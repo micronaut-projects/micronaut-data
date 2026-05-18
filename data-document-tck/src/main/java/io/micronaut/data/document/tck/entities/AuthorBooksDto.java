@@ -16,14 +16,17 @@
 package io.micronaut.data.document.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 @Introspected
 public class AuthorBooksDto {
 
+    @Nullable
     private String authorName;
 
+    @Nullable
     private List<BookDto> books;
 
     public AuthorBooksDto() {
@@ -34,6 +37,7 @@ public class AuthorBooksDto {
         this.books = books;
     }
 
+    @Nullable
     public String getAuthorName() {
         return authorName;
     }
@@ -42,6 +46,7 @@ public class AuthorBooksDto {
         this.authorName = authorName;
     }
 
+    @Nullable
     public List<BookDto> getBooks() {
         return books;
     }

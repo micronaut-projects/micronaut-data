@@ -26,6 +26,7 @@ import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.mongodb.session.MongoConnectionOperations;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -53,6 +54,7 @@ final class ContexualClientSessionInterceptor implements MethodInterceptor<Clien
     }
 
     @Override
+    @Nullable
     public Object intercept(MethodInvocationContext<ClientSession, Object> context) {
         Optional<ConnectionStatus<ClientSession>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isEmpty()) {

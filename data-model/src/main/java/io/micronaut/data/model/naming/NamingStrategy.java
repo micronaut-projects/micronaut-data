@@ -15,13 +15,16 @@
  */
 package io.micronaut.data.model.naming;
 
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
@@ -31,7 +34,6 @@ import io.micronaut.data.model.PersistentProperty;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
 
 /**
  * A strategy interface for resolving the mapped name of an entity or property.
@@ -53,15 +55,15 @@ public interface NamingStrategy {
      * @param name The name
      * @return The mapped name
      */
-    @NonNull
-    String mappedName(@NonNull String name);
+
+    String mappedName(String name);
 
     /**
      * Return the mapped name for the given entity.
      * @param entity The entity
      * @return The mapped name
      */
-    default @NonNull String mappedName(@NonNull PersistentEntity entity) {
+    default  String mappedName(PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class)
                 .filter(StringUtils::isNotEmpty)
@@ -83,7 +85,7 @@ public interface NamingStrategy {
      * @param property The embedded property
      * @return The mapped name
      */
-    default @NonNull String mappedName(Embedded embedded, PersistentProperty property) {
+    default  String mappedName(Embedded embedded, PersistentProperty property) {
         return mappedName(embedded.getName() + mappedAssociatedName(property.getPersistedName()));
     }
 
@@ -92,14 +94,23 @@ public interface NamingStrategy {
      * @param property The property
      * @return The mapped name
      */
-    default @NonNull String mappedName(@NonNull PersistentProperty property) {
+    default  String mappedName(PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
         if (property instanceof Association association) {
             return mappedName(association);
         } else {
-            return property.getAnnotationMetadata()
-                    .stringValue(MappedProperty.class)
-                    .filter(StringUtils::isNotEmpty)
+            Optional<String> mappedProperty = property.getAnnotationMetadata()
+                .stringValue(MappedProperty.class)
+                .filter(StringUtils::isNotEmpty);
+            return mappedProperty
+                    .or(() -> {
+                        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+                        AnnotationValue<Projection> annotation = annotationMetadata.getAnnotation(Projection.class);
+                        if (annotation == null) {
+                            return Optional.empty();
+                        }
+                        return annotation.stringValue().map(this::mappedName);
+                    })
                     .orElseGet(() -> mappedName(property.getName()));
         }
     }
@@ -109,7 +120,7 @@ public interface NamingStrategy {
      * @param association The association
      * @return The mapped name
      */
-    default @NonNull String mappedName(Association association) {
+    default  String mappedName(Association association) {
         String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
         if (providedName != null) {
             return providedName;
@@ -132,12 +143,12 @@ public interface NamingStrategy {
      * @return the name in a proper format
      * @since 4.2.0
      */
-    @NonNull
-    default String mappedAssociatedName(@NonNull String associatedName) {
+
+    default String mappedAssociatedName(String associatedName) {
         return NameUtils.capitalize(associatedName);
     }
 
-    default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
+    default  String mappedName(List<Association> associations,  PersistentProperty property) {
         if (associations.isEmpty()) {
             return mappedName(property);
         }
@@ -148,18 +159,24 @@ public interface NamingStrategy {
                 foreignAssociation = association;
             }
             final String originalAssocName = association.getName();
-            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(originalAssocName) : originalAssocName;
-            if (!sb.isEmpty()) {
-                sb.append(mappedAssociatedName(assocName));
-            } else {
-                sb.append(assocName);
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED
+                ? association.getAnnotationMetadata().stringValue(MappedProperty.class)
+                    .orElseGet(() -> association.getAnnotationMetadata().enumValue(EmbeddedNaming.class, EmbeddedNaming.Strategy.class)
+                        .filter(EmbeddedNaming.Strategy.LEGACY::equals)
+                        .map(strategy -> originalAssocName)
+                        .orElse(StringUtils.EMPTY_STRING))
+                : originalAssocName;
+            if (StringUtils.isNotEmpty(assocName)) {
+                if (!sb.isEmpty()) {
+                    sb.append(mappedAssociatedName(assocName));
+                } else {
+                    sb.append(assocName);
+                }
             }
         }
         if (foreignAssociation != null) {
             PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
-            PersistentProperty associatedEntityIdentity = associatedEntity != null ? associatedEntity.getIdentity() : null;
-            if (associatedEntity != null && associatedEntity.equals(property.getOwner())
-                && associatedEntityIdentity != null && associatedEntityIdentity.equals(property)) {
+            if (associatedEntity.equals(property.getOwner()) && associatedEntity.hasIdentity() && associatedEntity.getIdentity().equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;
@@ -201,7 +218,7 @@ public interface NamingStrategy {
      * The default foreign key suffix for property names.
      * @return The suffix
      */
-    default @NonNull String getForeignKeySuffix() {
+    default  String getForeignKeySuffix() {
         return "Id";
     }
 }

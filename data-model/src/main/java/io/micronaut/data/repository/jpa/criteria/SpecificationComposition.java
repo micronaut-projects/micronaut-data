@@ -16,8 +16,7 @@
 package io.micronaut.data.repository.jpa.criteria;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -30,7 +29,7 @@ import java.io.Serializable;
 /**
  * Helper class to support specification compositions.
  * <p>
- * Based on Spring Data's {@link org.springframework.data.jpa.domain.SpecificationComposition}.
+ * Based on Spring Data's org.springframework.data.jpa.domain.SpecificationComposition.
  *
  * @author Sebastian Staudt
  * @author Oliver Gierke
@@ -41,7 +40,6 @@ import java.io.Serializable;
 @Internal
 final class SpecificationComposition {
 
-    @NonNull
     static <T> QuerySpecification<T> composed(@Nullable QuerySpecification<T> lhs, @Nullable QuerySpecification<T> rhs, Combiner combiner) {
         return (root, query, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, query, builder);
@@ -55,7 +53,6 @@ final class SpecificationComposition {
         };
     }
 
-    @NonNull
     static <T> QuerySpecification<T> composed(@Nullable QuerySpecification<T> lhs, @Nullable PredicateSpecification<T> rhs, Combiner combiner) {
         return (root, query, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, query, builder);
@@ -69,7 +66,6 @@ final class SpecificationComposition {
         };
     }
 
-    @NonNull
     static <T> UpdateSpecification<T> composed(@Nullable UpdateSpecification<T> lhs, @Nullable PredicateSpecification<T> rhs, Combiner combiner) {
         return (root, query, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, query, builder);
@@ -83,7 +79,6 @@ final class SpecificationComposition {
         };
     }
 
-    @NonNull
     static <T> DeleteSpecification<T> composed(@Nullable DeleteSpecification<T> lhs, @Nullable DeleteSpecification<T> rhs, Combiner combiner) {
         return (root, query, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, query, builder);
@@ -97,7 +92,6 @@ final class SpecificationComposition {
         };
     }
 
-    @NonNull
     static <T> DeleteSpecification<T> composed(@Nullable DeleteSpecification<T> lhs, @Nullable PredicateSpecification<T> rhs, Combiner combiner) {
         return (root, query, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, query, builder);
@@ -111,7 +105,6 @@ final class SpecificationComposition {
         };
     }
 
-    @NonNull
     static <T> PredicateSpecification<T> composed(@Nullable PredicateSpecification<T> lhs, @Nullable PredicateSpecification<T> rhs, Combiner combiner) {
         return (root, builder) -> {
             Predicate otherPredicate = toPredicate(lhs, root, builder);
@@ -127,37 +120,37 @@ final class SpecificationComposition {
 
     @Nullable
     private static <T> Predicate toPredicate(@Nullable QuerySpecification<T> specification,
-                                             @NonNull Root<T> root,
-                                             @NonNull CriteriaQuery<?> query,
-                                             @NonNull CriteriaBuilder builder) {
+                                              Root<T> root,
+                                              CriteriaQuery<?> query,
+                                              CriteriaBuilder builder) {
         return specification == null ? null : specification.toPredicate(root, query, builder);
     }
 
     @Nullable
     private static <T> Predicate toPredicate(@Nullable UpdateSpecification<T> specification,
-                                             @NonNull Root<T> root,
-                                             @NonNull CriteriaUpdate<?> query,
-                                             @NonNull CriteriaBuilder builder) {
+                                              Root<T> root,
+                                              CriteriaUpdate<?> query,
+                                              CriteriaBuilder builder) {
         return specification == null ? null : specification.toPredicate(root, query, builder);
     }
 
     @Nullable
     private static <T> Predicate toPredicate(@Nullable DeleteSpecification<T> specification,
-                                             @NonNull Root<T> root,
-                                             @NonNull CriteriaDelete<?> query,
-                                             @NonNull CriteriaBuilder builder) {
+                                              Root<T> root,
+                                              CriteriaDelete<?> query,
+                                              CriteriaBuilder builder) {
         return specification == null ? null : specification.toPredicate(root, query, builder);
     }
 
     @Nullable
     private static <T> Predicate toPredicate(@Nullable PredicateSpecification<T> specification,
-                                             @NonNull Root<T> root,
-                                             @NonNull CriteriaBuilder builder) {
+                                              Root<T> root,
+                                              CriteriaBuilder builder) {
         return specification == null ? null : specification.toPredicate(root, builder);
     }
 
     interface Combiner extends Serializable {
-        @NonNull
-        Predicate combine(@NonNull CriteriaBuilder builder, @Nullable Predicate lhs, @Nullable Predicate rhs);
+        
+        Predicate combine(CriteriaBuilder builder, @Nullable Predicate lhs, @Nullable Predicate rhs);
     }
 }

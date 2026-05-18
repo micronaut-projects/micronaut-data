@@ -4,7 +4,7 @@ import com.azure.cosmos.CosmosDiagnostics
 import com.azure.cosmos.models.PartitionKey
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.core.beans.BeanIntrospector
 import io.micronaut.data.azure.entities.nopartitionkey.NoPartitionKeyEntity
 import io.micronaut.data.azure.invalid.InvalidIdEntity

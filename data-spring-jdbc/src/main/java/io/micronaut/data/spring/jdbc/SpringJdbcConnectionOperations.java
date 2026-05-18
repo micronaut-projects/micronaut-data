@@ -70,11 +70,20 @@ public final class SpringJdbcConnectionOperations implements ConnectionOperation
         return new JdbcTemplate(dataSource).execute((ConnectionCallback<R>) connection -> callback.apply(createStatus(connection)));
     }
 
+    @Override
+    public boolean managesConnection(ConnectionStatus<Connection> connectionStatus) {
+        if (connectionStatus instanceof DefaultConnectionStatus<Connection> status) {
+            return status.isConnectionOf(this);
+        }
+        return false;
+    }
+
     private DefaultConnectionStatus<Connection> createStatus(Connection connection) {
         return new DefaultConnectionStatus<>(
             connection,
             ConnectionDefinition.DEFAULT,
-            true
+            true,
+            this
         );
     }
 

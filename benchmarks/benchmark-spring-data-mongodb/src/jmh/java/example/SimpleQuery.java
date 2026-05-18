@@ -45,7 +45,7 @@ public class SimpleQuery {
         mongoDbContainer.start();
         SpringApplication springApplication = new SpringApplication();
         Properties properties = new Properties();
-        properties.setProperty("spring.data.mongodb.uri", mongoDbContainer.getReplicaSetUrl());
+        properties.setProperty("spring.mongodb.uri", mongoDbContainer.getReplicaSetUrl());
         springApplication.setDefaultProperties(properties);
         springApplication.addPrimarySources(Collections.singletonList(Application.class));
         springApplication.setLazyInitialization(true);

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.FindCursoredPageInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 

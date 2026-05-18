@@ -15,11 +15,12 @@
  */
 package io.micronaut.data.runtime.event;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of the {@link EntityEventContext} interface.
@@ -48,10 +49,10 @@ public class DefaultEntityEventContext<T> implements EntityEventContext<T> {
     }
 
     @Override
-    public <P> void setProperty(BeanProperty<T, P> property, P newValue) {
+    public <P> void setProperty(BeanProperty<T, P> property, @Nullable P newValue) {
         if (property.hasSetterOrConstructorArgument()) {
             if (property.isReadOnly()) {
-                this.entity = property.withValue(entity, newValue);
+                entity = property.withValue(entity, newValue);
             } else {
                 property.set(entity, newValue);
             }

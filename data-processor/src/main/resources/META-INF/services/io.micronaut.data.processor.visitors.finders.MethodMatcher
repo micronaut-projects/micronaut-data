@@ -1,11 +1,8 @@
-io.micronaut.data.processor.visitors.finders.spec.FindPageSpecificationMethodMatcher
-io.micronaut.data.processor.visitors.finders.spec.FindAllSpecificationMethodMatcher
-io.micronaut.data.processor.visitors.finders.spec.FindOneSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.FindSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.CountSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.DeleteAllSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.UpdateAllSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.spec.ExistsSpecificationMethodMatcher
-io.micronaut.data.processor.visitors.finders.spec.DeleteSpecificationMethodMatcher
 io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher
 io.micronaut.data.processor.visitors.finders.ExistsMethodMatcher
 io.micronaut.data.processor.visitors.finders.DeleteMethodMatcher
@@ -14,9 +11,4 @@ io.micronaut.data.processor.visitors.finders.CountMethodMatcher
 io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher
 io.micronaut.data.processor.visitors.finders.SaveMethodMatcher
 io.micronaut.data.processor.visitors.finders.ProcedureMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.InsertAnnotatedMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.UpdateAnnotatedMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.DeleteAnnotatedMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.FindAnnotatedMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.SaveAnnotatedMethodMatcher
-io.micronaut.data.processor.visitors.finders.annotated.JakartaDataQueryAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.JakartaDataQueryMethodMatcher

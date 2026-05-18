@@ -28,9 +28,7 @@ import io.micronaut.core.annotation.Internal;
  * @param nullable The indicator telling whether column is nullable
  */
 @Internal
-public record SqlColumnMetadata(
-
-    String name,
+public record SqlColumnMetadata(String name,
     int type,
     String typeName,
     int columnSize,

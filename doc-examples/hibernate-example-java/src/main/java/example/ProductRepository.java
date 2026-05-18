@@ -5,11 +5,11 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.jpa.annotation.EntityGraph;
-import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
-import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.repository.CrudRepository;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -62,7 +62,7 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
 
     @Transactional
     default List<Product> findByName(String name, boolean caseInsensitive, boolean includeBlank) {
-        Specification<Product> specification;
+        QuerySpecification<Product> specification;
         if (caseInsensitive) {
             specification = Specifications.nameEqualsCaseInsensitive(name);
         } else {
@@ -77,12 +77,12 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
     // tag::spec[]
     class Specifications {
 
-        public static Specification<Product> nameEquals(String name) {
+        public static QuerySpecification<Product> nameEquals(String name) {
             return (root, query, criteriaBuilder)
                     -> criteriaBuilder.equal(root.get("name"), name);
         }
 
-        public static Specification<Product> nameEqualsCaseInsensitive(String name) {
+        public static QuerySpecification<Product> nameEqualsCaseInsensitive(String name) {
             return (root, query, criteriaBuilder)
                     -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
         }

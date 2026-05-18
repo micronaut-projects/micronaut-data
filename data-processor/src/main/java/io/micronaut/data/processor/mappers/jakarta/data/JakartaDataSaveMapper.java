@@ -18,7 +18,6 @@ package io.micronaut.data.processor.mappers.jakarta.data;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.data.annotation.Save;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -36,7 +35,6 @@ import java.util.List;
 @Internal
 public final class JakartaDataSaveMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.data.repository.Save";

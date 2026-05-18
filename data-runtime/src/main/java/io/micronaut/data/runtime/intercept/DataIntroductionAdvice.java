@@ -21,8 +21,8 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -32,6 +32,7 @@ import io.micronaut.data.runtime.support.NullValue;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Inject;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -70,6 +71,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         this.conversionService = conversionService;
     }
 
+    @Nullable
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
@@ -94,16 +96,17 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletionStage<Object> completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        completionStage.whenComplete((value, throwable) -> {
-            try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+        Objects.requireNonNull(completionStage).whenComplete((value, throwable) -> {
+            propagatedContext.propagate(() -> {
                 if (throwable == null) {
                     Class<Object> target = context.getReturnType().asArgument().getType();
-                    if (value == null) {
-                        value = conversionService.convert(new NullValue(), target).orElse(value);
+                    Object v = value;
+                    if (v == null && target.getName().equals("kotlinx.coroutines.flow.Flow")) {
+                        v = conversionService.convert(new NullValue(), target).orElse(v);
                     } else {
-                        value = conversionService.convert(value, target).orElse(value);
+                        v = conversionService.convert(v, target).orElse(v);
                     }
-                    completableFuture.complete(value);
+                    completableFuture.complete(v);
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
@@ -111,7 +114,8 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                     }
                     completableFuture.completeExceptionally(finalThrowable);
                 }
-            }
+                return null;
+            });
         });
         return completableFuture;
     }

@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,7 +38,8 @@ import java.util.function.Function;
 @Internal
 public final class Utils {
 
-    public static SourcePersistentEntity resolvePersistentEntity(ClassElement returnType,
+    @Nullable
+    public static SourcePersistentEntity resolvePersistentEntity(@Nullable ClassElement returnType,
                                                                  Function<ClassElement, SourcePersistentEntity> entityResolver) {
         if (returnType != null) {
             if (returnType.hasAnnotation(MappedEntity.class) || returnType.hasStereotype(Embeddable.class)) {

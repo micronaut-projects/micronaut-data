@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Version
@@ -20,7 +19,7 @@ interface StudentRepository : CrudRepository<Student, ObjectId> {
 
     // end::studentRepository[]
     @Join("courses")
-    override fun findById(@NonNull id: ObjectId?): Optional<Student>
+    override fun findById(id: ObjectId): Optional<Student>
 
     @JoinSpecifications(
             Join("courses"),

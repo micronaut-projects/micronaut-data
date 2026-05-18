@@ -173,6 +173,12 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
         return context.getBean(MySqlExampleEntityRepository)
     }
 
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(MySqlIntervalRepository)
+    }
+
     def "for update is in the correct location"() {
         given:
             setupBooks()
@@ -191,6 +197,25 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     protected boolean skipQueryByDataArray() {
         return true
+    }
+
+    def "REPLACE INTO updates existing row without changing total count"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("The Stand")
+        def totalBefore = bookRepository.findAll().size()
+        when:
+        ((MySqlBookRepository) bookRepository).replaceBook(book.id, "The Stand Replaced", book.totalPages, book.author.id)
+        def replaced = bookRepository.queryByTitle("The Stand Replaced")
+        def old = bookRepository.queryByTitle("The Stand")
+        def totalAfter = bookRepository.findAll().size()
+        then:
+        replaced
+        replaced.id == book.id
+        !old
+        totalAfter == totalBefore
+        cleanup:
+        cleanupBooks()
     }
 
 }

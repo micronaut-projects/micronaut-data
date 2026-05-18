@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
@@ -27,8 +27,11 @@ import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.metamodel.Attribute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,20 +49,21 @@ import java.util.stream.Collectors;
  * @since 3.2
  */
 @Internal
-final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityJoinSupport<Owner, E>
-    implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E> {
+final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityFrom<Owner, E>
+    implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final SourceAssociation association;
     private final List<Association> associations;
-    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    private Join. @Nullable Type associationJoinType;
     @Nullable
     private String alias;
 
     SourcePersistentAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                     SourceAssociation association,
                                     List<Association> associations,
-                                    Join.Type associationJoinType,
+                                    Join. @Nullable Type associationJoinType,
+                                    @Nullable
                                     String alias,
                                     CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
@@ -102,12 +106,12 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     }
 
     @Override
-    public Join.Type getAssociationJoinType() {
+    public Join. @Nullable Type getAssociationJoinType() {
         return associationJoinType;
     }
 
     @Override
-    public void setAssociationJoinType(@Nullable Join.Type type) {
+    public void setAssociationJoinType(Join. @Nullable Type type) {
         this.associationJoinType = type;
     }
 
@@ -159,4 +163,14 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
         return newAssociations;
     }
 
+    @Override
+    public Attribute<? super Owner, ?> getAttribute() {
+        return PersistentAssociationPath.super.getAttribute();
+    }
+
+    @Override
+    @Nullable
+    public JoinType getJoinType() {
+        return PersistentAssociationPath.super.getJoinType();
+    }
 }

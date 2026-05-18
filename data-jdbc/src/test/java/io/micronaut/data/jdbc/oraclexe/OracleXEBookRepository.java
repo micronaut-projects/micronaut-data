@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Id;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -25,9 +27,13 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.transaction.annotation.OracleTransactional;
+import org.jspecify.annotations.Nullable;
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,15 +45,16 @@ public abstract class OracleXEBookRepository extends BookRepository {
     }
 
     @Query(value = "SELECT book_.* FROM book book_ ORDER BY book_.title ASC OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY")
+    @Override
     public abstract List<Book> findBooks(int limit, int offset);
 
     @Override
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Override
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Procedure
     public abstract int add1(int input);
@@ -58,13 +65,82 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Override
     @ClientInfo.Attribute(name = "OCSID.MODULE", value = "CustomModule")
     @ClientInfo.Attribute(name = "OCSID.ACTION", value = "INSERT")
+    @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
     public abstract @NonNull Book save(@NonNull Book book);
 
-    //    public abstract Book updateReturning(Book book);
-//
-//    public abstract String updateReturningTitle(Book book);
-//
-//    public abstract String updateReturningTitle(@Id Long id, String title);
-//
-//    public abstract String updateByIdReturningTitle(Long id, String title);
+    public abstract Book saveReturning(Book book);
+
+    public abstract List<Book> saveReturning(List<Book> books);
+
+    public abstract Book updateReturning(Book book);
+
+    public abstract String updateReturningTitle(Book book);
+
+    public abstract String updateReturningTitle(@Id Long id, String title);
+
+    public abstract String updateByIdReturningTitle(Long id, String title);
+
+    public abstract Book deleteReturning(Book book);
+
+    public abstract String deleteReturningTitle(Book book);
+
+    @Query("""
+        INSERT INTO book (author_id,genre_id,title,total_pages,publisher_id,last_updated)
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING author_id,genre_id,title,total_pages,publisher_id,last_updated,id INTO ?,?,?,?,?,?,?
+        """)
+    public abstract List<Book> customInsertReturningBooks(Long authorId,
+                                                          @Nullable Long genreId,
+                                                          String title,
+                                                          int totalPages,
+                                                          @Nullable Long publisherId,
+                                                          LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?
+        """)
+    public abstract Book customInsertReturningBook(Long authorId,
+                                                   @Nullable Long genreId,
+                                                   String title,
+                                                   int totalPages,
+                                                   @Nullable Long publisherId,
+                                                   LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "BOOK" ("AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED")
+        VALUES (:authorId, :genreId, :title, :totalPages, :publisherId, :lastUpdated)
+        RETURNING "TITLE" INTO ?
+        """)
+    public abstract String customInsertReturningTitle(Long authorId,
+                                                      @Nullable Long genreId,
+                                                      String title,
+                                                      int totalPages,
+                                                      @Nullable Long publisherId,
+                                                      LocalDateTime lastUpdated);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages,\"LAST_UPDATED\"=:lastUpdated WHERE \"ID\" = :bookId RETURNING \"AUTHOR_ID\",\"GENRE_ID\",\"TITLE\",\"TOTAL_PAGES\",\"PUBLISHER_ID\",\"LAST_UPDATED\",\"ID\" INTO ?,?,?,?,?,?,?")
+    public abstract Book customUpdateReturning(Long bookId, String title, int totalPages, LocalDateTime lastUpdated);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract BookDto customUpdateReturningDto(Long bookId, String title, int totalPages);
+
+    @Projection("title")
+    @Projection("totalPages")
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract OracleBookMethodProjectionDto customUpdateReturningMethodProjectionDto(Long bookId, String title, int totalPages);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:title,\"TOTAL_PAGES\"=:totalPages WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract OracleBookMappedPropertyDto customUpdateReturningMappedPropertyDto(Long bookId, String title, int totalPages);
+
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\",\"TOTAL_PAGES\" INTO ?,?")
+    public abstract Object[] customDeleteReturningTitleAndPages(Long bookId);
+
+    @Query("UPDATE \"BOOK\" SET \"TITLE\"=:newTitle WHERE \"ID\" = :bookId AND \"ID\" IN (:bookIds) RETURNING \"TITLE\" INTO ?")
+    public abstract String customUpdateReturningTitleWithExpandedIds(Long bookId, String newTitle, List<Long> bookIds);
+
+    @Query("DELETE FROM \"BOOK\" WHERE \"ID\" = :bookId RETURNING \"TITLE\" INTO ?")
+    public abstract String customDeleteReturningTitle(Long bookId);
+
 }

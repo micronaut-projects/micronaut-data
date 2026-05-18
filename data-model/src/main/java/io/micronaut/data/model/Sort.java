@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -60,8 +59,7 @@ public interface Sort {
      * @param propertyName The property name to order by
      * @return A new sort with the order applied
      */
-    @NonNull
-    Sort order(@NonNull String propertyName);
+    Sort order(String propertyName);
 
     /**
      * Adds an order object.
@@ -69,7 +67,7 @@ public interface Sort {
      * @param order The order object
      * @return A new sort with the order applied
      */
-    @NonNull Sort order(@NonNull Sort.Order order);
+    Sort order(Sort.Order order);
 
     /**
      * Adds an orders.
@@ -78,8 +76,7 @@ public interface Sort {
      * @return A new sort with the order applied
      * @since 4.10
      */
-    @NonNull
-    default Sort orders(@NonNull List<Sort.Order> orders) {
+    default Sort orders(List<Sort.Order> orders) {
         Sort theSort = this;
         for (Order order : orders) {
             theSort = theSort.order(order);
@@ -95,12 +92,12 @@ public interface Sort {
      *
      * @return A new sort with the order applied
      */
-    @NonNull Sort order(@NonNull String propertyName, @NonNull Sort.Order.Direction direction);
+    Sort order(String propertyName, Sort.Order.Direction direction);
 
     /**
      * @return The order definitions for this sort.
      */
-    @NonNull List<Order> getOrderBy();
+    List<Order> getOrderBy();
 
     /**
      * @return Default unsorted sort instance.
@@ -116,12 +113,11 @@ public interface Sort {
      * @return The sort
      */
     @JsonCreator
-    static @NonNull Sort of(
-            @JsonProperty("orderBy") @Nullable List<Order> orderList) {
+    static Sort of(@JsonProperty("orderBy") @Nullable List<Order> orderList) {
         if (CollectionUtils.isEmpty(orderList)) {
             return UNSORTED;
         }
-        return new DefaultSort(orderList);
+        return new DefaultSort(Objects.requireNonNull(orderList));
     }
 
     /**
@@ -129,7 +125,7 @@ public interface Sort {
      * @param orders The orders
      * @return The orders
      */
-    static @NonNull Sort of(Order... orders) {
+    static Sort of(Order... orders) {
         if (ArrayUtils.isEmpty(orders)) {
             return UNSORTED;
         } else {
@@ -151,7 +147,7 @@ public interface Sort {
          * Constructs an order for the given property in ascending order.
          * @param property The property
          */
-        public Order(@NonNull String property) {
+        public Order(String property) {
             this(property, Direction.ASC, false);
         }
 
@@ -163,9 +159,8 @@ public interface Sort {
          */
         @JsonCreator
         @Creator
-        public Order(
-                @JsonProperty("property") @NonNull String property,
-                @JsonProperty("direction") @NonNull Direction direction,
+        public Order(@JsonProperty("property") String property,
+                @JsonProperty("direction") Direction direction,
                 @JsonProperty("ignoreCase") boolean ignoreCase) {
             ArgumentUtils.requireNonNull("direction", direction);
             ArgumentUtils.requireNonNull("property", property);
@@ -201,11 +196,9 @@ public interface Sort {
          * @return A new instance of order that is reversed.
          */
         public Order reverse() {
-            return new Order(
-                property,
+            return new Order(property,
                 direction == Direction.ASC ? Direction.DESC : Direction.ASC,
-                ignoreCase
-            );
+                ignoreCase);
         }
 
         /**

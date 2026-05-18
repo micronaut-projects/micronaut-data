@@ -59,11 +59,6 @@ public abstract class AbstractPredicate implements IPredicate {
     }
 
     @Override
-    public String getAlias() {
-        return null;
-    }
-
-    @Override
     public void visitExpression(ExpressionVisitor expressionVisitor) {
         expressionVisitor.visit(this);
     }

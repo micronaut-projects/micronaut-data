@@ -103,14 +103,14 @@ interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
         when:
         buildEntity('test.Person', '''
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.MappedProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonView
-record Person(@Id @GeneratedValue @MappedProperty("id") Long id, String name, int age) {}
+@JsonView(entity = Person.class)
+record Person(@Id @GeneratedValue @JsonProperty("id") Long id, String name, int age) {}
 ''')
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("@JsonView identity @MappedProperty value cannot be set to value different than '_id'")
+        ex.message.contains("@JsonView identity @JsonProperty value cannot be set to value different than '_id'")
     }
 
     void "test JsonView entity with @Version not supported"() {
@@ -120,11 +120,49 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Version;
 
-@JsonView
+@JsonView(entity = Person.class)
 record Person(@Id @GeneratedValue @MappedProperty("_id") Long id, String name, int age, @Version Long version) {}
 ''')
         then:
         def ex = thrown(RuntimeException)
         ex.message.contains("@JsonView mapped entities do not support @Version fields")
     }
+
+    void "test JsonView property name doesn't match MappedEntity property name"() {
+        when:
+        buildEntity('test.Person', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class)
+record PersonView (@Id @GeneratedValue @MappedProperty("_id") Long id, String surname, int age) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Json View property surname doesn't exist in the defined entity class Person")
+    }
+
+    void "test JsonView property name matches MappedEntity with @MappedProperty annotation"() {
+        when:
+        buildEntity('test.Person', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class)
+record PersonView (@Id @GeneratedValue @MappedProperty("_id") Long id, @MappedProperty("name") String surname, int age) {}
+''')
+        then:
+        notThrown(RuntimeException)
+    }
+
 }

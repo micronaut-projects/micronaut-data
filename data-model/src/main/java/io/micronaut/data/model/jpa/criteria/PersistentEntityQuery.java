@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.Order;
@@ -40,8 +39,8 @@ public interface PersistentEntityQuery<T> extends AbstractQuery<T>, PersistentEn
      * @param <X>              The root type
      * @return The root
      */
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
+    
+    <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity);
 
     /**
      * Sets the limit to the query.
@@ -49,7 +48,7 @@ public interface PersistentEntityQuery<T> extends AbstractQuery<T>, PersistentEn
      * @param limit The limit
      * @return The query
      */
-    @NonNull
+    
     PersistentEntityQuery<T> limit(int limit);
 
     /**
@@ -58,7 +57,7 @@ public interface PersistentEntityQuery<T> extends AbstractQuery<T>, PersistentEn
      * @param offset The offset
      * @return The query
      */
-    @NonNull
+    
     PersistentEntityQuery<T> offset(int offset);
 
     /**
@@ -67,8 +66,8 @@ public interface PersistentEntityQuery<T> extends AbstractQuery<T>, PersistentEn
      * @param orders The order
      * @return The query
      */
-    @NonNull
-    PersistentEntityQuery<T> orderBy(@NonNull Order... orders);
+    
+    PersistentEntityQuery<T> orderBy(Order... orders);
 
     /**
      * Ordering of the query.
@@ -76,7 +75,7 @@ public interface PersistentEntityQuery<T> extends AbstractQuery<T>, PersistentEn
      * @param orders The order
      * @return The query
      */
-    @NonNull
-    PersistentEntityQuery<T> orderBy(@NonNull List<Order> orders);
+    
+    PersistentEntityQuery<T> orderBy(List<Order> orders);
 
 }

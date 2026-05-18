@@ -27,6 +27,7 @@ import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -35,7 +36,7 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -63,6 +64,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 /**
  * Schema generator used for testing purposes.
@@ -136,7 +138,8 @@ public class SchemaGenerator {
                 // filter out inner / internal / abstract(MappedSuperClass) classes
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                .filter(i -> !i.hasAnnotation(JsonView.class))
+                .filter(i -> !i.hasAnnotation(JsonSubView.class))
+                .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {
@@ -183,7 +186,7 @@ public class SchemaGenerator {
                                  PropertyPlaceholderResolver propertyPlaceholderResolver,
                                  PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect);
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -270,7 +273,10 @@ public class SchemaGenerator {
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
-            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                continue;
+            }
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();

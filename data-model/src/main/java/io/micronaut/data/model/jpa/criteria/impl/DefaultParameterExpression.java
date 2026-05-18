@@ -16,12 +16,16 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * The default parameter expression implementation.
@@ -33,11 +37,11 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 @Internal
 final class DefaultParameterExpression<T> extends IParameterExpression<T> {
 
-    private final @NonNull Class<T> paramClass;
+    private final  Class<T> paramClass;
     private final @Nullable Object value;
 
-    public DefaultParameterExpression(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
-        super(new ClassExpressionType<>(paramClass), name);
+    public DefaultParameterExpression(Class<T> paramClass, @Nullable String name, @Nullable Object value) {
+        super(new ClassExpressionType<>(paramClass), name == null ? "default" : name);
         this.paramClass = paramClass;
         this.value = value;
     }
@@ -49,6 +53,26 @@ final class DefaultParameterExpression<T> extends IParameterExpression<T> {
         if (outgoingQueryParameterProperty == null) {
             return new SimpleParameterBinding(name, DataType.forType(paramClass), bindingContext.isExpandable(), value);
         }
-        return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext.isExpandable(), value);
+        Object theValue = value;
+        PersistentPropertyPath incomingQueryParameterProperty = bindingContext.getIncomingMethodParameterProperty();
+        if (incomingQueryParameterProperty != null && theValue != null)  {
+            List<PersistentProperty> inPath = incomingQueryParameterProperty.getPropertyPath();
+            List<PersistentProperty> outPath = outgoingQueryParameterProperty.getPropertyPath();
+            Iterator<PersistentProperty> inIterator = inPath.iterator();
+            for (PersistentProperty outProp : outPath) {
+                if (inIterator.hasNext()) {
+                    PersistentProperty inProp = inIterator.next();
+                    if (inProp.equals(outProp)) {
+                        continue;
+                    }
+                    throw new IllegalStateException("OUT path: " + outPath + " should include IN path: " + inPath);
+                }
+                theValue = ((RuntimePersistentProperty) outProp).getProperty().get(theValue);
+                if (theValue == null) {
+                    break;
+                }
+            }
+        }
+        return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext.isExpandable(), theValue);
     }
 }

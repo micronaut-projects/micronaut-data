@@ -1,5 +1,6 @@
 package io.micronaut.data.hibernate;
 
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.hibernate.entities.RelPerson;
@@ -24,7 +25,7 @@ public interface RelPersonRepository extends JpaRepository<RelPerson, Long>, Jpa
 
     @Override
     @Transactional
-    List<RelPerson> findAll(PredicateSpecification<RelPerson> spec);
+    List<RelPerson> findAll(@Nullable PredicateSpecification<RelPerson> spec);
 
     class Specifications {
 

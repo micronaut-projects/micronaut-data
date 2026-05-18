@@ -19,28 +19,27 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate.entities.Rating
 import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
-import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
+import jakarta.persistence.OptimisticLockException
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
-
-import jakarta.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
@@ -109,7 +108,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
@@ -119,7 +118,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
             def found = userWithWhereRepository.findById(e.id)
         then:
             !found.isPresent()
@@ -380,7 +379,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -389,14 +388,14 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -737,12 +736,12 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test specification and pageable"() {
         when:
-            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0));
+            def value = bookRepository.findAll(testJoin("Stephen King") , Pageable.from(0));
         then:
             value.totalSize == 2
             value.content.size() == 2
         when:
-            value = bookRepository.findAll((Specification<Book>)null, Pageable.from(0))
+            value = bookRepository.findAll((QuerySpecification<Book>)null, Pageable.from(0))
             def count = bookRepository.count((PredicateSpecification<Book>) null)
         then:
             count
@@ -858,10 +857,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test order by embedded field"() {
         when:
-            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def e1 = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
             def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
             u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
-            def e2 = userWithWhereRepository.save(u2)
+            def e2 = userWithWhereRepository.insert(u2)
             def found1 = userWithWhereRepository.findById(e1.id)
             def found2 = userWithWhereRepository.findById(e2.id)
         then:
@@ -895,8 +894,47 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             book.title == "The Stand"
     }
 
-    private static Specification<Book> testJoin(String value) {
-        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.join("author").get("name"), value))
+    void "test criteria pagination sort ignore case with join"() {
+        given:
+        def book1 = new Book(title: "The Stand", students: [new Student("Denis"), new Student("Josh")])
+        def book2 = new Book(title: "Pet Cemetery", students: [new Student("Kevin")])
+        def book3 = new Book(title: "along Came a Spider", students: [new Student("Kevin"), new Student("Josh")])
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        bookRepository.save(book3)
+        def criteria = new PredicateSpecification<Book>() {
+            @Override
+            Predicate toPredicate(Root<Book> root, CriteriaBuilder criteriaBuilder) {
+                def students = root.joinSet("students", jakarta.persistence.criteria.JoinType.LEFT)
+                return criteriaBuilder.or(
+                        criteriaBuilder.equal(students.get("name"), "Denis"),
+                        criteriaBuilder.equal(students.get("name"), "Josh")
+                )
+            }
+        }
+
+        when:
+        def page = bookRepository.findAll(criteria, Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["along Came a Spider"]
+
+        when:
+        page = bookRepository.findAll(criteria, Pageable.from(1, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["The Stand"]
+    }
+
+    static QuerySpecification<Book> testJoin(String value) {
+        return new QuerySpecification<Book>() {
+            @Override
+            Predicate toPredicate(Root<Book> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                return criteriaBuilder.equal(root.join("author").get("name"), value)
+            }
+        }
     }
 
     @Override

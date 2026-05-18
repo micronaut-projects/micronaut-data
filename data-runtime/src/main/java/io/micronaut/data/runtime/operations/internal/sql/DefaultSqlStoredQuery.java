@@ -17,18 +17,18 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -49,7 +49,8 @@ import java.util.stream.Collectors;
 public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
-    private final SqlQueryBuilder2 queryBuilder;
+    private final SqlQueryBuilder queryBuilder;
+    @Nullable
     private final QueryResultInfo queryResultInfo;
 
     /**
@@ -60,7 +61,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
      */
     public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery,
                                  RuntimePersistentEntity<E> runtimePersistentEntity,
-                                 SqlQueryBuilder2 queryBuilder,
+                                 SqlQueryBuilder queryBuilder,
                                  ConversionService conversionService) {
         super(storedQuery, runtimePersistentEntity, conversionService);
         this.queryBuilder = queryBuilder;
@@ -75,18 +76,28 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
 
         if (storedQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
             AnnotationValue<QueryResult> queryResultAnn = storedQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
-            QueryResult.Type type = queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
-            String columnName = queryResultAnn.getRequiredValue("column", String.class);
-            JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
-            queryResultInfo = new QueryResultInfo(type, columnName, jsonDataType);
+            if (queryResultAnn != null) {
+                QueryResult.Type type = queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
+                String columnName = queryResultAnn.getRequiredValue("column", String.class);
+                JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+                queryResultInfo = new QueryResultInfo(type, columnName, jsonDataType);
+            } else {
+                queryResultInfo = null;
+            }
         } else {
             queryResultInfo = null;
         }
     }
 
     @Override
+    @Nullable
     public QueryResultInfo getQueryResultInfo() {
         return queryResultInfo;
+    }
+
+    @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return getStoredQueryDelegate().getOutParameterBindings();
     }
 
     @Override
@@ -100,11 +111,12 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
-    public SqlQueryBuilder2 getQueryBuilder() {
+    public SqlQueryBuilder getQueryBuilder() {
         return queryBuilder;
     }
 
     @Override
+    @Nullable
     public Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity) {
         StoredQuery<E, R> storedQuery = getStoredQueryDelegate();
         if (storedQuery.getQueryBindings().isEmpty()) {
@@ -113,16 +125,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
         return storedQuery.getQueryBindings().stream()
             .filter(b -> b.isAutoPopulated() && b.isRequiresPreviousPopulatedValue())
             .map(b -> {
-                if (b.getPropertyPath() == null) {
-                    throw new IllegalStateException("Missing property path for query parameter: " + b);
-                }
-                Object value = entity;
-                for (String property : b.getPropertyPath()) {
-                    if (value == null) {
-                        break;
-                    }
-                    value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
-                }
+                var value = getRequiredPropertyPath(b, getPersistentEntity()).getPropertyValue(entity);
                 return new AbstractMap.SimpleEntry<>(b, value);
             })
             .filter(e -> e.getValue() != null)

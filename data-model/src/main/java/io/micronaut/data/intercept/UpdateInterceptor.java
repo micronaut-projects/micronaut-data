@@ -20,7 +20,7 @@ package io.micronaut.data.intercept;
  *
  * @author graemerocher
  * @since 1.0
- * @param <T>
+ * @param <T> The declaring type
  */
 public interface UpdateInterceptor<T> extends DataInterceptor<T, Object> {
 }

@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.inject.ExecutableMethod;

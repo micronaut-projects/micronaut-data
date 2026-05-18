@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.core.annotation.Introspected
+import org.jspecify.annotations.NonNull
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.CursoredPage
@@ -25,9 +27,15 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.PageableRepository
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.ShipmentId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -44,11 +52,14 @@ class H2EmbeddedIdSpec extends Specification {
     @Inject
     ItemGroupRepository groupRepository
 
+    @Inject
+    ConfigurationItemRepository configurationItemRepository
+
     void "test empty one-to-many via embedded-id"() {
         when:
         ItemGroup itemGroup = new ItemGroup(1L)
         itemGroup.setSecondId(2L)
-        groupRepository.save(itemGroup)
+        groupRepository.insert(itemGroup)
         ItemGroup entity = groupRepository.findById(1L).get()
 
         then:
@@ -61,16 +72,16 @@ class H2EmbeddedIdSpec extends Specification {
 
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         def entity = repository.findById(id).orElse(null)
 
@@ -169,16 +180,16 @@ class H2EmbeddedIdSpec extends Specification {
         repository.deleteAll()
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
         Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
@@ -195,19 +206,19 @@ class H2EmbeddedIdSpec extends Specification {
     void "test cursored pageable"() {
         when:
         ShipmentId id = new ShipmentId("c1", "a")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c1", "b")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("c1", "c")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("c1", "d")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         ShipmentId id5 = new ShipmentId("c2", "a1")
-        repository.save(new Shipment(id5, "test5"))
+        repository.insert(new Shipment(id5, "test5"))
 
         CursoredPageable cursoredPageable = CursoredPageable.from(3, Sort.of());
         CursoredPage<Shipment> page = repository.findByShipmentIdCountry("c1", cursoredPageable)
@@ -225,6 +236,37 @@ class H2EmbeddedIdSpec extends Specification {
 
         cleanup:
         repository.deleteAll()
+    }
+
+    void "test pagination"() {
+        when:
+        def id = new ConfigItemEntityId(oheId: "oheid1", id: "id1")
+        def configItem = configurationItemRepository.insert(new ConfigItemEntity(id: id, name: "name1", description: "desc1", type: "type1"))
+        def page = configurationItemRepository.findAll(Pageable.from(0, 10))
+        then:
+        page
+        page.content.size() == 1
+        page.content[0].name == "name1"
+        when:
+        def cnt = configurationItemRepository.countByIdOheId(id.oheId)
+        then:
+        cnt == 1
+        when:
+        def idPredicate = new PredicateSpecification<ConfigItemEntity>() {
+            @Override
+            @Nullable Predicate toPredicate(@NonNull Root< ConfigItemEntity > root, @NonNull CriteriaBuilder criteriaBuilder) {
+                return criteriaBuilder.equal(root.get("id").get("oheId"), configItem.id.oheId)
+            }
+        };
+        List<ConfigItemEntity> list = configurationItemRepository.findAll(idPredicate)
+        then:
+        list.size() == 1
+        when:
+        Page<ConfigItemEntity> newPage = configurationItemRepository.findAll(idPredicate, Pageable.from(0, 10))
+        then:
+        newPage.content.size() == 1
+        cleanup:
+        configurationItemRepository.deleteAll()
     }
 }
 
@@ -318,4 +360,30 @@ interface ItemGroupRepository extends CrudRepository<ItemGroup, Long> {
     @Override
     @Join(value = "items", type = Join.Type.LEFT_FETCH)
     public abstract Optional<ItemGroup> findById(@NotNull Long id);
+}
+
+@Embeddable
+class ConfigItemEntityId {
+    @MappedProperty("ohe_id")
+    String oheId
+    @MappedProperty("id")
+    String id
+}
+
+@MappedEntity("CONFIGURATION_ITEM")
+class ConfigItemEntity {
+    @EmbeddedId
+    ConfigItemEntityId id
+    @Nullable
+    String description
+    String name
+    String type
+}
+
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ConfigurationItemRepository extends PageableRepository<ConfigItemEntity, ConfigItemEntityId>,
+        JpaSpecificationExecutor<ConfigItemEntity> {
+
+    long countByIdOheId(String oheId)
 }

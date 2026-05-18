@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -33,7 +32,7 @@ import java.util.List;
  * @since 2.4.0
  */
 public class EnumeratedAnnotationMapper implements NamedAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "javax.persistence.Enumerated";

@@ -16,4 +16,5 @@
 /**
  * Interfaces for reactive transaction management.
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.transaction.reactive;

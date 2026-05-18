@@ -15,9 +15,9 @@
  */
 package io.micronaut.transaction.support;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
@@ -43,49 +43,31 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
      * @param <R>        The result type
      * @return The result
      */
-    protected abstract <R> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
+    protected abstract <R extends @Nullable Object> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
 
     @Override
-    public final Optional<T> findTransactionStatus() {
-        return findTransactionPropagatedContextElement()
-            .map(PropagatedTransactionStatusElement::status)
+    public final Optional<TransactionStatus<C>> findTransactionStatus() {
+        return findTransactionStatusInternal().map(status -> status);
+    }
+
+    public final Optional<T> findTransactionStatusInternal() {
+        return PropagatedContext.getOrEmpty()
+            .findAll(TransactionStatus.class)
+            .filter(this::managesTransaction)
+            .findFirst()
             .map(status -> (T) status);
     }
 
-    private Optional<PropagatedTransactionStatusElement> findTransactionPropagatedContextElement() {
-        return PropagatedContext.getOrEmpty()
-            .findAll(PropagatedTransactionStatusElement.class)
-            .filter(element -> element.transactionOperations == this)
-            .findFirst();
-    }
-
     @Override
-    public final <R> R execute(@NonNull TransactionDefinition definition,
-                               @NonNull TransactionCallback<C, R> callback) {
-        return doExecute(definition, status -> {
-            try (PropagatedContext.Scope ignore = extendCurrentPropagatedContext(status)
-                .propagate()) {
+    public final <R extends @Nullable Object> R execute(@NonNull TransactionDefinition definition,
+                                                        @NonNull TransactionCallback<C, R> callback) {
+        return doExecute(definition, status -> status.propagate(() -> {
+            try {
                 return callback.call(status);
+            } catch (Exception e) {
+                return ExceptionUtil.sneakyThrow(e);
             }
-        });
-    }
-
-    /**
-     * Extends the propagated context with the transaction status.
-     *
-     * @param status The transaction status
-     * @return new propagated context
-     */
-    @NonNull
-    protected PropagatedContext extendCurrentPropagatedContext(TransactionStatus<C> status) {
-        return PropagatedContext.getOrEmpty()
-            .plus(new PropagatedTransactionStatusElement<>(AbstractPropagatedStatusTransactionOperations.this, status));
-    }
-
-    private record PropagatedTransactionStatusElement<T extends TransactionStatus<?>>(
-        TransactionOperations<?> transactionOperations,
-        TransactionStatus<?> status
-    ) implements PropagatedContextElement {
+        }));
     }
 
 }

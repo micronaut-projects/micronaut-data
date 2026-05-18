@@ -27,7 +27,7 @@ import jakarta.persistence.criteria.CommonAbstractCriteria;
  * @since 4.10
  */
 @Experimental
-public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria {
+public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria, PersistentEntityCriteriaQueryBuilder {
 
     /**
      * Create a subquery from the expression type.
@@ -36,13 +36,20 @@ public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCr
      * @return A new subquery
      * @since 4.10
      */
+    
     <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type);
 
     @Override
+    
     default <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
         return subquery(new ClassExpressionType<>(type));
     }
 
+    /**
+     * The persistent entity.
+     * @return The persistent entity
+     */
+    
     PersistentEntity getPersistentEntity();
 
 }

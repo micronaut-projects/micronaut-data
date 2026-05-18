@@ -25,9 +25,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -39,12 +39,14 @@ import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
+import io.micronaut.data.processor.visitors.finders.MethodResult;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -115,10 +117,10 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
-            .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+            .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
             .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
-        if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
+        if (entity.hasVersion() && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
             query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
         }
 
@@ -158,10 +160,12 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     @Override
+    @Nullable
     protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
                                                List<ParameterElement> notConsumedParameters,
                                                PersistentEntityRoot<T> root,
                                                PersistentEntityCriteriaBuilder cb,
+                                               @Nullable
                                                Predicate existingPredicate) {
         ParameterElement entityParameter = getEntityParameter();
         if (entityParameter == null) {
@@ -171,7 +175,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         Predicate predicate = null;
         SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
         if (entityParameter != null) {
-            if (rootEntity.getVersion() != null && existingPredicate == null) {
+            if (rootEntity.hasVersion() && existingPredicate == null) {
                 predicate = cb.and(
                     cb.equal(root.id(), scb.entityPropertyParameter(entityParameter, null)),
                     cb.equal(root.version(), scb.entityPropertyParameter(entityParameter, null))
@@ -266,14 +270,14 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), matchContext.getMethodElement(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
-                            return root.get(p.getName()).alias(p.getName());
-                        } else {
+                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
                             return root.get(p.getName());
+                        } else {
+                            return root.get(p.getName()).alias(p.getName());
                         }
                     })
                     .collect(Collectors.toList());
@@ -293,7 +297,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+        QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

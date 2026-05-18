@@ -19,21 +19,26 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.spring.tx.AbstractSpringTransactionOperations;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.SessionImplementor;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
+import org.jspecify.annotations.Nullable;
+import org.springframework.orm.jpa.hibernate.HibernateTransactionManager;
 
 import java.sql.Connection;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Adds Spring Transaction management capability to Micronaut Data.
@@ -57,13 +62,14 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
      */
     SpringHibernateTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
         hibernateTransactionManager.setNestedTransactionAllowed(true);
-        this.sessionFactory = hibernateTransactionManager.getSessionFactory();
+        this.sessionFactory = Objects.requireNonNull(hibernateTransactionManager.getSessionFactory());
         this.transactionOperations = new SpringJdbcConnectionTransactionOperations(hibernateTransactionManager);
     }
 
     @Override
-    public Optional<? extends TransactionStatus<?>> findTransactionStatus() {
-        return transactionOperations.findTransactionStatus();
+    public Optional<TransactionStatus<Session>> findTransactionStatus() {
+        return transactionOperations.findTransactionStatus()
+            .map(status -> new SessionTransactionStatus(status, status.getTransactionDefinition(), this));
     }
 
     @Override
@@ -77,13 +83,13 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
     }
 
     @Override
-    public <R> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
-        return transactionOperations.execute(definition, status -> callback.call(new SessionTransactionStatus(status, definition)));
+    public <R extends @Nullable Object> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
+        return transactionOperations.execute(definition, status -> callback.call(new SessionTransactionStatus(status, definition, this)));
     }
 
     @Override
     public TransactionStatus<Session> getTransaction(TransactionDefinition definition) throws TransactionException {
-        return new SessionTransactionStatus(transactionOperations.getTransaction(definition), definition);
+        return new SessionTransactionStatus(transactionOperations.getTransaction(definition), definition, this);
     }
 
     @Override
@@ -98,6 +104,14 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         transactionOperations.rollback(sessionTransactionStatus.status);
     }
 
+    @Override
+    public boolean managesTransaction(TransactionStatus<Session> transactionStatus) {
+        if (transactionStatus instanceof SessionTransactionStatus sessionTransactionStatus) {
+            return sessionTransactionStatus.isConnectionOf(this);
+        }
+        return false;
+    }
+
     private static final class SpringJdbcConnectionTransactionOperations extends AbstractSpringTransactionOperations {
 
         private final SessionFactory sessionFactory;
@@ -109,7 +123,7 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
          */
         SpringJdbcConnectionTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
             super(hibernateTransactionManager);
-            this.sessionFactory = hibernateTransactionManager.getSessionFactory();
+            this.sessionFactory = Objects.requireNonNull(hibernateTransactionManager.getSessionFactory());
         }
 
         @Override
@@ -130,13 +144,20 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
 
         private final TransactionStatus<Connection> status;
         private final TransactionDefinition definition;
+        private final TransactionOperations<?> transactionOperations;
 
-        SessionTransactionStatus(TransactionStatus<Connection> status, TransactionDefinition definition) {
+        SessionTransactionStatus(TransactionStatus<Connection> status, TransactionDefinition definition, TransactionOperations<?> transactionOperations) {
             this.status = status;
             this.definition = definition;
+            this.transactionOperations = transactionOperations;
+        }
+
+        boolean isConnectionOf(TransactionOperations<?> transactionOperations) {
+            return this.transactionOperations == transactionOperations;
         }
 
         @Override
+        @Nullable
         public Object getTransaction() {
             return status.getTransaction();
         }
@@ -180,6 +201,20 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         public void registerSynchronization(TransactionSynchronization synchronization) {
             status.registerSynchronization(synchronization);
         }
+
+        @Override
+        public <V> V propagate(PropagatedContext propagatedContext, Supplier<V> supplier) {
+            return status.propagate(propagatedContext, supplier);
+        }
+
+        @Override
+        public void propagate(Runnable runnable) {
+            status.propagate(runnable);
+        }
+
+        @Override
+        public <V> V propagate(Supplier<V> supplier) {
+            return status.propagate(supplier);
+        }
     }
 }
-

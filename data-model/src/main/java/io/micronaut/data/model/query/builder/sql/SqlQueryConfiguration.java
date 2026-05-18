@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
-
 /**
  * Allows configuration of how SQL queries are generated.
  *

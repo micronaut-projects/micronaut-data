@@ -16,7 +16,6 @@
 package io.micronaut.data.exceptions;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 
 /**
  * The exception converter.
@@ -32,7 +31,7 @@ public interface ExceptionConverter {
      * @param exception The exception to convert
      * @return The converted exception
      */
-    @NonNull
-    Exception convert(@NonNull Exception exception);
+    
+    Exception convert(Exception exception);
 
 }

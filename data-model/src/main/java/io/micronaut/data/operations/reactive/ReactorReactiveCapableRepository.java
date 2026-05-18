@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * The alternative of {@link ReactiveCapableRepository} that provides {@link ReactorReactiveRepositoryOperations}.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public interface ReactorReactiveCapableRepository extends ReactiveCapableRepository {
 
-    @NonNull
     @Override
     ReactorReactiveRepositoryOperations reactive();
 }

@@ -15,13 +15,15 @@
  */
 package io.micronaut.transaction.support;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -54,6 +56,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
 
     private Collection<Class<? extends Throwable>> dontRollbackOn = Collections.emptyList();
 
+    private Map<String, Object> properties = Collections.emptyMap();
+
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
      * Can be modified through bean property setters.
@@ -83,6 +87,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         this.name = other.getName();
         this.rollbackOn = other.getRollbackOn();
         this.dontRollbackOn = other.getDontRollbackOn();
+        this.properties = new LinkedHashMap<>(other.getProperties());
     }
 
     /**
@@ -260,6 +265,43 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         return dontRollbackOn;
     }
 
+    @Override
+    public Map<String, Object> getProperties() {
+        return Collections.unmodifiableMap(properties);
+    }
+
+    /**
+     * Sets additional transaction properties that may be interpreted by specific transaction managers.
+     *
+     * @param properties The transaction properties
+     * @since 5.0
+     */
+    public void setProperties(@Nullable Map<String, Object> properties) {
+        this.properties = properties == null ? Collections.emptyMap() : new LinkedHashMap<>(properties);
+    }
+
+    /**
+     * Adds an additional transaction property that may be interpreted by a specific transaction manager.
+     *
+     * @param name The property name
+     * @param value The property value
+     * @since 5.0
+     */
+    public void putProperty(@NonNull String name, @Nullable Object value) {
+        Objects.requireNonNull(name, "Argument [name] cannot be null");
+        if (value == null && this.properties.isEmpty()) {
+            return;
+        }
+        if (this.properties.isEmpty()) {
+            this.properties = new LinkedHashMap<>();
+        }
+        if (value == null) {
+            this.properties.remove(name);
+        } else {
+            this.properties.put(name, value);
+        }
+    }
+
     /**
      * This implementation compares the {@code toString()} results.
      * @see #toString()
@@ -300,9 +342,11 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
         if (!dontRollbackOn.isEmpty()) {
             sb.append(", dontRollbackOn=").append(dontRollbackOn);
         }
+        if (!properties.isEmpty()) {
+            sb.append(", properties=").append(properties);
+        }
         sb.append(']');
         return sb.toString();
     }
 
 }
-

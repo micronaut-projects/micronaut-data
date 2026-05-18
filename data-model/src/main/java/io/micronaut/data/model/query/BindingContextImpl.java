@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.data.model.PersistentPropertyPath;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link BindingParameter.BindingContext}.
@@ -26,9 +27,13 @@ import io.micronaut.data.model.PersistentPropertyPath;
 final class BindingContextImpl implements BindingParameter.BindingContext {
 
     private int index = -1;
+    @Nullable
     private String name;
+    @Nullable
     private PersistentPropertyPath incomingMethodParameterProperty;
+    @Nullable
     private PersistentPropertyPath outgoingQueryParameterProperty;
+    @Nullable
     private PersistentPropertyPath parameterBindingPath;
     private boolean expandable;
 
@@ -39,25 +44,25 @@ final class BindingContextImpl implements BindingParameter.BindingContext {
     }
 
     @Override
-    public BindingParameter.BindingContext name(String name) {
+    public BindingParameter.BindingContext name(@Nullable String name) {
         this.name = name;
         return this;
     }
 
     @Override
-    public BindingParameter.BindingContext incomingMethodParameterProperty(PersistentPropertyPath propertyPath) {
+    public BindingParameter.BindingContext incomingMethodParameterProperty(@Nullable PersistentPropertyPath propertyPath) {
         this.incomingMethodParameterProperty = propertyPath;
         return this;
     }
 
     @Override
-    public BindingParameter.BindingContext outgoingQueryParameterProperty(PersistentPropertyPath propertyPath) {
+    public BindingParameter.BindingContext outgoingQueryParameterProperty(@Nullable PersistentPropertyPath propertyPath) {
         this.outgoingQueryParameterProperty = propertyPath;
         return this;
     }
 
     @Override
-    public BindingParameter.BindingContext parameterBindingPath(PersistentPropertyPath propertyPath) {
+    public BindingParameter.BindingContext parameterBindingPath(@Nullable PersistentPropertyPath propertyPath) {
         this.parameterBindingPath = propertyPath;
         return this;
     }
@@ -74,21 +79,25 @@ final class BindingContextImpl implements BindingParameter.BindingContext {
     }
 
     @Override
+    @Nullable
     public String getName() {
         return name;
     }
 
     @Override
+    @Nullable
     public PersistentPropertyPath getIncomingMethodParameterProperty() {
         return incomingMethodParameterProperty;
     }
 
     @Override
+    @Nullable
     public PersistentPropertyPath getOutgoingQueryParameterProperty() {
         return outgoingQueryParameterProperty;
     }
 
     @Override
+    @Nullable
     public PersistentPropertyPath getParameterBindingPath() {
         return parameterBindingPath;
     }

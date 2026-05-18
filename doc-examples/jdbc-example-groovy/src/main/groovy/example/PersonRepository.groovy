@@ -1,6 +1,7 @@
 
 package example
 
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
@@ -23,7 +24,7 @@ interface PersonRepository extends CrudRepository<Person, Long>, JpaSpecificatio
 
     Optional<Person> findOne(QuerySpecification<Person> spec)
 
-    List<Person> findAll(PredicateSpecification<Person> spec)
+    List<Person> findAll(@Nullable PredicateSpecification<Person> spec)
 
     List<Person> findAll(QuerySpecification<Person> spec)
 

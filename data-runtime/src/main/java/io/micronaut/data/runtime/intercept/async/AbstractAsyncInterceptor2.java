@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -36,7 +36,7 @@ import java.util.concurrent.CompletionStage;
  * @since 4.2.0
  */
 @Internal
-abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInterceptor<T, CompletionStage<? extends R>> permits DefaultProcedureReturningManyAsyncInterceptor {
+abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInterceptor<T, CompletionStage<? extends R>> permits DefaultProcedureReturningManyAsyncInterceptor, DefaultInsertReturningManyAsyncInterceptor, DefaultUpdateReturningManyAsyncInterceptor, DefaultDeleteReturningManyAsyncInterceptor {
 
     @NonNull
     protected final AsyncRepositoryOperations asyncDatastoreOperations;

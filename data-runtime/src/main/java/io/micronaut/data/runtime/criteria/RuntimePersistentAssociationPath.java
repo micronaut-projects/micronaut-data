@@ -16,15 +16,19 @@
 package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.metamodel.Attribute;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,20 +42,20 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityJoinSupport<Owner, E>
-    implements RuntimePersistentEntityPath<E>, PersistentAssociationPath<Owner, E> {
+sealed class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityFrom<Owner, E>
+    implements PersistentEntityPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> permits RuntimePersistentCollectionAssociationPath, RuntimePersistentListAssociationPath, RuntimePersistentSetAssociationPath {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final RuntimeAssociation<Owner> association;
     private final List<Association> associations;
-    private Join.Type associationJoinType;
+    private Join. @Nullable Type associationJoinType;
     @Nullable
     private String alias;
 
     RuntimePersistentAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                      RuntimeAssociation<Owner> association,
                                      List<Association> associations,
-                                     Join.Type associationJoinType,
+                                     Join. @Nullable Type associationJoinType,
                                      @Nullable String alias,
                                      CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
@@ -68,12 +72,12 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
     }
 
     @Override
-    public Join.Type getAssociationJoinType() {
+    public Join. @Nullable Type getAssociationJoinType() {
         return associationJoinType;
     }
 
     @Override
-    public void setAssociationJoinType(Join.Type type) {
+    public void setAssociationJoinType(Join. @Nullable Type type) {
         this.associationJoinType = type;
     }
 
@@ -123,6 +127,17 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
         newAssociations.addAll(associations);
         newAssociations.add(association);
         return newAssociations;
+    }
+
+    @Override
+    public Attribute<? super Owner, ?> getAttribute() {
+        return PersistentAssociationPath.super.getAttribute();
+    }
+
+    @Override
+    @Nullable
+    public JoinType getJoinType() {
+        return PersistentAssociationPath.super.getJoinType();
     }
 
     @Override

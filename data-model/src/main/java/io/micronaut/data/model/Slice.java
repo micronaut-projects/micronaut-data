@@ -17,12 +17,11 @@ package io.micronaut.data.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.micronaut.context.annotation.DefaultImplementation;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.serde.annotation.Serdeable;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Iterator;
 import java.util.List;
@@ -48,12 +47,12 @@ public interface Slice<T> extends Iterable<T> {
     /**
      * @return The content.
      */
-    @NonNull List<T> getContent();
+    List<T> getContent();
 
     /**
      * @return The pageable for this slice.
      */
-    @NonNull Pageable getPageable();
+    Pageable getPageable();
 
     /**
      * @return The page number
@@ -90,7 +89,7 @@ public interface Slice<T> extends Iterable<T> {
      *
      * @return The next pageable
      */
-    default @NonNull Pageable nextPageable() {
+    default Pageable nextPageable() {
         return getPageable().next();
     }
 
@@ -102,7 +101,7 @@ public interface Slice<T> extends Iterable<T> {
      *
      * @return The previous pageable
      */
-    default @NonNull Pageable previousPageable() {
+    default Pageable previousPageable() {
         return getPageable().previous();
     }
 
@@ -131,7 +130,7 @@ public interface Slice<T> extends Iterable<T> {
      * @return The sort
      */
     @JsonIgnore
-    default @NonNull Sort getSort() {
+    default Sort getSort() {
         return getPageable();
     }
 
@@ -143,7 +142,6 @@ public interface Slice<T> extends Iterable<T> {
     }
 
     @Override
-    @NonNull
     default Iterator<T> iterator() {
         return getContent().iterator();
     }
@@ -155,7 +153,7 @@ public interface Slice<T> extends Iterable<T> {
      * @param <T2> The type returned by the function
      * @return A new slice with the mapped content
      */
-    default @NonNull <T2> Slice<T2> map(Function<T, T2> function) {
+    default <T2> Slice<T2> map(Function<T, T2> function) {
         List<T2> content = getContent().stream().map(function).toList();
         return new DefaultSlice<>(content, getPageable());
     }
@@ -168,7 +166,7 @@ public interface Slice<T> extends Iterable<T> {
      * @return The slice
      */
     @ReflectiveAccess
-    static @NonNull <T2> Slice<T2> of(@NonNull List<T2> content, @NonNull Pageable pageable) {
+    static <T2> Slice<T2> of(List<T2> content, Pageable pageable) {
         return new DefaultSlice<>(content, pageable);
     }
 }

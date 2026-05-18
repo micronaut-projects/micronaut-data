@@ -22,10 +22,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
@@ -56,15 +55,42 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
     }
 
     @Override
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context,
+                                                 OperationType operationType) {
+        AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
+        if (dataMethodQuery != null) {
+            if (isOperationType(dataMethodQuery, operationType)) {
+                return new DefaultStoredQuery<>(
+                    context.getExecutableMethod(),
+                    dataMethodQuery,
+                    getHintsCapableRepository()
+                );
+            }
+            for (AnnotationValue<DataMethodQuery> query : dataMethodQuery.getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery.class)) {
+                if (isOperationType(query, operationType)) {
+                    return new DefaultStoredQuery<>(
+                        context.getExecutableMethod(),
+                        (AnnotationValue<Annotation>) (AnnotationValue<?>) query,
+                        getHintsCapableRepository()
+                    );
+                }
+            }
+        }
+        return resolveQuery(context);
+    }
+
+    @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
         AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
-        AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
-        if (countQuery != null) {
-            return new DefaultStoredQuery<>(
-                context.getExecutableMethod(),
-                countQuery,
-                getHintsCapableRepository()
-            );
+        if (dataMethodQuery != null) {
+            AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
+            if (countQuery != null) {
+                return new DefaultStoredQuery<>(
+                    context.getExecutableMethod(),
+                    countQuery,
+                    getHintsCapableRepository()
+                );
+            }
         }
         // Previous way
         return new DefaultStoredQuery<>(
@@ -72,6 +98,12 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             true,
             getHintsCapableRepository()
         );
+    }
+
+    private boolean isOperationType(AnnotationValue<?> dataMethodQuery, OperationType operationType) {
+        return dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .map(op -> op.name().equals(operationType.name()))
+            .orElse(false);
     }
 
     @Override
@@ -142,19 +174,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
                 return false;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return isSingleResult;
             }
 
             @Override
@@ -241,19 +262,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata
-                    .classValue(RepositoryConfiguration.class, "queryBuilder")
-                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
-                return true;
-            }
-
-            @Override
-            public boolean isSingleResult() {
                 return true;
             }
 

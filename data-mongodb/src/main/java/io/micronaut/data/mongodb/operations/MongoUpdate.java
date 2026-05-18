@@ -17,8 +17,10 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.bson.BsonDocument;
+import org.jspecify.annotations.NonNull;
 import org.bson.conversions.Bson;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The MongoDB's many command.
@@ -40,9 +42,9 @@ public final class MongoUpdate {
      * @param filter  The filter
      * @param options The options
      */
-    public MongoUpdate(@NonNull Bson update, @NonNull Bson filter, @NonNull UpdateOptions options) {
+    public MongoUpdate(@NonNull Bson update, @Nullable Bson filter, @NonNull UpdateOptions options) {
         this.update = update;
-        this.filter = filter;
+        this.filter = filter == null ? new BsonDocument() : filter;
         this.options = options;
     }
 

@@ -22,6 +22,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.support.convert.AttributeConverterProvider;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,13 +62,15 @@ final class JakartaAttributeConverterProvider implements AttributeConverterProvi
             this.converter = converter;
         }
 
+        @Nullable
         @Override
-        public Object convertToPersistedValue(Object entityValue, ConversionContext context) {
+        public Object convertToPersistedValue(@Nullable Object entityValue, ConversionContext context) {
             return converter.convertToDatabaseColumn(entityValue);
         }
 
+        @Nullable
         @Override
-        public Object convertToEntityValue(Object persistedValue, ConversionContext context) {
+        public Object convertToEntityValue(@Nullable Object persistedValue, ConversionContext context) {
             return converter.convertToEntityAttribute(persistedValue);
         }
     }

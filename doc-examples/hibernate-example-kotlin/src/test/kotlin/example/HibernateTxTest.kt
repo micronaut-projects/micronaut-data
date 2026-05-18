@@ -12,11 +12,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.JoinType
-import jakarta.persistence.criteria.ListJoin
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.hibernate.query.sqm.tree.domain.SqmListJoin
-import org.hibernate.query.sqm.tree.domain.SqmSingularJoin
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -255,8 +252,8 @@ class HibernateTxTest {
             val saved2 = repositorySuspended.save(parent2)
 
             val query = query {
-                val children: ListJoin<Parent, Child> = if (query.resultType.kotlin != Long::class) {
-                    root.fetch<Parent, Child>("children", JoinType.LEFT) as SqmListJoin<Parent, Child>
+                val children: Join<Parent, Child> = if (query.resultType != Long::class.javaObjectType) {
+                    root.fetch<Parent, Child>("children", JoinType.LEFT) as Join<Parent, Child>
                 }  else {
                     root.joinMany(Parent::children)
                 }
@@ -301,8 +298,8 @@ class HibernateTxTest {
             repositorySuspended.save(parent2)
 
             val query = query<Child> {
-                val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
-                    root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
+                val parent: Join<Child, Parent?> = if (query.resultType != Long::class.javaObjectType) {
+                    root.fetch<Child, Parent?>("parent") as Join<Child, Parent?>
                 }  else {
                     root.joinOne(Child::parent)
                 }
@@ -339,8 +336,8 @@ class HibernateTxTest {
         }
 
         val query = query<Child> {
-            val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
-                root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
+            val parent: Join<Child, Parent?> = if (query.resultType != Long::class.javaObjectType) {
+                root.fetch<Child, Parent?>("parent") as Join<Child, Parent?>
             }  else {
                 root.joinOne(Child::parent)
             }

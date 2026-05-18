@@ -55,9 +55,6 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
                       CodecRegistry codecRegistry) {
         super(dataSerdeRegistry, persistentEntity, type, codecRegistry);
         RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-        if (identity == null) {
-            throw new IllegalStateException("Identity not found!");
-        }
         identityProperty = identity.getProperty();
         isGeneratedId = identity.isAnnotationPresent(GeneratedValue.class);
         isGeneratedObjectId = isGeneratedId && identity.getType().isAssignableFrom(ObjectId.class);
@@ -84,6 +81,6 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
 
     @Override
     public BsonValue getDocumentId(T document) {
-        return MongoUtils.idValue(null, persistentEntity, document, codecRegistry);
+        return MongoUtils.idValue(dataSerdeRegistry.getConversionService(), persistentEntity, document, codecRegistry);
     }
 }

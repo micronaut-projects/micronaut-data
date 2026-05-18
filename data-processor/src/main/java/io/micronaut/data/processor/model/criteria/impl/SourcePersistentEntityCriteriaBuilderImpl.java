@@ -18,6 +18,7 @@ package io.micronaut.data.processor.model.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -28,6 +29,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.ParameterExpression;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -54,8 +56,9 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, entityResolver, this);
+    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(@Nullable Class<T> resultClass) {
+        Class aClass = resultClass == null ? Object.class : resultClass;
+        return new SourcePersistentEntityCriteriaQueryImpl<>(aClass, entityResolver, this);
     }
 
     @Override
@@ -64,13 +67,28 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
+    public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(@Nullable Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaDeleteImpl<>(entityResolver, targetEntity, this);
     }
 
     @Override
-    public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
+    public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(@Nullable Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaUpdateImpl<>(entityResolver, targetEntity, this);
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity) {
+        throw new UnsupportedOperationException("This operation is not yet supported.");
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity) {
+        return createCriteriaInsert(entityResolver.apply(targetEntity));
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity) {
+        return new SourcePersistentEntityCriteriaInsertImpl<>(targetEntity, this);
     }
 
     @Override
@@ -79,7 +97,7 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement, PersistentPropertyPath propertyPath) {
+    public <T> ParameterExpression<T> parameter(@Nullable ParameterElement parameterElement, @Nullable PersistentPropertyPath propertyPath) {
         throw notSupportedOperation();
     }
 
@@ -94,7 +112,7 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter, PersistentPropertyPath propertyPath) {
+    public <T> ParameterExpression<T> entityPropertyParameter(@Nullable ParameterElement entityParameter, @Nullable PersistentPropertyPath propertyPath) {
         throw notSupportedOperation();
     }
 }

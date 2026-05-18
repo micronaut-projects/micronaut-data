@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 /**
- * Compile time representation of the Query model.
- *
- * @author graemerocher
- * @since 1.0.0
+ * Processor model.
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.processor.model;

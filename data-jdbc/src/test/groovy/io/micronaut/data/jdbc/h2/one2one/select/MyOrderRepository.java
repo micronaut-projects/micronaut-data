@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2.one2one.select;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.repeatable.JoinSpecifications;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -18,6 +19,6 @@ public interface MyOrderRepository extends CrudRepository<MyOrder, UUID> {
     @JoinSpecifications({
         @Join(value = "embedded", type = Join.Type.LEFT_FETCH)
     })
-    Page<MyOrder> findAll(PredicateSpecification<MyOrder> spec, Pageable pageable);
+    Page<MyOrder> findAll(@Nullable PredicateSpecification<MyOrder> spec, Pageable pageable);
 
 }

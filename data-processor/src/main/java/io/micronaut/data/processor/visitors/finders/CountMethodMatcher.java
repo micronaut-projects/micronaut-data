@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -46,6 +47,7 @@ public final class CountMethodMatcher extends AbstractMethodMatcher {
     }
 
     @Override
+    @Nullable
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.isValidCountReturnType(matchContext)) {
             return new QueryCriteriaMethodMatch(matches) {

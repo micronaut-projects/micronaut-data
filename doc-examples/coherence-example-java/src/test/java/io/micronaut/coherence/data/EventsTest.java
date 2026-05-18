@@ -146,7 +146,7 @@ class EventsTest extends AbstractDataTest {
      * @param repository the {@link CrudRepository} under test
      */
     private void runPersistEventTest(CrudRepository<Book, UUID> repository) {
-        repository.save(IT);
+        repository.insert(IT);
 
         Assertions.assertTrue(eventRecorder.getRecordedEvents().containsAll(
             List.of(
@@ -160,7 +160,7 @@ class EventsTest extends AbstractDataTest {
      * @param repository the {@link AsyncCrudRepository} under test
      */
     private void runPersistEventTest(AsyncCrudRepository<Book, UUID> repository) throws Exception {
-        repository.save(IT).thenAccept(unused -> Assertions.assertTrue(eventRecorder.getRecordedEvents().containsAll(
+        repository.insert(IT).thenAccept(unused -> Assertions.assertTrue(eventRecorder.getRecordedEvents().containsAll(
             List.of(
                 new EventRecord<>(EventType.PRE_PERSIST, IT),
                 new EventRecord<>(EventType.POST_PERSIST, IT))))).get(5, TimeUnit.SECONDS);
@@ -173,7 +173,7 @@ class EventsTest extends AbstractDataTest {
      */
     private void runPersistEventTestMutations(CrudRepository<Book, UUID> repository) {
         MutationsBook b = beanContext.inject(new MutationsBook(IT));
-        Book result = repository.save(b); // should trigger setting page count on b to 1000
+        Book result = repository.insert(b); // should trigger setting page count on b to 1000
 
         Assertions.assertEquals(result, b);
         Assertions.assertTrue(eventRecorder.getRecordedEvents().containsAll(
@@ -190,7 +190,7 @@ class EventsTest extends AbstractDataTest {
      */
     private void runPersistEventTestMutations(AsyncCrudRepository<Book, UUID> repository) throws Exception {
         MutationsBook b = beanContext.inject(new MutationsBook(IT));
-        repository.save(b)
+        repository.insert(b)
             .thenApply(b1 -> {
                 Assertions.assertEquals(b1, b);
                 return b1;

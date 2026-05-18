@@ -16,7 +16,7 @@
 package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.Blocking;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
 
 import java.util.Optional;
@@ -81,4 +81,14 @@ public interface ConnectionOperations<C> {
     default <R> R executeWrite(@NonNull Function<ConnectionStatus<C>, R> callback) {
         return execute(ConnectionDefinition.DEFAULT, callback);
     }
+
+    /**
+     * Determine whether the given connection status refers to a connection
+     * managed by this {@link ConnectionOperations} instance.
+     *
+     * @param connectionStatus The connection status to verify
+     * @return true if the connection is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesConnection(@NonNull ConnectionStatus<C> connectionStatus);
 }

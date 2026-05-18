@@ -18,6 +18,7 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -26,9 +27,11 @@ import java.util.Objects;
 public class ShipmentId implements Serializable {
 
     @MappedProperty("sp_country")
+    @Nullable
     private String country;
 
     @MappedProperty("sp_city")
+    @Nullable
     private String city;
 
     @Creator
@@ -40,10 +43,12 @@ public class ShipmentId implements Serializable {
     public ShipmentId() {
     }
 
+    @Nullable
     public String getCountry() {
         return country;
     }
 
+    @Nullable
     public String getCity() {
         return city;
     }

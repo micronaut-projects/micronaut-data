@@ -16,11 +16,17 @@
 package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Default implementation of {@link SaveAllReactiveInterceptor}.
@@ -41,6 +47,46 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractCountOrEntityPubl
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
-        return reactiveOperations.persistAll(getInsertBatchOperation(context, iterable));
+        List<Object> entities = CollectionUtils.iterableToList(iterable);
+        return saveAll(context, entities);
+    }
+
+    private Publisher<Object> saveAll(MethodInvocationContext<Object, Object> context, List<Object> entities) {
+        if (isSaveAsInsert()) {
+            return reactiveOperations.persistAll(getInsertBatchOperation(context, entities));
+        }
+        return Flux.defer(() -> {
+            List<Publisher<Object>> publishers = new ArrayList<>();
+            List<Object> batch = new ArrayList<>();
+            SaveOperation currentOperation = null;
+            for (Object entity : entities) {
+                SaveOperation entityOperation = resolveSaveOperation(context, entity);
+                if (currentOperation != null && currentOperation != entityOperation) {
+                    addBatch(context, publishers, currentOperation, batch);
+                }
+                currentOperation = entityOperation;
+                batch.add(entity);
+            }
+            addBatch(context, publishers, currentOperation, batch);
+            return Flux.concat(publishers);
+        });
+    }
+
+    private void addBatch(MethodInvocationContext<Object, Object> context,
+                          List<Publisher<Object>> publishers,
+                          @Nullable SaveOperation operation,
+                          List<Object> batch) {
+        if (operation == null || batch.isEmpty()) {
+            return;
+        }
+        List<Object> currentBatch = new ArrayList<>(batch);
+        Publisher<Object> publisher = switch (operation) {
+            case INSERT -> reactiveOperations.persistAll(getInsertBatchOperation(context, currentBatch));
+            case INSERT_WITH_UPDATE_FALLBACK -> Flux.fromIterable(currentBatch)
+                .concatMap(entity -> persistWithUpdateFallbackReactive(context, entity));
+            case UPDATE -> reactiveOperations.updateAll(getUpdateAllBatchOperation(context, getRequiredRootEntity(context), currentBatch));
+        };
+        publishers.add(publisher);
+        batch.clear();
     }
 }

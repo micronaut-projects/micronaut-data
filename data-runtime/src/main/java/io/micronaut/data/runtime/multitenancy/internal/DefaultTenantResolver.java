@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.runtime.multitenancy.TenantResolver;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -43,6 +44,7 @@ final class DefaultTenantResolver implements TenantResolver {
         this.tenantResolver = tenantResolver;
     }
 
+    @Nullable
     @Override
     public Serializable resolveTenantIdentifier() {
         Serializable tenantId = tenantResolver.resolveTenantIdentifier();

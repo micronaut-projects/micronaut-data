@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code updateAll(Specification)}.
@@ -39,6 +40,7 @@ public class UpdateAllSpecificationInterceptor extends AbstractSpecificationInte
         super(operations);
     }
 
+    @Nullable
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         ReturnType<Object> rt = context.getReturnType();

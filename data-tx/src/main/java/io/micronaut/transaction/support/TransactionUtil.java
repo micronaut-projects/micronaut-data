@@ -19,12 +19,16 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * Transaction utils.
@@ -55,7 +59,7 @@ public final class TransactionUtil {
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
         definition.setName(name);
         definition.setReadOnly(annotation.isTrue("readOnly"));
-        annotation.intValue("timeout").ifPresent(value -> definition.setTimeout(Duration.ofSeconds(value)));
+        annotation.intValue("timeout").ifPresent(timeout -> definition.setTimeout(Duration.ofSeconds(timeout)));
         final Class[] rollbackFor = annotation.classValues("rollbackFor");
         //noinspection unchecked
         definition.setRollbackOn(Arrays.asList(rollbackFor));
@@ -66,7 +70,43 @@ public final class TransactionUtil {
                 .ifPresent(definition::setPropagationBehavior);
         annotation.enumValue("isolation", TransactionDefinition.Isolation.class)
                 .ifPresent(definition::setIsolationLevel);
+
+        AnnotationValue<OracleTransactional> oracleTransactional = annotationMetadataProvider.getAnnotation(OracleTransactional.class);
+        if (oracleTransactional != null) {
+            OracleTransactional.Priority priority = oracleTransactional.enumValue("priority", OracleTransactional.Priority.class)
+                .orElse(OracleTransactional.Priority.HIGH);
+            definition.putProperty(OracleTransactional.ORACLE_PRIORITY, priority);
+        }
+
         return definition;
+    }
+
+    /**
+     * Resolves Oracle transaction priority from a transaction definition.
+     *
+     * @param definition The transaction definition
+     * @return The Oracle transaction priority, or {@code null} if none is present
+     */
+    public static OracleTransactional.@Nullable Priority getOraclePriority(TransactionDefinition definition) {
+        Object value = definition.getProperties().get(OracleTransactional.ORACLE_PRIORITY);
+        if (value instanceof OracleTransactional.Priority priority) {
+            return priority;
+        }
+        if (value instanceof String priority) {
+            return parseOraclePriority(priority);
+        }
+        if (value instanceof Enum<?> priority) {
+            return parseOraclePriority(priority.name());
+        }
+        return null;
+    }
+
+    private static OracleTransactional.Priority parseOraclePriority(String priority) {
+        try {
+            return OracleTransactional.Priority.valueOf(priority.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new CannotCreateTransactionException("Invalid Oracle transaction priority: " + priority, e);
+        }
     }
 
 }

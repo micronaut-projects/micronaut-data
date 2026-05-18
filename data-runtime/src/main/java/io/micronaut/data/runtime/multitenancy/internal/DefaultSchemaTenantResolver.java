@@ -21,6 +21,7 @@ import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.multitenancy.TenantResolver;
 import io.micronaut.data.runtime.multitenancy.conf.SchemaMultiTenancyEnabledCondition;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -45,6 +46,7 @@ final class DefaultSchemaTenantResolver implements SchemaTenantResolver {
         this.tenantResolver = tenantResolver;
     }
 
+    @Nullable
     @Override
     public String resolveTenantSchemaName() {
         Serializable tenantId = tenantResolver.resolveTenantIdentifier();

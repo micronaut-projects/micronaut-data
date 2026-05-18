@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Version;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Date;
 
@@ -29,13 +30,18 @@ import java.util.Date;
 public class Student {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
     @Version
+    @Nullable
     private Long version;
+    @Nullable
     private String name;
     @DateCreated
+    @Nullable
     private Date creationTime;
     @DateUpdated
+    @Nullable
     private Date lastUpdatedTime;
 
     public Student() {
@@ -45,6 +51,7 @@ public class Student {
         this.name = name;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -53,6 +60,7 @@ public class Student {
         this.id = id;
     }
 
+    @Nullable
     public Long getVersion() {
         return version;
     }
@@ -61,6 +69,7 @@ public class Student {
         this.version = version;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
@@ -69,6 +78,7 @@ public class Student {
         this.name = name;
     }
 
+    @Nullable
     public Date getCreationTime() {
         return creationTime;
     }
@@ -77,6 +87,7 @@ public class Student {
         this.creationTime = creationTime;
     }
 
+    @Nullable
     public Date getLastUpdatedTime() {
         return lastUpdatedTime;
     }

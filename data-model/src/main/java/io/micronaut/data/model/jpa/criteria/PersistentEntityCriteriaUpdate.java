@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Expression;
@@ -41,46 +40,43 @@ import java.util.Set;
 @Experimental
 public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, PersistentEntityCommonAbstractCriteria {
 
-    @NonNull
-    PersistentEntityRoot<T> from(@NonNull PersistentEntity persistentEntity);
+    PersistentEntityRoot<T> from(PersistentEntity persistentEntity);
 
     @Override
-    @NonNull
-    PersistentEntityRoot<T> from(@NonNull Class<T> entityClass);
+
+    PersistentEntityRoot<T> from(Class<T> entityClass);
 
     @Override
-    @NonNull
-    PersistentEntityRoot<T> from(@NonNull EntityType<T> entity);
+    PersistentEntityRoot<T> from(EntityType<T> entity);
 
     @Override
-    @NonNull
     PersistentEntityRoot<T> getRoot();
 
     @Override
-    @NonNull <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @Nullable X value);
+     <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute, @Nullable X value);
 
     @Override
-    @NonNull <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @NonNull Expression<? extends Y> value);
+     <Y> PersistentEntityCriteriaUpdate<T> set(SingularAttribute<? super T, Y> attribute,  Expression<? extends Y> value);
 
     @Override
-    @NonNull <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @Nullable X value);
+     <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, @Nullable X value);
 
     @Override
-    @NonNull <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @NonNull Expression<? extends Y> value);
+     <Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute,  Expression<? extends Y> value);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> set(@NonNull String attributeName, @Nullable Object value);
+
+    PersistentEntityCriteriaUpdate<T> set(String attributeName, @Nullable Object value);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> where(@NonNull Expression<Boolean> restriction);
+
+    PersistentEntityCriteriaUpdate<T> where(Expression<Boolean> restriction);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> where(@NonNull Predicate... restrictions);
 
-    @NonNull
+    PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions);
+
+    @Override
     Set<ParameterExpression<?>> getParameters();
 
     /**
@@ -91,9 +87,8 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> returning(@NonNull Selection<? extends T> selection);
 
+    PersistentEntityCriteriaUpdate<T> returning(Selection<? extends T> selection);
 
     /**
      * The returning result of the query.
@@ -103,8 +98,10 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections);
+
+    default PersistentEntityCriteriaUpdate<T> returningMulti(Selection<?>... selections) {
+        return returningMulti(List.of(selections));
+    }
 
     /**
      * The returning result of the query.
@@ -114,7 +111,7 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull List<Selection<?>> selectionList);
+
+    PersistentEntityCriteriaUpdate<T> returningMulti(List<Selection<?>> selectionList);
 
 }

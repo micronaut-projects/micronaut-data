@@ -1,8 +1,6 @@
 package io.micronaut.data.jakarta.tck;
 
-import ee.jakarta.tck.data.standalone.entity.EntityTests;
-import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
-import ee.jakarta.tck.data.web.validation.ValidationTests;
+import ee.jakarta.tck.data.standalone.entity.ExpressionTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -19,18 +17,12 @@ public class FilterExtension implements ExecutionCondition {
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
         Class<?> testClass = context.getTestClass().orElse(null);
         String testMethodName = context.getTestMethod().map(Method::getName).orElse("");
-        if (testClass == EntityTests.class) {
+        if (testClass == ExpressionTests.class) {
             switch (testMethodName) {
-                case "testBasicRepositoryBuiltInMethods",  "testBasicRepositoryMethods" -> {
-                    return DISABLED; // Support deciding between persist or update when save is called
-                }
-
-            }
-        }
-        if (testClass == ValidationTests.class) {
-            switch (testMethodName) {
-                case "testSaveWithValidConstraints",  "testUpdateAllWithValidConstraints", "testUpdateWithValidConstraints" -> {
-                    return DISABLED; // Support deciding between persist or update when save is called
+                case "testPrependExpression" -> {
+                    return ConditionEvaluationResult.disabled(
+                        "Disabled until JDBC support for prepend expressions used by ExpressionTests.testPrependExpression is implemented"
+                    );
                 }
 
             }

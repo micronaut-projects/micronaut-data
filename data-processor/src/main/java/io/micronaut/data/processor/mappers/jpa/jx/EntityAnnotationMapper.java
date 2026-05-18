@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.processor.mappers.MappedEntityMapper;
@@ -33,7 +32,7 @@ import java.util.List;
  * @since 1.0
  */
 public class EntityAnnotationMapper implements NamedAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "javax.persistence.Entity";

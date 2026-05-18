@@ -1,8 +1,8 @@
+
 package example
 
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
-import org.junit.Rule
 import org.junit.jupiter.api.AfterAll
 import org.testcontainers.containers.CosmosDBEmulatorContainer
 import org.testcontainers.utility.DockerImageName
@@ -12,13 +12,16 @@ import java.nio.file.Path
 
 abstract class AbstractAzureCosmosTest : TestPropertyProvider {
 
-    @Rule
-    var emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+    companion object {
+        @JvmStatic
+        val emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
 
-    @AfterAll
-    open fun tearDown() {
-        if (emulator.isRunning) {
-            emulator.stop()
+        @AfterAll
+        @JvmStatic
+        fun tearDown() {
+            if (emulator.isRunning) {
+                emulator.stop()
+            }
         }
     }
 

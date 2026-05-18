@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -44,7 +44,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractCountConvertComplet
     @Override
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Object entity = getEntityParameter(context, Object.class);
-        return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+        return persistOrUpdateAsync(context, entity);
     }
 
 }

@@ -17,12 +17,18 @@ package io.micronaut.data.runtime.support;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.event.*;
+import io.micronaut.data.annotation.event.PostLoad;
+import io.micronaut.data.annotation.event.PostPersist;
+import io.micronaut.data.annotation.event.PostRemove;
+import io.micronaut.data.annotation.event.PostUpdate;
+import io.micronaut.data.annotation.event.PrePersist;
+import io.micronaut.data.annotation.event.PreRemove;
+import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -33,8 +39,14 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
+
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -86,7 +98,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
 
     @Override
     @NonNull
-    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
         for (Map.Entry<Class<? extends Annotation>, PropertyAutoPopulator<?>> entry : propertyPopulators.entrySet()) {
             if (persistentProperty.getAnnotationMetadata().hasAnnotation(entry.getKey())) {
                 final PropertyAutoPopulator<?> populator = entry.getValue();

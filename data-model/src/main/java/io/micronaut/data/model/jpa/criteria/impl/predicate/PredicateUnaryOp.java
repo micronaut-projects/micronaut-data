@@ -16,8 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import jakarta.persistence.criteria.Expression;
 
@@ -36,7 +35,7 @@ public enum PredicateUnaryOp {
     IS_EMPTY,
     IS_NOT_EMPTY;
 
-    void validate(@NonNull Expression<?> expression) {
+    void validate(Expression<?> expression) {
         switch (this) {
             case IS_EMPTY, IS_NOT_EMPTY -> {
                 CriteriaUtils.requireStringExpression(expression);

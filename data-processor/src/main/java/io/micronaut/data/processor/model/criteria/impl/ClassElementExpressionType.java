@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
@@ -35,7 +34,7 @@ public final class ClassElementExpressionType<T> implements ExpressionType<T> {
 
     private final ClassElement type;
 
-    public ClassElementExpressionType(@NonNull ClassElement type) {
+    public ClassElementExpressionType(ClassElement type) {
         this.type = type;
     }
 

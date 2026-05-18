@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -33,10 +32,8 @@ import java.util.List;
  * @since 2.4.0
  */
 public class JoinTableAnnotationMapper implements NamedAnnotationMapper {
-
     private static final JoinColumnAnnotationMapper JOIN_COLUMN_ANNOTATION_MAPPER = new JoinColumnAnnotationMapper();
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.JoinTable";

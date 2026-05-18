@@ -5,12 +5,14 @@ plugins {
 }
 
 springBoot {
-    mainClassName = 'example.Application'
+    mainClass= 'example.Application'
 }
 
 dependencyManagement {
     imports {
         mavenBom libs.benchmark.spring.data.bom.get().toString()
+        // Ensure Spring Boot's BOM wins to align Spring Framework/Data with Boot version
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
     }
 }
 

@@ -19,4 +19,7 @@
  * @author graemerocher
  * @since 1.0.0
  */
+@NullMarked
 package io.micronaut.data.jdbc.mapper;
+
+import org.jspecify.annotations.NullMarked;

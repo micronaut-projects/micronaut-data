@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's {@code Id} annotation to Micronaut's.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public final class IdAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.IdAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Id";

@@ -18,14 +18,18 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity("comp_zone")
 public class Zone {
     @Id
+    @Nullable
     private Long id;
+    @Nullable
     @MappedProperty
     private String name;
 
+    @Nullable
     public Long getId() {
         return id;
     }
@@ -34,6 +38,7 @@ public class Zone {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }

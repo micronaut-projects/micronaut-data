@@ -19,9 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The stored query parameter.
@@ -32,39 +34,48 @@ import java.util.List;
 @Internal
 public final class StoredQueryParameter implements QueryParameterBinding {
 
+    @Nullable
     private final String name;
+    @Nullable
     private final DataType dataType;
+    @Nullable
     private final JsonDataType jsonDataType;
     private final int parameterIndex;
-    private final String[] parameterBindingPath;
-    private final String[] propertyPath;
+    private final String @Nullable [] parameterBindingPath;
+    private final String @Nullable [] propertyPath;
     private final boolean autoPopulated;
     private final boolean requiresPreviousPopulatedValue;
+    @Nullable
     private final Class<?> parameterConverterClass;
     private final boolean expandable;
     private final List<QueryParameterBinding> all;
     private final boolean expression;
+    @Nullable
     private final Object value;
+    @Nullable
     private final String role;
+    @Nullable
     private final String tableAlias;
 
     private boolean previousInitialized;
+    @Nullable
     private QueryParameterBinding previousPopulatedValueParameter;
 
-    StoredQueryParameter(String name,
-                         DataType dataType,
-                         JsonDataType jsonDataType,
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    StoredQueryParameter(@Nullable String name,
+                         @Nullable DataType dataType,
+                         @Nullable JsonDataType jsonDataType,
                          int parameterIndex,
-                         String[] parameterBindingPath,
-                         String[] propertyPath,
+                         String @Nullable [] parameterBindingPath,
+                         String @Nullable [] propertyPath,
                          boolean autoPopulated,
                          boolean requiresPreviousPopulatedValue,
-                         Class<?> parameterConverterClass,
+                         @Nullable Class<?> parameterConverterClass,
                          boolean expandable,
                          final boolean expression,
-                         Object value,
-                         String role,
-                         String tableAlias,
+                         @Nullable Object value,
+                         @Nullable String role,
+                         @Nullable String tableAlias,
                          List<QueryParameterBinding> all) {
         this.name = name;
         this.dataType = dataType;
@@ -84,20 +95,22 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
+    @Nullable
     public String getName() {
         return name;
     }
 
     @Override
     public DataType getDataType() {
-        return dataType;
+        return Objects.requireNonNullElse(dataType, DataType.OBJECT);
     }
 
     @Override
     public JsonDataType getJsonDataType() {
-        return jsonDataType;
+        return Objects.requireNonNullElse(jsonDataType, JsonDataType.DEFAULT);
     }
 
+    @Nullable
     @Override
     public Class<?> getParameterConverterClass() {
         return parameterConverterClass;
@@ -109,12 +122,12 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
-    public String[] getParameterBindingPath() {
+    public String @Nullable [] getParameterBindingPath() {
         return parameterBindingPath;
     }
 
     @Override
-    public String[] getPropertyPath() {
+    public String @Nullable [] getPropertyPath() {
         return propertyPath;
     }
 
@@ -129,6 +142,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
+    @Nullable
     public QueryParameterBinding getPreviousPopulatedValueParameter() {
         if (!previousInitialized) {
             for (QueryParameterBinding it : all) {
@@ -153,16 +167,19 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
+    @Nullable
     public Object getValue() {
         return value;
     }
 
     @Override
+    @Nullable
     public String getRole() {
         return role;
     }
 
     @Override
+    @Nullable
     public String getTableAlias() {
         return tableAlias;
     }

@@ -49,17 +49,29 @@ final class JdbcTuple implements Tuple {
 
     @Override
     public <X> X get(String alias, Class<X> type) {
-        return conversionService.convertRequired(get(alias), type);
+        X converted = conversionService.convertRequired(get(alias), type);
+        if (converted == null) {
+            throw new IllegalArgumentException("Cannot be converted to type: " + type + " for alias: " + alias);
+        }
+        return converted;
     }
 
     @Override
     public Object get(String alias) {
-        return get(aliasToPosition.get(alias));
+        Integer index = aliasToPosition.get(alias);
+        if (index == null) {
+            throw new IllegalArgumentException("No column found for alias: " + alias);
+        }
+        return get(index);
     }
 
     @Override
     public <X> X get(int i, Class<X> type) {
-        return conversionService.convertRequired(get(i), type);
+        X converted = conversionService.convertRequired(get(i), type);
+        if (converted == null) {
+            throw new IllegalArgumentException("Cannot be converted to type: " + type + " at index: " + i);
+        }
+        return converted;
     }
 
     @Override

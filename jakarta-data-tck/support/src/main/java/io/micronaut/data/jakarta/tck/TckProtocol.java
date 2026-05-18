@@ -31,10 +31,12 @@ import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.test.spi.TestMethodExecutor;
 import org.jboss.arquillian.test.spi.TestResult;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@NullUnmarked
 @Internal
 final class TckProtocol implements Protocol<TckProtocol.TckProtocolConfiguration> {
 

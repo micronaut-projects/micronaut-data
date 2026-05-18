@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * An entity operation with an instance.
  *
@@ -29,6 +27,6 @@ public interface EntityInstanceOperation<E> extends EntityOperation<E> {
     /**
      * @return The entity to insert.
      */
-    @NonNull E getEntity();
+     E getEntity();
 
 }

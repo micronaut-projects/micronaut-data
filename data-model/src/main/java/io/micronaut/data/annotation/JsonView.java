@@ -27,6 +27,21 @@ import java.lang.annotation.Target;
 /**
  * The annotation defining Json Duality View. Currently supported only by Oracle database.
  *
+ *
+ * <pre>
+ * {@code
+ * @JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
+ * public class ContactView {
+ *     {@literal @Id}
+ *     @GeneratedValue(GeneratedValue.Type.IDENTITY)
+ *     private Long id;
+ *     private String name;
+ *     private int age;
+ *     private LocalDateTime startDateTime;
+ *     private boolean active;
+ * }
+ * }
+ * </pre>
  * @author radovanradic
  * @since 4.0.0
  */
@@ -40,6 +55,40 @@ import java.lang.annotation.Target;
 public @interface JsonView {
 
     String DEFAULT_COLUMN_NAME = "DATA";
+
+    /**
+     * The entity class.
+     * Specify an entity class annotated with {@link MappedEntity} that this JSON view corresponds to.
+     * Valid entity class is one that defines the properties used in this class.
+     *
+     * @return the entity class, defaults to void
+     */
+    Class<?> entity() default void.class;
+
+    /**
+     * The possible sql operations.
+     */
+    enum Operation {
+        /**
+         * Update operation.
+         */
+        UPDATE,
+        /**
+         * Insert operation.
+         */
+        INSERT,
+        /**
+         * Delete operation.
+         */
+        DELETE
+    }
+
+    /**
+     * The supported sql operations array.
+     *
+     * @return the supported operations array (default [UPDATE, INSERT, DELETE])
+     */
+    Operation[] operations() default { Operation.INSERT, Operation.UPDATE, Operation.DELETE };
 
     /**
      * The name of the single column in the view.

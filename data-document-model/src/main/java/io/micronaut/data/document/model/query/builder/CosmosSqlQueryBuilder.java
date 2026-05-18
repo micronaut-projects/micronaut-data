@@ -18,37 +18,36 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
+import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
-import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
-import java.util.function.BiConsumer;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
  * The Azure Cosmos DB sql query builder.
@@ -56,34 +55,20 @@ import java.util.function.BiConsumer;
  * @author radovanradic
  * @since 3.9.0
  */
+@Internal
 public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
-    private static final String VALUE = "VALUE ";
-    private static final String SELECT_COUNT = "COUNT(1)";
+    private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
     private static final String JOIN = " JOIN ";
     private static final String IN = " IN ";
-    private static final String IS_NULL = "IS_NULL";
-    private static final String IS_DEFINED = "IS_DEFINED";
-    private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
-
-    private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
 
     @Creator
     public CosmosSqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         super(annotationMetadata);
-        initializeCriteriaHandlers();
-    }
-
-    /**
-     * Default constructor.
-     */
-    public CosmosSqlQueryBuilder() {
-        super();
-        initializeCriteriaHandlers();
     }
 
     @Override
-    protected String asLiteral(Object value) {
+    protected String asLiteral(@Nullable Object value) {
         if (value instanceof Boolean) {
             return value.toString();
         }
@@ -91,13 +76,130 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected void appendProjectionRowCount(StringBuilder queryString, String logicalName) {
-        queryString.append(SELECT_COUNT);
+    protected boolean traverseEmbedded() {
+        return false;
     }
 
     @Override
-    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState, PersistentEntity entity, AnnotationMetadata annotationMetadata, String logicalName) {
-        throw new UnsupportedOperationException("Count distinct is not supported by Micronaut Data Azure Cosmos.");
+    protected SqlSelectionVisitor createSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        return new SqlSelectionVisitor(queryState, annotationMetadata, distinct) {
+
+            private static final String VALUE = "VALUE ";
+            private static final String SELECT_COUNT = "COUNT(1)";
+
+            @Override
+            protected void appendRowCount(String logicalName) {
+                query.append(SELECT_COUNT);
+            }
+
+            @Override
+            protected void appendRowCountDistinct(String logicalName) {
+                throw new UnsupportedOperationException("Count distinct is not supported by Micronaut Data Azure Cosmos.");
+            }
+
+            @Override
+            protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths, @Nullable Map<JoinPath, String> joinAliasOverride) {
+                // Does nothing since we don't select columns in joins
+            }
+
+            @Override
+            protected void appendPropertyProjection(QueryPropertyPath propertyPath) {
+                query.append(VALUE);
+                super.appendPropertyProjection(propertyPath);
+            }
+
+            @Override
+            protected void appendAssociationProjection(PersistentAssociationPath associationPath) {
+                String joinedPath = associationPath.getPath();
+                if (!queryState.isJoined(joinedPath)) {
+                    query.setLength(query.length() - 1);
+                    return;
+                }
+                String joinAlias = queryState.getJoinAlias(associationPath.getPath());
+                selectAllColumns(AnnotationMetadata.EMPTY_METADATA, associationPath.getAssociation().getAssociatedEntity(), joinAlias);
+            }
+
+            @Override
+            protected void selectAllColumnsAndJoined() {
+                query.append(DISTINCT).append(VALUE).append(queryState.getRootAlias());
+            }
+
+            @Override
+            public void visit(UnaryExpression<?> unaryExpression) {
+                query.append(VALUE);
+                super.visit(unaryExpression);
+            }
+        };
+    }
+
+    @Override
+    protected SqlPredicateVisitor createPredicateVisitor(AnnotationMetadata annotationMetadata, QueryState queryState) {
+        return new SqlPredicateVisitor(queryState, annotationMetadata) {
+
+            private static final String IS_NULL = "IS_NULL";
+            private static final String IS_DEFINED = "IS_DEFINED";
+            private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
+
+            @Override
+            public void visitIsNull(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
+                query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+                query.append(IS_NULL).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET);
+            }
+
+            @Override
+            public void visitIsNotNull(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
+                query.append(IS_DEFINED).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+                query.append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET);
+            }
+
+            @Override
+            public void visitIsEmpty(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
+                query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+                query.append(IS_NULL).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
+                appendPropertyRef(propertyPath);
+                query.append(" = ").append("''");
+            }
+
+            @Override
+            public void visitIsNotEmpty(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
+                query.append(IS_DEFINED).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+                query.append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
+                appendPropertyRef(propertyPath);
+                query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
+                appendPropertyRef(propertyPath);
+                query.append(" != ").append("''");
+            }
+
+            @Override
+            public void visitArrayContains(Expression<?> leftExpression, Expression<?> rightExpression) {
+                PersistentPropertyPath leftProperty = requireProperty(leftExpression).getPropertyPath();
+                query.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
+                appendPropertyRef(leftProperty);
+                query.append(COMMA);
+                appendExpression(rightExpression, leftExpression);
+                query.append(COMMA);
+                query.append("true").append(CLOSE_BRACKET);
+            }
+
+        };
     }
 
     @Override
@@ -110,89 +212,10 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         return propertyPath.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
 
-    @Override
-    protected void traversePersistentProperties(List<Association> associations,
-                                                PersistentProperty property,
-                                                BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        if (property instanceof Embedded) {
-            consumerProperty.accept(associations, property);
-            return;
-        }
-        super.traversePersistentProperties(associations, property, consumerProperty);
-    }
-
-    @Override
-    public QueryResult buildQuery(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query) {
-        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("query", query);
-        QueryState queryState = new QueryState(query, true, true);
-
-        List<JoinPath> joinPaths = new ArrayList<>(query.getJoinPaths());
-        joinPaths.sort((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1.getPath(), o2.getPath()));
-        for (JoinPath joinPath : joinPaths) {
-            queryState.applyJoin(joinPath);
-        }
-
-        StringBuilder select = new StringBuilder(SELECT_CLAUSE);
-        String logicalName = queryState.getRootAlias();
-        PersistentEntity entity = queryState.getEntity();
-        List<QueryModel.Projection> projections = query.getProjections();
-        buildSelect(
-            annotationMetadata,
-            queryState,
-            select,
-            projections,
-            logicalName,
-            entity
-        );
-
-        // For projections, we need to have VALUE in order to be able to read value
-        // but for DTO when there can be more fields retrieved (meaning there is comma in the query) then VALUE cannot work
-        // also literal projection does not need VALUE
-        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && !(projections.get(0) instanceof QueryModel.RootEntityProjection) && select.indexOf(",") == -1) {
-            select.insert(SELECT_CLAUSE.length(), VALUE);
-        }
-
-        select.append(FROM_CLAUSE).append(getTableName(entity)).append(SPACE).append(logicalName);
-
-        QueryModel queryModel = queryState.getQueryModel();
-        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
-        appendJoins(queryState, select, allPaths, null);
-
-        queryState.getQuery().insert(0, select);
-
-        QueryModel.Junction criteria = query.getCriteria();
-
-        if (!criteria.isEmpty() || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
-            buildWhereClause(annotationMetadata, criteria, queryState);
-        }
-
-        appendOrder(annotationMetadata, query, queryState);
-        appendForUpdate(QueryPosition.END_OF_QUERY, query, queryState.getQuery());
-
-        return QueryResult.of(
-            queryState.getFinalQuery(),
-            queryState.getQueryParts(),
-            queryState.getParameterBindings(),
-            queryState.getAdditionalRequiredParameters(),
-            query.getMax(),
-            query.getOffset(),
-            queryState.getJoinPaths()
-        );
-    }
-
-    @Internal
-    @Override
-    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
-                                                 StringBuilder queryBuffer,
-                                                 Collection<JoinPath> allPaths,
-                                                 @Nullable Map<JoinPath, String> joinAliasOverride) {
-        // Does nothing since we don't select columns in joins
-    }
-
     /**
-     * We use this method instead of {@link #selectAllColumnsFromJoinPaths(QueryState, StringBuilder, Collection, Map)}
+     * We use this method instead of selectAllColumnsFromJoinPaths(Collection, Map)
      * and said method is empty because Cosmos Db has different join logic.
+     *
      * @param queryState
      * @param queryBuffer
      * @param allPaths
@@ -231,32 +254,55 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
-        String joinedPath = propertyPath.getPath();
-        if (!queryState.isJoined(joinedPath)) {
-            queryString.setLength(queryString.length() - 1);
-            return false;
+    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
+        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
+        QueryState queryState = new QueryState(definition, true, true);
+
+        List<JoinPath> joinPaths = new ArrayList<>(definition.getJoinPaths());
+        joinPaths.sort((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1.getPath(), o2.getPath()));
+        for (JoinPath joinPath : joinPaths) {
+            queryState.applyJoin(joinPath);
         }
-        String joinAlias = queryState.computeAlias(propertyPath.getPath());
-        selectAllColumns(((Association) property).getAssociatedEntity(), joinAlias, queryString);
-        return true;
+
+        StringBuilder select = queryState.getQuery();
+
+        select.append(SELECT_CLAUSE);
+
+        buildSelect(
+            annotationMetadata,
+            queryState,
+            definition.selection(),
+            false
+        );
+
+        select.append(FROM_CLAUSE)
+            .append(getTableName(queryState.getEntity()))
+            .append(SPACE)
+            .append(queryState.getRootAlias());
+
+        appendJoins(queryState, select, definition.getJoinPaths(), null);
+
+        Predicate predicate = definition.predicate();
+
+        if (predicate != null || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
+            buildWhereClause(annotationMetadata, predicate, queryState);
+        }
+
+        appendOrder(annotationMetadata, definition.order(), queryState);
+        appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
+
+        return QueryResult.of(
+            queryState.getFinalQuery(),
+            queryState.getQueryParts(),
+            queryState.getParameterBindings(),
+            definition.limit(),
+            definition.offset(),
+            queryState.getJoinPaths()
+        );
     }
 
     @Override
-    protected void selectAllColumns(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryBuffer) {
-        queryBuffer.append(DISTINCT).append(SPACE).append(VALUE).append(queryState.getRootAlias());
-    }
-
-    @Override
-    protected void buildJoin(String joinType,
-                             StringBuilder sb,
-                             QueryState queryState,
-                             List<Association> joinAssociationsPath,
-                             String joinAlias,
-                             Association association,
-                             PersistentEntity associatedEntity,
-                             PersistentEntity associationOwner,
-                             String currentJoinAlias) {
+    protected void buildJoin(@Nullable String joinType, StringBuilder query, QueryState queryState, PersistentAssociationPath joinAssociation, PersistentEntity associationOwner, String currentJoinAlias, String lastJoinAlias) {
         // Does nothing since joins in Cosmos Db work different way
     }
 
@@ -277,23 +323,24 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+    @NullUnmarked
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
         return null;
     }
 
     @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, QueryModel query, Map<String, Object> propertiesToUpdate) {
-        QueryResult queryResult = super.buildUpdate(annotationMetadata, query, propertiesToUpdate);
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
+        QueryResult queryResult = super.buildUpdate(annotationMetadata, definition);
         String resultQuery = queryResult.getQuery();
 
-        PersistentEntity entity = query.getPersistentEntity();
+        PersistentEntity entity = definition.persistentEntity();
         String tableAlias = getAliasName(entity);
         String tableName = getTableName(entity);
 
         final String finalQuery = "SELECT * FROM " + tableName + SPACE + tableAlias + SPACE +
             resultQuery.substring(resultQuery.toLowerCase(Locale.ROOT).indexOf("where"));
         StringJoiner stringJoiner = new StringJoiner(",");
-        propertiesToUpdate.keySet().forEach(stringJoiner::add);
+        definition.propertiesToUpdate().keySet().forEach(stringJoiner::add);
         final String update = stringJoiner.toString();
 
         return new QueryResult() {
@@ -327,85 +374,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         };
     }
 
-    @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
-        if (pageable.getMode() != Mode.OFFSET) {
-            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
+    public String buildLimitAndOffset(long limit, long offset) {
+        if (limit > 0) {
+            return " OFFSET " + offset + " LIMIT " + limit + " ";
         }
-        int size = pageable.getSize();
-        if (size > 0) {
-            StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getOffset();
-            builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
-            return QueryResult.of(
-                builder.toString(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
-        }
-        return QueryResult.of(
-            "",
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
-    }
-
-    /**
-     * Initializes criteria handlers specific for Cosmos Db.
-     */
-    private void initializeCriteriaHandlers() {
-        addCriterionHandler(QueryModel.IsNull.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET);
-        });
-        addCriterionHandler(QueryModel.IsNotNull.class, (ctx, criterion) -> {
-            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET);
-        });
-        addCriterionHandler(QueryModel.IsEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            ctx.query().append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(EQUALS).append("''");
-        });
-        addCriterionHandler(QueryModel.IsNotEmpty.class, (ctx, criterion) -> {
-            ctx.query().append(IS_DEFINED).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            ctx.query().append(NOT).append(SPACE).append(IS_NULL).append(OPEN_BRACKET);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
-            appendPropertyRef(ctx.query(), ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), ctx.getRequiredProperty(criterion));
-            ctx.query().append(NOT_EQUALS).append("''");
-        });
-        addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
-            QueryPropertyPath propertyPath = ctx.getRequiredProperty(criterion.getProperty(), QueryModel.ArrayContains.class);
-            StringBuilder whereClause = ctx.query();
-            whereClause.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
-            appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
-            whereClause.append(COMMA);
-            Object value = criterion.getValue();
-            if (value instanceof BindingParameter bindingParameter) {
-                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.getPropertyPath()));
-            } else {
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(COMMA).append("true").append(CLOSE_BRACKET);
-        });
+        return "";
     }
 }

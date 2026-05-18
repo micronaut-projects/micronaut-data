@@ -16,8 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -118,7 +117,6 @@ public final class Restrictions {
             return "GreaterThan";
         }
     }
-
 
     /**
      * Same as {@link PropertyGreaterThan}.
@@ -405,7 +403,6 @@ public final class Restrictions {
             return "EndingWithIgnoreCase";
         }
     }
-
 
     /**
      * Ends with criterion.
@@ -819,7 +816,7 @@ public final class Restrictions {
 
         private final OneExpressionOp<T> func;
 
-        public SinglePropertyRestriction(OneExpressionOp<T> func) {
+        private SinglePropertyRestriction(OneExpressionOp<T> func) {
             this.func = func;
         }
 
@@ -841,7 +838,7 @@ public final class Restrictions {
 
         private final TwoExpressionOp<T> func;
 
-        public SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
+        private SinglePropertyExpressionRestriction(TwoExpressionOp<T> func) {
             this.func = func;
         }
 
@@ -859,7 +856,6 @@ public final class Restrictions {
         }
     }
 
-
     /**
      * Property restriction.
      *
@@ -871,11 +867,10 @@ public final class Restrictions {
 
         int getRequiredParameters();
 
-        @NonNull
-        Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
-                       @NonNull PersistentEntityCriteriaBuilder cb,
-                       @NonNull Expression<T> expression,
-                       @NonNull List<ParameterExpression<T>> parameters);
+        Predicate find(PersistentEntityRoot<?> entityRoot,
+                       PersistentEntityCriteriaBuilder cb,
+                       Expression<T> expression,
+                       List<ParameterExpression<T>> parameters);
     }
 
     /**
@@ -889,10 +884,9 @@ public final class Restrictions {
 
         int getRequiredParameters();
 
-        @NonNull
-        Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
-                       @NonNull PersistentEntityCriteriaBuilder cb,
-                       @NonNull List<ParameterExpression<T>> parameters);
+        Predicate find(PersistentEntityRoot<?> entityRoot,
+                       PersistentEntityCriteriaBuilder cb,
+                       List<ParameterExpression<T>> parameters);
 
     }
 
@@ -935,6 +929,67 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "CollectionContains";
+        }
+    }
+
+    /**
+     * Geo within restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoWithin<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoWithin() {
+            super(PersistentEntityCriteriaBuilder::geoWithin);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoWithin";
+        }
+    }
+
+    /**
+     * Geo intersects restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGeoIntersects<T> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGeoIntersects() {
+            super(PersistentEntityCriteriaBuilder::geoIntersects);
+        }
+
+        @Override
+        public String getName() {
+            return "GeoIntersects";
+        }
+    }
+
+    /**
+     * Near restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyNear<T> implements PropertyRestriction<T> {
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<T> expression,
+                              List<ParameterExpression<T>> parameters) {
+            return cb.near(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
+        }
+
+        @Override
+        public String getName() {
+            return "Near";
         }
     }
 }

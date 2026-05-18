@@ -20,7 +20,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import io.micronaut.core.annotation.NonNull;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +31,6 @@ import java.util.List;
  * @since 1.0.0
  */
 public class SpringPersistentAnnotationMapper implements NamedAnnotationMapper {
-    @NonNull
     @Override
     public String getName() {
         return "org.springframework.data.annotation.Persistent";

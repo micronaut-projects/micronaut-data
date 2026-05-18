@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,7 +53,15 @@ public final class PersistentEntityUtils {
      * @since 4.2.0
      */
     public static boolean isAccessibleWithoutJoin(Association association, PersistentProperty persistentProperty) {
-        PersistentProperty identity = association.getAssociatedEntity().getIdentity();
+        if (association instanceof Embedded) {
+            return true;
+        }
+        PersistentEntity associatedEntity = association.getAssociatedEntity();
+        if (!associatedEntity.hasIdentity()) {
+            // Some strange case of document DB
+            return false;
+        }
+        PersistentProperty identity = associatedEntity.getIdentity();
         if (identity instanceof Embedded embedded) {
             for (PersistentProperty property : embedded.getAssociatedEntity().getPersistentProperties()) {
                 if (property == persistentProperty) {
@@ -84,7 +93,7 @@ public final class PersistentEntityUtils {
         for (PersistentProperty identityProperty : persistentEntity.getIdentityProperties()) {
             traversePersistentProperties(Collections.emptyList(), identityProperty, consumer);
         }
-        if (persistentEntity.getVersion() != null) {
+        if (persistentEntity.hasVersion()) {
             traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
         }
         for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
@@ -106,7 +115,7 @@ public final class PersistentEntityUtils {
                 traversePersistentProperties(Collections.emptyList(), identityProperty, consumer);
             }
         }
-        if (includeVersion && persistentEntity.getVersion() != null) {
+        if (includeVersion && persistentEntity.hasVersion()) {
             traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
         }
         for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
@@ -184,10 +193,10 @@ public final class PersistentEntityUtils {
             List<Association> newAssociations = new ArrayList<>(associations);
             newAssociations.add((Association) property);
             PersistentEntity associatedEntity = association.getAssociatedEntity();
-            PersistentProperty assocIdentity = associatedEntity.getIdentity();
-            if (assocIdentity == null) {
+            if (!associatedEntity.hasIdentity()) {
                 throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
             }
+            PersistentProperty assocIdentity = associatedEntity.getIdentity();
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
@@ -236,6 +245,7 @@ public final class PersistentEntityUtils {
         return entity.getPath(path);
     }
 
+    @Nullable
     private static PersistentProperty getJoinColumnAssocIdentity(PersistentProperty property, PersistentEntity associatedEntity) {
         AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
         AnnotationValue<JoinColumns> joinColumnsAnnotationValue = propertyAnnotationMetadata.getAnnotation(JoinColumns.class);

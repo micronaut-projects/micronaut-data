@@ -19,14 +19,15 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Limit;
@@ -68,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -169,7 +171,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param parameterName The parameter name
      * @param value         The value
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value);
+    protected abstract void setParameter(Q query, String parameterName, @Nullable Object value);
 
     /**
      * Sets parameter into query.
@@ -179,7 +181,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value, Argument<?> argument);
+    protected abstract void setParameter(Q query, String parameterName, @Nullable Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -207,7 +209,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param parameterIndex The parameter index
      * @param value          The value
      */
-    protected abstract void setParameter(Q query, int parameterIndex, Object value);
+    protected abstract void setParameter(Q query, int parameterIndex, @Nullable Object value);
 
     /**
      * Sets parameter into query.
@@ -217,7 +219,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param value          The value
      * @param argument       The argument
      */
-    protected abstract void setParameter(Q query, int parameterIndex, Object value, Argument<?> argument);
+    protected abstract void setParameter(Q query, int parameterIndex, @Nullable Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -355,7 +357,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                                                ResultCollector<R> resultCollector) {
         if (sort != null && sort.isSorted()) {
             queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
-                preparedQuery.isNative()).getQuery();
+                preparedQuery.isNative(), null);
         }
         if (preparedQuery.isDtoProjection()) {
             P q;
@@ -371,15 +373,28 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 q = createQuery(session, queryStr, Tuple.class);
             }
             bindPreparedQuery(q, preparedQuery, limit, session);
+            List<String> projection = preparedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class)
+                .stream()
+                .flatMap(a -> a.stringValue().stream())
+                .toList();
             resultCollector.collectTuple(q, tuple -> {
+                if (preparedQuery.getResultType().equals(Object[].class)) {
+                    return (R) tuple.toArray();
+                }
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
+                Iterator<String> iterator = projection.iterator();
                 return (new BeanIntrospectionMapper<Tuple, R>() {
                     @Override
+                    @Nullable
                     public Object read(Tuple tuple1, String alias) {
-                        if (!properties.contains(alias)) {
+                        String propertyName = alias;
+                        if (iterator.hasNext()) {
+                            propertyName = iterator.next();
+                        }
+                        if (!properties.contains(propertyName)) {
                             return null;
                         }
-                        return tuple1.get(alias);
+                        return tuple1.get(propertyName);
                     }
 
                     @Override
@@ -455,22 +470,24 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             int index = 1;
 
             @Override
-            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
                 return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
             }
 
             @Override
-            public Object convert(Object value, RuntimePersistentProperty<?> property) {
+            @Nullable
+            public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
                 return value;
             }
 
             @Override
-            public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+            @Nullable
+            public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
                 return value;
             }
 
             @Override
-            public void bindOne(QueryParameterBinding binding, Object value) {
+            public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
                 if (binding.getParameterIndex() != -1) {
                     int parameterIndex = binding.getParameterIndex();
@@ -568,7 +585,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             }
             String[] parts = path.split("\\.");
             if (parts.length == 1) {
-                AttributeNode<?> attrNode = rootGraph.findAttributeNode(path);
+                AttributeNode<?> attrNode = rootGraph.getAttributeNode(path);
                 if (attrNode == null) {
                     rootGraph.addAttributeNode(path);
                 }
@@ -577,12 +594,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 for (int i = 0; i < parts.length; i++) {
                     String part = parts[i];
                     // Check if the node already exists at this level
-                    AttributeNode<?> attrNode = graph.findAttributeNode(part);
+                    AttributeNode<?> attrNode = graph.getAttributeNode(part);
                     if (attrNode != null) {
                         SubGraph<?> subGraph = attrNode.getSubGraphs().isEmpty() ? null : attrNode.getSubGraphs().values().iterator().next();
                         // If this is not a leaf and the subgraph doesn't exist, create it
                         if (subGraph == null && i < parts.length - 1) {
-                            graph = graph.addSubGraph(part);
+                            graph = graph.addSubgraph(part);
                         } else if (subGraph != null) {
                             // Otherwise, keep the existing one for the child node
                             graph = subGraph;
@@ -592,7 +609,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                         graph.addAttributeNode(part);
                     } else {
                         // Otherwise, create a subgraph
-                        graph = graph.addSubGraph(part);
+                        graph = graph.addSubgraph(part);
                     }
                 }
             }
@@ -600,6 +617,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         return rootGraph;
     }
 
+    @Nullable
     protected final FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(QueryHint.class).stream().filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null))).map(av -> av.enumValue("value", FlushModeType.class)).findFirst().orElse(Optional.empty()).orElse(null);
     }
@@ -656,7 +674,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
                 path = path.get(property);
             }
-            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.as(String.class)) : path;
             orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);

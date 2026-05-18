@@ -23,6 +23,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaDelete;
 import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -42,9 +43,9 @@ final class SourcePersistentEntityCriteriaDeleteImpl<T> extends AbstractPersiste
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                    Class<T> result,
-                                                    CriteriaBuilder criteriaBuilder) {
+    SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                             @Nullable Class<T> result,
+                                             CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
         this.criteriaBuilder = criteriaBuilder;
     }

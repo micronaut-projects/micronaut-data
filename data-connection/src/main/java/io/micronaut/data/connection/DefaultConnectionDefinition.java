@@ -17,8 +17,8 @@ package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -39,7 +39,7 @@ public record DefaultConnectionDefinition(
     @Nullable String name,
     Propagation propagationBehavior,
     @Nullable Duration timeout,
-    Boolean readOnlyValue,
+    @Nullable Boolean readOnlyValue,
     @NonNull AnnotationMetadata annotationMetadata
 ) implements ConnectionDefinition {
 
@@ -55,7 +55,11 @@ public record DefaultConnectionDefinition(
         this(name, PROPAGATION_DEFAULT, null, readOnly, AnnotationMetadata.EMPTY_METADATA);
     }
 
-    public DefaultConnectionDefinition(String name, Propagation propagationBehavior, Duration timeout,
+    public DefaultConnectionDefinition(String name,
+                                       Propagation propagationBehavior,
+                                       @Nullable
+                                       Duration timeout,
+                                       @Nullable
                                        Boolean readOnlyValue) {
         this(name, propagationBehavior, timeout, readOnlyValue, AnnotationMetadata.EMPTY_METADATA);
     }
@@ -78,6 +82,7 @@ public record DefaultConnectionDefinition(
     }
 
     @Override
+    @Nullable
     public String getName() {
         return name;
     }
@@ -88,7 +93,7 @@ public record DefaultConnectionDefinition(
     }
 
     @Override
-    public ConnectionDefinition withName(String name) {
+    public ConnectionDefinition withName(@Nullable String name) {
         return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, annotationMetadata);
     }
 

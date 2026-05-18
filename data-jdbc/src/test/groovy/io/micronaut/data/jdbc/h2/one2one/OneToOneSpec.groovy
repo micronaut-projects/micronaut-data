@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.h2.one2one
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
@@ -23,8 +22,7 @@ import java.sql.Connection
 import java.time.LocalDateTime
 
 @MicronautTest
-@H2DBProperties
-@Property(name = "datasources.default.schema-generate", value = "NONE")
+@H2DBProperties(schemaGenerate = "NONE")
 class OneToOneSpec extends Specification {
 
     @Shared
@@ -46,24 +44,24 @@ DROP TABLE IF EXISTS `TestXyzCustomerDetails`;
 CREATE OR REPLACE TABLE `TestXyzCategory` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `active` boolean DEFAULT NULL,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `priority` bigint DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomer` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `showCustomer` boolean DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `detail` varchar(255) DEFAULT NULL,
   `label` varchar(255) DEFAULT NULL,
-  `updatedAt` datetime(6) NOT NULL,
+  `updatedAt` timestamp(6) NOT NULL,
   `categoryId` bigint DEFAULT NULL,
   `customerId` bigint DEFAULT NULL
 );

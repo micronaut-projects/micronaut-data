@@ -16,7 +16,7 @@
 package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -69,6 +69,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
     private void doSubscribe(Subscriber<? super T> actualSubscriber, @Nullable CoreSubscriber<? super T> coreSubscriber) {
         actualPublisher.subscribe(new CoreSubscriber<>() {
 
+            @Nullable
             Subscription actualSubscription;
 
             @Override
@@ -86,6 +87,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
             }
 
             @Override
+            @SuppressWarnings("NullAway")
             public void onNext(T t) {
                 if (isMono) {
                     actualSubscription.cancel();

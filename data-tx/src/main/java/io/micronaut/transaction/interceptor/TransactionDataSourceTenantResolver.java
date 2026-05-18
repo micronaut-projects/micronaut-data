@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.interceptor;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves the tenant data source name for the transactional manager.

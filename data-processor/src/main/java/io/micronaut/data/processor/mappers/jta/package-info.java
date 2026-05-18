@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 /**
- * Classes to map JTA annotations onto generic Micronaut Data annotations.
- *
- * @author graemerocher
- * @since 1.0.0
+ * JTA/Jakarta Transaction mappers.
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.processor.mappers.jta;

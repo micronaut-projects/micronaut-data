@@ -11,7 +11,7 @@ import com.azure.cosmos.models.ThroughputProperties;
 import com.azure.cosmos.models.UniqueKey;
 import com.azure.cosmos.models.UniqueKeyPolicy;
 import io.micronaut.context.BeanContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;

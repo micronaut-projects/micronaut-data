@@ -16,7 +16,7 @@
 package io.micronaut.data.spring.jdbc;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -31,6 +31,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link TransactionOperations} that uses Spring managed transactions.
@@ -52,7 +53,7 @@ public final class SpringJdbcTransactionOperations extends AbstractSpringTransac
      */
     SpringJdbcTransactionOperations(DataSourceTransactionManager transactionManager) {
         super(transactionManager);
-        this.dataSource = transactionManager.getDataSource();
+        this.dataSource = Objects.requireNonNull(transactionManager.getDataSource());
     }
 
     public DataSource getDataSource() {

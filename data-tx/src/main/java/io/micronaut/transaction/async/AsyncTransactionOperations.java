@@ -16,7 +16,8 @@
 package io.micronaut.transaction.async;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 
 import java.util.Optional;
@@ -49,8 +50,8 @@ public interface AsyncTransactionOperations<C> {
      * @return A publisher that emits the result type
      */
     @NonNull
-    <T> CompletionStage<T> withTransaction(@NonNull TransactionDefinition definition,
-                                           @NonNull Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler);
+    <T extends @Nullable Object> CompletionStage<T> withTransaction(@NonNull TransactionDefinition definition,
+                                                                    @NonNull Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler);
 
     /**
      * Execute the given handler with a new transaction.
@@ -59,7 +60,17 @@ public interface AsyncTransactionOperations<C> {
      * @param <T>     The emitted type
      * @return A publisher that emits the result type
      */
-    default @NonNull <T> CompletionStage<T> withTransaction(@NonNull Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
+    default @NonNull <T extends @Nullable Object> CompletionStage<T> withTransaction(@NonNull Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         return withTransaction(TransactionDefinition.DEFAULT, handler);
     }
+
+    /**
+     * Determine whether the given transaction status refers to a transaction
+     * managed by this {@link AsyncTransactionOperations} instance.
+     *
+     * @param transactionStatus The transaction status to verify
+     * @return true if the transaction is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesTransaction(@NonNull AsyncTransactionStatus<C> transactionStatus);
 }

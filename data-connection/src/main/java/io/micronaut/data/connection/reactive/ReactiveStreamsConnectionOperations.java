@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.connection.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import org.reactivestreams.Publisher;
@@ -52,5 +52,15 @@ public interface ReactiveStreamsConnectionOperations<C> {
     default @NonNull <T> Publisher<T> withConnection(@NonNull Function<ConnectionStatus<C>, Publisher<T>> handler) {
         return withConnection(ConnectionDefinition.DEFAULT, handler);
     }
+
+    /**
+     * Determine whether the given connection status refers to a connection
+     * managed by this {@link ReactiveStreamsConnectionOperations} instance.
+     *
+     * @param connectionStatus The connection status to verify
+     * @return true if the connection is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesConnection(@NonNull ConnectionStatus<C> connectionStatus);
 
 }

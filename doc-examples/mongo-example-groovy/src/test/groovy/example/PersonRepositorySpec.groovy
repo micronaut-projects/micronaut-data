@@ -44,9 +44,9 @@ class PersonRepositorySpec extends Specification {
 
             long countAgeLess20 = personRepository.count(ageIsLessThan(20))
 
-            long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) & not(nameEquals("Denis")))
+            long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) & PredicateSpecification.not(nameEquals("Denis")))
 
-            List<Person> people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))
+            List<Person> people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis") | nameEquals("Josh")))
             // end::find[]
 
         then:
@@ -65,7 +65,7 @@ class PersonRepositorySpec extends Specification {
 
         when:
             // tag::delete[]
-            long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))
+            long recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))
             // end::delete[]
         then:
             recordsDeleted == 1

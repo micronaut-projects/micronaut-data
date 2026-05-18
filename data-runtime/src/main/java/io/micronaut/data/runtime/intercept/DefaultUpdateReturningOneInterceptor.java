@@ -17,11 +17,12 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateReturningOneInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,14 +44,15 @@ public final class DefaultUpdateReturningOneInterceptor<T, R> extends AbstractQu
         super(datastore);
     }
 
+    @Nullable
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        PreparedQuery<?, R> preparedQuery = (PreparedQuery<?, R>) prepareQuery(methodKey, context);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         List<R> results = operations.execute(preparedQuery);
         if (results.isEmpty()) {
-            return null;
+            return (R) convertOne(context, (Object) null);
         }
-        return operations.getConversionService().
-            convertRequired(results.get(0), context.getExecutableMethod().getReturnType().asArgument());
+        return operations.getConversionService()
+            .convertRequired(results.get(0), context.getExecutableMethod().getReturnType().asArgument());
     }
 }

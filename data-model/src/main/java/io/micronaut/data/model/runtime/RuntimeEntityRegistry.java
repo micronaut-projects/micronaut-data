@@ -16,8 +16,7 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.context.ApplicationContextProvider;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.event.EntityEventListener;
 
@@ -31,7 +30,7 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
     /**
      * @return The primary entity event listener
      */
-    @NonNull EntityEventListener<Object> getEntityEventListener();
+     EntityEventListener<Object> getEntityEventListener();
 
     /**
      * @param persistentProperty The persistent property
@@ -39,10 +38,8 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
      * @return The new value, never null.
      */
     @Experimental
-    @NonNull Object autoPopulateRuntimeProperty(
-            @NonNull RuntimePersistentProperty<?> persistentProperty,
-            @Nullable Object previousValue
-    );
+    Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty,
+                                       @Nullable Object previousValue);
 
     /**
      * Get a new, non-cached instance.
@@ -50,7 +47,7 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
      * @param <T> The generic type
      * @return The entity
      */
-    @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type);
+     <T> RuntimePersistentEntity<T> getEntity(Class<T> type);
 
     /**
      * Get a new, non-cached instance.
@@ -58,5 +55,5 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
      * @param <T> The generic type
      * @return The entity
      */
-    @NonNull <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type);
+     <T> RuntimePersistentEntity<T> newEntity(Class<T> type);
 }

@@ -19,11 +19,12 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link ConnectionOperationsRegistry}.
@@ -43,7 +44,7 @@ final class DefaultConnectionOperationsRegistry implements ConnectionOperationsR
 
     @NonNull
     @Override
-    public <T extends ConnectionOperations<?>> T provideSynchronous(Class<T> connectionOperationsType, String dataSourceName) {
+    public <T extends ConnectionOperations<?>> T provideSynchronous(@NonNull Class<T> connectionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(connectionOperationsType, null);
@@ -60,7 +61,7 @@ final class DefaultConnectionOperationsRegistry implements ConnectionOperationsR
 
     @NonNull
     @Override
-    public <T extends ReactiveStreamsConnectionOperations<?>> T provideReactive(Class<T> connectionOperationsType, String dataSourceName) {
+    public <T extends ReactiveStreamsConnectionOperations<?>> T provideReactive(@NonNull Class<T> connectionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(connectionOperationsType, null);
@@ -77,7 +78,7 @@ final class DefaultConnectionOperationsRegistry implements ConnectionOperationsR
 
     @NonNull
     @Override
-    public <T extends AsyncConnectionOperations<?>> T provideAsync(Class<T> connectionOperationsType, String dataSourceName) {
+    public <T extends AsyncConnectionOperations<?>> T provideAsync(@NonNull Class<T> connectionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(connectionOperationsType, null);

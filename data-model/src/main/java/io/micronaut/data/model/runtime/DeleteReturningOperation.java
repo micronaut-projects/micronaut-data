@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.runtime;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A delete returning operation that updates the given entity and returns a result.
  *
@@ -25,6 +27,7 @@ package io.micronaut.data.model.runtime;
  */
 public interface DeleteReturningOperation<E, R> extends DeleteOperation<E> {
 
+    @Nullable
     @Override
     StoredQuery<E, R> getStoredQuery();
 }

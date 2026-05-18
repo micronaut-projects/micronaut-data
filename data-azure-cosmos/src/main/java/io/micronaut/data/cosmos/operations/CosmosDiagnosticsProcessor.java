@@ -16,7 +16,7 @@
 package io.micronaut.data.cosmos.operations;
 
 import com.azure.cosmos.CosmosDiagnostics;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The Cosmos diagnostics processor interface. Implementations can log diagnostics or perform some metrics, but it is important

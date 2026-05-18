@@ -1,7 +1,7 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity

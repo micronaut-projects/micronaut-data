@@ -2,11 +2,11 @@ package example
 
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jpa.annotation.EntityGraph
-import io.micronaut.data.jpa.repository.JpaSpecificationExecutor
-import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.repository.CrudRepository
-import io.reactivex.Maybe
-import io.reactivex.Single
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.reactivex.rxjava3.core.Maybe
+import io.reactivex.rxjava3.core.Single
 import java.util.concurrent.CompletableFuture
 import jakarta.transaction.Transactional
 
@@ -61,15 +61,15 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     // tag::spec[]
     object Specifications {
 
-        fun nameEquals(name: String) = Specification<Product> { root, _, criteriaBuilder ->
+        fun nameEquals(name: String) = QuerySpecification<Product> { root, _, criteriaBuilder ->
             // end::spec[]
             check(criteriaBuilder.javaClass.getName().startsWith("org.hibernate"))
             // tag::spec[]
             criteriaBuilder.equal(root.get<String>("name"), name)
         }
 
-        fun nameEqualsCaseInsensitive(name: String) = Specification<Product> { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase())
+        fun nameEqualsCaseInsensitive(name: String) = QuerySpecification<Product> { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.lowercase())
         }
     }
     // end::spec[]

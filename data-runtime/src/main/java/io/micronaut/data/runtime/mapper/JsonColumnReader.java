@@ -15,12 +15,11 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.json.JsonMapper;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -50,9 +49,10 @@ public interface JsonColumnReader<S> {
      * @return object of type T read from JSON column
      * @param <T> the result type
      */
-    default  <T> T readJsonColumn(ResultReader<S, String> resultReader, S resultSet, String columnName, JsonDataType jsonDataType, Argument<T> argument) {
+    @Nullable
+    default <T> T readJsonColumn(ResultReader<S, String> resultReader, S resultSet, String columnName, JsonDataType jsonDataType, Argument<T> argument) {
         String data = resultReader.readString(resultSet, columnName);
-        if (StringUtils.isEmpty(data) || data.equals(NULL_VALUE)) {
+        if (data == null || data.isBlank() || data.equals(NULL_VALUE)) {
             return null;
         }
         if (argument.getType().equals(String.class)) {
@@ -68,5 +68,5 @@ public interface JsonColumnReader<S> {
     /**
      * @return the json mapper
      */
-    @NonNull JsonMapper getJsonMapper();
+    JsonMapper getJsonMapper();
 }

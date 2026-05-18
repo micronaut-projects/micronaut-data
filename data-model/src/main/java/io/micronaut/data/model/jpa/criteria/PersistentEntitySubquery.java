@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
@@ -35,50 +34,50 @@ import java.util.List;
 public interface PersistentEntitySubquery<T> extends Subquery<T>, PersistentEntityQuery<T> {
 
     @Override
-    @NonNull
+    
     PersistentEntitySubquery<T> limit(int limit);
 
     @Override
-    @NonNull
+    
     PersistentEntitySubquery<T> offset(int offset);
 
     @Override
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull Class<X> entityClass);
+    
+    <X> PersistentEntityRoot<X> from(Class<X> entityClass);
 
     @Override
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull EntityType<X> entity);
+    
+    <X> PersistentEntityRoot<X> from(EntityType<X> entity);
 
     @Override
-    PersistentEntitySubquery<T> select(@NonNull Expression<T> expression);
+    PersistentEntitySubquery<T> select(Expression<T> expression);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> where(@NonNull Expression<Boolean> restriction);
+    
+    PersistentEntitySubquery<T> where(Expression<Boolean> restriction);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> where(@NonNull Predicate... restrictions);
+    
+    PersistentEntitySubquery<T> where(Predicate... restrictions);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> groupBy(@NonNull Expression<?>... grouping);
+    
+    PersistentEntitySubquery<T> groupBy(Expression<?>... grouping);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> groupBy(@NonNull List<Expression<?>> grouping);
+    
+    PersistentEntitySubquery<T> groupBy(List<Expression<?>> grouping);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> having(@NonNull Expression<Boolean> restriction);
+    
+    PersistentEntitySubquery<T> having(Expression<Boolean> restriction);
 
     @Override
-    @NonNull
-    PersistentEntitySubquery<T> having(@NonNull Predicate... restrictions);
+    
+    PersistentEntitySubquery<T> having(Predicate... restrictions);
 
     @Override
-    @NonNull
+    
     PersistentEntitySubquery<T> distinct(boolean distinct);
 
     /**

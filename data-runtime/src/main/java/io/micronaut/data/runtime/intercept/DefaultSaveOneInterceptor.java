@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.SaveOneInterceptor;
@@ -46,7 +46,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> valueMap = getParameterValueMap(context);
         Object instance = instantiateEntity(rootEntity, valueMap);
-        instance = operations.persist(getInsertOperation(context, instance));
+        instance = persistOrUpdate(context, instance);
         ReturnType<Object> rt = context.getReturnType();
         if (isNumber(rt.getType())) {
             return operations.getConversionService().convert(1, rt.asArgument())

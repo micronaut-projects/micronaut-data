@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
@@ -29,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -37,12 +40,14 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 1.0
  */
+@Internal
 public class MethodMatchContext extends MatchContext {
 
+    @Nullable
     private SourcePersistentEntity entity;
     private final Map<Element, String> parametersInRole;
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
-    private final Function<String, SourcePersistentEntity> entityBySimplyNameResolver;
+    private final Function<String, @Nullable SourcePersistentEntity> entityBySimplyNameResolver;
 
     /**
      * Creates the context.
@@ -58,20 +63,23 @@ public class MethodMatchContext extends MatchContext {
      * @param entityResolver function used to resolve entities
      * @param findInterceptors The interceptors
      */
+    @SuppressWarnings("checkstyle:ParameterNumber")
     MethodMatchContext(
-            @NonNull QueryBuilder queryBuilder,
-            @NonNull ClassElement repositoryClass,
-            @NonNull SourcePersistentEntity entity,
-            @NonNull VisitorContext visitorContext,
-            @NonNull ClassElement returnType,
-            @NonNull MethodElement methodElement,
-            @NonNull Map<Element, String> parametersInRole,
-            @NonNull Map<String, String> typeRoles,
-            @NonNull ParameterElement[] parameters,
-            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver,
-            @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors,
-            @NonNull Function<String, SourcePersistentEntity> entityBySimplyNameResolver) {
-        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters, findInterceptors);
+            QueryBuilder queryBuilder,
+            ClassElement repositoryClass,
+            @Nullable
+            SourcePersistentEntity entity,
+            VisitorContext visitorContext,
+            ClassElement returnType,
+            MethodElement methodElement,
+            Map<Element, String> parametersInRole,
+            Map<String, String> typeRoles,
+            List<Map.Entry<String, String>> annotationRoles,
+            ParameterElement[] parameters,
+            Function<ClassElement, SourcePersistentEntity> entityResolver,
+            Map<ClassElement, FindInterceptorDef> findInterceptors,
+            Function<String, SourcePersistentEntity> entityBySimplyNameResolver) {
+        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, annotationRoles, returnType, parameters, findInterceptors);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.entityResolver = entityResolver;
@@ -81,7 +89,7 @@ public class MethodMatchContext extends MatchContext {
     /**
      * @return The entity by a simple name resolver
      */
-    public Function<String, SourcePersistentEntity> getEntityBySimplyNameResolver() {
+    public Function<String, @Nullable SourcePersistentEntity> getEntityBySimplyNameResolver() {
         return entityBySimplyNameResolver;
     }
 
@@ -91,7 +99,7 @@ public class MethodMatchContext extends MatchContext {
      * @return True if there is a parameter available in the given role
      */
     @SuppressWarnings("ConstantConditions")
-    public boolean hasParameterInRole(@NonNull String role) {
+    public boolean hasParameterInRole(String role) {
         return role != null && parametersInRole.containsValue(role);
     }
 
@@ -101,7 +109,7 @@ public class MethodMatchContext extends MatchContext {
      * @return The parameter
      */
     @Nullable
-    public Element findParameterInRole(@NonNull String role) {
+    public Element findParameterInRole(String role) {
         for (Map.Entry<Element, String> e : parametersInRole.entrySet()) {
             if (e.getValue().equals(role)) {
                 return e.getKey();
@@ -113,9 +121,15 @@ public class MethodMatchContext extends MatchContext {
     /**
      * @return Parameters that fulfill a query execution role
      */
-    @NonNull
     public Map<Element, String> getParametersInRole() {
         return parametersInRole;
+    }
+
+    /**
+     * @return Has a root entity?
+     */
+    public boolean hasRootEntity() {
+        return entity != null;
     }
 
     /**
@@ -123,7 +137,7 @@ public class MethodMatchContext extends MatchContext {
      * @return The root entity
      */
     public SourcePersistentEntity getRootEntity() {
-        return entity;
+        return Objects.requireNonNull(entity, "Persistent entity is required");
     }
 
     /**
@@ -137,7 +151,7 @@ public class MethodMatchContext extends MatchContext {
      * Returns a list of parameters that are not fulfilling a specific query role.
      * @return The parameters not in role
      */
-    public @NonNull List<ParameterElement> getParametersNotInRole() {
+    public List<ParameterElement> getParametersNotInRole() {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsKey(p)
         ).toList();
@@ -147,7 +161,7 @@ public class MethodMatchContext extends MatchContext {
      * Returns a list of parameters that are not fulfilling a specific query role.
      * @return The parameters not in role
      */
-    public @NonNull List<ParameterElement> getParametersInRoleList() {
+    public List<ParameterElement> getParametersInRoleList() {
         return Arrays.stream(getParameters()).filter(this.parametersInRole::containsKey).toList();
     }
 
@@ -156,7 +170,26 @@ public class MethodMatchContext extends MatchContext {
      * @param element The element
      * @return The entity
      */
-    public @NonNull SourcePersistentEntity getEntity(@NonNull ClassElement element) {
+    public SourcePersistentEntity getEntity(ClassElement element) {
         return entityResolver.apply(element);
+    }
+
+    /**
+     * Find implicit root entity.
+     *
+     * @since 5.0
+     */
+    public void findImplicitRootEntity() {
+        if (parameters.length == 1) {
+            ClassElement rootType = parameters[0].getGenericType();
+            if (rootType.isArray()) {
+                rootType = rootType.fromArray();
+            } else if (TypeUtils.isIterableOfEntity(rootType)) {
+                rootType = rootType.getFirstTypeArgument().orElseThrow(() -> new ProcessingException(methodElement, "Cannot determine implicit root entity type"));
+            }
+            if (TypeUtils.isEntity(rootType)) {
+                setRootEntity(getEntity(rootType));
+            }
+        }
     }
 }

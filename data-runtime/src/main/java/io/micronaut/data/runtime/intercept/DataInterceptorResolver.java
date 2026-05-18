@@ -19,8 +19,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.ConvertException;
@@ -91,7 +91,9 @@ public final class DataInterceptorResolver {
         return dataInterceptor;
     }
 
-    private DataInterceptor<Object, Object> findDataInterceptor(MethodInvocationContext<Object, Object> context, InjectionPoint<?> injectionPoint, String tenantDataSourceName) {
+    private DataInterceptor<Object, Object> findDataInterceptor(MethodInvocationContext<Object, Object> context,
+                                                                @Nullable InjectionPoint<?> injectionPoint,
+                                                                @Nullable String tenantDataSourceName) {
         final String dataSourceName;
         if (tenantDataSourceName == null) {
             dataSourceName = context.stringValue(Repository.class)
@@ -122,6 +124,7 @@ public final class DataInterceptorResolver {
             Collection<ExceptionConverter> exceptionConverters = beanLocator.getBeansOfType(exceptionConverterClass);
             return new DataInterceptor<Object, Object>() {
                 @Override
+                @Nullable
                 public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
                     try {
                         return interceptor.intercept(methodKey, context);
@@ -172,12 +175,14 @@ public final class DataInterceptorResolver {
     }
 
     private static final class TenantRepositoryMethodKey {
+        @Nullable
         private final String dataSource;
         private final RepositoryMethodKey key;
+        @Nullable
         private final Argument<?> injectionPoint;
         private final int hashCode;
 
-        TenantRepositoryMethodKey(String dataSource, RepositoryMethodKey key, @Nullable Argument<?> injectionPoint) {
+        TenantRepositoryMethodKey(@Nullable String dataSource, RepositoryMethodKey key, @Nullable Argument<?> injectionPoint) {
             this.dataSource = dataSource;
             this.key = key;
             this.injectionPoint = injectionPoint;

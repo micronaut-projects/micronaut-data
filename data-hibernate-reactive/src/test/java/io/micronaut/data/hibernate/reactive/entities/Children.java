@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.reactive.entities;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;

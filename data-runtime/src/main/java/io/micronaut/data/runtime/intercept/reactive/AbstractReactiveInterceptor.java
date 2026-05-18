@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.aop.MethodInvocationContext;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -64,5 +65,27 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
             }
             return 1L;
         }).reduce(0L, Long::sum).map(Long::intValue);
+    }
+
+    protected final <E> Publisher<E> persistOrUpdateReactive(MethodInvocationContext<T, ?> context, E entity) {
+        if (isSaveAsInsert()) {
+            return reactiveOperations.persist(getInsertOperation(context, entity));
+        }
+        return switch (resolveSaveOperation(context, entity)) {
+            case INSERT -> reactiveOperations.persist(getInsertOperation(context, entity));
+            case INSERT_WITH_UPDATE_FALLBACK -> persistWithUpdateFallbackReactive(context, entity);
+            case UPDATE -> reactiveOperations.update(getUpdateOperation(context, entity));
+        };
+    }
+
+    protected final <E> Publisher<E> persistWithUpdateFallbackReactive(MethodInvocationContext<T, ?> context, E entity) {
+        return Flux.from(reactiveOperations.persist(getInsertOperation(context, entity)))
+            .onErrorResume(throwable -> {
+                Throwable cause = unwrapCompletionException(throwable);
+                if (cause instanceof RuntimeException runtimeException && isEntityExistsException(context, runtimeException)) {
+                    return Flux.from(reactiveOperations.update(getUpdateOperation(context, entity)));
+                }
+                return Flux.error(cause);
+            });
     }
 }

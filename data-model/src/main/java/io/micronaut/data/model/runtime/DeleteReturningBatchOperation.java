@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.runtime;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A delete returning batch operation is an operation performed on one or more entities of the same type.
  *
@@ -26,5 +28,6 @@ package io.micronaut.data.model.runtime;
 public interface DeleteReturningBatchOperation<E, R> extends DeleteBatchOperation<E> {
 
     @Override
+    @Nullable
     StoredQuery<E, R> getStoredQuery();
 }

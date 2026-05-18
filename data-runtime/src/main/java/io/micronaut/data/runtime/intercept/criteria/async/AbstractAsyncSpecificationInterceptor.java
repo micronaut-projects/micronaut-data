@@ -17,8 +17,9 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.ArgumentUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -26,9 +27,9 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
-import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import jakarta.persistence.criteria.CriteriaQuery;
 
@@ -48,6 +49,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected static final Argument<List<Object>> LIST_OF_OBJECTS = Argument.listOf(Object.class);
 
     protected final AsyncRepositoryOperations asyncOperations;
+    @Nullable
     protected final AsyncCriteriaRepositoryOperations asyncCriteriaOperations;
 
     /**
@@ -56,25 +58,33 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
      * @param operations The operations
      */
     protected AbstractAsyncSpecificationInterceptor(RepositoryOperations operations) {
-        super(operations);
-        if (operations instanceof AsyncCapableRepository asyncCapableRepository) {
-            this.asyncOperations = asyncCapableRepository.async();
-        } else {
-            throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
+        super(validateAsyncRepositoryOperations(operations));
+        this.asyncOperations = ((AsyncCapableRepository) operations).async();
+
+        AsyncCriteriaRepositoryOperations criteriaOperations = findRepositoryOperations(AsyncCriteriaRepositoryOperations.class);
+        if (criteriaOperations == null) {
+            ReactiveCriteriaRepositoryOperations reactiveCriteriaOperations = findRepositoryOperations(ReactiveCriteriaRepositoryOperations.class);
+            if (reactiveCriteriaOperations != null) {
+                criteriaOperations = new ReactiveAsyncCriteriaRepositoryOperations(reactiveCriteriaOperations);
+            }
         }
-        if (operations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
-            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
-        } else if (asyncOperations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
-            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
-        } else if (operations instanceof AsyncCriteriaCapableRepository repository) {
-            asyncCriteriaOperations = repository.async();
-        } else {
-            asyncCriteriaOperations = null;
+        asyncCriteriaOperations = criteriaOperations;
+        if (asyncCriteriaOperations != null) {
+            criteriaBuilder = asyncCriteriaOperations.getCriteriaBuilder();
         }
+    }
+
+    private static RepositoryOperations validateAsyncRepositoryOperations(RepositoryOperations operations) {
+        ArgumentUtils.requireNonNull("operations", operations);
+        if (operations instanceof AsyncCapableRepository) {
+            return operations;
+        }
+        throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
     }
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
                                                                                  MethodInvocationContext<?, ?> context,
+                                                                                 @Nullable
                                                                                  Pageable pageable) {
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;

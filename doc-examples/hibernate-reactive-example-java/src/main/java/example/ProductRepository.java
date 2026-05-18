@@ -3,9 +3,9 @@ package example;
 
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.hibernate.reactive.repository.jpa.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.jpa.annotation.EntityGraph;
-import io.micronaut.data.jpa.repository.criteria.Specification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import reactor.core.publisher.Flux;
 
@@ -34,7 +34,7 @@ public interface ProductRepository extends ReactorCrudRepository<Product, Long>,
     // tag::specifications[]
     @Transactional
     default Flux<Product> findByName(String name, boolean caseInsensitive, boolean includeBlank) {
-        Specification<Product> specification;
+        QuerySpecification<Product> specification;
         if (caseInsensitive) {
             specification = Specifications.nameEqualsCaseInsensitive(name);
         } else {
@@ -49,12 +49,12 @@ public interface ProductRepository extends ReactorCrudRepository<Product, Long>,
     // tag::spec[]
     class Specifications {
 
-        public static Specification<Product> nameEquals(String name) {
+        public static QuerySpecification<Product> nameEquals(String name) {
             return (root, query, criteriaBuilder)
                     -> criteriaBuilder.equal(root.get("name"), name);
         }
 
-        public static Specification<Product> nameEqualsCaseInsensitive(String name) {
+        public static QuerySpecification<Product> nameEqualsCaseInsensitive(String name) {
             return (root, query, criteriaBuilder)
                     -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
         }

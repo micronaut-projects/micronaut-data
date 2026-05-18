@@ -19,7 +19,11 @@ import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Designates a class as being persisted. This is a generic annotation to identify a persistent type
@@ -31,16 +35,14 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Documented
-@Introspected(
-    indexed = {
+@Introspected(indexed = {
         @Introspected.IndexedAnnotation(annotation = Id.class),
         @Introspected.IndexedAnnotation(annotation = Version.class),
         @Introspected.IndexedAnnotation(annotation = DateCreated.class),
         @Introspected.IndexedAnnotation(annotation = DateUpdated.class),
         @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value"),
         @Introspected.IndexedAnnotation(annotation = Index.class, member = "value")
-    }
-)
+    })
 public @interface MappedEntity {
 
     /**

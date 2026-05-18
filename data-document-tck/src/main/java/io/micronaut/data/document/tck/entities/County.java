@@ -18,16 +18,21 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity("comp_country")
 public class County {
     @EmbeddedId
+    @Nullable
     private CountyPk id;
     @MappedProperty
+    @Nullable
     private String countyName;
     @MappedProperty("is_enabled")
+    @Nullable
     private Boolean enabled;
 
+    @Nullable
     public CountyPk getId() {
         return id;
     }
@@ -36,6 +41,7 @@ public class County {
         this.id = id;
     }
 
+    @Nullable
     public String getCountyName() {
         return countyName;
     }
@@ -44,6 +50,7 @@ public class County {
         this.countyName = countyName;
     }
 
+    @Nullable
     public Boolean getEnabled() {
         return enabled;
     }

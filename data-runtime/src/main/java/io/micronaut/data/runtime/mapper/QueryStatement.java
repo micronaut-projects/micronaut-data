@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -45,8 +44,7 @@ public interface QueryStatement<PS, IDX> {
      * @return this writer
      * @throws DataAccessException if the value cannot be read
      */
-    QueryStatement<PS, IDX> setValue(PS statement, IDX index, Object value)
-            throws DataAccessException;
+    QueryStatement<PS, IDX> setValue(PS statement, IDX index, @Nullable Object value) throws DataAccessException;
 
     /**
      * Write a value dynamically using the result set and the given name and data type.
@@ -57,14 +55,13 @@ public interface QueryStatement<PS, IDX> {
      * @throws DataAccessException if the value cannot be read
      * @return The writer
      */
-    default QueryStatement<PS, IDX> setDynamic(
-            @NonNull PS statement,
-            @NonNull IDX index,
-            @NonNull DataType dataType,
-            Object value) {
+    default QueryStatement<PS, IDX> setDynamic(PS statement, IDX index, DataType dataType, @Nullable Object value) {
         switch (dataType) {
             case STRING:
             case JSON:
+                if (value == null) {
+                    return setString(statement, index, null);
+                }
                 String str;
                 if (value instanceof CharSequence) {
                     str = value.toString();
@@ -75,33 +72,29 @@ public interface QueryStatement<PS, IDX> {
                 }
                 return setString(statement, index, str);
             case INTEGER:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setInt(statement, index, number.intValue());
-                } else {
-                    Integer integer = convertRequired(value, Integer.class);
-                    if (integer != null) {
-                        return setInt(statement, index, integer);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setInt(statement, index, convertRequired(value, Integer.class));
             case BOOLEAN:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Boolean bool) {
                     return setBoolean(statement, index, bool);
-                } else {
-                    Boolean b = convertRequired(value, Boolean.class);
-                    if (b != null) {
-                        return setBoolean(statement, index, b);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setBoolean(statement, index, convertRequired(value, Boolean.class));
             case DATE:
+                if (value == null) {
+                    return setDate(statement, index, null);
+                }
                 if (value instanceof Date date) {
                     return setDate(statement, index, date);
-                } else {
-                    return setDate(statement, index, convertRequired(value, java.sql.Date.class));
                 }
+                return setDate(statement, index, convertRequired(value, java.sql.Date.class));
             case TIMESTAMP:
                 Instant instant;
                 if (value == null) {
@@ -115,100 +108,89 @@ public interface QueryStatement<PS, IDX> {
                 }
                 return setTimestamp(statement, index, instant);
             case TIME:
+                if (value == null) {
+                    return setTime(statement, index, null);
+                }
                 if (value instanceof Time time) {
                     return setTime(statement, index, time);
-                } else {
-                    throw new DataAccessException("Invalid time: " + value);
                 }
+                throw new DataAccessException("Invalid time: " + value);
 
             case UUID:
                 if (value instanceof CharSequence) {
                     return setValue(statement, index, UUID.fromString(value.toString()));
-                } else if (value instanceof UUID) {
-                    return setValue(statement, index, value);
-                } else {
-                    throw new DataAccessException("Invalid UUID: " + value);
                 }
+                if (value instanceof UUID) {
+                    return setValue(statement, index, value);
+                }
+                throw new DataAccessException("Invalid UUID: " + value);
             case DOUBLE:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setDouble(statement, index, number.doubleValue());
-                } else {
-                    Double d = convertRequired(value, Double.class);
-                    if (d != null) {
-                        return setDouble(statement, index, d);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setDouble(statement, index, convertRequired(value, Double.class));
             case BYTE_ARRAY:
+                if (value == null) {
+                    return setBytes(statement, index, null);
+                }
                 if (value instanceof byte[] byteArray) {
                     return setBytes(statement, index, byteArray);
-                } else {
-                    return setBytes(statement, index, convertRequired(value, byte[].class));
                 }
+                return setBytes(statement, index, convertRequired(value, byte[].class));
             case BIGDECIMAL:
+                if (value == null) {
+                    return setBigDecimal(statement, index, null);
+                }
                 if (value instanceof BigDecimal decimal) {
                     return setBigDecimal(statement, index, decimal);
-                } else if (value instanceof Number number) {
-                    return setBigDecimal(statement, index, BigDecimal.valueOf(number.doubleValue()));
-                } else {
-                    return setBigDecimal(statement, index, convertRequired(value, BigDecimal.class));
                 }
+                if (value instanceof Number number) {
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(number.doubleValue()));
+                }
+                return setBigDecimal(statement, index, convertRequired(value, BigDecimal.class));
             case LONG:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setLong(statement, index, number.longValue());
-                } else {
-                    Long l = convertRequired(value, Long.class);
-                    if (l != null) {
-                        return setLong(statement, index, l);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setLong(statement, index, convertRequired(value, Long.class));
             case CHARACTER:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Character character) {
                     return setChar(statement, index, character);
-                } else {
-                    Character c = convertRequired(value, Character.class);
-                    if (c != null) {
-                        return setChar(statement, index, c);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setChar(statement, index, convertRequired(value, Character.class));
             case FLOAT:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setFloat(statement, index, number.floatValue());
-                } else {
-                    Float f = convertRequired(value, Float.class);
-                    if (f != null) {
-                        return setFloat(statement, index, f);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setFloat(statement, index, convertRequired(value, Float.class));
             case SHORT:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setShort(statement, index, number.shortValue());
-                } else {
-                    Short s = convertRequired(value, Short.class);
-                    if (s != null) {
-                        return setShort(statement, index, s);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setShort(statement, index, convertRequired(value, Short.class));
             case BYTE:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
                 if (value instanceof Number number) {
                     return setByte(statement, index, number.byteValue());
-                } else {
-                    Byte n = convertRequired(value, Byte.class);
-                    if (n != null) {
-                        return setByte(statement, index, n);
-                    } else {
-                        throw new DataAccessException("Cannot set null value");
-                    }
                 }
+                return setByte(statement, index, convertRequired(value, Byte.class));
             case OBJECT:
             default:
                 if (dataType.isArray()) {
@@ -238,6 +220,9 @@ public interface QueryStatement<PS, IDX> {
                                 case CHARACTER_ARRAY:
                                     value = convertRequired(value, String[].class);
                                     break;
+                                case UUID_ARRAY:
+                                    value = convertRequired(value, UUID[].class);
+                                    break;
                                 default:
                                     // no-op
                             }
@@ -251,6 +236,10 @@ public interface QueryStatement<PS, IDX> {
         }
     }
 
+    private DataAccessException cannotSetNullValueError() {
+        return new DataAccessException("Cannot set null value");
+    }
+
     /**
      * Convert the value to the given type.
      * @param value The value
@@ -259,10 +248,7 @@ public interface QueryStatement<PS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default @Nullable <T> T convertRequired(@Nullable Object value, Class<T> type) {
-        if (value == null) {
-            return null;
-        }
+    default @Nullable <T> T convertRequired(Object value, Class<T> type) {
         if (type.isInstance(value)) {
             return (T) value;
         }
@@ -281,8 +267,7 @@ public interface QueryStatement<PS, IDX> {
      * @param value The value
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setLong(PS statement, IDX name, long value) {
+    default QueryStatement<PS, IDX> setLong(PS statement, IDX name, @Nullable Long value) {
         setValue(statement, name, value);
         return this;
     }
@@ -294,8 +279,7 @@ public interface QueryStatement<PS, IDX> {
      * @param value The char value
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setChar(PS statement, IDX name, char value) {
+    default QueryStatement<PS, IDX> setChar(PS statement, IDX name, @Nullable Character value) {
         return setValue(statement, name, value);
     }
 
@@ -306,8 +290,7 @@ public interface QueryStatement<PS, IDX> {
      * @param date The date
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setDate(PS statement, IDX name, Date date) {
+    default QueryStatement<PS, IDX> setDate(PS statement, IDX name, @Nullable Date date) {
         return setValue(statement, name, date);
     }
 
@@ -320,8 +303,7 @@ public interface QueryStatement<PS, IDX> {
      * @return This writer
      * @since 3.4.2
      */
-    @NonNull
-    default QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Instant instant) {
+    default QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, @Nullable Instant instant) {
         return setValue(statement, name, instant);
     }
 
@@ -334,7 +316,7 @@ public interface QueryStatement<PS, IDX> {
      * @return This writer
      * @since 3.8
      */
-    default QueryStatement<PS, IDX> setTime(PS statement, IDX name, Time instant) {
+    default QueryStatement<PS, IDX> setTime(PS statement, IDX name, @Nullable Time instant) {
         return setValue(statement, name, instant);
     }
 
@@ -345,7 +327,7 @@ public interface QueryStatement<PS, IDX> {
      * @param string The string
      * @return This writer
      */
-    default QueryStatement<PS, IDX> setString(PS statement, IDX name, String string) {
+    default QueryStatement<PS, IDX> setString(PS statement, IDX name, @Nullable String string) {
         return setValue(statement, name, string);
     }
 
@@ -356,8 +338,7 @@ public interface QueryStatement<PS, IDX> {
      * @param integer The integer
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setInt(PS statement, IDX name, int integer) {
+    default QueryStatement<PS, IDX> setInt(PS statement, IDX name, @Nullable Integer integer) {
         return setValue(statement, name, integer);
     }
 
@@ -368,8 +349,7 @@ public interface QueryStatement<PS, IDX> {
      * @param bool The boolean
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setBoolean(PS statement, IDX name, boolean bool) {
+    default QueryStatement<PS, IDX> setBoolean(PS statement, IDX name, @Nullable Boolean bool) {
         return setValue(statement, name, bool);
     }
 
@@ -380,8 +360,7 @@ public interface QueryStatement<PS, IDX> {
      * @param f The float
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setFloat(PS statement, IDX name, float f) {
+    default QueryStatement<PS, IDX> setFloat(PS statement, IDX name, @Nullable Float f) {
         return setValue(statement, name, f);
     }
 
@@ -392,8 +371,7 @@ public interface QueryStatement<PS, IDX> {
      * @param b The byte
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setByte(PS statement, IDX name, byte b) {
+    default QueryStatement<PS, IDX> setByte(PS statement, IDX name, @Nullable Byte b) {
         return setValue(statement, name, b);
     }
 
@@ -404,8 +382,7 @@ public interface QueryStatement<PS, IDX> {
      * @param s The short
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setShort(PS statement, IDX name, short s) {
+    default QueryStatement<PS, IDX> setShort(PS statement, IDX name, @Nullable Short s) {
         return setValue(statement, name, s);
     }
 
@@ -416,8 +393,7 @@ public interface QueryStatement<PS, IDX> {
      * @param d The double
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setDouble(PS statement, IDX name, double d) {
+    default QueryStatement<PS, IDX> setDouble(PS statement, IDX name, @Nullable Double d) {
         return setValue(statement, name, d);
     }
 
@@ -428,8 +404,7 @@ public interface QueryStatement<PS, IDX> {
      * @param bd The big decimal
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setBigDecimal(PS statement, IDX name, BigDecimal bd) {
+    default QueryStatement<PS, IDX> setBigDecimal(PS statement, IDX name, @Nullable BigDecimal bd) {
         return setValue(statement, name, bd);
     }
 
@@ -440,8 +415,7 @@ public interface QueryStatement<PS, IDX> {
      * @param bytes the bytes
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setBytes(PS statement, IDX name, byte[] bytes) {
+    default QueryStatement<PS, IDX> setBytes(PS statement, IDX name, byte @Nullable [] bytes) {
         return setValue(statement, name, bytes);
     }
 
@@ -452,8 +426,7 @@ public interface QueryStatement<PS, IDX> {
      * @param array the array
      * @return This writer
      */
-    default @NonNull
-    QueryStatement<PS, IDX> setArray(PS statement, IDX name, Object array) {
+    default QueryStatement<PS, IDX> setArray(PS statement, IDX name, @Nullable Object array) {
         return setValue(statement, name, array);
     }
 

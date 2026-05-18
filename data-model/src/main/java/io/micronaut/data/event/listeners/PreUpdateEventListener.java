@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -37,10 +36,10 @@ public interface PreUpdateEventListener<T> extends EntityEventListener<T> {
      * @param entity The entity
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    boolean preUpdate(@NonNull T entity);
+    boolean preUpdate(T entity);
 
     @Override
-    default boolean preUpdate(@NonNull EntityEventContext<T> context) {
+    default boolean preUpdate(EntityEventContext<T> context) {
         return preUpdate(context.getEntity());
     }
 

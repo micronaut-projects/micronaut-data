@@ -15,11 +15,14 @@
  */
 package io.micronaut.transaction;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionSynchronization;
+
+import java.util.function.Supplier;
 
 /**
  * The transaction status.
@@ -29,7 +32,7 @@ import io.micronaut.transaction.support.TransactionSynchronization;
  * @author Denis Stepanov
  * @since 1.0.0
  */
-public interface TransactionStatus<T> extends TransactionExecution {
+public interface TransactionStatus<T> extends TransactionExecution, PropagatedContextElement {
 
     /**
      * @return The underlying transaction object if exists.
@@ -40,7 +43,6 @@ public interface TransactionStatus<T> extends TransactionExecution {
     /**
      * @return The associated connection.
      */
-    @NonNull
     default T getConnection() {
         return getConnectionStatus().getConnection();
     }
@@ -49,7 +51,6 @@ public interface TransactionStatus<T> extends TransactionExecution {
      * @return The connection status.
      * @since 4.0.0
      */
-    @NonNull
     ConnectionStatus<T> getConnectionStatus();
 
     /**
@@ -60,8 +61,47 @@ public interface TransactionStatus<T> extends TransactionExecution {
      *
      * @param synchronization the synchronization object to register
      */
-    default void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+    default void registerSynchronization(TransactionSynchronization synchronization) {
         throw new TransactionUsageException("Transaction synchronization is not supported!");
     }
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param propagatedContext The propagated context
+     * @param supplier The supplier
+     * @param <V>      The value type
+     * @return The value
+     * @since 5.0
+     */
+    default <V> V propagate(PropagatedContext propagatedContext, Supplier<V> supplier) {
+        return propagatedContext.plus(getConnectionStatus()).plus(this).propagate(supplier);
+    }
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param supplier The supplier
+     * @param <V>      The value type
+     * @return The value
+     * @since 5.0
+     */
+    default <V> V propagate(Supplier<V> supplier) {
+        return PropagatedContext.getOrEmpty().plus(getConnectionStatus()).plus(this).propagate(supplier);
+    }
+
+    /**
+     * Propagated the current {@link io.micronaut.core.propagation.PropagatedContext} with added connection status.
+     *
+     * @param runnable The runnable
+     * @since 5.0
+     */
+    default void propagate(Runnable runnable) {
+        propagate(() -> {
+            runnable.run();
+            return null;
+        });
+    }
+
 }
 

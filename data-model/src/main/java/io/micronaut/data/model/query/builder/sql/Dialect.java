@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.DataType;
 
@@ -41,27 +40,23 @@ public enum Dialect {
      * H2 database.
      */
     H2(true, false,
-        EnumSet.of(
-            DEFAULT,
+        EnumSet.of(DEFAULT,
             LEFT,
             LEFT_FETCH,
             RIGHT,
             RIGHT_FETCH,
             FETCH,
-            INNER
-        )),
+            INNER)),
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(true, true, EnumSet.of(
-        DEFAULT,
+    MYSQL(true, true, EnumSet.of(DEFAULT,
         LEFT,
         LEFT_FETCH,
         RIGHT,
         RIGHT_FETCH,
         FETCH,
-        INNER
-    )),
+        INNER)),
     /**
      * Postgres 9.5 or later.
      */
@@ -73,7 +68,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true, false, false, false),
+    ORACLE(true, true, ALL_TYPES, true, true, true, true),
     /**
      * Ansi compliant SQL.
      */
@@ -145,9 +140,11 @@ public enum Dialect {
      * @return The dialect compatible DataType
      * @since 2.0.1
      */
-    public final DataType getDataType(@NonNull DataType type) {
+    public final DataType getDataType(DataType type) {
         if (type == DataType.UUID && this.stringUUID) {
             return DataType.STRING;
+        } else if (type == DataType.DURATION || type == DataType.PERIOD) {
+            return this == Dialect.ORACLE ? type : DataType.STRING;
         } else {
             return type;
         }
@@ -160,7 +157,7 @@ public enum Dialect {
      * @return True if a string UUID is required
      * @since 1.1.3
      */
-    public final boolean requiresStringUUID(@NonNull DataType type) {
+    public final boolean requiresStringUUID(DataType type) {
         return type == DataType.UUID && this.stringUUID;
     }
 
@@ -170,7 +167,7 @@ public enum Dialect {
      * @param joinType the join type
      * @return True if the type is supported by this dialect.
      */
-    public final boolean supportsJoinType(@NonNull Join.Type joinType) {
+    public final boolean supportsJoinType(Join.  Type joinType) {
         return this.joinTypesSupported.contains(joinType);
     }
 

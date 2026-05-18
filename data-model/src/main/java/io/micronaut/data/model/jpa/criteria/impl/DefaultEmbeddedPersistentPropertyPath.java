@@ -43,8 +43,7 @@ public class DefaultEmbeddedPersistentPropertyPath<T> implements PersistentPrope
     private final io.micronaut.data.model.PersistentAssociationPath propertyPath;
     private final BiFunction<Path<?>, PersistentProperty, PersistentPropertyPath<?>> getPropertyFn;
 
-    public DefaultEmbeddedPersistentPropertyPath(
-        Association association,
+    public DefaultEmbeddedPersistentPropertyPath(Association association,
         List<Association> associations,
         BiFunction<Path<?>, PersistentProperty, PersistentPropertyPath<?>> getPropertyFn) {
         this(new io.micronaut.data.model.PersistentAssociationPath(associations, association), getPropertyFn);

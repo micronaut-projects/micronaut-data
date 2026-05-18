@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.event.PostPersist;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -36,10 +35,10 @@ public interface PostPersistEventListener<T> extends EntityEventListener<T> {
      *
      * @param entity The entity
      */
-    void postPersist(@NonNull T entity);
+    void postPersist(T entity);
 
     @Override
-    default void postPersist(@NonNull EntityEventContext<T> context) {
+    default void postPersist(EntityEventContext<T> context) {
         postPersist(context.getEntity());
     }
 
@@ -48,4 +47,3 @@ public interface PostPersistEventListener<T> extends EntityEventListener<T> {
         return eventType == PostPersist.class;
     }
 }
-

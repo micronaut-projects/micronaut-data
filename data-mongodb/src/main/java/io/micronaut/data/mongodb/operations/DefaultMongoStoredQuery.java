@@ -17,17 +17,19 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2;
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -54,13 +56,11 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonObjectId;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +71,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,7 +88,7 @@ import java.util.regex.Pattern;
 @Internal
 final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
-    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
@@ -96,9 +98,15 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final ConversionService conversionService;
     private final RuntimePersistentEntity<E> persistentEntity;
+    @Nullable
     private final UpdateData updateData;
+    @Nullable
+    private final UpdateReturningData updateReturningData;
+    @Nullable
     private final FindData findData;
+    @Nullable
     private final AggregateData aggregateData;
+    @Nullable
     private final DeleteData deleteData;
     private final boolean isCount;
 
@@ -123,7 +131,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                             RuntimeEntityRegistry runtimeEntityRegistry,
                             ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
-                            String updateJson) {
+                            @Nullable String updateJson) {
         super(storedQuery, persistentEntity, conversionService);
         this.storedQuery = storedQuery;
         this.codecRegistry = codecRegistry;
@@ -188,6 +196,21 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else {
             updateData = null;
         }
+
+        if (operationType == OperationType.UPDATE_RETURNING) {
+            if (StringUtils.isEmpty(updateJson)) {
+                throw new IllegalStateException("Update query is expected!");
+            }
+            String query = storedQuery.getQuery();
+            updateReturningData = new UpdateReturningData(
+                BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                getParameterInRole(MongoRoles.FILTER_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
+            );
+        } else {
+            updateReturningData = null;
+        }
     }
 
     private List<Bson> parseAggregation(String query, boolean isCount) {
@@ -209,12 +232,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     @Nullable
     private String getParameterInRole(String role) {
         if (storedQuery instanceof DefaultStoredQuery) {
-            return storedQuery.getAnnotationMetadata().getAnnotation(DataMethod.class).stringValue(role).orElse(null);
+            AnnotationValue<DataMethod> dataMethodAnnotationValue = storedQuery.getAnnotationMetadata().getAnnotation(DataMethod.class);
+            if (dataMethodAnnotationValue != null) {
+                return dataMethodAnnotationValue.stringValue(role).orElse(null);
+            }
         }
         return null;
     }
 
-    @Nullable
     private int getParameterIndexByName(@Nullable String name) {
         if (name == null) {
             return -1;
@@ -233,8 +258,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     @Nullable
-    private <X> X getParameterAtIndex(InvocationContext<?, ?> invocationContext, int index) {
-        requireInvocationContext(invocationContext);
+    private <X> X getParameterAtIndex(@Nullable InvocationContext<?, ?> invocationContext, int index) {
+        Objects.requireNonNull(invocationContext);
         return (X) invocationContext.getParameterValues()[index];
     }
 
@@ -282,6 +307,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     @Override
+    public MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
+        if (updateReturningData == null) {
+            throw new IllegalStateException("Expected update returning query!");
+        }
+        return updateReturningData.getFindOneAndUpdate(invocationContext);
+    }
+
+    @Override
     public MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext) {
         if (deleteData == null) {
             throw new IllegalStateException("Expected delete query!");
@@ -297,7 +330,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         return deleteData.getDeleteOne(entity);
     }
 
-    private boolean needsProcessing(Bson value) {
+    private boolean needsProcessing(@Nullable Bson value) {
         if (value == null) {
             return false;
         }
@@ -307,7 +340,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         throw new IllegalStateException("Unrecognized value: " + value);
     }
 
-    private boolean needsProcessing(List<Bson> values) {
+    private boolean needsProcessing(@Nullable List<Bson> values) {
         if (values == null) {
             return false;
         }
@@ -321,7 +354,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private boolean needsProcessingValue(BsonValue value) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 return true;
             }
@@ -342,7 +375,10 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         }
         if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
-            return MONGO_PARAM_PATTERN.matcher(pattern).matches();
+            if (MONGO_PARAM_PATTERN.matcher(pattern).matches()) {
+                return true;
+            }
+            return bsonRegularExpression.getOptions().contains("l");
         }
         return false;
     }
@@ -371,21 +407,25 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         bindParameter(new Binder() {
 
             @Override
-            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
                 return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
             }
 
             @Override
-            public Object convert(Object value, RuntimePersistentProperty<?> property) {
-                AttributeConverter<Object, Object> converter = property.getConverter();
-                if (converter != null) {
-                    return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+            @Nullable
+            public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
+                if (property != null) {
+                    AttributeConverter<Object, Object> converter = property.getConverter();
+                    if (converter != null) {
+                        return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                    }
                 }
                 return value;
             }
 
+            @Nullable
             @Override
-            public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+            public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
                 if (converterClass == null) {
                     return value;
                 }
@@ -394,7 +434,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 return converter.convertToPersistedValue(value, conversionContext);
             }
 
-            private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property, Argument<?> argument) {
+            private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property, @Nullable Argument<?> argument) {
                 if (argument != null) {
                     return ConversionContext.of(argument);
                 }
@@ -405,7 +445,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
 
             @Override
-            public void bindOne(QueryParameterBinding binding, Object value) {
+            public void bindOne(QueryParameterBinding binding, @Nullable Object value) {
                 holder[0] = new AbstractMap.SimpleEntry<>(binding, value);
             }
 
@@ -420,7 +460,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
                 QueryParameterBinding queryParameterBinding = getQueryBindings().get(index);
@@ -429,7 +469,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     throw new DataAccessException("Cannot bind a value at index: " + index);
                 }
                 BsonValue bsonValue = getValue(e.getKey(), e.getValue());
-                if (bsonDocument.containsKey(MongoQueryBuilder2.NEGATE)) {
+                if (bsonDocument.containsKey(MongoQueryBuilder.NEGATE)) {
                     if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
                         Object object = bsonDocumentWrapper.getWrappedDocument();
                         if (object instanceof Long aLong) {
@@ -464,7 +504,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         default -> bsonValue;
                     };
                 }
-                if (bsonDocument.containsKey(MongoQueryBuilder2.RECIPROCATE)) {
+                if (bsonDocument.containsKey(MongoQueryBuilder.RECIPROCATE)) {
                     if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
                         Object object = bsonDocumentWrapper.getWrappedDocument();
                         if (object instanceof Long aLong) {
@@ -530,6 +570,11 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else if (value instanceof BsonRegularExpression bsonRegularExpression) {
             String pattern = bsonRegularExpression.getPattern();
             Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
+            String originalOptions = bsonRegularExpression.getOptions();
+            String sanitizedOptions = originalOptions.contains("l") ? originalOptions.replace("l", "") : originalOptions;
+            if (!sanitizedOptions.equals(originalOptions) && !matcher.matches()) {
+                return new BsonRegularExpression(pattern, sanitizedOptions);
+            }
             if (matcher.matches()) {
                 Integer queryParamIndex = null;
                 try {
@@ -545,14 +590,18 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
                     }
                     pattern = pattern.replace(matcher.group(1), e.getValue().toString());
-                    String options = bsonRegularExpression.getOptions();
-                    if (options.contains("l")) {
+                    if (originalOptions.contains("l")) {
                         pattern = pattern
                             .replace("_", ".")
                             .replace("%", ".*");
-                        options = options.replace("l", "");
+                        if (!pattern.startsWith("^")) {
+                            pattern = "^" + pattern;
+                        }
+                        if (!pattern.endsWith("$")) {
+                            pattern = pattern + "$";
+                        }
                     }
-                    return new BsonRegularExpression(pattern, options);
+                    return new BsonRegularExpression(pattern, sanitizedOptions);
                 }
             }
         }
@@ -567,15 +616,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
             RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
             if (persistentProperty instanceof RuntimeAssociation runtimeAssociation) {
-                RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
-                isIdentity = identity != null && identity.getType() == String.class && identity.isGenerated();
+                if (runtimeAssociation.getAssociatedEntity().hasIdentity()) {
+                    RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
+                    isIdentity = identity.getType() == String.class && identity.isGenerated();
+                }
             } else {
-                isIdentity = persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated();
+                isIdentity = persistentProperty.getOwner().hasIdentity() && persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated();
             }
         }
 
-        if (isIdentity && value instanceof String) {
-            return new BsonObjectId(new ObjectId((String) value));
+        if (isIdentity && value instanceof String string) {
+            return MongoUtils.generatedStringIdValue(string);
         }
         if (value instanceof Object[] objects) {
             List<Object> valueList = Arrays.asList(objects);
@@ -583,7 +634,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
                     Object item = iterator.next();
                     if (item instanceof String string) {
-                        item = new BsonObjectId(new ObjectId(string));
+                        item = MongoUtils.generatedStringIdValue(string);
                     }
                     iterator.set(item);
                 }
@@ -594,12 +645,12 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             final boolean isIdentityField = isIdentity;
             return new BsonArray(values.stream().map(val -> {
                 if (isIdentityField && val instanceof String string) {
-                    return new BsonObjectId(new ObjectId(string));
+                    return MongoUtils.generatedStringIdValue(string);
                 }
-                return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
+                return MongoUtils.toBsonValue(val, codecRegistry.get());
             }).toList());
         }
-        return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
+        return MongoUtils.toBsonValue(value, codecRegistry.get());
     }
 
     @Override
@@ -608,6 +659,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private final class AggregateData extends CollationSupported {
+        @Nullable
         private final List<Bson> pipeline;
         private final boolean pipelineNeedsProcessing;
         @Nullable
@@ -615,15 +667,15 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final int pipelineParameterIndex;
         private final int optionsParameterIndex;
 
-        private AggregateData(List<Bson> pipeline) {
+        private AggregateData(@Nullable List<Bson> pipeline) {
             this(pipeline, null, null);
         }
 
-        private AggregateData(String pipelineParameter, String optionsParameter) {
+        private AggregateData(@Nullable String pipelineParameter, @Nullable String optionsParameter) {
             this(null, pipelineParameter, optionsParameter);
         }
 
-        private AggregateData(List<Bson> pipeline, String pipelineParameter, String optionsParameter) {
+        private AggregateData(@Nullable List<Bson> pipeline, @Nullable String pipelineParameter, @Nullable String optionsParameter) {
             this.pipeline = pipeline;
             this.pipelineParameterIndex = getParameterIndexByName(pipelineParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
@@ -641,15 +693,16 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 }
                 options.collation(collation);
             }
-            return new MongoAggregation(pipeline, options);
+            return new MongoAggregation(Objects.requireNonNull(pipeline), options);
         }
 
+        @Nullable
         private List<Bson> getPipeline(InvocationContext<?, ?> invocationContext) {
             if (pipelineParameterIndex != -1) {
                 return getParameterAtIndex(invocationContext, pipelineParameterIndex);
             }
             if (pipelineNeedsProcessing) {
-                return replaceQueryParametersInList(pipeline, invocationContext, null);
+                return replaceQueryParametersInList(Objects.requireNonNull(pipeline), invocationContext, null);
             }
             return pipeline;
         }
@@ -672,8 +725,10 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private final class UpdateData extends CollationSupported {
+        @Nullable
         private final Bson update;
         private final boolean updateNeedsProcessing;
+        @Nullable
         private final Bson filter;
         private final boolean filterNeedsProcessing;
         @Nullable
@@ -682,7 +737,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final int updateParameterIndex;
         private final int optionsParameterIndex;
 
-        private UpdateData(Bson update, Bson filter, String filterParameter, String updateParameter, String optionsParameter) {
+        private UpdateData(@Nullable Bson update, @Nullable Bson filter, @Nullable String filterParameter, @Nullable String updateParameter, @Nullable String optionsParameter) {
             this.update = update;
             this.updateNeedsProcessing = needsProcessing(update);
             this.filter = filter;
@@ -725,14 +780,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
         }
 
-        public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
+        private MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
             return new MongoUpdate(
                 getUpdate(invocationContext, null),
                 getFilter(invocationContext, null),
                 getOptions(invocationContext));
         }
 
-        public MongoUpdate getUpdateOne(E entity) {
+        private MongoUpdate getUpdateOne(E entity) {
             if (updateData == null) {
                 throw new IllegalStateException("Expected update query!");
             }
@@ -741,7 +796,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             return new MongoUpdate(update, getFilter(null, entity), options);
         }
 
-        private Bson getUpdate(InvocationContext<?, ?> invocationContext, E entity) {
+        private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             Bson update = this.update;
             if (updateParameterIndex != -1) {
                 update = getParameterAtIndex(invocationContext, updateParameterIndex);
@@ -750,14 +805,11 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 throw new IllegalStateException("Update query is not provided!");
             }
             update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
-            }
             return update;
         }
 
         @NonNull
-        private UpdateOptions getOptions(InvocationContext<?, ?> invocationContext) {
+        private UpdateOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
             UpdateOptions options = this.options;
             if (optionsParameterIndex != -1) {
                 UpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
@@ -765,7 +817,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     if (options == null) {
                         options = paramOptions;
                     } else {
-                        options = copy(this.options);
+                        options = copy(options);
                         copyNonNullFrom(options, paramOptions);
                     }
                 }
@@ -783,19 +835,224 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             return options;
         }
 
-        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (filterParameterIndex != -1) {
                 return getParameterAtIndex(invocationContext, filterParameterIndex);
             }
-            return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
+            return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+    }
+
+    private final class UpdateReturningData extends CollationSupported {
+        @Nullable
+        private final Bson update;
+        private final boolean updateNeedsProcessing;
+        @Nullable
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        @Nullable
+        private final FindOneAndUpdateOptions options;
+        @Nullable
+        private final Bson projection;
+        @Nullable
+        private final Bson sort;
+        private final int filterParameterIndex;
+        private final int updateParameterIndex;
+        private final int optionsParameterIndex;
+
+        private UpdateReturningData(@Nullable Bson update, @Nullable Bson filter, @Nullable String filterParameter, @Nullable String updateParameter,
+                                    @Nullable String optionsParameter) {
+            this.update = update;
+            this.updateNeedsProcessing = needsProcessing(update);
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.updateParameterIndex = getParameterIndexByName(updateParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
+            String projectionJson = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).orElse(null);
+            this.projection = projectionJson == null ? null : parseProjectionOrSortJson(projectionJson, "MongoProjection");
+            String sortJson = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).orElse(null);
+            this.sort = sortJson == null ? null : parseProjectionOrSortJson(sortJson, "MongoSort");
+            this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
+        }
+
+        /**
+         * Parse BSON JSON for MongoProjection/MongoSort annotations.
+         * <p>
+         * Projection and sort definitions are expected to be constant JSON. Using
+         * {@code :param}-style placeholders is not supported and will result in
+         * a {@link DataAccessException}.
+         *
+         * @param json         The raw JSON from the annotation.
+         * @param annotationId The annotation identifier (for error messages).
+         * @return The parsed {@link BsonDocument}.
+         */
+        @NonNull
+        private BsonDocument parseProjectionOrSortJson(@NonNull String json, @NonNull String annotationId) {
+            try {
+                return BsonDocument.parse(json);
+            } catch (RuntimeException e) {
+                throw new DataAccessException(
+                        "Failed to parse " + annotationId + " JSON. " +
+                        annotationId + " must contain constant JSON and does not support :param-style placeholders. " +
+                        "Invalid value: " + json,
+                        e
+                );
+            }
+        }
+
+        private FindOneAndUpdateOptions copy(FindOneAndUpdateOptions options) {
+            FindOneAndUpdateOptions newOptions = new FindOneAndUpdateOptions();
+            newOptions.collation(options.getCollation());
+            newOptions.upsert(options.isUpsert());
+            newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
+            newOptions.hint(options.getHint());
+            newOptions.hintString(options.getHintString());
+            newOptions.arrayFilters(options.getArrayFilters());
+            newOptions.returnDocument(options.getReturnDocument());
+            newOptions.projection(options.getProjection());
+            newOptions.sort(options.getSort());
+            if (options.getComment() != null) {
+                newOptions.comment(options.getComment());
+            }
+            if (options.getLet() != null) {
+                newOptions.let(options.getLet());
+            }
+            long maxTimeMs = options.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                newOptions.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
+            }
+            return newOptions;
+        }
+
+        private void copyNonNullFrom(FindOneAndUpdateOptions to, FindOneAndUpdateOptions from) {
+            if (from.getCollation() != null) {
+                to.collation(from.getCollation());
+            }
+            if (from.isUpsert()) {
+                to.upsert(from.isUpsert());
+            }
+            if (from.getBypassDocumentValidation() != null) {
+                to.bypassDocumentValidation(from.getBypassDocumentValidation());
+            }
+            if (from.getHint() != null) {
+                to.hint(from.getHint());
+            }
+            if (from.getHintString() != null) {
+                to.hintString(from.getHintString());
+            }
+            if (from.getArrayFilters() != null) {
+                to.arrayFilters(from.getArrayFilters());
+            }
+            if (from.getReturnDocument() != null && to.getReturnDocument() == null) {
+                to.returnDocument(from.getReturnDocument());
+            }
+            if (from.getProjection() != null) {
+                to.projection(from.getProjection());
+            }
+            if (from.getSort() != null) {
+                to.sort(from.getSort());
+            }
+            if (from.getComment() != null) {
+                to.comment(from.getComment());
+            }
+            if (from.getLet() != null) {
+                to.let(from.getLet());
+            }
+            long maxTimeMs = from.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                to.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        private MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
+            return new MongoFindOneAndUpdate(
+                getUpdate(invocationContext, null),
+                getFilter(invocationContext, null),
+                getOptions(invocationContext));
+        }
+
+        private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            Bson update = this.update;
+            if (updateParameterIndex != -1) {
+                update = getParameterAtIndex(invocationContext, updateParameterIndex);
+            }
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
+            return update;
+        }
+
+        @NonNull
+        private FindOneAndUpdateOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
+            FindOneAndUpdateOptions options = this.options;
+            if (optionsParameterIndex != -1) {
+                FindOneAndUpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        options = copy(paramOptions);
+                    } else {
+                        options = copy(options);
+                        copyNonNullFrom(options, paramOptions);
+                    }
+                }
+            }
+            if (options == null) {
+                options = new FindOneAndUpdateOptions();
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.collation(collation);
+            }
+            Bson projection = getProjection(invocationContext, null);
+            if (projection != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.projection(projection);
+            }
+            Bson sort = getSort(invocationContext, null);
+            if (sort != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.sort(sort);
+            }
+            return options;
+        }
+
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
+            return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+
+        @Nullable
+        private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            return projection;
+        }
+
+        @Nullable
+        private Bson getSort(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            return sort;
         }
     }
 
     private final class FindData extends CollationSupported {
+        @Nullable
         private final Bson filter;
         private final boolean filterNeedsProcessing;
+        @Nullable
         private final Bson sort;
         private final boolean sortNeedsProcessing;
+        @Nullable
         private final Bson projection;
         private final boolean projectionNeedsProcessing;
         @Nullable
@@ -803,15 +1060,15 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final int filterParameterIndex;
         private final int optionsParameterIndex;
 
-        private FindData(Bson filter) {
+        private FindData(@Nullable Bson filter) {
             this(filter, null, null);
         }
 
-        private FindData(String filterParameter, String optionsParameter) {
+        private FindData(@Nullable String filterParameter, @Nullable String optionsParameter) {
             this(null, filterParameter, optionsParameter);
         }
 
-        private FindData(Bson filter, String filterParameter, String optionsParameter) {
+        private FindData(@Nullable Bson filter, @Nullable String filterParameter, @Nullable String optionsParameter) {
             this.filterParameterIndex = getParameterIndexByName(filterParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             sort = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).map(BsonDocument::parse).orElse(null);
@@ -823,7 +1080,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             options = MongoOptionsUtils.buildFindOptions(storedQuery.getAnnotationMetadata()).orElse(null);
         }
 
-        public MongoFind getFind(InvocationContext<?, ?> invocationContext) {
+        private MongoFind getFind(InvocationContext<?, ?> invocationContext) {
             MongoFindOptions options = getFilterOptions(invocationContext);
             Bson filter = getFilter(invocationContext, null);
             if (filter != null) {
@@ -863,7 +1120,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             return new MongoFindOptions();
         }
 
-        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (filterParameterIndex != -1) {
                 return getParameterAtIndex(invocationContext, filterParameterIndex);
             }
@@ -873,6 +1131,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             return filterNeedsProcessing ? replaceQueryParameters(filter, invocationContext, entity) : filter;
         }
 
+        @Nullable
         private Bson getSort(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (sort == null) {
                 return null;
@@ -880,6 +1139,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             return sortNeedsProcessing ? replaceQueryParameters(sort, invocationContext, entity) : sort;
         }
 
+        @Nullable
         private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (projection == null) {
                 return null;
@@ -897,26 +1157,26 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         private final int filterParameterIndex;
         private final int optionsParameterIndex;
 
-        private DeleteData(Bson filter, String filterParameter, String optionsParameter) {
-            this.filter = filter;
+        private DeleteData(@Nullable Bson filter, @Nullable String filterParameter, @Nullable String optionsParameter) {
+            this.filter = filter == null ? new BsonDocument() : filter;
             this.filterNeedsProcessing = needsProcessing(filter);
             this.filterParameterIndex = getParameterIndexByName(filterParameter);
             this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
             options = MongoOptionsUtils.buildDeleteOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
         }
 
-        public MongoDelete getDeleteMany(InvocationContext<?, ?> invocationContext) {
+        private MongoDelete getDeleteMany(@Nullable InvocationContext<?, ?> invocationContext) {
             DeleteOptions options = getOptions(invocationContext);
             return new MongoDelete(getFilter(invocationContext, null), options);
         }
 
-        public MongoDelete getDeleteOne(E entity) {
+        private MongoDelete getDeleteOne(E entity) {
             DeleteOptions options = getOptions(null);
             return new MongoDelete(getFilter(null, entity), options);
         }
 
         @NonNull
-        private DeleteOptions getOptions(InvocationContext<?, ?> invocationContext) {
+        private DeleteOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
             DeleteOptions options = this.options;
             if (optionsParameterIndex != -1) {
                 DeleteOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
@@ -962,7 +1222,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
         }
 
-        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, E entity) {
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (filterParameterIndex != -1) {
                 return getParameterAtIndex(invocationContext, filterParameterIndex);
             }
@@ -971,16 +1232,19 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private abstract class CollationSupported {
+        @Nullable
         private final Bson collationAsBson;
         private final boolean collationNeedsProcessing;
+        @Nullable
         private final Collation collation;
 
-        protected CollationSupported() {
+        private CollationSupported() {
             collationAsBson = storedQuery.getAnnotationMetadata().stringValue(MongoCollation.class).map(BsonDocument::parse).orElse(null);
             collationNeedsProcessing = needsProcessing(collationAsBson);
             collation = collationAsBson == null || collationNeedsProcessing ? null : MongoOptionsUtils.bsonDocumentAsCollation(collationAsBson.toBsonDocument());
         }
 
+        @Nullable
         protected Collation getCollation(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
             if (collation != null) {
                 return collation;

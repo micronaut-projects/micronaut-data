@@ -19,6 +19,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Subclass of {@link DTOMapper} specifically for SQL.
@@ -53,6 +54,7 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
+                        @Nullable
                         SqlJsonColumnReader<S> jsonColumnReader,
                         DataConversionService conversionService) {
         super(persistentEntity, resultReader, jsonColumnReader, conversionService);

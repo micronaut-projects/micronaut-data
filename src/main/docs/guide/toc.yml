@@ -59,7 +59,9 @@ hibernate:
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
+  hibernateStreaming: Streaming Large Result Sets
   hibernateProcedures: Procedures
+
 hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC
@@ -93,6 +95,7 @@ dbc:
     sqlAssociationFetching: Association Fetching
     columnTransformer: Using @ColumnTransformer
     mappedPropertyAlias: Using @MappedProperty alias
+    sqlGeospatial: Geospatial Support
     sqlJsonType: JSON Column Support
     sqlJsonView: JSON View
     javaRecords: Support for Java 16 Records

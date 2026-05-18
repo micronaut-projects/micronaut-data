@@ -16,12 +16,11 @@
 package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 
 import java.util.Map;
@@ -52,7 +51,7 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
     /**
      * @return query builder for possible modification in the prepared query
      */
-    SqlQueryBuilder2 getQueryBuilder();
+    SqlQueryBuilder getQueryBuilder();
 
     /**
      * Collect auto-populated property values before pre-actions are triggered and property values are modified.
@@ -60,6 +59,7 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      * @param entity The entity instance
      * @return collected values
      */
+    @Nullable
     Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity);
 
     /**
@@ -68,10 +68,4 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      */
     @Nullable
     QueryResultInfo getQueryResultInfo();
-
-    /**
-     * @return The persistent entity
-     */
-    @Nullable
-    RuntimePersistentEntity<E> getPersistentEntity();
 }

@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
@@ -44,7 +44,9 @@ public final class SqlJsonColumnMapperProvider<S> {
 
     private final List<SqlJsonColumnReader<S>> sqlJsonColumnReaders;
     private final List<SqlJsonValueMapper> sqlJsonValueMappers;
+    @Nullable
     private final SqlJsonColumnReader<S> defaultSqlJsonColumnReader;
+    @Nullable
     private final SqlJsonValueMapper defaultSqlJsonValueMapper;
 
     /**
@@ -54,7 +56,8 @@ public final class SqlJsonColumnMapperProvider<S> {
      * @param sqlJsonColumnReaders list of custom SQL JSON column readers
      * @param sqlJsonValueMappers  list of custom SQL JSON value mappers
      */
-    public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper, List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
+    public SqlJsonColumnMapperProvider(@Nullable JsonMapper jsonMapper,
+                                       List<SqlJsonColumnReader<S>> sqlJsonColumnReaders,
                                        List<SqlJsonValueMapper> sqlJsonValueMappers) {
         this.sqlJsonColumnReaders = sqlJsonColumnReaders;
         this.sqlJsonValueMappers = sqlJsonValueMappers;
@@ -77,6 +80,7 @@ public final class SqlJsonColumnMapperProvider<S> {
      * @return the {@link SqlJsonColumnReader} for given SQL prepared query, or default {@link SqlJsonColumnReader}
      * if prepared query does not have specific one that it supports
      */
+    @Nullable
     public SqlJsonColumnReader<S> getJsonColumnReader(SqlStoredQuery<?, ?> sqlStoredQuery, Class<S> resultSetType) {
         // Hack to avoid using the prepared query
         DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery = new DefaultSqlPreparedQuery<>(sqlStoredQuery);
@@ -111,6 +115,7 @@ public final class SqlJsonColumnMapperProvider<S> {
      * @return the {@link SqlJsonValueMapper} for given SQL stored query, or default {@link SqlJsonValueMapper}
      * if stored query does not have specific one that it supports
      */
+    @Nullable
     public SqlJsonValueMapper getJsonValueMapper(SqlStoredQuery<?, ?> sqlStoredQuery, JsonDataType jsonDataType, Object value) {
         if (value == null || value.getClass().equals(String.class)) {
             return defaultSqlJsonValueMapper;

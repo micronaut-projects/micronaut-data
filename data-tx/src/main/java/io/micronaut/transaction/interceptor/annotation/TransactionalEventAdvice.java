@@ -20,7 +20,10 @@ import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.interceptor.TransactionalEventInterceptor;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Internal annotation applied to {@link io.micronaut.transaction.annotation.TransactionalEventListener} that

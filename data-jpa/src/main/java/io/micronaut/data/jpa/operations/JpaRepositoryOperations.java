@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.operations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -66,4 +66,40 @@ public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
      * Flush the current session.
      */
     void flush();
+
+    /**
+     * Persist the entity.
+     *
+     * @param entity The entity to persist
+     * @param <T>    The entity type
+     * @since 5.0
+     */
+    <T> void persist(@NonNull T entity);
+
+    /**
+     * Refresh the entity state from the database.
+     *
+     * @param entity The entity to refresh
+     * @param <T>    The entity type
+     * @since 5.0
+     */
+    <T> void refresh(@NonNull T entity);
+
+    /**
+     * Remove the entity from the persistence context and schedule deletion.
+     *
+     * @param entity The entity to remove
+     * @param <T>    The entity type
+     * @since 5.0
+     */
+    <T> void remove(@NonNull T entity);
+
+    /**
+     * Detach the entity from the persistence context.
+     *
+     * @param entity The entity to detach
+     * @param <T>    The entity type
+     * @since 5.0
+     */
+    <T> void detach(@NonNull T entity);
 }

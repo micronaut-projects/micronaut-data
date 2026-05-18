@@ -61,11 +61,17 @@ public final class HibernateConnectionConnectionOperations implements Connection
         return hibernateConnectionOperations.execute(definition, connectionStatus -> callback.apply(createConnectionStatus(connectionStatus)));
     }
 
+    @Override
+    public boolean managesConnection(ConnectionStatus<Connection> connectionStatus) {
+        return false;
+    }
+
     private ConnectionStatus<Connection> createConnectionStatus(ConnectionStatus<Session> connectionStatus) {
         return new DefaultConnectionStatus<>(
             getConnection(connectionStatus.getConnection()),
             connectionStatus.getDefinition(),
-            connectionStatus.isNew()
+            connectionStatus.isNew(),
+            this
         );
     }
 

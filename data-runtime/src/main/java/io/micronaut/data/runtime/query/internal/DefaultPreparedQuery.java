@@ -18,8 +18,9 @@ package io.micronaut.data.runtime.query.internal;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
@@ -50,7 +51,6 @@ import java.util.stream.Stream;
  */
 @Internal
 public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements DelegateStoredQuery<E, RT>, PreparedQuery<E, RT> {
-    private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
     private final Pageable pageable;
     private final StoredQuery<E, RT> storedQuery;
     private final String query;
@@ -109,7 +109,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                               @NonNull Class<?> type,
                                               @NonNull MethodInvocationContext<?, ?> methodContext,
                                               @NonNull ConversionService conversionService) {
-        return methodContext.stringValue(DATA_METHOD_ANN_NAME, DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE)
+        return methodContext.stringValue(DataMethod.NAME, DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE)
             .filter(typeRole -> typeRole.equals(role))
             .map(ignore -> conversionService.canConvert(methodContext.getReturnType().getType(), type))
             .orElse(false);
@@ -130,7 +130,25 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                                          @NonNull Class<RT1> type,
                                                          @NonNull MethodInvocationContext<?, ?> methodContext,
                                                          @NonNull ConversionService conversionService) {
-        return methodContext.stringValue(DATA_METHOD_ANN_NAME, role).flatMap(name -> {
+        return getParameterInRole(role, Argument.of(type), methodContext, conversionService);
+    }
+
+    /**
+     * Find a parameter in role from the method context.
+     *
+     * @param role              The role
+     * @param type              The type of the parameter in role
+     * @param methodContext     The method context
+     * @param conversionService The conversion service
+     * @param <RT1>             The type
+     * @return The optional parameter
+     */
+    @NonNull
+    public static <RT1> Optional<RT1> getParameterInRole(@NonNull String role,
+                                                         @NonNull Argument<RT1> type,
+                                                         @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                         @NonNull ConversionService conversionService) {
+        return methodContext.stringValue(DataMethod.NAME, role).flatMap(name -> {
             MutableArgumentValue<?> arg = methodContext.getParameters().get(name);
             if (arg == null) {
                 return Optional.empty();
@@ -143,7 +161,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                 //noinspection unchecked
                 return Optional.of((RT1) o);
             }
-            return conversionService.convert(o, type);
+            return conversionService.convert(o, ConversionContext.of(type));
         });
     }
 
@@ -162,7 +180,25 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                                       @NonNull Class<RT1> type,
                                                       @NonNull MethodInvocationContext<?, ?> methodContext,
                                                       @NonNull ConversionService conversionService) {
-        AnnotationValue<Annotation> annotation = methodContext.getAnnotation(DATA_METHOD_ANN_NAME);
+        return  getParametersInRole(role, Argument.of(type), methodContext, conversionService);
+    }
+
+    /**
+     * Find the parameters in role from the method context.
+     *
+     * @param role              The role
+     * @param type              The type of the parameter in role
+     * @param methodContext     The method context
+     * @param conversionService The conversion service
+     * @param <RT1>             The type
+     * @return The list of types
+     */
+    @NonNull
+    public static <RT1> List<RT1> getParametersInRole(@NonNull String role,
+                                                      @NonNull Argument<RT1> type,
+                                                      @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                      @NonNull ConversionService conversionService) {
+        AnnotationValue<Annotation> annotation = methodContext.getAnnotation(DataMethod.NAME);
         if (annotation == null) {
             return List.of();
         }
@@ -276,22 +312,6 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     @Override
     public <T> Optional<T> getAttribute(CharSequence name, Class<T> type) {
         return context.getAttribute(name, type);
-    }
-
-    @Override
-    public int getOffset() {
-        if (limit != null) {
-            return (int) limit.offset();
-        }
-        return DelegateStoredQuery.super.getOffset();
-    }
-
-    @Override
-    public int getLimit() {
-        if (limit != null) {
-            return limit.maxResults();
-        }
-        return DelegateStoredQuery.super.getLimit();
     }
 
     @Override

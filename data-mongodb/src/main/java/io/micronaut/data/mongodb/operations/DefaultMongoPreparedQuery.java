@@ -24,7 +24,6 @@ import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
@@ -135,12 +134,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
 
     private Bson getSort(Sort sort) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
-        RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
         return sort.getOrderBy()
             .stream()
             .map(order -> {
                 String property = order.getProperty();
-                if (identity != null && identity.getName().contains(property)) {
+                if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getName().contains(property)) {
                     property = MongoUtils.ID;
                 }
                 return order.isAscending() ? Sorts.ascending(property) : Sorts.descending(property);
@@ -151,6 +149,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     @Override
     public MongoUpdate getUpdateMany() {
         return mongoStoredQuery.getUpdateMany(defaultPreparedQuery.getContext());
+    }
+
+    @Override
+    public MongoFindOneAndUpdate getFindOneAndUpdate() {
+        return mongoStoredQuery.getFindOneAndUpdate(defaultPreparedQuery.getContext());
     }
 
     @Override

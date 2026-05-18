@@ -15,8 +15,7 @@
  */
 package io.micronaut.transaction;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.support.ExceptionUtil;
 
 import java.util.function.Function;
@@ -29,9 +28,10 @@ import java.util.function.Function;
  * @param <R> The return type
  */
 @FunctionalInterface
-public interface TransactionCallback<T, R> extends Function<TransactionStatus<T>, R> {
+public interface TransactionCallback<T, R extends @Nullable Object> extends Function<TransactionStatus<T>, R> {
 
     @Override
+    @SuppressWarnings("FunctionalInterfaceMethodChanged")
     default R apply(TransactionStatus<T> status) {
         try {
             return call(status);
@@ -48,5 +48,5 @@ public interface TransactionCallback<T, R> extends Function<TransactionStatus<T>
      * @return The return value
      * @throws Exception When an error occurs in invoking the transaction
      */
-    @Nullable R call(@NonNull TransactionStatus<T> status) throws Exception;
+    R call(TransactionStatus<T> status) throws Exception;
 }

@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 
@@ -35,18 +34,16 @@ public final class FunctionExpression<E> extends AbstractExpression<E> {
     private final String name;
     private final List<Expression<?>> expressions;
 
-    public FunctionExpression(String name, List<Expression<?>> expressions, @NonNull Class<E> expressionType) {
+    public FunctionExpression(String name, List<Expression<?>> expressions, Class<E> expressionType) {
         super(new ClassExpressionType<>(expressionType));
         this.name = name;
         this.expressions = expressions;
     }
 
-    @NonNull
     public String getName() {
         return name;
     }
 
-    @NonNull
     public List<Expression<?>> getExpressions() {
         return expressions;
     }

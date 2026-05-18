@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.reactive;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
 import org.reactivestreams.Publisher;
 
@@ -49,6 +49,16 @@ public interface ReactiveTransactionOperations<C> {
     }
 
     /**
+     * Determine whether the given transaction status refers to a transaction
+     * managed by this {@link ReactiveTransactionOperations} instance.
+     *
+     * @param transactionStatus The transaction status to verify
+     * @return true if the transaction is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesTransaction(@NonNull ReactiveTransactionStatus<C> transactionStatus);
+
+    /**
      * A transactional callback interface.
      *
      * @param <C> The connection type
@@ -63,4 +73,5 @@ public interface ReactiveTransactionOperations<C> {
          */
         Publisher<T> doInTransaction(ReactiveTransactionStatus<C> status);
     }
+
 }

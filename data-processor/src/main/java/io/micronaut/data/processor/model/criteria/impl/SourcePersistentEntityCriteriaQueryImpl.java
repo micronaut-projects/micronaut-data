@@ -27,6 +27,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -43,13 +44,13 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
-                                                   Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                   CriteriaBuilder criteriaBuilder) {
+    SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
+                                            Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                            CriteriaBuilder criteriaBuilder) {
         this(new ClassExpressionType<>(result), entityResolver, criteriaBuilder);
     }
 
-    public SourcePersistentEntityCriteriaQueryImpl(ExpressionType<T> result,
+    SourcePersistentEntityCriteriaQueryImpl(ExpressionType<T> result,
                                                    Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                    CriteriaBuilder criteriaBuilder) {
         super(result, criteriaBuilder);
@@ -77,6 +78,7 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
     }
 
     @Override
+    @Nullable
     public String getQueryResultTypeName() {
         if (selection instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();

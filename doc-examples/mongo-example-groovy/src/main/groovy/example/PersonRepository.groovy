@@ -1,6 +1,7 @@
 
 package example
 
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -24,7 +25,7 @@ interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaSpecific
 
     Optional<Person> findOne(QuerySpecification<Person> spec)
 
-    List<Person> findAll(PredicateSpecification<Person> spec)
+    List<Person> findAll(@Nullable PredicateSpecification<Person> spec)
 
     List<Person> findAll(QuerySpecification<Person> spec)
 

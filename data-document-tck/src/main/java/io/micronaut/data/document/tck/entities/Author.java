@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.document.tck.entities;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -29,8 +29,10 @@ public class Author {
 
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
 
+    @Nullable
     private String name;
     @Nullable
     private String nickName;
@@ -39,6 +41,7 @@ public class Author {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author", cascade = Relation.Cascade.ALL)
     private Set<Book> books = new HashSet<>();
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -47,6 +50,7 @@ public class Author {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
@@ -63,6 +67,7 @@ public class Author {
         this.books = books;
     }
 
+    @Nullable
     public String getNickName() {
         return nickName;
     }

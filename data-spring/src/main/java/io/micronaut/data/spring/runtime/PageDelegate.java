@@ -17,6 +17,7 @@ package io.micronaut.data.spring.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -153,7 +154,7 @@ class PageDelegate<T> implements Page<T> {
     /**
      * A sort delegate impl.
      */
-    private class SortDelegate extends Sort {
+    private static class SortDelegate extends Sort {
 
         private final io.micronaut.data.model.Sort delegate;
 
@@ -176,6 +177,7 @@ class PageDelegate<T> implements Page<T> {
         }
 
         @Override
+        @Nullable
         public Order getOrderFor(String property) {
             return delegate.getOrderBy().stream().filter(o -> o.getProperty().equals(property))
                         .map(order ->

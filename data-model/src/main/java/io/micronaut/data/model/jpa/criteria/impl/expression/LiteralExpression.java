@@ -16,7 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 
@@ -43,6 +43,7 @@ public final class LiteralExpression<T> extends AbstractExpression<T> {
         this.value = object;
     }
 
+    @Nullable
     public T getValue() {
         return value;
     }

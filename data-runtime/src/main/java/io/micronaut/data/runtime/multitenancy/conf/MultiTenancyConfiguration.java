@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.multitenancy.conf;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.multitenancy.MultiTenancyMode;
 
@@ -37,6 +37,7 @@ public final class MultiTenancyConfiguration {
     /**
      * The multi-tenancy mode.
      */
+    @Nullable
     private MultiTenancyMode mode;
 
     /**

@@ -16,7 +16,7 @@
 package io.micronaut.transaction;
 
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Common representation of the current state of a transaction.

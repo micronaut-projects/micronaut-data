@@ -4,6 +4,25 @@ You can annotate a property that is a date type of entity with ann:data.annotati
 
 You can also annotate a property that is a date type of entity with ann:data.annotation.DateUpdated[] which will be automatically populated whenever the entity is updated either via the `persist` method or when using one of the batch update methods of Micronaut Data.
 
+If you sometimes want to provide values yourself and otherwise let Micronaut Data populate them, you can use the optional `skipIfPresent` flag:
+
+[source,java]
+----
+@DateCreated(skipIfPresent = true)
+Instant created;
+
+@DateUpdated(skipIfPresent = true)
+Instant updated;
+----
+
+Behavior:
+
+* `@DateCreated`: `skipIfPresent = true` preserves a non-null value on insert; otherwise Micronaut Data assigns the timestamp.
+* `@DateUpdated`: `skipIfPresent = true` preserves a non-null value only for the initial insert. This is useful for imports or backfills where you want to keep an existing "last updated" value when the row is first created.
+* After the row exists, `@DateUpdated` keeps its normal meaning: on later updates Micronaut Data always refreshes the field to the current timestamp, regardless of `skipIfPresent` or the current value.
+
+In other words, `skipIfPresent` on `@DateUpdated` is an insert-time override, not a way to make the property user-controlled or immutable after the entity has been stored.
+
 NOTE: If you update the entity with an external SQL statement or custom logic you will need to update the underlying `DateUpdated` column manually.
 
 === JPA Hibernate and Entity Timestamps

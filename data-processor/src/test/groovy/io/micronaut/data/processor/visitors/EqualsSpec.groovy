@@ -40,7 +40,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('MyInterface.findByNameOrAge(int age,String name). Parameter [int age] is not compatible with property [java.lang.String name] of entity')
+        e.message.contains('Parameter [int age] is not compatible with property [java.lang.String name] of entity')
     }
 
 

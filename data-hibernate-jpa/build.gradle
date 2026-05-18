@@ -33,7 +33,7 @@ dependencies {
     testImplementation (projects.micronautDataProcessor) {
         exclude group: 'org.antlr'
     }
-    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
@@ -45,6 +45,7 @@ dependencies {
     testRuntimeOnly(libs.jupiter.engine)
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(libs.managed.jakarta.data.api)
+    testImplementation(libs.managed.jakarta.data.stateful)
     testImplementation(mnTest.junit.platform.suite)
 }
 
@@ -54,6 +55,7 @@ micronaut {
         enabled = true
         inferClasspath = false
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        additionalModules.add(KnownModules.JDBC_MYSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }

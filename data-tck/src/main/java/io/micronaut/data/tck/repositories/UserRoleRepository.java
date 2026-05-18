@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.jdbc.entities.Role;
@@ -29,10 +29,10 @@ import jakarta.validation.constraints.NotNull;
 public interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
     @NonNull
-    UserRole save(@Valid @NotNull @NonNull UserRole entity);
+    UserRole insert(@Valid @NotNull @NonNull UserRole entity);
 
-    default UserRole save(User user, Role role) {
-        return save(new UserRole(new UserRoleId(user, role)));
+    default UserRole insert(User user, Role role) {
+        return insert(new UserRole(new UserRoleId(user, role)));
     }
 
     void deleteById(@NonNull @NotNull UserRoleId id);

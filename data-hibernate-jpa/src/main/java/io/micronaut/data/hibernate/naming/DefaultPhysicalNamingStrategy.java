@@ -21,6 +21,7 @@ import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The default {@link PhysicalNamingStrategy} to use. Can be replaced with another bean that declares:
@@ -32,30 +33,36 @@ import jakarta.inject.Singleton;
 @Singleton
 public final class DefaultPhysicalNamingStrategy implements PhysicalNamingStrategy {
     @Override
+    @Nullable
     public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
     }
 
     @Override
+    @Nullable
     public Identifier toPhysicalSchemaName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
     }
 
     @Override
+    @Nullable
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
     }
 
     @Override
+    @Nullable
     public Identifier toPhysicalSequenceName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
     }
 
     @Override
+    @Nullable
     public Identifier toPhysicalColumnName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return getIdentifier(name);
     }
 
+    @Nullable
     private Identifier getIdentifier(Identifier name) {
         if (name == null) {
             return null;

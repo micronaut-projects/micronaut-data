@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -26,6 +25,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -49,9 +49,12 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final JsonDataType jsonDataType;
     private final boolean constructorArg;
     private final Argument<Object> argument;
+    @Nullable
     private final Supplier<AttributeConverter<Object, Object>> converter;
+    @Nullable
     private String persistedName;
-    private String alias;
+    @Nullable
+    private final String alias;
 
     /**
      * Default constructor.
@@ -78,7 +81,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.annotationMetadata = annotationMetadata;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
-        this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : null;
+        this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : JsonDataType.DEFAULT;
         this.constructorArg = constructorArg;
         this.argument = argument;
         this.converter = annotationMetadata.classValue(MappedProperty.class, "converter")
@@ -88,6 +91,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
+    @Nullable
     public String getAlias() {
         return alias;
     }
@@ -153,35 +157,32 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The property type, unwrapped if primitive
      */
-    public @NonNull Class<?> getType() {
+    public  Class<?> getType() {
         return type;
     }
 
-    @NonNull
     @Override
     public String getName() {
         return property.getName();
     }
 
-    @NonNull
     @Override
     public String getTypeName() {
         return property.getType().getName();
     }
 
-    @NonNull
     @Override
     public RuntimePersistentEntity<T> getOwner() {
         return owner;
     }
 
     @Override
-    public boolean isAssignable(@NonNull String type) {
+    public boolean isAssignable(String type) {
         throw new UnsupportedOperationException("Use isAssignable(Class) instead");
     }
 
     @Override
-    public boolean isAssignable(@NonNull Class<?> type) {
+    public boolean isAssignable(Class<?> type) {
         return type.isAssignableFrom(getProperty().getType());
     }
 
@@ -198,6 +199,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
+    @Nullable
     public AttributeConverter<Object, Object> getConverter() {
         if (converter == null) {
             return null;
@@ -205,7 +207,6 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         return converter.get();
     }
 
-    @NonNull
     @Override
     public String getPersistedName() {
         if (persistedName == null) {
@@ -232,7 +233,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        RuntimePersistentProperty other = (RuntimePersistentProperty) obj;
+        RuntimePersistentProperty<?> other = (RuntimePersistentProperty<?>) obj;
         return Objects.equals(other.getOwner(), getOwner()) && Objects.equals(other.getName(), getName());
     }
 }

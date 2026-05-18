@@ -20,12 +20,14 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Pet {
 
     @Id
     @AutoPopulated
+    @Nullable
     private String id;
     private String name;
     @Relation(Relation.Kind.MANY_TO_ONE)
@@ -46,6 +48,7 @@ public class Pet {
         return name;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }

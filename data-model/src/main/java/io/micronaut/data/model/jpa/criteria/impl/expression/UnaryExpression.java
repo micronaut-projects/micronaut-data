@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
@@ -47,12 +46,10 @@ public final class UnaryExpression<E> extends AbstractExpression<E> {
         type.validate(expression);
     }
 
-    @NonNull
     public UnaryExpressionType getType() {
         return type;
     }
 
-    @NonNull
     public Expression<?> getExpression() {
         return expression;
     }

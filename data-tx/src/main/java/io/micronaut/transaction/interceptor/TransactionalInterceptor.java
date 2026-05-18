@@ -20,8 +20,8 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
@@ -80,8 +80,10 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     }
 
     @Override
+    @Nullable
+    @SuppressWarnings("NullAway")
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        String tenantDataSourceName;
+        @Nullable String tenantDataSourceName;
         if (tenantResolver != null) {
             tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
         } else {
@@ -137,7 +139,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                 }
                 case SYNCHRONOUS -> {
                     TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
-                    return transactionManager.execute(definition, status -> context.proceed());
+                    return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
                 }
                 default -> {
                     return interceptedMethod.unsupported();
@@ -178,6 +180,6 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
 
     }
 
-    private record TenantExecutableMethod(String dataSource, ExecutableMethod method) {
+    private record TenantExecutableMethod(@Nullable String dataSource, ExecutableMethod method) {
     }
 }

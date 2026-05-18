@@ -20,7 +20,8 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionOperations;
@@ -59,6 +60,7 @@ public class TransactionalEventInterceptor implements MethodInterceptor<Object, 
     }
 
     @Override
+    @Nullable
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         TransactionEventInvocation transactionEventInvocation = transactionInvocationMap.computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
             final String qualifier = executableMethod.stringValue(TransactionalEventListener.class, "transactionManager").orElse(null);

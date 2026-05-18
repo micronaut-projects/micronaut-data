@@ -18,7 +18,11 @@ package io.micronaut.data.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.model.DataType;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Designates a method or field that is mapped as a persistent property. Typically not used directly

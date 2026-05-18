@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -26,18 +25,21 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -49,24 +51,26 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T>,
-    QueryResultPersistentEntityCriteriaQuery {
+public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T> {
 
+    @Nullable
     protected Predicate predicate;
+    @Nullable
     protected PersistentEntityRoot<T> entityRoot;
+    @Nullable
     protected Selection<?> returning;
 
     @Override
     public PersistentEntity getPersistentEntity() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot.getPersistentEntity();
     }
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
-        return queryBuilder.buildDelete(
-            annotationMetadata,
-            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning)
-        );
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        Objects.requireNonNull(entityRoot);
+        return queryBuilder.buildDelete(annotationMetadata,
+            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning));
     }
 
     @Override
@@ -94,9 +98,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     public PersistentEntityCriteriaDelete<T> where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
-            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
-            );
+            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
         }
@@ -105,10 +107,12 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityRoot<T> getRoot() {
+        Objects.requireNonNull(entityRoot);
         return entityRoot;
     }
 
     @Override
+    @Nullable
     public Predicate getRestriction() {
         return predicate;
     }
@@ -118,8 +122,17 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         throw notSupportedOperation();
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
+        throw notSupportedOperation();
+    }
+
     public final boolean hasVersionRestriction() {
-        if (entityRoot.getPersistentEntity().getVersion() == null) {
+        if (predicate == null) {
+            return false;
+        }
+        Objects.requireNonNull(entityRoot);
+        if (!entityRoot.getPersistentEntity().hasVersion()) {
             return false;
         }
         return CriteriaUtils.hasVersionPredicate(predicate);
@@ -144,7 +157,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public PersistentEntityCriteriaDelete<T> returningMulti(@NonNull Selection<?>... selections) {
+    public PersistentEntityCriteriaDelete<T> returningMulti(Selection<?>... selections) {
         Objects.requireNonNull(selections);
         if (selections.length != 0) {
             this.returning = new CompoundSelection<>(List.of(selections));
@@ -154,15 +167,22 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         return this;
     }
 
-    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder2.DeleteQueryDefinition {
+    @Override
+    public Set<ParameterExpression<?>> getParameters() {
+        return CriteriaUtils.extractPredicateParameters(predicate);
+    }
 
+    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder.DeleteQueryDefinition {
+
+        @Nullable
         private final Selection<?> returningSelection;
 
-        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection) {
+        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, @Nullable Predicate predicate, @Nullable Selection<?> returningSelection) {
             super(persistentEntity, predicate, Map.of());
             this.returningSelection = returningSelection;
         }
 
+        @Nullable
         @Override
         public Selection<?> returningSelection() {
             return returningSelection;

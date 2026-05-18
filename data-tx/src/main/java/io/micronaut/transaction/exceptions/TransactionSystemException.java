@@ -16,7 +16,7 @@
 package io.micronaut.transaction.exceptions;
 
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 

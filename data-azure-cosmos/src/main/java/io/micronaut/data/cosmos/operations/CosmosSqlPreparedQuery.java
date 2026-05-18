@@ -16,12 +16,13 @@
 package io.micronaut.data.cosmos.operations;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Azure Cosmos DB implementation of {@link io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery}.
@@ -45,14 +46,14 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
      * @param entity The entity instance
      */
     @Override
-    public void prepare(E entity) {
+    public void prepare(@Nullable E entity) {
         if (isExpandableQuery()) {
-            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
             StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
             int queryParamIndex = 1;
             int inx = 1;
             for (QueryParameterBinding parameter : sqlStoredQuery.getQueryBindings()) {
-                AbstractSqlLikeQueryBuilder2.Placeholder placeholder = queryBuilder.formatParameter(inx++);
+                AbstractSqlLikeQueryBuilder.Placeholder placeholder = queryBuilder.formatParameter(inx++);
                 if (!parameter.isExpandable()) {
                     q.append(placeholder.name());
                 } else {
@@ -67,6 +68,7 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
     /**
      * @return the update statement for update operation
      */
+    @Nullable
     public String getUpdate() {
         CosmosSqlStoredQuery<E, R> cosmosSqlStoredQuery = getCosmosSqlStoredQuery(sqlStoredQuery);
         return cosmosSqlStoredQuery.getUpdate();

@@ -19,21 +19,28 @@ import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity("comp_settlement")
 public class Settlement {
 
     @EmbeddedId
+    @Nullable
     private SettlementPk id;
     @MappedProperty
+    @Nullable
     private String description;
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private SettlementType settlementType;
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private Zone zone;
+    @Nullable
     @MappedProperty("is_enabled")
     private Boolean enabled;
 
+    @Nullable
     public SettlementPk getId() {
         return id;
     }
@@ -42,6 +49,7 @@ public class Settlement {
         this.id = id;
     }
 
+    @Nullable
     public String getDescription() {
         return description;
     }
@@ -50,6 +58,7 @@ public class Settlement {
         this.description = description;
     }
 
+    @Nullable
     public SettlementType getSettlementType() {
         return settlementType;
     }
@@ -58,6 +67,7 @@ public class Settlement {
         this.settlementType = settlementType;
     }
 
+    @Nullable
     public Zone getZone() {
         return zone;
     }
@@ -66,6 +76,7 @@ public class Settlement {
         this.zone = zone;
     }
 
+    @Nullable
     public Boolean getEnabled() {
         return enabled;
     }

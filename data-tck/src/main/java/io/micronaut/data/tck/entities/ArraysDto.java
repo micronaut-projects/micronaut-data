@@ -16,9 +16,10 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.UUID;
 
 @Introspected
 public class ArraysDto {
@@ -51,6 +52,8 @@ public class ArraysDto {
     private Boolean[] booleanArray;
     private boolean[] booleanPrimitiveArray;
     private Collection<Boolean> booleanArrayCollection;
+    private UUID[] uuidArray;
+    private Collection<UUID> uuidArrayCollection;
 
     public Long getSomeId() {
         return someId;
@@ -245,5 +248,21 @@ public class ArraysDto {
 
     public void setBooleanArrayCollection(Collection<Boolean> booleanArrayCollection) {
         this.booleanArrayCollection = booleanArrayCollection;
+    }
+
+    public UUID[] getUuidArray() {
+        return uuidArray;
+    }
+
+    public void setUuidArray(UUID[] uuidArray) {
+        this.uuidArray = uuidArray;
+    }
+
+    public Collection<UUID> getUuidArrayCollection() {
+        return uuidArrayCollection;
+    }
+
+    public void setUuidArrayCollection(Collection<UUID> uuidArrayCollection) {
+        this.uuidArrayCollection = uuidArrayCollection;
     }
 }

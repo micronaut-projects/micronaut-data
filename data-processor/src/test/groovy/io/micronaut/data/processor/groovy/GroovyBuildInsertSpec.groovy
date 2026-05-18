@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.groovy
 
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.PendingFeature

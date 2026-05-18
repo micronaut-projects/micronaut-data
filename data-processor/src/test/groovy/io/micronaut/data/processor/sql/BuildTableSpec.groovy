@@ -24,7 +24,6 @@ import io.micronaut.data.tck.jdbc.entities.Employee
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Unroll
 
-//@Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
 
 
@@ -38,7 +37,7 @@ class BuildTableSpec extends AbstractDataSpec {
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
 
         and:"regular @Embedded does include NOT NULL declaration"
-        sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
+        sql.contains("\"street\" VARCHAR(255) NOT NULL,")
     }
 
     @Unroll
@@ -99,8 +98,8 @@ class Test {
         Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`json` JSON NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
-        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
-                           'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" JSON NOT NULL)'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" JSON NOT NULL)' + System.lineSeparator() +
+                           'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 
     void "test custom column definition"() {
@@ -138,14 +137,13 @@ class Test {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
+        sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`date_created` TIMESTAMP WITH TIME ZONE);'
     }
 
-//    @PendingFeature(reason = "Waiting for https://github.com/micronaut-projects/micronaut-core/pull/4343")
     void "test custom parent entity with generics"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
@@ -157,11 +155,11 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"created_date" TIMESTAMP,"updated_date" TIMESTAMP);'
+        sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`created_date` TIMESTAMP(6) DEFAULT NOW(6),`updated_date` TIMESTAMP(6) DEFAULT NOW(6));'
     }
 
     @Unroll
@@ -301,8 +299,8 @@ class Test {
         Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"text1" VARCHAR(255) NOT NULL,"text2" VARCHAR(10) NOT NULL,"text3" VARCHAR(7) NOT NULL,"amount1" DECIMAL NOT NULL,"amount2" NUMERIC(11,2) NOT NULL,"amount3" DECIMAL NOT NULL,"float_amount1" REAL NOT NULL,"float_amount2" NUMERIC(11,2) NOT NULL,"double_amount1" DOUBLE PRECISION NOT NULL,"double_amount2" NUMERIC(11,2) NOT NULL);'
-        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
-                'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"TEXT1" VARCHAR(255) NOT NULL,"TEXT2" VARCHAR(10) NOT NULL,"TEXT3" VARCHAR(7) NOT NULL,"AMOUNT1" FLOAT(126) NOT NULL,"AMOUNT2" NUMBER(11,2) NOT NULL,"AMOUNT3" FLOAT(126) NOT NULL,"FLOAT_AMOUNT1" FLOAT(53) NOT NULL,"FLOAT_AMOUNT2" NUMBER(11,2) NOT NULL,"DOUBLE_AMOUNT1" FLOAT(23) NOT NULL,"DOUBLE_AMOUNT2" NUMBER(11,2) NOT NULL)'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"TEXT1" VARCHAR(255) NOT NULL,"TEXT2" VARCHAR(10) NOT NULL,"TEXT3" VARCHAR(7) NOT NULL,"AMOUNT1" FLOAT(126) NOT NULL,"AMOUNT2" NUMBER(11,2) NOT NULL,"AMOUNT3" FLOAT(126) NOT NULL,"FLOAT_AMOUNT1" FLOAT(53) NOT NULL,"FLOAT_AMOUNT2" NUMBER(11,2) NOT NULL,"DOUBLE_AMOUNT1" FLOAT(23) NOT NULL,"DOUBLE_AMOUNT2" NUMBER(11,2) NOT NULL)' + System.lineSeparator() +
+                           'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 
     @Unroll
@@ -333,10 +331,10 @@ class Test {
 
         where:
         dialect          | statement
-        Dialect.H2       | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
-        Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6)  NOT NULL );'
-        Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6)  NOT NULL );'
-        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL )'
+        Dialect.H2       | 'CREATE TABLE `test` (`wakeup_time` TIME(6) NOT NULL);'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6) NOT NULL);'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6) NOT NULL);'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL)'
     }
 
     void "test create table MappedProperty with Embedded"() {
@@ -504,14 +502,75 @@ class Teacher {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildCreateTableStatements(entity)
 
         then:
         sql.length == 4
-        sql[0] == 'CREATE SCHEMA "students";'
-        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
-        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
-        sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+        sql[0] == 'CREATE SCHEMA `students`;'
+        sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
+        sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
+        sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+    }
+
+    @Unroll
+    void "test build create table for Duration and Period types for dialect #dialect"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import java.time.Duration;
+import java.time.Period;
+
+@MappedEntity
+class Test {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private Duration duration;
+
+    private Period period;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public Period getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(Period period) {
+        this.period = period;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        sql == statement
+
+        where:
+        dialect          | statement
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`duration` VARCHAR(255) NOT NULL,`period` VARCHAR(255) NOT NULL);'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`duration` VARCHAR(255) NOT NULL,`period` VARCHAR(255) NOT NULL);'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"duration" VARCHAR(255) NOT NULL,"period" VARCHAR(255) NOT NULL);'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"DURATION" INTERVAL DAY TO SECOND NOT NULL,"PERIOD" INTERVAL YEAR TO MONTH NOT NULL)' + System.lineSeparator() +
+                           'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 }

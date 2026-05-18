@@ -16,8 +16,7 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.beans.BeanIntrospection;
@@ -64,13 +63,13 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
         System.err.println(message + " " + e.getMessage());
     }
 
-    @NonNull
     @Override
     public String getAliasName() {
         return getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
                 .orElseGet(() -> NamingStrategy.DEFAULT.mappedName(getSimpleName()) + "_");
     }
 
+    @Nullable
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
                 .stringValue(io.micronaut.data.annotation.NamingStrategy.class)
@@ -78,7 +77,6 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                 .orElse(null);
     }
 
-    @NonNull
     private Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
         NamingStrategy namingStrategy = NAMING_STRATEGIES.get(className);
         if (namingStrategy != null) {
@@ -116,17 +114,15 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
      * @return The naming strategy
      */
     @Override
-    public @NonNull NamingStrategy getNamingStrategy() {
+    public  NamingStrategy getNamingStrategy() {
         return namingStrategy == null ? NamingStrategy.DEFAULT : namingStrategy;
     }
 
-    @NonNull
     @Override
     public Optional<NamingStrategy> findNamingStrategy() {
         return Optional.ofNullable(namingStrategy);
     }
 
-    @NonNull
     @Override
     public String getPersistedName() {
         return getNamingStrategy().mappedName(this);

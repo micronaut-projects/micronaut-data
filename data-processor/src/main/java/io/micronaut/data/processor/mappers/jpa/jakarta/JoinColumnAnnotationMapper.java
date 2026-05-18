@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's {@code JoinColumn} annotation to Micronaut's.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public final class JoinColumnAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.JoinColumnAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.JoinColumn";

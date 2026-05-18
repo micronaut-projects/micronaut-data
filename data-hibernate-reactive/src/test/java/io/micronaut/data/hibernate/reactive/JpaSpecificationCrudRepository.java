@@ -15,14 +15,17 @@
  */
 package io.micronaut.data.hibernate.reactive;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.hibernate.reactive.repository.jpa.ReactorJpaSpecificationExecutor;
-import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import io.micronaut.data.tck.entities.Person;
 import reactor.core.publisher.Flux;
@@ -62,6 +65,14 @@ public interface JpaSpecificationCrudRepository extends ReactorCrudRepository<Pe
 
     Mono<Long> getAvgAgeByNameLike(String name);
 
+    Mono<Person> findOne(CriteriaQueryBuilder<Person> builder);
+
+    Flux<Person> findAll(CriteriaQueryBuilder<Person> builder);
+
+    Mono<Long> deleteAll(CriteriaDeleteBuilder<Person> builder);
+
+    Mono<Long> updateAll(CriteriaUpdateBuilder<Person> builder);
+
     Flux<Integer> readAgeByNameLike(String name);
 
     Flux<Person> findByNameLikeOrderByAge(String name);
@@ -69,13 +80,13 @@ public interface JpaSpecificationCrudRepository extends ReactorCrudRepository<Pe
     Flux<Person> findByNameLikeOrderByAgeDesc(String name);
 
     class Specifications {
-        public static Specification<Person> ageGreaterThanThirty() {
+        public static QuerySpecification<Person> ageGreaterThanThirty() {
             return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(
                     root.get("age"), 30
             );
         }
 
-        public static Specification<Person> nameEquals(String name) {
+        public static QuerySpecification<Person> nameEquals(String name) {
             return (root, query, criteriaBuilder) -> criteriaBuilder.equal(
                     root.get("name"), name
             );

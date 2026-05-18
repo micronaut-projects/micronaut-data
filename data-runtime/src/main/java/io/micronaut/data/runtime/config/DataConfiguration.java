@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.util.StringUtils;
+import org.jspecify.annotations.Nullable;
+
 import java.util.regex.Pattern;
 
 /**
@@ -28,6 +30,54 @@ import java.util.regex.Pattern;
 @ConfigurationProperties(DataSettings.PREFIX)
 public class DataConfiguration implements DataSettings {
 
+    /**
+     * The configuration property that makes repository save methods use insert operations only.
+     */
+    public static final String SAVE_AS_INSERT_PROPERTY = DataSettings.PREFIX + ".save-as-insert";
+
+    /**
+     * The configuration property that makes repository save methods fall back to update when insert detects
+     * that an entity with an assigned identity already exists.
+     */
+    public static final String SAVE_ASSIGNED_ID_FALLBACK_TO_UPDATE_PROPERTY = DataSettings.PREFIX + ".save-assigned-id-fallback-to-update";
+
+    private boolean saveAsInsert;
+    private boolean saveAssignedIdFallbackToUpdate;
+
+    /**
+     * @return Whether repository save methods should always use insert operations.
+     */
+    public boolean isSaveAsInsert() {
+        return saveAsInsert;
+    }
+
+    /**
+     * @return Whether repository save methods should fall back to update for entities with assigned identities.
+     */
+    public boolean isSaveAssignedIdFallbackToUpdate() {
+        return saveAssignedIdFallbackToUpdate;
+    }
+
+    /**
+     * Sets whether repository save methods should always use insert operations.
+     * This restores the Micronaut Data 4 behavior where {@code save} and {@code saveAll}
+     * always inserted entities instead of selecting insert or update based on identity state.
+     *
+     * @param saveAsInsert Whether repository save methods should always use insert operations
+     */
+    public void setSaveAsInsert(boolean saveAsInsert) {
+        this.saveAsInsert = saveAsInsert;
+    }
+
+    /**
+     * Sets whether repository save methods should fall back to update when an insert detects that an entity
+     * with a non-generated identity already exists.
+     *
+     * @param saveAssignedIdFallbackToUpdate Whether repository save methods should fall back to update
+     */
+    public void setSaveAssignedIdFallbackToUpdate(boolean saveAssignedIdFallbackToUpdate) {
+        this.saveAssignedIdFallbackToUpdate = saveAssignedIdFallbackToUpdate;
+    }
 
     /**
      * Configuration for pageable.
@@ -41,6 +91,7 @@ public class DataConfiguration implements DataSettings {
         public static final String DEFAULT_PAGE_PARAMETER = "page";
         public static final String PREFIX = "pageable";
         private int maxPageSize = DEFAULT_MAX_PAGE_SIZE;
+        @Nullable
         private Integer defaultPageSize = null; // When is not specified the maxPageSize should be used
         private boolean sortIgnoreCase = DEFAULT_SORT_IGNORE_CASE;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;

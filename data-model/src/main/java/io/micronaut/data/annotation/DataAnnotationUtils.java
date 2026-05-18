@@ -18,7 +18,6 @@ package io.micronaut.data.annotation;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 
 /**
  * The util class for annotations for micronaut-data module.
@@ -39,7 +38,7 @@ public final class DataAnnotationUtils {
      *
      * @return true if annotation metadata is annotated with {@link EntityRepresentation} with JSON column
      */
-    public static boolean hasJsonEntityRepresentationAnnotation(@NonNull AnnotationMetadata annotationMetadata) {
+    public static boolean hasJsonEntityRepresentationAnnotation(AnnotationMetadata annotationMetadata) {
         AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = annotationMetadata.getAnnotation(EntityRepresentation.class);
         if (entityRepresentationAnnotationValue == null) {
             return false;

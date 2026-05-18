@@ -32,6 +32,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.container.LibraryContainer;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+import org.jspecify.annotations.NullUnmarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +42,10 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 import java.util.Objects;
 
+@NullUnmarked
 @Internal
 public final class TckDeployableContainer implements DeployableContainer<TckContainerConfiguration> {
 
@@ -141,6 +144,7 @@ public final class TckDeployableContainer implements DeployableContainer<TckCont
             ApplicationContext applicationContext = ApplicationContext.builder()
                 .packages("ee.jakarta.tck.data")
                 .classLoader(classLoader)
+                .properties(Map.of("micronaut.data.save-assigned-id-fallback-to-update", true))
                 .build()
                 .start();
 

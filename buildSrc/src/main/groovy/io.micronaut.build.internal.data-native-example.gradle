@@ -1,17 +1,73 @@
+import groovy.yaml.YamlSlurper
+
 plugins {
     id "java"
     id "io.micronaut.application"
     id "io.micronaut.test-resources"
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    id "io.micronaut.build.internal.java-base"
 }
 
 tasks.register("testExamples") {
     dependsOn "test"
+}
+
+tasks.register("testOracleTestPilot") {
+    dependsOn "test"
+}
+
+tasks.named("test", Test) {
+    if (System.getenv("TESTPILOT_USERNAME") != null) {
+        description = "Runs a subset of tests specifically for Oracle Test Pilot"
+        group = "verification"
+
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+
+        // include all tests under example.oracle package, only!
+        include "example/oracle/**"
+
+        // and forces the environment
+        getEnvironment().put("MICRONAUT_ENVIRONMENTS", "oracle")
+    }
+}
+
+processResources {
+    outputs.upToDateWhen { false }
+    doLast {
+        if (System.getenv("TESTPILOT_USERNAME") != null) {
+            // We need to replace the default (using H2)
+            def targetFile = new File(destinationDir, "application.yml")
+
+            if(targetFile.exists()) {
+                def yaml = new YamlSlurper().parse(targetFile)
+                // change it if it's not already compliant with ORACLE dialect
+                if (yaml?.datasources?.default?.dialect != null && !yaml.datasources.default.dialect.contains("ORACLE")) {
+                    println "[oracle-test-pilot] ======================================="
+                    println "[oracle-test-pilot] Initializing project resources..."
+
+                    // replacing with a template file
+                    def newTargetFileSource = new File(destinationDir, "application-oracle.yml")
+                    if(newTargetFileSource.exists()) {
+                        targetFile.text = newTargetFileSource.text
+                        println "[oracle-test-pilot] - JDBC configuration updated!"
+                        if (logging.level == LogLevel.DEBUG) {
+                            println targetFile.text
+                        }
+                    } else {
+                        targetFile.delete()
+                        println "[oracle-test-pilot] - Wrong JDBC configuration deleted!"
+                    }
+                    println "[oracle-test-pilot] ======================================="
+                }
+            }
+        }
+    }
+}
+
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
 }
 
 dependencies {
@@ -35,12 +91,33 @@ graalvmNative {
     }
     binaries {
         configureEach {
-            if (System.getenv("GRAALVM_HOME")?.contains("graal") && System.getenv("GRAALVM_HOME")?.contains("21")) {
-                logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
-                logger.quiet("Enabling strict image heap!")
-                buildArgs.add("--strict-image-heap")
+            if (System.getenv("GRAALVM_HOME")?.contains("graal")) {
+                if (System.getenv("GRAALVM_HOME")?.contains("21")) {
+                    logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
+                    logger.quiet("Enabling strict image heap!")
+                    buildArgs.add("--strict-image-heap")
+                }
+                if (System.getenv("GRAALVM_HOME")?.contains("25")) {
+                    logger.quiet("Enabling SharedArenaSupport for GraalVM 25")
+                    buildArgs.add("-H:+SharedArenaSupport")
+                }
             }
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger,org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter," +
+                    "ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger,ch.qos.logback.classic.LoggerContext,ch.qos.logback.classic.PatternLayout,ch.qos.logback.classic.spi,ch.qos.logback.classic.encoder," +
+                    "ch.qos.logback.core.spi,ch.qos.logback.core.util,ch.qos.logback.core,ch.qos.logback.classic.util,ch.qos.logback.classic.pattern.color,ch.qos.logback.classic.pattern," +
+                    "ch.qos.logback.classic.model.processor,ch.qos.logback.classic.model,ch.qos.logback.classic.joran,ch.qos.logback.core.helpers,org.xml.sax.helpers")
         }
     }
 }
 
+tasks.withType(Test).configureEach {
+    if ( project.findProperty( 'log-test-progress' )?.toString()?.toBoolean() ) {
+        // Log a statement for each test.
+        testLogging {
+            displayGranularity = 1
+            events = ["passed", "skipped", "failed"]
+            exceptionFormat = 'full'
+            showStandardStreams = true
+        }
+    }
+}

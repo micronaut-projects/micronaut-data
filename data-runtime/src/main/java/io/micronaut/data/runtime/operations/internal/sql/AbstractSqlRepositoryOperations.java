@@ -21,13 +21,18 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -38,10 +43,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -70,9 +74,11 @@ import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
+import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.persistence.Tuple;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -80,6 +86,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -115,9 +122,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
+    @Nullable
     protected final JsonMapper jsonMapper;
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
-    protected final Map<Class, SqlQueryBuilder2> queryBuilders = new HashMap<>(10);
+    protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final PropertyPlaceholderResolver propertyPlaceholderResolver;
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
@@ -149,6 +157,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         BeanContext beanContext,
         DataConversionService conversionService,
         AttributeConverterRegistry attributeConverterRegistry,
+        @Nullable
         JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
@@ -164,7 +173,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             String targetDs = beanDefinition.stringValue(Repository.class).orElse(null);
             Class<Object> beanType = beanDefinition.getBeanType();
             if (targetDs == null || targetDs.equalsIgnoreCase(dataSourceName)) {
-                SqlQueryBuilder2 queryBuilder = new SqlQueryBuilder2(beanDefinition.getAnnotationMetadata());
+                SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
                 queryBuilders.put(beanType, queryBuilder);
             } else {
                 repositoriesWithHardcodedDataSource.put(beanType, targetDs);
@@ -188,7 +197,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         Class<?> repositoryType = context.getTarget().getClass();
-        SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
+        SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder, conversionService);
     }
@@ -237,7 +246,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param value             The value
      * @param storedQuery       The SQL stored query
      */
-    protected void setStatementParameter(PS preparedStatement, int index, DataType dataType, JsonDataType jsonDataType, Object value, SqlStoredQuery<?, ?> storedQuery) {
+    protected void setStatementParameter(PS preparedStatement,
+                                         int index,
+                                         DataType dataType,
+                                         @Nullable JsonDataType jsonDataType,
+                                         @Nullable Object value,
+                                         SqlStoredQuery<?, ?> storedQuery) {
+        if (jsonDataType == null) {
+            jsonDataType = JsonDataType.DEFAULT;
+        }
         Dialect dialect = storedQuery.getDialect();
         switch (dataType) {
             case UUID:
@@ -278,7 +295,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         preparedStatementWriter.setDynamic(preparedStatement, index, dataType, value);
     }
 
-    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, JsonDataType jsonDataType, int index, Object value) {
+    @Nullable
+    private Object getJsonValue(SqlStoredQuery<?, ?> storedQuery, JsonDataType jsonDataType, int index, @Nullable Object value) {
         if (value == null || value.getClass().equals(String.class)) {
             return value;
         }
@@ -312,8 +330,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
-            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
-            final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, new SqlQueryBuilder2.InsertQueryDefinitionImpl(persistentEntity));
+            var criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
+            final QueryResult queryResult = Objects.requireNonNull(criteriaBuilder.createCriteriaInsert(rootEntity).build(annotationMetadata, queryBuilder));
             final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
 
             return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity), persistentEntity, queryBuilder, getConversionService());
@@ -333,7 +352,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                                                   RuntimePersistentEntity<T> persistentEntity,
                                                   RuntimeAssociation<T> association) {
         return associationInserts.computeIfAbsent(association, association1 -> {
-            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
             return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
     }
@@ -357,7 +376,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         final QueryKey key = new QueryKey(repositoryType, rootEntity);
         //noinspection unchecked
         return entityUpdates.computeIfAbsent(key, (queryKey) -> {
-            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
+            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
 
             var criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
             var criteriaUpdate = criteriaBuilder.createCriteriaUpdate(rootEntity);
@@ -370,11 +389,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             persistentEntity.getPersistentProperties()
                 .stream().filter(p ->
                     !(p instanceof Association association && association.isForeignKey()) &&
-                        p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
+                        p.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)
                 )
                 .forEach(prop -> criteriaUpdate.set(prop.getName(), criteriaBuilder.parameter(prop.getType())));
 
-            final QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(annotationMetadata, queryBuilder);
+            final QueryResult queryResult = Objects.requireNonNull(criteriaUpdate.build(annotationMetadata, queryBuilder));
             final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
             return new DefaultSqlStoredQuery<>(
                 QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity),
@@ -397,7 +416,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
         String sqlInsert = resolveEnvPlaceholderValues(resolveAssociationInsert(repositoryType, persistentEntity, association));
-        final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
+        final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
         for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).toList()) {
             parameters.add(new QueryParameterBinding() {
@@ -418,16 +437,22 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
 
                 @Override
+                @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return property.getKey()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = property.getKey()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return
+                            typeDefAnnotationValue.annotationClassValue("converter")
+                                .flatMap(AnnotationClassValue::getType)
+                                .orElse(null);
+                    }
+                    return null;
                 }
 
                 @Override
+                @Nullable
                 public Object getValue() {
                     return property.getValue();
                 }
@@ -457,13 +482,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
 
                 @Override
+                @Nullable
                 public Class<?> getParameterConverterClass() {
-                    return pp.getProperty()
+                    AnnotationValue<TypeDef> typeDefAnnotationValue = pp.getProperty()
                         .getAnnotationMetadata()
-                        .getAnnotation(TypeDef.class)
-                        .annotationClassValue("converter")
-                        .flatMap(AnnotationClassValue::getType)
-                        .orElse(null);
+                        .getAnnotation(TypeDef.class);
+                    if (typeDefAnnotationValue != null) {
+                        return typeDefAnnotationValue
+                            .annotationClassValue("converter")
+                            .flatMap(AnnotationClassValue::getType)
+                            .orElse(null);
+                    } else {
+                        return null;
+                    }
                 }
             });
         }
@@ -472,8 +503,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class, OperationType.INSERT), associatedEntity, queryBuilder, getConversionService());
     }
 
-    private SqlQueryBuilder2 findQueryBuilder(Class<?> repositoryType) {
-        SqlQueryBuilder2 queryBuilder = queryBuilders.get(repositoryType);
+    private SqlQueryBuilder findQueryBuilder(Class<?> repositoryType) {
+        SqlQueryBuilder queryBuilder = queryBuilders.get(repositoryType);
         if (queryBuilder != null) {
             return queryBuilder;
         }
@@ -507,12 +538,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
 
-    protected final <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(StoredQuery<E, R> storedQuery) {
+    protected final <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(@Nullable StoredQuery<E, R> storedQuery) {
         if (storedQuery instanceof SqlStoredQuery<E, R> sqlStoredQuery) {
             if (sqlStoredQuery.isExpandableQuery() && !(sqlStoredQuery instanceof SqlPreparedQuery)) {
                 return new DefaultSqlPreparedQuery<>(sqlStoredQuery);
             }
             return sqlStoredQuery;
+        }
+        if (storedQuery == null) {
+            throw new IllegalStateException("Expected for stored query to be of type: SqlStoredQuery got: null");
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlStoredQuery got: " + storedQuery.getClass().getName());
     }
@@ -544,7 +578,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return switch (dialect) {
             case SQL_SERVER -> false;
             case MYSQL, ORACLE -> {
-                if (persistentEntity.getIdentity() != null) {
+                if (persistentEntity.hasIdentity()) {
                     // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
                     yield !persistentEntity.getIdentity().isGenerated();
                 }
@@ -590,8 +624,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <R>              the result type
      * @return the {@link SqlTypeMapper} able to decode from column value into given type
      */
-    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
-                                                                        RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery,
+                                                                        String columnName,
+                                                                        JsonDataType jsonDataType,
+                                                                        Class<RS> resultSetType,
+                                                                        RuntimePersistentEntity<T> persistentEntity,
+                                                                        @Nullable
+                                                                        BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         QueryResultInfo queryResultInfo = sqlStoredQuery.getQueryResultInfo();
         if (queryResultInfo != null && queryResultInfo.getType() != io.micronaut.data.annotation.QueryResult.Type.JSON) {
             throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
@@ -606,7 +645,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info, if not null will hold info about result type
      * @return true if result is JSON
      */
-    protected final boolean isJsonResult(StoredQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
+    protected final boolean isJsonResult(StoredQuery<?, ?> preparedQuery, @Nullable QueryResultInfo queryResultInfo) {
         if (preparedQuery.isCount()) {
             return false;
         }
@@ -624,11 +663,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (!storedQuery.isJsonEntity()) {
             return false;
         }
-        PersistentProperty identity = persistentEntity.getIdentity();
-        if (identity == null) {
+        if (!persistentEntity.hasIdentity()) {
             return false;
         }
-        return identity.getDataType().isNumeric();
+        return persistentEntity.getIdentity().getDataType().isNumeric();
     }
 
     /**
@@ -638,9 +676,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
      * @return the JSON column name
      */
-    protected final String getJsonColumn(QueryResultInfo queryResultInfo) {
+    protected final String getJsonColumn(@Nullable QueryResultInfo queryResultInfo) {
         if (queryResultInfo != null) {
-            return queryResultInfo.getColumnName();
+            return Objects.requireNonNullElse(queryResultInfo.getColumnName(), io.micronaut.data.annotation.QueryResult.DEFAULT_COLUMN);
         }
         return io.micronaut.data.annotation.QueryResult.DEFAULT_COLUMN;
     }
@@ -652,9 +690,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info from the {@link io.micronaut.data.annotation.QueryResult} annotation, null if annotation not present
      * @return the JSON data type
      */
-    protected final JsonDataType getJsonDataType(QueryResultInfo queryResultInfo) {
+    protected final JsonDataType getJsonDataType(@Nullable QueryResultInfo queryResultInfo) {
         if (queryResultInfo != null) {
-            return queryResultInfo.getJsonDataType();
+            return Objects.requireNonNullElse(queryResultInfo.getJsonDataType(), JsonDataType.DEFAULT);
         }
         return JsonDataType.DEFAULT;
     }
@@ -707,10 +745,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T>              the entity type
      * @return the {@link JsonQueryResultMapper}
      */
-    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
-                                                                               RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery,
+                                                                               String columnName,
+                                                                               JsonDataType jsonDataType,
+                                                                               Class<RS> resultSetType,
+                                                                               RuntimePersistentEntity<T> persistentEntity,
+                                                                               @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
+        SqlJsonColumnReader<RS> jsonColumnReader = sqlJsonColumnMapperProvider.getJsonColumnReader(sqlStoredQuery, resultSetType);
         return new JsonQueryResultMapper<>(columnName, jsonDataType, persistentEntity, columnNameResultSetReader,
-            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlStoredQuery, resultSetType), loadListener);
+            Objects.requireNonNull(jsonColumnReader), loadListener);
     }
 
     /**
@@ -724,16 +767,36 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Creates a result mapper.
      *
-     * @param preparedQuery The prepared query
-     * @param rsType        The result set type
-     * @param <E>           The entity type
-     * @param <R>           The result type
+     * @param preparedQuery     The prepared query
+     * @param rsType            The result set type
+     * @param <E>               The entity type
+     * @param <R>               The result type
      * @return The new mapper
      * @since 4.2.0
      */
     protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
         if (preparedQuery.getResultType().equals(Tuple.class)) {
             return (SqlTypeMapper<RS, R>) createTupleMapper();
+        }
+        if (preparedQuery.getResultType().equals(Object[].class)) {
+            SqlTypeMapper<RS, Tuple> tupleMapper = createTupleMapper();
+            return new SqlTypeMapper<>() {
+                @Override
+                public boolean hasNext(RS resultSet) {
+                    return tupleMapper.hasNext(resultSet);
+                }
+
+                @Override
+                public @Nullable R map(RS object, Class<R> type) throws DataAccessException {
+                    Tuple tuple = tupleMapper.map(object, Tuple.class);
+                    return tuple == null ? null : (R) tuple.toArray();
+                }
+
+                @Override
+                public @Nullable Object read(RS object, String name) {
+                    return tupleMapper.read(object, name);
+                }
+            };
         }
         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
@@ -768,22 +831,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
-            Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
-            RuntimePersistentEntity<R> dtoPersistentEntity = new RuntimePersistentEntity<>(
-                resultPersistentEntity.getIntrospection(),
-                beanProperties.stream().map(p -> {
-                    if (p.hasAnnotation(MappedProperty.class)) {
-                        return p;
-                    }
-                    RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
-                    if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
-                        return p;
-                    }
-                    return new BeanPropertyWithAnnotationMetadata<>(
-                        p,
-                        new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
-                    );
-                }).toList()
+            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
+                preparedQuery.getAnnotationMetadata(),
+                persistentEntity,
+                resultPersistentEntity
             );
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
@@ -800,6 +851,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             }
 
             @Override
+            @Nullable
             public R map(RS rs, Class<R> type) throws DataAccessException {
                 Object v = columnIndexResultSetReader.readDynamic(rs, getFirstResultSetIndex(), preparedQuery.getResultDataType());
                 if (v == null) {
@@ -816,6 +868,95 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 throw new IllegalStateException("Not supported!");
             }
         };
+    }
+
+    protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                                                                 RuntimePersistentEntity<E> persistentEntity,
+                                                                                 RuntimePersistentEntity<R> resultPersistentEntity) {
+        List<AnnotationValue<Projection>> projections = annotationMetadata.getAnnotationValuesByType(Projection.class);
+        if (projections != null && !projections.isEmpty()) {
+            if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
+                throw new IllegalStateException("Number of projections does not match persistent entity properties");
+            }
+            Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
+            Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
+            List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
+            for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
+                RuntimePersistentProperty<R> dtoProp = dtoIter.next();
+                String propertyName = projectionAnnotationValue.stringValue().orElseThrow();
+                RuntimePersistentProperty<E> propertyByName = persistentEntity.getPropertyByName(propertyName);
+                if (propertyByName == null) {
+                    throw new IllegalStateException("Cannot find projection property [" + propertyName + "] for entity [" + persistentEntity.getName() + "]");
+                }
+                BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
+                MutableAnnotationMetadata mutableAnnotationMetadata = new MutableAnnotationMetadata();
+                mutableAnnotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                properties.add(new BeanPropertyWithAnnotationMetadata<>(
+                    dtoProp.getName(),
+                    dtoProp.getProperty(),
+                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata)
+                ));
+            }
+            return new RuntimePersistentEntity<>(
+                resultPersistentEntity.getIntrospection(),
+                properties
+            );
+        }
+        return new RuntimePersistentEntity<>(
+            resultPersistentEntity.getIntrospection(),
+            getDtoProperties(resultPersistentEntity, persistentEntity)
+        );
+    }
+
+    protected final <E, R> boolean isDtoProjection(SqlStoredQuery<E, R> storedQuery) {
+        if (storedQuery.isDtoProjection()) {
+            return true;
+        }
+        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+            return false;
+        }
+        Class<R> resultType = storedQuery.getResultType();
+        if (resultType.isArray() || resultType.isPrimitive() || resultType.isEnum() || resultType.equals(Tuple.class)) {
+            return false;
+        }
+        if (resultType.equals(String.class)
+            || Number.class.isAssignableFrom(resultType)
+            || CharSequence.class.isAssignableFrom(resultType)
+            || java.util.Date.class.isAssignableFrom(resultType)
+            || java.time.temporal.Temporal.class.isAssignableFrom(resultType)
+            || resultType.equals(Boolean.class)
+            || resultType.equals(Character.class)
+            || resultType.equals(Object.class)) {
+            return false;
+        }
+        try {
+            BeanIntrospection.getIntrospection(resultType);
+            return true;
+        } catch (IntrospectionException e) {
+            return false;
+        }
+    }
+
+    protected final <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                          RuntimePersistentEntity<E> persistentEntity) {
+        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
+            if (p.hasAnnotation(MappedProperty.class)) {
+                return p;
+            }
+            String name = p.getName();
+            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
+            if (projection != null) {
+                name = projection.stringValue().orElse(name);
+            }
+            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
+            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                return p;
+            }
+            return new BeanPropertyWithAnnotationMetadata<>(
+                p,
+                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+            );
+        }).toList();
     }
 
     private String resolveEnvPlaceholderValues(String value) {

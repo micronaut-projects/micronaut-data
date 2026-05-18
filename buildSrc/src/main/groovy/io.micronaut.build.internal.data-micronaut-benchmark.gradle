@@ -18,6 +18,9 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
     testImplementation mnTest.micronaut.test.junit5
 
+    testRuntimeOnly libs.jupiter.engine
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
     jmh libs.jmh.core
     jmh libs.jmh.annprocess
 }

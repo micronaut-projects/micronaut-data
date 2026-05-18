@@ -15,26 +15,27 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Invoice
-import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
+import io.micronaut.data.processor.entity.SomeEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
-import io.micronaut.inject.ExecutableMethod
+import jakarta.data.page.PageRequest
+import jakarta.data.restrict.Restriction
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -83,7 +84,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 }
 """
@@ -104,7 +104,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -134,7 +133,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -186,7 +184,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             )
         then:
             def e = thrown(Exception)
-            e.message.contains "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
+            e.message.contains "Expected an expression '#{...}' found a string!"
     }
 
     @PendingFeature
@@ -535,16 +533,18 @@ interface MealRepository extends CrudRepository<Meal, Long> {
 
     void "test find by relation"() {
         given:
-            def repository = buildRepository('test.UserRoleRepository', """
+            def repository = withEmbeddedNamingStrategy("LEGACY") {
+                buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.tck.jdbc.entities.Role;
-import io.micronaut.data.tck.jdbc.entities.User;
-import io.micronaut.data.tck.jdbc.entities.UserRole;
-import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
@@ -552,7 +552,95 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
 }
+
+@Entity
+@Table(name = "user_role_composite")
+class UserRole {
+    @EmbeddedId
+    private UserRoleId id;
+
+    public UserRoleId getId() {
+        return id;
+    }
+
+    public void setId(UserRoleId id) {
+        this.id = id;
+    }
+}
+
+@Embeddable
+class UserRoleId {
+    @ManyToOne
+    private User user;
+    @ManyToOne
+    private Role role;
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+}
+
+@Entity
+@Table(name = "user_composite")
+class User {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Entity
+@Table(name = "role_composite")
+class Role {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
 """)
+            }
 
             def method = repository.findPossibleMethods("findRoleByUser").findAny().get()
             def query = getQuery(method)
@@ -643,7 +731,7 @@ interface FacesRepository extends CrudRepository<Face, Long> {
     void "test native query with colon used in query"() {
         given:
         def repository = buildRepository('test.FacesRepository', """
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
@@ -748,7 +836,113 @@ interface ProductDtoRepository extends GenericRepository<Product, Long> {
         expect:
         method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
         query == 'SELECT product_.`name`,product_.`price`,product_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS long_name,product_.`date_created`,product_.`last_updated` FROM `product` product_ WHERE (product_.`name` LIKE ?)'
+    }
 
+    void "test build restriction DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    List<TrainNameCapacityDto> find(Restriction<Train> restriction);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
+    }
+
+    void "test build restriction page DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.page.Page;
+import jakarta.data.page.PageRequest;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    Page<TrainNameCapacityDto> find(Restriction<Train> restriction, PageRequest pageRequest);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction, PageRequest)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor"
+    }
+
+    void "test build restriction async page DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.page.Page;
+import jakarta.data.page.PageRequest;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+import java.util.concurrent.CompletionStage;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    CompletionStage<Page<TrainNameCapacityDto>> find(Restriction<Train> restriction, PageRequest pageRequest);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction, PageRequest)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor"
     }
 
     void "test join query in repo via mapped entity"() {
@@ -901,10 +1095,10 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
         def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
         expect:
-        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
-        saveQuery == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
-        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`address_street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        saveQuery == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
+        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
     }
 
     void "test count query with joins"() {
@@ -1182,7 +1376,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
         expect:
         countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
-        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`user_id`,user_role_.`role_id`))) FROM `user_role_composite` user_role_'
     }
 
     void "test many-to-one with properties starting with the same prefix"() {
@@ -1374,13 +1568,13 @@ interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
         then:
         queryFindAll == 'SELECT activity_period_entity_.`id`,activity_period_entity_.`name`,activity_period_entity_.`description`,activity_period_entity_.`type` FROM `activity_period` activity_period_entity_ LEFT JOIN `activity_period_person` activity_period_entity_persons_ ON activity_period_entity_.`id`=activity_period_entity_persons_.`activity_period_id` LEFT JOIN `activity_person` activity_period_entity_persons_id_person_ ON activity_period_entity_persons_.`person_id`=activity_period_entity_persons_id_person_.`id`'
         when:
-        def test = QueryModel.from(PersistentEntity.of(ActivityPeriodEntity))
-        test.join("persons.id.person", Join.Type.LEFT, null)
-        def builder = new SqlQueryBuilder(Dialect.H2)
-        def result = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, test)
-        def query = result.query
+        RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+        def query = builder.createQuery()
+        def root = query.from(ActivityPeriodEntity)
+        root.join("persons.id.person", Join.Type.LEFT)
+        def result = query.build(new SqlQueryBuilder(Dialect.H2))
         then:
-        query == queryFindAll
+        result.query == queryFindAll
     }
 
     void "test project enum"() {
@@ -1455,7 +1649,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
         expect:
         countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
-        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`user_id`,user_role_.`role_id`))) FROM `user_role_composite` user_role_'
     }
 
     void "test escape query"() {
@@ -1663,7 +1857,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         def repository = buildRepository('test.SettlementRepository', """
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Pageable;
@@ -1715,6 +1909,7 @@ class CountyPk {
 @MappedEntity("comp_country")
 class County {
     @EmbeddedId
+    @MappedProperty(value = "id")
     CountyPk id;
     @MappedProperty
     String countyName;
@@ -1739,6 +1934,7 @@ class SettlementPk {
 @MappedEntity("comp_settlement")
 class Settlement {
     @EmbeddedId
+    @MappedProperty(value = "id")
     SettlementPk id;
     @MappedProperty
     String description;
@@ -1827,6 +2023,40 @@ interface BookRepository extends GenericRepository<Book, Long> {
 """)
         when:
             def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("queryTop3ByAuthorNameOrderByTitle").findFirst().get()
+        then:
+            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
+            getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
+            getParameterPropertyPaths(queryTop3ByAuthorNameOrderByTitle) == ["author.name"] as String[]
+    }
+
+    void "test projection find annotation"() {
+
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.annotation.Find;
+import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+import static io.micronaut.data.model.query.builder.sql.Dialect.*;
+
+@JdbcRepository(dialect = POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Find
+    @First(3)
+    @OrderBy("title")
+    List<Book> find(@By("author.name") String name);
+}
+
+""")
+        when:
+            def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("find").findFirst().get()
         then:
             getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
             getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
@@ -2001,7 +2231,7 @@ class Resource {
         given:
         def repository = buildRepository('test.TestRepository', """
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.custom.CustomRepository;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;
@@ -2030,7 +2260,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         findByTitleContainsQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE CONCAT(\'%\',?,\'%\'))')
         findByTitleLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE ?)')
         findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
-        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
+        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" NOT LIKE ?)')
     }
 
     void "test IN"() {
@@ -2276,7 +2506,7 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
 
             def method = repository.getRequiredMethod("find", String)
         expect:
-            getQuery(method) == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
+            getQuery(method) == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == [""] as String[]
             getParameterPropertyPaths(method) == ["address.street"] as String[]
@@ -2310,5 +2540,182 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
         getExtendedStockOperationsMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
+    void "test oracle raw query ignores lowercase returning in string literal"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT 'user returning later' AS msg FROM dual")
+    String message();
+}
+""")
+        def method = repository.getRequiredMethod("message")
+
+        expect:
+        getRawQuery(method) == "SELECT 'user returning later' AS msg FROM dual"
+        method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
+    void "test raw REPLACE INTO is treated as UPDATE (MySQL)"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("REPLACE INTO book (id, title, total_pages) VALUES (:id, :title, :totalPages)")
+    int replaceCustom(Long id, String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("replaceCustom", Long, String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
+    }
+
+    void "test raw INSERT with explicit parameters is treated as UPDATE operation"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("INSERT INTO book (title, total_pages) VALUES (:title, :totalPages)")
+    int insertCustom(String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("insertCustom", String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(method) == 'INSERT INTO book (title, total_pages) VALUES (?, ?)'
+    }
+
+    void "test EmbeddedId naming strategy"() {
+        given:
+        def repository = buildRepository('test.SomeEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.processor.entity.SomeEntity;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.H2)
+interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.PrimaryKey> {
+    Optional<SomeEntity> findById(SomeEntity.PrimaryKey id);
+    SomeEntity save(SomeEntity entity);
+    List<SomeEntity> findAll();
+}
+""")
+
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", SomeEntity.PrimaryKey))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", SomeEntity))
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_ WHERE (some_entity_.`some_column` = ? AND some_entity_.`other_entity_id` = ?)'
+        saveQuery == 'INSERT INTO `some_table` (`col`,`some_column`,`other_entity_id`) VALUES (?,?,?)'
+        findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
+    }
+
+    void "test invalid embedded naming strategy fails compilation"() {
+        when:
+        withEmbeddedNamingStrategy("INVALID") {
+            buildRepository('test.InvalidEmbeddedNamingRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface InvalidEmbeddedNamingRepository extends GenericRepository<InvalidEmbeddedNamingEntity, Long> {
+    InvalidEmbeddedNamingEntity save(InvalidEmbeddedNamingEntity entity);
+}
+
+@Entity
+class InvalidEmbeddedNamingEntity {
+    @Id
+    Long id;
+}
+""")
+        }
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Invalid value for 'micronaut.data.embedded.naming.strategy': INVALID")
+        ex.message.contains("Supported values are LEGACY and STANDARD")
+    }
+
+    void "test legacy EmbeddedId naming strategy"() {
+        given:
+        def repository = withEmbeddedNamingStrategy("LEGACY") {
+            buildRepository('test.LegacySomeEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LegacySomeEntityRepository extends GenericRepository<LegacySomeEntity, LegacySomeEntity.PrimaryKey> {
+    Optional<LegacySomeEntity> findById(LegacySomeEntity.PrimaryKey id);
+    LegacySomeEntity saveLegacy(LegacySomeEntity entity);
+    List<LegacySomeEntity> findAll();
+}
+
+@Entity(name = "some_table")
+@Table(name = "some_table")
+record LegacySomeEntity(@EmbeddedId PrimaryKey primaryKey, String col) {
+    @Embeddable
+    record PrimaryKey(
+            int someColumn,
+            @ManyToOne LegacyOtherEntity otherEntity
+    ) {
+    }
+}
+
+@Entity(name = "other_table")
+@Table(name = "other_table")
+record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
+}
+""")
+        }
+
+        def findByIdQuery = getQuery(repository.executableMethods.find { it.methodName == "findById" && it.arguments.length == 1 && it.arguments[0].type.name.contains("PrimaryKey") })
+        def saveQuery = getQuery(repository.executableMethods.find { it.methodName == "saveLegacy" })
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_ WHERE (legacy_some_entity_.`primary_key_some_column` = ? AND legacy_some_entity_.`primary_key_other_entity_id` = ?)'
+        saveQuery == 'INSERT INTO `some_table` (`col`,`primary_key_some_column`,`primary_key_other_entity_id`) VALUES (?,?,?)'
+        findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 }

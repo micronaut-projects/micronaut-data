@@ -53,15 +53,11 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        if (context.getParameterValues().length != 2) {
-            throw new IllegalStateException("Expected exactly 2 arguments to method");
-        }
-
         Pageable pageable = getPageable(context);
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         Iterable<?> iterable;
-        if (root.getJoins().isEmpty()) {
+        if (root.getJoins().isEmpty() && root.getFetches().isEmpty()) {
             iterable = findAll(methodKey, context, pageable, criteriaQuery);
         } else {
             CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);

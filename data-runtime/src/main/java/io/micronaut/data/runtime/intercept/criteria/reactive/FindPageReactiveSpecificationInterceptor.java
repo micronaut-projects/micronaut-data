@@ -29,6 +29,7 @@ import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -70,7 +71,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
             Root<?> root = criteriaQuery.getRoots().iterator().next();
             Flux<Object> content;
-            if (root.getJoins().isEmpty()) {
+            if (root.getJoins().isEmpty() || root.getFetches().isEmpty()) {
                 content = findAllReactive(methodKey, context, pageable, criteriaQuery);
             } else {
                 CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
@@ -104,7 +105,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
         return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());
     }
 
-    private Page<?> getPage(List<Object> list, Pageable pageable, Long count, MethodInvocationContext<Object, Object> context) {
+    private Page<?> getPage(List<Object> list, Pageable pageable, @Nullable Long count, MethodInvocationContext<Object, Object> context) {
         Page<?> page;
         if (pageable.getMode() == Pageable.Mode.OFFSET) {
             page = Page.of(list, pageable, count);

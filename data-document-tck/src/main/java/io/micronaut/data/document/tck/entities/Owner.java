@@ -19,12 +19,14 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Owner {
 
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
     private String name;
     private int age;
@@ -46,6 +48,7 @@ public class Owner {
         return name;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }

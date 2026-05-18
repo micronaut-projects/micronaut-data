@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -70,6 +70,7 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * @since 4.0.0
      */
     @Override
+    @Nullable
     QueryResultInfo getQueryResultInfo();
 
     /**
@@ -84,6 +85,6 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
     /**
      * @return The persistent entity
      */
-    @Nullable
+    @Override
     RuntimePersistentEntity<E> getPersistentEntity();
 }

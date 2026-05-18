@@ -15,10 +15,16 @@
  */
 package io.micronaut.data.runtime.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanMethod;
-import io.micronaut.data.annotation.event.*;
+import io.micronaut.data.annotation.event.PostLoad;
+import io.micronaut.data.annotation.event.PostPersist;
+import io.micronaut.data.annotation.event.PostRemove;
+import io.micronaut.data.annotation.event.PostUpdate;
+import io.micronaut.data.annotation.event.PrePersist;
+import io.micronaut.data.annotation.event.PreRemove;
+import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.event.PersistenceEventException;

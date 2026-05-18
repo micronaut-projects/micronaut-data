@@ -3,6 +3,7 @@
 package example;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
@@ -14,9 +15,10 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository // <1>
-interface BookRepository extends CrudRepository<Book, Long> { // <2>
+public interface BookRepository extends CrudRepository<Book, Long> { // <2>
 // end::repository[]
 
     // tag::simple[]
@@ -146,6 +148,11 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
            nativeQuery = true)
     List<Book> findNativeBooks(String title);
     // end::native[]
+
+    // tag::stream_projection[]
+    @Fetch(1000)
+    Stream<BookDTO> listAll();
+    // end::stream_projection[]
 
 // tag::repository[]
 }

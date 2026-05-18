@@ -89,6 +89,31 @@ public @interface TypeRole {
     String CURSORED_PAGE = "cursoredPage";
 
     /**
+     * The parameter that is used to represent a predicate specification.
+     */
+    String SPECIFICATION_PREDICATE = "specificationPredicate";
+
+    /**
+     * The parameter that is used to represent a constraint specification.
+     */
+    String SPECIFICATION_CONSTRAINT = "specificationConstraint";
+
+    /**
+     * The parameter that is used to represent an update specification.
+     */
+    String SPECIFICATION_UPDATE = "specificationUpdate";
+
+    /**
+     * The parameter that is used to represent a delete specification.
+     */
+    String SPECIFICATION_DELETE = "specificationUpdate";
+
+    /**
+     * The parameter that is used to represent a query specification.
+     */
+    String SPECIFICATION_QUERY = "specificationQuery";
+
+    /**
      * The parameter that is used for pageable which is no un-paged.
      */
     @Experimental

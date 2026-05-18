@@ -17,12 +17,14 @@ package io.micronaut.data.jakarta.tck;
 
 import io.micronaut.annotation.processing.AggregatingTypeElementVisitorProcessor;
 import io.micronaut.annotation.processing.BeanDefinitionInjectProcessor;
+import io.micronaut.annotation.processing.MixinVisitorProcessor;
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor;
 import io.micronaut.core.annotation.Internal;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jspecify.annotations.NullUnmarked;
 
 import javax.annotation.processing.Processor;
 import javax.tools.DiagnosticCollector;
@@ -51,6 +53,7 @@ import java.util.stream.Stream;
  * file in this class's classloader. In other words, the CDI TCK source JAR must
  * be on classpath.
  */
+@NullUnmarked
 @Internal
 final class ArchiveCompiler {
     private final DeploymentDir deploymentDir;
@@ -172,6 +175,7 @@ final class ArchiveCompiler {
 
     private List<Processor> getAnnotationProcessors() {
         List<Processor> result = new ArrayList<>();
+        result.add(new MixinVisitorProcessor());
         result.add(new TypeElementVisitorProcessor());
         result.add(new AggregatingTypeElementVisitorProcessor());
         result.add(new BeanDefinitionInjectProcessor() {

@@ -16,8 +16,7 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.util.StringUtils;
@@ -62,7 +61,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
 
     @Nullable
     @Override
-    public Object readDynamic(@NonNull CallableStatement cs, @NonNull Integer index, @NonNull DataType dataType) {
+    public Object readDynamic(CallableStatement cs, Integer index, DataType dataType) {
         Object val = ResultReader.super.readDynamic(cs, index, dataType);
 
         try {
@@ -73,6 +72,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
     }
 
     @Override
+    @Nullable
     public Timestamp readTimestamp(CallableStatement cs, Integer index) {
         try {
             return cs.getTimestamp(index);
@@ -82,6 +82,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
     }
 
     @Override
+    @Nullable
     public Time readTime(CallableStatement cs, Integer index) {
         try {
             return cs.getTime(index);
@@ -113,6 +114,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
     }
 
     @Override
+    @Nullable
     public Date readDate(CallableStatement cs, Integer index) {
         try {
             return cs.getDate(index);
@@ -186,6 +188,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
     }
 
     @Override
+    @Nullable
     public BigDecimal readBigDecimal(CallableStatement cs, Integer index) {
         try {
             return cs.getBigDecimal(index);
@@ -204,6 +207,7 @@ public final class ColumnIndexCallableResultReader implements ResultReader<Calla
     }
 
     @Override
+    @Nullable
     public <T> T getRequiredValue(CallableStatement cs, Integer index, Class<T> type) throws DataAccessException {
         try {
             Object o;

@@ -18,8 +18,9 @@ package io.micronaut.data.cosmos.operations;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -28,13 +29,15 @@ import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * The sync Azure Cosmos DB operations implementation.
@@ -53,8 +56,8 @@ final class SyncCosmosRepositoryOperations implements
     PreparedQueryDecorator {
 
     private final DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations;
-    private ExecutorService executorService;
-    private ExecutorAsyncOperations asyncOperations;
+    private final ExecutorServiceResolver executorServiceResolver;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     /**
      * Default constructor.
@@ -62,29 +65,20 @@ final class SyncCosmosRepositoryOperations implements
      * @param reactiveCosmosRepositoryOperations    The reactive cosmos repository operations
      * @param executorService                       The executor service
      */
-    protected SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
-                                             @Named("io") @Nullable ExecutorService executorService) {
+    @Inject
+    SyncCosmosRepositoryOperations(DefaultReactiveCosmosRepositoryOperations reactiveCosmosRepositoryOperations,
+                                   @Named("io") @Nullable ExecutorService executorService) {
         this.reactiveCosmosRepositoryOperations = reactiveCosmosRepositoryOperations;
-        this.executorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations executorAsyncOperations = this.asyncOperations;
-        if (executorAsyncOperations == null) {
-            synchronized (this) { // double check
-                executorAsyncOperations = this.asyncOperations;
-                if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperations(
-                        this,
-                        executorService != null ? executorService : newLocalThreadPool()
-                    );
-                    this.asyncOperations = executorAsyncOperations;
-                }
-            }
-        }
-        return asyncOperations;
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+            this,
+            executorServiceResolver.get()
+        ));
     }
 
     @NonNull
@@ -93,10 +87,9 @@ final class SyncCosmosRepositoryOperations implements
         return reactiveCosmosRepositoryOperations;
     }
 
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @Override

@@ -17,8 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.annotation.TypeRole;
@@ -38,6 +37,9 @@ import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.intercept.FindStreamInterceptor;
+import io.micronaut.data.intercept.InsertAllInterceptor;
+import io.micronaut.data.intercept.InsertEntityInterceptor;
+import io.micronaut.data.intercept.InsertOneInterceptor;
 import io.micronaut.data.intercept.InsertReturningManyInterceptor;
 import io.micronaut.data.intercept.InsertReturningOneInterceptor;
 import io.micronaut.data.intercept.ProcedureReturningManyInterceptor;
@@ -61,9 +63,18 @@ import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindCursoredAsyncPageInterceptor;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
+import io.micronaut.data.intercept.async.DeleteReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.DeleteReturningOneAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertAllAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertEntityAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertOneAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.InsertReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
+import io.micronaut.data.intercept.async.UpdateReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.UpdateReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor;
@@ -79,6 +90,9 @@ import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindCursoredReactivePageInterceptor;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.InsertAllReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.InsertEntityReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.InsertOneReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
@@ -92,6 +106,7 @@ import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.reactivestreams.Publisher;
 
@@ -101,6 +116,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -139,14 +155,22 @@ public interface FindersUtils {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch updateEntry;
                 if (hasEntityParameter && returnsEntity) {
-                    updateEntry = pickDeleteInterceptor(matchContext, returnType);
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
+                        updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickDeleteInterceptor(matchContext, returnType);
+                    }
                 } else if (hasMultipleEntityParameter && returnsEntity) {
-                    updateEntry = pickDeleteAllReturningInterceptor(matchContext, returnType);
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
+                        updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickDeleteAllReturningInterceptor(matchContext, returnType);
+                    }
                 } else {
                     updateEntry = pickDeleteReturningInterceptor(matchContext, returnType);
                 }
                 if (isContainer(updateEntry.returnType, Iterable.class)) {
-                    yield typeAndInterceptorEntry(updateEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), updateEntry.interceptor);
+                    yield typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, updateEntry.returnType), updateEntry.interceptor);
                 } else {
                     yield updateEntry;
                 }
@@ -161,7 +185,7 @@ public interface FindersUtils {
                     updateEntry = pickUpdateInterceptor(matchContext, returnType);
                 }
                 if (isContainer(updateEntry.returnType, Iterable.class)) {
-                    yield typeAndInterceptorEntry(updateEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), updateEntry.interceptor);
+                    yield typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, updateEntry.returnType), updateEntry.interceptor);
                 } else {
                     yield updateEntry;
                 }
@@ -172,12 +196,16 @@ public interface FindersUtils {
                 if (hasMultipleEntityParameter && returnsEntity) {
                     updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
                 } else if (hasEntityParameter && returnsEntity) {
-                    updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
+                    if (isReactiveType(returnType) || isFutureType(matchContext.getMethodElement(), returnType)) {
+                        updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
+                    } else {
+                        updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
+                    }
                 } else {
                     updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
                 }
                 if (isContainer(updateEntry.returnType, Iterable.class)) {
-                    yield typeAndInterceptorEntry(updateEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), updateEntry.interceptor);
+                    yield typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, updateEntry.returnType), updateEntry.interceptor);
                 } else {
                     yield updateEntry;
                 }
@@ -185,14 +213,14 @@ public interface FindersUtils {
             case INSERT -> {
                 InterceptorMatch saveEntry;
                 if (hasEntityParameter) {
-                    saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
+                    saveEntry = pickInsertEntityInterceptor(matchContext, returnType);
                 } else if (hasMultipleEntityParameter) {
-                    saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
+                    saveEntry = pickInsertAllEntitiesInterceptor(matchContext, returnType);
                 } else {
-                    saveEntry = pickSaveOneInterceptor(matchContext, returnType);
+                    saveEntry = pickInsertOneInterceptor(matchContext, returnType);
                 }
                 if (isContainer(saveEntry.returnType, Iterable.class)) {
-                    yield typeAndInterceptorEntry(saveEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), saveEntry.interceptor);
+                    yield typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, saveEntry.returnType), saveEntry.interceptor);
                 } else {
                     yield saveEntry;
                 }
@@ -201,14 +229,14 @@ public interface FindersUtils {
                 boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch saveEntry;
                 if (hasEntityParameter && returnsEntity) {
-                    saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
+                    saveEntry = pickInsertEntityInterceptor(matchContext, returnType);
                 } else if (hasMultipleEntityParameter && returnsEntity) {
-                    saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
+                    saveEntry = pickInsertAllEntitiesInterceptor(matchContext, returnType);
                 } else {
                     saveEntry = pickInsertReturningInterceptor(matchContext, returnType);
                 }
                 if (isContainer(saveEntry.returnType, Iterable.class)) {
-                    yield typeAndInterceptorEntry(saveEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), saveEntry.interceptor);
+                    yield typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, saveEntry.returnType), saveEntry.interceptor);
                 } else {
                     yield saveEntry;
                 }
@@ -217,25 +245,82 @@ public interface FindersUtils {
         };
     }
 
+    static FindersUtils.InterceptorMatch resolveSaveInterceptorType(boolean hasEntityParameter,
+                                                                    boolean hasMultipleEntityParameter,
+                                                                    MethodMatchContext matchContext) {
+        ClassElement returnType = matchContext.getMethodElement().getGenericReturnType();
+        InterceptorMatch saveEntry;
+        if (hasEntityParameter) {
+            saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
+        } else if (hasMultipleEntityParameter) {
+            saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
+        } else {
+            saveEntry = pickSaveOneInterceptor(matchContext, returnType);
+        }
+        if (isContainer(saveEntry.returnType, Iterable.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, saveEntry.returnType), saveEntry.interceptor);
+        }
+        return saveEntry;
+    }
+
     private static InterceptorMatch pickUpdateReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), UpdateReturningManyAsyncInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, UpdateReturningOneAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.UpdateReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.UpdateReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), UpdateReturningManyInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), UpdateReturningManyInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType.getType(), UpdateReturningOneInterceptor.class);
         }
     }
 
     private static InterceptorMatch pickDeleteReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), DeleteReturningManyAsyncInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, DeleteReturningOneAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.DeleteReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.DeleteReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), DeleteReturningManyInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), DeleteReturningManyInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType.getType(), DeleteReturningOneInterceptor.class);
         }
     }
 
     private static InterceptorMatch pickInsertReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
+            if (isContainer(asyncType, Iterable.class)) {
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), InsertReturningManyAsyncInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, asyncType, InsertReturningOneAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            ClassElement reactiveType = returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+            if (isReactiveSingleResult(returnType)) {
+                return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.InsertReturningOneReactiveInterceptor.class);
+            }
+            return typeAndInterceptorEntry(matchContext, reactiveType, io.micronaut.data.intercept.reactive.InsertReturningManyReactiveInterceptor.class);
+        }
         if (isContainer(returnType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), InsertReturningManyInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), InsertReturningManyInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType.getType(), InsertReturningOneInterceptor.class);
         }
@@ -243,97 +328,127 @@ public interface FindersUtils {
 
     static FindersUtils.InterceptorMatch pickSaveOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), SaveOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), SaveOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), SaveOneReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), SaveOneReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), SaveOneInterceptor.class);
     }
 
+    static FindersUtils.InterceptorMatch pickInsertOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), InsertOneAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), InsertOneReactiveInterceptor.class);
+        }
+        return typeAndInterceptorEntry(matchContext, returnType.getType(), InsertOneInterceptor.class);
+    }
+
     static FindersUtils.InterceptorMatch pickUpdateAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), UpdateAllEntriesAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), UpdateAllEntriesAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), UpdateAllEntitiesReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), UpdateAllEntitiesReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), UpdateAllEntitiesInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickProcedureInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            ClassElement asyncType = getAsyncType(matchContext.getMethodElement(), returnType);
+            ClassElement asyncType = getAsyncType(matchContext, returnType);
             if (isContainer(asyncType, Iterable.class)) {
-                return typeAndInterceptorEntry(matchContext, asyncType.getFirstTypeArgument().orElse(asyncType), ProcedureReturningManyAsyncInterceptor.class);
+                return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), ProcedureReturningManyAsyncInterceptor.class);
             }
             return typeAndInterceptorEntry(matchContext, asyncType, ProcedureReturningOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), ProcedureReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), ProcedureReactiveInterceptor.class);
         }
         if (isContainer(returnType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), ProcedureReturningManyInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), ProcedureReturningManyInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), ProcedureReturningOneInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickDeleteInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), DeleteOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), DeleteOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), DeleteOneReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), DeleteOneReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), DeleteOneInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickDeleteAllInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), DeleteAllAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), DeleteAllAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), DeleteAllReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), DeleteAllReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), DeleteAllInterceptor.class);
     }
 
+    private static ClassElement voidType(MethodMatchContext matchContext) {
+        return matchContext.getVisitorContext().getClassElement(Void.class).orElseThrow();
+    }
+
     static FindersUtils.InterceptorMatch pickDeleteAllReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-//        if (isFutureType(matchContext.getMethodElement(), returnType)) {
-//            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), DeleteAllAsyncInterceptor.class);
-//        } else if (isReactiveType(returnType)) {
-//            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), DeleteAllReactiveInterceptor.class);
-//        }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), DeleteAllReturningInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickSaveEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), SaveEntityAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), SaveEntityAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), SaveEntityReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), SaveEntityReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), SaveEntityInterceptor.class);
     }
 
+    static FindersUtils.InterceptorMatch pickInsertEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), InsertEntityAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), InsertEntityReactiveInterceptor.class);
+        }
+        return typeAndInterceptorEntry(matchContext, returnType.getType(), InsertEntityInterceptor.class);
+    }
+
+    private static ClassElement getReactiveTypeOrVoid(MethodMatchContext matchContext, ClassElement returnType) {
+        return returnType.getFirstTypeArgument().orElse(voidType(matchContext));
+    }
+
     static FindersUtils.InterceptorMatch pickSaveAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), SaveAllAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), SaveAllAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), SaveAllReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), SaveAllReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), SaveAllInterceptor.class);
     }
 
+    static FindersUtils.InterceptorMatch pickInsertAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isFutureType(matchContext.getMethodElement(), returnType)) {
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), InsertAllAsyncInterceptor.class);
+        } else if (isReactiveType(returnType)) {
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), InsertAllReactiveInterceptor.class);
+        }
+        return typeAndInterceptorEntry(matchContext, returnType.getType(), InsertAllInterceptor.class);
+    }
+
     static FindersUtils.InterceptorMatch pickUpdateInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), UpdateAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), UpdateAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), UpdateReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), UpdateReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), UpdateInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickUpdateEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), UpdateEntityAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), UpdateEntityAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), UpdateEntityReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(voidType(matchContext)), UpdateEntityReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), UpdateEntityInterceptor.class);
     }
@@ -341,9 +456,9 @@ public interface FindersUtils {
     static FindersUtils.InterceptorMatch resolveFindInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         FindersUtils.InterceptorMatch entry;
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            entry = resolveAsyncFindInterceptor(matchContext, getAsyncType(matchContext.getMethodElement(), returnType));
+            entry = resolveAsyncFindInterceptor(matchContext, getAsyncType(matchContext, returnType));
         } else if (isReactiveType(returnType)) {
-            entry = resolveReactiveFindInterceptor(matchContext, returnType, returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new));
+            entry = resolveReactiveFindInterceptor(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), isReactiveSingleResult(returnType));
         } else {
             entry = resolveSyncFindInterceptor(matchContext, returnType);
         }
@@ -353,63 +468,66 @@ public interface FindersUtils {
         return entry;
     }
 
-    static FindersUtils.InterceptorMatch resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext,
-                                                                    @NonNull ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
+    private static FindersUtils.InterceptorMatch resolveSyncFindInterceptor(MethodMatchContext matchContext,
+                                                                    ClassElement returnType) {
         FindInterceptorDef findInterceptorDef = matchContext.getFindInterceptors().get(returnType);
         if (findInterceptorDef != null) {
             if (findInterceptorDef.isContainer() && isContainer(returnType, findInterceptorDef.returnType())) {
-                return new FindersUtils.InterceptorMatch(firstTypeArgument, findInterceptorDef.interceptor());
+                return new FindersUtils.InterceptorMatch(getFirstTypeArgumentOrFail(matchContext, returnType), findInterceptorDef.interceptor());
             } else {
                 return new FindersUtils.InterceptorMatch(findInterceptorDef.returnType(), findInterceptorDef.interceptor(), false);
             }
         }
         if (isCursoredPage(matchContext, returnType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredPageInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindCursoredPageInterceptor.class);
         } else if (isPage(matchContext, returnType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindPageInterceptor.class);
         } else if (isSlice(matchContext, returnType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindSliceInterceptor.class);
         } else if (isContainer(returnType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindAllInterceptor.class);
         } else if (returnType.isArray()) {
             return typeAndInterceptorEntry(matchContext, returnType.fromArray(), FindAllInterceptor.class);
-        } else if (isContainer(returnType, Publisher.class)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllReactiveInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType, FindOneInterceptor.class);
         }
     }
 
-    static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(
-        @NonNull MethodMatchContext matchContext, @NonNull ClassElement returnType, @NonNull ClassElement reactiveType) {
-        ClassElement firstTypeArgument = reactiveType.getFirstTypeArgument().orElse(null);
-        if (isCursoredPage(matchContext, reactiveType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredReactivePageInterceptor.class);
-        } else if (isPage(matchContext, reactiveType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageReactiveInterceptor.class);
-        } else if (isSlice(matchContext, reactiveType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceReactiveInterceptor.class);
-        } else if (isReactiveSingleResult(returnType)) {
-            return typeAndInterceptorEntry(matchContext, reactiveType, FindOneReactiveInterceptor.class);
+    private static ClassElement getFirstTypeArgumentOrFail(MethodMatchContext matchContext, ClassElement returnType) {
+        return getFirstTypeArgumentOrFail(matchContext.getMethodElement(), returnType);
+    }
+
+    private static ClassElement getFirstTypeArgumentOrFail(MethodElement methodElement, ClassElement returnType) {
+        return returnType.getFirstTypeArgument().orElseThrow(failOnMissingGeneric(methodElement, returnType));
+    }
+
+    private static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(MethodMatchContext matchContext,
+                                                                                ClassElement returnType,
+                                                                                boolean singleResult) {
+        if (isCursoredPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindCursoredReactivePageInterceptor.class);
+        } else if (isPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindPageReactiveInterceptor.class);
+        } else if (isSlice(matchContext, returnType)) {
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindSliceReactiveInterceptor.class);
+        } else if (singleResult) {
+            return typeAndInterceptorEntry(matchContext, returnType, FindOneReactiveInterceptor.class);
         } else {
-            return typeAndInterceptorEntry(matchContext, reactiveType, FindAllReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, returnType, FindAllReactiveInterceptor.class);
         }
     }
 
-    static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(
-        @NonNull MethodMatchContext matchContext, @NonNull ClassElement asyncType) {
-        ClassElement firstTypeArgument = asyncType.getFirstTypeArgument().orElse(null);
+    private static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(MethodMatchContext matchContext, ClassElement asyncType) {
         if (isCursoredPage(matchContext, asyncType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredAsyncPageInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindCursoredAsyncPageInterceptor.class);
         } else if (isPage(matchContext, asyncType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindPageAsyncInterceptor.class);
         } else if (isSlice(matchContext, asyncType)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindSliceAsyncInterceptor.class);
         } else if (isContainer(asyncType, Iterable.class)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindAllAsyncInterceptor.class);
         } else if (isContainer(asyncType, Optional.class)) {
-            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindOneAsyncInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, asyncType, FindOneAsyncInterceptor.class);
         }
@@ -417,47 +535,47 @@ public interface FindersUtils {
 
     static FindersUtils.InterceptorMatch pickCountInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), CountAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), CountAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), CountReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), CountReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), CountInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickExistsInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), ExistsByAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), ExistsByAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), ExistsByReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), ExistsByReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), ExistsByInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickFindByIdInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), FindByIdAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), FindByIdAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), FindByIdReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindByIdReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), FindByIdInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickFindOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext.getMethodElement(), returnType), FindOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getAsyncType(matchContext, returnType), FindOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), FindOneReactiveInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindOneReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(matchContext, returnType.getType(), FindOneInterceptor.class);
     }
 
     static FindersUtils.InterceptorMatch pickCountSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.CountAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.CountReactiveSpecificationInterceptor")
             );
         }
@@ -468,11 +586,11 @@ public interface FindersUtils {
 
     static FindersUtils.InterceptorMatch pickDeleteAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.DeleteAllAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(voidType(matchContext)),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.DeleteAllReactiveSpecificationInterceptor")
             );
         }
@@ -481,63 +599,90 @@ public interface FindersUtils {
         );
     }
 
-    static FindersUtils.InterceptorMatch pickFindAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+    static FindersUtils.InterceptorMatch pickSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
-                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindAllAsyncSpecificationInterceptor")
-            );
+            return pickFindAsyncSpecInterceptor(matchContext, getAsyncType(matchContext, returnType));
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
-                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindAllReactiveSpecificationInterceptor")
-            );
+            return pickFindReactiveSpecInterceptor(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), isReactiveSingleResult(returnType));
         }
-        ClassElement type = returnType.getType();
-        if (isContainer(returnType, Iterable.class)) {
-            type = returnType.getFirstTypeArgument().orElse(null);
-        }
-        return typeAndInterceptorEntry(type,
-            getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
-        );
+        return pickFindSyncSpecInterceptor(matchContext, returnType);
     }
 
-    static FindersUtils.InterceptorMatch pickFindOneSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
+    private static FindersUtils.InterceptorMatch pickFindSyncSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isCursoredPage(matchContext, returnType) || isPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor")
+            );
+        } else if (isContainer(returnType, Iterable.class) || isContainer(returnType, Stream.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
+            );
+         } else if (isContainer(returnType, Optional.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor")
+            );
+        } else {
+            return typeAndInterceptorEntry(returnType.getType(),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor")
+            );
+        }
+    }
+
+    private static FindersUtils.InterceptorMatch pickFindAsyncSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isCursoredPage(matchContext, returnType) || isPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor")
+            );
+        } else if (isContainer(returnType, Iterable.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindAllAsyncSpecificationInterceptor")
+            );
+        } else if (isContainer(returnType, Optional.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindOneAsyncSpecificationInterceptor")
+            );
+        } else {
+            return typeAndInterceptorEntry(returnType,
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindOneAsyncSpecificationInterceptor")
             );
         }
-        if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
-                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindOneReactiveSpecificationInterceptor")
-            );
-        }
-        return typeAndInterceptorEntry(returnType.getType(),
-            getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor")
-        );
     }
 
-    static FindersUtils.InterceptorMatch pickFindPageSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
-                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor")
-            );
-        } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getType(),
+    private static FindersUtils.InterceptorMatch pickFindReactiveSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType, boolean singleResult) {
+        if (isCursoredPage(matchContext, returnType) || isPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindPageReactiveSpecificationInterceptor")
             );
+        } else if (isContainer(returnType, Iterable.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindAllReactiveSpecificationInterceptor")
+            );
+        } else if (isContainer(returnType, Optional.class)) {
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindOneReactiveSpecificationInterceptor")
+            );
+        } else if (singleResult) {
+            return typeAndInterceptorEntry(returnType,
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindOneReactiveSpecificationInterceptor")
+            );
+        } else {
+            return typeAndInterceptorEntry(returnType,
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindAllReactiveSpecificationInterceptor")
+            );
         }
-        return typeAndInterceptorEntry(returnType.getType(),
-            getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor")
-        );
+    }
+
+    private static Supplier<ProcessingException> failOnMissingGeneric(MethodElement methodElement, ClassElement returnType) {
+        return () -> new ProcessingException(methodElement, "Expected a type " + returnType.getName() + " to have a generic value, got: " + returnType);
     }
 
     static FindersUtils.InterceptorMatch pickUpdateAllSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.UpdateAllAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(voidType(matchContext)),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.UpdateAllReactiveSpecificationInterceptor")
             );
         }
@@ -548,11 +693,11 @@ public interface FindersUtils {
 
     static FindersUtils.InterceptorMatch pickExistsSpecInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         if (isFutureType(matchContext.getMethodElement(), returnType)) {
-            return typeAndInterceptorEntry(getAsyncType(matchContext.getMethodElement(), returnType),
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.async.ExistsAsyncSpecificationInterceptor")
             );
         } else if (isReactiveType(returnType)) {
-            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null),
+            return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.ExistsReactiveSpecificationInterceptor")
             );
         }
@@ -561,17 +706,19 @@ public interface FindersUtils {
         );
     }
 
-    static ClassElement getAsyncType(@NonNull MethodElement methodElement,
-                                     @NonNull ClassElement returnType) {
+    static ClassElement getAsyncType(MethodMatchContext matchContext,
+                                     ClassElement returnType) {
+        MethodElement methodElement = matchContext.getMethodElement();
         if (methodElement.isSuspend()) {
-            return TypeUtils.getKotlinCoroutineProducedType(methodElement);
+            ClassElement coroutineProducedType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
+            return coroutineProducedType == null ? voidType(matchContext) : coroutineProducedType;
         }
-        return returnType.getFirstTypeArgument().orElse(null);
+        return getFirstTypeArgumentOrFail(methodElement, returnType);
     }
 
     static FindersUtils.InterceptorMatch typeAndInterceptorEntry(MethodMatchContext matchContext,
-                                                                         ClassElement type,
-                                                                         Class<? extends DataInterceptor> interceptor) {
+                                                                 ClassElement type,
+                                                                 Class<? extends DataInterceptor> interceptor) {
         return new FindersUtils.InterceptorMatch(type, getInterceptorElement(matchContext, interceptor));
     }
 
@@ -586,7 +733,7 @@ public interface FindersUtils {
     static boolean isReactiveType(@Nullable ClassElement type) {
         return isContainer(type, Publisher.class)
             || TypeUtils.isReactiveType(type)
-            && (type.getTypeArguments().isEmpty() || isContainer(type, type.getName())); // Validate container argument
+            && type != null && (type.getTypeArguments().isEmpty() || isContainer(type, type.getName())); // Validate container argument
     }
 
     static boolean isCursoredPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
@@ -613,7 +760,7 @@ public interface FindersUtils {
         return isContainer(typeArgument, Slice.class);
     }
 
-    static boolean isContainer(ClassElement typeArgument, Class<?> containerType) {
+    static boolean isContainer(@Nullable ClassElement typeArgument, Class<?> containerType) {
         if (typeArgument == null) {
             return false;
         }
@@ -627,7 +774,7 @@ public interface FindersUtils {
         return false;
     }
 
-    static boolean isContainer(ClassElement typeArgument, ClassElement containerType) {
+    static boolean isContainer(@Nullable ClassElement typeArgument, ClassElement containerType) {
         if (typeArgument == null) {
             return false;
         }
@@ -641,7 +788,7 @@ public interface FindersUtils {
         return false;
     }
 
-    static boolean isOneOfContainers(ClassElement typeArgument, Class<?>... containers) {
+    static boolean isOneOfContainers(@Nullable ClassElement typeArgument, Class<?>... containers) {
         if (typeArgument == null) {
             return false;
         }
@@ -670,7 +817,7 @@ public interface FindersUtils {
 
     static boolean isReactiveSingleResult(ClassElement returnType) {
         return returnType.hasStereotype(SingleResult.class)
-            || isContainer(returnType, "io.reactivex.Single")
+            || isContainer(returnType, "io.reactivex.rxjava3.core.Single")
             || isContainer(returnType, "reactor.core.publisher.Mono");
     }
 
@@ -681,7 +828,7 @@ public interface FindersUtils {
      * @param type         The type
      * @return The element
      */
-    static ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
+    static ClassElement getInterceptorElement(MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
         return matchContext.getVisitorContext().getClassElement(type).orElseGet(() -> new FindersUtils.DynamicClassElement(type));
     }
 
@@ -692,7 +839,7 @@ public interface FindersUtils {
      * @param type         The type
      * @return The element
      */
-    static ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, String type) {
+    static ClassElement getInterceptorElement(MethodMatchContext matchContext, String type) {
         return matchContext.getVisitorContext().getClassElement(type).orElseThrow(() -> new IllegalStateException("Unable to apply interceptor of type: " + type + ". The interceptor was not found on the classpath. Check your annotation processor configuration and try again."));
     }
 
@@ -721,7 +868,6 @@ public interface FindersUtils {
             return new DynamicClassElement((Class<? extends DataInterceptor>) type.getComponentType());
         }
 
-        @NonNull
         @Override
         public String getName() {
             return type.getName();
@@ -737,7 +883,6 @@ public interface FindersUtils {
             return Modifier.isPublic(type.getModifiers());
         }
 
-        @NonNull
         @Override
         public Object getNativeType() {
             return type;

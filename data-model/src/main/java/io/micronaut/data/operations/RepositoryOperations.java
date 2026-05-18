@@ -17,8 +17,7 @@ package io.micronaut.data.operations;
 
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NextMajorVersion;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
@@ -52,7 +51,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return The entity
      * @throws io.micronaut.core.beans.exceptions.IntrospectionException if no entity exists of the given type
      */
-    default @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+    default <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
         return PersistentEntity.of(type);
     }
 
@@ -64,7 +63,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return A result or null
      */
-    @Nullable <T> T findOne(@NonNull Class<T> type, @NonNull Object id);
+    @Nullable <T> T findOne(Class<T> type, Object id);
 
     /**
      * Find one by Query.
@@ -74,7 +73,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <R> The result type
      * @return A result or null
      */
-    @Nullable <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery);
+    @Nullable <T, R> R findOne(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Execute a query that checks for existence.
@@ -84,7 +83,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return A result or null
      */
     @NextMajorVersion("Switch boolean to ? as it doesn't require specific result")
-    <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
+    <T> boolean exists(PreparedQuery<T, Boolean> preparedQuery);
 
     /**
      * Finds all results for the given query.
@@ -92,9 +91,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return An iterable result
      */
-    @NonNull <T> Iterable<T> findAll(
-            @NonNull PagedQuery<T> query
-    );
+    <T> Iterable<T> findAll(PagedQuery<T> query);
 
     /**
      * Counts all results for the given query.
@@ -111,8 +108,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <R> The result type
      * @return An iterable result
      */
-    @NonNull <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
-
+    <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds all results for the given query.
@@ -121,7 +117,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <R> The result type
      * @return An iterable result
      */
-    @NonNull <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds a stream for the given arguments.
@@ -129,7 +125,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The stream
      */
-    @NonNull <T> Stream<T> findStream(@NonNull PagedQuery<T> query);
+    <T> Stream<T> findStream(PagedQuery<T> query);
 
     /**
      * Find a page for the given entity and pageable.
@@ -137,7 +133,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <R> The entity generic type
      * @return The page type
      */
-    <R> Page<R> findPage(@NonNull PagedQuery<R> query);
+    <R> Page<R> findPage(PagedQuery<R> query);
 
     /**
      * Persist the operation returning a possibly new entity.
@@ -145,7 +141,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The operation
      */
-    @NonNull <T> T persist(@NonNull InsertOperation<T> operation);
+    <T> T persist(InsertOperation<T> operation);
 
     /**
      * Updates the entity for the given operation.
@@ -154,7 +150,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The operation
      */
-    @NonNull <T> T update(@NonNull UpdateOperation<T> operation);
+    <T> T update(UpdateOperation<T> operation);
 
     /**
      * Updates the entities for the given operation.
@@ -163,8 +159,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The updated entities
      */
-    @NonNull
-    default <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+    default <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::update)
                 .toList();
@@ -176,8 +171,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull
-    default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+    default <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::persist)
                 .toList();
@@ -189,8 +183,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param preparedQuery The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
-    Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
+    Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a delete for the given query and parameter values. If it is possible to
@@ -198,8 +191,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param preparedQuery The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull
-    default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
     }
 
@@ -211,8 +203,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return The result
      * @since 4.2.0
      */
-    @NonNull
-    default <R> List<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+    default <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
         throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
@@ -223,7 +214,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The number of entities deleted
      */
-    <T> int delete(@NonNull DeleteOperation<T> operation);
+    <T> int delete(DeleteOperation<T> operation);
 
     /**
      * Deletes all the entities of the given type.
@@ -231,6 +222,6 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The number of entities deleted
      */
-    <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
+    <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation);
 
 }

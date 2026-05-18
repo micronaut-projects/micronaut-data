@@ -1,7 +1,8 @@
 
 package example;
 
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.context.annotation.Requires;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface SaleRepository extends CrudRepository<Sale, Long> {
 
     @NonNull

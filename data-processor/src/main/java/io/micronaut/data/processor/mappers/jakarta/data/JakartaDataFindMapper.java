@@ -16,9 +16,10 @@
 package io.micronaut.data.processor.mappers.jakarta.data;
 
 import io.micronaut.core.annotation.AnnotationClassValue;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.data.annotation.Find;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -36,7 +37,6 @@ import java.util.List;
 @Internal
 public final class JakartaDataFindMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.data.repository.Find";
@@ -44,8 +44,10 @@ public final class JakartaDataFindMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
+        AnnotationValueBuilder<Find> builder = AnnotationValue.builder(Find.class);
+        annotation.stringValue(AnnotationMetadata.VALUE_MEMBER).ifPresent(builder::value);
         return List.of(
-            AnnotationValue.builder(Find.class).build(),
+            builder.build(),
             AnnotationValue.builder(ConvertException.class)
                 .values(new AnnotationClassValue<>("io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataExceptionConverter"))
                 .build()

@@ -16,16 +16,18 @@
 package io.micronaut.data.tck.entities;
 
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 @Entity
+// Extra Nullable because of Javac bug - compiled type annotations not recognized - fixed in Java 22
 public class Person {
     @Id
     @GeneratedValue
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private Long id;
 
     private String name;
@@ -33,6 +35,7 @@ public class Person {
     private boolean enabled = true;
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private Double income;
 
     public Long getId() {

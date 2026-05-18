@@ -2,17 +2,9 @@ micronaut:
   http:
     client:
       read-timeout: 5m
-flyway:
-  datasources:
-    default:
-      locations:
-        - classpath:oracle-jsonview-migrations
-      enabled: true
-      baseline-version: 0
-      baseline-on-migrate: true
 datasources:
   default:
     db-type: oracle
     dialect: oracle
-    schema-generate: VALIDATE
+    schema-generate: CREATE_DROP
     packages: io.micronaut.data.jdbc.oraclexe.jsonview

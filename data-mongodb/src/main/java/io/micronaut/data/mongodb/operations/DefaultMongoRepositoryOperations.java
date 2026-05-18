@@ -39,8 +39,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -79,9 +79,12 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -97,7 +100,6 @@ import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -123,8 +125,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     private final MongoClient mongoClient;
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
     private final MongoConnectionOperations connectionOperations;
-    private ExecutorAsyncOperations asyncOperations;
-    private ExecutorService executorService;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final ExecutorServiceResolver executorServiceResolver;
 
     /**
      * Default constructor.
@@ -149,12 +151,12 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                      MongoCollectionNameProvider collectionNameProvider,
                                      @Named("io") @Nullable ExecutorService executorService) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
-            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName)));
+            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : serverName != null ? Qualifiers.byName(serverName) : null));
         this.mongoClient = mongoClient;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
-        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : Qualifiers.byName(serverName));
-        this.executorService = executorService;
+        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : serverName != null ? Qualifiers.byName(serverName) : null);
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @Override
@@ -196,7 +198,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             R result = aggregate(clientSession, preparedQuery, BsonDocument.class)
-                    .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
+                    .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                     .first();
             if (result == null) {
                 result = conversionService.convertRequired(0, resultType);
@@ -266,6 +268,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
+    public <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return withClientSession(clientSession -> execute(clientSession, getMongoPreparedQuery(preparedQuery)));
+    }
+
+    @Override
     public <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
         Optional<ConnectionStatus<ClientSession>> connectionStatus = connectionOperations.findConnectionStatus();
         if (connectionStatus.isEmpty()) {
@@ -300,6 +307,51 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return findAllFiltered(clientSession, preparedQuery, stream);
     }
 
+    private <T, R> List<R> execute(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        StoredQuery.OperationType operationType = preparedQuery.getOperationType();
+        if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
+            return executeUpdateReturning(clientSession, preparedQuery);
+        }
+        throw new DataAccessException("Unsupported MongoDB execute operation: " + operationType + ". Expected update returning single entity, DTO or scalar.");
+    }
+
+    private <T, R> List<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
+            throw new DataAccessException("MongoDB update returning supports only a single result, but found declared return type: "
+                + declaredReturnType.getName()
+                + ". Use a non-collection single value type, or a single-item reactive type like Mono<T>.");
+        }
+        MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
+                updateOne.getFilter().toBsonDocument().toJson(),
+                updateOne.getUpdate().toBsonDocument().toJson());
+        }
+        Class<T> rootType = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+        MongoDatabase database = getDatabase(preparedQuery);
+        if (resultType.isAssignableFrom(rootType)) {
+            MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
+            T entity = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
+            if (entity == null) {
+                return Collections.emptyList();
+            }
+            entity = triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity);
+            @SuppressWarnings("unchecked")
+            R result = (R) entity;
+            return Collections.singletonList(result);
+        }
+        MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
+        BsonDocument result = collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions());
+        if (result == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
+    }
+
+    @Nullable
     private <T, R> R findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         return findOne(find(clientSession, preparedQuery)
             .map(r -> {
@@ -312,13 +364,14 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             }));
     }
 
+    @Nullable
     private <T, R> R findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         MongoDatabase database = getDatabase(preparedQuery);
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
         if (!resultType.isAssignableFrom(type)) {
             BsonDocument result = aggregate(clientSession, preparedQuery, BsonDocument.class).first();
-            return convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
+            return convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
         }
         return findOne(aggregate(clientSession, preparedQuery).map(r -> {
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
@@ -329,6 +382,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         }));
     }
 
+    @Nullable
     private static <R> R findOne(MongoIterable<R> iterable) {
         try (MongoCursor<R> iterator = iterable.iterator()) {
             if (iterator.hasNext()) {
@@ -356,7 +410,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = aggregate(clientSession, preparedQuery, BsonDocument.class)
-                    .map(result -> convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
+                    .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
         } else {
             aggregate = aggregate(clientSession, preparedQuery, resultType);
         }
@@ -377,7 +431,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             findIterable = find(clientSession, preparedQuery, BsonDocument.class)
-                    .map(result -> convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
+                    .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
         } else {
             findIterable = find(clientSession, preparedQuery);
         }
@@ -713,7 +767,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
-    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, Class<?> repositoryClass) {
+    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass) {
         return mongoClient.getDatabase(databaseNameProvider.provide(persistentEntity, repositoryClass));
     }
 
@@ -730,7 +784,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
-    public <T> List<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+    public <T> List<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, @Nullable Predicate<T> predicate) {
         MongoEntitiesOperation<T> op = createMongoInsertManyOperation(ctx, persistentEntity, values);
         if (predicate != null) {
             op.veto(predicate);
@@ -810,7 +864,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
-            Bson filter;
+            Bson filter = EMPTY;
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -826,8 +880,10 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 bsonDocument.remove("_id");
                 UpdateResult updateResult = collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata));
                 modifiedCount = updateResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
-                    checkOptimisticLocking(1, (int) modifiedCount);
+                if (persistentEntity.hasVersion()) {
+                    checkOptimisticLocking(1, getModifiedOrUpsertedCount(updateResult));
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, getMatchedOrUpsertedCount(updateResult));
                 }
             }
 
@@ -859,8 +915,10 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates);
                 modifiedCount += bulkWriteResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
-                    checkOptimisticLocking(updates.size(), (int) modifiedCount);
+                if (persistentEntity.hasVersion()) {
+                    checkOptimisticLocking(updates.size(), getModifiedOrUpsertedCount(bulkWriteResult));
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                 }
             }
         };
@@ -871,7 +929,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
-            Map<Data, Bson> filters;
+            Map<Data, Bson> filters = Map.of();
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -886,7 +944,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     if (d.vetoed) {
                         continue;
                     }
-                    Bson filter = filters.get(d);
+                    Bson filter = filters.getOrDefault(d, EMPTY);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'replaceOne' with filter: {}", filter.toBsonDocument().toJson());
                     }
@@ -896,8 +954,10 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = collection.bulkWrite(ctx.clientSession, replaces);
                 modifiedCount = bulkWriteResult.getModifiedCount();
-                if (persistentEntity.getVersion() != null) {
-                    checkOptimisticLocking(replaces.size(), (int) modifiedCount);
+                if (persistentEntity.hasVersion()) {
+                    checkOptimisticLocking(replaces.size(), getModifiedOrUpsertedCount(bulkWriteResult));
+                } else {
+                    checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                 }
             }
         };
@@ -908,7 +968,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
-            Bson filter;
+            Bson filter = EMPTY;
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -922,7 +982,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 DeleteResult deleteResult = collection.deleteOne(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                 modifiedCount = deleteResult.getDeletedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(1, (int) modifiedCount);
                 }
             }
@@ -934,7 +994,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
-            Map<Data, Bson> filters;
+            Map<Data, Bson> filters = Map.of();
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -952,7 +1012,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                     DeleteResult deleteResult = collection.deleteMany(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata));
                     modifiedCount = deleteResult.getDeletedCount();
                 }
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     int expected = (int) entities.stream().filter(d -> !d.vetoed).count();
                     checkOptimisticLocking(expected, (int) modifiedCount);
                 }
@@ -981,7 +1041,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 }
                 BulkWriteResult bulkWriteResult = getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, deletes);
                 modifiedCount = bulkWriteResult.getDeletedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (persistentEntity.hasVersion()) {
                     checkOptimisticLocking(deletes.size(), (int) modifiedCount);
                 }
             }
@@ -1026,26 +1086,15 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-        if (asyncOperations == null) {
-            synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
-                            this,
-                            executorService != null ? executorService : newLocalThreadPool()
-                    );
-                    this.asyncOperations = asyncOperations;
-                }
-            }
-        }
-        return asyncOperations;
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+                this,
+                executorServiceResolver.get()
+        ));
     }
 
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @NonNull

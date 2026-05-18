@@ -17,11 +17,11 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NextMajorVersion;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
@@ -29,6 +29,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -40,11 +41,13 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CollectionJoin;
+import jakarta.persistence.criteria.CriteriaSelect;
 import jakarta.persistence.criteria.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.ListJoin;
 import jakarta.persistence.criteria.MapJoin;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
@@ -53,6 +56,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.SetJoin;
 import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.TemporalField;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
@@ -63,12 +67,14 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoolExpression;
@@ -83,6 +89,18 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoo
 @Internal
 public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteriaBuilder {
 
+    private final Supplier<OffsetDateTime> localDateTimeSupplier;
+
+    protected AbstractCriteriaBuilder() {
+        this(() -> {
+            throw new IllegalStateException("Local date/time expressions require a DateTimeProvider.");
+        });
+    }
+
+    protected AbstractCriteriaBuilder(Supplier<OffsetDateTime> localDateTimeSupplier) {
+        this.localDateTimeSupplier = Objects.requireNonNull(localDateTimeSupplier);
+    }
+
     @NotNull
     private Predicate predicate(Expression<?> x, Expression<?> y, PredicateBinaryOp op) {
         Objects.requireNonNull(x);
@@ -92,7 +110,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @NotNull
     @NextMajorVersion("Require non null y")
-    private Predicate predicate(Expression<?> x, Object y, PredicateBinaryOp op) {
+    private Predicate predicate(Expression<?> x, @Nullable Object y, PredicateBinaryOp op) {
         Objects.requireNonNull(x);
         return new BinaryPredicate(x, literal(y), op);
     }
@@ -113,8 +131,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <Y> CompoundSelection<Y> construct(@NonNull Class<Y> resultClass, @NonNull Selection<?>... selections) {
+
+    public <Y> CompoundSelection<Y> construct(Class<Y> resultClass,  Selection<?>... selections) {
         throw notSupportedOperation();
     }
 
@@ -124,8 +142,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public CompoundSelection<Tuple> tuple(@NonNull Selection<?>... selections) {
+
+    public CompoundSelection<Tuple> tuple(Selection<?>... selections) {
         throw notSupportedOperation();
     }
 
@@ -135,21 +153,71 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public CompoundSelection<Object[]> array(@NonNull Selection<?>... selections) {
+
+    public CompoundSelection<Object[]> array(Selection<?>... selections) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
-    public Order asc(@NonNull Expression<?> x) {
+    public CompoundSelection<Tuple> tuple(List<Selection<?>> selections) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public CompoundSelection<Object[]> array(List<Selection<?>> selections) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> union(CriteriaSelect<? extends T> left, CriteriaSelect<? extends T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> unionAll(CriteriaSelect<? extends T> left, CriteriaSelect<? extends T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> intersect(CriteriaSelect<? super T> left, CriteriaSelect<? super T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> intersectAll(CriteriaSelect<? super T> left, CriteriaSelect<? super T> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> except(CriteriaSelect<T> left, CriteriaSelect<?> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> CriteriaSelect<T> exceptAll(CriteriaSelect<T> left, CriteriaSelect<?> right) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    public Order asc(Expression<?> x) {
         return sort(x, true, false);
     }
 
     @Override
-    @NonNull
-    public Order desc(@NonNull Expression<?> x) {
+    public Order asc(Expression<?> expression, Nulls nullPrecedence) {
+        return new DefaultOrder<>(expression, true, false, nullPrecedence);
+    }
+
+    @Override
+
+    public Order desc(Expression<?> x) {
         return sort(x, false, false);
+    }
+
+    @Override
+    public Order desc(Expression<?> expression, Nulls nullPrecedence) {
+        return new DefaultOrder<>(expression, false, false, nullPrecedence);
     }
 
     @Override
@@ -158,139 +226,149 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<Double> avg(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<Double> avg(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.AVG);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> sum(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<N> sum(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.SUM);
     }
 
     @Override
-    @NonNull
-    public Expression<Long> sumAsLong(@NonNull Expression<Integer> x) {
+
+    public Expression<Long> sumAsLong(Expression<Integer> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.SUM, Long.class);
     }
 
     @Override
-    @NonNull
-    public Expression<Double> sumAsDouble(@NonNull Expression<Float> x) {
+
+    public Expression<Double> sumAsDouble(Expression<Float> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.SUM, Double.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> max(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<N> max(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.MAX);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> min(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<N> min(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.MIN);
     }
 
     @Override
-    @NonNull
-    public <X extends Comparable<? super X>> Expression<X> greatest(@NonNull Expression<X> x) {
+
+    public <X extends Comparable<? super X>> Expression<X> greatest(Expression<X> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.MAX);
     }
 
     @Override
-    @NonNull
-    public <X extends Comparable<? super X>> Expression<X> least(@NonNull Expression<X> x) {
+
+    public <X extends Comparable<? super X>> Expression<X> least(Expression<X> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.MIN);
     }
 
     @Override
-    @NonNull
-    public Expression<Long> count(@NonNull Expression<?> x) {
+
+    public Expression<Long> count(Expression<?> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.COUNT, Long.class);
     }
 
     @Override
-    @NonNull
-    public Expression<Long> countDistinct(@NonNull Expression<?> x) {
+
+    public Expression<Long> countDistinct(Expression<?> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.COUNT_DISTINCT, Long.class);
     }
 
     @Override
-    @NonNull
-    public Predicate exists(@NonNull Subquery<?> subquery) {
+
+    public Predicate exists(Subquery<?> subquery) {
         return new ExistsSubqueryPredicate(CriteriaUtils.requirePersistentEntitySubquery(subquery));
     }
 
     @Override
-    @NonNull
-    public <Y> Expression<Y> all(@NonNull Subquery<Y> subquery) {
+
+    public <Y> Expression<Y> all(Subquery<Y> subquery) {
         return new SubqueryExpression<>(SubqueryExpression.Type.ALL, CriteriaUtils.requirePersistentEntitySubquery(subquery));
     }
 
     @Override
-    @NonNull
-    public <Y> Expression<Y> some(@NonNull Subquery<Y> subquery) {
+
+    public <Y> Expression<Y> some(Subquery<Y> subquery) {
         return new SubqueryExpression<>(SubqueryExpression.Type.SOME, CriteriaUtils.requirePersistentEntitySubquery(subquery));
     }
 
     @Override
-    @NonNull
-    public <Y> Expression<Y> any(@NonNull Subquery<Y> subquery) {
+
+    public <Y> Expression<Y> any(Subquery<Y> subquery) {
         return new SubqueryExpression<>(SubqueryExpression.Type.ANY, CriteriaUtils.requirePersistentEntitySubquery(subquery));
     }
 
     @Override
-    @NonNull
-    public Predicate and(@NonNull Expression<Boolean> x, @NonNull Expression<Boolean> y) {
+    public <N, T extends java.time.temporal.Temporal> Expression<N> extract(TemporalField<N, T> field, Expression<T> temporal) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+
+    public Predicate and(Expression<Boolean> x,  Expression<Boolean> y) {
         return new ConjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
     }
 
     @Override
-    @NonNull
-    public Predicate and(@NonNull Predicate... restrictions) {
+
+    public Predicate and(Predicate... restrictions) {
         return and(List.of(restrictions));
     }
 
     @Override
-    @NonNull
-    public Predicate and(@NonNull Iterable<Predicate> restrictions) {
+
+    public Predicate and(Iterable<Predicate> restrictions) {
         return new ConjunctionPredicate(requireBoolExpressions(restrictions));
     }
 
     @Override
-    @NonNull
-    public Predicate isEmptyString(@NonNull Expression<String> expression) {
+    public Predicate and(List<Predicate> restrictions) {
+        return and((Iterable<Predicate>) restrictions);
+    }
+
+    @Override
+
+    public Predicate isEmptyString(Expression<String> expression) {
         return new UnaryPredicate(expression, PredicateUnaryOp.IS_EMPTY);
     }
 
     @Override
-    @NonNull
-    public Predicate isNotEmptyString(@NonNull Expression<String> expression) {
+
+    public Predicate isNotEmptyString(Expression<String> expression) {
         return new UnaryPredicate(expression, PredicateUnaryOp.IS_NOT_EMPTY);
     }
 
     @Override
-    @NonNull
-    public Predicate ilike(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+
+    public Predicate ilike(Expression<String> x,  Expression<String> pattern) {
         return new LikePredicate(x, pattern, null, false, true);
     }
 
     @Override
-    public Predicate endingWithString(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+    public Predicate endingWithString(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.ENDS_WITH);
     }
 
     @Override
-    @NonNull
-    public Predicate startsWithString(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate startsWithString(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.STARTS_WITH);
     }
 
     @Override
-    @NonNull
-    public Predicate containsString(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate containsString(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.CONTAINS);
     }
 
@@ -300,231 +378,232 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
-    @NonNull
-    public Predicate equalStringIgnoreCase(@NonNull Expression<String> x, @NonNull String y) {
+
+    public Predicate equalStringIgnoreCase(Expression<String> x,  String y) {
         return new BinaryPredicate(x, literal(y), PredicateBinaryOp.EQUALS_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate equalStringIgnoreCase(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate equalStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.EQUALS_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate notEqualStringIgnoreCase(@NonNull Expression<String> x, @NonNull String y) {
+
+    public Predicate notEqualStringIgnoreCase(Expression<String> x,  String y) {
         return new BinaryPredicate(x, literal(y), PredicateBinaryOp.NOT_EQUALS_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate notEqualStringIgnoreCase(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate notEqualStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.NOT_EQUALS_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate startsWithStringIgnoreCase(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate startsWithStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.STARTS_WITH_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate endingWithStringIgnoreCase(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Predicate endingWithStringIgnoreCase(Expression<String> x,  Expression<String> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.ENDS_WITH_IGNORE_CASE);
     }
 
     @Override
-    @NonNull
-    public Predicate or(@NonNull Expression<Boolean> x, @NonNull Expression<Boolean> y) {
+
+    public Predicate or(Expression<Boolean> x,  Expression<Boolean> y) {
         return new DisjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
     }
 
     @Override
-    @NonNull
-    public Predicate or(@NonNull Predicate... restrictions) {
+
+    public Predicate or(Predicate... restrictions) {
         return or(List.of(restrictions));
     }
 
     @Override
-    @NonNull
-    public Predicate or(@NonNull Iterable<Predicate> restrictions) {
+
+    public Predicate or(Iterable<Predicate> restrictions) {
         return new DisjunctionPredicate(requireBoolExpressions(restrictions));
     }
 
     @Override
-    @NonNull
-    public Predicate not(@NonNull Expression<Boolean> restriction) {
+    public Predicate or(List<Predicate> restrictions) {
+        return or((Iterable<Predicate>) restrictions);
+    }
+
+    @Override
+
+    public Predicate not(Expression<Boolean> restriction) {
         return new NegatedPredicate(requireBoolExpression(restriction));
     }
 
     @Override
-    @NonNull
+
     public Predicate conjunction() {
         return new ConjunctionPredicate(Collections.emptyList());
     }
 
     @Override
-    @NonNull
+
     public Predicate disjunction() {
         return new DisjunctionPredicate(Collections.emptyList());
     }
 
     @Override
-    @NonNull
-    public Predicate isTrue(@NonNull Expression<Boolean> x) {
+
+    public Predicate isTrue(Expression<Boolean> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_TRUE);
     }
 
     @Override
-    @NonNull
-    public Predicate isFalse(@NonNull Expression<Boolean> x) {
+
+    public Predicate isFalse(Expression<Boolean> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_FALSE);
     }
 
     @Override
-    @NonNull
-    public Predicate isNull(@NonNull Expression<?> x) {
+
+    public Predicate isNull(Expression<?> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_NULL);
     }
 
     @Override
-    @NonNull
-    public Predicate isNotNull(@NonNull Expression<?> x) {
+
+    public Predicate isNotNull(Expression<?> x) {
         return new UnaryPredicate(x, PredicateUnaryOp.IS_NON_NULL);
     }
 
     @Override
-    @NonNull
-    public Predicate equal(@NonNull Expression<?> x, @NonNull Expression<?> y) {
+
+    public Predicate equal(Expression<?> x,  Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
 
     @Override
-    @NonNull
     @NextMajorVersion("Don't allow null values")
-    public Predicate equal(@NonNull Expression<?> x, @Nullable Object y) {
+    public Predicate equal(Expression<?> x, @Nullable Object y) {
         return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
 
     @Override
-    @NonNull
-    public Predicate notEqual(@NonNull Expression<?> x, @NonNull Expression<?> y) {
+    public Predicate notEqual(Expression<?> x,  Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.NOT_EQUALS);
     }
 
     @Override
-    @NonNull
-    public Predicate notEqual(@NonNull Expression<?> x, @Nullable Object y) {
+    public Predicate notEqual(Expression<?> x, @Nullable Object y) {
         return predicate(x, y, PredicateBinaryOp.NOT_EQUALS);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+    public <Y extends Comparable<? super Y>> Predicate greaterThan(Expression<? extends Y> x,  Expression<? extends Y> y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThan(@NonNull Expression<? extends Y> x, @NonNull Y y) {
+
+    public <Y extends Comparable<? super Y>> Predicate greaterThan(Expression<? extends Y> x,  Y y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+
+    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(Expression<? extends Y> x,  Expression<? extends Y> y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Y y) {
+
+    public <Y extends Comparable<? super Y>> Predicate greaterThanOrEqualTo(Expression<? extends Y> x,  Y y) {
         return comparable(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate lessThan(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+
+    public <Y extends Comparable<? super Y>> Predicate lessThan(Expression<? extends Y> x,  Expression<? extends Y> y) {
         return comparable(x, y, PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate lessThan(@NonNull Expression<? extends Y> x, @NonNull Y y) {
+
+    public <Y extends Comparable<? super Y>> Predicate lessThan(Expression<? extends Y> x,  Y y) {
         return comparable(x, y, PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+
+    public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(Expression<? extends Y> x,  Expression<? extends Y> y) {
         return comparable(x, y, PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(@NonNull Expression<? extends Y> x, Y y) {
+
+    public <Y extends Comparable<? super Y>> Predicate lessThanOrEqualTo(Expression<? extends Y> x, Y y) {
         return comparable(x, y, PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate between(@NonNull Expression<? extends Y> v, @NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+
+    public <Y extends Comparable<? super Y>> Predicate between(Expression<? extends Y> v,  Expression<? extends Y> x,  Expression<? extends Y> y) {
         return new BetweenPredicate(v, x, y);
     }
 
     @Override
-    @NonNull
-    public <Y extends Comparable<? super Y>> Predicate between(@NonNull Expression<? extends Y> v, @NonNull Y x, @NonNull Y y) {
+
+    public <Y extends Comparable<? super Y>> Predicate between(Expression<? extends Y> v,  Y x,  Y y) {
         return new BetweenPredicate(v, literal(Objects.requireNonNull(x)), literal(Objects.requireNonNull(y)));
     }
 
     @Override
-    @NonNull
-    public Predicate gt(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
+
+    public Predicate gt(Expression<? extends Number> x,  Expression<? extends Number> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
-    @NonNull
-    public Predicate gt(@NonNull Expression<? extends Number> x, @NonNull Number y) {
+
+    public Predicate gt(Expression<? extends Number> x,  Number y) {
         return new BinaryPredicate(x, literal(Objects.requireNonNull(y)), PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
-    @NonNull
-    public Predicate ge(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
+
+    public Predicate ge(Expression<? extends Number> x,  Expression<? extends Number> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public Predicate ge(@NonNull Expression<? extends Number> x, @NonNull Number y) {
+
+    public Predicate ge(Expression<? extends Number> x,  Number y) {
         return new BinaryPredicate(x, literal(Objects.requireNonNull(y)), PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public Predicate lt(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
+
+    public Predicate lt(Expression<? extends Number> x,  Expression<? extends Number> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
-    @NonNull
-    public Predicate lt(@NonNull Expression<? extends Number> x, @NonNull Number y) {
+
+    public Predicate lt(Expression<? extends Number> x,  Number y) {
         return new BinaryPredicate(x, literal(Objects.requireNonNull(y)), PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
-    @NonNull
-    public Predicate le(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
+
+    public Predicate le(Expression<? extends Number> x,  Expression<? extends Number> y) {
         return new BinaryPredicate(x, y, PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     @Override
-    @NonNull
-    public Predicate le(@NonNull Expression<? extends Number> x, @NonNull Number y) {
+
+    public Predicate le(Expression<? extends Number> x,  Number y) {
         return new BinaryPredicate(x, literal(Objects.requireNonNull(y)), PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
@@ -534,8 +613,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> neg(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<N> neg(Expression<N> x) {
         throw notSupportedOperation();
     }
 
@@ -545,80 +624,80 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> abs(@NonNull Expression<N> x) {
+
+    public <N extends Number> Expression<N> abs(Expression<N> x) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> sum(@NonNull Expression<? extends N> x, Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> sum(Expression<? extends N> x, Expression<? extends N> y) {
         return new BinaryExpression<>(x, y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> sum(@NonNull Expression<? extends N> x, @NonNull N y) {
+
+    public <N extends Number> Expression<N> sum(Expression<? extends N> x,  N y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> sum(@NonNull N x, @NonNull Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> sum(N x,  Expression<? extends N> y) {
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> prod(@NonNull Expression<? extends N> x, @NonNull Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> prod(Expression<? extends N> x,  Expression<? extends N> y) {
         return new BinaryExpression<>(x, y, BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> prod(@NonNull Expression<? extends N> x, @NonNull N y) {
+
+    public <N extends Number> Expression<N> prod(Expression<? extends N> x,  N y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> prod(@NonNull N x, @NonNull Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> prod(N x,  Expression<? extends N> y) {
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> diff(@NonNull Expression<? extends N> x, @NonNull Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> diff(Expression<? extends N> x,  Expression<? extends N> y) {
         return new BinaryExpression<>(x, y, BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> diff(@NonNull Expression<? extends N> x, @NonNull N y) {
+
+    public <N extends Number> Expression<N> diff(Expression<? extends N> x,  N y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public <N extends Number> Expression<N> diff(@NonNull N x, @NonNull Expression<? extends N> y) {
+
+    public <N extends Number> Expression<N> diff(N x,  Expression<? extends N> y) {
         return new BinaryExpression<>(literal(y), y, BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
     @Override
-    @NonNull
-    public Expression<Number> quot(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
+
+    public Expression<Number> quot(Expression<? extends Number> x,  Expression<? extends Number> y) {
         return new BinaryExpression<>(x, y, BinaryExpressionType.QUOT, Number.class);
     }
 
     @Override
-    @NonNull
-    public Expression<Number> quot(@NonNull Expression<? extends Number> x, @NonNull Number y) {
+
+    public Expression<Number> quot(Expression<? extends Number> x,  Number y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.QUOT, Number.class);
     }
 
     @Override
-    @NonNull
-    public Expression<Number> quot(@NonNull Number x, @NonNull Expression<? extends Number> y) {
+
+    public Expression<Number> quot(Number x,  Expression<? extends Number> y) {
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.QUOT, Number.class);
     }
 
@@ -628,8 +707,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> mod(@NonNull Expression<Integer> x, @NonNull Expression<Integer> y) {
+
+    public Expression<Integer> mod(Expression<Integer> x,  Expression<Integer> y) {
         throw notSupportedOperation();
     }
 
@@ -639,7 +718,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    public Expression<Integer> mod(@NonNull Expression<Integer> x, @NonNull Integer y) {
+    public Expression<Integer> mod(Expression<Integer> x,  Integer y) {
         throw notSupportedOperation();
     }
 
@@ -649,8 +728,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> mod(@NonNull Integer x, @NonNull Expression<Integer> y) {
+
+    public Expression<Integer> mod(Integer x,  Expression<Integer> y) {
         throw notSupportedOperation();
     }
 
@@ -660,8 +739,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Double> sqrt(@NonNull Expression<? extends Number> x) {
+
+    public Expression<Double> sqrt(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -671,8 +750,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Long> toLong(@NonNull Expression<? extends Number> x) {
+
+    public Expression<Long> toLong(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -682,8 +761,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> toInteger(@NonNull Expression<? extends Number> x) {
+
+    public Expression<Integer> toInteger(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -693,8 +772,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Float> toFloat(@NonNull Expression<? extends Number> x) {
+
+    public Expression<Float> toFloat(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -704,8 +783,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Double> toDouble(@NonNull Expression<? extends Number> x) {
+
+    public Expression<Double> toDouble(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -715,8 +794,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<BigDecimal> toBigDecimal(@NonNull Expression<? extends Number> x) {
+
+    public Expression<BigDecimal> toBigDecimal(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -726,8 +805,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<BigInteger> toBigInteger(@NonNull Expression<? extends Number> x) {
+
+    public Expression<BigInteger> toBigInteger(Expression<? extends Number> x) {
         throw notSupportedOperation();
     }
 
@@ -737,31 +816,34 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> toString(@NonNull Expression<Character> x) {
+
+    public Expression<String> toString(Expression<Character> x) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
+
     public <T> Expression<T> literal(@Nullable T value) {
+        if (value instanceof Expression<?>) {
+            throw new IllegalArgumentException("An expression cannot be literal");
+        }
         return new LiteralExpression<>(value);
     }
 
     @Override
-    @NonNull
-    public <T> Expression<T> nullLiteral(@NonNull Class<T> x) {
+
+    public <T> Expression<T> nullLiteral(Class<T> x) {
         return new LiteralExpression<>(x);
     }
 
     @Override
-    @NonNull
-    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass) {
+
+    public <T> ParameterExpression<T> parameter(Class<T> paramClass) {
         return parameter(paramClass, null, null);
     }
 
     @Override
-    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @NonNull String name) {
+    public <T> ParameterExpression<T> parameter(Class<T> paramClass,  String name) {
         return parameter(paramClass, name, null);
     }
 
@@ -774,8 +856,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * @param <T>        The param type
      * @return the parameter expression
      */
-    @NonNull
-    public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
+
+    public <T> ParameterExpression<T> parameter(Class<T> paramClass, @Nullable String name, @Nullable Object value) {
         return new DefaultParameterExpression<>(paramClass, name, value);
     }
 
@@ -785,8 +867,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <C extends Collection<?>> Predicate isEmpty(@NonNull Expression<C> collection) {
+
+    public <C extends Collection<?>> Predicate isEmpty(Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -796,8 +878,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <C extends Collection<?>> Predicate isNotEmpty(@NonNull Expression<C> collection) {
+
+    public <C extends Collection<?>> Predicate isNotEmpty(Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -807,8 +889,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <C extends Collection<?>> Expression<Integer> size(@NonNull Expression<C> collection) {
+
+    public <C extends Collection<?>> Expression<Integer> size(Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -818,8 +900,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <C extends Collection<?>> Expression<Integer> size(@NonNull C collection) {
+
+    public <C extends Collection<?>> Expression<Integer> size(C collection) {
         throw notSupportedOperation();
     }
 
@@ -829,8 +911,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <E, C extends Collection<E>> Predicate isMember(@NonNull Expression<E> elem, @NonNull Expression<C> collection) {
+
+    public <E, C extends Collection<E>> Predicate isMember(Expression<E> elem,  Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -840,8 +922,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <E, C extends Collection<E>> Predicate isMember(@NonNull E elem, @NonNull Expression<C> collection) {
+
+    public <E, C extends Collection<E>> Predicate isMember(E elem,  Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -851,8 +933,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <E, C extends Collection<E>> Predicate isNotMember(@NonNull Expression<E> elem, @NonNull Expression<C> collection) {
+
+    public <E, C extends Collection<E>> Predicate isNotMember(Expression<E> elem,  Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -862,8 +944,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <E, C extends Collection<E>> Predicate isNotMember(@NonNull E elem, @NonNull Expression<C> collection) {
+
+    public <E, C extends Collection<E>> Predicate isNotMember(E elem,  Expression<C> collection) {
         throw notSupportedOperation();
     }
 
@@ -873,8 +955,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <V, M extends Map<?, V>> Expression<Collection<V>> values(@NonNull M map) {
+
+    public <V, M extends Map<?, V>> Expression<Collection<V>> values(M map) {
         throw notSupportedOperation();
     }
 
@@ -884,115 +966,129 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <K, M extends Map<K, ?>> Expression<Set<K>> keys(@NonNull M map) {
+
+    public <K, M extends Map<K, ?>> Expression<Set<K>> keys(M map) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
-    public Predicate regex(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+
+    public Predicate regex(Expression<String> x,  Expression<String> pattern) {
         return new BinaryPredicate(x, pattern, PredicateBinaryOp.REGEX);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+
+    public Predicate like(Expression<String> x,  Expression<String> pattern) {
         return new LikePredicate(x, pattern, null, false);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull String pattern) {
+
+    public Predicate like(Expression<String> x,  String pattern) {
         return new LikePredicate(x, literal(pattern), null, false);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern, @NonNull Expression<Character> escapeChar) {
+
+    public Predicate like(Expression<String> x,  Expression<String> pattern,  Expression<Character> escapeChar) {
         return new LikePredicate(x, pattern, escapeChar, false);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern, char escapeChar) {
+
+    public Predicate like(Expression<String> x,  Expression<String> pattern, char escapeChar) {
         return new LikePredicate(x, pattern, literal(escapeChar), false);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull String pattern, @NonNull Expression<Character> escapeChar) {
+
+    public Predicate like(Expression<String> x,  String pattern,  Expression<Character> escapeChar) {
         return new LikePredicate(x, literal(pattern), escapeChar, false);
     }
 
     @Override
-    @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull String pattern, char escapeChar) {
+
+    public Predicate like(Expression<String> x,  String pattern, char escapeChar) {
         return new LikePredicate(x, literal(pattern), literal(escapeChar), false);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+
+    public Predicate notLike(Expression<String> x,  Expression<String> pattern) {
         return new LikePredicate(x, pattern, null, true);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern) {
+
+    public Predicate notLike(Expression<String> x,  String pattern) {
         return new LikePredicate(x, literal(pattern), null, true);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern, @NonNull Expression<Character> escapeChar) {
+
+    public Predicate notLike(Expression<String> x,  Expression<String> pattern,  Expression<Character> escapeChar) {
         return new LikePredicate(x, pattern, escapeChar, true);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern, char escapeChar) {
+
+    public Predicate notLike(Expression<String> x,  Expression<String> pattern, char escapeChar) {
         return new LikePredicate(x, pattern, literal(escapeChar), true);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern, @NonNull Expression<Character> escapeChar) {
+
+    public Predicate notLike(Expression<String> x,  String pattern,  Expression<Character> escapeChar) {
         return new LikePredicate(x, literal(pattern), escapeChar, true);
     }
 
     @Override
-    @NonNull
-    public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern, char escapeChar) {
+
+    public Predicate notLike(Expression<String> x,  String pattern, char escapeChar) {
         return new LikePredicate(x, literal(pattern), literal(escapeChar), true);
     }
 
     @Override
-    @NonNull
-    public Expression<String> concat(@NonNull Expression<String> x, @NonNull Expression<String> y) {
+
+    public Expression<String> concat(Expression<String> x,  Expression<String> y) {
         return new BinaryExpression<>(x, y, BinaryExpressionType.CONCAT, String.class);
     }
 
     @Override
-    @NonNull
-    public Expression<String> concat(@NonNull Expression<String> x, @NonNull String y) {
+
+    public Expression<String> concat(Expression<String> x,  String y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.CONCAT, String.class);
     }
 
     @Override
-    @NonNull
-    public Expression<String> concat(@NonNull String x, @NonNull Expression<String> y) {
+
+    public Expression<String> concat(String x,  Expression<String> y) {
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.CONCAT, String.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
-    @NonNull
-    public Expression<String> substring(@NonNull Expression<String> x, @NonNull Expression<Integer> from) {
+    public Expression<String> concat(List<Expression<String>> expressions) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, Expression<String> substring, Expression<String> replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, Expression<String> substring, String replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, String substring, Expression<String> replacement) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> replace(Expression<String> x, String substring, String replacement) {
         throw notSupportedOperation();
     }
 
@@ -1002,8 +1098,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> substring(@NonNull Expression<String> x, int from) {
+
+    public Expression<String> substring(Expression<String> x,  Expression<Integer> from) {
         throw notSupportedOperation();
     }
 
@@ -1013,8 +1109,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> substring(@NonNull Expression<String> x, @NonNull Expression<Integer> from, @NonNull Expression<Integer> len) {
+
+    public Expression<String> substring(Expression<String> x, int from) {
         throw notSupportedOperation();
     }
 
@@ -1024,8 +1120,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> substring(@NonNull Expression<String> x, int from, int len) {
+
+    public Expression<String> substring(Expression<String> x,  Expression<Integer> from,  Expression<Integer> len) {
         throw notSupportedOperation();
     }
 
@@ -1035,8 +1131,28 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(@NonNull Expression<String> x) {
+
+    public Expression<String> substring(Expression<String> x, int from, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> left(Expression<String> x, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> left(Expression<String> x, Expression<Integer> len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> right(Expression<String> x, int len) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public Expression<String> right(Expression<String> x, Expression<Integer> len) {
         throw notSupportedOperation();
     }
 
@@ -1046,8 +1162,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(@NonNull Trimspec ts, @NonNull Expression<String> x) {
+
+    public Expression<String> trim(Expression<String> x) {
         throw notSupportedOperation();
     }
 
@@ -1057,8 +1173,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(@NonNull Expression<Character> t, @NonNull Expression<String> x) {
+
+    public Expression<String> trim(Trimspec ts,  Expression<String> x) {
         throw notSupportedOperation();
     }
 
@@ -1068,8 +1184,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(@NonNull Trimspec ts, @NonNull Expression<Character> t, @NonNull Expression<String> x) {
+
+    public Expression<String> trim(Expression<Character> t,  Expression<String> x) {
         throw notSupportedOperation();
     }
 
@@ -1079,8 +1195,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(char t, @NonNull Expression<String> x) {
+
+    public Expression<String> trim(Trimspec ts,  Expression<Character> t,  Expression<String> x) {
         throw notSupportedOperation();
     }
 
@@ -1090,26 +1206,37 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<String> trim(@NonNull Trimspec ts, char t, @NonNull Expression<String> x) {
+
+    public Expression<String> trim(char t,  Expression<String> x) {
+        throw notSupportedOperation();
+    }
+
+    /**
+     * Not supported yet.
+     *
+     * {@inheritDoc}
+     */
+    @Override
+
+    public Expression<String> trim(Trimspec ts, char t,  Expression<String> x) {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
-    public Expression<String> lower(@NonNull Expression<String> x) {
+
+    public Expression<String> lower(Expression<String> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.LOWER);
     }
 
     @Override
-    @NonNull
-    public Expression<String> upper(@NonNull Expression<String> x) {
+
+    public Expression<String> upper(Expression<String> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.UPPER);
     }
 
     @Override
-    @NonNull
-    public Expression<Integer> length(@NonNull Expression<String> x) {
+
+    public Expression<Integer> length(Expression<String> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.LENGTH);
     }
 
@@ -1119,8 +1246,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> locate(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+
+    public Expression<Integer> locate(Expression<String> x,  Expression<String> pattern) {
         throw notSupportedOperation();
     }
 
@@ -1130,8 +1257,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> locate(@NonNull Expression<String> x, @NonNull String pattern) {
+
+    public Expression<Integer> locate(Expression<String> x,  String pattern) {
         throw notSupportedOperation();
     }
 
@@ -1141,8 +1268,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> locate(@NonNull Expression<String> x, @NonNull Expression<String> pattern, @NonNull Expression<Integer> from) {
+
+    public Expression<Integer> locate(Expression<String> x,  Expression<String> pattern,  Expression<Integer> from) {
         throw notSupportedOperation();
     }
 
@@ -1152,46 +1279,28 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public Expression<Integer> locate(@NonNull Expression<String> x, @NonNull String pattern, int from) {
+
+    public Expression<Integer> locate(Expression<String> x,  String pattern, int from) {
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
-    @NonNull
     public Expression<Date> currentDate() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.DATE, Date.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
-    @NonNull
     public Expression<Timestamp> currentTimestamp() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.TIMESTAMP, Timestamp.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
-    @NonNull
     public Expression<Time> currentTime() {
-        throw notSupportedOperation();
+        return new CurrentTemporalExpression<>(CurrentTemporalExpression.Type.TIME, Time.class);
     }
 
     @Override
-    @NonNull
+
     public <T> In<T> in(Expression<? extends T> expression) {
         return new InPredicate<>((Expression) expression, this);
     }
@@ -1202,8 +1311,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <Y> Expression<Y> coalesce(@NonNull Expression<? extends Y> x, @NonNull Expression<? extends Y> y) {
+
+    public <Y> Expression<Y> coalesce(Expression<? extends Y> x,  Expression<? extends Y> y) {
         throw notSupportedOperation();
     }
 
@@ -1213,8 +1322,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <Y> Expression<Y> coalesce(@NonNull Expression<? extends Y> x, Y y) {
+
+    public <Y> Expression<Y> coalesce(Expression<? extends Y> x, Y y) {
         throw notSupportedOperation();
     }
 
@@ -1224,8 +1333,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <Y> Expression<Y> nullif(@NonNull Expression<Y> x, @NonNull Expression<?> y) {
+
+    public <Y> Expression<Y> nullif(Expression<Y> x,  Expression<?> y) {
         throw notSupportedOperation();
     }
 
@@ -1235,8 +1344,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <Y> Expression<Y> nullif(@NonNull Expression<Y> x, Y y) {
+
+    public <Y> Expression<Y> nullif(Expression<Y> x, Y y) {
         throw notSupportedOperation();
     }
 
@@ -1246,7 +1355,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
+
     public <T> Coalesce<T> coalesce() {
         throw notSupportedOperation();
     }
@@ -1257,8 +1366,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <C, R> SimpleCase<C, R> selectCase(@NonNull Expression<? extends C> expression) {
+
+    public <C, R> SimpleCase<C, R> selectCase(Expression<? extends C> expression) {
         throw notSupportedOperation();
     }
 
@@ -1268,14 +1377,14 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
+
     public <R> Case<R> selectCase() {
         throw notSupportedOperation();
     }
 
     @Override
-    @NonNull
-    public <T> Expression<T> function(@NonNull String name, @NonNull Class<T> type, @NonNull Expression<?>... args) {
+
+    public <T> Expression<T> function(String name,  Class<T> type,  Expression<?>... args) {
         return new FunctionExpression<>(Objects.requireNonNull(name), List.of(args), Objects.requireNonNull(type));
     }
 
@@ -1285,8 +1394,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T, V extends T> Join<X, V> treat(@NonNull Join<X, T> join, @NonNull Class<V> type) {
+
+    public <X, T, V extends T> Join<X, V> treat(Join<X, T> join,  Class<V> type) {
         throw notSupportedOperation();
     }
 
@@ -1296,8 +1405,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T, E extends T> CollectionJoin<X, E> treat(@NonNull CollectionJoin<X, T> join, @NonNull Class<E> type) {
+
+    public <X, T, E extends T> CollectionJoin<X, E> treat(CollectionJoin<X, T> join,  Class<E> type) {
         throw notSupportedOperation();
     }
 
@@ -1307,8 +1416,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T, E extends T> SetJoin<X, E> treat(@NonNull SetJoin<X, T> join, @NonNull Class<E> type) {
+
+    public <X, T, E extends T> SetJoin<X, E> treat(SetJoin<X, T> join,  Class<E> type) {
         throw notSupportedOperation();
     }
 
@@ -1318,8 +1427,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T, E extends T> ListJoin<X, E> treat(@NonNull ListJoin<X, T> join, @NonNull Class<E> type) {
+
+    public <X, T, E extends T> ListJoin<X, E> treat(ListJoin<X, T> join,  Class<E> type) {
         throw notSupportedOperation();
     }
 
@@ -1329,8 +1438,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, K, T, V extends T> MapJoin<X, K, V> treat(@NonNull MapJoin<X, K, T> join, @NonNull Class<V> type) {
+
+    public <X, K, T, V extends T> MapJoin<X, K, V> treat(MapJoin<X, K, T> join,  Class<V> type) {
         throw notSupportedOperation();
     }
 
@@ -1340,8 +1449,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T extends X> Path<T> treat(@NonNull Path<X> path, @NonNull Class<T> type) {
+
+    public <X, T extends X> Path<T> treat(Path<X> path,  Class<T> type) {
         throw notSupportedOperation();
     }
 
@@ -1351,9 +1460,24 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      * {@inheritDoc}
      */
     @Override
-    @NonNull
-    public <X, T extends X> Root<T> treat(@NonNull Root<X> root, @NonNull Class<T> type) {
+
+    public <X, T extends X> Root<T> treat(Root<X> root,  Class<T> type) {
         throw notSupportedOperation();
+    }
+
+    @Override
+    public Predicate geoWithin(Expression<?> x, Expression<?> y) {
+        return predicate(x, y, PredicateBinaryOp.GEO_WITHIN);
+    }
+
+    @Override
+    public Predicate geoIntersects(Expression<?> x, Expression<?> y) {
+        return predicate(x, y, PredicateBinaryOp.GEO_INTERSECTS);
+    }
+
+    @Override
+    public Predicate near(Expression<?> x, Expression<?> y, Expression<? extends Number> distance) {
+        return new NearPredicate(x, y, distance);
     }
 
     @Override
@@ -1363,17 +1487,17 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public Expression<LocalDate> localDate() {
-        throw notSupportedOperation();
+        return parameter(LocalDate.class, null, (Supplier<LocalDate>) () -> localDateTimeSupplier.get().toLocalDate());
     }
 
     @Override
     public Expression<LocalDateTime> localDateTime() {
-        throw notSupportedOperation();
+        return parameter(LocalDateTime.class, null, (Supplier<LocalDateTime>) () -> localDateTimeSupplier.get().toLocalDateTime());
     }
 
     @Override
     public Expression<LocalTime> localTime() {
-        throw notSupportedOperation();
+        return parameter(LocalTime.class, null, (Supplier<LocalTime>) () -> localDateTimeSupplier.get().toLocalTime());
     }
 
     @Override

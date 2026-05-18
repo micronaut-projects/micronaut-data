@@ -22,8 +22,8 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
@@ -84,6 +84,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     @Override
+    @Nullable
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         String tenantDataSourceName;
         if (tenantResolver != null) {
@@ -199,7 +200,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      * @param dataSource The datasource name
      * @param method     The method
      */
-    private record TenantExecutableMethod(String dataSource, ExecutableMethod<?, ?> method) {
+    private record TenantExecutableMethod(@Nullable String dataSource, ExecutableMethod<?, ?> method) {
     }
 
 }

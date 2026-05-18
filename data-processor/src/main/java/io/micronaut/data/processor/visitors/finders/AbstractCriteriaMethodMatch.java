@@ -18,9 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -29,10 +27,9 @@ import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TenantId;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
@@ -56,6 +53,7 @@ import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PrimitiveElement;
 import jakarta.persistence.criteria.Expression;
@@ -71,6 +69,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -111,7 +110,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         RESTRICTIONS_PATTERN = Pattern.compile("^(" + rExpressionPattern + ")$");
     }
 
-    @Nullable
     protected final List<MethodNameParser.Match> matches;
 
     protected AbstractCriteriaMethodMatch(List<MethodNameParser.Match> matches) {
@@ -137,8 +135,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @return The operation type
      */
-    @NonNull
-    protected abstract DataMethod.OperationType getOperationType();
+    protected abstract DataMethod. OperationType getOperationType();
 
     /**
      * @return true of the operation is supported by implicit queries
@@ -204,16 +201,21 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             List<Predicate> predicates = new ArrayList<>(queryParams.size());
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
+                String path = null;
                 boolean isId = TypeRole.ID.equals(paramName);
                 if (queryParam.hasAnnotation(By.class)) {
                     paramName = queryParam.stringValue(By.class).orElseThrow();
+                    path = paramName;
                     isId = By.ID.equals(paramName);
                 }
                 PersistentPropertyPath propPath;
                 if (isId && rootEntity.hasIdentity()) {
-                    propPath = new PersistentPropertyPath(rootEntity.getIdentity());
+                    propPath = new PersistentPropertyPath(Objects.requireNonNull(rootEntity.getIdentity()));
                 } else {
-                    propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
+                    if (path == null) {
+                        path = rootEntity.getPath(paramName).orElse(paramName);
+                    }
+                    propPath = rootEntity.getPropertyPath(path);
                 }
                 ParameterExpression<Object> param = ((SourcePersistentEntityCriteriaBuilder) cb).parameter(queryParam, propPath);
                 if (propPath == null) {
@@ -224,20 +226,22 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     }
                 } else {
                     PersistentProperty property = propPath.getProperty();
-                    if (property == rootEntity.getIdentity()) {
+                    if (rootEntity.hasIdentity() && property == rootEntity.getIdentity()) {
                         predicates.add(cb.equal(root.id(), param));
-                    } else if (property == rootEntity.getVersion()) {
+                    } else if (rootEntity.hasVersion() && property == rootEntity.getVersion()) {
                         predicates.add(cb.equal(root.version(), param));
                     } else {
                         if (propPath.getAssociations().isEmpty()) {
                             predicates.add(cb.equal(root.get(property.getName()), param));
                         } else {
                             // TODO: support embedded ID
-                            Association association = propPath.getAssociations().get(0);
+                            Association association = propPath.getAssociations().getFirst();
                             if (propPath.getAssociations().size() == 1) {
                                 if (association.isEmbedded()) {
                                     predicates.add(cb.equal(root.get(association.getName()).get(property.getName()), param));
                                 } else if (PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
+                                    predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
+                                } else {
                                     predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
                                 }
                             } else {
@@ -314,7 +318,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return existingPredicate;
     }
 
-    protected final <T> Predicate extractPredicates(String querySequence,
+    @Nullable
+    protected final <T> Predicate extractPredicates(@Nullable String querySequence,
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
                                                     PersistentEntityCriteriaBuilder cb) {
@@ -333,12 +338,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     String[] queryParameters = querySequence.split(operatorInUse);
                     List<Predicate> opPredicates = new ArrayList<>();
                     Pattern orPattern = OPERATOR_PATTERNS.get(OPERATOR_OR);
+                    Objects.requireNonNull(orPattern);
                     for (String queryParameter : queryParameters) {
                         // Since split was done first by And operator we may have queryParameters with Or predicate
                         // If queryParameters is actual Or expression we need to further extract predicates
                         // And not try to find actual method predicate from the property (queryParameter) containing Or expression
                         if (!OPERATOR_OR.equals(operatorInUse) && orPattern.matcher(queryParameter).find()) {
-                            opPredicates.add(extractPredicates(queryParameter, parametersIt, root, cb));
+                            Predicate innerPredicate = extractPredicates(queryParameter, parametersIt, root, cb);
+                            if (innerPredicate != null) {
+                                opPredicates.add(innerPredicate);
+                            }
                         } else {
                             opPredicates.add(
                                 findMethodPredicate(queryParameter, root, cb, parametersIt)
@@ -404,6 +413,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
         }
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
+        Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
     }
 
@@ -492,28 +502,53 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 throw new MatchFailedException("Insufficient arguments to method criteria: " + restrictionName);
             }
             ParameterElement parameter = parameters.next();
-            ClassElement genericType = parameter.getGenericType();
-            if (TypeUtils.isContainerType(genericType)) {
-                genericType = genericType.getFirstTypeArgument().orElse(genericType);
-            }
-
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
-                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
-                if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
-                    SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
-                    throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
-                }
-                params.add(scb.parameter(parameter, propertyPath));
-            } else {
-                params.add(scb.parameter(parameter, null));
-            }
+            params.add(provideParam(parameter, scb, restrictionName, i, expression));
         }
         return params;
     }
 
-    private boolean isValidType(ClassElement genericType, SourcePersistentProperty property) {
+    private <T> ParameterExpression<T> provideParam(ParameterElement parameter,
+                                                    SourcePersistentEntityCriteriaBuilder scb,
+                                                    String restrictionName,
+                                                    int parameterIndex,
+                                                    @Nullable
+                                                    Expression<?> expression) {
+        ClassElement genericType = parameter.getGenericType();
+        if (TypeUtils.isContainerType(genericType)) {
+            genericType = genericType.getFirstTypeArgument().orElse(genericType);
+        }
+
+        if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
+            PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
+            if (!isValidType(restrictionName, parameterIndex, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+                SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
+                throw new IllegalArgumentException(
+                    "Parameter [" + genericType.getType().getName() + " " + parameter.getName() +
+                        "] is not compatible with property [" + property.getType().getName() + " " +
+                        property.getName() + "] of entity: " + property.getOwner().getName());
+            }
+            if ("Near".equals(restrictionName) && parameterIndex == 1) {
+                return scb.parameter(parameter, null);
+            } else {
+                return scb.parameter(parameter, propertyPath);
+            }
+        } else {
+            return scb.parameter(parameter, null);
+        }
+    }
+
+    private boolean isValidType(String restrictionName, int parameterIndex, ClassElement genericType, SourcePersistentProperty property) {
         if (TypeUtils.isObjectClass(genericType)) {
             // Avoid an error when type information is missing.
+            return true;
+        }
+        if (("GeoWithin".equals(restrictionName) || "GeoIntersects".equals(restrictionName)
+            || ("Near".equals(restrictionName) && parameterIndex == 0))
+            && isGeometryType(genericType)
+            && isGeometryType(property.getType())) {
+            return true;
+        }
+        if ("Near".equals(restrictionName) && parameterIndex == 1 && TypeUtils.isNumber(genericType)) {
             return true;
         }
         PersistentEntity owner = property.getOwner();
@@ -533,7 +568,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return genericType.isAssignable(Iterable.class);
     }
 
-    @NonNull
+    private boolean isGeometryType(ClassElement type) {
+        return type.isAssignable("io.micronaut.data.model.geo.Geometry")
+            || type.isAssignable("com.mongodb.client.model.geojson.Geometry");
+    }
+
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
@@ -545,8 +584,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName + " " + root.getPersistentEntity().getPersistentProperties().stream().map(PersistentProperty::getName).toList());
     }
 
-    @Nullable
-    protected final <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
+    protected final <T> io.micronaut.data.model.jpa.criteria. @Nullable PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         PersistentProperty prop = entity.getPropertyByName(propertyName);
@@ -579,7 +617,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return CriteriaUtils.requireProperty(exp);
     }
 
-    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, @NonNull List<AnnotationValue<Join>> joinSpecs) {
+    protected final void applyJoinSpecs(PersistentEntityRoot<?> root, List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);
             Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
@@ -608,8 +646,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
      * @param isQuery      true if is a query criteria
      * @return a List of annotations values for {@link Join} annotation.
      */
-    @NonNull
-    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext, boolean isQuery) {
+
+    protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(MethodMatchContext matchContext, boolean isQuery) {
         List<AnnotationValue<Join>> joins;
         if (!isQuery) {
             return matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
@@ -621,7 +659,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return matchContext.getRepositoryClass().getAnnotationMetadata().getAnnotationValuesByType(Join.class);
     }
 
-    protected final boolean hasNoWhereAndJoinDeclaration(@NonNull MethodMatchContext matchContext) {
+    protected final boolean hasNoWhereAndJoinDeclaration(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().hasAnnotation(Join.class)) {
             return false;
         }
@@ -674,7 +712,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
+                                                     @Nullable
                                                      String selectedType,
+                                                     @Nullable
                                                      ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
@@ -694,52 +734,28 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
-                                                     ClassElement queryResultType,
+                                                     @Nullable ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
-        ClassElement resultType = interceptorMatch.returnType();
-
-        boolean isRuntimeDto = false;
-        boolean isDto = resultType != null
-            && !TypeUtils.areTypesCompatible(resultType, queryResultType)
-            && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
-
-        if (isDto) {
-            isRuntimeDto = isDtoType(matchContext.getRepositoryClass(), resultType);
-        } else if (interceptorMatch.validateReturnType()) {
-            if (queryResultType != null) {
-                if (resultType == null || !isVoid(resultType)) {
-                    if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
-                        if (!queryResultType.isPrimitive() || resultType == null) {
-                            resultType = queryResultType;
-                        }
-                    } else if (!allowEntityResultByDefault || !matchContext.getRootEntity().getClassElement().equals(resultType)) {
-                        throw new MatchFailedException("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + resultType.getName());
-                    }
-                }
-            }
-        }
-        return new MethodResult(resultType, isDto, isRuntimeDto);
-    }
-
-    private boolean isVoid(ClassElement resultType) {
-        return resultType.isAssignable(void.class) || resultType.isAssignable(Void.class) || resultType.getName().equals("kotlin.Unit");
-    }
-
-    private boolean isDtoType(ClassElement repositoryElement, ClassElement classElement) {
-        return Arrays.stream(repositoryElement.stringValues(RepositoryConfiguration.class, "queryDtoTypes"))
-            .anyMatch(type -> classElement.getName().equals(type));
+        return MatchUtils.analyzeMethodResult(matchContext.getRepositoryClass(), matchContext.getRootEntity().getClassElement(), queryResultType, interceptorMatch, allowEntityResultByDefault);
     }
 
     /**
      * Find DTO properties.
      *
-     * @param entity     The entity
-     * @param returnType The result
+     * @param entity        The entity
+     * @param methodElement The method element
+     * @param returnType    The result
      * @return DTO properties
      */
     protected List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
+                                                                        MethodElement methodElement,
                                                                         ClassElement returnType) {
+        List<String> projectionList = methodElement.getAnnotationValuesByType(Projection.class)
+            .stream()
+            .flatMap(a -> a.stringValue().stream())
+            .toList();
+        Iterator<String> iterator = projectionList.iterator();
         return returnType.getBeanProperties().stream()
             .filter(dtoProperty -> {
                 String propertyName = dtoProperty.getName();
@@ -751,6 +767,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 if ("metaClass".equals(propertyName) && dtoProperty.getType().isAssignable("groovy.lang.MetaClass")) {
                     // ignore Groovy meta class
                     return null;
+                }
+                AnnotationValue<Projection> selectAnnotation = dtoProperty.getAnnotation(Projection.class);
+                if (selectAnnotation != null) {
+                    propertyName = selectAnnotation.stringValue().orElse(propertyName);
+                } else if (iterator.hasNext()) {
+                    propertyName = iterator.next();
                 }
                 SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
 
@@ -772,18 +794,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 }
                 return pp;
             }).toList();
-    }
-
-    /**
-     * Method result.
-     *
-     * @param resultType             The result type
-     * @param isDto                  Is DTO
-     * @param isRuntimeDtoConversion Is DTO converted at the runtime
-     */
-    protected record MethodResult(ClassElement resultType,
-                                  boolean isDto,
-                                  boolean isRuntimeDtoConversion) {
     }
 
 }

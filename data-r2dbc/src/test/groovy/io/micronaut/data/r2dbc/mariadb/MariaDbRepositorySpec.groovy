@@ -172,6 +172,12 @@ class MariaDbRepositorySpec extends AbstractRepositorySpec implements MariaDbTes
         return context.getBean(MySqlExampleEntityRepository)
     }
 
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(MySqlIntervalRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // INSERT command denied to user 'test'@'172.17.0.1' for table 'cars'

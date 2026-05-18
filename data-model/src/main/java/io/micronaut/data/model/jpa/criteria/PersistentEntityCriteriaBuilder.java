@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -48,6 +47,15 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
 
     /**
+     * The insert criteria.
+     * @param targetEntity The target entity
+     * @param <T> The entity type
+     * @return The insert criteria
+     * @since 5.0
+     */
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity);
+
+    /**
      * Create an ordering.
      *
      * @param x          expression used to define the ordering
@@ -55,8 +63,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param ignoreCase If ignore case should be used
      * @return ascending ordering corresponding to the expression
      */
-    @NonNull
-    Order sort(@NonNull Expression<?> x, boolean ascending, boolean ignoreCase);
+    Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
      * OR restriction predicate.
@@ -207,6 +214,37 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return like predicate
      */
     Predicate regex(Expression<String> x, Expression<String> pattern);
+
+    /**
+     * Checks if geospatial expression x is within geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate geoWithin(Expression<?> x, Expression<?> y);
+
+    /**
+     * Checks if geospatial expression x intersects geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate geoIntersects(Expression<?> x, Expression<?> y);
+
+    /**
+     * Checks if geospatial expression x is within the given distance from geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @param distance The distance
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate near(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
 
     /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.

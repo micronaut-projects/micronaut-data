@@ -27,16 +27,11 @@ class ParameterTypeDefSpec extends AbstractDataSpec {
         given:
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@RepositoryConfiguration(
-    queryBuilder = SqlQueryBuilder.class,
-    implicitQueries = false,
-    namedParameters = false
-)
-@Repository
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.ANSI)
 interface PersonRepository extends GenericRepository<Person, UUID> {
     List<Person> findByIdIn(List<UUID> id);
 
@@ -74,16 +69,12 @@ class Person {
     void "test parameter type for query"() {
         given:
         def repository = buildRepository('test.BookRepository', '''
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
-@RepositoryConfiguration(
-    queryBuilder = SqlQueryBuilder.class,
-    implicitQueries = false,
-    namedParameters = false
-)
-@Repository
-@io.micronaut.context.annotation.Executable
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ANSI)
 abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
 
     public BookRepository(AuthorRepository authorRepository) {
@@ -127,16 +118,12 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
         given:
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.repository.GenericRepository;
 
-@RepositoryConfiguration(
-    queryBuilder = SqlQueryBuilder.class,
-    implicitQueries = false,
-    namedParameters = false
-)
-@Repository
-@io.micronaut.context.annotation.Executable
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ANSI)
 interface PersonRepository extends GenericRepository<Person, Long> {
     void deleteAll(Iterable<Person> entities);
 }

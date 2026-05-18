@@ -6,7 +6,6 @@ import io.micronaut.data.document.mongodb.upsert.repo.SongRepository2
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.bson.types.ObjectId
-import org.junit.Test
 import spock.lang.Specification
 
 /**
@@ -24,7 +23,6 @@ class SimpleSongSpec2 extends Specification implements MongoTestPropertyProvider
     @Inject
     private SongRepository2 songRepository
 
-    @Test
     void savesAndRetrievesSongs() {
         when:
             ObjectId id = new ObjectId("ffffffffffffffffffffffff")
@@ -38,7 +36,6 @@ class SimpleSongSpec2 extends Specification implements MongoTestPropertyProvider
             song1.isPresent()
     }
 
-    @Test
     void updatesSongs() {
         when:
             ObjectId id = new ObjectId("eeeeeeeeeeeeeeeeeeeeeeee")

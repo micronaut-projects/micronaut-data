@@ -19,8 +19,9 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.order.OrderUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
@@ -32,6 +33,8 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
+import io.micronaut.transaction.support.TransactionExecutionListener;
+import jakarta.inject.Inject;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -61,8 +64,30 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
 
     private final DataSource dataSource;
+    private final List<TransactionExecutionListener<Connection>> transactionExecutionListeners;
 
     private boolean enforceReadOnly = false;
+
+    /**
+     * Create a new DataSourceTransactionManager instance.
+     *
+     * @param dataSource                    The JDBC DataSource to manage transactions for
+     * @param connectionOperations          The connection operations
+     * @param synchronousConnectionManager  The synchronous connection operations
+     * @param transactionExecutionListeners The transaction execution listeners
+     */
+    @Inject
+    public DataSourceTransactionManager(@NonNull DataSource dataSource,
+                                        @Parameter ConnectionOperations<Connection> connectionOperations,
+                                        @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager,
+                                        List<TransactionExecutionListener<Connection>> transactionExecutionListeners) {
+        super(connectionOperations, synchronousConnectionManager);
+        Objects.requireNonNull(dataSource, "DataSource cannot be null");
+        dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
+        this.dataSource = dataSource;
+        this.transactionExecutionListeners = new ArrayList<>(transactionExecutionListeners);
+        OrderUtil.sort(this.transactionExecutionListeners);
+    }
 
     /**
      * Create a new DataSourceTransactionManager instance.
@@ -74,10 +99,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     public DataSourceTransactionManager(@NonNull DataSource dataSource,
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
-        super(connectionOperations, synchronousConnectionManager);
-        Objects.requireNonNull(dataSource, "DataSource cannot be null");
-        dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
-        this.dataSource = dataSource;
+        this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
     }
 
     /**
@@ -129,6 +151,10 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         List<Runnable> onComplete = new ArrayList<>(5);
 
+        for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            transactionExecutionListener.beforeBegin(status.getConnectionStatus(), definition);
+        }
+
         definition.isReadOnly()
             .ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
         definition.getIsolationLevel()
@@ -147,6 +173,9 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                     }
                 }
             });
+        }
+        for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
         }
     }
 

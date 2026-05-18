@@ -32,16 +32,16 @@ class JpaEmbeddedIdSpec extends Specification {
     void "test CRUD"() {
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         def entity = repository.findById(id).orElse(null)
 

@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -46,7 +46,7 @@ public class DefaultSaveOneAsyncInterceptor extends AbstractCountConvertCompleti
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = getParameterValueMap(context);
         Object o = instantiateEntity(rootEntity, parameterValueMap);
-        return asyncDatastoreOperations.persist(getInsertOperation(context, o));
+        return persistOrUpdateAsync(context, o);
     }
 
 }

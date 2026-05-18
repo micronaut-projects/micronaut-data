@@ -18,14 +18,18 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 @Embeddable
 public class CountyPk {
+    @Nullable
     private Long id;
     @MappedProperty(value = "state_id")
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private State state;
 
+    @Nullable
     public Long getId() {
         return id;
     }
@@ -34,6 +38,7 @@ public class CountyPk {
         this.id = id;
     }
 
+    @Nullable
     public State getState() {
         return state;
     }

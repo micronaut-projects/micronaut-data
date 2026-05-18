@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,51 +29,46 @@ import reactor.core.publisher.Mono;
  * @see ReactiveStreamsCrudRepository
  */
 public interface ReactorCrudRepository<E, ID> extends ReactiveStreamsCrudRepository<E, ID> {
-    @NonNull
+    
     @Override
-    <S extends E> Mono<S> save(@NonNull S entity);
+    <S extends E> Mono<S> save(S entity);
 
-    @NonNull
     @Override
-    <S extends E> Flux<S> saveAll(@NonNull Iterable<S> entities);
+    <S extends E> Mono<S> insert(S entity);
 
-    @NonNull
     @Override
-    <S extends E> Mono<S> update(@NonNull S entity);
+    <S extends E> Flux<S> saveAll(Iterable<S> entities);
 
-    @NonNull
     @Override
-    <S extends E> Flux<S> updateAll(@NonNull Iterable<S> entities);
+    <S extends E> Flux<S> insertAll(Iterable<S> entities);
 
-    @NonNull
     @Override
-    Mono<E> findById(@NonNull ID id);
+    <S extends E> Mono<S> update(S entity);
 
-    @NonNull
     @Override
-    Mono<Boolean> existsById(@NonNull ID id);
+    <S extends E> Flux<S> updateAll(Iterable<S> entities);
 
-    @NonNull
+    @Override
+    Mono<E> findById(ID id);
+
+    @Override
+    Mono<Boolean> existsById(ID id);
+
     @Override
     Flux<E> findAll();
 
-    @NonNull
     @Override
     Mono<Long> count();
 
-    @NonNull
     @Override
-    Mono<Long> deleteById(@NonNull ID id);
+    Mono<Long> deleteById(ID id);
 
-    @NonNull
     @Override
-    Mono<Long> delete(@NonNull E entity);
+    Mono<Long> delete(E entity);
 
-    @NonNull
     @Override
-    Mono<Long> deleteAll(@NonNull Iterable<? extends E> entities);
+    Mono<Long> deleteAll(Iterable<? extends E> entities);
 
-    @NonNull
     @Override
     Mono<Long> deleteAll();
 }

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.event.PostRemove;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -36,10 +35,10 @@ public interface PostRemoveEventListener<T> extends EntityEventListener<T> {
      *
      * @param entity The entity
      */
-    void postRemove(@NonNull T entity);
+    void postRemove(T entity);
 
     @Override
-    default void postRemove(@NonNull EntityEventContext<T> context) {
+    default void postRemove(EntityEventContext<T> context) {
         postRemove(context.getEntity());
     }
 
@@ -48,5 +47,4 @@ public interface PostRemoveEventListener<T> extends EntityEventListener<T> {
         return eventType == PostRemove.class;
     }
 }
-
 

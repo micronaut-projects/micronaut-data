@@ -30,6 +30,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -46,16 +47,20 @@ import java.util.Optional;
 public class DefaultBindableParametersPreparedQuery<E, R> implements BindableParametersPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
     protected final PreparedQuery<E, R> preparedQuery;
+    @Nullable
     protected final MethodInvocationContext<?, ?> invocationContext;
     protected final BindableParametersStoredQuery<E, R> storedQuery;
 
+    @SuppressWarnings("unchecked")
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this.preparedQuery = preparedQuery;
-        this.invocationContext = ((DefaultPreparedQuery) preparedQuery).getContext();
-        this.storedQuery = unwrap(((DefaultPreparedQuery<E, R>) preparedQuery).getStoredQueryDelegate());
+        DefaultPreparedQuery<E, R> defaultPreparedQuery = (DefaultPreparedQuery<E, R>) unwrapPreparedQuery(preparedQuery);
+        this.invocationContext = defaultPreparedQuery.getContext();
+        this.storedQuery = unwrap(defaultPreparedQuery.getStoredQueryDelegate());
     }
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
+                                                  @Nullable
                                                   MethodInvocationContext<?, ?> invocationContext,
                                                   BindableParametersStoredQuery<E, R> storedQuery) {
         this.preparedQuery = preparedQuery;
@@ -67,10 +72,20 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         if (storedQuery instanceof BindableParametersStoredQuery<X, Y> bindableParametersStoredQuery) {
             return bindableParametersStoredQuery;
         }
-        if (storedQuery instanceof DelegateStoredQuery) {
-            return unwrap(storedQuery);
+        if (storedQuery instanceof DelegateStoredQuery delegateStoredQuery) {
+            return unwrap(delegateStoredQuery.getStoredQueryDelegate());
         }
         throw new DataAccessException("Cannot unwrap BindableParametersStoredQuery");
+    }
+
+    private static DefaultPreparedQuery<?, ?> unwrapPreparedQuery(PreparedQuery<?, ?> preparedQuery) {
+        if (preparedQuery instanceof DefaultPreparedQuery<?, ?> defaultPreparedQuery) {
+            return defaultPreparedQuery;
+        }
+        if (preparedQuery instanceof DelegatePreparedQuery<?, ?> delegatePreparedQuery) {
+            return unwrapPreparedQuery(delegatePreparedQuery.getPreparedQueryDelegate());
+        }
+        throw new DataAccessException("Cannot unwrap DefaultPreparedQuery");
     }
 
     @Override
@@ -89,13 +104,13 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     @Override
-    public void bindParameters(Binder binder, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        storedQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
+    public void bindParameters(Binder binder, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        storedQuery.bindParameters(binder, invocationContext, entity, previousValues);
     }
 
     @Override
-    public void bindParameters(Binder binder, InvocationContext<?, ?> invocationContext, E entity, Map<QueryParameterBinding, Object> previousValues) {
-        storedQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
+    public void bindParameters(Binder binder, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity, @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        storedQuery.bindParameters(binder, invocationContext, entity, previousValues);
     }
 
     @Override

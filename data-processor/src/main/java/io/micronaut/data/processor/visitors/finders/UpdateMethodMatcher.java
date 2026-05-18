@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Update;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -40,8 +41,10 @@ import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMetho
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.processing.ProcessingException;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -63,6 +66,21 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .build());
+    }
+
+    @Override
+    @Nullable
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Update.class)) {
+            if (!matchContext.hasRootEntity()) {
+                matchContext.findImplicitRootEntity();
+            }
+            if (!matchContext.hasRootEntity()) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+            }
+            return match(matchContext, List.of());
+        }
+        return super.match(matchContext);
     }
 
     @Override
@@ -95,13 +113,17 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
     }
 
     public static UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
-                                                   ParameterElement entityParameter,
-                                                   ParameterElement entitiesParameter,
-                                                   boolean isReturning) {
+                                                         @Nullable
+                                                         ParameterElement entityParameter,
+                                                         @Nullable
+                                                         ParameterElement entitiesParameter,
+                                                         boolean isReturning) {
         return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
+            @Nullable
             final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
+            @Override
             protected <T> void addPropertiesToUpdate(List<ParameterElement> nonConsumedParameters,
                                                      MethodMatchContext matchContext,
                                                      PersistentEntityRoot<T> root,
@@ -112,14 +134,15 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                 // for JSON entity representation we don't update all entity fields but all fields at once via JSON update
                 if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
                     AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = rootEntity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
-                    String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
-                    query.set(columnName, cb.parameter(entityParameter, null));
-                    return;
+                    if (entityRepresentationAnnotationValue != null) {
+                        String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+                        query.set(columnName, cb.parameter(entityParameter, null));
+                        return;
+                    }
                 }
 
-                Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
-                        .filter(p -> p != null && !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() &&
-                                p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(true))
+                Stream.concat(rootEntity.getPersistentProperties().stream(), rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.of())
+                        .filter(p -> !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
                         .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
 
                 if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
@@ -149,11 +172,13 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntityParameter() {
                 return entityParameter;
             }
 
             @Override
+            @Nullable
             protected ParameterElement getEntitiesParameter() {
                 return entitiesParameter;
             }

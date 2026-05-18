@@ -15,8 +15,11 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 |ann:data.mongodb.annotation.MongoUpdateQuery[]
 |Allows defining a custom update method execution with values for filter, update and collation.
 
+|ann:data.mongodb.annotation.MongoUpdateReturningQuery[]
+|Allows defining a custom single-document update-returning execution with values for filter, update, sort, projection, collation and `returnDocument`.
+
 |ann:data.mongodb.annotation.MongoDeleteQuery[]
-|Allows defining a custom update method execution with values for filter and collation.
+|Allows defining a custom delete method execution with values for filter and collation.
 
 |ann:data.mongodb.annotation.MongoFilter[]
 |Allows defining a custom filter value for operations that support it. Can be used on annotation to create a predefined filter annotation.
@@ -44,11 +47,31 @@ Micronaut Data MongoDB introduces a few annotations that can be used to define c
 
 |===
 
-Custom queries for MongoDB are defined in JSON and method parameters can be references as a variable prefixed with `:`.
+Custom queries for MongoDB are defined in JSON and method parameters can be referenced as variables prefixed with `:`.
+
+Mongo update methods can either return the number of updated documents (for example `long`, `int` or `boolean`) or return a single updated document.
+Use ann:data.mongodb.annotation.MongoUpdateQuery[] for count/acknowledgement update methods.
+Use ann:data.mongodb.annotation.MongoUpdateReturningQuery[] for single-document update-returning methods.
+
+For ann:data.mongodb.annotation.MongoUpdateReturningQuery[], the default `returnDocument` value is `ReturnDocument.BEFORE`.
+If you want the updated state returned, set `returnDocument = ReturnDocument.AFTER` explicitly.
+
+[source,java]
+----
+@MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1}}", returnDocument = ReturnDocument.AFTER)
+Book incrementTotalPagesAfter(String id);
+----
+
+NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`).
+Update-returning methods must use a single-result return type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[] (including supported single-item reactive/future types such as `Mono<T>` and `CompletionStage<T>`).
+Collection/iterable and `void` return types are rejected for ann:data.mongodb.annotation.MongoUpdateReturningQuery[].
+If you use a scalar return type (for example `String`), configure a matching projection with `project`.
+If your filter can match multiple documents, use `sort` to control which document is selected by `findOneAndUpdate`.
+`@MongoUpdateQuery` and `@MongoUpdateReturningQuery` are mutually exclusive and must not be used together on the same method.
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main" tags="custom", indent="0"]
 
-NOTE: Only queries for the filter, pipeline and the update can reference method parameters.
+NOTE: Filter, update and pipeline JSON can reference method parameters. The `project` and `sort` values must be constant JSON; `:param`-style placeholders are not supported there.
 
 Some annotations support to be defined on the repository, that can be used to provide the defaults for all operations that support it:
 

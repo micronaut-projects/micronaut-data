@@ -21,8 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Arrays;
@@ -107,7 +106,6 @@ public interface Pageable extends Sort {
     /**
      * @return The sort definition to use.
      */
-    @NonNull
     default Sort getSort() {
         return Sort.unsorted();
     }
@@ -116,7 +114,6 @@ public interface Pageable extends Sort {
      * @return The limit
      * @since 4.13
      */
-    @NonNull
     @JsonIgnore
     default Limit getLimit() {
         return Limit.of(getSize(), getOffset());
@@ -125,7 +122,6 @@ public interface Pageable extends Sort {
     /**
      * @return The next pageable.
      */
-    @NonNull
     default Pageable next() {
         return getPageable(getNumber() + 1);
     }
@@ -133,7 +129,6 @@ public interface Pageable extends Sort {
     /**
      * @return The previous pageable
      */
-    @NonNull
     default Pageable previous() {
         return getPageable(getNumber() - 1);
     }
@@ -144,7 +139,6 @@ public interface Pageable extends Sort {
             // unpaged
             return Pageable.from(0, size, getSort(), requestTotal());
         }
-        Pageable newPageable;
         // handle overflow
         if (newNumber < 0) {
             return Pageable.from(0, size, getSort(), requestTotal());
@@ -160,9 +154,8 @@ public interface Pageable extends Sort {
         return getSize() == -1;
     }
 
-    @NonNull
     @Override
-    default Pageable order(@NonNull String propertyName) {
+    default Pageable order(String propertyName) {
         Sort newSort = getSort().order(propertyName);
         return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
@@ -173,23 +166,20 @@ public interface Pageable extends Sort {
         return getSort().isSorted();
     }
 
-    @NonNull
     @Override
-    default Pageable order(@NonNull Order order) {
+    default Pageable order(Order order) {
         Sort newSort = getSort().order(order);
         return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
 
-    @NonNull
     @Override
-    default Pageable order(@NonNull String propertyName, @NonNull Order.Direction direction) {
+    default Pageable order(String propertyName, Order. Direction direction) {
         Sort newSort = getSort().order(propertyName, direction);
         return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
 
-    @NonNull
     @Override
-    default Pageable orders(@NonNull List<Order> orders) {
+    default Pageable orders(List<Order> orders) {
         return Pageable.from(getNumber(), getSize(), getSort().orders(orders), requestTotal());
     }
 
@@ -199,7 +189,6 @@ public interface Pageable extends Sort {
      * @since 4.10
      * @return A pageable without ordering
      */
-    @NonNull
     default Pageable withoutSort() {
         if (isSorted()) {
             return Pageable.from(getNumber(), getSize(), null, requestTotal());
@@ -213,7 +202,6 @@ public interface Pageable extends Sort {
      * @since 4.10
      * @return A pageable without paging
      */
-    @NonNull
     default Pageable withoutPaging() {
         return Pageable.UNPAGED.orders(getSort().getOrderBy());
     }
@@ -225,11 +213,10 @@ public interface Pageable extends Sort {
      * @since 4.10
      * @return A pageable instance with a new sort
      */
-    default Pageable withSort(@NonNull Sort sort) {
+    default Pageable withSort(Sort sort) {
         return Pageable.from(getNumber(), getSize(), sort, requestTotal());
     }
 
-    @NonNull
     @Override
     @JsonIgnore
     default List<Order> getOrderBy() {
@@ -269,7 +256,7 @@ public interface Pageable extends Sort {
      * @param page The page
      * @return The pageable
      */
-    static @NonNull Pageable from(int page) {
+    static Pageable from(int page) {
         return new DefaultPageable(page, 10, null, true);
     }
 
@@ -279,7 +266,7 @@ public interface Pageable extends Sort {
      * @param size the size
      * @return The pageable
      */
-    static @NonNull Pageable from(int page, int size) {
+    static Pageable from(int page, int size) {
         return new DefaultPageable(page, size, null, true);
     }
 
@@ -291,11 +278,9 @@ public interface Pageable extends Sort {
      * @param sort the sort
      * @return The pageable
      */
-    static @NonNull Pageable from(
-        int page,
+    static Pageable from(int page,
         int size,
-        @Nullable Sort sort
-    ) {
+        @Nullable Sort sort) {
         return new DefaultPageable(page, size, sort, true);
     }
 
@@ -309,8 +294,7 @@ public interface Pageable extends Sort {
      * @return The pageable
      * @since 4.13
      */
-    static @NonNull Pageable from(
-        int page,
+    static Pageable from(int page,
         int size,
         @Nullable Sort sort,
         boolean requestTotal) {
@@ -331,20 +315,16 @@ public interface Pageable extends Sort {
      */
     @Internal
     @JsonCreator
-    static @NonNull Pageable from(
-            @JsonProperty("number") int page,
+    static Pageable from(@JsonProperty("number") int page,
             @JsonProperty("size") int size,
             @JsonProperty("mode") @Nullable Mode mode,
             @JsonProperty("cursor") @Nullable Cursor cursor,
             @JsonProperty("sort") @Nullable Sort sort,
-            @JsonProperty(value = "requestTotal", defaultValue = "true") boolean requestTotal
-    ) {
+            @JsonProperty(value = "requestTotal", defaultValue = "true") boolean requestTotal) {
         if (mode == null || mode == Mode.OFFSET) {
             return new DefaultPageable(page, size, sort, requestTotal);
         } else {
-            return new DefaultCursoredPageable(
-                size, cursor, mode, page, sort == null ? UNSORTED : sort, requestTotal
-            );
+            return new DefaultCursoredPageable(size, cursor, mode, page, sort == null ? UNSORTED : sort, requestTotal);
         }
     }
 
@@ -353,7 +333,7 @@ public interface Pageable extends Sort {
      * @param sort the sort
      * @return The pageable
      */
-    static @NonNull Pageable from(Sort sort) {
+    static Pageable from(Sort sort) {
         if (sort == null) {
             return UNPAGED;
         } else {
@@ -364,7 +344,7 @@ public interface Pageable extends Sort {
     /**
      * @return A new instance without paging data.
      */
-    static @NonNull Pageable unpaged() {
+    static Pageable unpaged() {
         return UNPAGED;
     }
 
@@ -378,7 +358,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static @NonNull CursoredPageable afterCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static CursoredPageable afterCursor(@Nullable Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }
@@ -395,7 +375,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static @NonNull CursoredPageable beforeCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static CursoredPageable beforeCursor(@Nullable Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }

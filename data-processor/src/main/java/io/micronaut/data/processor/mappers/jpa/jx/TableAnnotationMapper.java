@@ -17,7 +17,6 @@ package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
@@ -38,7 +37,6 @@ import java.util.List;
  */
 public class TableAnnotationMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Table";
@@ -59,7 +57,7 @@ public class TableAnnotationMapper implements NamedAnnotationMapper {
         if (CollectionUtils.isNotEmpty(indexesValue)) {
             final AnnotationValue<Index>[] annotationValues =
                 (AnnotationValue<Index>[]) indexesValue.stream()
-                    .map(a -> mapper.map(a, null)
+                    .map(a -> mapper.map(a, visitorContext)
                         .get(0)).toArray(AnnotationValue[]::new);
             idxBuilder.member("value", annotationValues);
         }

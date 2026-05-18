@@ -16,17 +16,19 @@
 package io.micronaut.data.spring.tx;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -35,6 +37,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
+import java.util.function.Supplier;
 
 /**
  * Adds Spring Transaction management capability to Micronaut Data.
@@ -60,33 +63,30 @@ public abstract class AbstractSpringTransactionOperations
     }
 
     @Override
+    public boolean managesTransaction(TransactionStatus<Connection> transactionStatus) {
+        if (transactionStatus instanceof SpringTransactionStatus springTransactionStatus) {
+            return springTransactionStatus.isConnectionOf(this);
+        }
+        return false;
+    }
+
+    @Override
     public TransactionStatus<Connection> getTransaction(TransactionDefinition definition) throws TransactionException {
         DefaultTransactionDefinition def = asSpringTxDefinition(definition);
         org.springframework.transaction.TransactionStatus transaction = transactionManager.getTransaction(def);
-        SpringTransactionStatus status = new SpringTransactionStatus(transaction, definition);
-        PropagatedContext propagatedContext = extendCurrentPropagatedContext(status);
-        status.propagatedScope = propagatedContext.propagate();
-        return status;
+        return new SpringTransactionStatus(transaction, definition, this);
     }
 
     @Override
     public void commit(TransactionStatus<Connection> status) throws TransactionException {
         SpringTransactionStatus springTransactionStatus = (SpringTransactionStatus) status;
-        try {
-            transactionManager.commit(springTransactionStatus.springStatus);
-        } finally {
-            springTransactionStatus.propagatedScope.close();
-        }
+        transactionManager.commit(springTransactionStatus.springStatus);
     }
 
     @Override
     public void rollback(TransactionStatus<Connection> status) throws TransactionException {
         SpringTransactionStatus springTransactionStatus = (SpringTransactionStatus) status;
-        try {
-            transactionManager.rollback(springTransactionStatus.springStatus);
-        } finally {
-            springTransactionStatus.propagatedScope.close();
-        }
+        transactionManager.rollback(springTransactionStatus.springStatus);
     }
 
     @Override
@@ -109,6 +109,7 @@ public abstract class AbstractSpringTransactionOperations
         return execute(new TransactionTemplate(transactionManager, def), callback, definition);
     }
 
+    @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
@@ -123,6 +124,7 @@ public abstract class AbstractSpringTransactionOperations
         return def;
     }
 
+    @SuppressWarnings("NullAway")
     private <R> R execute(TransactionTemplate template,
                           TransactionCallback<Connection, R> callback,
                           TransactionDefinition transactionDefinition) {
@@ -134,10 +136,11 @@ public abstract class AbstractSpringTransactionOperations
         }
     }
 
+    @Nullable
     private <R> R execute(TransactionCallback<Connection, R> callback,
                           org.springframework.transaction.TransactionStatus status,
                           TransactionDefinition transactionDefinition) {
-        SpringTransactionStatus txStatus = new SpringTransactionStatus(status, transactionDefinition);
+        SpringTransactionStatus txStatus = new SpringTransactionStatus(status, transactionDefinition, this);
         try {
             return callback.call(txStatus);
         } catch (RuntimeException | Error ex) {
@@ -154,11 +157,16 @@ public abstract class AbstractSpringTransactionOperations
 
         private final org.springframework.transaction.TransactionStatus springStatus;
         private final TransactionDefinition transactionDefinition;
-        private PropagatedContext.Scope propagatedScope;
+        private final TransactionOperations<Connection> transactionOperations;
 
-        SpringTransactionStatus(org.springframework.transaction.TransactionStatus springStatus, TransactionDefinition transactionDefinition) {
+        SpringTransactionStatus(org.springframework.transaction.TransactionStatus springStatus, TransactionDefinition transactionDefinition, TransactionOperations<Connection> transactionOperations) {
             this.springStatus = springStatus;
             this.transactionDefinition = transactionDefinition;
+            this.transactionOperations = transactionOperations;
+        }
+
+        boolean isConnectionOf(TransactionOperations<Connection> transactionOperations) {
+            return this.transactionOperations == transactionOperations;
         }
 
         @Override
@@ -199,12 +207,17 @@ public abstract class AbstractSpringTransactionOperations
         }
 
         @Override
+        public <V> V propagate(Supplier<V> supplier) {
+            return PropagatedContext.getOrEmpty().plus(this).propagate(supplier);
+        }
+
+        @Override
         public ConnectionStatus<Connection> getConnectionStatus() {
             throw new IllegalStateException("Connections status not supported for the Spring TX manager!");
         }
 
         @Override
-        public void registerSynchronization(@NonNull io.micronaut.transaction.support.TransactionSynchronization synchronization) {
+        public void registerSynchronization(io.micronaut.transaction.support. @NonNull TransactionSynchronization synchronization) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public int getOrder() {

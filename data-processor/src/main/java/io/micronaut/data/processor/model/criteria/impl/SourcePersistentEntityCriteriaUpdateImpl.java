@@ -24,6 +24,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -43,9 +44,9 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                    Class<T> root,
-                                                    CriteriaBuilder criteriaBuilder) {
+    SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                             @Nullable Class<T> root,
+                                             CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
         this.criteriaBuilder = criteriaBuilder;
     }
@@ -71,7 +72,7 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
     }
 
     @Override
-    protected void setValue(String attributeName, Object value) {
+    protected void setValue(String attributeName, @Nullable Object value) {
         if (value instanceof SourceParameterExpressionImpl sourceParameterExpression) {
             sourceParameterExpression.setUpdate(true);
         }
@@ -79,6 +80,7 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
     }
 
     @Override
+    @Nullable
     public String getQueryResultTypeName() {
         if (returning instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();

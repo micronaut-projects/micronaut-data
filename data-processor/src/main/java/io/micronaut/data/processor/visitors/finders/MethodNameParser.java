@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.processor.visitors.MatchFailedException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -149,7 +150,7 @@ public final class MethodNameParser {
             return this;
         }
 
-        public Builder tryMatchLastOccurrencePrefixed(MatchId matchId, String error, String... prefixes) {
+        public Builder tryMatchLastOccurrencePrefixed(MatchId matchId, @Nullable String error, String... prefixes) {
             matchSteps.add((input, chain) -> {
                 for (String prefix : prefixes) {
                     int matchIndex = input.lastIndexOf(prefix);

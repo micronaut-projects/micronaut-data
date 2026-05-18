@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentCollectionAssociationPath;
@@ -40,7 +41,8 @@ final class RuntimePersistentCollectionAssociationPath<Owner, E> extends Runtime
     RuntimePersistentCollectionAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                                RuntimeAssociation<Owner> association,
                                                List<Association> associations,
-                                               Join.Type associationJoinType,
+                                               Join. @Nullable Type associationJoinType,
+                                               @Nullable
                                                String alias,
                                                CriteriaBuilder criteriaBuilder) {
         super(parent, association, associations, associationJoinType, alias, criteriaBuilder);

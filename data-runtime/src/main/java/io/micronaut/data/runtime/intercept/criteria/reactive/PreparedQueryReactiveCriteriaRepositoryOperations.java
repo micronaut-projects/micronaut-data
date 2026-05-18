@@ -27,6 +27,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 
 /**
@@ -47,6 +48,7 @@ final class PreparedQueryReactiveCriteriaRepositoryOperations extends AbstractPr
                                                              MethodInvocationContext<?, ?> context,
                                                              QueryBuilder queryBuilder,
                                                              Class<?> entityRoot,
+                                                             @Nullable
                                                              Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;

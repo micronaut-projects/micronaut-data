@@ -15,25 +15,33 @@
  */
 package io.micronaut.data.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import io.micronaut.context.annotation.Property
 import io.micronaut.core.type.Argument
 import io.micronaut.serde.annotation.Serdeable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.PendingFeature
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import jakarta.inject.Inject
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 
 @MicronautTest
 @Property(name = "micronaut.serde.deserialization.ignore-unknown", value = "false")
 class PageSpec extends Specification {
-    @Inject ObjectMapper mapper
+
+    @Shared
+    ObjectMapper mapper
 
     @Inject io.micronaut.serde.ObjectMapper serdeMapper
+
+    void setupSpec() {
+        mapper = JsonMapper.builder().disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build()
+    }
 
     @Unroll
     void "test page for page number #number and size #size"() {

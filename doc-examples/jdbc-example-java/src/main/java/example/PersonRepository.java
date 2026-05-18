@@ -1,6 +1,8 @@
 
 package example;
 
+import io.micronaut.context.annotation.Requires;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -18,6 +20,7 @@ import java.util.Optional;
 
 // tag::repository[]
 @JdbcRepository(dialect = Dialect.H2)
+@Requires(notEnv="oracle")
 public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpecificationExecutor<Person> {
 // end::repository[]
 
@@ -26,7 +29,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, JpaSpeci
 
     Optional<Person> findOne(QuerySpecification<Person> spec);
 
-    List<Person> findAll(PredicateSpecification<Person> spec);
+    List<Person> findAll(@Nullable PredicateSpecification<Person> spec);
 
     List<Person> findAll(QuerySpecification<Person> spec);
 

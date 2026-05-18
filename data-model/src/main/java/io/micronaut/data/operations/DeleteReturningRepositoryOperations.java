@@ -16,7 +16,6 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
 import io.micronaut.data.model.runtime.DeleteReturningOperation;
 
@@ -39,7 +38,7 @@ public interface DeleteReturningRepositoryOperations extends RepositoryOperation
      * @param <R>       The result type
      * @return The deleted entity
      */
-    <E, R> R deleteReturning(@NonNull DeleteReturningOperation<E, R> operation);
+    <E, R> R deleteReturning(DeleteReturningOperation<E, R> operation);
 
     /**
      * Deletes the entities and returns a result.
@@ -49,5 +48,5 @@ public interface DeleteReturningRepositoryOperations extends RepositoryOperation
      * @param <R>       The result type
      * @return The deleted entities
      */
-    <E, R> List<R> deleteAllReturning(@NonNull DeleteReturningBatchOperation<E, R> operation);
+    <E, R> List<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation);
 }

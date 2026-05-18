@@ -16,7 +16,6 @@
 package io.micronaut.data.operations.async;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -51,7 +50,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @return True if query returns true or any row
      * @since 4.10
      */
-    CompletionStage<Boolean> exists(@NonNull CriteriaQuery<?> query);
+    CompletionStage<Boolean> exists(CriteriaQuery<?> query);
 
     /**
      * Find one by Query.
@@ -60,7 +59,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @param <R> The result type
      * @return A result or null
      */
-    <R> CompletionStage<R> findOne(@NonNull CriteriaQuery<R> query);
+    <R> CompletionStage<R> findOne(CriteriaQuery<R> query);
 
     /**
      * Finds all results for the given query.
@@ -68,7 +67,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @param <T> The generic type
      * @return An iterable result
      */
-    <T> CompletionStage<List<T>> findAll(@NonNull CriteriaQuery<T> query);
+    <T> CompletionStage<List<T>> findAll(CriteriaQuery<T> query);
 
     /**
      * Finds all results for the given query.
@@ -79,7 +78,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @param <T>    The generic type
      * @return An iterable result
      */
-    <T> CompletionStage<List<T>> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+    <T> CompletionStage<List<T>> findAll(CriteriaQuery<T> query, int offset, int limit);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -87,7 +86,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @param query The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    CompletionStage<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
+    CompletionStage<Number> updateAll(CriteriaUpdate<Number> query);
 
     /**
      * Executes delete for the given query and parameter values. If it is possible to
@@ -95,6 +94,6 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
      * @param query The query
      * @return An optional number with the count of the number of records updated
      */
-    CompletionStage<Number> deleteAll(@NonNull CriteriaDelete<Number> query);
+    CompletionStage<Number> deleteAll(CriteriaDelete<Number> query);
 
 }

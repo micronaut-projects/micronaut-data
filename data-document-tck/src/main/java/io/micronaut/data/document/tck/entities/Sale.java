@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 public class Sale {
@@ -26,12 +27,15 @@ public class Sale {
 //    @ManyToOne
 //    private final Product product;
     @MappedProperty(converter = QuantityAttributeConverter.class)
+    @Nullable
     private Quantity quantity;
 
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
 
+    @Nullable
     public Quantity getQuantity() {
         return quantity;
     }
@@ -40,6 +44,7 @@ public class Sale {
         this.quantity = quantity;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }

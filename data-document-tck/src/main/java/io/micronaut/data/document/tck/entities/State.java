@@ -18,16 +18,21 @@ package io.micronaut.data.document.tck.entities;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity("comp_state")
 public class State {
     @Id
+    @Nullable
     private Long id;
     @MappedProperty
+    @Nullable
     private String stateName;
     @MappedProperty("is_enabled")
+    @Nullable
     private Boolean enabled;
 
+    @Nullable
     public Long getId() {
         return id;
     }
@@ -36,6 +41,7 @@ public class State {
         this.id = id;
     }
 
+    @Nullable
     public String getStateName() {
         return stateName;
     }
@@ -44,6 +50,7 @@ public class State {
         this.stateName = stateName;
     }
 
+    @Nullable
     public Boolean getEnabled() {
         return enabled;
     }

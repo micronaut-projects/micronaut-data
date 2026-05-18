@@ -24,6 +24,7 @@ import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.AbstractPropertyReferenceManager;
 import io.micronaut.serde.reference.PropertyReference;
 import io.micronaut.serde.reference.SerializationReference;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link Serializer.EncoderContext}.
@@ -54,6 +55,7 @@ class DefaultEncoderContext extends AbstractPropertyReferenceManager implements 
     }
 
     @Override
+    @Nullable
     public <B, P> SerializationReference<B, P> resolveReference(SerializationReference<B, P> reference) {
         final Object value = reference.getReference();
         if (refs != null) {

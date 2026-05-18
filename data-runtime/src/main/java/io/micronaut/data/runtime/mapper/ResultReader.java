@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -24,6 +23,8 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.Time;
+import java.time.Duration;
+import java.time.Period;
 import java.util.Date;
 import java.util.UUID;
 
@@ -43,13 +44,11 @@ public interface ResultReader<RS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(@NonNull Object value, Class<T> type) {
-        return getConversionService().convert(
-                value,
-                type
-        ).orElseThrow(() ->
+    default <T> T convertRequired(Object value, Class<T> type) {
+        return getConversionService().convert(value, type)
+            .orElseThrow(() ->
                 new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.")
-        );
+            );
     }
 
     /**
@@ -60,7 +59,7 @@ public interface ResultReader<RS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(@NonNull Object value, Argument<T> type) {
+    default <T> T convertRequired(Object value, Argument<T> type) {
         return getConversionService().convert(
                 value,
                 type
@@ -82,6 +81,24 @@ public interface ResultReader<RS, IDX> {
         throws DataAccessException;
 
     /**
+     * Get a value from the given result set for the given name and type.
+     * @param resultSet The result set
+     * @param name The name
+     * @param type The type
+     * @param <T> The generic type
+     * @return The value
+     * @throws DataAccessException if the value cannot be read
+     */
+    default <T> T getRequiredValueNonNull(RS resultSet, IDX name, Class<T> type)
+        throws DataAccessException {
+        T value = getRequiredValue(resultSet, name, type);
+        if (value == null) {
+            throw new DataAccessException("No value found for column: " + name);
+        }
+        return value;
+    }
+
+    /**
      * Move the index to the next result if possible.
      * @return The next result
      * @param resultSet The result set
@@ -96,10 +113,8 @@ public interface ResultReader<RS, IDX> {
      * @return The value, can be null
      * @throws DataAccessException if the value cannot be read
      */
-    default @Nullable Object readDynamic(
-            @NonNull RS resultSet,
-            @NonNull IDX index,
-            @NonNull DataType dataType) {
+    @Nullable
+    default Object readDynamic(RS resultSet, IDX index, DataType dataType) {
         return switch (dataType) {
             case STRING, JSON -> readString(resultSet, index);
             case UUID -> readUUID(resultSet, index);
@@ -110,6 +125,8 @@ public interface ResultReader<RS, IDX> {
             case TIMESTAMP -> readTimestamp(resultSet, index);
             case TIME -> readTime(resultSet, index);
             case DATE -> readDate(resultSet, index);
+            case DURATION -> readDuration(resultSet, index);
+            case PERIOD -> readPeriod(resultSet, index);
             case CHARACTER -> readChar(resultSet, index);
             case FLOAT -> readFloat(resultSet, index);
             case SHORT -> readShort(resultSet, index);
@@ -127,7 +144,7 @@ public interface ResultReader<RS, IDX> {
      * @return The long value
      */
     default long readLong(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, long.class);
+        return getRequiredValueNonNull(resultSet, name, long.class);
     }
 
     /**
@@ -137,7 +154,7 @@ public interface ResultReader<RS, IDX> {
      * @return The char value
      */
     default char readChar(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, char.class);
+        return getRequiredValueNonNull(resultSet, name, char.class);
     }
 
     /**
@@ -146,8 +163,31 @@ public interface ResultReader<RS, IDX> {
      * @param name The name (such as the column name)
      * @return The char value
      */
+    @Nullable
     default Date readDate(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, Date.class);
+    }
+
+    /**
+     * Read a duration value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The duration value
+     * @since 5.0
+     */
+    default @Nullable Duration readDuration(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, Duration.class);
+    }
+
+    /**
+     * Read a period value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The period value
+     * @since 5.0
+     */
+    default @Nullable Period readPeriod(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, Period.class);
     }
 
     /**
@@ -156,6 +196,7 @@ public interface ResultReader<RS, IDX> {
      * @param index The index (such as the column name)
      * @return The char value
      */
+    @Nullable
     default Date readTimestamp(RS resultSet, IDX index) {
         return getRequiredValue(resultSet, index, Date.class);
     }
@@ -166,6 +207,7 @@ public interface ResultReader<RS, IDX> {
      * @param index The index (such as the column name)
      * @return The char value
      */
+    @Nullable
     default Time readTime(RS resultSet, IDX index) {
         return getRequiredValue(resultSet, index, Time.class);
     }
@@ -176,7 +218,8 @@ public interface ResultReader<RS, IDX> {
      * @param name The name (such as the column name)
      * @return The string value
      */
-    default @Nullable String readString(RS resultSet, IDX name) {
+    @Nullable
+    default String readString(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, String.class);
     }
 
@@ -186,7 +229,8 @@ public interface ResultReader<RS, IDX> {
      * @param name The name (such as the column name)
      * @return The string value
      */
-    default @Nullable UUID readUUID(RS resultSet, IDX name) {
+    @Nullable
+    default UUID readUUID(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, UUID.class);
     }
 
@@ -197,7 +241,7 @@ public interface ResultReader<RS, IDX> {
      * @return The int value
      */
     default int readInt(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, int.class);
+        return getRequiredValueNonNull(resultSet, name, int.class);
     }
 
     /**
@@ -207,7 +251,7 @@ public interface ResultReader<RS, IDX> {
      * @return The boolean value
      */
     default boolean readBoolean(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, boolean.class);
+        return getRequiredValueNonNull(resultSet, name, boolean.class);
     }
 
     /**
@@ -217,7 +261,7 @@ public interface ResultReader<RS, IDX> {
      * @return The float value
      */
     default float readFloat(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, float.class);
+        return getRequiredValueNonNull(resultSet, name, float.class);
     }
 
     /**
@@ -227,7 +271,7 @@ public interface ResultReader<RS, IDX> {
      * @return The byte value
      */
     default byte readByte(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, byte.class);
+        return getRequiredValueNonNull(resultSet, name, byte.class);
     }
 
     /**
@@ -237,7 +281,7 @@ public interface ResultReader<RS, IDX> {
      * @return The short value
      */
     default short readShort(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, short.class);
+        return getRequiredValueNonNull(resultSet, name, short.class);
     }
 
     /**
@@ -247,7 +291,7 @@ public interface ResultReader<RS, IDX> {
      * @return The double value
      */
     default double readDouble(RS resultSet, IDX name) {
-        return getRequiredValue(resultSet, name, double.class);
+        return getRequiredValueNonNull(resultSet, name, double.class);
     }
 
     /**
@@ -256,6 +300,7 @@ public interface ResultReader<RS, IDX> {
      * @param name The name (such as the column name)
      * @return The BigDecimal value
      */
+    @Nullable
     default BigDecimal readBigDecimal(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, BigDecimal.class);
     }
@@ -266,7 +311,7 @@ public interface ResultReader<RS, IDX> {
      * @param name The name (such as the column name)
      * @return The byte[] value
      */
-    default byte[] readBytes(RS resultSet, IDX name) {
+    default byte @Nullable [] readBytes(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte[].class);
     }
 

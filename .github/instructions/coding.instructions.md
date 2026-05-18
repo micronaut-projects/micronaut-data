@@ -41,7 +41,7 @@ The root project MUST NOT contain any code: it is a parent project which coordin
 
 You SHOULD prefer modern Java idioms: records, pattern matching, sealed interfaces/classes, `var` for local variables.
 You MUST NOT use fully qualified class names unless there is a conflict between 2 class names in different packages.
-You MUST annotate the code with nullability annotations (`io.micronaut.core.annotation.Nullable`, `io.micronaut.core.annotation.NonNull`).
+You MUST annotate the code with nullability annotations (`org.jspecify.annotations.Nullable`, `org.jspecify.annotations.NonNull`).
 You MUST NOT use reflection: Micronaut is a reflection-free framework tailored for integration with GraalVM.
 You MUST use `jakarta.inject` for dependency injection, NOT `javax.inject`.
 
@@ -50,7 +50,7 @@ You MUST use `jakarta.inject` for dependency injection, NOT `javax.inject`.
 Micronaut projects are intended to be used in consumer applications and therefore follow semantic versioning. As a consequence:
 - You MUST NOT break any public facing API without explicit consent
 - You SHOULD run the `./gradlew japiCmp` task to get a report about binary breaking changes
-- You SHOULD reduce the visibility of members for non user-facing APIs.
+- You SHOULD reduce the visibility of members for non-user-facing APIs.
 - You MUST annotate non-user facing APIs with `@io.micronaut.core.annotation.Internal`
 
 ## Implementation Workflow (Required Checklist)
@@ -71,9 +71,9 @@ You MUST follow this sequence after editing source files:
     - Checkstyle: `./gradlew -q cM`
 
 5) (Optional) If, and only if you have created new files, you SHOULD run
-  - Spotless check: `./gradlew -q spotlessCheck`
-  - If Spotless fails: `./gradlew -q spotlessApply` then re-run `spotlessCheck`
-  - You MUST NOT add new license headers on existing files: only focus on files you have added
+    - Spotless check: `./gradlew -q spotlessCheck`
+    - If Spotless fails: `./gradlew -q spotlessApply` then re-run `spotlessCheck`
+    - You MUST NOT add new license headers on existing files: only focus on files you have added
 
 6) Verify a clean working tree
     - You SHOULD ensure no unrelated changes are pending before proposing changes.
@@ -165,7 +165,7 @@ You SHOULD try to prefer composition of convention plugins.
 
 ## Key Requirements
 
-You MUST confirm all of the following BEFORE using `attempt_completion`:
+You MUST confirm all the following BEFORE using `attempt_completion`:
 
 - Changes compile successfully (affected modules)
 - Targeted tests pass

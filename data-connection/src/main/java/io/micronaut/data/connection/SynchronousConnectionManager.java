@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.connection;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * The synchronous connection manager.

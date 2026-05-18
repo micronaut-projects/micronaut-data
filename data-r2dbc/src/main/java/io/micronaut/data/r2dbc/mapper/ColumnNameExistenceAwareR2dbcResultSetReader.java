@@ -19,11 +19,14 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.AbstractDelegatingResultReader;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -35,12 +38,14 @@ import java.util.Set;
 @Internal
 public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelegatingResultReader<Row, String> {
 
+    @Nullable
     private Set<String> knownColumns;
 
-    public ColumnNameExistenceAwareR2dbcResultSetReader() {
-        super(new ColumnNameR2dbcResultReader());
+    public ColumnNameExistenceAwareR2dbcResultSetReader(ResultReader<Row, String> delegate) {
+        super(delegate);
     }
 
+    @Nullable
     @Override
     public Object readDynamic(Row row, String index, DataType dataType) {
         if (!containsColumnName(row, index)) {
@@ -55,9 +60,9 @@ public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelega
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             knownColumns = CollectionUtils.newHashSet(columnMetadatas.size());
             for (ColumnMetadata columnMetadata : columnMetadatas) {
-                knownColumns.add(columnMetadata.getName().toLowerCase());
+                knownColumns.add(columnMetadata.getName().toLowerCase(Locale.ENGLISH));
             }
         }
-        return knownColumns.contains(name.toLowerCase());
+        return knownColumns.contains(name.toLowerCase(Locale.ENGLISH));
     }
 }

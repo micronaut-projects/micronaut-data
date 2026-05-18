@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -37,8 +36,8 @@ public interface ReactiveStreamsPageableRepository<E, ID> extends ReactiveStream
      * @param sort The sort
      * @return The results publisher
      */
-    @NonNull
-    Publisher<E> findAll(@NonNull Sort sort);
+    
+    Publisher<E> findAll(Sort sort);
 
     /**
      * Finds all records for the given pageable.
@@ -46,6 +45,6 @@ public interface ReactiveStreamsPageableRepository<E, ID> extends ReactiveStream
      * @param pageable The pageable.
      * @return The results publisher
      */
-    @NonNull
-    Publisher<Page<E>> findAll(@NonNull Pageable pageable);
+    
+    Publisher<Page<E>> findAll(Pageable pageable);
 }

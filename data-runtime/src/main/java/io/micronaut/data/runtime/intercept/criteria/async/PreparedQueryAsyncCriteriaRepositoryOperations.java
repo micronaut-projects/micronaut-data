@@ -28,6 +28,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -50,6 +51,7 @@ final class PreparedQueryAsyncCriteriaRepositoryOperations extends AbstractPrepa
                                                           MethodInvocationContext<?, ?> context,
                                                           QueryBuilder queryBuilder,
                                                           Class<?> entityRoot,
+                                                          @Nullable
                                                           Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;

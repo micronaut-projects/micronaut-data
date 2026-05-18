@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.connection.async;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.exceptions.NoConnectionException;

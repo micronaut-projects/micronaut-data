@@ -16,7 +16,6 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -58,10 +57,9 @@ public interface Association extends PersistentProperty {
     }
 
     /**
-     * The associated entity if any.
+     * The associated entity.
      * @return The associated entity
      */
-    @NonNull
     PersistentEntity getAssociatedEntity();
 
     /**
@@ -109,7 +107,7 @@ public interface Association extends PersistentProperty {
     /**
      * @return The relationship kind
      */
-    default @NonNull Relation.Kind getKind() {
+    default Relation. Kind getKind() {
         return findAnnotation(Relation.class)
                 .flatMap(av -> av.enumValue(Relation.Kind.class))
                 .orElse(Relation.Kind.ONE_TO_ONE);

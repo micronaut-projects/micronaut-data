@@ -15,15 +15,15 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Delete;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Delete all specification method.
@@ -42,16 +42,18 @@ public class DeleteAllSpecificationMethodMatcher extends AbstractSpecificationMe
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
+    protected boolean matches(MethodMatchContext matchContext) {
+        return matchContext.getMethodElement().hasStereotype(Delete.class) || super.matches(matchContext);
+    }
+
+    @Override
+    @Nullable
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
+        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isDeleteSpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickDeleteAllSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.DELETE, e.returnType(), e.interceptor());
         }
         return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return isFirstParameterMicronautDataDeleteSpecification(matchContext.getMethodElement());
-    }
 }

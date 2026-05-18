@@ -17,4 +17,5 @@
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
  * to use enums, SLF4J and decoupling from Spring.
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.transaction;

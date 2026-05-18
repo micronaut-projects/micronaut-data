@@ -17,7 +17,6 @@ package io.micronaut.data.processor.mappers.spring;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -33,7 +32,6 @@ import java.util.List;
  * @since 1.0
  */
 public class SpringRepositoryMapper implements NamedAnnotationMapper {
-    @NonNull
     @Override
     public String getName() {
         return "org.springframework.stereotype.Repository";

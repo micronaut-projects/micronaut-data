@@ -16,188 +16,246 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.reflect.exception.InstantiationException;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Pageable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
+import io.micronaut.data.model.query.JoinPath;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Selection;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Optional;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
  * An interface capable of encoding a query into a string and a set of named parameters.
  *
  * @author graemerocher
+ * @author Denis Stepanov
  * @since 1.0
  */
+@Experimental
 @Introspected
 public interface QueryBuilder {
 
     /**
-     * A pattern used to find variables in a query string.
-     */
-    Pattern VARIABLE_PATTERN = Pattern.compile("([^:])(:([a-zA-Z0-9]+))");
-
-    /**
      * Builds an insert statement for the given entity.
+     *
      * @param repositoryMetadata The repository annotation metadata
-     * @param entity The entity
+     * @param definition         The definition
      * @return The insert statement or null if the implementation doesn't require insert statements
      */
     @Nullable
-    QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity);
-
-    /**
-     * Builds an insert statement for the given entity.
-     * @param repositoryMetadata The repository annotation metadata
-     * @param entity The entity
-     * @return The insert statement or null if the implementation doesn't require insert statements
-     */
-    @Nullable
-    default QueryResult buildInsertReturning(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
-        throw new IllegalStateException("Query builder: " + getClass().getSimpleName() + " doesn't support an insert with a returning clause");
-    }
+    QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition);
 
     /**
      * Encode the given query for the passed annotation metadata and query.
+     *
      * @param annotationMetadata The annotation metadata
-     * @param query The query model
+     * @param query              The query model
      * @return The query result
      */
-    QueryResult buildQuery(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
-
-    /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param query The query
-     * @param propertiesToUpdate The property names to update
-     * @return The encoded query
-     */
-    @NonNull
-    default QueryResult buildUpdate(@NonNull QueryModel query, @NonNull List<String> propertiesToUpdate) {
-        return buildUpdate(AnnotationMetadata.EMPTY_METADATA, query, propertiesToUpdate);
-    }
-
-    /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param query The query
-     * @param propertiesToUpdate The property names to update
-     * @return The encoded query
-     */
-    @NonNull
-    default QueryResult buildUpdate(@NonNull QueryModel query, @NonNull Map<String, Object> propertiesToUpdate) {
-        return buildUpdate(AnnotationMetadata.EMPTY_METADATA, query, propertiesToUpdate);
-    }
+    QueryResult buildSelect(AnnotationMetadata annotationMetadata,  SelectQueryDefinition query);
 
     /**
      * Encode the given query into the encoded query instance.
      *
      * @param annotationMetadata The annotation metadata
-     * @param query The query
-     * @param propertiesToUpdate The property names to update
+     * @param definition         The definition
      * @return The encoded query
      */
-    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate);
+    QueryResult buildUpdate(AnnotationMetadata annotationMetadata,  UpdateQueryDefinition definition);
 
     /**
      * Encode the given query into the encoded query instance.
      *
      * @param annotationMetadata The annotation metadata
-     * @param query The query
-     * @param propertiesToUpdate The property names to update
+     * @param definition         The query definition
      * @return The encoded query
      */
-    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull Map<String, Object> propertiesToUpdate);
+    QueryResult buildDelete(AnnotationMetadata annotationMetadata,  DeleteQueryDefinition definition);
 
     /**
-     * Encode the given query into the encoded query instance.
+     * Generate the limit and offset query.
      *
-     * @param query The query
+     * @param limit  The limit (-1 of not set)
+     * @param offset The offset (0 if not set)
      * @return The encoded query
      */
-    @NonNull
-    default QueryResult buildDelete(@NonNull QueryModel query) {
-        return buildDelete(AnnotationMetadata.EMPTY_METADATA, query);
+
+    String buildLimitAndOffset(long limit, long offset);
+
+    /**
+     * The select query definition.
+     */
+    interface SelectQueryDefinition extends BaseQueryDefinition {
+
+        /**
+         * @return The root
+         */
+
+        Root<?> root();
+
+        /**
+         * @return The selection
+         */
+
+        Selection<?> selection();
+
+        /**
+         * @return The order
+         */
+
+        List<Order> order();
+
+        /**
+         * @return Return the order as sort
+         */
+        default Sort asSort() {
+            List<Order> orders = order();
+            if (orders == null || orders.isEmpty()) {
+                return Sort.unsorted();
+            }
+            List<Sort.Order> sortOrders = orders.stream().map(o -> {
+                PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
+                String name = propertyPath.getPathAsString();
+                if (o instanceof DefaultOrder<?> order) {
+                    return new Sort.Order(name, order.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC, order.isIgnoreCase());
+                }
+                if (o.isAscending()) {
+                    return Sort.Order.asc(name);
+                }
+                return Sort.Order.desc(name);
+            }).toList();
+            return Sort.of(sortOrders);
+        }
+
+        /**
+         * @return Is the query marked for update
+         */
+        default boolean isForUpdate() {
+            return false;
+        }
+
+        /**
+         * @return Is the selection marked as distinct.
+         */
+        default boolean isDistinct() {
+            return false;
+        }
+
+        /**
+         * @return The parameters in role
+         */
+        default Map<Integer, String> parametersInRole() {
+            return Map.of();
+        }
+
     }
 
     /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param annotationMetadata The annotation metadata
-     * @param query The query
-     * @return The encoded query
+     * The delete query definition.
      */
-    QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
+    interface DeleteQueryDefinition extends BaseQueryDefinition {
 
-    /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param entity The root entity
-     * @param sort The sort
-     * @return The encoded query
-     */
-    @NonNull
-    QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort);
+        /**
+         * @return The returning selection
+         */
+        @Nullable
+        Selection<?> returningSelection();
 
-    /**
-     * Encode the pageable.
-     *
-     * @param pageable The pageable
-     * @return The encoded query
-     */
-    @NonNull
-    QueryResult buildPagination(@NonNull Pageable pageable);
-
-    /**
-     * Build a query build from the configured annotation metadata.
-     * @param annotationMetadata The annotation metadata.
-     * @return The query builder
-     */
-    static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.stringValue(
-                RepositoryConfiguration.class,
-                DataMethod.META_MEMBER_QUERY_BUILDER
-        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.isPresent() && ref.getBeanType().getName().equals(type))
-                .stream().findFirst()
-                .map(introspection -> {
-                    try {
-                        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-                        if (constructorArguments.length == 0) {
-                            return (QueryBuilder) introspection.instantiate();
-                        } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
-                            return (QueryBuilder) introspection.instantiate(annotationMetadata);
-                        }
-                    } catch (InstantiationException e) {
-                        return new JpaQueryBuilder();
-                    }
-                    return new JpaQueryBuilder();
-                })).orElse(new JpaQueryBuilder());
     }
 
     /**
-     * Whether projections should be aliased.
-     * @return True if they should
+     * The insert query definition.
      */
-    default boolean shouldAliasProjections() {
-        return true;
+    interface InsertQueryDefinition {
+
+        /**
+         * @return The persistent entity
+         */
+
+        PersistentEntity persistentEntity();
+
+        /**
+         * @return Is returning selection
+         */
+        boolean returning();
+
     }
 
     /**
-     * Whether FOR UPDATE queries are supported.
-     * @return True if FOR UPDATE queries are supported
+     * The update query definition.
      */
-    default boolean supportsForUpdate() {
-        return false;
+    interface UpdateQueryDefinition extends BaseQueryDefinition {
+
+        /**
+         * @return The properties to update
+         */
+
+        Map<String, Object> propertiesToUpdate();
+
+        /**
+         * @return The returning selection
+         */
+        @Nullable
+        Selection<?> returningSelection();
+
     }
+
+    /**
+     * The base query definition.
+     */
+    interface BaseQueryDefinition {
+
+        /**
+         * @return The persistent entity
+         */
+
+        PersistentEntity persistentEntity();
+
+        /**
+         * @return The predicate
+         */
+        @Nullable
+        Predicate predicate();
+
+        /**
+         * @return The join paths.
+         */
+        Collection<JoinPath> getJoinPaths();
+
+        /**
+         * Obtain the join type for the given association.
+         *
+         * @param path The path
+         * @return The join type for the association.
+         */
+        Optional<JoinPath> getJoinPath(String path);
+
+        /**
+         * @return The limit or -1 if not set
+         */
+        default int limit() {
+            return -1;
+        }
+
+        /**
+         * @return The offset or -1 if not set
+         */
+        default int offset() {
+            return -1;
+        }
+
+    }
+
 }

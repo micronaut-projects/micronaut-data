@@ -8,6 +8,8 @@ import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
+import java.util.stream.Stream
+
 @Repository // <1>
 interface BookRepository extends CrudRepository<Book, Long> { // <2>
 // end::repository[]
@@ -135,6 +137,11 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
             nativeQuery = true)
     List<Book> findNativeBooks(String title)
     // end::native[]
+
+    // tag::stream_projection[]
+    @Fetch(1000)
+    abstract Stream<BookDTO> listAll();
+    // end::stream_projection[]
 
 // tag::repository[]
 }

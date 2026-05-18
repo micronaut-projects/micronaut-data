@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.event;
 
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 
 /**
@@ -28,7 +28,7 @@ public interface EntityEventContext<T> extends PersistenceEventContext<T> {
     /**
      * @return The entity associated with the event.
      */
-    @NonNull T getEntity();
+     T getEntity();
 
     /**
      * Sets a property to its new value. If the property is immutable then the copy-constructor will be used and {@link #getEntity()} will return the updated entity.
@@ -36,7 +36,7 @@ public interface EntityEventContext<T> extends PersistenceEventContext<T> {
      * @param newValue The new value
      * @param <P> THe property type
      */
-    <P> void setProperty(BeanProperty<T, P> property, P newValue);
+    <P> void setProperty(BeanProperty<T, P> property, @Nullable P newValue);
 
     /**
      * @return Does the underlying persistence engine have its own event system.

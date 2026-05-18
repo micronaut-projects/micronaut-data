@@ -15,18 +15,18 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
 
 /**
  * The method info. This class describes the pre-computed method handling for a
@@ -46,8 +46,11 @@ public final class MethodMatchInfo {
     private boolean dto;
     private boolean optimisticLock;
 
+    @Nullable
     private QueryResult queryResult;
+    @Nullable
     private QueryResult countQueryResult;
+    private final List<QueryDefinition> additionalQueries = new ArrayList<>(2);
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
 
@@ -58,7 +61,7 @@ public final class MethodMatchInfo {
      * @param resultType    The result type, can be null for void etc.
      * @param interceptor   The interceptor type to execute at runtime
      */
-    public MethodMatchInfo(DataMethod.OperationType operationType, @Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
+    public MethodMatchInfo(DataMethod.OperationType operationType, TypedElement resultType, ClassElement interceptor) {
         this.operationType = operationType;
         this.interceptor = interceptor;
         this.resultType = resultType;
@@ -105,14 +108,14 @@ public final class MethodMatchInfo {
      * @param name      The role name
      * @see io.micronaut.data.annotation.TypeRole
      */
-    public void addParameterRole(@NonNull ParameterElement parameter, @NonNull String name) {
+    public void addParameterRole(ParameterElement parameter, String name) {
         parameterRoles.put(parameter, name);
     }
 
     /**
      * @return The parameter roles
      */
-    @NonNull
+
     public Map<ParameterElement, String> getParameterRoles() {
         return Collections.unmodifiableMap(parameterRoles);
     }
@@ -121,7 +124,7 @@ public final class MethodMatchInfo {
      * The computed result type.
      * @return The result type.
      */
-    @Nullable public TypedElement getResultType() {
+    public TypedElement getResultType() {
         return resultType;
     }
 
@@ -138,13 +141,27 @@ public final class MethodMatchInfo {
         return this;
     }
 
-    public MethodMatchInfo queryResult(QueryResult queryResult) {
+    public MethodMatchInfo queryResult(@Nullable QueryResult queryResult) {
         this.queryResult = queryResult;
         return this;
     }
 
-    public MethodMatchInfo countQueryResult(QueryResult countQueryResult) {
+    public MethodMatchInfo countQueryResult(@Nullable QueryResult countQueryResult) {
         this.countQueryResult = countQueryResult;
+        return this;
+    }
+
+    public MethodMatchInfo addQueryResult(DataMethod.OperationType operationType,
+                                          @Nullable TypedElement resultType,
+                                          QueryResult queryResult) {
+        return addQueryResult(operationType, resultType, queryResult, false);
+    }
+
+    public MethodMatchInfo addQueryResult(DataMethod.OperationType operationType,
+                                          @Nullable TypedElement resultType,
+                                          QueryResult queryResult,
+                                          boolean optimisticLock) {
+        additionalQueries.add(new QueryDefinition(operationType, resultType, queryResult, optimisticLock));
         return this;
     }
 
@@ -167,10 +184,12 @@ public final class MethodMatchInfo {
         return interceptor;
     }
 
+    @Nullable
     public QueryResult getQueryResult() {
         return queryResult;
     }
 
+    @Nullable
     public QueryResult getCountQueryResult() {
         return countQueryResult;
     }
@@ -181,6 +200,16 @@ public final class MethodMatchInfo {
 
     public boolean isEncodeEntityParameters() {
         return encodeEntityParameters;
+    }
+
+    public List<QueryDefinition> getAdditionalQueries() {
+        return Collections.unmodifiableList(additionalQueries);
+    }
+
+    public record QueryDefinition(DataMethod.OperationType operationType,
+                                  @Nullable TypedElement resultType,
+                                  QueryResult queryResult,
+                                  boolean optimisticLock) {
     }
 
 }

@@ -1,23 +1,34 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
+import groovy.transform.Memoized
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.r2dbc.oraclexe.OracleXETestPropertyProvider
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@MicronautTest(environments = ["oracle-jsonview"], transactional = false)
-class OracleR2DbcJsonViewSpec extends Specification {
+class OracleR2DbcJsonViewSpec extends Specification implements OracleXETestPropertyProvider {
 
-    @Inject
-    OracleXEContactRepository contactRepository
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
-    @Inject
-    ContactViewRepository contactViewRepository
+    @Memoized
+    OracleXEContactRepository getContactRepository() {
+        return context.getBean(OracleXEContactRepository)
+    }
+
+    @Memoized
+    ContactViewRepository getContactViewRepository() {
+        return context.getBean(ContactViewRepository)
+    }
 
     def "test CRUD"() {
         when:
@@ -25,6 +36,7 @@ class OracleR2DbcJsonViewSpec extends Specification {
         contact.name = "Contact1"
         contact.age = 25
         contact.startDateTime = LocalDateTime.now().minusMonths(10)
+        contact.address = new Address("Street-0", "Z0")
         contactRepository.save(contact)
         def optContactView = contactViewRepository.findById(contact.id)
         then:
@@ -48,7 +60,9 @@ class OracleR2DbcJsonViewSpec extends Specification {
         when:
         contactView = new ContactView()
         contactView.name = "Contact2"
+        contactView.startDateTime =  LocalDateTime.now().minusDays(10)
         contactView.age = 30
+        contactView.address = new Address("Street-1", "Z1")
         contactViewRepository.save(contactView)
         optContact = contactRepository.findById(contactView.id)
         then:
@@ -89,10 +103,14 @@ class OracleR2DbcJsonViewSpec extends Specification {
         when:"Save multiple at once"
         ContactView contactView1 = new ContactView()
         contactView1.name = "ContactNew1"
+        contactView1.startDateTime = startDateTime
         contactView1.age = 59
         ContactView contactView2 = new ContactView()
         contactView2.name = "ContactNew2"
+        contactView2.startDateTime = startDateTime
         contactView2.age = 60
+        contactView1.address = new Address("Street-2", "Z2")
+        contactView2.address = new Address("Street-3", "Z3")
         def savedEntities = contactViewRepository.saveAll(Arrays.asList(contactView1, contactView2))
         then:
         savedEntities.size() == 2

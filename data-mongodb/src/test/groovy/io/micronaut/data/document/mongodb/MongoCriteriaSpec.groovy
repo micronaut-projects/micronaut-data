@@ -16,23 +16,17 @@
 package io.micronaut.data.document.mongodb
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
 import io.micronaut.data.document.mongodb.entities.Test
 import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
-import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
-import io.micronaut.data.model.runtime.RuntimeEntityRegistry
-import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaDelete
@@ -54,33 +48,7 @@ class MongoCriteriaSpec extends Specification {
     PersistentEntityCriteriaUpdate criteriaUpdate
 
     void setup() {
-        Map<Class, RuntimePersistentEntity> map = new HashMap<>();
-        criteriaBuilder = new RuntimeCriteriaBuilder(new RuntimeEntityRegistry() {
-            @Override
-            EntityEventListener<Object> getEntityEventListener() {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new)
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            ApplicationContext getApplicationContext() {
-                throw new IllegalStateException()
-            }
-        })
+        criteriaBuilder = new RuntimeCriteriaBuilder()
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(Test)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(Test)
@@ -475,19 +443,19 @@ class MongoCriteriaSpec extends Specification {
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaDelete<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getUpdateQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getUpdate()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getUpdate()
     }
 
     @CompileStatic

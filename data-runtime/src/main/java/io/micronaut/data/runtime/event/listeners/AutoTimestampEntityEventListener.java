@@ -16,8 +16,8 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;
@@ -47,6 +47,7 @@ import java.util.function.Predicate;
  */
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
+
     private final DateTimeProvider<?> dateTimeProvider;
     private final DataConversionService conversionService;
 
@@ -69,7 +70,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     @NonNull
     @Override
     protected Predicate<RuntimePersistentProperty<Object>> getPropertyPredicate() {
-        return (prop) -> {
+        return prop -> {
             final AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
             return annotationMetadata.hasAnnotation(DateCreated.class) || annotationMetadata.hasAnnotation(DateUpdated.class);
         };
@@ -96,45 +97,103 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return conversionService.convertRequired(now, property.getArgument());
     }
 
-    private Object truncate(Object now, ChronoUnit truncateToValue) {
+    @Nullable
+    private Object truncate(@Nullable Object now, @Nullable ChronoUnit truncateToValue) {
         if (truncateToValue != null) {
             if (now instanceof OffsetDateTime offsetDateTime) {
                 now = offsetDateTime.truncatedTo(truncateToValue);
             } else {
-                now = conversionService.convertRequired(now, Instant.class).truncatedTo(truncateToValue);
+                Instant instant = conversionService.convertRequired(now, Instant.class);
+                now = instant.truncatedTo(truncateToValue);
             }
         }
         return now;
     }
 
+    @Nullable
+    private Object computePropertyNow(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, @Nullable Object now) {
+        ChronoUnit truncateToValue;
+        if (isUpdate) {
+            truncateToValue = truncateToDateUpdated(annotationMetadata);
+        } else {
+            truncateToValue = truncateToDateCreated(annotationMetadata);
+            if (truncateToValue == null) {
+                truncateToValue = truncateToDateUpdated(annotationMetadata);
+            }
+        }
+        return truncate(now, truncateToValue);
+    }
+
+    private @Nullable Object convertIfNeeded(@Nullable Object value, @NonNull Class<?> targetType) {
+        if (value == null) {
+            return null;
+        }
+        if (targetType.isInstance(value)) {
+            return value;
+        }
+        return conversionService.convert(value, targetType).orElse(null);
+    }
+
+    private boolean shouldSkipTimestamp(@NonNull AnnotationMetadata annotationMetadata,
+                                        boolean hasDateCreated,
+                                        boolean hasDateUpdated,
+                                        boolean isUpdate,
+                                        @Nullable Object currentValue) {
+        if (currentValue == null) {
+            return false;
+        }
+        if (hasDateCreated && annotationMetadata.booleanValue(DateCreated.class, DateCreated.SKIP_IF_PRESENT).orElse(false)) {
+            return true;
+        }
+        return hasDateUpdated && !isUpdate && annotationMetadata.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false);
+    }
+
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
-        for (RuntimePersistentProperty<Object> property : applicableProperties) {
-            if (isUpdate) {
-                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
-                    continue;
-                }
+        // 1) Top-level properties
+        AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
+            final AnnotationMetadata am = prop.getAnnotationMetadata();
+            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
+                return null;
             }
-
-            final BeanProperty<Object, Object> beanProperty = property.getProperty();
-            final Class<?> propertyType = property.getType();
-            ChronoUnit truncateToValue;
-            if (isUpdate) {
-                truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
+            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+            Object current = prop.getProperty().get(context.getEntity());
+            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, current)) {
+                return null;
+            }
+            Object propertyNow = computePropertyNow(am, isUpdate, now);
+            return convertIfNeeded(propertyNow, prop.getType());
+        });
+        // 2) Embedded properties (recursive via util)
+        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
+            final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
+            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+            if (!hasDateCreated && !hasDateUpdated) {
+                return current;
+            }
+            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
+                return current;
+            }
+            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+            if (!prop.hasSetterOrConstructorArgument()) {
+                return current;
+            }
+            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, prop.get(current))) {
+                return current;
+            }
+            Object propertyNow = computePropertyNow(am, isUpdate, now);
+            Class<?> propertyType = embeddedPersistentProperty.getType();
+            Object newValue = convertIfNeeded(propertyNow, propertyType);
+            if (prop.isReadOnly()) {
+                return prop.withValue(current, newValue);
             } else {
-                truncateToValue = truncateToDateCreated(property.getAnnotationMetadata());
-                if (truncateToValue == null) {
-                    truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
-                }
+                prop.set(current, newValue);
+                return current;
             }
-            Object propertyNow = truncate(now, truncateToValue);
-            if (propertyType.isInstance(propertyNow)) {
-                context.setProperty(beanProperty, propertyNow);
-            } else {
-                conversionService.convert(propertyNow, propertyType).ifPresent(o -> context.setProperty(beanProperty, o));
-            }
-        }
+        });
     }
 
     @Nullable

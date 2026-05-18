@@ -20,7 +20,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -32,13 +32,14 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.BlockingReactorRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * MongoDB reactive beans factory.
@@ -60,11 +61,12 @@ final class MongoReactiveFactory {
             AsyncCapableRepository,
             HintsCapableRepository,
             MethodContextAwareStoredQueryDecorator,
-            PreparedQueryDecorator {
+            PreparedQueryDecorator,
+            AutoCloseable {
 
         private final DefaultReactiveMongoRepositoryOperations reactiveOperations;
-        private ExecutorService executorService;
-        private ExecutorAsyncOperations asyncOperations;
+        private final ExecutorServiceResolver executorServiceResolver = new ExecutorServiceResolver(null);
+        private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
         private MongoReactiveBlockingRepositoryOperations(DefaultReactiveMongoRepositoryOperations reactiveOperations) {
             this.reactiveOperations = reactiveOperations;
@@ -93,20 +95,13 @@ final class MongoReactiveFactory {
         @NonNull
         @Override
         public ExecutorAsyncOperations async() {
-            ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-            if (asyncOperations == null) {
-                synchronized (this) { // double check
-                    asyncOperations = this.asyncOperations;
-                    if (asyncOperations == null) {
-                        if (executorService == null) {
-                            executorService = Executors.newCachedThreadPool();
-                        }
-                        asyncOperations = new ExecutorAsyncOperations(this, executorService);
-                        this.asyncOperations = asyncOperations;
-                    }
-                }
-            }
-            return asyncOperations;
+            return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorServiceResolver.get()));
+        }
+
+        @PreDestroy
+        @Override
+        public void close() {
+            executorServiceResolver.close();
         }
 
         @Override

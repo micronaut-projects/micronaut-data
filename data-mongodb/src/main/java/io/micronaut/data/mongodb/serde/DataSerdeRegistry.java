@@ -41,6 +41,7 @@ import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.support.DefaultSerdeRegistry;
 import jakarta.inject.Singleton;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -93,7 +94,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
     }
 
     @Override
-    public Serializer.EncoderContext newEncoderContext(Class<?> view) {
+    public Serializer.EncoderContext newEncoderContext(@Nullable Class<?> view) {
         if (view != null) {
             return new DefaultEncoderContext(this) {
                 @Override
@@ -111,7 +112,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
     }
 
     @Override
-    public Deserializer.DecoderContext newDecoderContext(Class<?> view) {
+    public Deserializer.DecoderContext newDecoderContext(@Nullable Class<?> view) {
         if (view != null) {
             return new DefaultDecoderContext(this) {
                 @Override
@@ -136,9 +137,6 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 @Override
                 public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
                     RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) type.getType());
-                    if (entity.getIdentity() == null) {
-                        throw new SerdeException("Cannot find ID of entity type: " + type);
-                    }
                     BeanProperty<Object, Object> property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
                     Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);

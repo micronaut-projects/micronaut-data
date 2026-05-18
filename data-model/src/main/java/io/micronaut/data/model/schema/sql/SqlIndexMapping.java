@@ -16,6 +16,7 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -26,9 +27,15 @@ import java.util.Objects;
  * @param name The index name
  * @param unique Whether the index is unique
  * @param columns The column names in the index
+ * @param spatial Whether the index is spatial
+ * @param srid The spatial reference identifier
  */
 @Internal
-public record SqlIndexMapping(String name, boolean unique, String[] columns) {
+public record SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial, @Nullable Integer srid) {
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns) {
+        this(name, unique, columns, false, null);
+    }
 
     @Override
     public boolean equals(Object object) {
@@ -39,12 +46,16 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             return false;
         }
         SqlIndexMapping that = (SqlIndexMapping) object;
-        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns);
+        return unique == that.unique
+            && Objects.equals(name, that.name)
+            && Arrays.equals(columns, that.columns)
+            && spatial == that.spatial
+            && Objects.equals(srid, that.srid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, unique, Arrays.hashCode(columns));
+        return Objects.hash(name, unique, Arrays.hashCode(columns), spatial, srid);
     }
 
     @Override
@@ -53,6 +64,8 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             "name='" + name + '\'' +
             ", unique=" + unique +
             ", columns=" + Arrays.toString(columns) +
+            ", spatial=" + spatial +
+            ", srid=" + srid +
             '}';
     }
 }

@@ -16,7 +16,7 @@
 package io.micronaut.data.document.tck.entities;
 
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -24,22 +24,27 @@ import io.micronaut.data.annotation.MappedEntity;
 import java.time.LocalDate;
 import java.util.List;
 
+// Extra Nullable because of Javac bug - compiled type annotations not recognized - fixed in Java 22
 @MappedEntity
 public class Person {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
-
+    @Nullable
     private String name;
     private int age;
     private boolean enabled = true;
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private LocalDate dateOfBirth;
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     private List<Address> addresses;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -48,6 +53,7 @@ public class Person {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
@@ -72,6 +78,7 @@ public class Person {
         this.enabled = enabled;
     }
 
+    @Nullable
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
@@ -80,6 +87,7 @@ public class Person {
         this.dateOfBirth = dateOfBirth;
     }
 
+    @Nullable
     public List<Address> getAddresses() {
         return addresses;
     }

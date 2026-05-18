@@ -65,7 +65,7 @@ final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntityS
         }
         RuntimePersistentEntity<X> runtimePersistentEntity = (RuntimePersistentEntity<X>) persistentEntity;
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(this, runtimePersistentEntity, criteriaBuilder);
+        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

@@ -16,8 +16,8 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
@@ -37,7 +37,7 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.persistence.Basic;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -93,6 +93,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     int count(String name);
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     Person findByName(String name);
 
     Long deleteByNameLike(String name);
@@ -186,7 +187,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     CursoredPage<Person> retrieve(@NonNull Pageable pageable);
 
     @NonNull
-    CursoredPage<Person> findAll(@Nullable PredicateSpecification<Person> spec, CursoredPageable pageable);
+    CursoredPage<Person> findAll(@Nullable @io.micronaut.core.annotation.Nullable PredicateSpecification<Person> spec, CursoredPageable pageable);
 
     final class Specifications {
 

@@ -15,22 +15,20 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,7 +55,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnNameR2dbcResultReader(DataConversionService conversionService) {
+    public ColumnNameR2dbcResultReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
@@ -109,7 +107,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             case DOUBLE:
                 return resultSet.get(index, Double.class);
             case BYTE_ARRAY:
-                return readBlob(resultSet, index);
+                return readBytes(resultSet, index);
             case BIGDECIMAL:
                 return resultSet.get(index, BigDecimal.class);
             case OBJECT:
@@ -118,33 +116,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         }
     }
 
-    private byte[] readBlob(@NonNull Row resultSet, @NonNull String index) {
-        try {
-            return resultSet.get(index, byte[].class);
-        } catch (Exception e) {
-            // Ignore
-        }
-        // Second try for Oracle and H2
-        Object o = resultSet.get(index);
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof byte[]) {
-            return null;
-        }
-        if (o instanceof ByteBuffer byteBuffer) {
-            return byteBuffer.array();
-        }
-        if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
-                return new byte[0];
-            }
-            return byteBuffer.array();
-        }
-        return convertRequired(o, byte[].class);
-    }
-
+    @Nullable
     private <T> T readDynamic(@NonNull Row resultSet, @NonNull String index, Class<T> type) {
         Object o = resultSet.get(index);
         if (o == null) {
@@ -176,6 +148,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
+    @Nullable
     public Date readDate(Row resultSet, String name) {
         final LocalDate localDate = resultSet.get(name, LocalDate.class);
         if (localDate != null) {
@@ -185,6 +158,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(Row resultSet, String index) {
         final LocalDateTime localDateTime = resultSet.get(index, LocalDateTime.class);
         if (localDateTime != null) {
@@ -282,8 +256,13 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
-    public byte[] readBytes(Row resultSet, String name) {
-        return resultSet.get(name, byte[].class);
+    public byte @Nullable [] readBytes(Row resultSet, String name) {
+        try {
+            return resultSet.get(name, byte[].class);
+        } catch (Exception e) {
+            // Ignore and fallback to generic handling (Oracle, H2, etc.)
+        }
+        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
     }
 
     @Nullable
@@ -294,7 +273,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
-                return conversionService.convertRequired(resultSet.get(name), type);
+                return conversionService.convert(resultSet.get(name), type).orElse(null);
             } catch (Exception exception) {
                 throw exceptionForColumn(name, e);
             }

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
@@ -44,7 +44,7 @@ public interface R2dbcOperations {
      * @param <T> The emitted type
      * @return A publisher that emits the result type
      */
-    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status, @NonNull ReactiveTransactionOperations.TransactionalCallback<Connection, T> handler);
+    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionStatus<Connection> status, ReactiveTransactionOperations. @NonNull TransactionalCallback<Connection, T> handler);
 
     /**
      * Execute the given handler with an existing transaction status.
@@ -52,7 +52,7 @@ public interface R2dbcOperations {
      * @param <T> The emitted type
      * @return A publisher that emits the result type
      */
-    @NonNull <T> Publisher<T> withTransaction(@NonNull ReactiveTransactionOperations.TransactionalCallback<Connection, T> handler);
+    @NonNull <T> Publisher<T> withTransaction(ReactiveTransactionOperations.@NonNull TransactionalCallback<Connection, T> handler);
 
     /**
      * Execute the given handler with a new connection.

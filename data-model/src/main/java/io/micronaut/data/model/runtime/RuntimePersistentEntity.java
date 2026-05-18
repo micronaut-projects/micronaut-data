@@ -15,23 +15,33 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
-import io.micronaut.data.exceptions.MappingException;
-import io.micronaut.data.model.*;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.AbstractPersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +51,7 @@ import java.util.stream.Collectors;
  * @since 1.0
  * @param <T> The type
  */
-public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
+public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
 
     private static final Logger LOG = LoggerFactory.getLogger(RuntimePersistentEntity.class);
 
@@ -54,20 +64,22 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
+    @Nullable
     private final RuntimePersistentProperty<T> version;
+    @Nullable
     private Boolean hasAutoPopulatedProperties;
-
+    @Nullable
     private List<String> allPersistentPropertiesNames;
+    @Nullable
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
-
+    @Nullable
     private EnumSet<Relation.Cascade> cascadedTypes;
-    private BeanIntrospection<?> idClassIntrospection;
 
     /**
      * Default constructor.
      * @param type The type
      */
-    public RuntimePersistentEntity(@NonNull Class<T> type) {
+    public RuntimePersistentEntity(Class<T> type) {
         this(BeanIntrospection.getIntrospection(type));
     }
 
@@ -75,7 +87,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * Default constructor.
      * @param introspection The introspection
      */
-    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
+    public RuntimePersistentEntity(BeanIntrospection<T> introspection) {
         this(introspection, introspection.getBeanProperties());
     }
 
@@ -85,7 +97,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param introspection The introspection
      * @param beanProperties The bean properties
      */
-    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
+    public RuntimePersistentEntity(BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
@@ -175,8 +187,8 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param converterClass The converter class
      * @return converter instance
      */
-    @NonNull
-    protected AttributeConverter<Object, Object> resolveConverter(@NonNull Class<?> converterClass) {
+
+    protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
         throw new MappingException("Converters not supported");
     }
 
@@ -266,7 +278,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return getName();
     }
 
-    @NonNull
     @Override
     public String getAliasName() {
         return aliasName;
@@ -294,16 +305,36 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return identity.length == 1;
     }
 
-    @Nullable
     @Override
-    public RuntimePersistentProperty<T>[] getCompositeIdentity() {
-        return identity.length > 1 ? identity : null;
+    public boolean hasVersion() {
+        return version != null;
     }
 
-    @Nullable
+    @Override
+    public RuntimePersistentProperty<T>[] getCompositeIdentity() {
+        if (hasCompositeIdentity()) {
+            return identity;
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have composite identity");
+    }
+
     @Override
     public RuntimePersistentProperty<T> getIdentity() {
-        return identity.length == 1 ? identity[0] : null;
+        if (hasIdentity()) {
+            return identity[0];
+        }
+        if (hasCompositeIdentity()) {
+            throw new IllegalStateException("Entity [" + getName() + "] has composite identity");
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have an identity");
+    }
+
+    @Override
+    public RuntimePersistentProperty<T> getVersion() {
+        if (hasVersion()) {
+            return Objects.requireNonNull(version);
+        }
+        throw new IllegalStateException("Entity [" + getName() + "] doesn't have a version");
     }
 
     @Override
@@ -319,13 +350,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return List.of(identity);
     }
 
-    @Nullable
-    @Override
-    public RuntimePersistentProperty<T> getVersion() {
-        return version;
-    }
-
-    @NonNull
     @Override
     public Collection<RuntimePersistentProperty<T>> getPersistentProperties() {
         if (persistentPropertiesValues == null) {
@@ -334,7 +358,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return persistentPropertiesValues;
     }
 
-    @NonNull
     @Override
     public Collection<RuntimeAssociation<T>> getAssociations() {
         return (Collection<RuntimeAssociation<T>>) super.getAssociations();
@@ -351,6 +374,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     }
 
     @Override
+    @Nullable
     public RuntimePersistentProperty<T> getPropertyByNameIgnoreCase(String name) {
         for (RuntimePersistentProperty<T> property : allPersistentProperties) {
             if (property != null && property.getName().equalsIgnoreCase(name)) {
@@ -366,7 +390,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return (RuntimePersistentProperty<T>) super.getIdentityByName(name);
     }
 
-    @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
         if (allPersistentPropertiesNames == null) {
@@ -415,11 +438,58 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public boolean hasAutoPopulatedProperties() {
         if (this.hasAutoPopulatedProperties == null) {
-            this.hasAutoPopulatedProperties = Arrays.stream(allPersistentProperties)
-                    .filter(Objects::nonNull)
-                    .anyMatch(PersistentProperty::isAutoPopulated);
+            this.hasAutoPopulatedProperties = hasDirectAutoPopulated() || hasAutoPopulatedInEmbeddeds();
         }
         return this.hasAutoPopulatedProperties;
     }
 
+    private boolean hasDirectAutoPopulated() {
+        return Arrays.stream(allPersistentProperties)
+            .filter(Objects::nonNull)
+            .anyMatch(PersistentProperty::isAutoPopulated);
+    }
+
+    private boolean hasAutoPopulatedInEmbeddeds() {
+        // Avoid RuntimeEntityRegistry lookups, keep track of visited to prevent cycles
+        Set<Class<?>> visited = new HashSet<>();
+        visited.add(getIntrospection().getBeanType());
+
+        return getAssociations().stream()
+            .filter(RuntimeAssociation::isEmbedded)
+            .map(a -> a.getProperty().getType())
+            .filter(visited::add)
+            .anyMatch(type -> {
+                BeanIntrospection<?> embeddedIntrospection = BeanIntrospection.getIntrospection(type);
+                return hasAutoPopulatedInEmbedded(embeddedIntrospection, visited);
+            });
+    }
+
+    /**
+     * Recursively checks if the given embedded bean introspection has any auto-populated properties,
+     * without going through the RuntimeEntityRegistry to avoid recursive map updates.
+     */
+    private static boolean hasAutoPopulatedInEmbedded(BeanIntrospection<?> introspection, Set<Class<?>> visited) {
+        for (BeanProperty<?, ?> bp : introspection.getBeanProperties()) {
+            if (bp.hasStereotype(Transient.class)) {
+                continue;
+            }
+            // Check direct auto-populated (but not @GeneratedValue)
+            var am = bp.getAnnotationMetadata();
+            if (!am.hasAnnotation(GeneratedValue.class) && am.hasStereotype(AutoPopulated.class)) {
+                return true;
+            }
+            // Recurse into nested embedded associations
+            Relation.Kind kind = am.enumValue(Relation.class, Relation.Kind.class).orElse(null);
+            if (kind == Relation.Kind.EMBEDDED) {
+                Class<?> type = bp.getType();
+                if (visited.add(type)) {
+                    BeanIntrospection<?> ei = BeanIntrospection.getIntrospection(type);
+                    if (hasAutoPopulatedInEmbedded(ei, visited)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

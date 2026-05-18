@@ -71,7 +71,7 @@ class PersonRepositorySpec extends AbstractAzureCosmosTest {
 
     @Test
     void testDelete() {
-        List<Person> all = personRepository.findAll((PredicateSpecification<Person>) null);
+        List<Person> all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)));
         assertEquals(2, all.size());
 
         // tag::delete[]
@@ -80,13 +80,13 @@ class PersonRepositorySpec extends AbstractAzureCosmosTest {
 
         assertEquals(1, recordsDeleted);
 
-        all = personRepository.findAll((PredicateSpecification<Person>) null);
+        all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)));
         assertEquals(1, all.size());
     }
 
     @Test
     void testUpdate() {
-        List<Person> all = personRepository.findAll((PredicateSpecification<Person>) null);
+        List<Person> all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)));
         assertEquals(2, all.size());
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Denis")));
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Josh")));
@@ -97,7 +97,7 @@ class PersonRepositorySpec extends AbstractAzureCosmosTest {
 
         assertEquals(1, recordsUpdated);
 
-        all = personRepository.findAll((PredicateSpecification<Person>) null);
+        all = personRepository.findAll(PredicateSpecification.where(ageIsLessThan(30)));
         assertEquals(2, all.size());
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Steven")));
         assertTrue(all.stream().anyMatch(p -> p.getName().equals("Josh")));

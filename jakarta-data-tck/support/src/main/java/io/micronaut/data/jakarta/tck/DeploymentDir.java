@@ -16,11 +16,13 @@
 package io.micronaut.data.jakarta.tck;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@NullUnmarked
 @Internal
 final class DeploymentDir {
     final Path root;

@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.ParameterExpression;
@@ -26,8 +25,10 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -43,7 +44,9 @@ import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +55,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * Finder with custom defied query used to return a single result.
@@ -65,7 +70,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
+    private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
@@ -80,6 +85,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         if (matchContext.getMethodElement().stringValue(Query.class).isPresent()) {
             return new MethodMatch() {
@@ -105,24 +111,27 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
-                    // Don't use implicit entity interceptors for implicit-query repositories
+// Don't use implicit entity interceptors for implicit-query repositories
                     // Otherwise JPA's implicit interceptors will not use a custom query
                     FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
-                            entityParameter != null,
+                        entityParameter != null,
                         entitiesParameter != null,
-                            operationType,
-                            matchContext);
+                        operationType,
+                        matchContext);
                     ClassElement resultType = entry.returnType();
                     ClassElement interceptorType = entry.interceptor();
 
-                    if (interceptorType.getSimpleName().startsWith("SaveOne")) {
+                    if (entityParameter == null
+                        && entitiesParameter == null
+                        && operationType == DataMethod.OperationType.INSERT
+                        && (interceptorType.getSimpleName().startsWith("SaveOne") || interceptorType.getSimpleName().startsWith("InsertOne"))) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
-                        operationType = DataMethod.OperationType.UPDATE;
                         FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.returnType();
                         interceptorType = e.interceptor();
+                        operationType = DataMethod.OperationType.UPDATE;
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {
@@ -147,9 +156,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     }
 
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                            operationType,
-                            resultType,
-                            interceptorType
+                        operationType,
+                        resultType,
+                        interceptorType
                     );
 
                     methodMatchInfo.dto(isDto);
@@ -180,17 +189,22 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
 
         if (DELETE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
         } else if (INSERT_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
+        } else if (REPLACE_INTO_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
+                return DataMethod.OperationType.UPDATE_RETURNING;
+            }
+            return DataMethod.OperationType.UPDATE;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
             }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
@@ -209,19 +223,21 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     /**
      * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
      */
-    private void buildRawQuery(@NonNull MethodMatchContext matchContext,
+    private void buildRawQuery(MethodMatchContext matchContext,
                                MethodMatchInfo methodMatchInfo,
+                               @Nullable
                                ParameterElement entityParameter,
+                               @Nullable
                                ParameterElement entitiesParameter,
                                DataMethod.OperationType operationType,
                                boolean implicitQueries) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
-                new IllegalStateException("Should only be called if Query has value!")
+            new IllegalStateException("Should only be called if Query has value!")
         );
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         boolean namedParameters = matchContext.getRepositoryClass()
-                .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
+            .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
 
         ParameterElement entityParam = null;
         SourcePersistentEntity persistentEntity = null;
@@ -233,10 +249,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
-        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
-                .orElse(null);
-        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
+            .orElse(null);
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
         boolean encodeEntityParameters;
         if (implicitQueries) {
             encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
@@ -244,18 +260,22 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             encodeEntityParameters = false;
         }
         methodMatchInfo
-                .isRawQuery(true)
-                .encodeEntityParameters(encodeEntityParameters)
-                .queryResult(queryResult)
-                .countQueryResult(countQueryResult);
+            .isRawQuery(true)
+            .encodeEntityParameters(encodeEntityParameters)
+            .queryResult(queryResult)
+            .countQueryResult(countQueryResult);
     }
 
     private QueryResult getQueryResult(MethodMatchContext matchContext,
                                        String queryString,
                                        List<ParameterElement> parameters,
                                        boolean namedParameters,
+                                       @Nullable
                                        ParameterElement entityParam,
-                                       SourcePersistentEntity persistentEntity) {
+                                       @Nullable
+                                       SourcePersistentEntity persistentEntity,
+                                       @Nullable
+                                       TypedElement resultType) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
@@ -297,20 +317,99 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
         String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
-        return new QueryResult() {
+
+        String cleanLower = SQL_COMMENT_PATTERN.matcher(finalQueryString).replaceAll("").trim().toLowerCase(Locale.ENGLISH);
+        boolean hasReturning = containsReturningClause(cleanLower);
+        if (hasReturning) {
+            Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
+                .orElse(Dialect.ANSI);
+            if (dialect == Dialect.ORACLE) {
+                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+                return OracleRawQueryReturningSupport.buildQueryResult(
+                    finalQueryString,
+                    queryParts,
+                    parameterBindings,
+                    entity,
+                    resultType,
+                    RawQueryMethodMatcher::createOutBinding
+                );
+            }
+        }
+
+        // Default: no transformation
+        return QueryResult.of(finalQueryString, queryParts, parameterBindings);
+    }
+
+    private static boolean containsReturningClause(String query) {
+        return lastKeywordOutsideQuotes(query, "returning") > -1;
+    }
+
+    private static int lastKeywordOutsideQuotes(String query, String keyword) {
+        return findKeywordOutsideQuotes(query, keyword, 0, true);
+    }
+
+    private static int findKeywordOutsideQuotes(String query, String keyword, int startIndex, boolean findLast) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int match = -1;
+        int keywordLength = keyword.length();
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= query.length() || query.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                    i++;
+                }
+                continue;
+            }
+            if (inDoubleQuote) {
+                if (c == '"' && (i + 1 >= query.length() || query.charAt(i + 1) != '"')) {
+                    inDoubleQuote = false;
+                } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
+                    i++;
+                }
+                continue;
+            }
+            if (c == '\'') {
+                inSingleQuote = true;
+                continue;
+            }
+            if (c == '"') {
+                inDoubleQuote = true;
+                continue;
+            }
+            if (i < startIndex) {
+                continue;
+            }
+            if (query.regionMatches(true, i, keyword, 0, keyword.length()) && isKeywordBoundary(query, i - 1) && isKeywordBoundary(query, i + keywordLength)) {
+                if (!findLast) {
+                    return i;
+                }
+                match = i;
+            }
+        }
+        return match;
+    }
+
+    private static boolean isKeywordBoundary(String query, int index) {
+        if (index < 0 || index >= query.length()) {
+            return true;
+        }
+        char c = query.charAt(index);
+        return !Character.isLetterOrDigit(c) && c != '_';
+    }
+
+    private static QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
+        return new QueryOutParameterBinding() {
             @Override
-            public String getQuery() {
-                return finalQueryString;
+            public String getName() {
+                return column;
             }
 
             @Override
-            public List<String> getQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
+            public DataType getDataType() {
+                return dataType;
             }
         };
     }
@@ -318,7 +417,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     public static QueryParameterBinding addBinding(MethodMatchContext matchContext,
                                                    List<ParameterElement> parameters,
                                                    List<AnnotationValue<ParameterExpression>> parameterExpressions,
+                                                   @Nullable
                                                    ParameterElement entityParam,
+                                                   @Nullable
                                                    SourcePersistentEntity persistentEntity,
                                                    String name,
                                                    BindingContext bindingContext) {
@@ -340,7 +441,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
             .findFirst();
         if (element.isPresent()) {
-            PersistentPropertyPath propertyPath = matchContext.getRootEntity() == null ? null : matchContext.getRootEntity().getPropertyPath(name);
+            PersistentPropertyPath propertyPath = !matchContext.hasRootEntity() ? null : matchContext.getRootEntity().getPropertyPath(name);
             bindingContext = bindingContext
                 .incomingMethodParameterProperty(propertyPath)
                 .outgoingQueryParameterProperty(propertyPath);
@@ -362,24 +463,24 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
     }
 
-    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, @Nullable ParameterElement element) {
         return bindingParameter(matchContext, element, false);
     }
 
-    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, @Nullable ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
-                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
-                matchContext.getParameters(),
-                element,
-                isEntityParameter,
+            Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            matchContext.getParameters(),
+            element,
+            isEntityParameter,
             null);
     }
 
     private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
                                                                   String name,
-                                                                  ClassElement type) {
+                                                                  @Nullable ClassElement type) {
         return new SourceParameterExpressionImpl(
-                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             name,
             type,
             null);
@@ -387,12 +488,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     /**
      * Extract the expression type.
-     * @param matchContext The match context
+     *
+     * @param matchContext        The match context
      * @param parameterExpression The parameter expression
      * @return the type
      */
+    @Nullable
     public static ClassElement extractExpressionType(MatchContext matchContext, AnnotationValue<ParameterExpression> parameterExpression) {
         Object expressionValue = parameterExpression.getValues().get("expression");
+        if (expressionValue == null) {
+            return null;
+        }
         if (expressionValue instanceof String) {
             throw new ProcessingException(matchContext.getMethodElement(), "Expected an expression '#{...}' found a string!");
         }

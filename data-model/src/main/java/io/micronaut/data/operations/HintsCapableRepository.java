@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.operations;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.Collections;
@@ -34,7 +33,7 @@ public interface HintsCapableRepository {
      * @param storedQuery The stored query
      * @return THe query hints
      */
-    default @NonNull Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
+    default Map<String, Object> getQueryHints(StoredQuery<?, ?> storedQuery) {
         return Collections.emptyMap();
     }
 

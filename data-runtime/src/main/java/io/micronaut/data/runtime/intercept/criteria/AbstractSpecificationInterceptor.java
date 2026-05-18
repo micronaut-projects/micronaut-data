@@ -17,24 +17,35 @@ package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
@@ -55,17 +66,19 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,8 +98,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     protected static final String PREPARED_QUERY_KEY = "PREPARED_QUERY";
 
+    @Nullable
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
-    protected final CriteriaBuilder criteriaBuilder;
+    protected CriteriaBuilder criteriaBuilder;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
 
@@ -106,8 +120,32 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
     }
 
+    @Override
+    protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
+        Pageable pageable = super.getPageable(context);
+        List<Sort.Order> orders = getOrders(context);
+        if (!orders.isEmpty()) {
+            pageable = pageable.orders(orders);
+        }
+        return pageable;
+    }
+
+    private List<Sort.Order> getOrders(MethodInvocationContext<?, ?> context) {
+        List<Sort.Order> orders =
+            context.getExecutableMethod().getAnnotationValuesByStereotype(OrderBy.class.getName())
+                .stream()
+                .map(av -> new Sort.Order(
+                    av.stringValue().orElseThrow(),
+                    av.booleanValue("descending").orElse(false) ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
+                    av.booleanValue("ignoreCase").orElse(false)
+                ))
+                .toList();
+        return orders;
+    }
+
     final CriteriaRepositoryOperations getCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
                                                                        MethodInvocationContext<?, ?> context,
+                                                                       @Nullable
                                                                        Pageable pageable) {
         if (criteriaRepositoryOperations != null) {
             return criteriaRepositoryOperations;
@@ -123,19 +161,32 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         );
     }
 
-    protected final <T> List<T> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<T> criteriaQuery) {
+    protected final <B> List<B> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (criteriaRepositoryOperations != null) {
+            Limit limit = Limit.UNLIMITED;
             if (pageable != null) {
+                limit = pageable.getLimit();
                 if (pageable.getMode() != Mode.OFFSET) {
                     throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
-                return criteriaRepositoryOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
             }
-            int offset = getOffset(context);
-            int limit = getLimit(context);
-            if (offset > 0 || limit > 0) {
-                return criteriaRepositoryOperations.findAll(criteriaQuery, offset, limit);
+            if (!limit.isLimited()) {
+                limit = getParameterInRole(context, TypeRole.LIMIT, Limit.class).orElse(limit);
+            }
+            if (!limit.isLimited()) {
+                int offset = getOffset(context);
+                int maxResults = getLimit(context);
+                limit = Limit.of(maxResults, offset);
+            }
+            if (!limit.isLimited()) {
+                AnnotationValue<First> annotation = context.getAnnotationMetadata().getAnnotation(First.class);
+                if (annotation != null) {
+                    limit = Limit.of(annotation.intValue().orElse(1), 0);
+                }
+            }
+            if (limit.isLimited()) {
+                return criteriaRepositoryOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults());
             }
             return criteriaRepositoryOperations.findAll(criteriaQuery);
         }
@@ -145,22 +196,6 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final Set<JoinPath> getMethodJoinPaths(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
         return methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
             AssociationUtils.getJoinPaths(context));
-    }
-
-    @NonNull
-    @Override
-    protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
-        for (Object param : context.getParameterValues()) {
-            if (param instanceof Pageable pageable) {
-                return pageable;
-            }
-        }
-        for (Object param : context.getParameterValues()) {
-            if (param instanceof Sort sort) {
-                return Pageable.UNPAGED.orders(sort.getOrderBy());
-            }
-        }
-        return Pageable.UNPAGED;
     }
 
     @NonNull
@@ -179,28 +214,28 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     @NonNull
-    protected final <E> CriteriaQuery<E> buildExistsQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
-        return this.<E>getCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context)).build(criteriaBuilder);
+    protected final CriteriaQuery<Object> buildExistsQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
+        return this.getCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     @NonNull
     protected final <E> CriteriaUpdate<E> buildUpdateQuery(MethodInvocationContext<?, ?> context) {
-        return this.<E>getCriteriaUpdateBuilder(context).build(criteriaBuilder);
+        return this.<E>getCriteriaUpdateBuilder(context, getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     @NonNull
     protected final <E> CriteriaDelete<E> buildDeleteQuery(MethodInvocationContext<?, ?> context) {
-        return this.<E>getCriteriaDeleteBuilder(context).build(criteriaBuilder);
+        return this.<E>getCriteriaDeleteBuilder(context, getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     @NonNull
     protected final CriteriaQuery<Long> buildCountQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
-        return getCountCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context)).build(criteriaBuilder);
+        return getCountCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     @NonNull
-    protected final <N> CriteriaQuery<N> buildQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
-        return this.<N>getCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context)).build(criteriaBuilder);
+    protected final CriteriaQuery<Object> buildQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
+        return this.getCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     private <N> void appendSort(Sort sort, CriteriaQuery<N> criteriaQuery, Root<?> root) {
@@ -294,62 +329,136 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final CriteriaQuery<Tuple> buildIdsQuery(RepositoryMethodKey methodKey,
                                                        MethodInvocationContext<?, ?> context,
                                                        Sort sort) {
-        return getIdsCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), sort).build(criteriaBuilder);
+        return getIdsCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), sort, getRequiredRootEntity(context)).build(criteriaBuilder);
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context The context
-     * @param <K>     the specification entity root type
+     * @param context    The context
+     * @param rootEntity The root entity
+     * @param <K>        the specification entity root type
      * @return found specification
      */
     @Nullable
-    protected <K> QuerySpecification<K> getQuerySpecification(MethodInvocationContext<?, ?> context) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof QuerySpecification<?> querySpecification) {
-            return (QuerySpecification<K>) querySpecification;
+    protected <K> QuerySpecification<K> getQuerySpecification(MethodInvocationContext<?, ?> context, Class<?> rootEntity) {
+        Optional<PredicateSpecification> predicateSpecification = getPredicateSpecification(context, rootEntity);
+        if (predicateSpecification.isPresent()) {
+            return (QuerySpecification<K>) QuerySpecification.where(predicateSpecification.get());
         }
-        if (parameterValue instanceof PredicateSpecification<?> predicateSpecification) {
-            return (QuerySpecification<K>) QuerySpecification.where(predicateSpecification);
+        Optional<QuerySpecification> spec = getParameterInRole(context, TypeRole.SPECIFICATION_PREDICATE, Argument.of(QuerySpecification.class, rootEntity));
+        if (spec.isPresent()) {
+            return spec.get();
         }
-        Argument<?> parameterArgument = context.getArguments()[0];
-        if (parameterArgument.isAssignableFrom(QuerySpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
+        spec = getParameterInRole(context, TypeRole.SPECIFICATION_QUERY, Argument.of(QuerySpecification.class, rootEntity));
+        if (spec.isPresent()) {
+            return spec.get();
+        }
+        if (context.getArguments()[0].isNullable()) {
             return null;
         }
-        throw new IllegalArgumentException("Argument must be an instance of: " + QuerySpecification.class + " or " + PredicateSpecification.class);
+        throw new IllegalArgumentException("Specification may not be null.");
+    }
+
+    private Optional<PredicateSpecification> getPredicateSpecification(MethodInvocationContext<?, ?> context, Class<?> rootEntity) {
+        List<PredicateSpecification> predicates =
+            CollectionUtils.concat(
+                getParametersInRole(context, TypeRole.SPECIFICATION_PREDICATE, Argument.of(PredicateSpecification.class, rootEntity)),
+                getSpecificationConstraints(context)
+            );
+        if (predicates.isEmpty()) {
+            return Optional.empty();
+        }
+        if (predicates.size() == 1) {
+            return Optional.of(predicates.get(0));
+        }
+        List<PredicateSpecification> finalPredicates = predicates;
+        return Optional.of(new PredicateSpecification() {
+            @Override
+            public Predicate toPredicate(Root root, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> andPredicates = new ArrayList<>(finalPredicates.size());
+                for (PredicateSpecification<?> predicate : finalPredicates) {
+                    andPredicates.add(predicate.toPredicate(root, criteriaBuilder));
+                }
+                return criteriaBuilder.and(andPredicates.toArray(new Predicate[0]));
+            }
+        });
+    }
+
+    @NonNull
+    private List<PredicateSpecification> getSpecificationConstraints(@NonNull MethodInvocationContext<?, ?> methodContext) {
+        AnnotationValue<Annotation> annotation = methodContext.getAnnotation(DataMethod.NAME);
+        if (annotation == null) {
+            return List.of();
+        }
+        List<AnnotationValue<Annotation>> roles = annotation.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS_TYPE_ROLES);
+        return roles.stream()
+            .filter(a -> a.stringValue().orElseThrow().equals(TypeRole.SPECIFICATION_CONSTRAINT))
+            .flatMap(a -> {
+                int parameterIndex = a.intValue("parameterIndex").orElseThrow();
+                Argument<?> argument = methodContext.getArguments()[parameterIndex];
+                Object value = methodContext.getParameterValues()[parameterIndex];
+                return conversionService.convert(new SpecificationConstraint(argument, value), PredicateSpecification.class).stream();
+            }).toList();
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder}
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context   The context
-     * @param joinPaths The join fetch paths
-     * @param <K>       the result type
+     * @param context    The context
+     * @param joinPaths  The join fetch paths
+     * @param rootEntity The join fetch paths
+     * @param <K>        the result type
      * @return found specification
      */
     @NonNull
-    protected final <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaQueryBuilder criteriaQueryBuilder) {
-            return criteriaQueryBuilder;
+    protected final <K> CriteriaQueryBuilder<Object> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths, Class<K> rootEntity) {
+        Optional<CriteriaQueryBuilder> queryBuilder = getParameterInRole(context, TypeRole.SPECIFICATION_QUERY, Argument.of(CriteriaQueryBuilder.class, rootEntity));
+        if (queryBuilder.isPresent()) {
+            return queryBuilder.get();
         }
         return criteriaBuilder -> {
-            Class<K> rootEntity = getRequiredRootEntity(context);
-            QuerySpecification<K> specification = getQuerySpecification(context);
-            CriteriaQuery<K> criteriaQuery = criteriaBuilder.createQuery(rootEntity);
+            List<AnnotationValue<Projection>> projections = context.getAnnotationValuesByType(Projection.class);
+            AnnotationValue<DataMethod> dataAnnotation = context.getAnnotation(DataMethod.class);
+            boolean isDto = dataAnnotation != null && dataAnnotation.isTrue(DataMethod.META_MEMBER_DTO);
+            QuerySpecification<K> specification = getQuerySpecification(context, rootEntity);
+            CriteriaQuery<Object> criteriaQuery;
+            if (isDto || !projections.isEmpty()) {
+                Class<?> dtoClass = dataAnnotation != null ? dataAnnotation.classValue(DataMethod.META_MEMBER_RESULT_TYPE).orElse(Object.class) : Object.class;
+                criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(dtoClass);
+            } else {
+                criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(rootEntity);
+            }
+            //
             Root<K> root = criteriaQuery.from(rootEntity);
+            if (CollectionUtils.isNotEmpty(joinPaths)) {
+                for (JoinPath joinPath : sortJoinPaths(joinPaths)) {
+                    join(root, joinPath);
+                }
+            }
             if (specification != null) {
                 Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
                 if (predicate != null) {
                     criteriaQuery.where(predicate);
                 }
             }
-            if (CollectionUtils.isNotEmpty(joinPaths)) {
-                for (JoinPath joinPath : sortJoinPaths(joinPaths)) {
-                    join(root, joinPath);
+            if (!projections.isEmpty()) {
+                if (projections.size() == 1) {
+                    criteriaQuery.select(
+                        root.get(projections.getFirst().stringValue().orElseThrow())
+                    );
+                } else {
+                    criteriaQuery.multiselect(
+                        projections.stream()
+                            .map(av -> root.get(av.stringValue().orElseThrow()))
+                            .toArray(Selection[]::new)
+                    );
                 }
+            }
+            List<Sort.Order> orders = getOrders(context);
+            if (!orders.isEmpty()) {
+                criteriaQuery.orderBy(getOrders(Sort.of(orders), root, criteriaBuilder));
             }
             return criteriaQuery;
         };
@@ -358,88 +467,130 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @NonNull
     protected final CriteriaQueryBuilder<Tuple> getIdsCriteriaQueryBuilder(MethodInvocationContext<?, ?> context,
                                                                            Set<JoinPath> joinPaths,
-                                                                           Sort sort) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaQueryBuilder<?>) {
+                                                                           Sort sort,
+                                                                           Class<?> rootEntity) {
+        Optional<CriteriaQueryBuilder> queryBuilder = getParameterInRole(context, TypeRole.SPECIFICATION_QUERY, Argument.of(CriteriaQueryBuilder.class, rootEntity));
+        if (queryBuilder.isPresent()) {
             throw new IllegalStateException("Criteria pagination doesn't support CriteriaQueryBuilder!");
         }
-        return criteriaBuilder -> createSelectIdsCriteriaQuery(context, joinPaths, sort);
+        return criteriaBuilder -> createSelectIdsCriteriaQuery(context, joinPaths, sort, rootEntity);
     }
 
     @NonNull
     private <K> CriteriaQuery<Tuple> createSelectIdsCriteriaQuery(MethodInvocationContext<?, ?> context,
                                                                   Set<JoinPath> joinPaths,
-                                                                  Sort sort) {
-        Class<K> rootEntity = getRequiredRootEntity(context);
-        QuerySpecification<K> specification = getQuerySpecification(context);
+                                                                  Sort sort,
+                                                                  Class<K> rootEntity) {
         CriteriaQuery<Tuple> criteriaQuery = criteriaBuilder.createTupleQuery();
         Root<K> root = criteriaQuery.from(rootEntity);
-        List<Selection<?>> selection = new ArrayList<>();
-        selection.add(getIdExpression(root));
-        // We need to select all ordered properties from ORDER BY for DISTINCT to work properly
-        for (Sort.Order order : sort.getOrderBy()) {
-            Path<?> path = root;
-            for (Iterator<String> iterator = StringUtils.splitOmitEmptyStrings(order.getProperty(), '.').iterator(); iterator.hasNext(); ) {
-                String next = iterator.next();
-                if (iterator.hasNext()) {
-                    path = ((From<?, ?>) path).join(next);
-                } else {
-                    path = path.get(next);
-                }
+        if (CollectionUtils.isNotEmpty(joinPaths)) {
+            for (JoinPath joinPath : sortJoinPaths(joinPaths)) {
+                join(root, joinPath);
             }
-            selection.add(path);
         }
-        criteriaQuery.multiselect(selection).distinct(true);
+        QuerySpecification<K> specification = getQuerySpecification(context, rootEntity);
         if (specification != null) {
             Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
             if (predicate != null) {
                 criteriaQuery.where(predicate);
             }
         }
-        if (CollectionUtils.isNotEmpty(joinPaths)) {
-            for (JoinPath joinPath : sortJoinPaths(joinPaths)) {
-                join(root, joinPath);
+
+        criteriaQuery.multiselect(
+            createSelectionForSelectingIds(sort, root)
+        ).distinct(true);
+        return criteriaQuery;
+    }
+
+    private <K> List<Selection<?>> createSelectionForSelectingIds(Sort sort, Root<K> root) {
+        // We select IDs and all ordered properties from ORDER BY for DISTINCT to work properly
+        List<Selection<?>> selection = new ArrayList<>();
+        selection.add(getIdExpression(root));
+        List<Sort.Order> orders = new ArrayList<>(sort.getOrderBy());
+        for (Join<K, ?> join : root.getJoins()) {
+            // First, we check if the order is for one of the joined entities
+            for (Sort.Order order : sort.getOrderBy()) {
+                Iterator<String> orderIterator = StringUtils.splitOmitEmptyStrings(order.getProperty(), '.').iterator();
+                if (!orderIterator.hasNext()) {
+                    continue;
+                }
+                String firstPath = orderIterator.next();
+                if (join instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+                    if (!persistentPropertyPath.getProperty().getName().equals(firstPath)) {
+                        continue;
+                    }
+                } else if (!join.getAttribute().getName().equals(firstPath)) {
+                    continue;
+                }
+                orders.remove(order);
+                Path<?> path = join;
+                while (orderIterator.hasNext()) {
+                    path = path.get(orderIterator.next());
+                }
+                selection.add(getSelectionForOrder(order, path));
             }
         }
-        return criteriaQuery;
+        for (Sort.Order order : orders) {
+            // Remaining orders must be for the root entity
+            Path<?> path = root;
+            for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(orderPath);
+            }
+            selection.add(getSelectionForOrder(order, path));
+        }
+        return selection;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Selection<?> getSelectionForOrder(Sort.Order order, Path<?> path) {
+        if (order.isIgnoreCase()) {
+            // Keep the DISTINCT tuple selection aligned with the generated ORDER BY expression.
+            // Some dialects reject DISTINCT pagination if ORDER BY LOWER(path) is used but only
+            // the raw path is projected in the internal id-selection query.
+            return criteriaBuilder.lower((Expression<String>) path);
+        }
+        return path;
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder}
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context   The context
-     * @param joinPaths The join fetch paths
+     * @param context    The context
+     * @param joinPaths  The join fetch paths
+     * @param rootEntity The root entity
      * @return found specification
      */
     @NonNull
-    private CriteriaQueryBuilder<Long> getCountCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaQueryBuilder<?> providedCriteriaQueryBuilder) {
+    protected CriteriaQueryBuilder<Long> getCountCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths, Class<?> rootEntity) {
+        Optional<CriteriaQueryBuilder> queryBuilder = getParameterInRole(context, TypeRole.SPECIFICATION_QUERY, Argument.of(CriteriaQueryBuilder.class, rootEntity));
+        if (queryBuilder.isPresent()) {
             return new CriteriaQueryBuilder<Long>() {
                 @Override
                 public CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
-                    CriteriaQuery<?> criteriaQuery = providedCriteriaQueryBuilder.build(criteriaBuilder);
+                    CriteriaQuery<?> criteriaQuery = queryBuilder.get().build(criteriaBuilder);
                     Root<?> root = criteriaQuery.getRoots().iterator().next();
                     Expression countExpression;
-                    if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
-                        countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+                    PersistentEntity entity = getPersistentEntity(root);
+                    boolean countOnRoot = entity.hasCompositeIdentity() || (entity.hasIdentity() && entity.getIdentity() instanceof Embedded);
+                    if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
+                        countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
                     } else {
-                        countExpression = criteriaBuilder.count(getIdExpression(root));
+                        countExpression = criteriaBuilder.count(countOnRoot ? root : getIdExpression(root));
                     }
                     return criteriaQuery.select(countExpression);
                 }
             };
         }
-        return criteriaBuilder -> createPageCountCriteriaQuery(context, criteriaBuilder, joinPaths);
+        return criteriaBuilder -> createPageCountCriteriaQuery(context, criteriaBuilder, joinPaths, rootEntity);
     }
 
-    private <E> CriteriaQuery createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context,
-                                                           CriteriaBuilder criteriaBuilder,
-                                                           Set<JoinPath> joinPaths) {
-        Class<E> rootEntity = getRequiredRootEntity(context);
-        QuerySpecification<E> specification = getQuerySpecification(context);
-        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(Long.class);
+    private <E> CriteriaQuery<Long> createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context,
+                                                                 CriteriaBuilder criteriaBuilder,
+                                                                 Set<JoinPath> joinPaths,
+                                                                 Class<E> rootEntity) {
+        QuerySpecification<E> specification = getQuerySpecification(context, rootEntity);
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         Root<E> root = criteriaQuery.from(rootEntity);
         if (specification != null) {
             Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
@@ -447,11 +598,13 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        Expression countExpression;
-        if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
-            countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+        Expression<Long> countExpression;
+        PersistentEntity entity = getPersistentEntity(root);
+        boolean countOnRoot = entity.hasCompositeIdentity() || (entity.hasIdentity() && entity.getIdentity() instanceof Embedded);
+        if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
+            countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
         } else {
-            countExpression = criteriaBuilder.count(getIdExpression(root));
+            countExpression = criteriaBuilder.count(countOnRoot ? root : getIdExpression(root));
         }
         return criteriaQuery.select(countExpression);
     }
@@ -464,7 +617,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
     }
 
-    final PersistentEntity getPersistentEntity(Root<?> root) {
+    private PersistentEntity getPersistentEntity(Root<?> root) {
         if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
             return persistentEntityRoot.getPersistentEntity();
         } else {
@@ -480,49 +633,66 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             } else {
                 persistentEntityFrom.join(joinPath.getPath(), joinPath.getJoinType());
             }
+        } else {
+            root.join(joinPath.getPath(), toJoinType(joinPath.getJoinType()));
         }
+    }
+
+    private JoinType toJoinType(io.micronaut.data.annotation.Join.Type joinType) {
+        return switch (joinType) {
+            case DEFAULT, FETCH, LEFT, LEFT_FETCH -> JoinType.LEFT;
+            case RIGHT, RIGHT_FETCH -> JoinType.RIGHT;
+            case INNER, INNER_FETCH -> JoinType.INNER;
+            default -> throw new IllegalArgumentException("Unsupported join type: " + joinType);
+        };
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.DeleteSpecification} in context.
      *
-     * @param context The context
-     * @param <K>     the specification entity root type
+     * @param context    The context
+     * @param rootEntity The rootEntity
+     * @param <K>        the specification entity root type
      * @return found specification
      */
     @Nullable
-    protected <K> DeleteSpecification<K> getDeleteSpecification(MethodInvocationContext<?, ?> context) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof DeleteSpecification deleteSpecification) {
-            return deleteSpecification;
+    protected <K> DeleteSpecification<K> getDeleteSpecification(MethodInvocationContext<?, ?> context, Class<K> rootEntity) {
+        Optional<PredicateSpecification> predicateSpecification = getPredicateSpecification(context, rootEntity);
+        if (predicateSpecification.isPresent()) {
+            return (DeleteSpecification<K>) DeleteSpecification.where(predicateSpecification.get());
         }
-        if (parameterValue instanceof PredicateSpecification predicateSpecification) {
-            return DeleteSpecification.where(predicateSpecification);
+        Optional<DeleteSpecification> spec = getParameterInRole(context, TypeRole.SPECIFICATION_PREDICATE, Argument.of(DeleteSpecification.class, rootEntity));
+        if (spec.isPresent()) {
+            return spec.get();
+        }
+        spec = getParameterInRole(context, TypeRole.SPECIFICATION_DELETE, Argument.of(DeleteSpecification.class, rootEntity));
+        if (spec.isPresent()) {
+            return spec.get();
         }
         Argument<?> parameterArgument = context.getArguments()[0];
-        if (parameterArgument.isAssignableFrom(DeleteSpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
+        if (parameterArgument.isNullable()) {
             return null;
         }
-        throw new IllegalArgumentException("Argument must be an instance of: " + DeleteSpecification.class + " or " + PredicateSpecification.class);
+        throw new IllegalArgumentException("Specification may not be null.");
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder}
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context The context
-     * @param <K>     the result type
+     * @param context    The context
+     * @param rootEntity The rootEntity
+     * @param <K>        the result type
      * @return found specification
      */
     @NonNull
-    protected <K> CriteriaDeleteBuilder<K> getCriteriaDeleteBuilder(MethodInvocationContext<?, ?> context) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaDeleteBuilder criteriaDeleteBuilder) {
-            return criteriaDeleteBuilder;
+    protected <K> CriteriaDeleteBuilder<K> getCriteriaDeleteBuilder(MethodInvocationContext<?, ?> context, Class<K> rootEntity) {
+        Optional<CriteriaDeleteBuilder> criteriaDeleteBuilder = getParameterInRole(context, TypeRole.SPECIFICATION_DELETE, CriteriaDeleteBuilder.class);
+        if (criteriaDeleteBuilder.isPresent()) {
+            return criteriaDeleteBuilder.get();
         }
         return criteriaBuilder -> {
-            Class<K> rootEntity = getRequiredRootEntity(context);
-            DeleteSpecification<K> specification = getDeleteSpecification(context);
+            DeleteSpecification<K> specification = getDeleteSpecification(context, rootEntity);
             CriteriaDelete<K> criteriaDelete = criteriaBuilder.createCriteriaDelete(rootEntity);
             Root<K> root = criteriaDelete.from(rootEntity);
             if (specification != null) {
@@ -538,40 +708,45 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.UpdateSpecification} in context.
      *
-     * @param context The context
-     * @param <K>     the specification entity root type
+     * @param context    The context
+     * @param rootEntity The root entity
+     * @param <K>        the specification entity root type
      * @return found specification
      */
     @Nullable
-    protected <K> UpdateSpecification<K> getUpdateSpecification(MethodInvocationContext<?, ?> context) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof UpdateSpecification updateSpecification) {
-            return updateSpecification;
+    protected <K> UpdateSpecification<K> getUpdateSpecification(MethodInvocationContext<?, ?> context, Class<K> rootEntity) {
+        Optional<UpdateSpecification> spec = getParameterInRole(context, TypeRole.SPECIFICATION_UPDATE, Argument.of(UpdateSpecification.class, rootEntity));
+        if (spec.isPresent()) {
+            return spec.get();
         }
+//        PredicateSpecification<?> predicateSpecification = findPredicateSpecification(parameterValue);
+//        if (predicateSpecification != null) {
+//            return (UpdateSpecification<K>) UpdateSpecification.where(predicateSpecification);
+//        }
         Argument<?> parameterArgument = context.getArguments()[0];
-        if (parameterArgument.isAssignableFrom(UpdateSpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
+        if (parameterArgument.isNullable()) {
             return null;
         }
-        throw new IllegalArgumentException("Argument must be an instance of: " + UpdateSpecification.class);
+        throw new IllegalArgumentException("Specification may not be null.");
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder}
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context The context
-     * @param <K>     the result type
+     * @param context    The context
+     * @param rootEntity The rootEntity
+     * @param <K>        the result type
      * @return found specification
      */
     @NonNull
-    protected <K> CriteriaUpdateBuilder<K> getCriteriaUpdateBuilder(MethodInvocationContext<?, ?> context) {
-        final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaUpdateBuilder criteriaUpdateBuilder) {
-            return criteriaUpdateBuilder;
+    protected <K> CriteriaUpdateBuilder<K> getCriteriaUpdateBuilder(MethodInvocationContext<?, ?> context, Class<K> rootEntity) {
+        Optional<CriteriaUpdateBuilder> criteriaUpdateBuilder = getParameterInRole(context, TypeRole.SPECIFICATION_DELETE, Argument.of(CriteriaUpdateBuilder.class, rootEntity));
+        if (criteriaUpdateBuilder.isPresent()) {
+            return criteriaUpdateBuilder.get();
         }
         return criteriaBuilder -> {
-            Class<K> rootEntity = getRequiredRootEntity(context);
-            UpdateSpecification<K> specification = getUpdateSpecification(context);
+            UpdateSpecification<K> specification = getUpdateSpecification(context, rootEntity);
             CriteriaUpdate<K> criteriaUpdate = criteriaBuilder.createCriteriaUpdate(rootEntity);
             Root<K> root = criteriaUpdate.from(rootEntity);
             if (specification != null) {
@@ -588,22 +763,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         List<Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
             Path<?> path = root;
-            for (Iterator<String> iterator = StringUtils.splitOmitEmptyStrings(order.getProperty(), '.').iterator(); iterator.hasNext(); ) {
-                String next = iterator.next();
-                if (iterator.hasNext()) {
-                    path = ((From<?, ?>) path).join(next);
-                } else {
-                    path = path.get(next);
-                }
+            for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(orderPath);
+
             }
-            Expression<?> expression = order.isIgnoreCase() ? cb.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) path) : path;
             orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
         }
         return orders;
-    }
-
-    protected enum Type {
-        COUNT, FIND_ONE, FIND_PAGE, FIND_ALL, DELETE_ALL, UPDATE_ALL, EXISTS
     }
 
     private List<JoinPath> sortJoinPaths(Collection<JoinPath> joinPaths) {

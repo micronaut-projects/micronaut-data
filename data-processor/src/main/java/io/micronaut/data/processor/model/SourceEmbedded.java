@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.model;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.inject.ast.ClassElement;
@@ -37,7 +36,7 @@ class SourceEmbedded extends SourceAssociation implements Embedded {
      * @param propertyElement The property element
      * @param entityResolver The entity resolver
      */
-    SourceEmbedded(SourcePersistentEntity owner, PropertyElement propertyElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
+    SourceEmbedded(SourcePersistentEntity owner, PropertyElement propertyElement, Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(owner, propertyElement, entityResolver);
     }
 }

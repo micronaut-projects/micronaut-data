@@ -16,11 +16,12 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateAllEntitiesInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link UpdateAllEntitiesInterceptor}.
@@ -40,10 +41,10 @@ public class DefaultUpdateAllEntitiesInterceptor<T, R> extends AbstractQueryInte
         super(operations);
     }
 
+    @Nullable
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Iterable<R> iterable = (Iterable<R>) getEntitiesParameter(context, Object.class);
-        //noinspection unchecked
         Class<R> rootEntity = getRequiredRootEntity(context);
         Iterable<R> rs = operations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
         ReturnType<R> rt = context.getReturnType();

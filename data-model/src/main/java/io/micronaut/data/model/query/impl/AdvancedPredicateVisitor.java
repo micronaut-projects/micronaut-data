@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
@@ -66,6 +67,11 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     }
 
     @Override
+    default void visit(NearPredicate nearPredicate) {
+        visitNear(nearPredicate.getValue(), nearPredicate.getGeometry(), nearPredicate.getDistance());
+    }
+
+    @Override
     default void visit(BinaryPredicate binaryPredicate) {
         appendPredicate(binaryPredicate.getOp(), binaryPredicate.getLeftExpression(), binaryPredicate.getRightExpression());
     }
@@ -91,6 +97,8 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
             case STARTS_WITH -> visitStartsWith(leftExpression, rightExpression, false);
             case STARTS_WITH_IGNORE_CASE -> visitStartsWith(leftExpression, rightExpression, true);
             case REGEX -> visitRegexp(leftExpression, rightExpression);
+            case GEO_WITHIN -> visitGeoWithin(leftExpression, rightExpression);
+            case GEO_INTERSECTS -> visitGeoIntersects(leftExpression, rightExpression);
             case ARRAY_CONTAINS -> visitArrayContains(leftExpression, rightExpression);
             case CONTAINS -> visitContains(leftExpression, rightExpression, false);
             case CONTAINS_IGNORE_CASE -> visitContains(leftExpression, rightExpression, true);
@@ -106,6 +114,18 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     default void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("Regexp is not supported by this implementation.");
+    }
+
+    default void visitGeoWithin(Expression<?> leftExpression, Expression<?> expression) {
+        throw new UnsupportedOperationException("GeoWithin is not supported by this implementation.");
+    }
+
+    default void visitGeoIntersects(Expression<?> leftExpression, Expression<?> expression) {
+        throw new UnsupportedOperationException("GeoIntersects is not supported by this implementation.");
+    }
+
+    default void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+        throw new UnsupportedOperationException("Near is not supported by this implementation.");
     }
 
     default void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
@@ -140,6 +160,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     void visitIsNotEmpty(Expression<?> expression);
 
+    @Override
     default void visit(InPredicate<?> inPredicate) {
         visitIn(inPredicate.getExpression(), inPredicate.getValues(), false);
     }

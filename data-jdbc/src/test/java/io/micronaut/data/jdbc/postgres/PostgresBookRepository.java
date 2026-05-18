@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
@@ -30,6 +30,7 @@ import io.micronaut.data.tck.repositories.BookRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public abstract class PostgresBookRepository extends BookRepository {
@@ -38,13 +39,13 @@ public abstract class PostgresBookRepository extends BookRepository {
     }
 
     @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable String arg0, @Nullable Sort sort);
+    public abstract List<Book> listNativeBooksNullableSearch(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String arg0, @Nullable @io.micronaut.core.annotation.Nullable Sort sort);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query("SELECT 'one\\:two\\:three'")
     public abstract String reproduceColonErrorEscaped();
@@ -81,6 +82,14 @@ public abstract class PostgresBookRepository extends BookRepository {
     public abstract Book customUpdateReturningBook(Long authorId);
 
     @Query("""
+        UPDATE "book"
+        SET "title" = :newTitle
+        WHERE "title" = :existingTitle
+        RETURNING "id"
+        """)
+    public abstract Optional<Long> customUpdateReturningIdIfTitleMatches(String existingTitle, String newTitle);
+
+    @Query("""
         INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
         VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
          RETURNING *
@@ -98,11 +107,24 @@ public abstract class PostgresBookRepository extends BookRepository {
          RETURNING *
         """)
     public abstract Book customInsertReturningBook(Long authorId,
-                                                   @Nullable Long genderId,
+                                                   @Nullable @io.micronaut.core.annotation.Nullable Long genderId,
                                                    String title,
                                                    int totalPages,
-                                                   @Nullable Long publisherId,
+                                                   @Nullable @io.micronaut.core.annotation.Nullable Long publisherId,
                                                    LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        SELECT :authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated
+        WHERE NOT EXISTS (SELECT 1 FROM "book" WHERE "title" = :title)
+         RETURNING "id"
+        """)
+    public abstract Optional<Long> customInsertReturningIdIfTitleNotExists(Long authorId,
+                                                                            @Nullable Long genderId,
+                                                                            String title,
+                                                                            int totalPages,
+                                                                            @Nullable Long publisherId,
+                                                                            LocalDateTime lastUpdated);
 
     public abstract Book saveReturning(Book book);
 
@@ -129,4 +151,11 @@ public abstract class PostgresBookRepository extends BookRepository {
         DELETE FROM "book" WHERE "id" = :id RETURNING *
         """)
     public abstract Book customDeleteOne(Long id);
+
+    @Query("""
+        DELETE FROM "book"
+        WHERE "title" = :title
+        RETURNING "id"
+        """)
+    public abstract Optional<Long> customDeleteReturningIdByTitle(String title);
 }

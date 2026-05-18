@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.reactive;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
@@ -24,11 +24,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.Where;
-import io.micronaut.data.hibernate.reactive.repository.jpa.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorPageableRepository;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
@@ -101,34 +101,34 @@ public interface BookRepository extends ReactorPageableRepository<Book, Long>, R
     Mono<Integer> countNativeByTitleWithPagesGreaterThan(String title, int pages);
 
     @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableSearch(@Nullable String arg0);
+    Flux<Book> listNativeBooksNullableSearch(@Nullable @io.micronaut.core.annotation.Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
+    Flux<Book> listNativeBooksNullableListSearch(@Nullable @io.micronaut.core.annotation.Nullable List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE :arg1 END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableListSearchWithExtraParameter(@Nullable List<String> arg0, boolean arg1);
+    Flux<Book> listNativeBooksNullableListSearchWithExtraParameter(@Nullable @io.micronaut.core.annotation.Nullable List<String> arg0, boolean arg1);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
+    Flux<Book> listNativeBooksNullableArraySearch(@Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title in (:arg0)", nativeQuery = true)
-    Flux<Book> listNativeBooksWithTitleInCollection(@Nullable Collection<String> arg0);
+    Flux<Book> listNativeBooksWithTitleInCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title IN (:arg0)", nativeQuery = true)
-    Flux<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    Flux<Book> listNativeBooksWithTitleInArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
-    Flux<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+    Flux<Book> listNativeBooksWithTitleAnyCollection(@Nullable @io.micronaut.core.annotation.Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    Flux<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+    Flux<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable @io.micronaut.core.annotation.Nullable String[] arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableListAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
+    Flux<Book> listNativeBooksNullableListAsStringArray(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
-    Flux<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
+    Flux<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @io.micronaut.core.annotation.Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
 
     Flux<Book> updateBooks(Collection<Book> books);
 

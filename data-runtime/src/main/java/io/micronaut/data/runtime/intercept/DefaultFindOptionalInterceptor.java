@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.Optional;

@@ -17,7 +17,7 @@ package io.micronaut.data.hibernate.connection;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;

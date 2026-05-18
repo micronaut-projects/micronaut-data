@@ -16,8 +16,8 @@
 package io.micronaut.transaction.reactive;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

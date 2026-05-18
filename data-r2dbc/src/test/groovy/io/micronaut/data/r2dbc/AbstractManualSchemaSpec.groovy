@@ -1,7 +1,7 @@
 package io.micronaut.data.r2dbc
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Patient
 import io.micronaut.data.tck.repositories.PatientRepository

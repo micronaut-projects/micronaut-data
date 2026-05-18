@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
@@ -38,77 +37,60 @@ import java.util.List;
 @Experimental
 public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, PersistentEntityQuery<T> {
 
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
+    @Override
+    <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity);
 
     @Override
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull Class<X> entityClass);
+    <X> PersistentEntityRoot<X> from(Class<X> entityClass);
 
     @Override
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull EntityType<X> entity);
+    <X> PersistentEntityRoot<X> from(EntityType<X> entity);
 
     @Override
-    @NonNull
     PersistentEntityCriteriaQuery<T> limit(int limit);
 
     @Override
-    @NonNull
     PersistentEntityCriteriaQuery<T> offset(int offset);
 
     @Internal
-    @NonNull
     default PersistentEntityCriteriaQuery<T> forUpdate(boolean forUpdate) {
         return this;
     }
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> select(@NonNull Selection<? extends T> selection);
+    PersistentEntityCriteriaQuery<T> select(Selection<? extends T> selection);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> multiselect(@NonNull Selection<?>... selections);
+    PersistentEntityCriteriaQuery<T> multiselect(Selection<?>... selections);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> multiselect(@NonNull List<Selection<?>> selectionList);
+    PersistentEntityCriteriaQuery<T> multiselect(List<Selection<?>> selectionList);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> where(@NonNull Expression<Boolean> restriction);
+    PersistentEntityCriteriaQuery<T> where(Expression<Boolean> restriction);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> where(@NonNull Predicate... restrictions);
+    PersistentEntityCriteriaQuery<T> where(Predicate... restrictions);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> groupBy(@NonNull Expression<?>... grouping);
+    PersistentEntityCriteriaQuery<T> groupBy(Expression<?>... grouping);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> groupBy(@NonNull List<Expression<?>> grouping);
+    PersistentEntityCriteriaQuery<T> groupBy(List<Expression<?>> grouping);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> having(@NonNull Expression<Boolean> restriction);
+    PersistentEntityCriteriaQuery<T> having(Expression<Boolean> restriction);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> having(@NonNull Predicate... restrictions);
+    PersistentEntityCriteriaQuery<T> having(Predicate... restrictions);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> orderBy(@NonNull Order... orders);
+    PersistentEntityCriteriaQuery<T> orderBy(Order... orders);
 
     @Override
-    @NonNull
-    PersistentEntityCriteriaQuery<T> orderBy(@NonNull List<Order> orders);
+    PersistentEntityCriteriaQuery<T> orderBy(List<Order> orders);
 
     @Override
-    @NonNull
     PersistentEntityCriteriaQuery<T> distinct(boolean distinct);
 
 }

@@ -16,15 +16,9 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
-import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import jakarta.persistence.criteria.CriteriaBuilder
-import jakarta.persistence.criteria.CriteriaQuery
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", rollback = false, transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -46,7 +40,7 @@ class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
     void "test updateReturning"() {
         given:
         def saved = new UserWithWhere(id: UUID.randomUUID(), email: "test@email.com", deleted: true)
-        userWithWhereRepository.save(saved)
+        userWithWhereRepository.insert(saved)
         when:"Update returning custom native query executed"
         userWithWhereRepository.updateEmailById(saved.id, "test1@email.com")
         def obj = userWithWhereRepository.updateReturningCustom("test2@email.com", false, saved.id)

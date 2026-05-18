@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -33,23 +34,24 @@ import io.micronaut.transaction.impl.DefaultTransactionStatus;
 @Internal
 public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTransactionOperations<DefaultTransactionStatus<C>, C> {
 
-    public AbstractDefaultTransactionOperations(ConnectionOperations<C> connectionOperations, SynchronousConnectionManager<C> synchronousConnectionManager) {
+    public AbstractDefaultTransactionOperations(ConnectionOperations<C> connectionOperations,
+                                                @Nullable SynchronousConnectionManager<C> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
     }
 
     @Override
     protected DefaultTransactionStatus<C> createNewTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return DefaultTransactionStatus.newTx(connectionStatus, definition);
+        return DefaultTransactionStatus.newTx(connectionStatus, definition, this);
     }
 
     @Override
-    protected DefaultTransactionStatus<C> createExistingTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition, DefaultTransactionStatus<C> existingTransaction) {
-        return DefaultTransactionStatus.existingTx(connectionStatus, existingTransaction);
+    protected DefaultTransactionStatus<C> createExistingTransactionStatus(TransactionDefinition definition, DefaultTransactionStatus<C> existingTransaction) {
+        return DefaultTransactionStatus.existingTx(existingTransaction.getConnectionStatus(), definition, existingTransaction, this);
     }
 
     @Override
     protected DefaultTransactionStatus<C> createNoTxTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
-        return DefaultTransactionStatus.noTx(connectionStatus, definition);
+        return DefaultTransactionStatus.noTx(connectionStatus, definition, this);
     }
 
 }

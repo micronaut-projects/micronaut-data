@@ -17,8 +17,9 @@ package io.micronaut.data.r2dbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Fetch;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
@@ -50,6 +51,8 @@ public class DataR2dbcConfiguration implements Named {
     private String schemaGenerateName;
     @Nullable
     private List<String> schemaGenerateNames;
+    @NonNull
+    private Integer defaultFetchSize = Fetch.DEFAULT_FETCH_SIZE;
 
     /**
      * The configuration.
@@ -180,5 +183,29 @@ public class DataR2dbcConfiguration implements Named {
      */
     public void setSchemaGenerateNames(@Nullable List<String> schemaGenerateNames) {
         this.schemaGenerateNames = schemaGenerateNames;
+    }
+
+    /**
+     * Gets the default fetch size for the JDBC driver. The fetch size is a hint to the JDBC driver
+     * as to the number of rows that should be fetched from the database when more rows are needed.
+     * If not set, the JDBC driver's default fetch size will be used.
+     * Used in streaming operations.
+     *
+     * @return the default fetch size
+     */
+    public @NonNull Integer getDefaultFetchSize() {
+        return defaultFetchSize;
+    }
+
+    /**
+     * Sets the default fetch size for the JDBC driver. The fetch size is a hint to the JDBC driver
+     * as to the number of rows that should be fetched from the database when more rows are needed.
+     * If set to null, the JDBC driver's default fetch size will be used.
+     * Used in streaming operations.
+     *
+     * @param defaultFetchSize the default fetch size
+     */
+    public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
+        this.defaultFetchSize = defaultFetchSize;
     }
 }

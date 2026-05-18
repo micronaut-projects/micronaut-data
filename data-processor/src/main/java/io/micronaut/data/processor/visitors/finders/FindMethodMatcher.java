@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
@@ -31,8 +31,11 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteri
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Find method matcher.
@@ -57,12 +60,29 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
             .build());
     }
 
+    @Nullable
     @Override
-    public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
-        return by(matches);
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Find.class)) {
+            AnnotationValue<Find> annotation = matchContext.getMethodElement().getAnnotation(Find.class);
+            if (annotation != null) {
+                Optional<String> rootEntity = annotation.stringValue();
+                if (rootEntity.isPresent()) {
+                    ClassElement classElement = matchContext.getVisitorContext().getClassElement(rootEntity.get())
+                        .orElseThrow(() -> new ProcessingException(matchContext.getMethodElement(), "Unknown entity: " + rootEntity.get()));
+                    matchContext.setRootEntity(matchContext.getEntity(classElement));
+                }
+                if (!matchContext.hasRootEntity()) {
+                    throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+                }
+                return match(matchContext, List.of());
+            }
+        }
+        return super.match(matchContext);
     }
 
-    public static QueryCriteriaMethodMatch by(List<MethodNameParser.Match> matches) {
+    @Override
+    public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         return new QueryCriteriaMethodMatch(matches) {
 
             boolean hasIdMatch;
@@ -96,8 +116,8 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
                 return e;
             }
 
-            private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext,
-                                            @NonNull ClassElement queryResultType) {
+            private boolean isFindByIdQuery(MethodMatchContext matchContext,
+                                            ClassElement queryResultType) {
                 return hasIdMatch
                     && matchContext.supportsImplicitQueries()
                     && queryResultType.getName().equals(matchContext.getRootEntity().getName())

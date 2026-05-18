@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.runtime;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

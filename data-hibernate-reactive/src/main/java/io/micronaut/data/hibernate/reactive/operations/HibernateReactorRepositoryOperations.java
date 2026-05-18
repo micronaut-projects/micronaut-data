@@ -16,7 +16,7 @@
 package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import org.hibernate.reactive.stage.Stage;

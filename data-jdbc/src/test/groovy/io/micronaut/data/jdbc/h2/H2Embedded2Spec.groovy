@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.core.annotation.Introspected
-import io.micronaut.core.annotation.Nullable
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -41,7 +41,7 @@ class H2Embedded2Spec extends Specification {
 
     def filledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", "2")))
+            var saved = repo.insert(new Foo(0, new Bar("1", "2")))
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", "2")
@@ -49,7 +49,7 @@ class H2Embedded2Spec extends Specification {
 
     void partiallyFilledInnerCanBeRetrieved() {
         when:
-            var saved = repo.save(new Foo(0, new Bar("1", null)))
+            var saved = repo.insert(new Foo(0, new Bar("1", null)))
             var found = repo.findById(saved.id).get()
         then:
             found.bar == new Bar("1", null)

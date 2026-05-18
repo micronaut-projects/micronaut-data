@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2.embeddedAssociation
 
 import io.micronaut.context.ApplicationContext
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.repeatable.JoinSpecifications
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -125,7 +126,7 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
             o.one.em.assoc[1].name == "D"
         when:
             def oem = new OneMainEntityEm(id: new EmId(one: e), name: "Embedded is crazy")
-            oem = oneMainEntityEmRepository.save(oem)
+            oem = oneMainEntityEmRepository.insert(oem)
             oem = oneMainEntityEmRepository.findById(oem.id).get()
         then:
             oem.name == "Embedded is crazy"
@@ -140,8 +141,8 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
 
     void 'embedded with generated values are saved'() {
         given:
-        relationshipStatusRepository.save(new RelationshipStatus(id: 1, name: 'Active'))
-        relationshipStatusRepository.save(new RelationshipStatus(id: 2, name: 'InActive'))
+        relationshipStatusRepository.insert(new RelationshipStatus(id: 1, name: 'Active'))
+        relationshipStatusRepository.insert(new RelationshipStatus(id: 2, name: 'InActive'))
         when:
         var status = relationshipStatusRepository.findById(1L).orElse(null)
         then:
@@ -170,7 +171,7 @@ interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpec
     Page<MainEntity> findAll(Pageable pageable)
 
     @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
-    Page<MainEntity> findAllByCriteria(PredicateSpecification<Order> spec, Pageable pageable)
+    Page<MainEntity> findAllByCriteria(@Nullable PredicateSpecification<Order> spec, Pageable pageable)
 }
 
 @JdbcRepository(dialect = Dialect.H2)

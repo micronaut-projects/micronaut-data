@@ -15,24 +15,14 @@
  */
 package io.micronaut.data.jakarta.tck;
 
-import ee.jakarta.tck.data.standalone.entity.Coordinate;
-import ee.jakarta.tck.data.standalone.entity.EntityTests;
-import ee.jakarta.tck.data.standalone.entity.MultipleEntityRepo;
 import org.jboss.arquillian.container.test.spi.client.deployment.ApplicationArchiveProcessor;
 import org.jboss.arquillian.test.spi.TestClass;
 import org.jboss.shrinkwrap.api.Archive;
-import org.jboss.shrinkwrap.api.container.ClassContainer;
 
 
 public class TCKArchiveProcessor implements ApplicationArchiveProcessor {
 
     @Override
     public void process(Archive<?> applicationArchive, TestClass testClass) {
-        if (applicationArchive instanceof ClassContainer) {
-            if (testClass.getName().equals(EntityTests.class.getName())) {
-                ((ClassContainer<?>) applicationArchive).addClass(MultipleEntityRepo.class);
-                ((ClassContainer<?>) applicationArchive).addClass(Coordinate.class);
-            }
-        }
     }
 }

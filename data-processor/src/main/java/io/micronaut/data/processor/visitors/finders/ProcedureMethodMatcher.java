@@ -28,6 +28,7 @@ import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpression
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
 import io.micronaut.inject.ast.ParameterElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +53,7 @@ public final class ProcedureMethodMatcher implements MethodMatcher {
     }
 
     @Override
+    @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         AnnotationValue<Procedure> procedureAnnotationValue = matchContext.getMethodElement().getAnnotation(Procedure.class);
         if (procedureAnnotationValue != null) {

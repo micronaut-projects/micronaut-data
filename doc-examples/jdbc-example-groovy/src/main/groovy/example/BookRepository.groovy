@@ -2,7 +2,7 @@
 // tag::repository[]
 package example
 
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository

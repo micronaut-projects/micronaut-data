@@ -24,7 +24,6 @@ import jakarta.inject.Singleton;
 
 import java.sql.Types;
 
-
 /**
  * A validator for SQL Server table mappings, extending the {@link BaseSqlTableMappingValidator} to provide
  * SQL Server-specific validation logic.

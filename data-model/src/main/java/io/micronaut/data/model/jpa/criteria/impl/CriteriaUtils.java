@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -31,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Subquery;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -49,22 +49,22 @@ public final class CriteriaUtils {
     private CriteriaUtils() {
     }
 
-    public static boolean isNumeric(@NonNull Class<?> clazz) {
+    public static boolean isNumeric(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return Number.class.isAssignableFrom(ReflectionUtils.getPrimitiveType(clazz));
         }
         return Number.class.isAssignableFrom(clazz);
     }
 
-    public static boolean isBoolean(@NonNull Class<?> clazz) {
+    public static boolean isBoolean(Class<?> clazz) {
         return Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz);
     }
 
-    public static boolean isComparable(@NonNull Class<?> clazz) {
+    public static boolean isComparable(Class<?> clazz) {
         return Comparable.class.isAssignableFrom(clazz) || isNumeric(clazz) ;
     }
 
-    public static boolean isTextual(@NonNull Class<?> clazz) {
+    public static boolean isTextual(Class<?> clazz) {
         return CharSequence.class.isAssignableFrom(clazz);
     }
 
@@ -146,11 +146,11 @@ public final class CriteriaUtils {
     public static boolean hasVersionPredicate(Expression<?> predicate) {
         if (predicate instanceof BinaryPredicate binaryPredicate) {
             if (binaryPredicate.getLeftExpression() instanceof PersistentPropertyPath<?> pp &&
-                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                pp.getProperty().getOwner().hasVersion() && pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
                 return true;
             }
             if (binaryPredicate.getRightExpression() instanceof PersistentPropertyPath<?> pp &&
-                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                pp.getProperty().getOwner().hasVersion() && pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
                 return true;
             }
         }
@@ -172,7 +172,7 @@ public final class CriteriaUtils {
         return false;
     }
 
-    public static Set<ParameterExpression<?>> extractPredicateParameters(Expression<?> predicate) {
+    public static Set<ParameterExpression<?>> extractPredicateParameters(@Nullable Expression<?> predicate) {
         if (predicate == null) {
             return Collections.emptySet();
         }
@@ -182,31 +182,36 @@ public final class CriteriaUtils {
     }
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
-        if (predicate instanceof LiteralExpression<?>) {
-            return;
-        } else if (predicate instanceof BinaryPredicate binaryPredicate) {
-            if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
+        switch (predicate) {
+            case LiteralExpression<?> ignored -> {
             }
-            if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
-            }
-        } else if (predicate instanceof InPredicate<?> pp) {
-            for (Expression<?> expression : pp.getValues()) {
-                if (expression instanceof ParameterExpression<?> parameterExpression) {
+            case BinaryPredicate binaryPredicate -> {
+                if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }
-        } else if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
-            for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case InPredicate<?> pp -> {
+                for (Expression<?> expression : pp.getValues()) {
+                    if (expression instanceof ParameterExpression<?> parameterExpression) {
+                        parameters.add(parameterExpression);
+                    }
+                }
             }
-        } else if (predicate instanceof DisjunctionPredicate disjunctionPredicate) {
-            for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case ConjunctionPredicate conjunctionPredicate -> {
+                for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
             }
-        } else {
-            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
+            case DisjunctionPredicate disjunctionPredicate -> {
+                for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
+            }
+            default ->
+                throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
         }
     }
 

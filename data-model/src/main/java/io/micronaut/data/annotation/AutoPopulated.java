@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.annotation;
 
-import io.micronaut.context.annotation.AliasFor;
-
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Meta annotation to identity annotations that are auto-populated by the Micronaut Data.
@@ -36,24 +38,25 @@ public @interface AutoPopulated {
      */
     String NAME = AutoPopulated.class.getName();
 
-    /**
-     * @deprecated Replaced by {@link #UPDATABLE}
-     */
-    @Deprecated(since = "4.8", forRemoval = true)
-    String UPDATEABLE = "updateable";
-
     String UPDATABLE = "updatable";
 
     /**
-     * @return Whether the property can be updated following an insert
-     * @deprecated Replaced by {@link #updatable()}
+     * The metadata key for {@link #skipIfPresent()}.
      */
-    @Deprecated(since = "4.8", forRemoval = true)
-    boolean updateable() default true;
+    String SKIP_IF_PRESENT = "skipIfPresent";
 
     /**
      * @return Whether the property can be updated following an insert
      */
-    @AliasFor(member = UPDATEABLE)
     boolean updatable() default true;
+
+    /**
+     * Controls whether auto-population should skip if a non-null value is already present.
+     *
+     * Default is false to preserve the existing behavior of always generating a value.
+     *
+     * @return {@code true} if auto-population should be skipped if a non-null value is present, {@code false} otherwise
+     * @since 5.0
+     */
+    boolean skipIfPresent() default false;
 }

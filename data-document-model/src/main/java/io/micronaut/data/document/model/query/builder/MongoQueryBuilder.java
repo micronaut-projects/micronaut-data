@@ -17,8 +17,7 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -27,25 +26,56 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.serde.config.annotation.SerdeConfig;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,19 +88,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 
 /**
  * The Mongo query builder.
@@ -78,6 +107,7 @@ import static java.util.Collections.singletonMap;
  * @author Denis Stepanov
  * @since 3.3
  */
+@TypeHint(MongoQueryBuilder.class)
 @Internal
 public final class MongoQueryBuilder implements QueryBuilder {
 
@@ -85,362 +115,88 @@ public final class MongoQueryBuilder implements QueryBuilder {
      * An object with this property is replaced with an actual query parameter at the runtime.
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+    public static final String NEGATE = "$mn_negate"; // -vale
+    public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
+    private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
 
-    private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
-
-    {
-        addCriterionHandler(QueryModel.Negation.class, (ctx, obj, negation) -> {
-            if (negation.getCriteria().size() == 1) {
-                QueryModel.Criterion criterion = negation.getCriteria().iterator().next();
-                if (criterion instanceof QueryModel.In in) {
-                    handleCriterion(ctx, obj, new QueryModel.NotIn(in.getName(), in.getValue()));
-                    return;
-                }
-                if (criterion instanceof QueryModel.NotIn notIn) {
-                    handleCriterion(ctx, obj, new QueryModel.In(notIn.getName(), notIn.getValue()));
-                    return;
-                }
-                if (criterion instanceof QueryModel.PropertyCriterion || criterion instanceof QueryModel.PropertyComparisonCriterion) {
-                    var neg = new LinkedHashMap<String, Object>();
-                    handleCriterion(ctx, neg, criterion);
-                    if (neg.size() != 1) {
-                        throw new IllegalStateException("Expected size of 1");
-                    }
-                    String key = neg.keySet().iterator().next();
-                    obj.put(key, singletonMap("$not", neg.get(key)));
-                } else {
-                    throw new IllegalStateException("Negation is not supported for this criterion: " + criterion);
-                }
-            } else {
-                throw new IllegalStateException("Negation not supported on multiple criterion: " + negation);
-            }
-        });
-
-        addCriterionHandler(QueryModel.Conjunction.class, (ctx, sb, conjunction) -> handleJunction(ctx, sb, conjunction, "$and"));
-        addCriterionHandler(QueryModel.Disjunction.class, (ctx, sb, disjunction) -> handleJunction(ctx, sb, disjunction, "$or"));
-        addCriterionHandler(QueryModel.IsTrue.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), true)));
-        addCriterionHandler(QueryModel.IsFalse.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), false)));
-        addCriterionHandler(QueryModel.IdEquals.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals("id", criterion.getValue())));
-        addCriterionHandler(QueryModel.VersionEquals.class, (context, sb, criterion) -> {
-            handleCriterion(context, sb, new QueryModel.Equals(context.getPersistentEntity().getVersion().getName(), criterion.getValue()));
-        });
-        addCriterionHandler(QueryModel.GreaterThan.class, propertyOperatorExpression("$gt"));
-        addCriterionHandler(QueryModel.GreaterThanEquals.class, propertyOperatorExpression("$gte"));
-        addCriterionHandler(QueryModel.LessThan.class, propertyOperatorExpression("$lt"));
-        addCriterionHandler(QueryModel.LessThanEquals.class, propertyOperatorExpression("$lte"));
-        addCriterionHandler(QueryModel.IsNull.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), null)));
-        addCriterionHandler(QueryModel.IsNotNull.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.NotEquals(criterion.getProperty(), null)));
-        addCriterionHandler(QueryModel.IsNotNull.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.NotEquals(criterion.getProperty(), null)));
-        addCriterionHandler(QueryModel.GreaterThanProperty.class, comparison("$gt"));
-        addCriterionHandler(QueryModel.GreaterThanEqualsProperty.class, comparison("$gte"));
-        addCriterionHandler(QueryModel.LessThanProperty.class, comparison("$lt"));
-        addCriterionHandler(QueryModel.LessThanEqualsProperty.class, comparison("$lte"));
-        addCriterionHandler(QueryModel.EqualsProperty.class, comparison("$eq"));
-        addCriterionHandler(QueryModel.NotEqualsProperty.class, comparison("$ne"));
-        addCriterionHandler(QueryModel.Between.class, (context, obj, criterion) -> {
-            QueryModel.Conjunction conjunction = new QueryModel.Conjunction();
-            conjunction.add(new QueryModel.GreaterThanEquals(criterion.getProperty(), criterion.getFrom()));
-            conjunction.add(new QueryModel.LessThanEquals(criterion.getProperty(), criterion.getTo()));
-            handleCriterion(context, obj, conjunction);
-        });
-        addCriterionHandler(QueryModel.Regex.class, propertyOperatorExpression("$regex", value -> {
-            if (value instanceof BindingParameter) {
-                return value;
-            }
-            return new RegexPattern(value.toString());
-        }));
-        addCriterionHandler(QueryModel.IsEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            obj.put("$or", asList(
-                    singletonMap(criterionPropertyName, singletonMap("$eq", "")),
-                    singletonMap(criterionPropertyName, singletonMap("$exists", false))
-            ));
-        });
-        addCriterionHandler(QueryModel.IsNotEmpty.class, (context, obj, criterion) -> {
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            obj.put("$and", asList(
-                    singletonMap(criterionPropertyName, singletonMap("$ne", "")),
-                    singletonMap(criterionPropertyName, singletonMap("$exists", true))
-            ));
-        });
-        addCriterionHandler(QueryModel.In.class, (context, obj, criterion) -> {
-            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-            Object value = criterion.getValue();
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            if (value instanceof Iterable<?> iterable) {
-                List<?> values = CollectionUtils.iterableToList(iterable);
-                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
-            } else {
-                obj.put(criterionPropertyName, singletonMap("$in", singletonList(valueRepresentation(context, propertyPath, value))));
-            }
-        });
-        addCriterionHandler(QueryModel.NotIn.class, (context, obj, criterion) -> {
-            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-            Object value = criterion.getValue();
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            if (value instanceof Iterable<?> iterable) {
-                List<?> values = CollectionUtils.iterableToList(iterable);
-                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
-            } else {
-                obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
-            }
-        });
-        addCriterionHandler(QueryModel.Equals.class, (context, obj, criterion) -> {
-            if (criterion.isIgnoreCase()) {
-                handleRegexPropertyExpression(context, obj, criterion, true, false, true, true);
-                return;
-            }
-            handlePropertyOperatorExpression(context, obj, criterion, "$eq", null);
-        });
-        addCriterionHandler(QueryModel.NotEquals.class, (context, obj, criterion) -> {
-            if (criterion.isIgnoreCase()) {
-                handleRegexPropertyExpression(context, obj, criterion, true, true, true, true);
-                return;
-            }
-            handlePropertyOperatorExpression(context, obj, criterion, "$ne", null);
-        });
-        addCriterionHandler(QueryModel.StartsWith.class, (context, obj, criterion) -> {
-            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, true, false);
-        });
-        addCriterionHandler(QueryModel.EndsWith.class, (context, obj, criterion) -> {
-            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, true);
-        });
-        addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
-            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
-        });
-        addCriterionHandler(QueryModel.Like.class, (context, obj, criterion) -> {
-            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
-        });
-        addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
-            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-            Object value = criterion.getValue();
-            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            Object criteriaValue;
-            if (value instanceof Iterable<?> iterable) {
-                List<?> values = CollectionUtils.iterableToList(iterable);
-                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList();
-            } else {
-                criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
-            }
-            obj.put(criterionPropertyName, singletonMap("$all", criteriaValue));
-        });
-    }
-
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
-        return propertyOperatorExpression(op, null);
-    }
-
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op, Function<Object, Object> mapper) {
-        return (context, obj, criterion) -> handlePropertyOperatorExpression(context, obj, criterion, op, mapper);
-    }
-
-    private <T extends QueryModel.PropertyCriterion> void handlePropertyOperatorExpression(CriteriaContext context, Map<String, Object> obj,
-                                                                                           T criterion, String op, Function<Object, Object> mapper) {
-        Object value = criterion.getValue();
-        if (mapper != null) {
-            value = mapper.apply(value);
-        }
-        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-        Object finalValue = value;
-        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-            String path = asPath(associations, property);
-            obj.put(path, singletonMap(op, valueRepresentation(context, propertyPath, PersistentPropertyPath.of(associations, property), finalValue)));
-        });
-    }
-
-    /**
-     * Handles criteria by string value using $regex in MongoDB. It supports case ignore, negation, whole world matching, starts with, contains and ends with.
-     *
-     * @param context the criterion context
-     * @param obj the object to populate with criteria
-     * @param criterion the criterion
-     * @param ignoreCase whether to regex search using ignore case
-     * @param negate used with not equal, to negate regex search
-     * @param startsWith whether to search regex starting with
-     * @param endsWith whether to search regex ending with
-     * @param <T> the criterion type
-     */
-    private <T extends QueryModel.PropertyCriterion> void handleRegexPropertyExpression(CriteriaContext context, Map<String, Object> obj, T criterion,
-                                                                                        boolean ignoreCase, boolean negate, boolean startsWith, boolean endsWith) {
-        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-        Object value = criterion.getValue();
-        Object filterValue;
-        Map<String, Object> regexCriteria = new HashMap<>(2);
-        regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
-        String regexValue;
-        if (value instanceof BindingParameter bindingParameter) {
-            int index = context.pushParameter(
-                bindingParameter,
-                newBindingContext(propertyPath, propertyPath)
-            );
-            regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
-        } else {
-            regexValue = value.toString();
-        }
-        StringBuilder regexValueBuff = new StringBuilder();
-        if (startsWith) {
-            regexValueBuff.append("^");
-        }
-        regexValueBuff.append(regexValue);
-        if (endsWith) {
-            regexValueBuff.append("$");
-        }
-        regexCriteria.put(REGEX, regexValueBuff.toString());
-        if (negate) {
-            filterValue = singletonMap(NOT, regexCriteria);
-        } else {
-            filterValue = regexCriteria;
-        }
-        String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-        obj.put(criterionPropertyName, filterValue);
-    }
-
-    /**
-     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
-     * Used currently for id property name to be generated as _id when used in criteria.
-     *
-     * @param name    the criteria property name
-     * @param context the criteria context
-     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
-     */
-    private String getCriterionPropertyName(String name, CriteriaContext context) {
-        PersistentEntity persistentEntity = context.getPersistentEntity();
-        PersistentProperty identity = persistentEntity.getIdentity();
-        if (identity != null && identity.getName().equals(name)) {
-            return MONGO_ID_FIELD;
-        }
-        return name;
-    }
-
-    private String getPropertyPersistName(PersistentProperty property) {
-        if (property.getOwner().getIdentity() == property) {
-            return MONGO_ID_FIELD;
-        }
-        return property.getAnnotationMetadata()
-            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
-            .orElseGet(property::getName);
-    }
-
-    private Object valueRepresentation(CriteriaContext context, PersistentPropertyPath propertyPath, Object value) {
-        return valueRepresentation(context, propertyPath, propertyPath, value);
-    }
-
-    private Object valueRepresentation(CriteriaContext context,
-                                       PersistentPropertyPath inPropertyPath,
-                                       PersistentPropertyPath outPropertyPath,
-                                       Object value) {
-        if (value instanceof LocalDate localDate) {
-            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate(localDate));
-        }
-        if (value instanceof LocalDateTime localDateTime) {
-            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate(localDateTime));
-        }
-        if (value instanceof BindingParameter bindingParameter) {
-            int index = context.pushParameter(
-                    bindingParameter,
-                    newBindingContext(inPropertyPath, outPropertyPath)
-            );
-            return singletonMap(QUERY_PARAMETER_PLACEHOLDER, index);
-        } else {
-            return asLiteral(value);
-        }
-    }
-
-    private String formatDate(LocalDate localDate) {
-        return formatDate(localDate.atStartOfDay());
-    }
-
-    private String formatDate(LocalDateTime localDateTime) {
-        return formatDate(localDateTime.atZone(ZoneId.of("Z")).toInstant().toEpochMilli());
-    }
-
-    private String formatDate(final long dateTime) {
-        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME);
-    }
-
-    private <T extends QueryModel.PropertyComparisonCriterion> CriterionHandler<T> comparison(String operator) {
-        return (ctx, obj, comparisonCriterion) -> {
-            PersistentPropertyPath p1 = ctx.getRequiredProperty(comparisonCriterion.getProperty(), comparisonCriterion.getClass());
-            PersistentPropertyPath p2 = ctx.getRequiredProperty(comparisonCriterion.getOtherProperty(), comparisonCriterion.getClass());
-            obj.put("$expr", singletonMap(
-                    operator, asList(
-                            "$" + p1.getPath(), "$" + p2.getPath()
-                    )
-            ));
-        };
-    }
-
-    private Object asLiteral(@Nullable Object value) {
-        if (value instanceof RegexPattern regexPattern) {
-            return "'" + Pattern.quote(regexPattern.value) + "'";
-        }
-        return value;
-    }
-
+    @Nullable
     @Override
-    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition insertQueryDefinition) {
         return null;
     }
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryModel query) {
+    public QueryResult buildSelect(AnnotationMetadata annotationMetadata, SelectQueryDefinition selectQueryDefinition) {
         ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("selectQueryDefinition", selectQueryDefinition);
 
-        QueryState queryState = new QueryState(query, true);
+        QueryState queryState = new QueryState(selectQueryDefinition, true);
 
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> projectionObj = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
 
-        addLookups(query.getJoinPaths(), queryState);
+        addLookups(selectQueryDefinition.getJoinPaths(), queryState);
         List<Map<String, Object>> pipeline = queryState.rootLookups.pipeline;
-        buildProjection(query.getProjections(), query.getPersistentEntity(), group, projectionObj, countObj);
-        QueryModel.Junction criteria = query.getCriteria();
-        if (!criteria.isEmpty()) {
-            predicateObj = buildWhereClause(annotationMetadata, criteria, queryState);
+        buildProjection(selectQueryDefinition.selection(), group, projectionObj, countObj);
+        Predicate predicate = selectQueryDefinition.predicate();
+        if (predicate != null) {
+            predicateObj = buildWhereClause(predicate, queryState);
         }
 
         if (!predicateObj.isEmpty()) {
-            pipeline.add(singletonMap("$match", predicateObj));
+            pipeline.add(Map.of("$match", predicateObj));
         }
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
-            pipeline.add(singletonMap("$group", group));
+            pipeline.add(Map.of("$group", group));
         }
         if (!countObj.isEmpty()) {
             pipeline.add(countObj);
         }
-        if (!projectionObj.isEmpty()) {
-            pipeline.add(singletonMap("$project", projectionObj));
-        } else {
-            String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
-            if (customProjection != null) {
-                pipeline.add(singletonMap("$project", new RawJsonValue(customProjection)));
-            }
-        }
-        Sort sort = query.getSort();
-        if (sort.isSorted() && !sort.getOrderBy().isEmpty()) {
+        // Order should be before project as it can remove fields that are needed for ordering
+        List<Order> orders = selectQueryDefinition.order();
+        if (!orders.isEmpty()) {
             Map<String, Object> sortObj = new LinkedHashMap<>();
-            sort.getOrderBy().forEach(order -> sortObj.put(order.getProperty(), order.isAscending() ? 1 : -1));
-            pipeline.add(singletonMap("$sort", sortObj));
+            orders.forEach(order -> {
+                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath = requireProperty(order.getExpression());
+                PersistentProperty property = persistentPropertyPath.getProperty();
+                PersistentEntity owner = property.getOwner();
+                if (owner.hasIdentity()) {
+                    PersistentProperty identity = owner.getIdentity();
+                    if (identity.equals(property)) {
+                        sortObj.put(MONGO_ID_FIELD, order.isAscending() ? 1 : -1);
+                    } else {
+                        sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                    }
+                }
+            });
+            pipeline.add(Map.of("$sort", sortObj));
         } else {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
-                pipeline.add(singletonMap("$sort", new RawJsonValue(customSort)));
+                pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
             }
         }
-        if (query.getOffset() > 0) {
-            pipeline.add(singletonMap("$skip", query.getOffset()));
+        if (!projectionObj.isEmpty()) {
+            pipeline.add(Map.of("$project", projectionObj));
+        } else {
+            String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
+            if (customProjection != null) {
+                pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
+            }
         }
-        if (query.getMax() != -1) {
-            pipeline.add(singletonMap("$limit", query.getMax()));
+        if (selectQueryDefinition.offset() > 0) {
+            pipeline.add(Map.of("$skip", selectQueryDefinition.offset()));
+        }
+        if (selectQueryDefinition.limit() != -1) {
+            pipeline.add(Map.of("$limit", selectQueryDefinition.limit()));
         }
 
         String q;
@@ -459,8 +215,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return;
         }
         List<String> joined = joins.stream().map(JoinPath::getPath)
-                .sorted((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1, o2))
-                .toList();
+            .sorted((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1, o2))
+            .toList();
         for (String join : joined) {
             StringJoiner rootPath = new StringJoiner(".");
             StringJoiner currentEntityPath = new StringJoiner(".");
@@ -470,12 +226,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 currentEntityPath.add(path);
                 String thisPath = currentEntityPath.toString();
                 if (currentLookup.subLookups.containsKey(thisPath)) {
+                    // TODO: inspect this check. Why do we check 'thisPath' but get 'path'
                     currentLookup = currentLookup.subLookups.get(path);
+                    Objects.requireNonNull(currentLookup);
                     currentEntityPath = new StringJoiner(".");
                     continue;
                 }
 
                 PersistentPropertyPath propertyPath = currentLookup.persistentEntity.getPropertyPath(thisPath);
+                Objects.requireNonNull(propertyPath, "Cannot find property path: " + thisPath);
                 PersistentProperty property = propertyPath.getProperty();
                 if (!(property instanceof Association association)) {
                     continue;
@@ -494,16 +253,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
                     PersistentEntity associationOwner = association.getOwner();
                     // JOIN TABLE
-                    PersistentProperty identity = associatedEntity.getIdentity();
-                    if (identity == null) {
+                    if (!associatedEntity.hasIdentity()) {
                         throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                     }
-                    final PersistentProperty associatedId = associationOwner.getIdentity();
-                    if (associatedId == null) {
+                    if (!associationOwner.hasIdentity()) {
                         throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                     }
                     Association owningAssociation = inverseSide.orElse(association);
-                    boolean isAssociationOwner = !association.getInverseSide().isPresent();
+                    boolean isAssociationOwner = association.getInverseSide().isEmpty();
                     NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                     AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
 
@@ -521,22 +278,22 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     List<Map<String, Object>> joinCollectionLookupPipeline = new ArrayList<>();
                     pipeline.add(lookup(joinCollectionName, MONGO_ID_FIELD, ownerCollectionName, joinCollectionLookupPipeline, thisPath));
                     joinCollectionLookupPipeline.add(
-                            lookup(
-                                    joinedCollectionName,
-                                    joinedCollectionName,
-                                    MONGO_ID_FIELD,
-                                    lookupStage.pipeline,
-                                    joinedCollectionName)
+                        lookup(
+                            joinedCollectionName,
+                            joinedCollectionName,
+                            MONGO_ID_FIELD,
+                            lookupStage.pipeline,
+                            joinedCollectionName)
                     );
                     joinCollectionLookupPipeline.add(unwind("$" + joinedCollectionName, true));
                     joinCollectionLookupPipeline.add(
-                            singletonMap("$replaceRoot", singletonMap("newRoot", "$" + joinedCollectionName))
+                        Map.of("$replaceRoot", Map.of("newRoot", "$" + joinedCollectionName))
                     );
                 } else {
                     String currentPath = asPath(propertyPath.getAssociations(), propertyPath.getProperty());
                     if (association.isForeignKey()) {
                         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy")
-                                .orElseThrow(IllegalStateException::new);
+                            .orElseThrow(IllegalStateException::new);
                         PersistentPropertyPath mappedByPath = association.getAssociatedEntity().getPropertyPath(mappedBy);
                         if (mappedByPath == null) {
                             throw new IllegalStateException("Cannot find mapped path: " + mappedBy);
@@ -547,25 +304,24 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
-                            String fieldPath = asPath(associations, p);
-                            localMatchFields.add(fieldPath);
+                        PersistentEntityUtils.traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                            localMatchFields.add(asPath(associations, p));
                         });
 
                         var mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
                         mappedAssociations.add(associationProperty);
 
-                        traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
+                        PersistentEntityUtils.traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
                             String fieldPath = asPath(associations, p);
                             foreignMatchFields.add(fieldPath);
                         });
 
                         pipeline.add(lookup(
-                                joinedCollectionName,
-                                localMatchFields,
-                                foreignMatchFields,
-                                lookupStage.pipeline,
-                                currentPath)
+                            joinedCollectionName,
+                            localMatchFields,
+                            foreignMatchFields,
+                            lookupStage.pipeline,
+                            currentPath)
                         );
                     } else {
                         var mappedAssociations = new ArrayList<>(propertyPath.getAssociations());
@@ -573,25 +329,23 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                         var localMatchFields = new ArrayList<String>();
                         var foreignMatchFields = new ArrayList<String>();
-                        PersistentProperty identity = lookupStage.persistentEntity.getIdentity();
-                        if (identity == null) {
+                        if (!lookupStage.persistentEntity.hasIdentity()) {
                             throw new IllegalStateException("Null identity of persistent entity: " + lookupStage.persistentEntity);
                         }
-                        traversePersistentProperties(mappedAssociations, identity, (associations, p) -> {
-                            String fieldPath = asPath(associations, p);
-                            localMatchFields.add(fieldPath);
+                        PersistentProperty identity = lookupStage.persistentEntity.getIdentity();
+                        PersistentEntityUtils.traversePersistentProperties(mappedAssociations, identity, (associations, p) -> {
+                            localMatchFields.add(asPath(associations, p));
                         });
-                        traversePersistentProperties(identity, (associations, p) -> {
-                            String fieldPath = asPath(associations, p);
-                            foreignMatchFields.add(fieldPath);
+                        PersistentEntityUtils.traversePersistentProperties(identity, (associations, p) -> {
+                            foreignMatchFields.add(asPath(associations, p));
                         });
 
                         pipeline.add(lookup(
-                                joinedCollectionName,
-                                localMatchFields,
-                                foreignMatchFields,
-                                lookupStage.pipeline,
-                                currentPath)
+                            joinedCollectionName,
+                            localMatchFields,
+                            foreignMatchFields,
+                            lookupStage.pipeline,
+                            currentPath)
                         );
                     }
                     if (association.getKind().isSingleEnded()) {
@@ -611,9 +365,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return joinColumns;
         }
         var fields = new ArrayList<String>();
-        traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-            fields.add(asPath(associations, property));
-        });
+        PersistentEntityUtils.traversePersistentProperties(entity.getIdentity(), (associations, property) -> fields.add(asPath(associations, property)));
         return fields;
     }
 
@@ -623,12 +375,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
-        PersistentProperty identity = entity.getIdentity();
-        if (identity == null) {
+        if (!entity.hasIdentity()) {
             throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
         }
+        PersistentProperty identity = entity.getIdentity();
         var fields = new ArrayList<String>();
-        traversePersistentProperties(identity, (associations, property) -> {
+        PersistentEntityUtils.traversePersistentProperties(identity, (associations, property) -> {
             fields.add(asPath(associations, property));
         });
         return fields;
@@ -659,7 +411,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         lookup.put("foreignField", foreignField);
         lookup.put("pipeline", pipeline);
         lookup.put("as", as);
-        return singletonMap("$lookup", lookup);
+        return Map.of("$lookup", lookup);
     }
 
     private Map<String, Object> lookup(String from,
@@ -680,14 +432,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
         for (String localField : localFields) {
             String var = "v" + i++;
             let.put(var, "$" + localField);
-            matches.add(singletonMap("$eq", Arrays.asList("$$" + var, "$" + foreignIt.next())));
+            matches.add(Map.of("$eq", Arrays.asList("$$" + var, "$" + foreignIt.next())));
         }
 
         Map<String, Object> match;
         if (matches.size() > 1) {
-            match = singletonMap("$match", singletonMap("$expr", singletonMap("$and", matches)));
+            match = Map.of("$match", Map.of("$expr", Map.of("$and", matches)));
         } else {
-            match = singletonMap("$match", singletonMap("$expr", matches.iterator().next()));
+            match = Map.of("$match", Map.of("$expr", matches.iterator().next()));
         }
 
         return lookup(from, let, match, pipeline, as);
@@ -705,97 +457,53 @@ public final class MongoQueryBuilder implements QueryBuilder {
         lookup.put("let", let);
         lookup.put("pipeline", pipeline);
         lookup.put("as", as);
-        return singletonMap("$lookup", lookup);
+        return Map.of("$lookup", lookup);
     }
 
     private Map<String, Object> unwind(String path, boolean preserveNullAndEmptyArrays) {
         Map<String, Object> unwind = new LinkedHashMap<>();
         unwind.put("path", path);
         unwind.put("preserveNullAndEmptyArrays", preserveNullAndEmptyArrays);
-        return singletonMap("$unwind", unwind);
+        return Map.of("$unwind", unwind);
     }
 
     private boolean isMatchOnlyStage(List<Map<String, Object>> pipeline) {
         return pipeline.size() == 1 && pipeline.iterator().next().containsKey("$match");
     }
 
-    private Map<String, Object> buildWhereClause(AnnotationMetadata annotationMetadata, QueryModel.Junction criteria, QueryState queryState) {
-        CriteriaContext ctx = new CriteriaContext() {
-
-            @Override
-            public QueryState getQueryState() {
-                return queryState;
-            }
-
-            @Override
-            public PersistentEntity getPersistentEntity() {
-                return queryState.getEntity();
-            }
-
-            @Override
-            public PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz) {
-                return findProperty(queryState, name, criterionClazz);
-            }
-
-        };
-
-        Map<String, Object> obj = new LinkedHashMap<>();
-        handleCriterion(ctx, obj, criteria);
-        return obj;
+    private Map<String, Object> buildWhereClause(Predicate predicate, QueryState queryState) {
+        if (predicate == null) {
+            return Map.of();
+        }
+        Map<String, Object> query = new LinkedHashMap<>();
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(new MongoPredicateVisitor(queryState, query));
+        } else {
+            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
+        }
+        return query;
     }
 
-    private void buildProjection(List<QueryModel.Projection> projectionList,
-                                 PersistentEntity entity,
+    private void buildProjection(Selection<?> selection,
                                  Map<String, Object> groupObj,
                                  Map<String, Object> projectionObj,
                                  Map<String, Object> countObj) {
-        if (!projectionList.isEmpty()) {
-            for (QueryModel.Projection projection : projectionList) {
-                if (projection instanceof QueryModel.LiteralProjection literalProjection) {
-                    projectionObj.put("val", singletonMap("$literal", asLiteral(literalProjection.getValue())));
-                } else if (projection instanceof QueryModel.CountProjection || projection instanceof QueryModel.CountDistinctRootProjection) {
-                    // before adding support for count distinct in https://github.com/micronaut-projects/micronaut-data/issues/2695
-                    // it was producing the same query as this, same as count basically
-                    countObj.put("$count", "result");
-                } else if (projection instanceof QueryModel.DistinctProjection) {
-                    throw new UnsupportedOperationException("Not implemented yet");
-                } else if (projection instanceof QueryModel.IdProjection) {
-                    projectionObj.put(MONGO_ID_FIELD, 1);
-                } else if (projection instanceof QueryModel.PropertyProjection pp) {
-                    String propertyName = pp.getPropertyName();
-                    PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
-                    if (propertyPath == null) {
-                        throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
-                    }
-                    String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
-                    if (projection instanceof QueryModel.AvgProjection) {
-                        addProjection(groupObj, pp, "$avg", propertyPersistName);
-                    } else if (projection instanceof QueryModel.SumProjection) {
-                        addProjection(groupObj, pp, "$sum", propertyPersistName);
-                    } else if (projection instanceof QueryModel.MinProjection) {
-                        addProjection(groupObj, pp, "$min", propertyPersistName);
-                    } else if (projection instanceof QueryModel.MaxProjection) {
-                        addProjection(groupObj, pp, "$max", propertyPersistName);
-                    } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        throw new UnsupportedOperationException("Count distinct against property is not supported by Micronaut Data MongoDB.");
-                    } else {
-                        projectionObj.put(propertyPersistName, 1);
-                    }
-                }
-            }
+        if (selection == null) {
+            return;
+        }
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(new MongoSelectionVisitor(projectionObj, groupObj, countObj));
+        } else {
+            throw new IllegalStateException("Unsupported selection type: " + selection.getClass().getName());
         }
     }
 
-    private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op, String persistentPropertyName) {
-        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + persistentPropertyName));
-    }
-
     @NonNull
-    private PersistentPropertyPath findProperty(QueryState queryState, String name, Class criterionType) {
-        return findPropertyInternal(queryState, queryState.getEntity(), name, criterionType);
+    private PersistentPropertyPath findProperty(QueryState queryState, String name) {
+        return findPropertyInternal(queryState, queryState.getEntity(), name);
     }
 
-    private PersistentPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String name, Class criterionType) {
+    private PersistentPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String name) {
         PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
         if (propertyPath != null) {
             if (propertyPath.getAssociations().isEmpty()) {
@@ -812,7 +520,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (joinAssociation.getAssociatedEntity().hasIdentity() && association != joinAssociation.getAssociatedEntity().getIdentity()) {
                     if (!queryState.isAllowJoins()) {
                         throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
                     }
@@ -820,7 +528,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
                     }
-//                    lastJoinAlias = joinInPath(queryState, joinStringPath);
                     // Continue to look for a joined property
                     joinAssociation = association;
                 } else {
@@ -830,7 +537,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
-                if (property != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (joinAssociation.getAssociatedEntity().hasIdentity() && property != joinAssociation.getAssociatedEntity().getIdentity()) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
@@ -838,87 +545,95 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 }
                 // We don't need to join to access the id of the relation
             }
-        } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
+        } else if (TypeRole.ID.equals(name) && entity.hasIdentity()) {
             // special case handling for ID
             return PersistentPropertyPath.of(Collections.emptyList(), entity.getIdentity(), entity.getIdentity().getName());
         }
         if (propertyPath == null) {
-            if (criterionType == null || criterionType == Sort.Order.class) {
-                throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
-            } else {
-                throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
-            }
+            throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
         }
         return propertyPath;
     }
 
-    private void handleJunction(CriteriaContext ctx, Map<String, Object> query, QueryModel.Junction criteria, String operator) {
-        if (criteria.getCriteria().size() == 1) {
-            handleCriterion(ctx, query, criteria.getCriteria().iterator().next());
+    @Override
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition updateQueryDefinition) {
+
+        QueryState queryState = new QueryState(updateQueryDefinition, true);
+
+        Predicate predicate = updateQueryDefinition.predicate();
+
+        String predicateQuery;
+        if (predicate != null) {
+            predicateQuery = toJsonString(
+                buildWhereClause(predicate, queryState)
+            );
         } else {
-            List<Object> ops = new ArrayList<>(criteria.getCriteria().size());
-            query.put(operator, ops);
-            for (QueryModel.Criterion criterion : criteria.getCriteria()) {
-                Map<String, Object> criterionObj = new LinkedHashMap<>();
-                ops.add(criterionObj);
-                handleCriterion(ctx, criterionObj, criterion);
-            }
-        }
-    }
-
-    private void handleCriterion(CriteriaContext ctx, Map<String, Object> query, QueryModel.Criterion criterion) {
-        CriterionHandler<QueryModel.Criterion> criterionHandler = queryHandlers.get(criterion.getClass());
-        if (criterionHandler == null) {
-            throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
-        }
-        criterionHandler.handle(ctx, query, criterion);
-    }
-
-    @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, QueryModel query, List<String> propertiesToUpdate) {
-        throw new IllegalStateException("Only 'buildUpdate' with 'Map<String, Object> propertiesToUpdate' is supported");
-    }
-
-    @Override
-    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, QueryModel query, Map<String, Object> propertiesToUpdate) {
-        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("query", query);
-        ArgumentUtils.requireNonNull("propertiesToUpdate", propertiesToUpdate);
-
-        QueryState queryState = new QueryState(query, true);
-
-        QueryModel.Junction criteria = query.getCriteria();
-
-        String predicateQuery = "";
-        if (!criteria.isEmpty()) {
-            Map<String, Object> predicate = buildWhereClause(annotationMetadata, criteria, queryState);
-            predicateQuery = toJsonString(predicate);
+            predicateQuery = "";
         }
 
-        Map<String, Object> sets = new LinkedHashMap<>();
+        Map<String, Object> propertiesToUpdate = updateQueryDefinition.propertiesToUpdate();
+        Map<String, Object> sets = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
+        Map<String, Object> incs = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
+        Map<String, Object> muls = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
-            PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
-            String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
-            if (e.getValue() instanceof BindingParameter bindingParameter) {
+            PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey());
+            String propertyPersistName = getPropertyPersistName(propertyPath);
+            Object value = e.getValue();
+            if (value instanceof BindingParameter bindingParameter) {
                 int index = queryState.pushParameter(
+                    bindingParameter,
+                    newBindingContext(propertyPath)
+                );
+                sets.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+            } else if (value instanceof LiteralExpression<?> literalExpression) {
+                sets.put(propertyPersistName, literalExpression.getValue());
+            } else if (value instanceof BinaryExpression<?> binaryExpression) {
+                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> leftProp = requireProperty(binaryExpression.getLeft());
+                if (!leftProp.getProperty().equals(propertyPath.getProperty())) {
+                    throw new IllegalStateException("Left property path does not match property path");
+                }
+                if (binaryExpression.getRight() instanceof BindingParameter bindingParameter) {
+                    int index = queryState.pushParameter(
                         bindingParameter,
                         newBindingContext(propertyPath)
-                );
-                sets.put(propertyPersistName, singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
-            } else {
-                sets.put(propertyPersistName, e.getValue());
+                    );
+                    switch (binaryExpression.getType()) {
+                        case CONCAT -> {
+                        }
+                        case SUM ->
+                            incs.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                        case PROD ->
+                            muls.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                        case QUOT ->
+                            muls.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index, RECIPROCATE, true));
+                        case DIFF ->
+                            incs.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index, NEGATE, true));
+                        default -> throw new IllegalStateException("Unsupported binary expression type: " + binaryExpression.getType());
+                    }
+                    continue;
+                }
+                throw new IllegalArgumentException("Unsupported expression type: " + value.getClass().getName() + " " + value);
             }
         }
 
-        String update = toJsonString(singletonMap("$set", sets));
+        Map<String, Map<String, Object>> map = new LinkedHashMap<>();
+        if (!sets.isEmpty()) {
+            map.put("$set", sets);
+        }
+        if (!incs.isEmpty()) {
+            map.put("$inc", incs);
+        }
+        if (!muls.isEmpty()) {
+            map.put("$mul", muls);
+        }
+        String update = toJsonString(map);
 
-        String finalPredicateQuery = predicateQuery;
         return new QueryResult() {
 
             @NonNull
             @Override
             public String getQuery() {
-                return finalPredicateQuery;
+                return predicateQuery;
             }
 
             @Override
@@ -945,35 +660,31 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     @Override
-    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, QueryModel query) {
+    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition queryDefinition) {
         ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("query", queryDefinition);
 
-        QueryState queryState = new QueryState(query, true);
+        QueryState queryState = new QueryState(queryDefinition, true);
 
-        QueryModel.Junction criteria = query.getCriteria();
+        Predicate predicate = queryDefinition.predicate();
 
         String predicateQuery = "";
-        if (!criteria.isEmpty()) {
-            Map<String, Object> predicate = buildWhereClause(annotationMetadata, criteria, queryState);
-            predicateQuery = toJsonString(predicate);
+        if (predicate != null) {
+            predicateQuery = toJsonString(
+                buildWhereClause(predicate, queryState)
+            );
         }
 
         return QueryResult.of(
-                predicateQuery,
-                Collections.emptyList(),
-                queryState.getParameterBindings(),
-                queryState.getAdditionalRequiredParameters()
+            predicateQuery,
+            Collections.emptyList(),
+            queryState.getParameterBindings(),
+            queryState.getAdditionalRequiredParameters()
         );
     }
 
     @Override
-    public QueryResult buildOrderBy(PersistentEntity entity, Sort sort) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public QueryResult buildPagination(Pageable pageable) {
+    public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
     }
 
@@ -1015,9 +726,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return false;
     }
 
-    private void appendArray(StringBuilder sb, Collection<Object> collection) {
+    private void appendArray(StringBuilder sb, Collection<?> collection) {
         sb.append("[");
-        for (Iterator<Object> iterator = collection.iterator(); iterator.hasNext(); ) {
+        for (Iterator<?> iterator = collection.iterator(); iterator.hasNext(); ) {
             Object value = iterator.next();
             append(sb, value);
             if (iterator.hasNext()) {
@@ -1030,7 +741,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private void append(StringBuilder sb, Object obj) {
         if (obj instanceof Map map) {
             appendMap(sb, map);
-        } else if (obj instanceof Collection collection) {
+        } else if (obj instanceof Collection<?> collection) {
             appendArray(sb, collection);
         } else if (obj instanceof RawJsonValue rawJsonValue) {
             sb.append(rawJsonValue.value);
@@ -1041,7 +752,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append('\'').append(obj).append('\'');
+            sb.append('\'').append(obj.toString().replace("'", "\\'")).append('\'');
         }
     }
 
@@ -1054,89 +765,48 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return false;
     }
 
-    /**
-     * Adds criterion handler.
-     *
-     * @param clazz   The handler class
-     * @param handler The handler
-     * @param <T>     The criterion type
-     */
-    private <T extends QueryModel.Criterion> void addCriterionHandler(Class<T> clazz, CriterionHandler<T> handler) {
-        queryHandlers.put(clazz, handler);
-    }
-
     private BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath ref) {
         return newBindingContext(ref, ref);
     }
 
     private BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath in, @Nullable PersistentPropertyPath out) {
         return BindingParameter.BindingContext.create()
-                .incomingMethodParameterProperty(in)
-                .outgoingQueryParameterProperty(out);
+            .incomingMethodParameterProperty(in)
+            .outgoingQueryParameterProperty(out);
     }
 
     /**
-     * Traverses properties that should be persisted.
+     * Gets criterion property name. Used as sort of adapter if property in criteria should have different name that the persistent property.
+     * Used currently for id property name to be generated as _id when used in criteria.
      *
-     * @param property The property to start traversing from
-     * @param consumer The function to invoke on every property
+     * @param propertyPath the propertyPath
+     * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
      */
-    private void traversePersistentProperties(PersistentProperty property, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        traversePersistentProperties(Collections.emptyList(), property, consumer);
-    }
-
-    private void traversePersistentProperties(List<Association> associations,
-                                              PersistentProperty property,
-                                              BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        PersistentEntityUtils.traversePersistentProperties(associations, property, consumerProperty);
-    }
-
-    private static final class RawJsonValue {
-
-        private final String value;
-
-        private RawJsonValue(String value) {
-            this.value = value;
+    private String getPropertyPersistName(PersistentPropertyPath propertyPath) {
+        PersistentProperty property = propertyPath.getProperty();
+        if (property.getOwner().hasIdentity() && property.getOwner().getIdentity() == property) {
+            return MONGO_ID_FIELD;
         }
+        return property.getAnnotationMetadata()
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(propertyPath::getPath);
     }
 
-    /**
-     * A criterion handler.
-     *
-     * @param <T> The criterion type
-     */
-    private interface CriterionHandler<T extends QueryModel.Criterion> {
-
-        /**
-         * Handles a criterion.
-         *
-         * @param context   The context
-         * @param query     The query
-         * @param criterion The criterion
-         */
-        void handle(CriteriaContext context, Map<String, Object> query, T criterion);
+    private String getPropertyPersistName(PersistentProperty property) {
+        if (property.getOwner().hasIdentity() && property.getOwner().getIdentity() == property) {
+            return MONGO_ID_FIELD;
+        }
+        return property.getAnnotationMetadata()
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(property::getName);
     }
 
-    /**
-     * A criterion context.
-     */
-    private interface CriteriaContext extends PropertyParameterCreator {
-
-        QueryState getQueryState();
-
-        PersistentEntity getPersistentEntity();
-
-        PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
-
-        @Override
-        default int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
-            return getQueryState().pushParameter(bindingParameter, bindingContext);
+    @Nullable
+    private Object asLiteral(@Nullable Object value) {
+        if (value instanceof RegexPattern regexPattern) {
+            return "'" + Pattern.quote(regexPattern.value) + "'";
         }
-
-        default PersistentPropertyPath getRequiredProperty(QueryModel.PropertyNameCriterion propertyCriterion) {
-            return getRequiredProperty(propertyCriterion.getProperty(), propertyCriterion.getClass());
-        }
-
+        return value;
     }
 
     /**
@@ -1157,7 +827,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
      * The state of the query.
      */
     @Internal
-    protected final class QueryState implements PropertyParameterCreator {
+    private static final class QueryState implements PropertyParameterCreator {
         private final Set<String> joinPaths = new TreeSet<>();
         private final AtomicInteger position = new AtomicInteger(0);
         private final Map<String, String> additionalRequiredParameters = new LinkedHashMap<>();
@@ -1167,9 +837,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         private final LookupsStage rootLookups;
 
-        private QueryState(QueryModel query, boolean allowJoins) {
+        private QueryState(BaseQueryDefinition baseQueryDefinition, boolean allowJoins) {
             this.allowJoins = allowJoins;
-            this.entity = query.getPersistentEntity();
+            this.entity = baseQueryDefinition.persistentEntity();
             this.parameterBindings = new ArrayList<>(entity.getPersistentPropertyNames().size());
             this.rootLookups = new LookupsStage(entity);
         }
@@ -1222,11 +892,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
+        public int pushParameter(@NonNull BindingParameter bindingParameter, BindingParameter. @NonNull BindingContext bindingContext) {
             int index = position.getAndIncrement();
             bindingContext = bindingContext.index(index);
             parameterBindings.add(
-                    bindingParameter.bind(bindingContext)
+                bindingParameter.bind(bindingContext)
             );
             return index;
         }
@@ -1235,15 +905,667 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private interface PropertyParameterCreator {
 
         int pushParameter(@NonNull BindingParameter bindingParameter,
-                          @NonNull BindingParameter.BindingContext bindingContext);
+                          BindingParameter. @NonNull BindingContext bindingContext);
 
     }
 
-    private static final class RegexPattern {
-        private final String value;
+    private record RegexPattern(String value) {
+    }
 
-        private RegexPattern(String value) {
-            this.value = value;
+    private record RawJsonValue(String value) {
+    }
+
+    private class MongoPredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
+
+        private final PersistentEntity persistentEntity;
+        private final QueryState queryState;
+        private Map<String, Object> query;
+
+        public MongoPredicateVisitor(QueryState queryState, Map<String, Object> query) {
+            this.queryState = queryState;
+            this.query = query;
+            persistentEntity = queryState.getEntity();
+        }
+
+        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof BinaryExpression<?> binaryExpression) {
+                PersistentPropertyPath propertyPath;
+                Expression<?> otherExpression;
+                if (binaryExpression.getLeft() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> leftProp) {
+                    propertyPath = leftProp.getPropertyPath();
+                    otherExpression = binaryExpression.getRight();
+                } else if (binaryExpression.getRight() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> rightProp) {
+                    propertyPath = rightProp.getPropertyPath();
+                    otherExpression = binaryExpression.getLeft();
+                } else {
+                    throw new IllegalStateException("Unsupported expression type: " + binaryExpression);
+                }
+                if (binaryExpression.getType() == BinaryExpressionType.PROD) {
+                    query.put("$expr", Map.of(
+                        op,
+                        asList(
+                            Map.of("$multiply", List.of(
+                                "$" + propertyPath.getPath(),
+                                valueRepresentation(queryState, propertyPath, propertyPath, otherExpression)
+                            )),
+                            valueRepresentation(queryState, propertyPath, propertyPath, value)
+                        )
+                    ));
+                    return;
+                }
+                throw new IllegalStateException("Unsupported binary expression type: " + binaryExpression.getType());
+            }
+            if (leftExpression instanceof UnaryExpression<?> unaryExpression) {
+                PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unaryExpression.getExpression()).getPropertyPath();
+                if (unaryExpression.getType() == UnaryExpressionType.LENGTH) {
+                    query.put("$expr", Map.of(
+                        op,
+                        asList(
+                            Map.of("$strLenCP", "$" + propertyPath.getPath()),
+                            valueRepresentation(queryState, propertyPath, propertyPath, value)
+                        )
+                    ));
+                    return;
+                }
+                throw new IllegalStateException("Unsupported unary expression type: " + unaryExpression.getType());
+            }
+            PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+            appendOperatorExpression(op, value, propertyPath);
+        }
+
+        private void appendOperatorExpression(String op, Expression<?> value, PersistentPropertyPath propertyPath) {
+            if (value instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
+                query.put("$expr", Map.of(
+                    op,
+                    asList(
+                        "$" + propertyPath.getPath(), "$" + p2.getPath()
+                    )
+                ));
+                return;
+            }
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+                String path = asPath(associations, property);
+                query.put(path, Collections.singletonMap(op, valueRepresentation(queryState, propertyPath, PersistentPropertyPath.of(associations, property), value)));
+            });
+        }
+
+        private void visitPredicate(IExpression<Boolean> expression) {
+            if (expression instanceof IPredicate predicateVisitable) {
+                predicateVisitable.visitPredicate(this);
+            } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                visitIsTrue(expression);
+            } else {
+                throw new IllegalStateException("Unknown boolean expression: " + expression);
+            }
+        }
+
+        @Override
+        public void visit(ConjunctionPredicate conjunction) {
+            Collection<? extends IExpression<Boolean>> predicates = conjunction.getPredicates();
+            if (predicates.isEmpty()) {
+                return;
+            }
+            if (predicates.size() == 1) {
+                visitPredicate(predicates.iterator().next());
+                return;
+            }
+            List<Object> ops = new ArrayList<>(predicates.size());
+            query.put("$and", ops);
+            visitConjunctionPredicate(predicates, ops);
+        }
+
+        private void visitConjunctionPredicate(Collection<? extends IExpression<Boolean>> predicates, List<Object> ops) {
+            for (IExpression<Boolean> expression : predicates) {
+                if (expression instanceof ConjunctionPredicate conjunctionPredicate) {
+                    visitConjunctionPredicate(conjunctionPredicate.getPredicates(), ops);
+                } else {
+                    Map<String, Object> preQuery = query;
+                    query = new LinkedHashMap<>();
+                    ops.add(query);
+                    visitPredicate(expression);
+                    query = preQuery;
+                }
+            }
+        }
+
+        @Override
+        public void visit(DisjunctionPredicate disjunction) {
+            Collection<? extends IExpression<Boolean>> predicates = disjunction.getPredicates();
+            if (predicates.isEmpty()) {
+                return;
+            }
+            if (predicates.size() == 1) {
+                visitPredicate(predicates.iterator().next());
+                return;
+            }
+            List<Object> ops = new ArrayList<>(predicates.size());
+            query.put("$or", ops);
+            visitDisjunctionPredicate(predicates, ops);
+        }
+
+        private void visitDisjunctionPredicate(Collection<? extends IExpression<Boolean>> predicates, List<Object> ops) {
+            for (IExpression<Boolean> expression : predicates) {
+                Map<String, Object> preQuery = query;
+                query = new LinkedHashMap<>();
+                ops.add(query);
+                if (expression instanceof DisjunctionPredicate disjunctionPredicate) {
+                    visitDisjunctionPredicate(disjunctionPredicate.getPredicates(), ops);
+                } else {
+                    visitPredicate(expression);
+                }
+                query = preQuery;
+            }
+        }
+
+        @Override
+        public void visit(NegatedPredicate negate) {
+            IExpression<Boolean> negated = negate.getNegated();
+            if (negated instanceof InPredicate<?> p) {
+                visitIn(p.getExpression(), p.getValues(), true);
+                return;
+            }
+            if (negated instanceof BetweenPredicate betweenPredicate) {
+                visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), true);
+                return;
+            }
+            visitPredicate(negate.getNegated());
+            negate(query);
+        }
+
+        private void negate(Map<String, Object> map) {
+            Set<Map.Entry<String, Object>> entries = map.entrySet();
+            if (entries.size() != 1) {
+                throw new IllegalStateException("Expected one entry got: " + map);
+            }
+            Map.Entry<String, Object> propertyPredicate = entries.iterator().next();
+            String key = propertyPredicate.getKey();
+            Object value = propertyPredicate.getValue();
+            if ("$or".equals(key)) {
+                map.remove("$or");
+                map.put("$nor", value);
+            } else if ("$and".equals(key)) {
+                map.put("$nor", List.of(Map.of("$and", map.remove("$and"))));
+            } else {
+                map.put(key, Map.of("$not", value));
+            }
+        }
+
+        @Override
+        public PersistentPropertyPath getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            return persistentPropertyPath.getPropertyPath();
+        }
+
+        @Override
+        public void visitIn(Expression<?> expression, Collection<?> values, boolean negated) {
+            query.put(
+                getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath()),
+                Map.of(negated ? "$nin" : "$in", values.stream().map(val -> valueRepresentation(queryState, expression, val)).toList())
+            );
+        }
+
+        @Override
+        public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
+            Expression<?> value = expression;
+            if (expression instanceof LiteralExpression<?> literalExpression) {
+                value = new LiteralExpression<Object>(new RegexPattern(Objects.requireNonNull(literalExpression.getValue()).toString()));
+            }
+            appendOperatorExpression(leftExpression, REGEX, value);
+        }
+
+        @Override
+        public void visitContains(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, false, false, rightExpression, false);
+        }
+
+        @Override
+        public void visitEndsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, false, true, rightExpression, false);
+        }
+
+        @Override
+        public void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, true, false, rightExpression, false);
+        }
+
+        @Override
+        public void visit(LikePredicate likePredicate) {
+            Expression<String> pattern = likePredicate.getPattern();
+            if (pattern instanceof LiteralExpression<?> literalExpression && literalExpression.getValue() instanceof String patternString) {
+                patternString = patternString
+                    .replace("_", ".")
+                    .replace("%", ".*");
+                pattern = new LiteralExpression<>("^" + patternString + "$");
+            }
+            handleRegexExpression(
+                likePredicate.getExpression(),
+                likePredicate.isCaseInsensitive(), likePredicate.isNegated(), false, false,
+                pattern, true);
+        }
+
+        @Override
+        public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+            throw new UnsupportedOperationException("ExistsSubquery is not supported by this implementation.");
+        }
+
+        @Override
+        public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            if (leftExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
+                PersistentProperty property = propertyPath.getProperty();
+                if (property.isEnum() && rightExpression instanceof LiteralExpression<?> literalExpression
+                    && literalExpression.getValue() instanceof String stringValue) {
+                    String typeName = property.getTypeName().replace("$", ".");
+                    if (stringValue.startsWith(typeName)) {
+                        for (PersistentProperty.EnumConstant enumConstant : property.getEnumConstants()) {
+                            if (stringValue.equals(typeName + "." + enumConstant.name())) {
+                                if (property.getDataType() == DataType.STRING) {
+                                    rightExpression = new LiteralExpression<Object>(enumConstant.name());
+                                }
+                                if (property.getDataType() == DataType.INTEGER) {
+                                    rightExpression = new LiteralExpression<Object>(enumConstant.ordinal());
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (ignoreCase) {
+                handleRegexExpression(leftExpression, true, false, true, true, rightExpression, false);
+                return;
+            }
+            appendEquals(leftExpression, rightExpression);
+        }
+
+        private void appendEquals(Expression<?> leftExpression, Expression<?> value) {
+            appendOperatorExpression(leftExpression, "$eq", value);
+        }
+
+        @Override
+        public void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            if (ignoreCase) {
+                handleRegexExpression(leftExpression, true, true, true, true, rightExpression, false);
+                return;
+            }
+            appendPropertyNotEquals(leftExpression, rightExpression);
+        }
+
+        private void appendPropertyNotEquals(Expression<?> leftExpression, Expression<?> value) {
+            appendOperatorExpression(leftExpression, "$ne", value);
+        }
+
+        @Override
+        public void visitGreaterThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$gt", rightExpression);
+        }
+
+        @Override
+        public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$gte", rightExpression);
+        }
+
+        @Override
+        public void visitLessThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$lt", rightExpression);
+        }
+
+        @Override
+        public void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$lte", rightExpression);
+        }
+
+        @Override
+        public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated) {
+            String propertyName;
+            Object firstCondition;
+            Object secondCondition;
+            if (value instanceof UnaryExpression<?> valueExp && valueExp.getType() == UnaryExpressionType.LOWER
+                && from instanceof UnaryExpression<?> fromExp && fromExp.getType() == UnaryExpressionType.LOWER
+                && to instanceof UnaryExpression<?> toExp && toExp.getType() == UnaryExpressionType.LOWER) {
+                PersistentPropertyPath propertyPath = requireProperty(valueExp.getExpression()).getPropertyPath();
+                propertyName = getPropertyPersistName(propertyPath);
+                firstCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, fromExp.getExpression()));
+                secondCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, toExp.getExpression()));
+            } else {
+                PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
+                propertyName = getPropertyPersistName(propertyPath);
+                firstCondition = valueRepresentation(queryState, propertyPath, from);
+                secondCondition = valueRepresentation(queryState, propertyPath, to);
+            }
+            LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+            map.put("$gte", firstCondition);
+            map.put("$lte", secondCondition);
+            if (negated) {
+                query.put(
+                    propertyName, Map.of("$not", map)
+                );
+            } else {
+                query.put(
+                    propertyName, map
+                );
+            }
+        }
+
+        @Override
+        public void visitIsFalse(Expression<?> expression) {
+            appendEquals(expression, new LiteralExpression<>(false));
+        }
+
+        @Override
+        public void visitIsNotNull(Expression<?> expression) {
+            appendPropertyNotEquals(expression, new LiteralExpression<>((Object) null));
+        }
+
+        @Override
+        public void visitIsNull(Expression<?> expression) {
+            appendEquals(expression, new LiteralExpression<>((Object) null));
+        }
+
+        @Override
+        public void visitIsTrue(Expression<?> expression) {
+            appendEquals(expression, new LiteralExpression<>(true));
+        }
+
+        @Override
+        public void visitIsEmpty(Expression<?> expression) {
+            String propertyName = getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath());
+            query.put("$or", asList(
+                Map.of(propertyName, Map.of("$eq", "")),
+                Map.of(propertyName, Map.of("$exists", false))
+            ));
+        }
+
+        @Override
+        public void visitIsNotEmpty(Expression<?> expression) {
+            String propertyName = getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath());
+            query.put("$and", asList(
+                Map.of(propertyName, Map.of("$ne", "")),
+                Map.of(propertyName, Map.of("$exists", true))
+            ));
+        }
+
+        @Override
+        public void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
+            Object value = expression;
+            if (expression instanceof LiteralExpression<?> literalExpression) {
+                value = literalExpression.getValue();
+            }
+            Object criteriaValue;
+            if (value instanceof Iterable<?> iterable) {
+                List<?> values = CollectionUtils.iterableToList(iterable);
+                criteriaValue = values.stream().map(val -> valueRepresentation(queryState, leftExpression, val)).toList();
+            } else {
+                criteriaValue = List.of(valueRepresentation(queryState, leftExpression, value));
+            }
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of("$all", criteriaValue));
+        }
+
+        @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoWithin", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoIntersects", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visit(NearPredicate nearPredicate) {
+            visitNear(nearPredicate.getValue(), nearPredicate.getGeometry(), nearPredicate.getDistance());
+        }
+
+        @Override
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$near", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, geometryExpression),
+                    "$maxDistance", valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression)
+                )
+            ));
+        }
+
+        @Override
+        public void visitIdEquals(Expression<?> expression) {
+            if (persistentEntity.hasCompositeIdentity()) {
+                throw new IllegalStateException("Composite ID not supported!");
+            } else if (persistentEntity.hasIdentity()) {
+                query.put(
+                    MONGO_ID_FIELD,
+                    valueRepresentation(queryState, new PersistentPropertyPath(List.of(), Objects.requireNonNull(persistentEntity.getIdentity())), expression)
+                );
+            } else {
+                throw new IllegalStateException("No ID found for entity: " + persistentEntity.getName());
+            }
+        }
+
+        private void handleRegexExpression(Expression<?> leftExpression,
+                                           boolean ignoreCase,
+                                           boolean negate,
+                                           boolean startsWith,
+                                           boolean endsWith,
+                                           Expression<?> value,
+                                           boolean isLike) {
+            PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+            Object filterValue;
+            Map<String, Object> regexCriteria = new LinkedHashMap<>(2);
+            String options = ignoreCase ? "i" : "";
+            if (isLike) {
+                options += "l";
+            }
+            regexCriteria.put(OPTIONS, options);
+            String regexValue;
+            if (value instanceof BindingParameter bindingParameter) {
+                int index = queryState.pushParameter(
+                    bindingParameter,
+                    newBindingContext(propertyPath, propertyPath)
+                );
+                regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
+            } else if (value instanceof LiteralExpression<?> literalExpression) {
+                regexValue = (String) literalExpression.getValue();
+            } else {
+                regexValue = value.toString();
+            }
+            StringBuilder regexValueBuff = new StringBuilder();
+            if (startsWith) {
+                regexValueBuff.append("^");
+            }
+            regexValueBuff.append(regexValue);
+            if (endsWith) {
+                regexValueBuff.append("$");
+            }
+            regexCriteria.put(REGEX, regexValueBuff.toString());
+            if (negate) {
+                filterValue = Map.of(NOT, regexCriteria);
+            } else {
+                filterValue = regexCriteria;
+            }
+            query.put(getPropertyPersistName(propertyPath), filterValue);
+        }
+
+        @Nullable
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator, Expression<?> leftExpression, @Nullable Object value) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);
+        }
+
+        @Nullable
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator, PersistentPropertyPath propertyPath, @Nullable Object value) {
+            return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);
+        }
+
+        @Nullable
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator,
+                                           PersistentPropertyPath inPropertyPath,
+                                           PersistentPropertyPath outPropertyPath,
+                                           @Nullable
+                                           Object value) {
+            if (value instanceof LiteralExpression<?> literalExpression) {
+                value = literalExpression.getValue();
+            }
+            if (value instanceof RegexPattern regexPattern) {
+                return "'" + Pattern.quote(regexPattern.value) + "'";
+            }
+            if (value instanceof LocalDate localDate) {
+                return Map.of(MONGO_DATE_IDENTIFIER, formatDate(localDate));
+            }
+            if (value instanceof LocalDateTime localDateTime) {
+                return Map.of(MONGO_DATE_IDENTIFIER, formatDate(localDateTime));
+            }
+            if (value instanceof BindingParameter bindingParameter) {
+                int index = parameterCreator.pushParameter(
+                    bindingParameter,
+                    newBindingContext(inPropertyPath, outPropertyPath)
+                );
+                return Map.of(QUERY_PARAMETER_PLACEHOLDER, index);
+            }
+            return value;
+        }
+
+        private String formatDate(LocalDate localDate) {
+            return formatDate(localDate.atStartOfDay());
+        }
+
+        private String formatDate(LocalDateTime localDateTime) {
+            return formatDate(localDateTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli());
+        }
+
+        private String formatDate(final long dateTime) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
+        }
+
+    }
+
+    private final class MongoSelectionVisitor implements SelectionVisitor {
+
+        private final Map<String, Object> projectionObj;
+        private final Map<String, Object> groupObj;
+        private final Map<String, Object> countObj;
+        @Nullable
+        private String alias;
+
+        public MongoSelectionVisitor(Map<String, Object> projectionObj, Map<String, Object> groupObj, Map<String, Object> countObj) {
+            this.projectionObj = projectionObj;
+            this.groupObj = groupObj;
+            this.countObj = countObj;
+        }
+
+        @Override
+        public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            PersistentProperty property = persistentPropertyPath.getProperty();
+            String propertyPersistName = getPropertyPersistName(property);
+            projectionObj.put(propertyPersistName, 1);
+        }
+
+        @Override
+        public void visit(AliasedSelection<?> aliasedSelection) {
+            alias = aliasedSelection.getAlias();
+            aliasedSelection.getSelection().visitSelection(this);
+            alias = null;
+        }
+
+        @Override
+        public void visit(PersistentEntityRoot<?> entityRoot) {
+            // The default is the entity projection
+        }
+
+        @Override
+        public void visit(PersistentEntitySubquery<?> subquery) {
+            throw new IllegalStateException("Subquery not supported by MongoDB");
+        }
+
+        @Override
+        public void visit(CompoundSelection<?> compoundSelection) {
+            for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
+                if (selection instanceof ISelection<?> selectionVisitable) {
+                    selectionVisitable.visitSelection(this);
+                } else {
+                    throw new IllegalStateException("Unknown selection object: " + selection);
+                }
+            }
+        }
+
+        @Override
+        public void visit(LiteralExpression<?> literalExpression) {
+            projectionObj.put("val", Map.of("$literal", asLiteral(literalExpression.getValue())));
+        }
+
+        @Override
+        public void visit(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
+                case SUM, AVG, MAX, MIN -> {
+                    PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
+                    switch (unaryExpression.getType()) {
+                        case SUM -> addProjection(groupObj, "$sum", propertyPath);
+                        case AVG -> addProjection(groupObj, "$avg", propertyPath);
+                        case MAX -> addProjection(groupObj, "$max", propertyPath);
+                        case MIN -> addProjection(groupObj, "$min", propertyPath);
+                        default ->
+                            throw new IllegalStateException("Unsupported expression type: " + unaryExpression.getExpression());
+                    }
+                }
+                case COUNT -> {
+                    // before adding support for count distinct in https://github.com/micronaut-projects/micronaut-data/issues/2695
+                    // it was producing the same query as this, same as count basically
+                    countObj.put("$count", "result");
+                }
+                case COUNT_DISTINCT -> {
+                    if (expression instanceof PersistentEntityRoot) {
+                        // before adding support for count distinct in https://github.com/micronaut-projects/micronaut-data/issues/2695
+                        // it was producing the same query as this, same as count basically
+                        countObj.put("$count", "result");
+                    } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                        throw new UnsupportedOperationException("Count distinct against property is not supported by Micronaut Data MongoDB.");
+                    } else {
+                        throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
+                    }
+                }
+                default ->
+                    throw new IllegalStateException("Unsupported expression type: " + unaryExpression.getExpression());
+            }
+        }
+
+        @Override
+        public void visit(IdExpression<?, ?> idExpression) {
+            projectionObj.put(MONGO_ID_FIELD, 1);
+        }
+
+        private void addProjection(Map<String, Object> groupBy, String op, PersistentPropertyPath propertyPath) {
+            groupBy.put(alias == null ? propertyPath.getProperty().getName() : alias, Map.of(op, "$" + propertyPath.getPath()));
+        }
+
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            throw new UnsupportedOperationException("CAST is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            throw new UnsupportedOperationException("Current temporal expression is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            throw new UnsupportedOperationException("Binary expression: " + binaryExpression + " is not supported by Micronaut Data MongoDB.");
         }
     }
 }

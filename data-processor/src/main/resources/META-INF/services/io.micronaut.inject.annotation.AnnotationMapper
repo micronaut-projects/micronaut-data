@@ -76,4 +76,11 @@ io.micronaut.data.processor.mappers.jakarta.data.JakartaDataFindMapper
 io.micronaut.data.processor.mappers.jakarta.data.JakartaDataSaveMapper
 io.micronaut.data.processor.mappers.jakarta.data.JakartaDataOrderByMapper
 io.micronaut.data.processor.mappers.jakarta.data.JakartaDataOrderByListMapper
-
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataSelectMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataSelectListMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataFirstByMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataMergeStatefulMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataPersistMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataDetachMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataRefreshMapper
+io.micronaut.data.processor.mappers.jakarta.data.JakartaDataRemoveMapper

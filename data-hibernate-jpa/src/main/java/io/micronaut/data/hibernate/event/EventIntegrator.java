@@ -24,15 +24,23 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import org.hibernate.boot.Metadata;
+import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.*;
+import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PostDeleteEvent;
+import org.hibernate.event.spi.PostDeleteEventListener;
+import org.hibernate.event.spi.PostInsertEvent;
+import org.hibernate.event.spi.PostInsertEventListener;
+import org.hibernate.event.spi.PostUpdateEvent;
+import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
-import org.hibernate.tuple.entity.EntityMetamodel;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Integrates event handling.
@@ -59,10 +67,10 @@ public class EventIntegrator implements Integrator {
     @Override
     public void integrate(
             Metadata metadata,
-            SessionFactoryImplementor sessionFactory,
-            SessionFactoryServiceRegistry serviceRegistry) {
+            BootstrapContext bootstrapContext,
+            SessionFactoryImplementor sessionFactory) {
         EventListenerRegistry eventListenerRegistry =
-                serviceRegistry.getService(EventListenerRegistry.class);
+                sessionFactory.getServiceRegistry().getService(EventListenerRegistry.class);
         final EntityEventListener<Object> entityEventListener = entityRegistry.getEntityEventListener();
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT)
                 .appendListener(event -> {
@@ -195,37 +203,46 @@ public class EventIntegrator implements Integrator {
         // no-op
     }
 
-    private static class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+    private static final class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         private final AbstractPreDatabaseOperationEvent event;
+        @Nullable
         private final Object[] state;
 
-        public StatefulHibernateEventContext(RuntimePersistentEntity<T> entity, AbstractPreDatabaseOperationEvent event, Object[] state) {
+        private StatefulHibernateEventContext(RuntimePersistentEntity<T> entity, AbstractPreDatabaseOperationEvent event, Object[] state) {
             super(entity, (T) event.getEntity());
             this.event = event;
             this.state = state;
         }
 
         @Override
-        public <P> void setProperty(BeanProperty<T, P> property, P newValue) {
+        public <P> void setProperty(BeanProperty<T, P> property, @Nullable P newValue) {
             super.setProperty(property, newValue);
-            EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
-            int i = entityMetamodel.getPropertyIndex(property.getName());
-            state[i] = newValue;
+            int i = -1;
+            String[] propertyNames = event.getPersister().getPropertyNames();
+            for (int idx = 0; idx < propertyNames.length; idx++) {
+                if (propertyNames[idx].equals(property.getName())) {
+                    i = idx;
+                    break;
+                }
+            }
+            if (i >= 0) {
+                state[i] = newValue;
+            }
         }
 
         @Override
-        public final boolean supportsEventSystem() {
+        public boolean supportsEventSystem() {
             return false;
         }
     }
 
-    private static class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+    private static final class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         public SimpleHibernateEventContext(RuntimePersistentEntity<T> entity, T object) {
             super(entity, object);
         }
 
         @Override
-        public final boolean supportsEventSystem() {
+        public boolean supportsEventSystem() {
             return false;
         }
     }

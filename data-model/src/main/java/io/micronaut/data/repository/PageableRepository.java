@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -40,8 +39,7 @@ public interface PageableRepository<E, ID> extends CrudRepository<E, ID> {
      * @param sort The sort
      * @return The iterable results
      */
-    @NonNull
-    List<E> findAll(@NonNull Sort sort);
+    List<E> findAll(Sort sort);
 
     /**
      * Finds all records for the given pageable.
@@ -49,5 +47,5 @@ public interface PageableRepository<E, ID> extends CrudRepository<E, ID> {
      * @param pageable The pageable.
      * @return The results
      */
-    @NonNull Page<E> findAll(@NonNull Pageable pageable);
+    Page<E> findAll(Pageable pageable);
 }

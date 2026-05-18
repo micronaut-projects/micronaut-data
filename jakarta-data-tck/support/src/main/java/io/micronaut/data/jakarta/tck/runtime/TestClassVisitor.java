@@ -20,7 +20,8 @@ import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Transient;
@@ -38,12 +39,24 @@ import jakarta.persistence.Entity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Set;
 
+@NullUnmarked
 @Internal
 public final class TestClassVisitor implements TypeElementVisitor<Object, Object> {
 
     private final boolean isJdbcImplementation;
-    private final boolean isMogngoDBImplementation;
+    private final boolean isMongoDBImplementation;
+
+    private boolean introspected;
+
+    private static final Set<String> INTROSPECTED = Set.of(
+        "ee.jakarta.tck.data.framework.read.only.CardinalNumber",
+        "ee.jakarta.tck.data.framework.read.only.HexInfo",
+        "ee.jakarta.tck.data.framework.read.only.NumberInfo",
+        "ee.jakarta.tck.data.framework.read.only.WholeNumber",
+        "ee.jakarta.tck.data.framework.read.only.FruitSummary"
+    );
 
     public TestClassVisitor() {
         Properties prop = new Properties();
@@ -53,13 +66,12 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
             if (resourceAsStream != null) {
                 prop.load(resourceAsStream);
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             // ignore
         }
         Object implementation = prop.getOrDefault("implementation", "");
         isJdbcImplementation = implementation.equals("jdbc");
-        isMogngoDBImplementation = implementation.equals("mongodb");
+        isMongoDBImplementation = implementation.equals("mongodb");
     }
 
     @Override
@@ -74,15 +86,18 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        if (!introspected) {
+           INTROSPECTED.forEach(bean -> context.getClassElement(bean).orElseThrow().annotate(Introspected.class));
+           introspected = true;
+        }
         if (element.hasStereotype(Repository.class) && isJdbcImplementation) {
             element.annotate(JdbcRepository.class, annotationValueBuilder -> {
                 annotationValueBuilder.member("dialect", Dialect.H2);
             });
         }
-        if (element.hasStereotype(Repository.class) && isMogngoDBImplementation) {
+        if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
             element.annotate(MongoRepository.class);
         }
-
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
             if (element.hasStereotype(Introspected.class)) {
                 element.annotate(Introspected.class, builder -> {
@@ -110,7 +125,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitField(FieldElement element, VisitorContext context) {
-        if (isJdbcImplementation || isMogngoDBImplementation) {
+        if (isJdbcImplementation || isMongoDBImplementation) {
             if (element.getOwningType().hasStereotype(Entity.class)) {
                 element.annotate(Nullable.class);
             }
@@ -118,9 +133,13 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
                 element.annotate(Transient.class);
             }
         }
-        if (isMogngoDBImplementation && element.getType().getName().equals("char")) {
+        if (isMongoDBImplementation && element.getType().getName().equals("char")) {
             MongoUtils.bson(element);
         }
     }
 
+    @Override
+    public void finish(VisitorContext visitorContext) {
+        introspected = false;
+    }
 }

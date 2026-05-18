@@ -28,9 +28,12 @@ import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
@@ -42,6 +45,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
@@ -50,10 +54,11 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -65,9 +70,7 @@ import java.util.TreeMap;
 @Internal
 public class Joiner implements SelectionVisitor, PredicateVisitor {
 
-    private final Map<String, Joined> joins = new TreeMap<>(
-        Comparator.comparingInt(String::length).thenComparing(String::compareTo)
-    );
+    private final Map<String, Joined> joins = new TreeMap<>(Comparator.comparingInt(String::length).thenComparing(String::compareTo));
 
     /**
      * Returns required query joins.
@@ -145,23 +148,20 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     @Override
     public void visit(PersistentEntityRoot<?> entityRoot) {
-        Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins = entityRoot.getJoins();
-        visitJoins(joins);
+        visitJoins(entityRoot.getPersistentJoins());
     }
 
     @Override
     public void visit(PersistentEntitySubquery<?> subquery) {
     }
 
-    private void visitJoins(Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins) {
-        for (jakarta.persistence.criteria.Join<?, ?> join : joins) {
-            if (join instanceof PersistentAssociationPath<?, ?> persistentAssociationPath) {
-                if (persistentAssociationPath.getAssociationJoinType() == null) {
-                    continue;
-                }
-                joinIfNeeded(persistentAssociationPath, false);
-                visitJoins(join.getJoins());
+    private void visitJoins(Collection<? extends PersistentAssociationPath<?, ?>> persistentAssociationPaths) {
+        for (PersistentAssociationPath<?, ?> persistentAssociationPath : persistentAssociationPaths) {
+            if (persistentAssociationPath.getAssociationJoinType() == null) {
+                continue;
             }
+            joinIfNeeded(persistentAssociationPath, false);
+            visitJoins(persistentAssociationPath.getPersistentJoins());
         }
     }
 
@@ -210,6 +210,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
+    public void visit(IParameterExpression<?> parameterExpression) {
+        // Parameters do not introduce join paths.
+    }
+
+    @Override
     public void visit(IdExpression<?, ?> idExpression) {
     }
 
@@ -227,6 +232,16 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(FunctionExpression<?> functionExpression) {
         functionExpression.getExpressions().forEach(this::visitExpression);
+    }
+
+    @Override
+    public void visit(CastExpression<?> castExpression) {
+        visitExpression(castExpression.getExpression());
+    }
+
+    @Override
+    public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+        // Current temporal expressions do not introduce join paths.
     }
 
     @Override
@@ -261,6 +276,13 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
+    public void visit(NearPredicate nearPredicate) {
+        visitPredicateExpression(nearPredicate.getValue());
+        visitPredicateExpression(nearPredicate.getGeometry());
+        visitPredicateExpression(nearPredicate.getDistance());
+    }
+
+    @Override
     public void visit(BinaryPredicate binaryPredicate) {
         visitPredicateExpression(binaryPredicate.getLeftExpression());
         visitPredicateExpression(binaryPredicate.getRightExpression());
@@ -288,10 +310,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Internal
     public static final class Joined {
         private final PersistentAssociationPath<?, ?> association;
-        private io.micronaut.data.annotation.Join.Type type;
+        private io.micronaut.data.annotation.Join. @Nullable Type type;
+        @Nullable
         private String alias;
 
-        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join.Type type, String alias) {
+        public Joined(PersistentAssociationPath<?, ?> association, io.micronaut.data.annotation.Join. @Nullable Type type, @Nullable String alias) {
             this.association = association;
             this.type = type;
             this.alias = alias;
@@ -301,7 +324,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             return association;
         }
 
-        public io.micronaut.data.annotation.Join.Type getType() {
+        public io.micronaut.data.annotation.Join. @Nullable Type getType() {
             return type;
         }
 
@@ -309,11 +332,12 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             this.type = type;
         }
 
+        @Nullable
         public String getAlias() {
             return alias;
         }
 
-        public void setAlias(String alias) {
+        public void setAlias(@Nullable String alias) {
             this.alias = alias;
         }
     }

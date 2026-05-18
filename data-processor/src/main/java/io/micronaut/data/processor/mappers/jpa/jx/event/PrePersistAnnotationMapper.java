@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx.event;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -33,7 +32,6 @@ import java.util.List;
  */
 public class PrePersistAnnotationMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.PrePersist";

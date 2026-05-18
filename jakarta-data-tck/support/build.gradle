@@ -17,6 +17,7 @@ dependencies {
         }
     }
     api libs.managed.jakarta.data.api
+    api libs.managed.jakarta.data.stateful
 
     api mnLogging.slf4j.jul.to.slf4j
     api("jakarta.servlet:jakarta.servlet-api:6.1.0")

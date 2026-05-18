@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's @Enumerated to a correct type def.
  *
@@ -24,7 +22,7 @@ import io.micronaut.core.annotation.NonNull;
  * @since 2.4.8
  */
 public final class EnumeratedAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.EnumeratedAnnotationMapper {
-    @NonNull
+    
     @Override
     public String getName() {
         return "jakarta.persistence.Enumerated";

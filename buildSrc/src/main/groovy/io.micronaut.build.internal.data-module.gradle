@@ -1,9 +1,24 @@
 plugins {
     id "io.micronaut.build.internal.data-base"
     id "io.micronaut.build.internal.module"
+    id "java-library"
 }
+
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
+    testRuntimeOnly(mnTest.junit.platform.suite)
+    testRuntimeOnly(mnTest.junit.platform.launcher)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
+}
+
+micronautBuild {
+    descriptor {
+        parentModuleId = "io.micronaut.data:micronaut-data-model"
+    }
 }
 
 def testModulesOptional = rootProject.tasks.findByName("testModules")
@@ -15,3 +30,7 @@ if (testModulesOptional) {
 }
 
 testModules.mustRunAfter(tasks.named("test"))
+
+test {
+    useJUnitPlatform()
+}

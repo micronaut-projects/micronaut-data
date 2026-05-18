@@ -1,10 +1,11 @@
 package example;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.*;
 import java.util.Date;
 
-@MappedEntity // <1>
+@MappedEntity
+public// <1>
 record Book(
         @Id @GeneratedValue @Nullable Long id, // <2>
         @DateCreated @Nullable Date dateCreated,

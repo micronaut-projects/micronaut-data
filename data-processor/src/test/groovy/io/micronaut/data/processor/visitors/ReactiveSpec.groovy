@@ -17,9 +17,33 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.reactive.*
+import io.micronaut.data.model.entities.Person
 import spock.lang.Unroll
 
 class ReactiveSpec extends AbstractDataSpec {
+
+    @Unroll
+    void "test #repoType exposes explicit insert methods"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.reactive.*;
+
+@Repository
+interface MyInterface extends $repoType<Person, Long> {
+}
+"""
+        )
+
+        expect:
+        repository.getRequiredMethod("insert", Person).synthesize(DataMethod).interceptor() == InsertEntityReactiveInterceptor
+        repository.getRequiredMethod("insertAll", Iterable).synthesize(DataMethod).interceptor() == InsertAllReactiveInterceptor
+
+        where:
+        repoType << ["ReactiveStreamsCrudRepository", "ReactorCrudRepository", "RxJavaCrudRepository"]
+    }
 
     @Unroll
     void "test reactive method #method"() {
@@ -31,7 +55,7 @@ import java.util.concurrent.CompletionStage;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import java.util.*;
-import io.reactivex.*;
+import io.reactivex.rxjava3.core.*;
 import reactor.core.publisher.*;
 
 @Repository
@@ -71,11 +95,28 @@ $returnType $method($arguments);
         "save"         | "Completable"           | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Long>"          | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
+        "saveReturning"| "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "saveReturningAll" | "Flowable<Person>"   | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "insert"       | "Completable"           | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Long>"          | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Person>"        | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Mono<Person>"          | "Person person"                | InsertEntityReactiveInterceptor
+        "insert"       | "Single<Person>"        | "String name, String publicId" | InsertOneReactiveInterceptor
+        "insert"       | "Flowable<Person>"      | "List<Person> entities"        | InsertAllReactiveInterceptor
+        "insertAll"    | "Flowable<Person>"      | "List<Person> entities"        | InsertAllReactiveInterceptor
+        "insertAll"    | "Flux<Person>"          | "List<Person> entities"        | InsertAllReactiveInterceptor
+        "deleteReturning"  | "Single<Person>"     | "Person person"                | DeleteReturningOneReactiveInterceptor
+        "deleteReturning"  | "Flowable<Person>"   | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor
+        "deleteReturning"  | "Flux<Person>"       | "List<Person> entities"        | DeleteReturningManyReactiveInterceptor
         "updateByName" | "Single<Number>"        | "String name, int age"         | UpdateReactiveInterceptor
         "update"       | "Completable"           | "@Id Long id, int age"         | UpdateReactiveInterceptor
         "update"       | "Single<Number>"        | "@Id Long id, int age"         | UpdateReactiveInterceptor
+        "updateReturning" | "Single<Person>"      | "Person person"                | UpdateReturningOneReactiveInterceptor
+        "updateReturning" | "Mono<Person>"        | "Person person"                | UpdateReturningOneReactiveInterceptor
+        "updateReturning" | "Flowable<Person>"    | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
+        "updateReturning" | "Flux<Person>"        | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateAll"    | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateAll"    | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateCustom" | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor

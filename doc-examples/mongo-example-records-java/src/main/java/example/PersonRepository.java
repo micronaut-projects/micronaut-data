@@ -1,6 +1,7 @@
 
 package example;
 
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -29,7 +30,7 @@ public interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaS
     Optional<Person> findOne(QuerySpecification<Person> spec);
 
     @Override
-    List<Person> findAll(PredicateSpecification<Person> spec);
+    List<Person> findAll(@Nullable PredicateSpecification<Person> spec);
 
     @Override
     List<Person> findAll(QuerySpecification<Person> spec);

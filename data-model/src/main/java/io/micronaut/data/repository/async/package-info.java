@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 /**
- * Async repository interfaces.
+ * Async repositories API.
  *
  * @author graemerocher
  * @since 1.0.0
  */
+@org.jspecify.annotations.NullMarked
 package io.micronaut.data.repository.async;

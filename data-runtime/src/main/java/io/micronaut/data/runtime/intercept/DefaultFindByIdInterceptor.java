@@ -15,11 +15,12 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation that handles lookup by ID.
@@ -36,6 +37,7 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
         super(datastore);
     }
 
+    @Nullable
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);

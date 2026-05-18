@@ -13,7 +13,7 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation mn.micronaut.http.server.netty
     implementation projects.micronautDataModel
-    implementation mnRxjava2.rxjava2
+    implementation(mnRxjava3.rxjava3)
     implementation mn.reactor
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core
@@ -21,7 +21,14 @@ dependencies {
     implementation libs.groovy.dateutil
     implementation(libs.managed.javax.persistence.api)
     implementation(mnSql.jakarta.persistence.api)
+    implementation(libs.jupiter.engine)
+    implementation(mnTest.micronaut.test.junit5)
+    implementation(libs.managed.jakarta.data.api)
 
     compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy
+}
+
+tasks.withType(Javadoc).configureEach {
+    exclude("io/micronaut/data/tck/tests/AbstractJakartaDataTest.java")
 }

@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jakarta;
 
-import io.micronaut.core.annotation.NonNull;
-
 /**
  * Maps JPA's {@code Table} annotation to {@link io.micronaut.data.annotation.MappedEntity}.
  *
@@ -25,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
  */
 public final class TableAnnotationMapper extends io.micronaut.data.processor.mappers.jpa.jx.TableAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.persistence.Table";

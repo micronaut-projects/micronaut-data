@@ -16,7 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import jakarta.persistence.criteria.Expression;
 
@@ -43,12 +43,14 @@ public enum PredicateBinaryOp {
     ENDS_WITH,
     STARTS_WITH_IGNORE_CASE,
     ENDS_WITH_IGNORE_CASE,
+    GEO_WITHIN,
+    GEO_INTERSECTS,
     ARRAY_CONTAINS,
     ;
 
-    void validate(@Nullable Expression<?> left, @Nullable Expression<?> right) {
+    void validate(Expression<?> left, Expression<?> right) {
         switch (this) {
-            case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE -> {
+            case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE, GEO_WITHIN, GEO_INTERSECTS -> {
                 // Any type
             }
             case GREATER_THAN, GREATER_THAN_OR_EQUALS, LESS_THAN, LESS_THAN_OR_EQUALS -> {

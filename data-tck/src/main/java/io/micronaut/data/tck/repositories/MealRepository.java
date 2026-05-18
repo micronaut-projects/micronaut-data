@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Meal;
@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 public interface MealRepository extends CrudRepository<@Valid Meal, Long> {
 
     @Nullable
+    @io.micronaut.core.annotation.Nullable
     @Join("foods")
     Meal searchById(Long uuid);
 

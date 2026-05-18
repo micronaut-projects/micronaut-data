@@ -1,0 +1,52 @@
+When dealing with large datasets in database queries, loading all results into memory at once can lead to OutOfMemoryError (OOM). Micronaut Data JPA Hibernate provides support for streaming query results using `java.util.stream.Stream`, allowing you to process data incrementally without loading everything into memory.
+
+This guide explains how to use streaming effectively, avoid common pitfalls, and manage resources properly.
+
+=== Why Streaming Can Cause OOM Without Detachment
+
+Hibernate maintains a first-level cache (the session cache) that keeps track of all loaded entities. When streaming large result sets without detaching entities, this cache grows indefinitely, potentially leading to OOM errors. Each entity loaded into the session remains managed, consuming memory until the session is cleared or closed.
+
+To mitigate this, you must detach entities after processing or periodically clear the session.
+
+=== Using TransactionOperations to Keep the Session Open
+
+Streams require an open Hibernate session to fetch data lazily. Use `TransactionOperations` to execute operations within a transaction, ensuring the session remains open while consuming the stream.
+
+Loading stream using programmatic transactions:
+
+snippet::example.UserRepositorySpec[project-base="doc-examples/hibernate-example", source="test", tags="stream_and_count"]
+
+=== Using @Fetch for Fetch Size and Read-Only Queries
+
+The `@Fetch` annotation sets the JDBC fetch size, controlling how many rows are fetched from the database at a time. This optimizes memory usage for large streams.
+
+Example repository:
+
+snippet::example.UserRepository[project-base="doc-examples/hibernate-example", source="main", tags="fetch_size_streaming"]
+
+For the operation without api:data.annotation.Fetch[] annotation telling what fetch size should be, the application will try to
+read from `jpa.<datasource>.properties.default-fetch-size` configuration and if not present fallback to default value 1000.
+
+Streams are executed in read-only mode by default for performance.
+
+[NOTE]
+Hibernate Reactive: @Fetch is not applicable. Hibernate Reactive uses non-blocking drivers; there is no fetch size API on reactive queries.
+
+=== Detaching Entities Per Row and/or Periodic Session Clear
+
+Detach entities after processing to remove them from the session cache is used in the example above.
+It also shows how to periodically clear the session which might not be required if entities are being detached.
+
+=== Using DTO or Native Projection Streams
+
+DTO projections or native queries returning DTOs do not create managed entities, avoiding session cache issues:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="stream_projection"]
+
+== Warnings
+
+- **Do not access lazy associations after detaching**: Detached entities cannot load lazy relationships.
+- **Consume the stream fully within the transaction**: Partial consumption may leave the session open unexpectedly.
+- **Do not leak the stream beyond the method**: Return streams only if consumed immediately; otherwise, convert to lists.
+
+

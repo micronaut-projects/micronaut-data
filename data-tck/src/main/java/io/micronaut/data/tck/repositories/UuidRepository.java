@@ -16,7 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.UuidEntity;
@@ -40,5 +40,5 @@ public interface UuidRepository extends CrudRepository<UuidEntity, UUID> {
         value = "select * from uuid_entity where :param is null",
         nativeQuery = true
     )
-    Collection<UuidEntity> findByNullableValue(@Parameter("param") @Nullable UUID param);
+    Collection<UuidEntity> findByNullableValue(@Parameter("param") @Nullable @io.micronaut.core.annotation.Nullable UUID param);
 }

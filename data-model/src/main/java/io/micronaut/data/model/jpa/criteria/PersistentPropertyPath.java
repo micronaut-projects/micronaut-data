@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
@@ -44,17 +43,14 @@ import java.util.StringJoiner;
 @Experimental
 public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
 
-    @NonNull
     PersistentProperty getProperty();
 
-    @NonNull
     List<Association> getAssociations();
 
     default io.micronaut.data.model.PersistentPropertyPath getPropertyPath() {
         return new io.micronaut.data.model.PersistentPropertyPath(getAssociations(), getProperty());
     }
 
-    @NonNull
     default String getPathAsString() {
         StringJoiner joiner = new StringJoiner(".");
         for (Association association : getAssociations()) {
@@ -73,12 +69,12 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
     }
 
     @Override
-    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<T, C, E> collection) {
+    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<? super T, C, E> collection) {
         return get(collection.getName());
     }
 
     @Override
-    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<T, K, V> map) {
+    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<? super T, K, V> map) {
         return get(map.getName());
     }
 

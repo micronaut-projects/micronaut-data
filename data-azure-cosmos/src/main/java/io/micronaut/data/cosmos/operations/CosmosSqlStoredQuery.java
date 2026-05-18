@@ -17,10 +17,11 @@ package io.micronaut.data.cosmos.operations;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Cosmos Azure implementation fo {@link StoredQuery}.
@@ -34,6 +35,7 @@ import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
 @Internal
 final class CosmosSqlStoredQuery<E, R> extends DefaultSqlStoredQuery<E, R> {
 
+    @Nullable
     private final String update;
 
     /**
@@ -43,8 +45,8 @@ final class CosmosSqlStoredQuery<E, R> extends DefaultSqlStoredQuery<E, R> {
      * @param update                  The update statement. In this case list of properties to update via API.
      * @param conversionService       The conversion service
      */
-    public CosmosSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder2 queryBuilder,
-                                String update,
+    public CosmosSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder queryBuilder,
+                                @Nullable String update,
                                 ConversionService conversionService) {
         super(storedQuery, runtimePersistentEntity, queryBuilder, conversionService);
         this.update = update;
@@ -53,6 +55,7 @@ final class CosmosSqlStoredQuery<E, R> extends DefaultSqlStoredQuery<E, R> {
     /**
      * @return the update query for Cosmos Azure. In this implementation, list of properties to be updated via Cosmos API.
      */
+    @Nullable
     public String getUpdate() {
         return update;
     }

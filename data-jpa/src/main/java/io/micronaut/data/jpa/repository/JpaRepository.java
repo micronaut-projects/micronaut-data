@@ -15,12 +15,16 @@
  */
 package io.micronaut.data.jpa.repository;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.jpa.repository.intercept.DetachInterceptor;
 import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;
 import io.micronaut.data.jpa.repository.intercept.LoadInterceptor;
 import io.micronaut.data.jpa.repository.intercept.MergeInterceptor;
+import io.micronaut.data.jpa.repository.intercept.PersistInterceptor;
+import io.micronaut.data.jpa.repository.intercept.RefreshInterceptor;
+import io.micronaut.data.jpa.repository.intercept.RemoveInterceptor;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
@@ -84,4 +88,40 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      */
     @DataMethod(interceptor = MergeInterceptor.class)
     <S extends E> S merge(@NonNull S entity);
+
+    /**
+     * Persist an entity instance into the persistence context.
+     *
+     * @param entity entity instance
+     * @param <S>    The entity type
+     */
+    @DataMethod(interceptor = PersistInterceptor.class)
+    <S extends E> void persist(@NonNull S entity);
+
+    /**
+     * Refresh the state of the given entity from the database.
+     *
+     * @param entity entity instance
+     * @param <S>    The entity type
+     */
+    @DataMethod(interceptor = RefreshInterceptor.class)
+    <S extends E> void refresh(@NonNull S entity);
+
+    /**
+     * Remove the given entity from the persistence context.
+     *
+     * @param entity entity instance
+     * @param <S>    The entity type
+     */
+    @DataMethod(interceptor = RemoveInterceptor.class)
+    <S extends E> void remove(@NonNull S entity);
+
+    /**
+     * Detach the given entity from the persistence context.
+     *
+     * @param entity entity instance
+     * @param <S>    The entity type
+     */
+    @DataMethod(interceptor = DetachInterceptor.class)
+    <S extends E> void detach(@NonNull S entity);
 }

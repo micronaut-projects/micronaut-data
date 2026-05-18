@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.event.PostUpdate;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.annotation.event.PreUpdate;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,14 +38,18 @@ import java.util.List;
 public class Book {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
+    @Nullable
     private String title;
     private int totalPages;
 
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private Author author;
 
     @Relation(Relation.Kind.MANY_TO_ONE)
+    @Nullable
     private Publisher publisher;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "book", cascade = Relation.Cascade.ALL)
@@ -54,9 +59,11 @@ public class Book {
     public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
 
     @DateUpdated
+    @Nullable
     private LocalDateTime created;
 
     @DateUpdated
+    @Nullable
     private LocalDateTime lastUpdated;
 
     @PrePersist
@@ -113,6 +120,7 @@ public class Book {
         this.pages = pages;
     }
 
+    @Nullable
     public Author getAuthor() {
         return author;
     }
@@ -121,6 +129,7 @@ public class Book {
         this.author = author;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -129,11 +138,12 @@ public class Book {
         this.id = id;
     }
 
+    @Nullable
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(@Nullable String title) {
         this.title = title;
     }
 
@@ -145,6 +155,7 @@ public class Book {
         this.totalPages = totalPages;
     }
 
+    @Nullable
     public Publisher getPublisher() {
         return publisher;
     }
@@ -153,6 +164,7 @@ public class Book {
         this.publisher = publisher;
     }
 
+    @Nullable
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
     }
@@ -161,6 +173,7 @@ public class Book {
         this.lastUpdated = lastUpdated;
     }
 
+    @Nullable
     public LocalDateTime getCreated() {
         return created;
     }

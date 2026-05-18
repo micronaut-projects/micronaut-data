@@ -15,18 +15,30 @@
  */
 package io.micronaut.data.runtime.event;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.event.*;
+import io.micronaut.data.annotation.event.EntityEventMapping;
+import io.micronaut.data.annotation.event.PostLoad;
+import io.micronaut.data.annotation.event.PostPersist;
+import io.micronaut.data.annotation.event.PostRemove;
+import io.micronaut.data.annotation.event.PostUpdate;
+import io.micronaut.data.annotation.event.PrePersist;
+import io.micronaut.data.annotation.event.PreRemove;
+import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.event.PersistenceEventException;
 import io.micronaut.data.event.QueryEventContext;
-import io.micronaut.data.event.listeners.*;
+import io.micronaut.data.event.listeners.PostPersistEventListener;
+import io.micronaut.data.event.listeners.PostRemoveEventListener;
+import io.micronaut.data.event.listeners.PostUpdateEventListener;
+import io.micronaut.data.event.listeners.PrePersistEventListener;
+import io.micronaut.data.event.listeners.PreRemoveEventListener;
+import io.micronaut.data.event.listeners.PreUpdateEventListener;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanDefinitionMethodReference;
@@ -34,7 +46,13 @@ import io.micronaut.inject.ExecutableMethod;
 
 import jakarta.inject.Singleton;
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -279,11 +297,11 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
     }
 
     private boolean isApplicableListener(RuntimePersistentEntity<Object> entity, List<Argument<?>> typeArguments) {
-        return typeArguments.isEmpty() || typeArguments.get(0).getType().isAssignableFrom(entity.getIntrospection().getBeanType());
+        return typeArguments.isEmpty() || typeArguments.getFirst().getType().isAssignableFrom(entity.getIntrospection().getBeanType());
     }
 
     @Override
-    public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+    public <B> void process(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
         final Argument[] arguments = method.getArguments();
         if (arguments.length == 1) {
             final List<Class<? extends Annotation>> eventTypes = method

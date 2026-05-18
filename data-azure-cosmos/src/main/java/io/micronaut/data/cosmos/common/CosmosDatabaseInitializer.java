@@ -29,7 +29,7 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.CollectionUtils;
@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -116,7 +117,7 @@ final class CosmosDatabaseInitializer {
      * @param throughputProperties throughput properties from the configuration, can be null
      * @return CosmosDatabase instance for given database name
      */
-    private CosmosDatabase createOrUpdateDatabase(CosmosClient cosmosClient, CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String databaseName,
+    private CosmosDatabase createOrUpdateDatabase(CosmosClient cosmosClient, @Nullable CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor, String databaseName,
                                                   StorageUpdatePolicy storageUpdatePolicy, @Nullable ThroughputProperties throughputProperties) {
         CosmosDatabase cosmosDatabase;
         if (StorageUpdatePolicy.CREATE_IF_NOT_EXISTS.equals(storageUpdatePolicy)) {
@@ -164,17 +165,25 @@ final class CosmosDatabaseInitializer {
             .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(RuntimePersistentEntity<?>[]::new);
     }
 
-    private void initContainers(CosmosDatabaseConfiguration configuration, CosmosDatabase cosmosDatabase, RuntimeEntityRegistry runtimeEntityRegistry,
+    private void initContainers(CosmosDatabaseConfiguration configuration,
+                                CosmosDatabase cosmosDatabase,
+                                RuntimeEntityRegistry runtimeEntityRegistry,
+                                @Nullable
                                 CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         RuntimePersistentEntity<?>[] entities = getPersistentEntities(configuration, runtimeEntityRegistry);
         Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettings = CollectionUtils.isEmpty(configuration.getContainers()) ? Collections.emptyMap() :
-            configuration.getContainers().stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
+            Objects.requireNonNull(configuration.getContainers()).stream().collect(Collectors.toMap(CosmosDatabaseConfiguration.CosmosContainerSettings::getContainerName, Function.identity()));
         for (RuntimePersistentEntity<?> persistentEntity : entities) {
             initContainer(cosmosContainerSettings, configuration.getUpdatePolicy(), persistentEntity, cosmosDatabase, cosmosDiagnosticsProcessor);
         }
     }
 
-    private CosmosContainerResponse createContainer(CosmosDatabase cosmosDatabase, String containerName, String partitionKey, ThroughputProperties throughputProperties,
+    private CosmosContainerResponse createContainer(CosmosDatabase cosmosDatabase,
+                                                    String containerName,
+                                                    String partitionKey,
+                                                    @Nullable
+                                                    ThroughputProperties throughputProperties,
+                                                    @Nullable
                                                     CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         CosmosContainerProperties containerProperties = new CosmosContainerProperties(containerName, partitionKey);
         try {
@@ -189,7 +198,11 @@ final class CosmosDatabaseInitializer {
         }
     }
 
-    private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap, StorageUpdatePolicy updatePolicy, RuntimePersistentEntity<?> entity, CosmosDatabase cosmosDatabase,
+    private void initContainer(Map<String, CosmosDatabaseConfiguration.CosmosContainerSettings> cosmosContainerSettingsMap,
+                               StorageUpdatePolicy updatePolicy,
+                               RuntimePersistentEntity<?> entity,
+                               CosmosDatabase cosmosDatabase,
+                               @Nullable
                                CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor) {
         String containerName = entity.getPersistedName();
         CosmosDatabaseConfiguration.CosmosContainerSettings cosmosContainerSettings = cosmosContainerSettingsMap.get(containerName);

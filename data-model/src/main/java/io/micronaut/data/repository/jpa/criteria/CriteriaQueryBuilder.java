@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
-import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 
@@ -34,7 +33,7 @@ public interface CriteriaQueryBuilder<R> {
      * @param criteriaBuilder The criteria builder
      * @return a query
      */
-    @NonNull
-    CriteriaQuery<R> build(@NonNull CriteriaBuilder criteriaBuilder);
+    
+    CriteriaQuery<R> build(CriteriaBuilder criteriaBuilder);
 
 }

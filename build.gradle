@@ -10,7 +10,28 @@ repositories {
 if (System.getenv("SONAR_TOKEN") != null) {
     sonarqube {
         properties {
-            property "sonar.exclusions", "**/example/**"
+            property "sonar.exclusions", "**/example/**, **/data/tck/**"
         }
     }
 }
+
+tasks.register('cleanBuildArtifacts', Delete) {
+    group = 'cleanup'
+    description = 'Removes Eclipse artifacts from project and all submodules'
+
+    def pathsToDelete = []
+
+    allprojects.each { proj ->
+        pathsToDelete += [
+                new File(proj.projectDir, 'bin'),
+                new File(proj.projectDir, '.settings'),
+                new File(proj.projectDir, '.classpath'),
+                new File(proj.projectDir, '.project'),
+                new File(proj.projectDir, '.factorypath'),
+                new File(proj.projectDir, '.micronaut'),
+        ]
+    }
+
+    delete pathsToDelete
+}
+

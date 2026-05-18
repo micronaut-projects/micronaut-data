@@ -34,12 +34,12 @@ final class RuntimePersistentPropertySingularAttribute<T> extends RuntimePersist
 
     @Override
     public boolean isId() {
-        return persistentEntity.getIdentity() == persistentProperty;
+        return persistentEntity.hasIdentity() && persistentEntity.getIdentity() == persistentProperty;
     }
 
     @Override
     public boolean isVersion() {
-        return persistentEntity.getVersion() == persistentProperty;
+        return persistentEntity.hasVersion() && persistentEntity.getVersion() == persistentProperty;
     }
 
     @Override

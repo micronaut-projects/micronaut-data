@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -32,7 +31,6 @@ import java.util.List;
  */
 public class VersionAnnotationMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Version";

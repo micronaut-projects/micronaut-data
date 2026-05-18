@@ -19,10 +19,13 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.AbstractDelegatingResultReader;
+import io.micronaut.data.runtime.mapper.ResultReader;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -34,13 +37,15 @@ import java.util.Set;
 @Internal
 public class ColumnNameExistenceAwareResultSetReader extends AbstractDelegatingResultReader<ResultSet, String> {
 
+    @Nullable
     private Set<String> knownColumns;
 
-    public ColumnNameExistenceAwareResultSetReader() {
-        super(new ColumnNameResultSetReader());
+    public ColumnNameExistenceAwareResultSetReader(ResultReader<ResultSet, String> delegate) {
+        super(delegate);
     }
 
     @Override
+    @Nullable
     public Object readDynamic(ResultSet resultSet, String index, DataType dataType) {
         if (!containsColumnName(resultSet, index)) {
             return null;
@@ -55,16 +60,17 @@ public class ColumnNameExistenceAwareResultSetReader extends AbstractDelegatingR
                 int columnsCount = rsmd.getColumnCount();
                 knownColumns = CollectionUtils.newHashSet(columnsCount);
                 for (int x = 1; x <= columnsCount; x++) {
-                    knownColumns.add(toLowerCase(rsmd.getColumnLabel(x)));
+                    String columnLabel = rsmd.getColumnLabel(x);
+                    if (columnLabel == null) {
+                        continue;
+                    }
+                    knownColumns.add(columnLabel.toLowerCase(Locale.ENGLISH));
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
-        return knownColumns.contains(toLowerCase(name));
+        return knownColumns.contains(name.toLowerCase(Locale.ENGLISH));
     }
 
-    private static String toLowerCase(String str) {
-        return str == null ? null : str.toLowerCase();
-    }
 }

@@ -21,7 +21,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.ArraysDto;
 import io.micronaut.data.tck.entities.ArraysEntity;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 
 public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Long> {
@@ -32,9 +32,9 @@ public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Lon
                 @Parameter("shortArray") Short[] shortArray,
                 @Parameter("shortPrimitiveArray") short[] shortPrimitiveArray,
                 @Parameter("shortArrayCollection") Collection<Short> shortArrayCollection,
-                @Parameter("integerArray") @Nullable Integer[] integerArray,
-                @Parameter("integerPrimitiveArray") @Nullable int[] integerPrimitiveArray,
-                @Parameter("integerArrayCollection") @Nullable Collection<Integer> integerArrayCollection
+                @Parameter("integerArray") @Nullable @io.micronaut.core.annotation.Nullable Integer[] integerArray,
+                @Parameter("integerPrimitiveArray") @Nullable @io.micronaut.core.annotation.Nullable int[] integerPrimitiveArray,
+                @Parameter("integerArrayCollection") @Nullable @io.micronaut.core.annotation.Nullable Collection<Integer> integerArrayCollection
     );
 
     ArraysDto queryBySomeId(Long someId);

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.event.listeners;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -38,10 +37,10 @@ public interface PreRemoveEventListener<T> extends EntityEventListener<T> {
      * @param entity The entity
      * @return A boolean value indicating whether to proceed with the operation.
      */
-    boolean preRemove(@NonNull T entity);
+    boolean preRemove(T entity);
 
     @Override
-    default boolean preRemove(@NonNull EntityEventContext<T> context) {
+    default boolean preRemove(EntityEventContext<T> context) {
         return preRemove(context.getEntity());
     }
 

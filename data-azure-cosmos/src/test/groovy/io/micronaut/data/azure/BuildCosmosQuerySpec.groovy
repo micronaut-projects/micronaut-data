@@ -217,7 +217,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
 
         then:
         def ex = thrown(Exception)
-        ex.message.contains('Unable to implement Repository method: FamilyRepository.countDistinct(). Count distinct is not supported by Micronaut Data Azure Cosmos')
+        ex.message.contains('Count distinct is not supported by Micronaut Data Azure Cosmos')
     }
 
     static String getQuery(AnnotationMetadataProvider metadata) {

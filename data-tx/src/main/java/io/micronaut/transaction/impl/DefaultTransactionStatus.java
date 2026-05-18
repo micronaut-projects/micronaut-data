@@ -16,10 +16,11 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
@@ -34,29 +35,41 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
 
     protected final ConnectionStatus<C> connectionStatus;
     private final TransactionDefinition definition;
+    private final TransactionOperations<C> transactionOperations;
     @Nullable
     private Object transaction;
     @Nullable
     private Object savepoint;
 
     private DefaultTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                     TransactionDefinition definition) {
+                                     TransactionDefinition definition,
+                                     TransactionOperations<C> transactionOperations) {
         this.connectionStatus = connectionStatus;
         this.definition = definition;
+        this.transactionOperations = transactionOperations;
     }
 
     public static <C> DefaultTransactionStatus<C> newTx(ConnectionStatus<C> connectionStatus,
-                                                        TransactionDefinition definition) {
-        return new NewTransactionStatus<>(connectionStatus, definition);
+                                                        TransactionDefinition definition,
+                                                        TransactionOperations<C> transactionOperations) {
+        return new NewTransactionStatus<>(connectionStatus, definition, transactionOperations);
     }
 
     public static <C> DefaultTransactionStatus<C> noTx(ConnectionStatus<C> connectionStatus,
-                                                       TransactionDefinition definition) {
-        return new NoTxTransactionStatus<>(connectionStatus, definition);
+                                                       TransactionDefinition definition,
+                                                       TransactionOperations<C> transactionOperations) {
+        return new NoTxTransactionStatus<>(connectionStatus, definition, transactionOperations);
     }
 
-    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus, DefaultTransactionStatus<C> existingTransaction) {
-        return new ExistingTransactionStatus<>(connectionStatus, existingTransaction);
+    public static <C> DefaultTransactionStatus<C> existingTx(ConnectionStatus<C> connectionStatus,
+                                                             TransactionDefinition definition,
+                                                             DefaultTransactionStatus<C> existingTransaction,
+                                                             TransactionOperations<C> transactionOperations) {
+        return new ExistingTransactionStatus<>(connectionStatus, definition, existingTransaction, transactionOperations);
+    }
+
+    public boolean isTransactionOf(TransactionOperations<C> transactionOperations) {
+        return this.transactionOperations ==  transactionOperations;
     }
 
     @Override
@@ -113,11 +126,23 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         return definition;
     }
 
+    @Override
+    public String toString() {
+        return "DefaultTransactionStatus{" +
+            "connectionStatus=" + connectionStatus +
+            ", definition=" + definition +
+            ", transaction=" + transaction +
+            ", savepoint=" + savepoint +
+            ", synchronizations=" + synchronizations +
+            '}';
+    }
+
     private static final class NewTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NewTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                    TransactionDefinition definition) {
-            super(connectionStatus, definition);
+        private NewTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                    TransactionDefinition definition,
+                                    TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
         }
 
         @Override
@@ -125,13 +150,24 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             return true;
         }
 
+        @Override
+        public String toString() {
+            return "NewTransactionStatus{" +
+                "transaction=" + getTransaction() +
+                ", connectionStatus=" + connectionStatus +
+                ", definition=" + getTransactionDefinition() +
+                ", savepoint=" + getSavepoint() +
+                ", synchronizations=" + synchronizations +
+                '}';
+        }
     }
 
     private static final class NoTxTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
-        public NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                     TransactionDefinition definition) {
-            super(connectionStatus, definition);
+        private NoTxTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                     TransactionDefinition definition,
+                                     TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
         }
 
         @Override
@@ -139,15 +175,21 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             return false;
         }
 
+        @Override
+        public String toString() {
+            return "NoTxTransactionStatus{}";
+        }
     }
 
     private static final class ExistingTransactionStatus<C> extends DefaultTransactionStatus<C> {
 
         private final DefaultTransactionStatus<C> existingTransaction;
 
-        public ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
-                                         DefaultTransactionStatus<C> existingTransaction) {
-            super(connectionStatus, existingTransaction.getTransactionDefinition());
+        private ExistingTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                          TransactionDefinition definition,
+                                          DefaultTransactionStatus<C> existingTransaction,
+                                          TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
             this.existingTransaction = existingTransaction;
         }
 
@@ -159,13 +201,26 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         @Override
         public void setRollbackOnly() {
             super.setRollbackOnly();
-            existingTransaction.setGlobalRollbackOnly();
+            // Nested transactions use savepoints for isolation: rollback-only should
+            // only affect the savepoint, not doom the outer transaction. For all other
+            // propagation types (REQUIRED, SUPPORTS, MANDATORY) the inner block shares
+            // the outer transaction, so rollback-only must propagate.
+            if (!isNestedTransaction()) {
+                existingTransaction.setGlobalRollbackOnly();
+            }
         }
 
         @Override
         public void registerSynchronization(TransactionSynchronization synchronization) {
             // The synchronization should be bound to the current TX
             existingTransaction.registerSynchronization(synchronization);
+        }
+
+        @Override
+        public String toString() {
+            return "ExistingTransactionStatus{" +
+                "existingTransaction=" + existingTransaction +
+                '}';
         }
     }
 }

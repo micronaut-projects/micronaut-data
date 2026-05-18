@@ -20,10 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
@@ -48,7 +46,6 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final Class<E> rootEntity;
     private final Class<R> resultType;
     private final boolean pageable;
-    private final boolean isSingleResult;
     private final boolean isCount;
     private final DataType resultDataType;
     private final boolean rawQuery;
@@ -72,11 +69,10 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             Class<E> rootEntity,
                             Class<R> resultType,
                             boolean pageable,
-                            boolean isSingleResult,
                             boolean isCount,
                             OperationType operationType) {
         this(name, annotationMetadata, query, expandableQueryParts, queryParameterBindings,
-            rootEntity, resultType, pageable, isSingleResult, isCount,
+            rootEntity, resultType, pageable, isCount,
             rootEntity != resultType && (DataType.forType(resultType) == DataType.OBJECT && BeanIntrospector.SHARED.findIntrospection(resultType).isPresent()),
             operationType);
     }
@@ -89,19 +85,17 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             Class<E> rootEntity,
                             Class<R> resultType,
                             boolean pageable,
-                            boolean isSingleResult,
                             boolean isCount,
                             boolean isDto,
                             OperationType operationType) {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
-        this.expandableQueryParts = expandableQueryParts == null ? new String[0] : expandableQueryParts;
+        this.expandableQueryParts = expandableQueryParts;
         this.queryParameterBindings = queryParameterBindings;
         this.rootEntity = rootEntity;
         this.resultType = resultType;
         this.pageable = pageable;
-        this.isSingleResult = isSingleResult;
         this.isCount = isCount;
         this.operationType = operationType;
         this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
@@ -170,19 +164,8 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     }
 
     @Override
-    public boolean useNumericPlaceholders() {
-        return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                .map(c -> c == SqlQueryBuilder.class).orElse(false);
-    }
-
-    @Override
     public boolean isCount() {
         return isCount;
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return isSingleResult;
     }
 
     @Override

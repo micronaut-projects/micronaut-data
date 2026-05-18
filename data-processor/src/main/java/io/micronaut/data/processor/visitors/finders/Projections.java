@@ -16,8 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
@@ -52,10 +51,10 @@ public final class Projections {
             }).toList();
 
     @Nullable
-    public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
-                                    @NonNull PersistentEntityCriteriaBuilder cb,
+    public static Selection<?> find(PersistentEntityRoot<?> entityRoot,
+                                    PersistentEntityCriteriaBuilder cb,
                                     String value,
-                                    BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
+                                    BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction) {
         String decapitalized = NameUtils.decapitalize(value);
         Optional<String> path = PersistentEntityUtils.getPersistentPropertyPath(entityRoot.getPersistentEntity(), decapitalized);
         if (path.isPresent()) {
@@ -141,7 +140,8 @@ public final class Projections {
     private abstract static class PrefixedPropertyProjection implements Projection {
 
         @Override
-        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value, BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
+        @Nullable
+        public final Selection<?> find(PersistentEntityRoot<?> entityRoot, PersistentEntityCriteriaBuilder cb, String value, BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction) {
             String prefix = getPrefix();
             if (value.startsWith(prefix)) {
                 String remaining = value.substring(prefix.length());
@@ -155,7 +155,7 @@ public final class Projections {
             return null;
         }
 
-        public abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath);
+        protected abstract Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath);
 
         protected abstract String getPrefix();
     }
@@ -163,10 +163,10 @@ public final class Projections {
     interface Projection {
 
         @Nullable
-        Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
-                          @NonNull PersistentEntityCriteriaBuilder cb,
-                          @NonNull String value,
-                          BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction);
+        Selection<?> find(PersistentEntityRoot<?> entityRoot,
+                          PersistentEntityCriteriaBuilder cb,
+                          String value,
+                          BiFunction<PersistentEntityRoot<?>, String, @Nullable PersistentPropertyPath<?>> findFunction);
 
     }
 

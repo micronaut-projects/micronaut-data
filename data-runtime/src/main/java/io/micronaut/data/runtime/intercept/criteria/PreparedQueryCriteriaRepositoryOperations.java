@@ -26,6 +26,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,7 @@ final class PreparedQueryCriteriaRepositoryOperations extends AbstractPreparedQu
                                                      MethodInvocationContext<?, ?> context,
                                                      QueryBuilder queryBuilder,
                                                      Class<?> entityRoot,
+                                                     @Nullable
                                                      Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;
@@ -64,6 +66,7 @@ final class PreparedQueryCriteriaRepositoryOperations extends AbstractPreparedQu
     }
 
     @Override
+    @Nullable
     public <K> K findOne(CriteriaQuery<K> query) {
         return operations.findOne(createFindOne(query));
     }

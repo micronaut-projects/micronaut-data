@@ -15,12 +15,18 @@
  */
 package io.micronaut.data.operations.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -38,7 +44,7 @@ public interface AsyncRepositoryOperations {
     /**
      * @return The executor used by this async operations
      */
-    @NonNull Executor getExecutor();
+     Executor getExecutor();
 
     /**
      * Find one by ID.
@@ -48,8 +54,8 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the result
      */
-    @NonNull
-    <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id);
+    
+    <T> CompletionStage<T> findOne(Class<T> type,  Object id);
 
     /**
      * Check with a record exists for the given query.
@@ -57,7 +63,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The declaring type
      * @return True if it exists
      */
-    <T> CompletionStage<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
+    <T> CompletionStage<Boolean> exists(PreparedQuery<T, Boolean> preparedQuery);
 
     /**
      * Find one by Query.
@@ -67,7 +73,7 @@ public interface AsyncRepositoryOperations {
      * @param <R> The result type
      * @return A completion stage that emits the result
      */
-    @NonNull <T, R> CompletionStage<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
+     <T, R> CompletionStage<R> findOne(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Find one by ID.
@@ -77,8 +83,8 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the result or null if there is no result
      */
-    @NonNull
-    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
+    
+    <T> CompletionStage<T> findOptional(Class<T> type,  Object id);
 
     /**
      * Find one by Query.
@@ -88,7 +94,7 @@ public interface AsyncRepositoryOperations {
      * @param <R> The result type
      * @return A completion stage that emits the result or null if there is no result
      */
-    @NonNull <T, R> CompletionStage<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
+     <T, R> CompletionStage<R> findOptional(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds all results for the given query.
@@ -96,7 +102,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the results
      */
-    @NonNull <T> CompletionStage<Iterable<T>> findAll(PagedQuery<T> pagedQuery);
+     <T> CompletionStage<Iterable<T>> findAll(PagedQuery<T> pagedQuery);
 
     /**
      * Counts all results for the given query.
@@ -104,7 +110,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the count as a long
      */
-    @NonNull <T> CompletionStage<Long> count(PagedQuery<T> pagedQuery);
+     <T> CompletionStage<Long> count(PagedQuery<T> pagedQuery);
 
     /**
      * Finds all results for the given query.
@@ -113,7 +119,7 @@ public interface AsyncRepositoryOperations {
      * @param <R> The result type
      * @return A completion stage that emits an iterable with all results
      */
-    @NonNull <T, R> CompletionStage<Iterable<R>> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
+     <T, R> CompletionStage<Iterable<R>> findAll(PreparedQuery<T, R> preparedQuery);
 
     /**
      * Persist the entity returning a possibly new entity.
@@ -121,7 +127,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the entity
      */
-    @NonNull <T> CompletionStage<T> persist(@NonNull InsertOperation<T> operation);
+     <T> CompletionStage<T> persist(InsertOperation<T> operation);
 
     /**
      * Updates the entity returning a possibly new entity.
@@ -129,7 +135,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion stage that emits the entity
      */
-    @NonNull <T> CompletionStage<T> update(@NonNull UpdateOperation<T> operation);
+     <T> CompletionStage<T> update(UpdateOperation<T> operation);
 
     /**
      * Updates the entities for the given operation.
@@ -138,7 +144,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return The updated entities
      */
-    default @NonNull <T> CompletionStage<Iterable<T>> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+    default  <T> CompletionStage<Iterable<T>> updateAll(UpdateBatchOperation<T> operation) {
         throw new UnsupportedOperationException("The updateAll is required to be implemented.");
     }
 
@@ -149,8 +155,8 @@ public interface AsyncRepositoryOperations {
      * @return A publisher that emits the number of entities deleted
      */
     @SingleResult
-    @NonNull
-    <T> CompletionStage<Number> delete(@NonNull DeleteOperation<T> operation);
+    
+    <T> CompletionStage<Number> delete(DeleteOperation<T> operation);
 
     /**
      * Persist all the given entities.
@@ -158,7 +164,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull InsertBatchOperation<T> operation);
+     <T> CompletionStage<Iterable<T>> persistAll(InsertBatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -166,8 +172,8 @@ public interface AsyncRepositoryOperations {
      * @param preparedQuery The prepared query
      * @return A completion that emits a boolean true if successful
      */
-    @NonNull
-    CompletionStage<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
+    
+    CompletionStage<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a delete batch for the given query and parameter values. If it is possible to
@@ -175,8 +181,8 @@ public interface AsyncRepositoryOperations {
      * @param preparedQuery The prepared query
      * @return A completion that emits a boolean true if successful
      */
-    @NonNull
-    default CompletionStage<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    
+    default CompletionStage<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
     }
 
@@ -188,8 +194,8 @@ public interface AsyncRepositoryOperations {
      * @return The result
      * @since 4.2.0
      */
-    @NonNull
-    default <R> CompletionStage<List<R>> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+    
+    default <R> CompletionStage<List<R>> execute(PreparedQuery<?, R> preparedQuery) {
         throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
@@ -199,7 +205,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion that emits a boolean true if successful
      */
-    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
+     <T> CompletionStage<Number> deleteAll(DeleteBatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.
@@ -207,7 +213,6 @@ public interface AsyncRepositoryOperations {
      * @param <R> The entity generic type
      * @return The page type
      */
-    @NonNull <R> CompletionStage<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
+     <R> CompletionStage<Page<R>> findPage(PagedQuery<R> pagedQuery);
 
 }
-

@@ -18,7 +18,6 @@ package io.micronaut.data.processor.mappers.jakarta.data;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -35,7 +34,6 @@ import java.util.List;
 @Internal
 public final class JakartaDataOrderByListMapper implements NamedAnnotationMapper {
 
-    @NonNull
     @Override
     public String getName() {
         return "jakarta.data.repository.OrderBy.List";

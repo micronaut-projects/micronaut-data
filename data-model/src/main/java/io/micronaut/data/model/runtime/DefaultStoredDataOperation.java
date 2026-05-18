@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -34,7 +33,6 @@ public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
         this.method = method;
     }
 
-    @NonNull
     @Override
     public final Argument<R> getResultArgument() {
         //noinspection unchecked
@@ -46,5 +44,4 @@ public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
         return method.getAnnotationMetadata();
     }
 }
-
 

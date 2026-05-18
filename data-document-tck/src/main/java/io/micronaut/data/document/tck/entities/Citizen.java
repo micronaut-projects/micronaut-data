@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,11 +27,15 @@ import java.util.List;
 public class Citizen {
     @Id
     @GeneratedValue
+    @Nullable
     private String id;
+    @Nullable
     private String name;
     @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    @Nullable
     private List<Settlement> settlements;
 
+    @Nullable
     public String getId() {
         return id;
     }
@@ -39,6 +44,7 @@ public class Citizen {
         this.id = id;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
@@ -47,6 +53,7 @@ public class Citizen {
         this.name = name;
     }
 
+    @Nullable
     public List<Settlement> getSettlements() {
         return settlements;
     }

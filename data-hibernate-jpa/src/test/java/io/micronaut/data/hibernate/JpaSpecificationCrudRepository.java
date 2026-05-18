@@ -15,15 +15,15 @@
  */
 package io.micronaut.data.hibernate;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
-import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.entities.Person;
 
 import jakarta.transaction.Transactional;
@@ -71,11 +71,11 @@ public interface JpaSpecificationCrudRepository extends CrudRepository<Person, L
     List<Person> findByNameLikeOrderByAgeDesc(String name);
 
     class Specifications {
-        public static Specification<Person> ageGreaterThanThirty() {
+        public static QuerySpecification<Person> ageGreaterThanThirty() {
             return ageGreaterThanThirty(false);
         }
 
-        public static Specification<Person> ageGreaterThanThirty(boolean countDistinct) {
+        public static QuerySpecification<Person> ageGreaterThanThirty(boolean countDistinct) {
             return (root, query, criteriaBuilder) -> {
                 if (countDistinct && query.getResultType() == Long.class) {
                     query.distinct(true);
@@ -86,7 +86,7 @@ public interface JpaSpecificationCrudRepository extends CrudRepository<Person, L
             };
         }
 
-        public static Specification<Person> nameEquals(String name) {
+        public static QuerySpecification<Person> nameEquals(String name) {
             return (root, query, criteriaBuilder) -> criteriaBuilder.equal(
                     root.get("name"), name
             );

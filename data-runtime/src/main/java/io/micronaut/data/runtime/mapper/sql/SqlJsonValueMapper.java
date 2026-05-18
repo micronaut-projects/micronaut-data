@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.runtime.mapper.sql;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.json.JsonMapper;
@@ -41,9 +40,6 @@ public interface SqlJsonValueMapper {
      * @throws IOException exception that can be thrown when encoding JSON
      */
     default Object mapValue(Object object, JsonDataType jsonDataType) throws IOException {
-        if (object == null) {
-            return null;
-        }
         // This doesn't support writing to blob
         if (object instanceof String) {
             // No need to serialize String
@@ -67,6 +63,5 @@ public interface SqlJsonValueMapper {
     /**
      * @return the json mapper
      */
-    @NonNull
     JsonMapper getJsonMapper();
 }

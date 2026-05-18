@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -54,8 +55,14 @@ public abstract class AbstractDelegatingResultReader<RS, ID> implements ResultRe
     }
 
     @Override
+    @Nullable
     public <T> T getRequiredValue(RS resultSet, ID name, Class<T> type) throws DataAccessException {
         return delegate.getRequiredValue(resultSet, name, type);
+    }
+
+    @Override
+    public <T> T getRequiredValueNonNull(RS resultSet, ID name, Class<T> type) throws DataAccessException {
+        return delegate.getRequiredValueNonNull(resultSet, name, type);
     }
 
     @Override
@@ -64,6 +71,7 @@ public abstract class AbstractDelegatingResultReader<RS, ID> implements ResultRe
     }
 
     @Override
+    @Nullable
     public Object readDynamic(RS resultSet, ID index, DataType dataType) {
         return delegate.readDynamic(resultSet, index, dataType);
     }
@@ -79,26 +87,31 @@ public abstract class AbstractDelegatingResultReader<RS, ID> implements ResultRe
     }
 
     @Override
+    @Nullable
     public Date readDate(RS resultSet, ID name) {
         return delegate.readDate(resultSet, name);
     }
 
     @Override
+    @Nullable
     public Date readTimestamp(RS resultSet, ID index) {
         return delegate.readTimestamp(resultSet, index);
     }
 
     @Override
+    @Nullable
     public Time readTime(RS resultSet, ID index) {
         return delegate.readTime(resultSet, index);
     }
 
     @Override
+    @Nullable
     public String readString(RS resultSet, ID name) {
         return delegate.readString(resultSet, name);
     }
 
     @Override
+    @Nullable
     public UUID readUUID(RS resultSet, ID name) {
         return delegate.readUUID(resultSet, name);
     }
@@ -134,12 +147,13 @@ public abstract class AbstractDelegatingResultReader<RS, ID> implements ResultRe
     }
 
     @Override
+    @Nullable
     public BigDecimal readBigDecimal(RS resultSet, ID name) {
         return delegate.readBigDecimal(resultSet, name);
     }
 
     @Override
-    public byte[] readBytes(RS resultSet, ID name) {
+    public byte @Nullable [] readBytes(RS resultSet, ID name) {
         return delegate.readBytes(resultSet, name);
     }
 

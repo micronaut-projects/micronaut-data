@@ -34,9 +34,10 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
 import jakarta.persistence.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ANSI)
 interface MyInterface extends GenericRepository<User, Long> {
 
     @Join(value = "authority")
@@ -139,10 +140,10 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
 import jakarta.persistence.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.ANSI)
 interface MyInterface extends GenericRepository<User, Long> {
 
     @Join(value = "authorities")
@@ -260,9 +261,10 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
 import jakarta.persistence.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ANSI)
 interface MyInterface extends GenericRepository<User, Long> {
 
     @Join(value = "authorities")

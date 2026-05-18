@@ -33,7 +33,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -339,6 +339,11 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         });
     }
 
+    @Override
+    public <R> Flux<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return withClientSessionMany(clientSession -> execute(clientSession, getMongoPreparedQuery(preparedQuery)));
+    }
+
     private <T, R> Flux<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         if (preparedQuery.isCount()) {
             return getCount(clientSession, preparedQuery).flux();
@@ -347,6 +352,44 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             return findAllAggregated(clientSession, preparedQuery, preparedQuery.isDtoProjection());
         }
         return Flux.from(find(clientSession, preparedQuery));
+    }
+
+    private <T, R> Flux<R> execute(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        StoredQuery.OperationType operationType = preparedQuery.getOperationType();
+        if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
+            return executeUpdateReturning(clientSession, preparedQuery);
+        }
+        return Flux.error(new DataAccessException("Unsupported MongoDB execute operation: " + operationType + ". Expected update returning single entity, DTO or scalar."));
+    }
+
+    private <T, R> Flux<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
+            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result, but found declared return type: "
+                + declaredReturnType.getName()
+                + ". Use a non-collection single value type, or a single-item reactive type like Mono<T>."));
+        }
+        MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
+                updateOne.getFilter().toBsonDocument().toJson(),
+                updateOne.getUpdate().toBsonDocument().toJson());
+        }
+        Class<T> rootType = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+        MongoDatabase database = getDatabase(preparedQuery);
+        if (resultType.isAssignableFrom(rootType)) {
+            MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
+            return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
+                .map(entity -> triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity))
+                .cast(resultType)
+                .flux();
+        }
+        MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
+        return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
+            .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()))
+            .flux();
     }
 
     private <T, R> Mono<R> getCount(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
@@ -359,7 +402,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                 QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
+                .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                 .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
         } else {
             MongoFind find = preparedQuery.getFind();
@@ -393,7 +436,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
+                .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
         }
         return Mono.from(aggregate(clientSession, preparedQuery).first())
             .map(r -> {
@@ -412,7 +455,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
-                .map(result -> convertResult(database.getCodecRegistry(), resultType, result, isDtoProjection));
+                .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, isDtoProjection));
         } else {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery));
         }
@@ -553,7 +596,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             aggregateIterable = aggregateIterable.maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
         }
         Long maxAwaitTimeMS = aggregateOptions.getMaxAwaitTimeMS();
-        if (maxTimeMS != null) {
+        if (maxAwaitTimeMS != null) {
             aggregateIterable = aggregateIterable.maxAwaitTime(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
         }
         Boolean bypassDocumentValidation = aggregateOptions.getBypassDocumentValidation();
@@ -616,7 +659,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     @Override
-    public <T> Flux<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+    public <T> Flux<T> persistBatch(MongoOperationContext ctx, Iterable<T> values, RuntimePersistentEntity<T> persistentEntity, @Nullable Predicate<T> predicate) {
         MongoReactiveEntitiesOperation<T> op = createMongoInsertManyOperation(ctx, persistentEntity, values);
         if (predicate != null) {
             op.veto(predicate);
@@ -639,7 +682,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     @Override
-    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, Class<?> repository) {
+    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, @Nullable Class<?> repository) {
         return mongoClient.getDatabase(databaseNameProvider.provide(persistentEntity, repository));
     }
 
@@ -746,7 +789,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             @Override
             protected void execute() throws RuntimeException {
                 data = data.flatMap(d -> {
-                    Bson filter = (Bson) d.filter;
+                    Bson filter = d.getFilterOrDefault(EMPTY);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'replaceOne' with filter: {}", filter.toBsonDocument().toJson());
                     }
@@ -754,8 +797,10 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     bsonDocument.remove("_id");
                     return Mono.from(collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata))).map(updateResult -> {
                         d.rowsUpdated = updateResult.getModifiedCount();
-                        if (persistentEntity.getVersion() != null) {
-                            checkOptimisticLocking(1, (int) d.rowsUpdated);
+                        if (persistentEntity.hasVersion()) {
+                            checkOptimisticLocking(1, getModifiedOrUpsertedCount(updateResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, getMatchedOrUpsertedCount(updateResult));
                         }
                         return d;
                     });
@@ -793,7 +838,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                         if (d.vetoed) {
                             continue;
                         }
-                        Bson filter = (Bson) d.filter;
+                        Bson filter = d.getFilterOrDefault(EMPTY);
                         if (QUERY_LOG.isDebugEnabled()) {
                             QUERY_LOG.debug("Executing Mongo 'replaceOne' with filter: {}", filter.toBsonDocument().toJson());
                         }
@@ -802,8 +847,10 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                         replaces.add(new ReplaceOneModel<>(filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata)));
                     }
                     return Mono.from(collection.bulkWrite(ctx.clientSession, replaces)).map(bulkWriteResult -> {
-                        if (persistentEntity.getVersion() != null) {
-                            checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
+                        if (persistentEntity.hasVersion()) {
+                            checkOptimisticLocking(replaces.size(), getModifiedOrUpsertedCount(bulkWriteResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                         }
                         return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
@@ -833,7 +880,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     Mono<Long> modifiedCount = Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates)).map(result -> {
                         if (storedQuery.isOptimisticLock()) {
-                            checkOptimisticLocking(updates.size(), result.getModifiedCount());
+                            checkOptimisticLocking(updates.size(), getModifiedOrUpsertedCount(result));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), getMatchedOrUpsertedCount(result));
                         }
                         return (long) result.getModifiedCount();
                     });
@@ -865,13 +914,13 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             @Override
             protected void execute() throws RuntimeException {
                 data = data.flatMap(d -> {
-                    Bson filter = (Bson) d.filter;
+                    Bson filter = d.getFilterOrDefault(EMPTY);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'deleteOne' with filter: {}", filter.toBsonDocument().toJson());
                     }
                     return Mono.from(getCollection(persistentEntity, ctx.repositoryType).deleteOne(ctx.clientSession, filter, getDeleteOptions(ctx.annotationMetadata))).map(deleteResult -> {
                         d.rowsUpdated = (int) deleteResult.getDeletedCount();
-                        if (persistentEntity.getVersion() != null) {
+                        if (persistentEntity.hasVersion()) {
                             checkOptimisticLocking(1, d.rowsUpdated);
                         }
                         return d;
@@ -916,7 +965,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     } else {
                         modifiedCount = Mono.just(0L);
                     }
-                    if (persistentEntity.getVersion() != null) {
+                    if (persistentEntity.hasVersion()) {
                         modifiedCount = modifiedCount.map(count -> {
                             checkOptimisticLocking(filters.size(), count);
                             return count;

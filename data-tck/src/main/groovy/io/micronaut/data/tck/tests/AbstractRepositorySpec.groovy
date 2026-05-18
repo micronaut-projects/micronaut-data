@@ -57,6 +57,7 @@ import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
@@ -77,8 +78,14 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Connection
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -124,6 +131,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
     abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
     abstract ExampleEntityRepository getExampleEntityRepository()
+    abstract IntervalRepository getIntervalRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -192,6 +200,7 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
         personRepository.deleteAll()
+        intervalRepository.deleteAll()
     }
 
     protected void cleanupMeals() {
@@ -356,8 +365,7 @@ abstract class AbstractRepositorySpec extends Specification {
             def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
             bookRepository.save(book1)
             bookRepository.save(book2)
-            bookRepository.save(book3
-            )
+            bookRepository.save(book3)
             def criteria = new PredicateSpecification() {
                 @Override
                 Predicate toPredicate(Root root, CriteriaBuilder criteriaBuilder) {
@@ -379,7 +387,7 @@ abstract class AbstractRepositorySpec extends Specification {
             page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
 
         when:
-            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true)))
             page = bookRepository.findAll(criteria, pageable)
 
         then:
@@ -572,6 +580,20 @@ abstract class AbstractRepositorySpec extends Specification {
             // The point of test is that it won't throw error when field value is null
             retrievedBook.wrapperChar == 'c'
         }
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/3757")
+    void 'test retrieve single byte array column'() {
+        given:
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        expect:
+        def byteArrayOpt = basicTypeRepository.findByteArrayById(entity.myId)
+        byteArrayOpt.present
+        def byteArray = byteArrayOpt.get()
+        // Compare byte[] contents instead of reference equality
+        Arrays.equals(byteArray, entity.byteArray)
+        byteArray.class == byte[].class
     }
 
     void "test save and retrieve timezone basic types"() {
@@ -844,8 +866,8 @@ abstract class AbstractRepositorySpec extends Specification {
         io.micronaut.data.tck.jdbc.entities.User user1 = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("user1@email.com"))
         io.micronaut.data.tck.jdbc.entities.Role role1 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("manager"))
         io.micronaut.data.tck.jdbc.entities.Role role2 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("developer"))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
         def userRoleCount = userRoleRepository.count()
         def userRoleDistinctCount = userRoleRepository.countDistinct()
 
@@ -2075,7 +2097,7 @@ abstract class AbstractRepositorySpec extends Specification {
         Role role = roleRepository.save(new Role("ROLE_USER"))
 
         when:
-        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
+        UserRole userRole = userRoleRepository.insert(adminUser, adminRole)
 
         then:
         userRoleRepository.count() == 1
@@ -2083,8 +2105,8 @@ abstract class AbstractRepositorySpec extends Specification {
         userRole.role.id == adminRole.id
 
         when:
-        userRoleRepository.save(adminUser, role)
-        userRoleRepository.save(user, role)
+        userRoleRepository.insert(adminUser, role)
+        userRoleRepository.insert(user, role)
 
         then:
         userRoleRepository.count() == 3
@@ -3098,7 +3120,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -3107,14 +3129,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -3162,7 +3184,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClass2Repository.save(e)
+        entityWithIdClass2Repository.insert(e)
         e = entityWithIdClass2Repository.findById(k).get()
 
         then:
@@ -3171,14 +3193,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name() == "Xyz"
 
         when:
-        entityWithIdClass2Repository.save(f)
+        entityWithIdClass2Repository.insert(f)
         List<EntityWithIdClass2> ef = entityWithIdClass2Repository.findById2(e.id2())
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClass2Repository.save(g)
+        entityWithIdClass2Repository.insert(g)
         List<EntityWithIdClass2> eg = entityWithIdClass2Repository.findById1(e.id1())
 
         then:
@@ -3230,6 +3252,60 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             })
             count == 50
+    }
+
+    void "test criteria current temporal expressions"() {
+        given:
+            def dateTimeProvider = context.getBean(MockedDateTimeProvider)
+            def now = OffsetDateTime.of(2025, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC)
+            dateTimeProvider.setValue(now)
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Temporal", age: 1))
+            basicTypeRepository.deleteAll()
+            def basicTypes = new BasicTypes()
+            basicTypes.localDate = now.toLocalDate()
+            basicTypes.localTime = now.toLocalTime()
+            basicTypes.localDateTime = now.toLocalDateTime()
+            basicTypeRepository.save(basicTypes)
+
+        when:
+            def currentTemporalMatches = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<String>get("name"), "Temporal"),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentDate()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTime()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTimestamp())
+                    ))
+                    return query
+                }
+            })
+            def localTemporalMatches = basicTypeRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(BasicTypes)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<LocalDate>get("localDate"), criteriaBuilder.localDate()),
+                            criteriaBuilder.equal(root.<LocalTime>get("localTime"), criteriaBuilder.localTime()),
+                            criteriaBuilder.equal(root.<LocalDateTime>get("localDateTime"), criteriaBuilder.localDateTime())
+                    ))
+                    return query
+                }
+            })
+
+        then:
+            currentTemporalMatches == 1
+            localTemporalMatches == 1
+
+        cleanup:
+            dateTimeProvider.setValue(null)
+            basicTypeRepository.deleteAll()
     }
 
     void "test sum function"() {
@@ -3452,7 +3528,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "test query specification with uppercase/lowercase column names"() {
         given:
-        exampleEntityRepository.save(new ExampleEntity(1, "foo", "bar"))
+        exampleEntityRepository.insert(new ExampleEntity(1, "foo", "bar"))
         when:
         QuerySpecification<ExampleEntity> qs = (root, query, criteriaBuilder) -> {
             query.multiselect(
@@ -3475,6 +3551,158 @@ abstract class AbstractRepositorySpec extends Specification {
         entity.uppercaseColumn() == "foo"
         cleanup:
         exampleEntityRepository.deleteById(1)
+    }
+
+    void "test save, find and update single interval entity"() {
+        given:
+        def entity = new IntervalEntity()
+        entity.setDuration(Duration.ofHours(4).negated())
+        entity.setPeriod(Period.ofMonths(7))
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.duration == entity.duration
+        foundEntity.period == entity.period
+
+        when:
+        foundEntity.setDuration(Duration.ofHours(8))
+        foundEntity.setPeriod(Period.ofMonths(10))
+        intervalRepository.update(foundEntity)
+        def updatedEntityOpt = intervalRepository.findById(savedEntity.id)
+        def updatedEntity = updatedEntityOpt.orElse(null)
+
+        then:
+        updatedEntity != null
+        updatedEntity.duration == foundEntity.duration
+        updatedEntity.period == foundEntity.period
+    }
+
+    void "test save, find and update multiple interval entities"() {
+        given:
+        def entity1 = new IntervalEntity()
+        entity1.setDuration(Duration.ofHours(4))
+        entity1.setPeriod(Period.ofMonths(7))
+
+        def entity2 = new IntervalEntity()
+        entity2.setDuration(Duration.ofMinutes(5))
+        entity2.setPeriod(Period.ofYears(8))
+
+        when:
+        def savedEntities = intervalRepository.saveAll([entity1, entity2])
+
+        then:
+        savedEntities != null
+        savedEntities.size() == 2
+        savedEntities.get(0).id != null
+        savedEntities.get(1).id != null
+
+        when:
+        def foundEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 2
+        foundEntities.get(0).duration == entity1.duration
+        foundEntities.get(0).period == entity1.period
+        foundEntities.get(1).duration == entity2.duration
+        foundEntities.get(1).period == entity2.period
+
+        when:
+        entity1.setDuration(Duration.ofSeconds(30))
+        entity1.setPeriod(Period.ofYears(5))
+        entity2.setDuration(Duration.ofHours(5).plusMinutes(10).plusSeconds(14).plusMillis(250))
+        entity2.setPeriod(Period.ofYears(2).plusMonths(4))
+        intervalRepository.updateAll([entity1, entity2])
+        def updatedEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        updatedEntities != null
+        updatedEntities.size() == 2
+        updatedEntities.get(0).duration == entity1.duration
+        updatedEntities.get(0).period == entity1.period
+        updatedEntities.get(1).duration == entity2.duration
+        updatedEntities.get(1).period == entity2.period
+    }
+
+    void "test save, find and update single interval entity using custom queries"() {
+        given:
+        def duration1 = Duration.ofHours(4)
+        def period1 = Period.ofMonths(7)
+        def duration2 = Duration.ofHours(5)
+        def period2 = Period.ofMonths(8)
+        def duration3 = Duration.ofHours(5)
+        def period3 = Period.ofMonths(8)
+        def duration4 = Duration.ofHours(6)
+        def period4 = Period.ofMonths(11)
+
+        when:
+        intervalRepository.saveCustom(duration1, period1)
+        intervalRepository.saveCustom(duration2, period2)
+        intervalRepository.saveCustom(duration3, period3)
+        intervalRepository.saveCustom(duration4, period4)
+        def savedEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
+
+        then:
+        savedEntities != null
+        savedEntities.size() == 4
+        savedEntities.get(0).duration == duration1
+        savedEntities.get(0).period == period1
+        savedEntities.get(1).duration == duration2
+        savedEntities.get(1).period == period2
+        savedEntities.get(2).duration == duration3
+        savedEntities.get(2).period == period3
+        savedEntities.get(3).duration == duration4
+        savedEntities.get(3).period == period4
+
+        when:
+        def foundEntities = intervalRepository.findCustom(Duration.ofHours(5), Period.ofMonths(8))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 2
+        foundEntities.get(0).duration == duration2
+        foundEntities.get(0).period == period2
+        foundEntities.get(1).duration == duration3
+        foundEntities.get(1).period == period3
+
+        when:
+        intervalRepository.updateCustom(foundEntities.get(1).id, duration3.minusHours(3), period3)
+        foundEntities = intervalRepository.findCustom(Duration.ofHours(5), Period.ofMonths(8))
+
+        then:
+        foundEntities != null
+        foundEntities.size() == 1
+        foundEntities.get(0).duration == duration2
+        foundEntities.get(0).period == period2
+    }
+
+    void "test save and find when interval properties are null"() {
+        given:
+        def entity = new IntervalEntity()
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.id == savedEntity.id
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -24,7 +22,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.ast.ClassElement;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code count(Specification)} for JPA specifications.
@@ -43,34 +41,16 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidCountReturnType(matchContext)) {
+    @Nullable
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
+        if (TypeUtils.isValidCountReturnType(matchContext) && isQuerySpecification(matchContext)) {
             return mc -> {
-                if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
-                    FindersUtils.InterceptorMatch e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
-                    return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.returnType(), e.interceptor());
-                }
-                if (isFirstParameterSpringJpaSpecification(mc.getMethodElement())) {
-                    return new MethodMatchInfo(
-                            DataMethod.OperationType.COUNT,
-                            mc.getReturnType(),
-                            getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.CountSpecificationInterceptor")
-                    );
-                }
-                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor");
-                return new MethodMatchInfo(
-                        DataMethod.OperationType.COUNT,
-                        mc.getReturnType(),
-                        classElement
-                );
+                FindersUtils.InterceptorMatch e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
+                return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.returnType(), e.interceptor());
             };
         }
         return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement());
-    }
 }
 

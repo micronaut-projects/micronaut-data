@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Expression;
@@ -61,9 +60,8 @@ public interface PersistentEntityCriteriaDelete<T> extends CriteriaDelete<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaDelete<T> returning(@NonNull Selection<? extends T> selection);
-
+    
+    PersistentEntityCriteriaDelete<T> returning(Selection<? extends T> selection);
 
     /**
      * The returning result of the query.
@@ -73,8 +71,8 @@ public interface PersistentEntityCriteriaDelete<T> extends CriteriaDelete<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaDelete<T> returningMulti(@NonNull Selection<?>... selections);
+    
+    PersistentEntityCriteriaDelete<T> returningMulti(Selection<?>... selections);
 
     /**
      * The returning result of the query.
@@ -84,6 +82,6 @@ public interface PersistentEntityCriteriaDelete<T> extends CriteriaDelete<T>, Pe
      * @since 4.2.0
      */
     @Experimental
-    @NonNull
-    PersistentEntityCriteriaDelete<T> returningMulti(@NonNull List<Selection<?>> selectionList);
+    
+    PersistentEntityCriteriaDelete<T> returningMulti(List<Selection<?>> selectionList);
 }

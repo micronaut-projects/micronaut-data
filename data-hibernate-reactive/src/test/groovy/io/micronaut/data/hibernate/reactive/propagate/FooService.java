@@ -17,11 +17,12 @@ public class FooService {
     RequestContext requestContext;
 
     Mono<Foo> create() {
-        return repository.save(new Foo(requestContext.getId(), "DEFAULT_NAME"))
+        return repository.insert(new Foo(requestContext.getId(), "DEFAULT_NAME"))
             .flatMap(entity -> Mono.deferContextual(contextView -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     entity.setName(requestContext.getName());
-                }
+                    return null;
+                });
                 return repository.update(entity);
             }));
     }
@@ -29,11 +30,11 @@ public class FooService {
     @Transactional
     Mono<Foo> createTransactional() {
         return Mono.deferContextual(contextView -> {
-            try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
-                return repository.save(
+            return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
+                return repository.insert(
                     new Foo(requestContext.getId(), requestContext.getName())
                 );
-            }
+            });
         });
     }
 

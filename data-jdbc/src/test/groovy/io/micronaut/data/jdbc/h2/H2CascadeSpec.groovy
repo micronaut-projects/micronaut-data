@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -8,8 +7,7 @@ import spock.lang.Specification
 
 
 @MicronautTest
-@H2DBProperties
-@Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2")
+@H2DBProperties(packages = "io.micronaut.data.jdbc.h2")
 class H2CascadeSpec extends Specification {
 
     @Inject

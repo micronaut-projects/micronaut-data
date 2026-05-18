@@ -16,6 +16,7 @@
 package io.micronaut.data.cosmos.config;
 
 import com.azure.cosmos.models.ThroughputProperties;
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Throughput settings for database and container.
@@ -25,6 +26,7 @@ import com.azure.cosmos.models.ThroughputProperties;
  */
 public class ThroughputSettings {
 
+    @Nullable
     private Integer requestUnits;
 
     private boolean autoScale;
@@ -32,6 +34,7 @@ public class ThroughputSettings {
     /**
      * @return the request units
      */
+    @Nullable
     public Integer getRequestUnits() {
         return requestUnits;
     }
@@ -64,6 +67,7 @@ public class ThroughputSettings {
     /**
      * @return an instance of {@link ThroughputProperties} based on these settings and null if {@link #requestUnits} not greater than zero
      */
+    @Nullable
     public ThroughputProperties createThroughputProperties() {
         if (requestUnits != null && requestUnits > 0) {
             if (autoScale) {

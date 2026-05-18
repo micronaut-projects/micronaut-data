@@ -2,7 +2,7 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
     id "java"
     id "application"
-    id "com.github.johnrengelman.shadow"
+    id "com.gradleup.shadow"
     id "me.champeau.jmh"
 }
 
@@ -24,6 +24,12 @@ dependencies {
 
 tasks.named("test") {
     useJUnitPlatform()
+}
+
+tasks.withType(Javadoc).configureEach {
+    // Disable doclint warnings for benchmark projects to avoid "no comment" noise in generated Javadoc
+    options.addBooleanOption('Xdoclint:none', true)
+    options.addBooleanOption('quiet', true)
 }
 
 application {

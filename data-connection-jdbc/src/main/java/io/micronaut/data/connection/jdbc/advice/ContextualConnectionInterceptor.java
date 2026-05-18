@@ -26,6 +26,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
 
@@ -52,6 +53,7 @@ public final class ContextualConnectionInterceptor implements MethodInterceptor<
     }
 
     @Override
+    @Nullable
     public Object intercept(MethodInvocationContext<Connection, Object> context) {
         Connection connection = connectionOperations.findConnectionStatus().map(ConnectionStatus::getConnection).orElse(null);
         if (connection == null) {

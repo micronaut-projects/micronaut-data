@@ -1,16 +1,15 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalTime;
 
-@MappedEntity("TBL_CLASS")
+@MappedEntity(value = "TBL_CLASS", alias = "c")
 public class Class {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

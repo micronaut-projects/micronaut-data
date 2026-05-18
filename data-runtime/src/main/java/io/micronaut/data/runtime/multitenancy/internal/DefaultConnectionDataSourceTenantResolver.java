@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.interceptor.ConnectionDataSourceTenantResolver;
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The default implementation of {@link ConnectionDataSourceTenantResolver} enabling data source multi-tenancy for the connection manager.
@@ -38,6 +39,7 @@ final class DefaultConnectionDataSourceTenantResolver implements ConnectionDataS
         this.tenantResolver = tenantResolver;
     }
 
+    @Nullable
     @Override
     public String resolveTenantDataSourceName() {
         return tenantResolver.resolveTenantDataSourceName();

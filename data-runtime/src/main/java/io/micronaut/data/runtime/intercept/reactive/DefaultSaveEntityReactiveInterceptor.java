@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -41,7 +41,7 @@ public class DefaultSaveEntityReactiveInterceptor extends AbstractCountOrEntityP
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object entity = getEntityParameter(context, Object.class);
-        return reactiveOperations.persist(getInsertOperation(context, entity));
+        return persistOrUpdateReactive(context, entity);
     }
 
 }

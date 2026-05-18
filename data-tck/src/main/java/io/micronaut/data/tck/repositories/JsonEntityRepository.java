@@ -1,7 +1,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryResult;
@@ -30,7 +30,7 @@ public interface JsonEntityRepository extends CrudRepository<JsonEntity, Long> {
     @Query("UPDATE json_entity SET json_blob = :jsonBlob WHERE id = :id")
     void updateJsonBlobById(Long id, SampleData jsonBlob);
 
-    JsonEntity save(Long id, Iterable<String> values);
+    JsonEntity insert(Long id, Iterable<String> values);
 
     void update(@Id Long id, Iterable<String> values);
 
