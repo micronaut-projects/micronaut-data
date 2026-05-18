@@ -74,7 +74,7 @@ class Test {
 """)
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
         def entity = new SourcePersistentEntity(element, {})
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == query
@@ -188,7 +188,7 @@ class Test {
 """)
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
         def entity = new SourcePersistentEntity(element, {})
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == query

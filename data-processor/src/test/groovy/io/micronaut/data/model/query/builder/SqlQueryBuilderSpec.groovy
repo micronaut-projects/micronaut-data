@@ -703,7 +703,7 @@ interface MyRepository {
     void "test build create embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(entity)
+        def statements = encoder.buildCreateTableStatements(entity)
 
         then:
             statements.join("\n") == query
@@ -735,6 +735,7 @@ interface MyRepository {
         statements[5] == 'CREATE INDEX `idx_vehicle_second_plate_number` ON `vehicle` (`second_plate_number`);'
         statements[6] == 'CREATE INDEX `idx_vehicle_second_status` ON `vehicle` (`second_status`);'
         statements[7] == 'CREATE INDEX `idx_vehicle_second_jurisdiction_region_code` ON `vehicle` (`second_jurisdiction_region_code`);'
+        statements.toSet().size() == statements.size()
     }
 
     void "test build create index from table annotation"() {
@@ -747,7 +748,7 @@ interface MyRepository {
         statements[1] == 'CREATE UNIQUE INDEX `idx_shipment_with_index_field_taxcode` ON `shipment_with_index` (`field`, `taxCode`);'
 
         when:
-        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
+        def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product), List.of())
 
         then:
         productStatements.length == 1

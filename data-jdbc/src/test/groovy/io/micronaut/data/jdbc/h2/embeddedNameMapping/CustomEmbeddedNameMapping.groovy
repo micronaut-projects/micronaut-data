@@ -62,7 +62,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
     void "test build create"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook), List.of())
 
         then:
             statements.join("\n") == 'CREATE TABLE "MyBook" ("id" VARCHAR(255) NOT NULL,"firstName" VARCHAR(255) NOT NULL,"lastName" VARCHAR(255) NOT NULL,"numberAge" INT NOT NULL, PRIMARY KEY("id"));'

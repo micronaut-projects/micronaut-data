@@ -10,5 +10,6 @@ io.micronaut.data.processor.visitors.finders.FindMethodMatcher
 io.micronaut.data.processor.visitors.finders.CountMethodMatcher
 io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher
 io.micronaut.data.processor.visitors.finders.SaveMethodMatcher
+io.micronaut.data.processor.visitors.finders.VectorSearchMethodMatcher
 io.micronaut.data.processor.visitors.finders.ProcedureMethodMatcher
 io.micronaut.data.processor.visitors.finders.JakartaDataQueryMethodMatcher

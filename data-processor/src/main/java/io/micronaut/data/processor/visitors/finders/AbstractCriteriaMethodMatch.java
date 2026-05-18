@@ -45,6 +45,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -89,6 +90,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String[] OPERATORS = {OPERATOR_AND, OPERATOR_OR};
     private static final String NOT = "Not";
     private static final String IGNORE_CASE = "IgnoreCase";
+    private static final String NEAR = "Near";
+    private static final String WITHIN = "Within";
+    private static final String BETWEEN = "Between";
 
     private static final Map<String, Pattern> OPERATOR_PATTERNS;
 
@@ -452,13 +456,32 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
         Expression<Object> prop = getProperty(root, propertyName);
 
+        Restrictions.PropertyRestriction<Object> effectiveRestriction = restriction;
+        if (BETWEEN.equals(restriction.getName())) {
+            PersistentEntity persistentEntity = root.getPersistentEntity();
+            String resolvedPropertyName = persistentEntity.getPath(propertyName).orElse(propertyName);
+            PersistentProperty property = persistentEntity.getPropertyByName(resolvedPropertyName);
+            if (property == null) {
+                property = persistentEntity.getPropertyByNameIgnoreCase(propertyName);
+            }
+            if (property != null && property.isAssignable(Vector.class)) {
+                Restrictions.PropertyRestriction<Object> vectorRangeRestriction = Restrictions.findPropertyRestriction(WITHIN);
+                if (vectorRangeRestriction == null) {
+                    throw new MatchFailedException("Cannot find vector range restriction for: Within");
+                }
+                effectiveRestriction = vectorRangeRestriction;
+            }
+        }
+
+        Expression<?> parameterBindingExpression = prop;
+
         List<ParameterExpression<Object>> parameterExpressions = provideParams(parameters,
-            restriction.getRequiredParameters(),
-            restriction.getName(),
+            effectiveRestriction.getRequiredParameters(),
+            effectiveRestriction.getName(),
             cb,
-            prop
+            parameterBindingExpression
         );
-        Predicate predicate = restriction.find(root,
+        Predicate predicate = effectiveRestriction.find(root,
             cb,
             prop,
             parameterExpressions);
@@ -507,6 +530,17 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return params;
     }
 
+    private static boolean isNearOrWithinDistanceParameter(String restrictionName, int parameterIndex) {
+        return (NEAR.equals(restrictionName) || WITHIN.equals(restrictionName)) && parameterIndex > 0;
+    }
+
+    private static @Nullable PersistentPropertyPath toPersistentPropertyPath(@Nullable Expression<?> expression) {
+        if (!(expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp)) {
+            return null;
+        }
+        return PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
+    }
+
     private <T> ParameterExpression<T> provideParam(ParameterElement parameter,
                                                     SourcePersistentEntityCriteriaBuilder scb,
                                                     String restrictionName,
@@ -518,23 +552,30 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             genericType = genericType.getFirstTypeArgument().orElse(genericType);
         }
 
-        if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
-            PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
-            if (!isValidType(restrictionName, parameterIndex, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
-                SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
-                throw new IllegalArgumentException(
-                    "Parameter [" + genericType.getType().getName() + " " + parameter.getName() +
-                        "] is not compatible with property [" + property.getType().getName() + " " +
-                        property.getName() + "] of entity: " + property.getOwner().getName());
-            }
-            if ("Near".equals(restrictionName) && parameterIndex == 1) {
-                return scb.parameter(parameter, null);
-            } else {
-                return scb.parameter(parameter, propertyPath);
-            }
-        } else {
+        PersistentPropertyPath propertyPath = toPersistentPropertyPath(expression);
+        if (propertyPath == null) {
             return scb.parameter(parameter, null);
         }
+        if (isNearOrWithinDistanceParameter(restrictionName, parameterIndex)) {
+            if (NEAR.equals(restrictionName) && !propertyPath.getProperty().isAssignable(Vector.class)) {
+                validateParameterCompatibility(restrictionName, parameterIndex, genericType, parameter, propertyPath);
+            }
+            return scb.parameter(parameter, null);
+        }
+        validateParameterCompatibility(restrictionName, parameterIndex, genericType, parameter, propertyPath);
+        return scb.parameter(parameter, propertyPath);
+    }
+
+    private void validateParameterCompatibility(String restrictionName,
+                                                int parameterIndex,
+                                                ClassElement genericType,
+                                                ParameterElement parameter,
+                                                PersistentPropertyPath propertyPath) {
+        if (isValidType(restrictionName, parameterIndex, genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
+            return;
+        }
+        SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
+        throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
     }
 
     private boolean isValidType(String restrictionName, int parameterIndex, ClassElement genericType, SourcePersistentProperty property) {

@@ -210,4 +210,5 @@ public enum Dialect {
     public boolean supportsDeleteReturning() {
         return supportsDeleteReturning;
     }
+
 }

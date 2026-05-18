@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.jdbc.convert;
 
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
+import org.jspecify.annotations.NonNull;
 
 import java.sql.Connection;
 
@@ -25,13 +26,12 @@ import java.sql.Connection;
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface JdbcConversionContext extends ConversionContext {
+public interface JdbcConversionContext extends DatabaseTypeConversionContext {
 
     /**
      * Provides access to JDBC connection.
      *
-     * @return the connection
+     * @return the current connection
      */
-    Connection getConnection();
-
+    @NonNull Connection getConnection();
 }

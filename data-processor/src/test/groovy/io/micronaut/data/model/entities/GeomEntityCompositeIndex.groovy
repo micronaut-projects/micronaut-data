@@ -45,4 +45,3 @@ class GeomEntityCompositeIndex {
         this.name = name
     }
 }
-

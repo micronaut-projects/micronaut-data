@@ -27,9 +27,9 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.schema.sql.*;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -61,10 +61,12 @@ import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -232,7 +234,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String buildBatchCreateTableStatement(PersistentEntity... entities) {
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
+        return buildBatchCreateTableStatement(List.of(), entities);
+    }
+
+    /**
+     * Builds a batch create tables statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
+     * @param entities the entities
+     * @return The table
+     */
+    @Experimental
+    public String buildBatchCreateTableStatement(List<DefinitionProvider> columnDefinitionProviders,
+                                                 PersistentEntity... entities) {
+        return Arrays.stream(entities)
+            .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders)))
             .collect(Collectors.joining(System.lineSeparator()));
     }
 
@@ -333,14 +350,33 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the creation table statement. Designed for testing and not production usage. For production a
-     * SQL migration tool such as Flyway or Liquibase is recommended.
+     * Builds a set of {@code CREATE TABLE} statements for the given entity.
+     * <p>
+     * This method is {@code public} and the class is non-final; therefore it can be overridden.
+     * If you override it, ensure you preserve the following behavior expected by callers:
+     * <ul>
+     *     <li>Return a non-null {@code String[]} containing SQL statements in execution order.</li>
+     *     <li>Respect the current {@link #getDialect()} and escaping rules (see {@link #shouldEscape(PersistentEntity)}).</li>
+     *     <li>Keep special handling for {@link JsonView} entities (Oracle-only) consistent with the base implementation.</li>
+     * </ul>
      *
      * @param entity The entity
-     * @return The tables for the give entity
+     * @return The {@code CREATE TABLE} statements
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity) {
+        return buildCreateTableStatements(entity, List.of());
+    }
+
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity.
+     *
+     * @param entity The entity
+     * @param definitionProviders The definition providers
+     * @return The {@code CREATE TABLE} statements
+     */
+    @Experimental
+    public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
@@ -350,7 +386,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -374,7 +410,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @return The tables for the given entities
      */
     @Experimental
-    public String[] buildCreateTableStatements(PersistentEntity[] entities) {
+    public final String[] buildCreateTableStatements(PersistentEntity... entities) {
+        return buildCreateTableStatements(entities, getDialect());
+    }
+
+    @Experimental
+    public final String[] buildCreateTableStatements(PersistentEntity[] entities, Dialect dialect) {
+        return buildCreateTableStatements(List.of(), entities, dialect);
+    }
+
+    @Experimental
+    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -390,7 +438,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity, getDialect());
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
@@ -854,12 +902,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (CollectionUtils.isEmpty(indexes)) {
             return;
         }
+        List<String> indexNames = new ArrayList<>(indexes.size());
         for (SqlIndexMapping indexMapping : indexes) {
-            addToCollectionIfNotContains(createStatements, createIndexStatement(table, indexMapping, escapedTableName, escape));
+            String indexName = createIndexName(table, indexMapping, escape);
+            if (indexNames.contains(indexName)) {
+                continue;
+            }
+            indexNames.add(indexName);
+            addToCollectionIfNotContains(createStatements, createIndexStatement(table, indexMapping, indexName, escapedTableName, escape));
         }
     }
 
-    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+    private String createIndexName(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, boolean escape) {
         // Create index name without escaped table name and then escape if needed
         String columnNames = String.join(", ", indexMapping.columns());
         String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
@@ -867,6 +921,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 makeTransformedColumnList(columnNames));
         if (escape) {
             indexName = quote(indexName);
+        }
+        return indexName;
+    }
+
+    @SuppressWarnings("java:S3776")
+    private String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String indexName, String escapedTableName, boolean escape) {
+        String columnNames = String.join(", ", indexMapping.columns());
+        SqlIndexDefinitionProvider sqlIndexDefinitionProvider = indexMapping.sqlIndexDefinitionProvider();
+        if (sqlIndexDefinitionProvider != null) {
+            return sqlIndexDefinitionProvider.getIndexDefinition(
+                indexName,
+                escapedTableName,
+                indexMapping.columns(),
+                escape,
+                this::quote,
+                indexMapping,
+                dialect
+            );
         }
 
         StringBuilder indexBuilder = new StringBuilder();

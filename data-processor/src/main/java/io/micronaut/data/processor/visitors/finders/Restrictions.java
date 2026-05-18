@@ -16,13 +16,15 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -694,6 +696,33 @@ public final class Restrictions {
     }
 
     /**
+     * Restriction that matches vector score within an inclusive range.
+     */
+    public static final class PropertyWithin implements PropertyRestriction<Object> {
+
+        @Override
+        public String getName() {
+            return "Within";
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 3;
+        }
+
+        @Override
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<Object> expression,
+                              List<ParameterExpression<Object>> parameters) {
+            Expression<Double> score = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+            Expression<Double> min = (Expression<Double>) (Expression<?>) parameters.get(1);
+            Expression<Double> max = (Expression<Double>) (Expression<?>) parameters.get(2);
+            return cb.and(cb.greaterThanOrEqualTo(score, min), cb.lessThanOrEqualTo(score, max));
+        }
+    }
+
+    /**
      * Between restriction.
      *
      * @param <T> The property type
@@ -984,6 +1013,12 @@ public final class Restrictions {
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
                               List<ParameterExpression<T>> parameters) {
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                && propertyPath.getProperty().isAssignable(Vector.class)) {
+                Expression<Double> score = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, expression, parameters.get(0));
+                Expression<Double> threshold = (Expression<Double>) (Expression<?>) parameters.get(1);
+                return cb.lessThanOrEqualTo(score, threshold);
+            }
             return cb.near(expression, parameters.get(0), (Expression<? extends Number>) parameters.get(1));
         }
 

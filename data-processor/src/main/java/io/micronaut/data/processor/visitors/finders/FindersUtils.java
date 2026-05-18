@@ -101,6 +101,7 @@ import io.micronaut.data.intercept.reactive.UpdateAllEntitiesReactiveInterceptor
 import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.visitors.FindInterceptorDef;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -469,7 +470,10 @@ public interface FindersUtils {
     }
 
     private static FindersUtils.InterceptorMatch resolveSyncFindInterceptor(MethodMatchContext matchContext,
-                                                                    ClassElement returnType) {
+                                                                     ClassElement returnType) {
+        if (SearchResults.class.getName().equals(returnType.getName())) {
+            return new FindersUtils.InterceptorMatch(returnType, getInterceptorElement(matchContext, FindOneInterceptor.class), false);
+        }
         FindInterceptorDef findInterceptorDef = matchContext.getFindInterceptors().get(returnType);
         if (findInterceptorDef != null) {
             if (findInterceptorDef.isContainer() && isContainer(returnType, findInterceptorDef.returnType())) {
@@ -504,6 +508,13 @@ public interface FindersUtils {
     private static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(MethodMatchContext matchContext,
                                                                                 ClassElement returnType,
                                                                                 boolean singleResult) {
+        if (SearchResults.class.getName().equals(returnType.getName())) {
+            return new FindersUtils.InterceptorMatch(
+                returnType,
+                getInterceptorElement(matchContext, FindOneReactiveInterceptor.class),
+                false
+            );
+        }
         if (isCursoredPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, returnType), FindCursoredReactivePageInterceptor.class);
         } else if (isPage(matchContext, returnType)) {
@@ -518,6 +529,13 @@ public interface FindersUtils {
     }
 
     private static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(MethodMatchContext matchContext, ClassElement asyncType) {
+        if (SearchResults.class.getName().equals(asyncType.getName())) {
+            return new FindersUtils.InterceptorMatch(
+                asyncType,
+                getInterceptorElement(matchContext, FindOneAsyncInterceptor.class),
+                false
+            );
+        }
         if (isCursoredPage(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, getFirstTypeArgumentOrFail(matchContext, asyncType), FindCursoredAsyncPageInterceptor.class);
         } else if (isPage(matchContext, asyncType)) {

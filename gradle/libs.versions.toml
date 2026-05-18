@@ -26,6 +26,7 @@ groovy = "5.0.6"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M3"
+managed-pg-vector = "0.1.6"
 
 spring-data = "4.0.5"
 
@@ -87,7 +88,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
 managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
 managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data-stateful', version.ref = "managed-jakarta-data" }
-
+managed-pg-vector = { module = 'com.pgvector:pgvector', version.ref = "managed-pg-vector"}
 # JPA
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }

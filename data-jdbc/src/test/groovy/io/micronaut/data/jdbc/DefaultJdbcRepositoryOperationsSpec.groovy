@@ -22,6 +22,7 @@ import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
@@ -31,7 +32,6 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
-import java.sql.ResultSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -88,7 +88,8 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
                 null,
                 Mock(JdbcSchemaHandler),
                 null,
-                new SqlJsonColumnMapperProvider<ResultSet>(null, [], []),
+                context.getBean(SqlJsonColumnMapperProvider),
+                Mock(DatabaseConversionContextFactory),
                 []
         )
     }

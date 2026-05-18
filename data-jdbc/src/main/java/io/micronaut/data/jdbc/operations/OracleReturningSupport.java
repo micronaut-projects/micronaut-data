@@ -29,6 +29,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
@@ -96,7 +97,8 @@ final class OracleReturningSupport {
                                                                    @Nullable JsonMapper jsonMapper,
                                                                    Function<Class<?>, RuntimePersistentEntity<?>> entityResolver,
                                                                    DtoEntityResolver dtoEntityResolver,
-                                                                   PostLoadCallback postLoadCallback) {
+                                                                   PostLoadCallback postLoadCallback,
+                                                                   DatabaseConversionContextFactory conversionContextFactory) {
         ResultReader<CallableStatement, String> resultReader = new ColumnNameByIndexCallableResultReader(
             columnIndexCallableResultReader,
             outCtx.metadata().columnIndexesByName()
@@ -139,7 +141,8 @@ final class OracleReturningSupport {
                 query.getJoinPaths(),
                 jsonMapper != null ? () -> jsonMapper : null,
                 (loadedEntity, entity) -> (R) postLoadCallback.apply(loadedEntity, entity, query.getAnnotationMetadata()),
-                conversionService
+                conversionService,
+                conversionContextFactory
             );
         }
         if (dtoEntityResolver.isDtoProjection(query)) {
@@ -159,7 +162,8 @@ final class OracleReturningSupport {
                 query.getJoinPaths(),
                 null,
                 null,
-                conversionService
+                conversionService,
+                conversionContextFactory
             );
         }
         return new SqlTypeMapper<>() {
@@ -188,7 +192,8 @@ final class OracleReturningSupport {
                                                                                OutParameterContext outCtx,
                                                                                ColumnIndexCallableResultReader columnIndexCallableResultReader,
                                                                                @Nullable JsonMapper jsonMapper,
-                                                                               DataConversionService conversionService) {
+                                                                               DataConversionService conversionService,
+                                                                               DatabaseConversionContextFactory conversionContextFactory) {
         ColumnNameByIndexCallableResultReader resultReader = new ColumnNameByIndexCallableResultReader(
             columnIndexCallableResultReader,
             outCtx.metadata().canonicalColumnIndexesByName()
@@ -199,7 +204,9 @@ final class OracleReturningSupport {
             resultReader,
             Set.of(),
             reader,
-            conversionService
+            null,
+            conversionService,
+            conversionContextFactory
         );
     }
 
