@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
@@ -98,11 +100,11 @@ public final class SqlSchemaUtils {
     public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
     public static final String NULLABLE_COLUMN = "NULLABLE";
 
-    private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
     static final int SRID_WGS_84 = 4326;
     static final int SRID_ETRS_89 = 4258;
     static final int SRID_WEB_MERCATOR = 3857;
 
+    private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
     private static final String ORACLE_GEOM_METADATA_STATEMENT = """
         INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
         VALUES (
@@ -325,6 +327,10 @@ public final class SqlSchemaUtils {
             .orElse(AUTO) : AUTO;
         OptionalInt optPrecision = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "precision");
         OptionalInt optScale = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "scale");
+
+        if (annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class)) {
+            return new SqlColumnMapping(column, dataType, SqlDbType.JSON_OBJECT, false, null, false, false, generatedValueType, definition);
+        }
 
         SqlDbType dbType = getDbType(prop, definition);
 
