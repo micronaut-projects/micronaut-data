@@ -58,6 +58,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" tabindex="0">getTransactionDefinition(String, AnnotationMetadataProvider)</a></li>
+<li><a href="#getOraclePriority(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getOraclePriority(TransactionDefinition)</a></li>
 </ol>
 </li>
 </ol>
@@ -98,10 +99,15 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" class="member-name-link">getTransactionDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- io.micronaut.core.annotation.AnnotationMetadataProvider&nbsp;annotationMetadataProvider)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="../annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getOraclePriority(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getOraclePriority</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Resolves Oracle transaction priority from a transaction definition.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" class="member-name-link">getTransactionDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ io.micronaut.core.annotation.AnnotationMetadataProvider&nbsp;annotationMetadataProvider)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Creates a transaction definition from a given name and annotation metadata provider.</div>
 </div>
 </div>
@@ -134,6 +140,21 @@ loadScripts(document, 'script');</script>
 <dd><code>annotationMetadataProvider</code> - The annotation metadata</dd>
 <dt>Returns:</dt>
 <dd>the transaction definition</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getOraclePriority(io.micronaut.transaction.TransactionDefinition)">
+<h3>getOraclePriority</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">@Nullable <a href="../annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></span>&nbsp;<span class="element-name">getOraclePriority</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="block">Resolves Oracle transaction priority from a transaction definition.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dt>Returns:</dt>
+<dd>The Oracle transaction priority, or <code>null</code> if none is present</dd>
 </dl>
 </div>
 </section>

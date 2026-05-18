@@ -558,6 +558,14 @@ is issues.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryPosition.html#AFTER_TABLE_NAME" class="member-name-link">AFTER_TABLE_NAME</a> - Enum constant in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryPosition</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/ReactiveTransactionExecutionListener.html#afterBegin(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">afterBegin(ConnectionStatus, TransactionDefinition)</a> - Method in interface io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ReactiveTransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">ReactiveTransactionExecutionListener</a></dt>
+<dd>
+<div class="block">Invoked after the transaction manager begins a transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/TransactionExecutionListener.html#afterBegin(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">afterBegin(ConnectionStatus, TransactionDefinition)</a> - Method in interface io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">TransactionExecutionListener</a></dt>
+<dd>
+<div class="block">Invoked after the transaction manager begins a transaction.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#afterCascadedMany(T,java.util.List,java.lang.Iterable,java.util.List)" class="member-name-link">afterCascadedMany(T, List, Iterable, List)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
 <dd>
 <div class="block">Process after a children element has been cascaded.</div>
@@ -1432,6 +1440,14 @@ is issues.</div>
 <dt><a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html#BEFORE_COMMIT" class="member-name-link">BEFORE_COMMIT</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></dt>
 <dd>
 <div class="block">Fire the event before transaction commit.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/ReactiveTransactionExecutionListener.html#beforeBegin(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">beforeBegin(ConnectionStatus, TransactionDefinition)</a> - Method in interface io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ReactiveTransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">ReactiveTransactionExecutionListener</a></dt>
+<dd>
+<div class="block">Invoked before the transaction manager begins a transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/TransactionExecutionListener.html#beforeBegin(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">beforeBegin(ConnectionStatus, TransactionDefinition)</a> - Method in interface io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">TransactionExecutionListener</a></dt>
+<dd>
+<div class="block">Invoked before the transaction manager begins a transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#beforeCleanupTest(io.micronaut.test.context.TestContext)" class="member-name-link">beforeCleanupTest(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
 <dd>&nbsp;</dd>
@@ -4008,6 +4024,10 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 <div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" class="member-name-link">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager)</a> - Constructor for class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>
+<div class="block">Create a new DataSourceTransactionManager instance.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List)" class="member-name-link">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager, List)</a> - Constructor for class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
 <dd>
 <div class="block">Create a new DataSourceTransactionManager instance.</div>
 </dd>
@@ -12746,6 +12766,10 @@ pagination.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/MongoUpdate.html#getOptions()" class="member-name-link">getOptions()</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoUpdate.html" title="class in io.micronaut.data.mongodb.operations">MongoUpdate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/TransactionUtil.html#getOraclePriority(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getOraclePriority(TransactionDefinition)</a> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></dt>
+<dd>
+<div class="block">Resolves Oracle transaction priority from a transaction definition.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/interceptor/ConnectableInterceptor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.connection.interceptor.<a href="io/micronaut/data/connection/interceptor/ConnectableInterceptor.html" title="class in io.micronaut.data.connection.interceptor">ConnectableInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.document.processor.matchers.<a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html" title="class in io.micronaut.data.document.processor.matchers">MongoExecutorQueryMethodMatcher</a></dt>
@@ -13272,6 +13296,12 @@ i.e.</div>
 <dt><a href="io/micronaut/transaction/TransactionDefinition.html#getPropagationBehavior()" class="member-name-link">getPropagationBehavior()</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></dt>
 <dd>
 <div class="block">Return the propagation behavior.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#getProperties()" class="member-name-link">getProperties()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/TransactionDefinition.html#getProperties()" class="member-name-link">getProperties()</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></dt>
+<dd>
+<div class="block">Additional transaction properties that may be interpreted by specific transaction managers.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/DefaultEmbeddedPersistentPropertyPath.html#getProperty()" class="member-name-link">getProperty()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/DefaultEmbeddedPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">DefaultEmbeddedPersistentPropertyPath</a></dt>
 <dd>&nbsp;</dd>
@@ -15139,6 +15169,8 @@ decision on the side of the transaction coordinator.</div>
 <div class="block">Sets up the default hibernate transaction manager.</div>
 </dd>
 <dt><a href="io/micronaut/data/spring/jpa/hibernate/HibernateTransactionManagerFactory.html#%3Cinit%3E()" class="member-name-link">HibernateTransactionManagerFactory()</a> - Constructor for class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/HibernateTransactionManagerFactory.html" title="class in io.micronaut.data.spring.jpa.hibernate">HibernateTransactionManagerFactory</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html#HIGH" class="member-name-link">HIGH</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/annotation/EntityGraph.html#hint()" class="member-name-link">hint()</a> - Element in annotation interface io.micronaut.data.jpa.annotation.<a href="io/micronaut/data/jpa/annotation/EntityGraph.html" title="annotation interface in io.micronaut.data.jpa.annotation">EntityGraph</a></dt>
 <dd>&nbsp;</dd>
@@ -17093,6 +17125,10 @@ transaction in the first place.</div>
 <dd>
 <div class="block">Whether the given type is Object.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#isolation()" class="member-name-link">isolation()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">The transaction isolation level.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#isolation()" class="member-name-link">isolation()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
 <div class="block">The transaction isolation level.</div>
@@ -18343,6 +18379,8 @@ of the available methods.</div>
 <dd>
 <div class="block">A type code representing the generic SQL type <code>LONGVARCHAR</code>.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html#LOW" class="member-name-link">LOW</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#lower(jakarta.persistence.criteria.Expression)" class="member-name-link">lower(Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/expression/UnaryExpressionType.html#LOWER" class="member-name-link">LOWER</a> - Enum constant in enum class io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/UnaryExpressionType.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpressionType</a></dt>
@@ -18942,6 +18980,8 @@ exists.</div>
 <dt><a href="io/micronaut/data/tck/entities/Meal.html#%3Cinit%3E(java.lang.Long,int,java.util.Date,java.util.Date,java.util.Set)" class="member-name-link">Meal(Long, int, Date, Date, Set)</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/MealRepository.html" class="type-name-link" title="interface in io.micronaut.data.tck.repositories">MealRepository</a> - Interface in <a href="io/micronaut/data/tck/repositories/package-summary.html">io.micronaut.data.tck.repositories</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html#MEDIUM" class="member-name-link">MEDIUM</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#merge(S)" class="member-name-link">merge(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
 <dd>
@@ -19736,6 +19776,10 @@ that delegates to <a href="io/micronaut/data/connection/ConnectionOperations.htm
 <dd>
 <div class="block">Returns the value of the <code>name</code> record component.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">The optional name of the transaction.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/Transactional.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a></dt>
 <dd>
 <div class="block">The optional name of the transaction.</div>
@@ -20018,6 +20062,10 @@ exists.</div>
 <dt><a href="io/micronaut/data/event/EntityEventListener.html#NOOP" class="member-name-link">NOOP</a> - Static variable in interface io.micronaut.data.event.<a href="io/micronaut/data/event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a></dt>
 <dd>
 <div class="block">A no-op event listener that does nothing.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#noRollbackFor()" class="member-name-link">noRollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">Defines the exceptions that will not result in a rollback.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#noRollbackFor()" class="member-name-link">noRollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
@@ -20574,6 +20622,10 @@ exists.</div>
 <dd>
 <div class="block">Oracle 12c or above.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#ORACLE_PRIORITY" class="member-name-link">ORACLE_PRIORITY</a> - Static variable in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">Transaction definition property used to store Oracle transaction priority.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/OracleReturningMetadata.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">OracleReturningMetadata</a> - Record Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
 <dd>
 <div class="block">Oracle SQL <code>RETURNING</code> column metadata with both canonical and alias-expanded views.</div>
@@ -20581,6 +20633,14 @@ exists.</div>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/OracleReturningMetadata.html#%3Cinit%3E(java.util.Map,java.util.Map)" class="member-name-link">OracleReturningMetadata(Map, Map)</a> - Constructor for record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/OracleReturningMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">OracleReturningMetadata</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>OracleReturningMetadata</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html" class="type-name-link" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a> - Annotation Interface in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
+<dd>
+<div class="block">Oracle-specific transactional annotation that applies Oracle transaction priority.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a> - Enum Class in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
+<dd>
+<div class="block">Priority level for Oracle priority transactions.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryBuilder.SelectQueryDefinition.html#order()" class="member-name-link">order()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.SelectQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder.SelectQueryDefinition</a></dt>
 <dd>&nbsp;</dd>
@@ -21937,6 +21997,10 @@ of position parameters.</div>
 <div class="block">In the case of having two operations active (for example when using JPA and JDBC at the same time)
 this interface is used as a marker to decide on the primary operations to lookup.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#priority()" class="member-name-link">priority()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">The desired transaction priority level for Oracle priority transactions.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethod.html#procedure()" class="member-name-link">procedure()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQuery.html#procedure()" class="member-name-link">procedure()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQuery.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQuery</a></dt>
@@ -22122,6 +22186,10 @@ this interface is used as a marker to decide on the primary operations to lookup
 <dt><a href="io/micronaut/data/connection/annotation/Connectable.html#propagation()" class="member-name-link">propagation()</a> - Element in annotation interface io.micronaut.data.connection.annotation.<a href="io/micronaut/data/connection/annotation/Connectable.html" title="annotation interface in io.micronaut.data.connection.annotation">Connectable</a></dt>
 <dd>
 <div class="block">The connection propagation type.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#propagation()" class="member-name-link">propagation()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">The transaction propagation type.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#propagation()" class="member-name-link">propagation()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
@@ -22328,6 +22396,10 @@ this interface is used as a marker to decide on the primary operations to lookup
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html#pushParameter(io.micronaut.data.model.query.builder.QueryParameterBinding)" class="member-name-link">pushParameter(QueryParameterBinding)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>
 <div class="block">Adds query parameter binding.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#putProperty(java.lang.String,java.lang.Object)" class="member-name-link">putProperty(String, Object)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
+<dd>
+<div class="block">Adds an additional transaction property that may be interpreted by a specific transaction manager.</div>
 </dd>
 </dl>
 <h2 class="title" id="I:Q">Q</h2>
@@ -22749,6 +22821,10 @@ raw SQL encoding and <a href="io/micronaut/data/r2dbc/operations/R2dbcRepository
 <dt><a href="io/micronaut/data/repository/reactive/ReactiveStreamsPageableRepository.html" class="type-name-link" title="interface in io.micronaut.data.repository.reactive">ReactiveStreamsPageableRepository&lt;E,<wbr>ID&gt;</a> - Interface in <a href="io/micronaut/data/repository/reactive/package-summary.html">io.micronaut.data.repository.reactive</a></dt>
 <dd>
 <div class="block">A repository that supports pagination.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/ReactiveTransactionExecutionListener.html" class="type-name-link" title="interface in io.micronaut.transaction.support">ReactiveTransactionExecutionListener&lt;C&gt;</a> - Interface in <a href="io/micronaut/transaction/support/package-summary.html">io.micronaut.transaction.support</a></dt>
+<dd>
+<div class="block">Listener for reactive transaction execution lifecycle events.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" class="type-name-link" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations&lt;C&gt;</a> - Interface in <a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a></dt>
 <dd>
@@ -23237,6 +23313,10 @@ can occur.</div>
 <dt><a href="io/micronaut/data/connection/annotation/Connectable.html#readOnly()" class="member-name-link">readOnly()</a> - Element in annotation interface io.micronaut.data.connection.annotation.<a href="io/micronaut/data/connection/annotation/Connectable.html" title="annotation interface in io.micronaut.data.connection.annotation">Connectable</a></dt>
 <dd>
 <div class="block"><code>true</code> if the connection is read-only.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#readOnly()" class="member-name-link">readOnly()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block"><code>true</code> if the transaction is read-only.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/annotation/Transactional.html#readOnly()" class="member-name-link">readOnly()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a></dt>
 <dd>
@@ -24140,6 +24220,10 @@ can be produced by this query.</div>
 <dt><a href="io/micronaut/transaction/SynchronousTransactionManager.html#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback(TransactionStatus)</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">Perform a rollback of the given transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#rollbackFor()" class="member-name-link">rollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">Defines the exceptions that will result in a rollback.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/annotation/Transactional.html#rollbackFor()" class="member-name-link">rollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a></dt>
 <dd>
@@ -25993,6 +26077,10 @@ after a participating transaction failed.</div>
 <dd>
 <div class="block">Set the propagation behavior.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#setProperties(java.util.Map)" class="member-name-link">setProperties(Map)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
+<dd>
+<div class="block">Sets additional transaction properties that may be interpreted by specific transaction managers.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/event/DefaultEntityEventContext.html#setProperty(io.micronaut.core.beans.BeanProperty,P)" class="member-name-link">setProperty(BeanProperty, P)</a> - Method in class io.micronaut.data.runtime.event.<a href="io/micronaut/data/runtime/event/DefaultEntityEventContext.html" title="class in io.micronaut.data.runtime.event">DefaultEntityEventContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/event/EntityEventContext.html#setProperty(io.micronaut.core.beans.BeanProperty,P)" class="member-name-link">setProperty(BeanProperty, P)</a> - Method in interface io.micronaut.data.event.<a href="io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a></dt>
@@ -27610,6 +27698,10 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/connection/DefaultConnectionDefinition.html#param-timeout"><code>timeout</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#timeout()" class="member-name-link">timeout()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">The timeout for this transaction.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#timeout()" class="member-name-link">timeout()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
 <div class="block">The timeout for this transaction.</div>
@@ -28158,6 +28250,10 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <dd>
 <div class="block">Common representation of the current state of a transaction.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/support/TransactionExecutionListener.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionExecutionListener&lt;C&gt;</a> - Interface in <a href="io/micronaut/transaction/support/package-summary.html">io.micronaut.transaction.support</a></dt>
+<dd>
+<div class="block">Listener for synchronous transaction execution lifecycle events.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/tck/services/TxBookService.html#transactionFailing()" class="member-name-link">transactionFailing()</a> - Method in class io.micronaut.data.document.tck.services.<a href="io/micronaut/data/document/tck/services/TxBookService.html" title="class in io.micronaut.data.document.tck.services">TxBookService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/services/TxBookService.html#transactionFailing()" class="member-name-link">transactionFailing()</a> - Method in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/TxBookService.html" title="class in io.micronaut.data.tck.services">TxBookService</a></dt>
@@ -28166,6 +28262,10 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/services/TxBookService.html#transactionManager" class="member-name-link">transactionManager</a> - Variable in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/TxBookService.html" title="class in io.micronaut.data.tck.services">TxBookService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#transactionManager()" class="member-name-link">transactionManager()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">A qualifier value for the specified transaction.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#transactionManager()" class="member-name-link">transactionManager()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
 <div class="block">A <em>qualifier</em> value for the specified transaction.</div>
@@ -29727,6 +29827,10 @@ followed by the second, and so forth.</div>
 </dd>
 <dt><a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.r2dbc.annotation.<a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html" title="annotation interface in io.micronaut.data.r2dbc.annotation">R2dbcRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
+<dd>
+<div class="block">Alias for <a href="io/micronaut/transaction/annotation/OracleTransactional.html#transactionManager()"><code>OracleTransactional.transactionManager()</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></dt>
 <dd>
 <div class="block">Alias for <a href="io/micronaut/transaction/annotation/ReadOnly.html#transactionManager()"><code>ReadOnly.transactionManager()</code></a>.</div>
@@ -29904,6 +30008,10 @@ followed by the second, and so forth.</div>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Pet.PetType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.PetType.html" title="enum class in io.micronaut.data.tck.entities">Pet.PetType</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
@@ -30123,6 +30231,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Pet.PetType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.PetType.html" title="enum class in io.micronaut.data.tck.entities">Pet.PetType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
