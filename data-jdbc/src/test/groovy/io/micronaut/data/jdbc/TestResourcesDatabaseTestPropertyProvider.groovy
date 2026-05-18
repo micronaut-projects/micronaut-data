@@ -50,8 +50,8 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         def prefix = 'datasources.' + dataSourceName
         return [
                 (prefix + '.db-type')           : dbType(),
-                (prefix + '.schema-generate')   : schemaGenerate(),
-                (prefix + '.dialect')           : dialect(),
+                (prefix + '.schema-generate')   : schemaGenerate().name(),
+                (prefix + '.dialect')           : dialect().name(),
                 (prefix + '.packages')          : packages(),
                 (prefix + '.enabled')           : dataSourceEnabled(dataSourceName)
         ] as Map<String, String>

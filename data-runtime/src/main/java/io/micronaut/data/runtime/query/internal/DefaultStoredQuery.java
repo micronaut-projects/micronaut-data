@@ -25,10 +25,16 @@ import org.jspecify.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.ParameterExpression;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -38,6 +44,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.inject.ExecutableMethod;
@@ -89,6 +96,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Nullable
     private Set<JoinPath> joinPaths = null;
     private final List<QueryParameterBinding> queryParameters;
+    private final List<QueryOutParameterBinding> outParameterBindings;
     private final boolean rawQuery;
     private final boolean jsonEntity;
     private final OperationType operationType;
@@ -242,6 +250,9 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
             isNumericPlaceHolder
         );
+        this.outParameterBindings = getOutParameters(
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, DataMethodQueryOutParameter.class)
+        );
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
@@ -317,6 +328,19 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return queryParameters;
     }
 
+    private static List<QueryOutParameterBinding> getOutParameters(List<AnnotationValue<DataMethodQueryOutParameter>> params) {
+        if (params == null || params.isEmpty()) {
+            return List.of();
+        }
+        List<QueryOutParameterBinding> outParams = new ArrayList<>(params.size());
+        for (AnnotationValue<DataMethodQueryOutParameter> av : params) {
+            DataType dataType = av.enumValue(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, DataType.class).orElseThrow();
+            String name = av.stringValue(DataMethodQueryOutParameter.META_MEMBER_NAME).orElseThrow();
+            outParams.add(new StoredOutParameter(name, dataType));
+        }
+        return outParams;
+    }
+
     @Override
     public Limit getQueryLimit() {
         return limit;
@@ -330,6 +354,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public List<QueryParameterBinding> getQueryBindings() {
         return queryParameters;
+    }
+
+    @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return Collections.unmodifiableList(outParameterBindings);
     }
 
     @Override
@@ -507,5 +536,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             throw new IllegalStateException("No @DataMethod metadata present on method: " + method);
         }
         return av;
+    }
+
+    private record StoredOutParameter(String name, DataType dataType) implements QueryOutParameterBinding {
     }
 }

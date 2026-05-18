@@ -49,7 +49,7 @@ class AsyncSpec extends Specification {
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).get()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).get()
             def found = userWithWhereRepository.findById(e.id).get()
         then:
             found
@@ -57,7 +57,7 @@ class AsyncSpec extends Specification {
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).get()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).get()
             userWithWhereRepository.findById(e.id).get()
         then:
             def ex = thrown(ExecutionException)

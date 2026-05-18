@@ -5,3 +5,24 @@ Micronaut Data maps the declared transaction annotation to the correct underlyin
 NOTE: Starting Micronaut Data 4 repositories are no longer executed using a new transaction and will create a new connection if none is present.
 
 TIP: If you prefer Spring-managed transactions for Hibernate or JDBC you can add the `micronaut-data-spring` dependency and Spring-managed transactions will be used instead. See the section on <<spring, Spring Support>> for more information.
+
+=== Oracle Transaction Priority
+
+For Oracle JDBC and R2DBC transactions, Micronaut Data supports Oracle transaction priority with ann:transaction.annotation.OracleTransactional[].
+The annotation is a transactional stereotype and can be used instead of ann:transaction.annotation.Transactional[] when Oracle transaction priority should be applied:
+
+[source,java]
+----
+import io.micronaut.transaction.annotation.OracleTransactional;
+
+@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+void updateInventory() {
+    // ...
+}
+----
+
+When the transaction uses an Oracle connection, Micronaut Data sets the session `txn_priority` for the duration of the transaction and resets it afterwards.
+Non-Oracle databases ignore this property.
+
+NOTE: Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
+Older Oracle versions that reject `txn_priority` continue without applying priority.

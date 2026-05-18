@@ -19,13 +19,14 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.BasicTypes;
 import io.micronaut.data.tck.entities.BasicTypesProjection;
 
 import java.util.Collection;
 import java.util.Optional;
 
-public interface BasicTypesRepository extends CrudRepository<BasicTypes, Long> {
+public interface BasicTypesRepository extends CrudRepository<BasicTypes, Long>, JpaSpecificationExecutor<BasicTypes> {
 
     void update(@Id Long id, @Parameter("byteArray") byte[] byteArray);
 

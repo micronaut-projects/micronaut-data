@@ -17,6 +17,7 @@ package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
@@ -33,6 +34,7 @@ import java.util.List;
 @Internal
 public abstract class AbstractInternalTransaction<C> implements InternalTransaction<C> {
 
+    @Nullable
     protected List<TransactionSynchronization> synchronizations;
     private boolean manualRollbackOnly = false;
     private boolean globalRollbackOnly = false;

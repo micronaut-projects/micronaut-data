@@ -244,7 +244,7 @@ abstract class AbstractJSONSpec extends Specification {
     void 'test save/update iterable'() {
         given:
         def a = new JsonEntity(id: 1, values: List.of("item1", "item2"))
-        jsonEntityRepository.save(a)
+        jsonEntityRepository.insert(a)
         when:
         def loaded = jsonEntityRepository.findById(1L).get()
         then:
@@ -263,7 +263,7 @@ abstract class AbstractJSONSpec extends Specification {
         loaded.values[1] == 'item2'
         loaded.values[2] == 'item3'
         when:
-        def b = jsonEntityRepository.save(2, List.of("newitem1", "newitem2", "newitem3"))
+        def b = jsonEntityRepository.insert(2, List.of("newitem1", "newitem2", "newitem3"))
         loaded = jsonEntityRepository.findById(2L).get()
         then:
         b
@@ -304,7 +304,7 @@ abstract class AbstractJSONSpec extends Specification {
         jsonEntity.jsonDefault = sampleData
         jsonEntity.jsonBlob = sampleData
         jsonEntity.jsonString = sampleData
-        jsonEntityRepository.save(jsonEntity)
+        jsonEntityRepository.insert(jsonEntity)
         when:"Entities loaded from appropriate JSON fields"
         def optSampleDataFromJsonDefault = jsonEntityRepository.findJsonDefaultById(jsonEntity.id)
         def optSampleDataFromJsonString = jsonEntityRepository.findJsonStringById(jsonEntity.id)

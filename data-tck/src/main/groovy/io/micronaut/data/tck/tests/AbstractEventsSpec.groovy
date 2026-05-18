@@ -148,7 +148,7 @@ abstract class AbstractEventsSpec extends Specification {
     void 'tests pre and post remove events triggered - reactive'() {
         when:
         entityUnderTest.name = 'changed'
-        eventsReactiveRepository().delete(entityUnderTest).blockingGet()
+        eventsReactiveRepository().delete(entityUnderTest).blockingAwait()
 
         then:
         entityUnderTest.prePersist == 1

@@ -42,6 +42,9 @@ final class MicronautDataJakartaDataExceptionConverter implements JakartaDataExc
 
     @Override
     public Exception convert(Exception exception) {
+        if (exception instanceof io.micronaut.data.exceptions.EntityExistsException) {
+            throw new EntityExistsException(exception.getMessage(), exception);
+        }
         if (exception instanceof OptimisticLockException) {
             throw new jakarta.data.exceptions.OptimisticLockingFailureException(exception.getMessage(), exception);
         }

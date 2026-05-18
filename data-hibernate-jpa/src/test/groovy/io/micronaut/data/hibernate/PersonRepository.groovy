@@ -23,7 +23,7 @@ import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.GenericRepository
 import io.micronaut.data.tck.entities.Person
-import io.reactivex.Single
+import io.reactivex.rxjava3.core.Single
 
 @Repository
 interface PersonRepository extends GenericRepository<Person, Long> {

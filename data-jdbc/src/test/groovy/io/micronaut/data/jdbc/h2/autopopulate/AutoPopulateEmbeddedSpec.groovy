@@ -32,7 +32,7 @@ class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyPr
 
     def "test embeddable fields auto populated"() {
         when:
-        def saved = myAuditableEntityRepository.save(new MyAuditableEntity(id: "id1", firstName: "Peter"))
+        def saved = myAuditableEntityRepository.insert(new MyAuditableEntity(id: "id1", firstName: "Peter"))
         def loaded = myAuditableEntityRepository.findById(saved.id).orElse(null)
         then:
         loaded
@@ -117,7 +117,7 @@ class MyAuditableEntity {
 @JdbcRepository(dialect = Dialect.H2)
 interface MyAuditableEntityRepository extends GenericRepository<MyAuditableEntity, String> {
 
-    MyAuditableEntity save(MyAuditableEntity entity)
+    MyAuditableEntity insert(MyAuditableEntity entity)
 
     Optional<MyAuditableEntity> findById(String id)
 }

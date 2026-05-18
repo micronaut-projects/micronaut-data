@@ -27,7 +27,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         def prefix = 'r2dbc.datasources.' + dataSourceName
         return [
                 (prefix + '.url')            : "r2dbc:h2:mem:///${dataSourceName};DB_CLOSE_DELAY=10",
-                (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.schema-generate'): schemaGenerate().name(),
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

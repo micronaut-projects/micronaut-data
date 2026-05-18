@@ -55,6 +55,17 @@ public final class SqlColumnMapping {
      * @param name               the name of the column
      * @param dataType           the data type of the column
      * @param dbType             the database-specific type
+     */
+    public SqlColumnMapping(String name, DataType dataType, SqlDbType dbType) {
+        this(name, dataType, dbType, null, null, null, false, false, GeneratedValue.Type.AUTO, null, null);
+    }
+
+    /**
+     * Constructs a new Column instance.
+     *
+     * @param name               the name of the column
+     * @param dataType           the data type of the column
+     * @param dbType             the database-specific type
      * @param length             the length of the column (optional)
      * @param precision          the precision of the column (optional)
      * @param scale              the scale of the column (optional)
@@ -333,6 +344,7 @@ public final class SqlColumnMapping {
             // TODO: Array types are not supported for all dialects so might throw an error?
             // Think only H2 and Postgres support these type defs
             case STRING_ARRAY, CHARACTER_ARRAY -> "VARCHAR(255) ARRAY";
+            case UUID_ARRAY -> "UUID ARRAY";
             case SHORT_ARRAY -> {
                 if (dialect == Dialect.POSTGRES) {
                     yield "SMALLINT ARRAY";

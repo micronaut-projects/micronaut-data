@@ -40,6 +40,9 @@ final class HibernateJakartaDataPersistExceptionConverter implements JakartaData
 
     @Override
     public Exception convert(Exception exception) {
+        if (exception instanceof jakarta.persistence.EntityExistsException) {
+            throw new EntityExistsException(exception.getMessage(), exception);
+        }
         if (exception instanceof ConstraintViolationException) {
             throw new EntityExistsException(exception.getMessage(), exception);
         }

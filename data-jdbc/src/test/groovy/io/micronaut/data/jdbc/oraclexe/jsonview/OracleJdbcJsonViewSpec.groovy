@@ -459,7 +459,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:
         def apartmentId = new ApartmentId(12, 34)
         def apartmentView = new ApartmentView(apartmentId)
-        apartmentViewRepository.save(apartmentView)
+        apartmentViewRepository.insert(apartmentView)
         def result = apartmentViewRepository.findById(apartmentId)
         then:
         result.present

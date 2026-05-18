@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.result.UpdateResult;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
@@ -30,6 +32,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -108,6 +111,41 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {
         return MongoOptionsUtils.buildReplaceOptions(annotationMetadata).orElseGet(ReplaceOptions::new);
+    }
+
+    protected final void checkSaveMatchedCount(AnnotationMetadata annotationMetadata,
+                                               RuntimePersistentEntity<?> persistentEntity,
+                                               int expected,
+                                               long matched) {
+        if (!persistentEntity.hasVersion() && isSaveOperation(annotationMetadata)) {
+            checkOptimisticLocking(expected, matched);
+        }
+    }
+
+    protected final long getModifiedOrUpsertedCount(UpdateResult updateResult) {
+        return updateResult.getModifiedCount() + getUpsertedCount(updateResult);
+    }
+
+    protected final int getModifiedOrUpsertedCount(BulkWriteResult bulkWriteResult) {
+        return bulkWriteResult.getModifiedCount() + bulkWriteResult.getUpserts().size();
+    }
+
+    protected final long getMatchedOrUpsertedCount(UpdateResult updateResult) {
+        return updateResult.getMatchedCount() + getUpsertedCount(updateResult);
+    }
+
+    protected final int getMatchedOrUpsertedCount(BulkWriteResult bulkWriteResult) {
+        return bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size();
+    }
+
+    private int getUpsertedCount(UpdateResult updateResult) {
+        return updateResult.getUpsertedId() == null ? 0 : 1;
+    }
+
+    private boolean isSaveOperation(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .map(operationType -> operationType == DataMethod.OperationType.INSERT || operationType == DataMethod.OperationType.INSERT_RETURNING)
+            .orElse(false);
     }
 
     protected final InsertOneOptions getInsertOneOptions(AnnotationMetadata annotationMetadata) {

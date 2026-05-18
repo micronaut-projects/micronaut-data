@@ -59,7 +59,7 @@ class H2EmbeddedIdSpec extends Specification {
         when:
         ItemGroup itemGroup = new ItemGroup(1L)
         itemGroup.setSecondId(2L)
-        groupRepository.save(itemGroup)
+        groupRepository.insert(itemGroup)
         ItemGroup entity = groupRepository.findById(1L).get()
 
         then:
@@ -72,16 +72,16 @@ class H2EmbeddedIdSpec extends Specification {
 
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         def entity = repository.findById(id).orElse(null)
 
@@ -180,16 +180,16 @@ class H2EmbeddedIdSpec extends Specification {
         repository.deleteAll()
         when:
         ShipmentId id = new ShipmentId("a", "b")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c", "d")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("e", "f")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("g", "h")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
         Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
@@ -206,19 +206,19 @@ class H2EmbeddedIdSpec extends Specification {
     void "test cursored pageable"() {
         when:
         ShipmentId id = new ShipmentId("c1", "a")
-        repository.save(new Shipment(id, "test"))
+        repository.insert(new Shipment(id, "test"))
 
         ShipmentId id2 = new ShipmentId("c1", "b")
-        repository.save(new Shipment(id2, "test2"))
+        repository.insert(new Shipment(id2, "test2"))
 
         ShipmentId id3 = new ShipmentId("c1", "c")
-        repository.save(new Shipment(id3, "test3"))
+        repository.insert(new Shipment(id3, "test3"))
 
         ShipmentId id4 = new ShipmentId("c1", "d")
-        repository.save(new Shipment(id4, "test4"))
+        repository.insert(new Shipment(id4, "test4"))
 
         ShipmentId id5 = new ShipmentId("c2", "a1")
-        repository.save(new Shipment(id5, "test5"))
+        repository.insert(new Shipment(id5, "test5"))
 
         CursoredPageable cursoredPageable = CursoredPageable.from(3, Sort.of());
         CursoredPage<Shipment> page = repository.findByShipmentIdCountry("c1", cursoredPageable)
@@ -241,7 +241,7 @@ class H2EmbeddedIdSpec extends Specification {
     void "test pagination"() {
         when:
         def id = new ConfigItemEntityId(oheId: "oheid1", id: "id1")
-        def configItem = configurationItemRepository.save(new ConfigItemEntity(id: id, name: "name1", description: "desc1", type: "type1"))
+        def configItem = configurationItemRepository.insert(new ConfigItemEntity(id: id, name: "name1", description: "desc1", type: "type1"))
         def page = configurationItemRepository.findAll(Pageable.from(0, 10))
         then:
         page

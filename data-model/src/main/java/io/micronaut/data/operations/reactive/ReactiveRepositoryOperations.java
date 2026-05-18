@@ -19,7 +19,16 @@ import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import org.reactivestreams.Publisher;
 
 /**
@@ -202,6 +211,20 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
     <T> Publisher<Number> delete(DeleteOperation<T> operation);
 
     /**
+     * Deletes the entity and emits a deleted result.
+     *
+     * @param operation The delete returning operation
+     * @param <E>       The entity type
+     * @param <R>       The result type
+     * @return A publisher that emits the deleted result
+     * @since 5.0.0
+     */
+    @SingleResult
+    default <E, R> Publisher<R> deleteReturning(DeleteReturningOperation<E, R> operation) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'deleteReturning'!");
+    }
+
+    /**
      * Deletes all the entities of the given type.
      * @param operation The batch operation
      * @param <T> The generic type
@@ -210,6 +233,19 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
     
     @SingleResult
     <T> Publisher<Number> deleteAll(DeleteBatchOperation<T> operation);
+
+    /**
+     * Deletes the entities and emits deleted results.
+     *
+     * @param operation The delete returning batch operation
+     * @param <E>       The entity type
+     * @param <R>       The result type
+     * @return A publisher that emits deleted results
+     * @since 5.0.0
+     */
+    default <E, R> Publisher<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'deleteAllReturning'!");
+    }
 
     /**
      * Find a page for the given entity and pageable.

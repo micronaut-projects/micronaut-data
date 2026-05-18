@@ -1,14 +1,12 @@
 package example;
 
 import io.micronaut.data.model.Page;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
-@MicronautTest
-public class BookClientSpec {
+public abstract class BookClientSpec {
 
     @Inject BookClient bookClient;
 
