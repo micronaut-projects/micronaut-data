@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
@@ -255,6 +257,10 @@ public final class SqlSchemaUtils {
             .orElse(AUTO) : AUTO;
         OptionalInt optPrecision = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "precision");
         OptionalInt optScale = SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "scale");
+
+        if (annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class)) {
+            return new SqlColumnMapping(column, dataType, SqlDbType.JSON_OBJECT, false, null, false, false, generatedValueType, definition);
+        }
 
         SqlDbType dbType = getDbType(prop);
 
