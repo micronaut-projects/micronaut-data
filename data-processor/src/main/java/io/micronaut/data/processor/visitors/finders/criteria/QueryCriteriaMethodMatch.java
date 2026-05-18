@@ -73,7 +73,6 @@ import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -580,9 +579,6 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return bestMatch == null ? 1 : bestMatch.getValue().getRequiredParameters();
     }
 
-    private record VectorPredicate(String propertyName, int parameterIndex) {
-    }
-
     private void applyDtoProjectionIfNeeded(MethodMatchContext matchContext,
                                             SourcePersistentEntityCriteriaQuery<?> query,
                                             MethodResult result,
@@ -707,6 +703,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     @Override
     protected DataMethod.OperationType getOperationType() {
         return DataMethod.OperationType.QUERY;
+    }
+
+    private record VectorPredicate(String propertyName, int parameterIndex) {
     }
 
 }

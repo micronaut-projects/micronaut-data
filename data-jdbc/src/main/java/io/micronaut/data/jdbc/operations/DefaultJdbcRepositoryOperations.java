@@ -358,7 +358,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (ResultSet rs = ps.executeQuery()) {
                 SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
                 R result;
-                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                if (isSearchResults) {
+                    result = mapper.map(rs, preparedQuery.getResultType());
+                    if (result == null) {
+                        result = (R) SearchResults.of(List.of());
+                    }
+                } else if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
 
                     SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
@@ -369,20 +374,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         while (rs.next()) {
                             oneMapper.processRow(rs);
                         }
-                    } else if (!isSearchResults && jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                    } else if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                     result = oneMapper.getResult();
                 } else if (rs.next()) {
                     result = mapper.map(rs, preparedQuery.getResultType());
-                    if (!isSearchResults && jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                    if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                 } else {
-                    result = isSearchResults ? (R) SearchResults.of(List.of()) : null;
-                }
-                if (isSearchResults && result == null) {
-                    result = (R) SearchResults.of(List.of());
+                    result = null;
                 }
                 if (result != null && preparedQuery.hasResultConsumer()) {
                     R finalResult = result;

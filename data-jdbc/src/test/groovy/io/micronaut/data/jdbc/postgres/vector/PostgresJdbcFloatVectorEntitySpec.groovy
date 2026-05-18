@@ -192,8 +192,9 @@ class PostgresJdbcFloatVectorEntitySpec extends Specification implements Postgre
 
         then:
         nearResults != null
-        nearResults.results().size() >= 1
-        nearResults.results().get(0).score().value() <= 2d
+        nearResults.results().size() == 2
+        nearResults.results().get(0).entity().embedding.toFloatArray().toList() == [1f, 0f, 0f]
+        nearResults.results().get(0).score().value() == 0d
 
         when:
         SearchResults<VectorFloatDoc> withinResults = vectorRepository.searchByEmbeddingWithin(Vector.of([1f, 0f, 0f] as float[]), 0d, 0.2d)

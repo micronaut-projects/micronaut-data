@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Vector converter implementations.
+ *
+ * @since 5.0.0
+ */
 @NullMarked
 package io.micronaut.data.model.runtime.convert.vector.impl;
 
