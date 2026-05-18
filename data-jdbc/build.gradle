@@ -18,8 +18,6 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
-    implementation mn.jackson.annotations
-
     compileOnly(mnRxjava3.micronaut.rxjava3)
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
@@ -71,6 +69,8 @@ dependencies {
     testRuntimeOnly(libs.jupiter.engine)
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(libs.managed.jakarta.data.api)
+
+    testImplementation mn.jackson.annotations
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
     testAnnotationProcessor mnSerde.micronaut.serde.processor
