@@ -2928,13 +2928,13 @@ public interface UserRepository extends CrudRepository&lt;User, Long&gt; { // <b
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 
 @JdbcRepository(dialect = Dialect.H2)
-interface UserRepository : CrudRepository&lt;User, Long&gt; { // <b class="conum">(1)</b>
+interface UserRepository : KotlinCrudRepository&lt;User, Long&gt; { // <b class="conum">(1)</b>
 
     @Query("UPDATE user SET enabled = false WHERE id = :id") // <b class="conum">(2)</b>
-    override fun deleteById(id: Long)
+    override fun deleteById(id: Long): Int
 
     @Query("SELECT * FROM user WHERE enabled = false") // <b class="conum">(3)</b>
     fun findDisabled(): List&lt;User&gt;
@@ -4555,7 +4555,7 @@ public interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, Jp
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
-interface PersonRepository : CrudRepository&lt;Person, Long&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+interface PersonRepository : KotlinCrudRepository&lt;Person, Long&gt;, KotlinJpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
 </div>
@@ -4603,9 +4603,9 @@ Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pagea
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findOne(spec: PredicateSpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findOne(spec: PredicateSpecification&lt;Person&gt;?): Person?
 
-fun findOne(spec: QuerySpecification&lt;Person&gt;?): Optional&lt;Person&gt;
+fun findOne(spec: QuerySpecification&lt;Person&gt;?): Person?
 
 fun findAll(spec: PredicateSpecification&lt;Person&gt;?): List&lt;Person&gt;
 
@@ -4814,7 +4814,7 @@ List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").o
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val denis: Person? = personRepository.findOne(nameEquals("Denis")).orElse(null)
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val denis: Person? = personRepository.findOne(nameEquals("Denis"))
 
 val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
 
@@ -5822,7 +5822,7 @@ class ProductManager(
 
     fun findUsingRepo(name: String): Product? {
         return transactionManager.executeRead { status -&gt; // <b class="conum">(5)</b>
-            productRepository.findByName(name).orElse(null)
+            productRepository.findByName(name)
         }
     }
 }</code></pre>
@@ -9316,11 +9316,11 @@ import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import jakarta.transaction.Transactional
 
 @JdbcRepository(dialect = Dialect.H2) // <b class="conum">(1)</b>
-interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
+interface BookRepository : KotlinCrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
     @Executable
     fun find(title: String): Book
 }</code></pre>
@@ -9424,7 +9424,7 @@ Unlike the JPA implementation there is no dirty checking. <code>save</code> inse
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id)!!</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -11061,13 +11061,11 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
-import io.micronaut.data.repository.CrudRepository
-
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import jakarta.transaction.Transactional
-import kotlin.streams.toList
 
 @Repository
-abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations) : CrudRepository&lt;Book, Long&gt; {
+abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations) : KotlinCrudRepository&lt;Book, Long&gt; {
 
     @Transactional
     open fun findByTitle(title: String): List&lt;Book&gt; {
@@ -14254,7 +14252,7 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
-interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+interface ProductRepository : KotlinCrudRepository&lt;Product, Long&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
     fun list(): List&lt;Product&gt;
 }</code></pre>
