@@ -76,8 +76,6 @@ import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
-import io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
 import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
@@ -85,8 +83,6 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
-import io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor;
-import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.inject.annotation.EvaluatedExpressionReferenceCounter;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -131,6 +127,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     public static final String SPRING_REPO = "org.springframework.data.repository.Repository";
     public static final String JAKARTA_DATA_REPO = "jakarta.data.repository.DataRepository";
+    private static final String JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.JpaSpecificationExecutor";
+    private static final String ASYNC_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor";
+    private static final String REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor";
+    private static final String REACTOR_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor";
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -1028,19 +1028,19 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (entity != null) {
             return entity;
         }
-        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JpaSpecificationExecutor.class, "T");
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JPA_SPECIFICATION_EXECUTOR, "T");
         if (entity != null) {
             return entity;
         }
-        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, AsyncJpaSpecificationExecutor.class, "T");
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, ASYNC_JPA_SPECIFICATION_EXECUTOR, "T");
         if (entity != null) {
             return entity;
         }
-        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, ReactiveStreamsJpaSpecificationExecutor.class, "T");
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR, "T");
         if (entity != null) {
             return entity;
         }
-        return resolveEntityForCurrentClass(repositoryClass, entityResolver, ReactorJpaSpecificationExecutor.class, "T");
+        return resolveEntityForCurrentClass(repositoryClass, entityResolver, REACTOR_JPA_SPECIFICATION_EXECUTOR, "T");
     }
 
     @Nullable

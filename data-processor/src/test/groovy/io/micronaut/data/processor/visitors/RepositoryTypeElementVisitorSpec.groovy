@@ -34,11 +34,13 @@ import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import spock.lang.Shared
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
+import java.util.concurrent.CompletableFuture
 
 import static io.micronaut.data.processor.visitors.TestUtils.getQueryParameterNames
 
@@ -211,6 +213,56 @@ interface BookRepository extends JpaSpecificationExecutor<Person> {
         ExecutableMethod<?, ?> findAll = beanDefinition.getRequiredMethod("findAll", CriteriaQueryBuilder)
 
         then:
+        findAll.getValue(DataMethod, "rootEntity", Class).get() == Person
+    }
+
+    void "test inherited async specification methods without generic repository root"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.BookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor;
+
+@Repository
+interface BookRepository extends AsyncJpaSpecificationExecutor<Person> {
+}
+""")
+
+        expect:
+        !beanDefinition.isAbstract()
+
+        when:
+        ExecutableMethod<?, ?> findAll = beanDefinition.getRequiredMethod("findAll", QuerySpecification)
+
+        then:
+        findAll.getReturnType().type == CompletableFuture
+        findAll.getValue(DataMethod, "rootEntity", Class).get() == Person
+    }
+
+    void "test inherited reactive streams specification methods without generic repository root"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.BookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor;
+
+@Repository
+interface BookRepository extends ReactiveStreamsJpaSpecificationExecutor<Person> {
+}
+""")
+
+        expect:
+        !beanDefinition.isAbstract()
+
+        when:
+        ExecutableMethod<?, ?> findAll = beanDefinition.getRequiredMethod("findAll", QuerySpecification)
+
+        then:
+        findAll.getReturnType().type == Publisher
         findAll.getValue(DataMethod, "rootEntity", Class).get() == Person
     }
 
