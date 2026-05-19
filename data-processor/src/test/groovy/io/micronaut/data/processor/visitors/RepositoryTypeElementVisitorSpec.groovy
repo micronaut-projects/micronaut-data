@@ -27,11 +27,14 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import reactor.core.publisher.Flux
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -160,6 +163,55 @@ interface MyInterface {
         then:
             def e = thrown(RuntimeException)
             e.message.contains "Repository is required to be processed by the data-document-processor. Make sure it's included as a dependency to the annotation processor classpath!"
+    }
+
+    void "test inherited reactive specification methods without generic repository root"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.BookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface BookRepository extends ReactorJpaSpecificationExecutor<Person> {
+}
+""")
+
+        expect:
+        !beanDefinition.isAbstract()
+
+        when:
+        ExecutableMethod<?, ?> findAll = beanDefinition.getRequiredMethod("findAll", QuerySpecification)
+
+        then:
+        findAll.getReturnType().type == Flux
+        findAll.getValue(DataMethod, "rootEntity", Class).get() == Person
+    }
+
+    void "test inherited specification builder methods without generic repository root"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.BookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+
+@Repository
+interface BookRepository extends JpaSpecificationExecutor<Person> {
+}
+""")
+
+        expect:
+        !beanDefinition.isAbstract()
+
+        when:
+        ExecutableMethod<?, ?> findAll = beanDefinition.getRequiredMethod("findAll", CriteriaQueryBuilder)
+
+        then:
+        findAll.getValue(DataMethod, "rootEntity", Class).get() == Person
     }
 
     @Override

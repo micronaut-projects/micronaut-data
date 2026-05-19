@@ -76,6 +76,8 @@ import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
 import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
@@ -83,6 +85,8 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
+import io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.inject.annotation.EvaluatedExpressionReferenceCounter;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -1012,23 +1016,64 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Nullable
     private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        Map<String, ClassElement> typeArguments = repositoryClass.getTypeArguments(GenericRepository.class);
-        String argName = "E";
+        SourcePersistentEntity entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, GenericRepository.class, "E");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, SPRING_REPO, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JAKARTA_DATA_REPO, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JpaSpecificationExecutor.class, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, AsyncJpaSpecificationExecutor.class, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, ReactiveStreamsJpaSpecificationExecutor.class, "T");
+        if (entity != null) {
+            return entity;
+        }
+        return resolveEntityForCurrentClass(repositoryClass, entityResolver, ReactorJpaSpecificationExecutor.class, "T");
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               Class<?> repositoryType,
+                                                               String argName) {
+        return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               String repositoryType,
+                                                               String argName) {
+        return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityFromTypeArguments(Map<String, ClassElement> typeArguments,
+                                                                  Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                                  String argName) {
         if (typeArguments.isEmpty()) {
-            argName = "T";
-            typeArguments = repositoryClass.getTypeArguments(SPRING_REPO);
+            return null;
         }
-        if (typeArguments.isEmpty()) {
-            argName = "T";
-            typeArguments = repositoryClass.getTypeArguments(JAKARTA_DATA_REPO);
+        ClassElement classElement = typeArguments.get(argName);
+        if (classElement == null) {
+            classElement = typeArguments.values().iterator().next();
         }
-        if (!typeArguments.isEmpty()) {
-            ClassElement ce = typeArguments.get(argName);
-            if (ce != null) {
-                return entityResolver.apply(ce);
-            }
+        if (classElement == null) {
+            return null;
         }
-        return null;
+        return entityResolver.apply(classElement);
     }
 
     private void annotateEntityRepresentationIfPresent(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {
