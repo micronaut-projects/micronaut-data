@@ -34,6 +34,7 @@ dependencies {
     runtimeOnly mnLogging.logback.classic
 
     testImplementation mn.micronaut.http.client
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
 
     testResourcesService mnSql.mariadb.java.client
 }
