@@ -901,4 +901,60 @@ interface BookRepository extends GenericRepository<Book, Long> {
         ex.message.contains("must declare explicit returned columns instead of RETURNING *")
     }
 
+    void "duplicate physical insert columns fail fast unless reused for shared identity"() {
+        when:
+        buildRepository('test.ConflictingInsertEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ConflictingInsertEntityRepository extends CrudRepository<ConflictingInsertEntity, Long> {
+}
+
+@MappedEntity("conflicting_insert_entity")
+class ConflictingInsertEntity {
+    @Id
+    private Long id;
+
+    @MappedProperty("shared_value")
+    private String firstValue;
+
+    @MappedProperty("shared_value")
+    private String secondValue;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getFirstValue() {
+        return firstValue;
+    }
+
+    void setFirstValue(String firstValue) {
+        this.firstValue = firstValue;
+    }
+
+    String getSecondValue() {
+        return secondValue;
+    }
+
+    void setSecondValue(String secondValue) {
+        this.secondValue = secondValue;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Conflicting insert mapping for column [shared_value]")
+    }
+
 }

@@ -1216,6 +1216,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
             List<String> values = new ArrayList<>();
+            List<@Nullable QueryParameterBinding> valueBindings = new ArrayList<>();
 
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
@@ -1234,19 +1235,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                     String[] path = asStringPath(associations, property);
                     int existingIndex = columns.indexOf(columnName);
+                    if (existingIndex != -1) {
+                        QueryParameterBinding existingBinding = valueBindings.get(existingIndex);
+                        failOnConflictingInsertColumn(entity, unescapedColumnName, existingBinding == null ? null : existingBinding.getPropertyPath(), path);
+                    }
                     String key = String.valueOf(existingIndex == -1 ? values.size() + 1 : existingIndex + 1);
                     QueryParameterBinding binding = createInsertParameterBinding(key, property, path);
                     String valueExpression = getWriteExpression(Integer.parseInt(key), property);
                     if (existingIndex == -1) {
                         values.add(valueExpression);
-                        parameterBindings.add(binding);
+                        valueBindings.add(binding);
                         unescapedColumns.add(unescapedColumnName);
                         columns.add(columnName);
                         resultColumns.add(columnName);
                         resultColumnTypes.add(property.getDataType());
                     } else {
                         values.set(existingIndex, valueExpression);
-                        parameterBindings.set(existingIndex, binding);
+                        valueBindings.set(existingIndex, binding);
                     }
                 });
             }
@@ -1256,7 +1261,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     addWriteExpression(values, version);
 
                     String key = String.valueOf(values.size());
-                    parameterBindings.add(new QueryParameterBinding() {
+                    valueBindings.add(new QueryParameterBinding() {
 
                         @Override
                         public String getName() {
@@ -1298,7 +1303,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (escape) {
                         columnName = quote(columnName);
                     }
+                    String[] path = asStringPath(associations, property);
                     int existingIndex = columns.indexOf(columnName);
+                    if (existingIndex != -1) {
+                        QueryParameterBinding existingBinding = valueBindings.get(existingIndex);
+                        String @Nullable [] existingPath = existingBinding == null ? null : existingBinding.getPropertyPath();
+                        if (!isAllowedSharedIdentityColumnReuse(existingPath, path)) {
+                            failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
+                        }
+                    }
 
                     boolean isSequence = false;
                     if (SqlQueryBuilderUtils.isNotForeign(associations)) {
@@ -1326,20 +1339,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         String sequenceStatement = getSequenceStatement(unescapedSchema, unescapedTableName, property);
                         if (existingIndex == -1) {
                             values.add(sequenceStatement);
+                            valueBindings.add(null);
                         } else {
                             values.set(existingIndex, sequenceStatement);
+                            valueBindings.set(existingIndex, null);
                         }
                     } else {
-                        String[] path = asStringPath(associations, property);
                         String key = String.valueOf(existingIndex == -1 ? values.size() + 1 : existingIndex + 1);
                         QueryParameterBinding binding = createInsertParameterBinding(key, property, path);
                         String valueExpression = getWriteExpression(Integer.parseInt(key), property);
                         if (existingIndex == -1) {
                             values.add(valueExpression);
-                            parameterBindings.add(binding);
+                            valueBindings.add(binding);
                         } else {
                             values.set(existingIndex, valueExpression);
-                            parameterBindings.set(existingIndex, binding);
+                            valueBindings.set(existingIndex, binding);
                         }
                     }
 
@@ -1348,6 +1362,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
                 });
             }
+
+            parameterBindings = compactInsertParameterBindings(valueBindings);
 
             builder = INSERT_INTO + getTableName(entity) +
                 " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
@@ -1394,6 +1410,113 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collections.emptyList(),
             parameterBindings,
             Collections.emptyMap());
+    }
+
+    private void failOnConflictingInsertColumn(PersistentEntity entity, String columnName, String @Nullable [] existingPath, String[] path) {
+        throw new MappingException("Conflicting insert mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
+            + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
+    }
+
+    private List<QueryParameterBinding> compactInsertParameterBindings(List<@Nullable QueryParameterBinding> valueBindings) {
+        List<QueryParameterBinding> bindings = new ArrayList<>(valueBindings.size());
+        int bindingIndex = 1;
+        for (QueryParameterBinding binding : valueBindings) {
+            if (binding != null) {
+                bindings.add(reindexInsertParameterBinding(String.valueOf(bindingIndex++), binding));
+            }
+        }
+        return bindings;
+    }
+
+    private QueryParameterBinding reindexInsertParameterBinding(String key, QueryParameterBinding delegate) {
+        return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return key;
+            }
+
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return delegate.getDataType();
+            }
+
+            @Override
+            public JsonDataType getJsonDataType() {
+                return delegate.getJsonDataType();
+            }
+
+            @Override
+            public @Nullable String getConverterClassName() {
+                return delegate.getConverterClassName();
+            }
+
+            @Override
+            public int getParameterIndex() {
+                return delegate.getParameterIndex();
+            }
+
+            @Override
+            public String @Nullable [] getParameterBindingPath() {
+                return delegate.getParameterBindingPath();
+            }
+
+            @Override
+            public String @Nullable [] getPropertyPath() {
+                return delegate.getPropertyPath();
+            }
+
+            @Override
+            public boolean isAutoPopulated() {
+                return delegate.isAutoPopulated();
+            }
+
+            @Override
+            public boolean isRequiresPreviousPopulatedValue() {
+                return delegate.isRequiresPreviousPopulatedValue();
+            }
+
+            @Override
+            public boolean isExpandable() {
+                return delegate.isExpandable();
+            }
+
+            @Override
+            public @Nullable Object getValue() {
+                return delegate.getValue();
+            }
+
+            @Override
+            public boolean isExpression() {
+                return delegate.isExpression();
+            }
+
+            @Override
+            public @Nullable String getRole() {
+                return delegate.getRole();
+            }
+
+            @Override
+            public @Nullable String getTableAlias() {
+                return delegate.getTableAlias();
+            }
+        };
+    }
+
+    private boolean isAllowedSharedIdentityColumnReuse(String @Nullable [] existingPath, String[] identityPath) {
+        if (existingPath == null || existingPath.length <= identityPath.length) {
+            return false;
+        }
+        for (int i = 1; i <= identityPath.length; i++) {
+            if (!Objects.equals(existingPath[existingPath.length - i], identityPath[identityPath.length - i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {
