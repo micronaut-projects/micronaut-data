@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - '[0-9]+.[0-9]+.x'
+      - issue-3415
   pull_request:
     branches:
       - master
