@@ -1220,56 +1220,34 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                     boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
+                    String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                    String columnName = unescapedColumnName;
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
                     if (generated) {
-                        String columnName = getMappedName(namingStrategy, associations, property);
-                        unescapedColumns.add(columnName);
-                        if (escape) {
-                            columnName = quote(columnName);
-                        }
+                        unescapedColumns.add(unescapedColumnName);
                         resultColumns.add(columnName);
                         resultColumnTypes.add(property.getDataType());
                         return;
                     }
 
-                    addWriteExpression(values, property);
-
-                    String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);
-                    parameterBindings.add(new QueryParameterBinding() {
-                        @Override
-                        public String getName() {
-                            return key;
-                        }
-
-                        @Override
-                        public String getKey() {
-                            return key;
-                        }
-
-                        @Override
-                        public DataType getDataType() {
-                            return property.getDataType();
-                        }
-
-                        @Override
-                        public JsonDataType getJsonDataType() {
-                            return property.getJsonDataType();
-                        }
-
-                        @Override
-                        public String[] getPropertyPath() {
-                            return path;
-                        }
-                    });
-
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    unescapedColumns.add(columnName);
-                    if (escape) {
-                        columnName = quote(columnName);
+                    int existingIndex = columns.indexOf(columnName);
+                    String key = String.valueOf(existingIndex == -1 ? values.size() + 1 : existingIndex + 1);
+                    QueryParameterBinding binding = createInsertParameterBinding(key, property, path);
+                    String valueExpression = getWriteExpression(Integer.parseInt(key), property);
+                    if (existingIndex == -1) {
+                        values.add(valueExpression);
+                        parameterBindings.add(binding);
+                        unescapedColumns.add(unescapedColumnName);
+                        columns.add(columnName);
+                        resultColumns.add(columnName);
+                        resultColumnTypes.add(property.getDataType());
+                    } else {
+                        values.set(existingIndex, valueExpression);
+                        parameterBindings.set(existingIndex, binding);
                     }
-                    columns.add(columnName);
-                    resultColumns.add(columnName);
-                    resultColumnTypes.add(property.getDataType());
                 });
             }
             if (entity.hasVersion()) {
@@ -1320,13 +1298,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (escape) {
                         columnName = quote(columnName);
                     }
+                    int existingIndex = columns.indexOf(columnName);
 
                     boolean isSequence = false;
                     if (SqlQueryBuilderUtils.isNotForeign(associations)) {
-
-                        unescapedColumns.add(unescapedColumnName);
-                        resultColumns.add(columnName);
-                        resultColumnTypes.add(property.getDataType());
+                        if (existingIndex == -1) {
+                            unescapedColumns.add(unescapedColumnName);
+                            resultColumns.add(columnName);
+                            resultColumnTypes.add(property.getDataType());
+                        }
 
                         Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
                         if (generated.isPresent()) {
@@ -1343,43 +1323,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                        String sequenceStatement = getSequenceStatement(unescapedSchema, unescapedTableName, property);
+                        if (existingIndex == -1) {
+                            values.add(sequenceStatement);
+                        } else {
+                            values.set(existingIndex, sequenceStatement);
+                        }
                     } else {
-                        addWriteExpression(values, property);
-
-                        String key = String.valueOf(values.size());
                         String[] path = asStringPath(associations, property);
-                        parameterBindings.add(new QueryParameterBinding() {
-
-                            @Override
-                            public String getName() {
-                                return key;
-                            }
-
-                            @Override
-                            public String getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return property.getDataType();
-                            }
-
-                            @Override
-                            public JsonDataType getJsonDataType() {
-                                return property.getJsonDataType();
-                            }
-
-                            @Override
-                            public String[] getPropertyPath() {
-                                return path;
-                            }
-                        });
-
+                        String key = String.valueOf(existingIndex == -1 ? values.size() + 1 : existingIndex + 1);
+                        QueryParameterBinding binding = createInsertParameterBinding(key, property, path);
+                        String valueExpression = getWriteExpression(Integer.parseInt(key), property);
+                        if (existingIndex == -1) {
+                            values.add(valueExpression);
+                            parameterBindings.add(binding);
+                        } else {
+                            values.set(existingIndex, valueExpression);
+                            parameterBindings.set(existingIndex, binding);
+                        }
                     }
 
-                    columns.add(columnName);
+                    if (existingIndex == -1) {
+                        columns.add(columnName);
+                    }
                 });
             }
 
@@ -1490,33 +1456,64 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
+    private QueryParameterBinding createInsertParameterBinding(String key, PersistentProperty property, String[] path) {
+        return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return key;
+            }
+
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return property.getDataType();
+            }
+
+            @Override
+            public JsonDataType getJsonDataType() {
+                return property.getJsonDataType();
+            }
+
+            @Override
+            public String[] getPropertyPath() {
+                return path;
+            }
+        };
+    }
+
     private boolean addWriteExpression(List<String> values, PersistentProperty property) {
+        return values.add(getWriteExpression(values.size() + 1, property));
+    }
+
+    private String getWriteExpression(int parameterIndex, PersistentProperty property) {
         DataType dt = property.getDataType();
         String transformer = getDataTransformerWriteValue(null, property).orElse(null);
         if (transformer != null) {
-            return values.add(transformer);
+            return transformer;
         }
-        String param = formatParameter(values.size() + 1).name();
+        String param = formatParameter(parameterIndex).name();
         if (dt == DataType.JSON) {
-            switch (dialect) {
-                case POSTGRES -> values.add("to_json(" + param + "::json)");
-                case H2 -> values.add(param + " FORMAT JSON");
-                case MYSQL -> values.add("CONVERT(" + param + " USING UTF8MB4)");
-                default -> values.add(param);
-            }
-            return true;
+            return switch (dialect) {
+                case POSTGRES -> "to_json(" + param + "::json)";
+                case H2 -> param + " FORMAT JSON";
+                case MYSQL -> "CONVERT(" + param + " USING UTF8MB4)";
+                default -> param;
+            };
         }
         if (isJsonOrWktGeometry(property)) {
-            switch (dialect) {
-                case ORACLE -> values.add(getOracleGeometryExpression(param, property));
-                case MYSQL -> values.add(getMysqlGeometryExpression(param, property));
-                case SQL_SERVER -> values.add(getSqlServerGeometryExpression(param, property));
-                case POSTGRES, H2 -> values.add(getPostgresGeometryExpression(param, property));
-                default -> values.add(param);
-            }
-            return true;
+            return switch (dialect) {
+                case ORACLE -> getOracleGeometryExpression(param, property);
+                case MYSQL -> getMysqlGeometryExpression(param, property);
+                case SQL_SERVER -> getSqlServerGeometryExpression(param, property);
+                case POSTGRES, H2 -> getPostgresGeometryExpression(param, property);
+                default -> param;
+            };
         }
-        return values.add(param);
+        return param;
     }
 
     @Override
