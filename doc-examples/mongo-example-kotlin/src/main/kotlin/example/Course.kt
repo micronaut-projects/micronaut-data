@@ -12,7 +12,7 @@ data class Course(
         val id: ObjectId?,
         val name: String,
         @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "courses")
-        val students: List<Student>
+        val students: List<Student>? = emptyList()
 ) {
     constructor(name: String) : this(null, name, emptyList())
 }

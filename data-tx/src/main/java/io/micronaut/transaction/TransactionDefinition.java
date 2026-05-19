@@ -24,6 +24,7 @@ import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -375,6 +376,17 @@ public interface TransactionDefinition {
     @NonNull
     default Collection<Class<? extends Throwable>> getDontRollbackOn() {
         return Collections.emptyList();
+    }
+
+    /**
+     * Additional transaction properties that may be interpreted by specific transaction managers.
+     *
+     * @return the transaction properties
+     * @since 5.0
+     */
+    @NonNull
+    default Map<String, Object> getProperties() {
+        return Collections.emptyMap();
     }
 
     /**

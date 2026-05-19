@@ -1,10 +1,7 @@
 package io.micronaut.data.jakarta.tck;
 
-import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
-import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
 import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
-import ee.jakarta.tck.data.web.validation.ValidationTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -34,14 +31,6 @@ public class FilterExtension implements ExecutionCondition {
                 case "testLiteralTrue" -> {
                     return DISABLED; // https://hibernate.atlassian.net/browse/HHH-19177
                 }
-            }
-        }
-        if (testClass == ConstraintTests.class) {
-            switch (testMethodName) {
-                case "testGreaterThanConstraint",  "testNotLikeConstraintCustomWildcardsAndEscape" -> {
-                    return DISABLED; // https://github.com/jakartaee/data/issues/1364
-                }
-
             }
         }
         return ConditionEvaluationResult.enabled(null);

@@ -16,6 +16,9 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
+import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -26,9 +29,44 @@ import java.util.Objects;
  * @param name The index name
  * @param unique Whether the index is unique
  * @param columns The column names in the index
+ * @param sqlIndexDefinitionProvider Optional vendor-specific index DDL provider
+ * @param vectorIndexMetadata Vector index metadata, if any
+ * @param spatial Whether the index is spatial
+ * @param srid The spatial reference identifier
  */
 @Internal
-public record SqlIndexMapping(String name, boolean unique, String[] columns) {
+public record SqlIndexMapping(String name,
+                              boolean unique,
+                              String[] columns,
+                              @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
+                              @Nullable VectorIndexMetadata vectorIndexMetadata,
+                              boolean spatial,
+                              @Nullable Integer srid) {
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns) {
+        this(name, unique, columns, null, null, false, null);
+    }
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial) {
+        this(name, unique, columns, null, null, spatial, null);
+    }
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns, boolean spatial, @Nullable Integer srid) {
+        this(name, unique, columns, null, null, spatial, srid);
+    }
+
+    public SqlIndexMapping(String name,
+                           boolean unique,
+                           String[] columns,
+                           @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider,
+                           @Nullable VectorIndexMetadata vectorIndexMetadata,
+                           boolean spatial) {
+        this(name, unique, columns, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial, null);
+    }
+
+    public SqlIndexMapping(String name, boolean unique, String[] columns, @Nullable SqlIndexDefinitionProvider sqlIndexDefinitionProvider) {
+        this(name, unique, columns, sqlIndexDefinitionProvider, null, false, null);
+    }
 
     @Override
     public boolean equals(Object object) {
@@ -39,12 +77,20 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             return false;
         }
         SqlIndexMapping that = (SqlIndexMapping) object;
-        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns);
+        return unique == that.unique &&
+               spatial == that.spatial &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(sqlIndexDefinitionProvider, that.sqlIndexDefinitionProvider) &&
+               Objects.equals(vectorIndexMetadata, that.vectorIndexMetadata) &&
+               Objects.equals(srid, that.srid) &&
+               Arrays.equals(columns, that.columns);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, unique, Arrays.hashCode(columns));
+        int result = Objects.hash(name, unique, sqlIndexDefinitionProvider, vectorIndexMetadata, spatial, srid);
+        result = 31 * result + Arrays.hashCode(columns);
+        return result;
     }
 
     @Override
@@ -53,6 +99,8 @@ public record SqlIndexMapping(String name, boolean unique, String[] columns) {
             "name='" + name + '\'' +
             ", unique=" + unique +
             ", columns=" + Arrays.toString(columns) +
+            ", spatial=" + spatial +
+            ", srid=" + srid +
             '}';
     }
 }

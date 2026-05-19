@@ -106,6 +106,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Shared
     H2ExampleEntityRepository exampleEntityRepo = context.getBean(H2ExampleEntityRepository)
 
+    @Shared
+    IntervalRepository intervalRepo = context.getBean(H2IntervalRepository)
+
     @Override
     EntityWithIdClassRepository getEntityWithIdClassRepository() {
         return entityWithIdClassRepo
@@ -233,6 +236,12 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         return exampleEntityRepo
     }
 
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return intervalRepo
+    }
+
     @Override
     boolean isSupportsArrays() {
         return true
@@ -327,7 +336,7 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     void "find by embedded entity field"() {
         when:
         def bookEntity = new BookEntity(1L, new ResourceEntity<BookState>("1984", BookState.BORROWED))
-        bookEntityRepository.save(bookEntity)
+        bookEntityRepository.insert(bookEntity)
         def result = bookEntityRepository.findAllByResourceState(BookState.BORROWED)
         then:
         result

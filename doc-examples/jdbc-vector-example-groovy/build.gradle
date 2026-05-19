@@ -1,0 +1,35 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+    testResources {
+        additionalModules.add("jdbc-oracle-free")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor
+
+    implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.ojdbc11
+
+    testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
+}

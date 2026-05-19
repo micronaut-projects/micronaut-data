@@ -108,7 +108,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false))
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
@@ -118,7 +118,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true))
             def found = userWithWhereRepository.findById(e.id)
         then:
             !found.isPresent()
@@ -379,7 +379,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -388,14 +388,14 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -857,10 +857,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test order by embedded field"() {
         when:
-            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def e1 = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
             def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
             u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
-            def e2 = userWithWhereRepository.save(u2)
+            def e2 = userWithWhereRepository.insert(u2)
             def found1 = userWithWhereRepository.findById(e1.id)
             def found2 = userWithWhereRepository.findById(e2.id)
         then:
@@ -892,6 +892,40 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def book = bookRepository.findOne(BookSpecifications.findUsingASubquery("The Stand"))
         then:
             book.title == "The Stand"
+    }
+
+    void "test criteria pagination sort ignore case with join"() {
+        given:
+        def book1 = new Book(title: "The Stand", students: [new Student("Denis"), new Student("Josh")])
+        def book2 = new Book(title: "Pet Cemetery", students: [new Student("Kevin")])
+        def book3 = new Book(title: "along Came a Spider", students: [new Student("Kevin"), new Student("Josh")])
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        bookRepository.save(book3)
+        def criteria = new PredicateSpecification<Book>() {
+            @Override
+            Predicate toPredicate(Root<Book> root, CriteriaBuilder criteriaBuilder) {
+                def students = root.joinSet("students", jakarta.persistence.criteria.JoinType.LEFT)
+                return criteriaBuilder.or(
+                        criteriaBuilder.equal(students.get("name"), "Denis"),
+                        criteriaBuilder.equal(students.get("name"), "Josh")
+                )
+            }
+        }
+
+        when:
+        def page = bookRepository.findAll(criteria, Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["along Came a Spider"]
+
+        when:
+        page = bookRepository.findAll(criteria, Pageable.from(1, 1, Sort.of(Sort.Order.asc("title", true))))
+
+        then:
+        page.totalSize == 2
+        page.content*.title == ["The Stand"]
     }
 
     static QuerySpecification<Book> testJoin(String value) {

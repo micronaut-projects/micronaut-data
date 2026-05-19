@@ -25,8 +25,19 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.time.*;
-import java.util.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.Period;
+import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * Enum of basic data types allowing to compile time computation which can then subsequently be used at runtime for fast
@@ -69,6 +80,14 @@ public enum DataType {
      * A {@link Time} value.
      */
     TIME(Time.class),
+    /**
+     * A {@link Duration} value.
+     */
+    DURATION(Duration.class),
+    /**
+     * A {@link Period} value.
+     */
+    PERIOD(Period.class),
     /**
      * A {@link Double} value.
      */
@@ -113,6 +132,10 @@ public enum DataType {
      * A string array.
      */
     STRING_ARRAY(true, String[].class),
+    /**
+     * A UUID array.
+     */
+    UUID_ARRAY(true, java.util.UUID[].class),
     /**
      * A short array.
      */

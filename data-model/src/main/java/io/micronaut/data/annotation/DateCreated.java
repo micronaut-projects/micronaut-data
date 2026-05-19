@@ -15,7 +15,11 @@
  */
 package io.micronaut.data.annotation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -33,6 +37,20 @@ public @interface DateCreated {
      * The annotation name.
      */
     String NAME = DateCreated.class.getName();
+
+    /**
+     * The metadata key for {@link #skipIfPresent()}.
+     */
+    String SKIP_IF_PRESENT = "skipIfPresent";
+
+    /**
+     * When true, an existing non-null value will be preserved and not overwritten during auto-population on insert.
+     * Default false preserves existing behavior of always setting the value on insert.
+     *
+     * @return {@code true} if an existing non-null value should be preserved, {@code false} otherwise
+     * @since 5.0
+     */
+    boolean skipIfPresent() default false;
 
     /**
      * Allows to truncate the auto set date value.

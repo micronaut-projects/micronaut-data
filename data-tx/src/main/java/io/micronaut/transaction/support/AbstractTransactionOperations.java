@@ -119,14 +119,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     }
 
     @Override
-    protected final <R> R doExecute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<C, R> callback) {
+    protected final <R extends @Nullable Object> R doExecute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<C, R> callback) {
         if (synchronousConnectionManager == null) {
             return doExecuteWithoutSynchronousConnectionManager(definition, callback);
         }
         return executeTransactional(getTransaction(definition), callback, definition);
     }
 
-    private <R> R doExecuteWithoutSynchronousConnectionManager(TransactionDefinition definition, TransactionCallback<C, R> callback) {
+    private <R extends @Nullable Object> R doExecuteWithoutSynchronousConnectionManager(TransactionDefinition definition, TransactionCallback<C, R> callback) {
         Optional<T> existingTransactionOptional = findTransactionStatusInternal();
         if (existingTransactionOptional.isEmpty()) {
             return connectionOperations.execute(
@@ -309,7 +309,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     protected void doResume(T transaction) {
     }
 
-    private <R> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
+    private <R extends @Nullable Object> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
         R result;
         try {
             if (logger.isDebugEnabled()) {
@@ -367,11 +367,11 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 }
 
             } catch (UnexpectedRollbackException ex) {
-                // can only be caused by doCommit
+                // can only be caused by doCommit or doNestedCommit
                 tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
                 throw ex;
             } catch (TransactionException ex) {
-                // can only be caused by doCommit
+                // can only be caused by doCommit or doNestedCommit
                 if (isRollbackOnCommitFailure()) {
                     doRollbackOnCommitException(tx, ex);
                 } else {
@@ -430,7 +430,16 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             if (logger.isDebugEnabled()) {
                 logger.debug("Initiating transaction rollback after commit exception", ex);
             }
-            doRollback(tx);
+            // Mirror rollbackInternal's dispatch: nested transactions must roll back
+            // to their savepoint (not the entire connection), and non-new/non-nested
+            // transactions should only mark rollback-only on the outer transaction.
+            if (tx.isNewTransaction()) {
+                doRollback(tx);
+            } else if (tx.isNestedTransaction()) {
+                doNestedRollback(tx);
+            } else {
+                tx.setRollbackOnly();
+            }
         } catch (RuntimeException | Error rbex) {
             logger.error("Commit exception overridden by rollback exception", ex);
             tx.triggerAfterCompletion(TransactionSynchronization.Status.UNKNOWN);

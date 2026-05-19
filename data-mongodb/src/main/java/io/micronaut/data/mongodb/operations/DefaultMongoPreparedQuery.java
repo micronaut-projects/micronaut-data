@@ -152,6 +152,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     }
 
     @Override
+    public MongoFindOneAndUpdate getFindOneAndUpdate() {
+        return mongoStoredQuery.getFindOneAndUpdate(defaultPreparedQuery.getContext());
+    }
+
+    @Override
     public MongoDelete getDeleteMany() {
         return mongoStoredQuery.getDeleteMany(defaultPreparedQuery.getContext());
     }

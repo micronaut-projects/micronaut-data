@@ -170,4 +170,10 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
     ExampleEntityRepository getExampleEntityRepository() {
         return context.getBean(MSExampleEntityRepository)
     }
+
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(MSIntervalRepository)
+    }
 }

@@ -28,6 +28,12 @@ Micronaut Data R2DBC requires driver configuration using https://micronaut-proje
 
 |===
 
+NOTE: For Oracle sparse `VECTOR(..., SPARSE)` usage with R2DBC, include a recent Oracle JDBC driver as well so Oracle sparse VECTOR APIs are available at runtime.
+
+dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
+
+NOTE: For PostgreSQL vector support with R2DBC, Micronaut Data uses `io.r2dbc.postgresql.codec.Vector` from the PostgreSQL R2DBC driver. The pgvector Java library is only required when using JDBC pgvector driver-native types; sparse `PGsparsevec` mapping is currently JDBC-only.
+
 === SQL Logging
 
 You can enable SQL logging by enabling trace logging for the `io.micronaut.data.query` logger. For example in `logback.xml`:

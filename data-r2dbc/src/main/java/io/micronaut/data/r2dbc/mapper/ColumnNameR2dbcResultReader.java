@@ -23,20 +23,19 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Implementation of {@link ResultReader} for R2DBC.
@@ -109,40 +108,13 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             case DOUBLE:
                 return resultSet.get(index, Double.class);
             case BYTE_ARRAY:
-                return readBlob(resultSet, index);
+                return readBytes(resultSet, index);
             case BIGDECIMAL:
                 return resultSet.get(index, BigDecimal.class);
             case OBJECT:
             default:
                 return getRequiredValue(resultSet, index, Object.class);
         }
-    }
-
-    private byte @Nullable [] readBlob(@NonNull Row resultSet, @NonNull String index) {
-        try {
-            return resultSet.get(index, byte[].class);
-        } catch (Exception e) {
-            // Ignore
-        }
-        // Second try for Oracle and H2
-        Object o = resultSet.get(index);
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof byte[]) {
-            return null;
-        }
-        if (o instanceof ByteBuffer byteBuffer) {
-            return byteBuffer.array();
-        }
-        if (o instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
-                return new byte[0];
-            }
-            return byteBuffer.array();
-        }
-        return convertRequired(o, byte[].class);
     }
 
     @Nullable
@@ -285,15 +257,31 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
     }
 
     @Override
-    public byte[] readBytes(Row resultSet, String name) {
-        return resultSet.get(name, byte[].class);
+    public byte @Nullable [] readBytes(Row resultSet, String name) {
+        try {
+            return resultSet.get(name, byte[].class);
+        } catch (Exception e) {
+            // Ignore and fallback to generic handling (Oracle, H2, etc.)
+        }
+        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
     }
 
     @Nullable
     @Override
     public <T> T getRequiredValue(Row resultSet, String name, Class<T> type) throws DataAccessException {
         try {
-            return resultSet.get(name, type);
+            T value = getTypedValue(resultSet, name, type);
+            if (value != null) {
+                return value;
+            }
+            Object raw = getRawValue(resultSet, name);
+            if (raw == null) {
+                return null;
+            }
+            if (type.isInstance(raw)) {
+                return type.cast(raw);
+            }
+            return conversionService.convert(raw, type).orElse(null);
         } catch (IllegalArgumentException | ConversionErrorException |
                  R2dbcTransientResourceException e) {
             try {
@@ -301,6 +289,46 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             } catch (Exception exception) {
                 throw exceptionForColumn(name, e);
             }
+        }
+    }
+
+    @Nullable
+    private static <T> T getTypedValue(Row resultSet, String name, Class<T> type) {
+        IllegalArgumentException lowerCaseFailure = null;
+        try {
+            return resultSet.get(name, type);
+        } catch (IllegalArgumentException e) {
+            lowerCaseFailure = e;
+        }
+        String upperName = name.toUpperCase(Locale.ROOT);
+        if (upperName.equals(name)) {
+            throw lowerCaseFailure;
+        }
+        try {
+            return resultSet.get(upperName, type);
+        } catch (IllegalArgumentException e) {
+            e.addSuppressed(lowerCaseFailure);
+            throw e;
+        }
+    }
+
+    @Nullable
+    private static Object getRawValue(Row resultSet, String name) {
+        IllegalArgumentException lowerCaseFailure = null;
+        try {
+            return resultSet.get(name);
+        } catch (IllegalArgumentException e) {
+            lowerCaseFailure = e;
+        }
+        String upperName = name.toUpperCase(Locale.ROOT);
+        if (upperName.equals(name)) {
+            throw lowerCaseFailure;
+        }
+        try {
+            return resultSet.get(upperName);
+        } catch (IllegalArgumentException e) {
+            e.addSuppressed(lowerCaseFailure);
+            throw e;
         }
     }
 

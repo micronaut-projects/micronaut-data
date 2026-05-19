@@ -88,7 +88,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             student.ratings[0].rating == 5
         when:
             rating = new CourseRatingCompositeKey(id: new CourseRatingKey(student: student, course: student.courses.get(1)), rating: 5)
-            courseRatingCompositeKeyRepository.save(rating)
+            courseRatingCompositeKeyRepository.insert(rating)
             student = studentRepository.findByIdEquals(student.id).get()
         then:
             student.name == "Denis"

@@ -18,7 +18,11 @@ package io.micronaut.transaction.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.transaction.TransactionDefinition;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Stereotype annotation for demarcating a read-only transaction. Since the

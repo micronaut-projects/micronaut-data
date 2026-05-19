@@ -1,0 +1,107 @@
+name: Oracle Test Pilot CI
+on:
+  push:
+    branches:
+      - '[0-9]+.[0-9]+.x'
+  pull_request:
+    branches:
+      - '[0-9]+.[0-9]+.x'
+
+jobs:
+  build_matrix:
+    runs-on: [ self-hosted, Linux, X64, OracleTestPilot ]
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    steps:
+      # Provides the set of databases to test against as well as the list of modules to test
+      - name: Build Matrix
+        id: build-matrix
+        shell: bash
+        run: |
+          echo 'matrix={"db":["base-database-service-26ai","autonomous-transaction-processing-serverless-26ai"], "native_test_task":["micronaut-doc-examples:micronaut-jdbc-example-records-java:nativeTest","micronaut-doc-examples:micronaut-jdbc-example-java:nativeTest","micronaut-doc-examples:micronaut-hibernate-example-java:nativeTest"]}' >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: build_matrix
+    runs-on: [ self-hosted, Linux, X64, OracleTestPilot ]
+    strategy:
+      max-parallel: 6
+      matrix:
+        java: ['25']
+        native_test_task: ${{ fromJson(needs.build_matrix.outputs.matrix).native_test_task }}
+        db: ${{ fromJson(needs.build_matrix.outputs.matrix).db }}
+    env:
+      DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+      DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+      DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+
+    steps:
+      - name: Remove system JDKs
+        if: runner.environment == 'github-hosted'
+        run: |
+          sudo rm -rf /usr/lib/jvm/*
+          unset JAVA_HOME
+          export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+
+      - uses: actions/checkout@v6
+
+      - name: Pre-Build Steps
+        uses: micronaut-projects/github-actions/graalvm/pre-build@master
+        id: pre-build
+        with:
+          distribution: 'graalvm'
+          gradle-java: '25'
+          java: ${{ matrix.java }}
+          nativeTestTask: ${{ matrix.native_test_task }}
+
+      - name: Create Oracle Test Pilot Databases...
+        id: create_database
+        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        with:
+          oci-service: ${{ matrix.db }}
+          action: create
+          user: ${{ matrix.native_test_task }}
+
+      - name: Disable TCP Fast Open for Autonomous databases
+        id: disable_tfo
+        run: |
+          TESTPILOT_CONNECTION_STRING_SUFFIX=${{ steps.create_database.outputs.connection_string_suffix }}
+          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//USE_TCP_FAST_OPEN=ON/USE_TCP_FAST_OPEN=OFF}
+          echo "TESTPILOT_CONNECTION_STRING_SUFFIX=$TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Build Steps
+        id: gradle
+        env:
+          GH_TOKEN_PUBLIC_REPOS_READONLY: ${{ secrets.GH_TOKEN_PUBLIC_REPOS_READONLY }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GRAALVM_QUICK_BUILD: true
+          TESTPILOT_USERNAME: ${{ matrix.native_test_task }}_${{ github.run_number }}
+          TESTPILOT_PASSWORD: ${{ steps.create_database.outputs.database_password }}
+          TESTPILOT_CONNECTION_STRING_SUFFIX: ${{ env.TESTPILOT_CONNECTION_STRING_SUFFIX }}
+          API_HOST: ""
+          TESTPILOT_CLIENT_ID: ""
+          TESTPILOT_TOKEN: ""
+          # Needed for TFO (TCP fast open)
+          #LD_PRELOAD: /home/ubuntu/libtfojdbc1.so
+          #LD_LIBRARY_PATH: /home/ubuntu
+          # maximum number of worker (upper limit to maxParallelForks property, otherwise number of available CPUs)
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
+          PREDICTIVE_TEST_SELECTION: "${{ github.event_name == 'pull_request' && 'true' || 'false' }}"
+        shell: bash
+        run: |
+          ./gradlew ${{ matrix.native_test_task }} --no-daemon --continue --stacktrace -Plog-test-progress=true
+
+      - name: Delete Oracle Test Pilot Databases...
+        id: delete_database
+        if: always() && steps.create_database.outcome == 'success'
+        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        with:
+          oci-service: ${{ matrix.db }}
+          action: delete
+          user: ${{ matrix.native_test_task }}
+
+      - name: Post-Build Steps
+        uses: micronaut-projects/github-actions/graalvm/post-build@master
+        id: post-build
+        with:
+          java: ${{ matrix.java }}

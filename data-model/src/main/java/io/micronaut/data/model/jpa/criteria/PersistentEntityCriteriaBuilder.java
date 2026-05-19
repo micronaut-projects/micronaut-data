@@ -53,7 +53,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return The insert criteria
      * @since 5.0
      */
-    
     <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity);
 
     /**
@@ -64,7 +63,6 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param ignoreCase If ignore case should be used
      * @return ascending ordering corresponding to the expression
      */
-    
     Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
@@ -216,6 +214,37 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return like predicate
      */
     Predicate regex(Expression<String> x, Expression<String> pattern);
+
+    /**
+     * Checks if geospatial expression x is within geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate geoWithin(Expression<?> x, Expression<?> y);
+
+    /**
+     * Checks if geospatial expression x intersects geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate geoIntersects(Expression<?> x, Expression<?> y);
+
+    /**
+     * Checks if geospatial expression x is within the given distance from geospatial expression y.
+     *
+     * @param x The geospatial expression
+     * @param y The geospatial expression
+     * @param distance The distance
+     * @return a new predicate
+     * @since 5.0
+     */
+    Predicate near(Expression<?> x, Expression<?> y, Expression<? extends Number> distance);
 
     /**
      * Checks if array contains given expression. Supported by Azure Cosmos Db and MongoDB.

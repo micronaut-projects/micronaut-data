@@ -2,6 +2,7 @@
 // tag::repository[]
 package example;
 
+import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -13,7 +14,8 @@ import java.util.List;
 
 
 @JdbcRepository(dialect = Dialect.H2)        // <1>
-interface BookRepository extends CrudRepository<Book, Long> { // <2>
+@Requires(notEnv="oracle")
+public interface BookRepository extends CrudRepository<Book, Long> { // <2>
 // end::repository[]
 
     // tag::simple[]

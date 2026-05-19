@@ -17,6 +17,7 @@ package io.micronaut.transaction.async;
 
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -68,8 +69,8 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     }
 
     @Override
-    public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
-                                                  Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
+    public <T extends @Nullable Object> CompletionStage<T> withTransaction(TransactionDefinition definition,
+                                                                          Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition,
             status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
                 DefaultAsyncTransactionStatus<C> asyncStatus = new DefaultAsyncTransactionStatus<>(status, this);
@@ -79,11 +80,12 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
         return onCompleteCompleteFuture(result);
     }
 
-    private static <T> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
+    private static <T extends @Nullable Object> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
         publisher.subscribe(new CoreSubscriber<>() {
 
+            @Nullable
             private T result;
 
             @NonNull

@@ -26,15 +26,15 @@ class ParentRepositoryTest : AbstractMongoSpec() {
         )
         val saved = repository.save(parent)
         assertNotNull(saved.id)
-        saved.children.forEach { assertNotNull(it.id) }
+        requireNotNull(saved.children).forEach { assertNotNull(it.id) }
 
         val found = repository.findById(saved.id!!).get()
-        found.children.forEach { assertNull(it.parent) }
+        requireNotNull(found.children).forEach { assertNull(it.parent) }
 
         val modifiedParent = found.copy(name = found.name + " mod!")
         repository.update(modifiedParent)
         val found2 = repository.findById(saved.id!!).get()
         assertTrue(found2.name.endsWith(" mod!"))
-        assertTrue(found2.children.size == 3)
+        assertTrue(requireNotNull(found2.children).size == 3)
     }
 }

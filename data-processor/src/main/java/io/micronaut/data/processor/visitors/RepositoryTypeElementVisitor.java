@@ -63,6 +63,8 @@ import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -138,7 +140,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     {
         List<MethodMatcher> matcherList = new ArrayList<>(20);
-        SoftServiceLoader.load(MethodMatcher.class).collectAll(matcherList);
+        SoftServiceLoader.load(MethodMatcher.class, RepositoryTypeElementVisitor.class.getClassLoader()).collectAll(matcherList);
         OrderUtil.sort(matcherList);
         methodsMatchers = matcherList;
     }
@@ -625,7 +627,38 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 queryResult,
                 methodInfo.getResultType(),
                 parameterBinding,
-                methodInfo.isEncodeEntityParameters());
+                methodInfo.isEncodeEntityParameters(),
+                methodInfo.isOptimisticLock());
+
+            List<AnnotationValue<Annotation>> additionalQueryAnnotations = new ArrayList<>(methodInfo.getAdditionalQueries().size());
+            for (MethodMatchInfo.QueryDefinition queryDefinition : methodInfo.getAdditionalQueries()) {
+                QueryResult additionalQueryResult = queryDefinition.queryResult();
+                List<QueryParameterBinding> additionalParameterBinding = additionalQueryResult.getParameterBindings();
+                bindAdditionalParameters(methodMatchContext, additionalParameterBinding, additionalQueryResult.getAdditionalRequiredParameters());
+
+                AnnotationValueBuilder<Annotation> builder = AnnotationValue.builder(DataMethodQuery.class.getName());
+                String query = additionalQueryResult.getQuery();
+                if (methodInfo.isRawQuery()) {
+                    query = addRawQueryParameterPlaceholders(queryEncoder, query, additionalQueryResult.getQueryParts());
+                }
+                builder.member(AnnotationMetadata.VALUE_MEMBER, query);
+                builder.member(DataMethodQuery.META_MEMBER_NATIVE, method.booleanValue(Query.class,
+                    DataMethodQuery.META_MEMBER_NATIVE).orElse(false));
+
+                addQueryDefinition(methodMatchContext,
+                    builder,
+                    queryDefinition.operationType(),
+                    additionalQueryResult,
+                    queryDefinition.resultType(),
+                    additionalParameterBinding,
+                    methodInfo.isEncodeEntityParameters(),
+                    queryDefinition.optimisticLock());
+
+                additionalQueryAnnotations.add(builder.build());
+            }
+            if (!additionalQueryAnnotations.isEmpty()) {
+                annotationBuilder.member(DataMethod.META_MEMBER_QUERIES, additionalQueryAnnotations.toArray(AnnotationValue[]::new));
+            }
 
             QueryResult countQuery = methodInfo.getCountQueryResult();
             if (countQuery != null) {
@@ -649,7 +682,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     countQuery,
                     methodMatchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(),
                     countParametersBindings,
-                    methodInfo.isEncodeEntityParameters());
+                    methodInfo.isEncodeEntityParameters(),
+                    false);
 
                 annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, builder.build());
             }
@@ -664,17 +698,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     @Nullable
                                     TypedElement resultType,
                                     List<QueryParameterBinding> parameterBinding,
-                                    boolean encodeEntityParameters) {
+                                    boolean encodeEntityParameters,
+                                    boolean optimisticLock) {
 
         if (methodMatchContext.getMethodElement().hasAnnotation(Procedure.class)) {
             annotationBuilder.member(DataMethodQuery.META_MEMBER_PROCEDURE, true);
         }
 
         annotationBuilder.member(DataMethodQuery.META_MEMBER_OPERATION_TYPE, operationType);
+        if (optimisticLock) {
+            annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIMISTIC_LOCK, true);
+        }
 
         if (resultType != null) {
             String stringType = resultType.getName();
-            if (resultType.isArray()) {
+            if (resultType.isArray() && !stringType.endsWith("[]")) {
                 stringType += "[]";
             }
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
@@ -687,6 +725,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (queryResult != null) {
             if (parameterBinding.stream().anyMatch(QueryParameterBinding::isExpandable)) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY, queryResult.getQueryParts().toArray(new String[0]));
+            }
+            // OUT parameter bindings (e.g. Oracle RETURNING ... INTO ...)
+            List<QueryOutParameterBinding> outBindings = queryResult.getOutParameterBindings();
+            if (CollectionUtils.isNotEmpty(outBindings)) {
+                List<AnnotationValue<?>> outAnnotations = new ArrayList<>(outBindings.size());
+                for (QueryOutParameterBinding b : outBindings) {
+                    AnnotationValueBuilder<?> outBuilder = AnnotationValue.builder(DataMethodQueryOutParameter.class);
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_NAME, b.getName());
+                    outBuilder.member(DataMethodQueryOutParameter.META_MEMBER_DATA_TYPE, b.getDataType());
+                    outAnnotations.add(outBuilder.build());
+                }
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OUT_PARAMETERS, outAnnotations.toArray(new AnnotationValue[0]));
             }
 
             int max = queryResult.getMax();

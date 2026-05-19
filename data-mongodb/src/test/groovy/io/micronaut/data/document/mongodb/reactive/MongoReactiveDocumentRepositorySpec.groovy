@@ -9,6 +9,7 @@ import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.MongoDocumentRepositorySpec
 import io.micronaut.data.document.mongodb.repositories.MongoReactiveExecutorPersonRepository
+import io.micronaut.data.document.tck.entities.Person
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
@@ -183,6 +184,133 @@ class MongoReactiveDocumentRepositorySpec extends MongoDocumentRepositorySpec im
         people = mongoReactiveExecutorPersonRepository.findAll().collectList().block()
         then:
         people.count{ it.name == "UPDATED" } == 2
+    }
+
+    void "test reactive query executor custom update returning after and before"() {
+        given:
+        def person = personRepository.save("Jeff", 20)
+
+        when:
+        def updated = mongoReactiveExecutorPersonRepository.updateCustomReturning(person.id, "Updated").block()
+
+        then:
+        updated != null
+        updated.id == person.id
+        updated.name == "Updated"
+        personRepository.findById(person.id).get().name == "Updated"
+
+        when:
+        def previous = mongoReactiveExecutorPersonRepository.updateCustomReturningBefore(person.id, "Updated Again").block()
+
+        then:
+        previous != null
+        previous.id == person.id
+        previous.name == "Updated"
+        personRepository.findById(person.id).get().name == "Updated Again"
+    }
+
+    void "test reactive query executor custom update returning can use supertype result"() {
+        given:
+        def person = personRepository.save("Jeff Reactive Object", 20)
+
+        when:
+        def updated = mongoReactiveExecutorPersonRepository.updateCustomReturningAsObject(person.id, "Updated Reactive Object").block()
+
+        then:
+        updated instanceof Person
+        updated.id == person.id
+        updated.name == "Updated Reactive Object"
+        personRepository.findById(person.id).get().name == "Updated Reactive Object"
+    }
+
+    void "test reactive query executor custom update returning no match"() {
+        expect:
+        mongoReactiveExecutorPersonRepository.updateCustomReturning("507f1f77bcf86cd799439011", "Updated").block() == null
+    }
+
+    void "test reactive query executor custom update returning default returnDocument is BEFORE"() {
+        given:
+        def person = personRepository.save("Jeff Default", 20)
+
+        when:
+        def previous = mongoReactiveExecutorPersonRepository.updateCustomReturningDefault(person.id, "Jeff Default Updated").block()
+
+        then:
+        previous != null
+        previous.id == person.id
+        previous.name == "Jeff Default"
+        personRepository.findById(person.id).get().name == "Jeff Default Updated"
+    }
+
+    void "test reactive query executor annotation returnDocument takes precedence over options returnDocument"() {
+        given:
+        def person = personRepository.save("Jeff Options", 20)
+        def options = new com.mongodb.client.model.FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
+
+        when:
+        def result = mongoReactiveExecutorPersonRepository.updateCustomReturningAfterWithOptions(person.id, "Jeff Options Updated", options).block()
+
+        then:
+        result != null
+        result.name == "Jeff Options Updated"
+        personRepository.findById(person.id).get().name == "Jeff Options Updated"
+    }
+
+    void "test reactive query executor update returning options parameter is applied while annotation returnDocument wins"() {
+        given:
+        def id = "507f1f77bcf86cd799439012"
+        def options = new com.mongodb.client.model.FindOneAndUpdateOptions()
+                .upsert(true)
+                .returnDocument(com.mongodb.client.model.ReturnDocument.BEFORE)
+
+        when:
+        def result = mongoReactiveExecutorPersonRepository.updateCustomReturningAfterWithOptions(id, "Inserted Via Options", options).block()
+
+        then:
+        result != null
+        result.name == "Inserted Via Options"
+        personRepository.findById(id).present
+    }
+
+    void "test reactive query executor custom update returning dto projection"() {
+        given:
+        def person = personRepository.save("Jeff DTO", 20)
+
+        when:
+        def updated = mongoReactiveExecutorPersonRepository.updateCustomReturningDto(person.id, "Jeff DTO Updated").block()
+
+        then:
+        updated != null
+        updated.name() == "Jeff DTO Updated"
+        personRepository.findById(person.id).get().name == "Jeff DTO Updated"
+    }
+
+    void "test reactive query executor custom update returning scalar projection"() {
+        given:
+        def person = personRepository.save("Jeff Scalar", 20)
+
+        when:
+        def updatedName = mongoReactiveExecutorPersonRepository.updateCustomReturningNameProjection(person.id, "Jeff Scalar Updated").block()
+
+        then:
+        updatedName == "Jeff Scalar Updated"
+        personRepository.findById(person.id).get().name == "Jeff Scalar Updated"
+    }
+
+    void "test reactive query executor custom update returning uses sort to select matched document"() {
+        given:
+        personRepository.save("Sorted Candidate", 40)
+        personRepository.save("Sorted Candidate", 20)
+
+        when:
+        def returnedBefore = mongoReactiveExecutorPersonRepository.updateCustomReturningSortedBefore("Sorted Candidate", "Sorted Updated").block()
+
+        then:
+        returnedBefore != null
+        returnedBefore.age == 20
+        returnedBefore.name == "Sorted Candidate"
+        personRepository.findByName("Sorted Updated")*.age == [20]
+        personRepository.findByName("Sorted Candidate")*.age.sort() == [40]
     }
 
 }

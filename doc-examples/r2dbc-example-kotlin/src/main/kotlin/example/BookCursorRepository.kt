@@ -7,7 +7,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.kotlin.CoroutinePageableCrudRepository
 
-@R2dbcRepository(dialect = Dialect.MYSQL)
+@R2dbcRepository(dialect = Dialect.POSTGRES)
 interface BookCursorRepository : CoroutinePageableCrudRepository<Book, Long> {
 
     @Query(

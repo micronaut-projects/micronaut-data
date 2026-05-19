@@ -6,5 +6,6 @@
 
 <suppressions>
     <suppress checks="FileLength" files=".*AbstractSqlLikeQueryBuilder.*" />
+    <suppress checks="FileLength" files=".*/SqlQueryBuilder\.java" />
     <suppress files="[\\/]generated-src[\\/]" checks="[a-zA-Z0-9]*"/>
 </suppressions>

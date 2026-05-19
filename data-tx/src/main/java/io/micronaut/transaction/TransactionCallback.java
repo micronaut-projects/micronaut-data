@@ -28,10 +28,9 @@ import java.util.function.Function;
  * @param <R> The return type
  */
 @FunctionalInterface
-public interface TransactionCallback<T, R> extends Function<TransactionStatus<T>, R> {
+public interface TransactionCallback<T, R extends @Nullable Object> extends Function<TransactionStatus<T>, R> {
 
     @Override
-    @Nullable
     @SuppressWarnings("FunctionalInterfaceMethodChanged")
     default R apply(TransactionStatus<T> status) {
         try {
@@ -49,5 +48,5 @@ public interface TransactionCallback<T, R> extends Function<TransactionStatus<T>
      * @return The return value
      * @throws Exception When an error occurs in invoking the transaction
      */
-    @Nullable R call(TransactionStatus<T> status) throws Exception;
+    R call(TransactionStatus<T> status) throws Exception;
 }

@@ -20,7 +20,7 @@ class StudentRepositorySpec(private val studentRepository: StudentRepository,
         assertNotNull(student.courses[0].id)
         assertNotNull(student.courses[1].id)
         studentRepository.update(student)
-        student = studentRepository.findById(student.id!!).get()
+        student = studentRepository.findById(student.id!!)!!
         assertNotNull(student.id)
         assertEquals(1, student.version)
         assertEquals("Denis", student.name)
@@ -31,7 +31,7 @@ class StudentRepositorySpec(private val studentRepository: StudentRepository,
         assertEquals("Physics", student.courses[1].name)
         val rating = CourseRating(student, student.courses[1], 5)
         courseRatingRepository.save(rating)
-        student = studentRepository.queryById(student.id!!).orElse(null)
+        student = studentRepository.queryById(student.id!!)!!
         assertNotNull(student.id)
         assertEquals("Denis", student.name)
         assertNotNull(student.courses)

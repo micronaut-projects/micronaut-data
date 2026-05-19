@@ -55,6 +55,17 @@ public final class SqlColumnMapping {
      * @param name               the name of the column
      * @param dataType           the data type of the column
      * @param dbType             the database-specific type
+     */
+    public SqlColumnMapping(String name, DataType dataType, SqlDbType dbType) {
+        this(name, dataType, dbType, null, null, null, false, false, GeneratedValue.Type.AUTO, null, null);
+    }
+
+    /**
+     * Constructs a new Column instance.
+     *
+     * @param name               the name of the column
+     * @param dataType           the data type of the column
+     * @param dbType             the database-specific type
      * @param length             the length of the column (optional)
      * @param precision          the precision of the column (optional)
      * @param scale              the scale of the column (optional)
@@ -194,10 +205,10 @@ public final class SqlColumnMapping {
             return this.sqlType;
         }
         this.sqlType = switch (dataType) {
-            case STRING -> "VARCHAR(" + length + ")";
+            case STRING -> varcharType(length);
             case UUID -> {
                 if (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL) {
-                    yield "VARCHAR(36)";
+                    yield varcharType(36);
                 } else if (dialect == Dialect.SQL_SERVER) {
                     yield "UNIQUEIDENTIFIER";
                 } else {
@@ -208,7 +219,6 @@ public final class SqlColumnMapping {
                 if (dialect == Dialect.ORACLE) {
                     yield "NUMBER(1)";
                 } else if (dialect == Dialect.SQL_SERVER) {
-                    // TODO: was "BIT NOT NULL";
                     yield "BIT";
                 } else {
                     yield "BOOLEAN";
@@ -330,9 +340,9 @@ public final class SqlColumnMapping {
                 }
             }
             case JSON -> getJsonSqlType(dialect);
-            // TODO: Array types are not supported for all dialects so might throw an error?
             // Think only H2 and Postgres support these type defs
             case STRING_ARRAY, CHARACTER_ARRAY -> "VARCHAR(255) ARRAY";
+            case UUID_ARRAY -> "UUID ARRAY";
             case SHORT_ARRAY -> {
                 if (dialect == Dialect.POSTGRES) {
                     yield "SMALLINT ARRAY";
@@ -363,10 +373,22 @@ public final class SqlColumnMapping {
                 }
             }
             case BOOLEAN_ARRAY -> "BOOLEAN ARRAY";
+            case DURATION -> {
+                if (dialect == Dialect.ORACLE) {
+                    yield "INTERVAL DAY TO SECOND";
+                }
+                yield varcharType(255);
+            }
+            case PERIOD -> {
+                if (dialect == Dialect.ORACLE) {
+                    yield "INTERVAL YEAR TO MONTH";
+                }
+                yield varcharType(255);
+            }
             default -> {
                 if (dbType == SqlDbType.ENUM) {
                     // Special case for enum
-                    yield "VARCHAR(255)";
+                    yield varcharType(255);
                 } else if (dbType == SqlDbType.CLOB) {
                     if (dialect == Dialect.POSTGRES) {
                         yield "TEXT";
@@ -412,5 +434,9 @@ public final class SqlColumnMapping {
 
     private static String floatType(Integer precision) {
         return "FLOAT(" + precision + ")";
+    }
+
+    private static String varcharType(@Nullable Integer length) {
+        return length == null ? "VARCHAR" : "VARCHAR(" + length + ")";
     }
 }

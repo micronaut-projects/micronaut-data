@@ -30,11 +30,11 @@ class DtoAssociationsSpec extends Specification implements PostgresHibernateReac
     UserRepository userRepository
 
     def setupSpec() {
-        def group1 = groupRepository.save(new Group(id: 1, name: "Group 1")).block()
-        def group2 = groupRepository.save(new Group(id: 2, name: "Group 2")).block()
+        def group1 = groupRepository.insert(new Group(id: 1, name: "Group 1")).block()
+        def group2 = groupRepository.insert(new Group(id: 2, name: "Group 2")).block()
 
-        userRepository.save(new User(id: 1, username: "john", something: "blabla", groups: [group1, group2])).block()
-        userRepository.save(new User(id: 2, username: "jane", something: "blabla")).block()
+        userRepository.insert(new User(id: 1, username: "john", something: "blabla", groups: [group1, group2])).block()
+        userRepository.insert(new User(id: 2, username: "jane", something: "blabla")).block()
     }
 
     def "basic dtos"() {
@@ -69,7 +69,7 @@ interface UserRepository extends GenericRepository<User, Long> {
     @Join(value = "groups", type = Join.Type.LEFT)
     Flux<SomeDtoWithGroup> findAll();
 
-    Mono<Void> save(User user);
+    Mono<Void> insert(User user);
 
     Flux<SomeDto> list();
 }

@@ -27,6 +27,8 @@ import io.micronaut.data.intercept.DeleteOneInterceptor
 import io.micronaut.data.intercept.ExistsByInterceptor
 
 import io.micronaut.data.intercept.FindAllInterceptor
+import io.micronaut.data.intercept.InsertAllInterceptor
+import io.micronaut.data.intercept.InsertEntityInterceptor
 import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
@@ -96,6 +98,16 @@ interface MyInterface extends CrudRepository<Person, Long> {
         saveMethod.getReturnType().type == Person
         saveMethod.getArguments()[0].type == Person
 
+        when:"the insert method is retrieved"
+        def insertMethod = beanDefinition.getRequiredMethod("insert", Person.class)
+
+        then:"It was correctly compiled as an explicit insert"
+        insertMethod.getValue(DataMethod, "entity", String).isPresent()
+        insertMethod.getValue(DataMethod, "rootEntity", Class).get() == Person
+        insertMethod.getReturnType().type == Person
+        insertMethod.getArguments()[0].type == Person
+        insertMethod.synthesize(DataMethod).interceptor() == InsertEntityInterceptor
+
         when:"the save all method is retrieved"
         def saveAll = beanDefinition.getRequiredMethod("saveAll", Iterable.class)
 
@@ -105,6 +117,16 @@ interface MyInterface extends CrudRepository<Person, Long> {
         saveAll.getArguments()[0].getFirstTypeVariable().get().type == Person
         saveAll.synthesize(DataMethod).rootEntity() == Person
         saveAll.synthesize(DataMethod).interceptor() == SaveAllInterceptor
+
+        when:"the insert all method is retrieved"
+        def insertAll = beanDefinition.getRequiredMethod("insertAll", Iterable.class)
+
+        then:"the insert all method was correctly compiled as an explicit insert"
+        insertAll
+        insertAll.getReturnType().asArgument().getFirstTypeVariable().get().type == Person
+        insertAll.getArguments()[0].getFirstTypeVariable().get().type == Person
+        insertAll.synthesize(DataMethod).rootEntity() == Person
+        insertAll.synthesize(DataMethod).interceptor() == InsertAllInterceptor
 
         when:"the exists by id method is retrieved"
         def existsMethod = beanDefinition.getRequiredMethod("existsById", Long)

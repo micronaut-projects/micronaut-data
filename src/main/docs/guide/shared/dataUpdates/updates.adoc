@@ -1,7 +1,9 @@
-To update an entity you can once again pass the entity to the `update` method:
+To require an update of an existing entity, pass the entity to the `update` method:
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="update", indent="0"]
 
+Use `save` when you want Micronaut Data to decide between insert and update based on the entity identity value.
+Use `update` when the entity must already exist.
 However, generally it is more efficient to use batch updates to only update the properties that have actually changed.
 
 There are a couple of ways to achieve batch updates. One way is to define a method that features an argument annotated with ann:data.annotation.Id[], starts with the stem `update`:

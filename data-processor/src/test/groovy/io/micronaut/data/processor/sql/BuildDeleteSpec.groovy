@@ -37,6 +37,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
+import static io.micronaut.data.processor.visitors.TestUtils.getOutBindingParameters
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
@@ -699,5 +700,111 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         expect:
         deleteQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) DELETE FROM person WHERE id = :id "
         method.classValue(DataMethod, "interceptor").get() == DeleteAllInterceptor
+    }
+
+    void "ORACLE test build delete returning "() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    Book deleteReturning(Book book);
+    String deleteReturningTitle(Book book);
+}
+        """)
+        when:
+        def deleteReturningMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
+        def deleteOutBindingParameters = getOutBindingParameters(deleteReturningMethod)
+        def deleteReturningTitleMethod = repository.findPossibleMethods("deleteReturningTitle").findFirst().get()
+        def deleteTitleOutBindingParameters = getOutBindingParameters(deleteReturningTitleMethod)
+        then:
+        getQuery(deleteReturningMethod) == 'BEGIN DELETE  FROM "BOOK"  WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO ?,?,?,?,?,?,?; END;'
+        getDataResultType(deleteReturningMethod) == "io.micronaut.data.tck.entities.Book"
+        getParameterPropertyPaths(deleteReturningMethod) == ["id"] as String[]
+        getDataInterceptor(deleteReturningMethod) == "io.micronaut.data.intercept.DeleteOneInterceptor"
+        getResultDataType(deleteReturningMethod) == DataType.ENTITY
+        deleteOutBindingParameters.length == 7
+        deleteOutBindingParameters[0].name == "id"
+        deleteOutBindingParameters[0].dataType == DataType.LONG
+        deleteOutBindingParameters[1].name == "author_id"
+        deleteOutBindingParameters[1].dataType == DataType.LONG
+        deleteOutBindingParameters[2].name == "genre_id"
+        deleteOutBindingParameters[2].dataType == DataType.LONG
+        deleteOutBindingParameters[3].name == "title"
+        deleteOutBindingParameters[3].dataType == DataType.STRING
+        deleteOutBindingParameters[4].name == "total_pages"
+        deleteOutBindingParameters[4].dataType == DataType.INTEGER
+        deleteOutBindingParameters[5].name == "publisher_id"
+        deleteOutBindingParameters[5].dataType == DataType.LONG
+        deleteOutBindingParameters[6].name == "last_updated"
+        deleteOutBindingParameters[6].dataType == DataType.TIMESTAMP
+        getQuery(deleteReturningTitleMethod) == 'BEGIN DELETE  FROM "BOOK"  WHERE ("ID" = ?) RETURNING "TITLE" INTO ?; END;'
+        getDataResultType(deleteReturningTitleMethod) == "java.lang.String"
+        getParameterPropertyPaths(deleteReturningTitleMethod) == ["id"] as String[]
+        getDataInterceptor(deleteReturningTitleMethod) == "io.micronaut.data.intercept.DeleteReturningOneInterceptor"
+        getResultDataType(deleteReturningTitleMethod) == DataType.STRING
+        deleteTitleOutBindingParameters.length == 1
+        deleteTitleOutBindingParameters[0].name == "title"
+        deleteTitleOutBindingParameters[0].dataType == DataType.STRING
+    }
+
+    void "ORACLE raw @Query delete returning preserves full SQL and validates out bindings"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.Query;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("DELETE FROM \\\"BOOK\\\" WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\" INTO ?")
+    String customDeleteReturningTitle(Long bookId);
+}
+""")
+        when:
+        def method = repository.findPossibleMethods("customDeleteReturningTitle").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+        then:
+        getRawQuery(method) == 'BEGIN DELETE FROM "BOOK" WHERE "ID" = ? RETURNING "TITLE" INTO ?; END;'
+        outBindingParameters.length == 1
+        outBindingParameters[0].name == "title"
+        outBindingParameters[0].dataType == DataType.STRING
+    }
+
+    void "ORACLE raw @Query delete returning allows Object array returns"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Query("DELETE FROM \\\"BOOK\\\" WHERE \\\"ID\\\" = :bookId RETURNING \\\"TITLE\\\",\\\"TOTAL_PAGES\\\" INTO ?,?")
+    Object[] customDeleteReturningTitleAndPages(Long bookId);
+}
+""")
+        when:
+        def method = repository.findPossibleMethods("customDeleteReturningTitleAndPages").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(method)
+        then:
+        getRawQuery(method) == 'BEGIN DELETE FROM "BOOK" WHERE "ID" = ? RETURNING "TITLE","TOTAL_PAGES" INTO ?,?; END;'
+        outBindingParameters.length == 2
+        outBindingParameters[0].name == "title"
+        outBindingParameters[0].dataType == DataType.STRING
+        outBindingParameters[1].name == "total_pages"
+        outBindingParameters[1].dataType == DataType.INTEGER
     }
 }

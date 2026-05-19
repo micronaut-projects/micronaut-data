@@ -225,11 +225,11 @@ class TxTest3 : AbstractTest(false) {
 
 
 @Transactional(Transactional.TxType.MANDATORY)
-@R2dbcRepository(dialect = Dialect.MYSQL)
+@R2dbcRepository(dialect = Dialect.POSTGRES)
 interface RecordTransactionalCoroutineRepository : CoroutineCrudRepository<Record, UUID>
 
 @Transactional(Transactional.TxType.MANDATORY)
-@R2dbcRepository(dialect = Dialect.MYSQL)
+@R2dbcRepository(dialect = Dialect.POSTGRES)
 interface RecordTransactionalReactiveStreamsRepository : ReactiveStreamsCrudRepository<Record, UUID>
 
 @Singleton

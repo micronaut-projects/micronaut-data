@@ -15,18 +15,33 @@
  */
 package io.micronaut.data.processor.model;
 
+import io.micronaut.data.annotation.JsonSubView;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
-import io.micronaut.data.model.*;
+import io.micronaut.data.model.AbstractPersistentEntity;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -83,8 +98,8 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 allPersistentProperties.put(id.getName(), id);
             } else if (propertyElement.hasStereotype(Version.class)) {
                 version = new SourcePersistentProperty(this, propertyElement);
-                if (hasAnnotation(JsonView.class)) {
-                    throw new MappingException("@JsonView mapped entities do not support @Version fields.");
+                if (hasAnnotation(JsonView.class) || hasAnnotation(JsonSubView.class)) {
+                    throw new MappingException("@Version cannot be used in class annotated with @JsonView/@JsonSubView. Instead use @JsonProperty(\"_metadata\") on a property to enable optimistic locking.");
                 }
                 allPersistentProperties.put(version.getName(), version);
             } else {
