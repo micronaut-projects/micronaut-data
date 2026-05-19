@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres.issue3415
+package io.micronaut.data.jdbc.postgres.one2one
 
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -27,7 +27,7 @@ class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implement
 
     @Override
     List<String> packages() {
-        return List.of("io.micronaut.data.jdbc.postgres.issue3415")
+        return List.of("io.micronaut.data.jdbc.postgres.one2one")
     }
 
     @Override

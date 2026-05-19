@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.issue3415
+package io.micronaut.data.jdbc.h2.one2one
 
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
@@ -20,7 +20,7 @@ import java.sql.Connection
 import java.util.UUID
 
 @MicronautTest
-@H2DBProperties(packages = "io.micronaut.data.jdbc.issue3415", schemaGenerate = "NONE")
+@H2DBProperties(packages = "io.micronaut.data.jdbc.h2.one2one", schemaGenerate = "NONE")
 class OneToOneEmbeddedIdJoinColumnSpec extends Specification {
 
     @Shared
