@@ -9,6 +9,6 @@ import org.bson.types.ObjectId
 @MappedEntity
 data class Parent(val name: String,
                   @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "parent", cascade = [Relation.Cascade.ALL])
-                  val children: List<Child>,
+                  val children: List<Child>? = emptyList(),
                   @field:Id @GeneratedValue
                   val id: ObjectId? = null)

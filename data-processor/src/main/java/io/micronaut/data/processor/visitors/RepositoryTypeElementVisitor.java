@@ -712,7 +712,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         if (resultType != null) {
             String stringType = resultType.getName();
-            if (resultType.isArray()) {
+            if (resultType.isArray() && !stringType.endsWith("[]")) {
                 stringType += "[]";
             }
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));

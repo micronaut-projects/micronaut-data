@@ -18,15 +18,21 @@ dependencies {
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
+    implementation mn.jackson.annotations
+
     compileOnly(mnRxjava3.micronaut.rxjava3)
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
+    compileOnly mnSql.postgresql
+    compileOnly mnSql.mysql.connector.j
+    compileOnly libs.managed.pg.vector
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
     testImplementation projects.micronautDataTck
+    testImplementation libs.managed.pg.vector
     testImplementation projects.micronautDataProcessor
     testImplementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
@@ -44,6 +50,8 @@ dependencies {
     testImplementation(mnTestResources.testcontainers.oracle.xe)
 
     testCompileOnly mn.micronaut.inject.groovy
+    testImplementation mnSql.ojdbc11
+
 
     testImplementation mnMultitenancy.micronaut.multitenancy
 
@@ -51,8 +59,7 @@ dependencies {
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.mariadb.java.client
-    testRuntimeOnly mnSql.ojdbc11
-    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.mysql.connector.j
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
@@ -60,7 +67,7 @@ dependencies {
 
     testResourcesService mnSql.mariadb.java.client
     testResourcesService mnSql.ojdbc11
-    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.mysql.connector.j
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
 
@@ -83,6 +90,7 @@ micronaut {
         additionalModules.add(KnownModules.JDBC_MYSQL)
         additionalModules.add(KnownModules.JDBC_MARIADB)
         additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
         additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()

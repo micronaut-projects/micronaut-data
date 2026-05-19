@@ -17,16 +17,20 @@ package io.micronaut.data.r2dbc.operations
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations
 import io.micronaut.data.runtime.convert.DataConversionService
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
+import io.r2dbc.spi.Parameter
 import io.r2dbc.spi.Row
 import jakarta.inject.Provider
 import spock.lang.Specification
@@ -70,6 +74,25 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
             fallbackExecutor.isShutdown()
     }
 
+    void "dialect map selects correct vector bind support"() {
+        given:
+            def postgresSupport = new StubVectorBindSupport(Dialect.POSTGRES)
+            def oracleSupport = new StubVectorBindSupport(Dialect.ORACLE)
+            def supports = [postgresSupport, oracleSupport]
+            def supportByDialect = supports.collectEntries { [(it.getDialect()): it] }
+
+        expect:
+            supportByDialect.get(Dialect.ORACLE).is(oracleSupport)
+            supportByDialect.get(Dialect.POSTGRES).is(postgresSupport)
+            supportByDialect.get(Dialect.MYSQL) == null
+    }
+
+    void "vector binding candidate accepts abstract Vector API payload"() {
+        expect:
+            DefaultR2dbcRepositoryOperations.isVectorBindingCandidate(Vector.of(1d, 2d))
+            !DefaultR2dbcRepositoryOperations.isVectorBindingCandidate("[1.0,2.0]")
+    }
+
     private DefaultR2dbcRepositoryOperations newOperations(ExecutorService executorService) {
         context = ApplicationContext.run()
         ConnectionFactory connectionFactory = Mock()
@@ -86,10 +109,12 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
                 Mock(R2dbcSchemaHandler),
                 new DataR2dbcConfiguration("default", connectionFactory, Mock(Provider)),
                 null,
-                new SqlJsonColumnMapperProvider<Row>(null, [], []),
+                context.getBean(SqlJsonColumnMapperProvider) as SqlJsonColumnMapperProvider<Row>,
+                [],
                 [],
                 Mock(R2dbcReactorTransactionOperations),
-                Mock(ReactorConnectionOperations<Connection>)
+                Mock(ReactorConnectionOperations<Connection>),
+                Mock(DatabaseConversionContextFactory)
         )
     }
 
@@ -98,5 +123,24 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
         runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
         runtimeEntityRegistry.getApplicationContext() >> context
         return runtimeEntityRegistry
+    }
+
+    private static final class StubVectorBindSupport implements VectorBindSupport {
+
+        private final Dialect dialect
+
+        private StubVectorBindSupport(Dialect dialect) {
+            this.dialect = dialect
+        }
+
+        @Override
+        Dialect getDialect() {
+            return dialect
+        }
+
+        @Override
+        Parameter toTypedVectorParameter(Object value, String query) {
+            return null
+        }
     }
 }

@@ -15,8 +15,11 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import org.jspecify.annotations.Nullable;
 
@@ -36,5 +39,31 @@ public class ColumnIndexR2dbcResultReader extends ColumnIndexReadableResultReade
      */
     public ColumnIndexR2dbcResultReader(@Nullable DataConversionService conversionService) {
         super(conversionService);
+    }
+
+    @Nullable
+    @Override
+    public <T> T getRequiredValue(Row resultSet, Integer name, Class<T> type) throws DataAccessException {
+        try {
+            T value = resultSet.get(name, type);
+            if (value != null) {
+                return value;
+            }
+            Object raw = resultSet.get(name);
+            if (raw == null) {
+                return null;
+            }
+            if (type.isInstance(raw)) {
+                return type.cast(raw);
+            }
+            return getConversionService().convert(raw, type).orElse(null);
+        } catch (IllegalArgumentException | ConversionErrorException |
+                 R2dbcTransientResourceException e) {
+            try {
+                return getConversionService().convert(resultSet.get(name), type).orElse(null);
+            } catch (Exception exception) {
+                throw new DataAccessException("Error reading object for index [" + name + "] from result set: " + e.getMessage(), e);
+            }
+        }
     }
 }

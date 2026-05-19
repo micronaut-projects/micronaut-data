@@ -13,8 +13,6 @@ import io.micronaut.data.model.Sort
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
-import io.micronaut.data.runtime.criteria.get
-import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking

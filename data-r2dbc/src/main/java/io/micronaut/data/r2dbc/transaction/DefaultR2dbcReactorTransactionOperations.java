@@ -18,20 +18,26 @@ package io.micronaut.data.r2dbc.transaction;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.OrderUtil;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.r2dbc.connection.DefaultR2dbcReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
+import io.micronaut.transaction.support.ReactiveTransactionExecutionListener;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.time.Duration;
 
 /**
@@ -47,11 +53,21 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactorTransactionOperations.class);
     private final String dataSourceName;
+    private final List<ReactiveTransactionExecutionListener<Connection>> transactionExecutionListeners;
+
+    @Inject
+    DefaultR2dbcReactorTransactionOperations(@Parameter String dataSourceName,
+                                             @Parameter DefaultR2dbcReactorConnectionOperations connectionOperations,
+                                             List<ReactiveTransactionExecutionListener<Connection>> transactionExecutionListeners) {
+        super(connectionOperations);
+        this.dataSourceName = dataSourceName;
+        this.transactionExecutionListeners = new ArrayList<>(transactionExecutionListeners);
+        OrderUtil.sort(this.transactionExecutionListeners);
+    }
 
     DefaultR2dbcReactorTransactionOperations(@Parameter String dataSourceName,
                                              @Parameter DefaultR2dbcReactorConnectionOperations connectionOperations) {
-        super(connectionOperations);
-        this.dataSourceName = dataSourceName;
+        this(dataSourceName, connectionOperations, Collections.emptyList());
     }
 
     @Override
@@ -77,7 +93,14 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
             }
         }
-        return result.thenMany(connection.beginTransaction());
+        for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            result = result.thenMany(transactionExecutionListener.beforeBegin(connectionStatus, definition));
+        }
+        result = result.thenMany(connection.beginTransaction());
+        for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
+            result = result.thenMany(transactionExecutionListener.afterBegin(connectionStatus, definition));
+        }
+        return result;
     }
 
     @Override

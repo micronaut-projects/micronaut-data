@@ -341,7 +341,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build create Settlement"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement))
+            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement), List.of())
 
         then:
             statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INT NOT NULL,"id_county_id_id" INT NOT NULL,"id_county_id_state_id" INT NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
@@ -350,7 +350,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build create Citizen"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Citizen))
+            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Citizen), List.of())
 
         then:
             statements.length == 2

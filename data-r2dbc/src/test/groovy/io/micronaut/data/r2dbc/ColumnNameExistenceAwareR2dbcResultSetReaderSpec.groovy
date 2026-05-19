@@ -59,4 +59,36 @@ class ColumnNameExistenceAwareR2dbcResultSetReaderSpec extends Specification {
         1 * row.get("last_updated") >> localDateTime
         0 * row.get("missing_column")
     }
+
+    void "column-name reader does not use uppercase fallback when lower-case column is null"() {
+        given:
+        def reader = new ColumnNameR2dbcResultReader()
+        Row row = Mock()
+
+        when:
+        def value = reader.getRequiredValue(row, "col", Object)
+
+        then:
+        value == null
+        1 * row.get("col", Object) >> null
+        1 * row.get("col") >> null
+        0 * row.get("COL", _)
+        0 * row.get("COL")
+    }
+
+    void "column-name reader uses uppercase fallback only when lower-case column is missing"() {
+        given:
+        def reader = new ColumnNameR2dbcResultReader()
+        Row row = Mock()
+
+        when:
+        def value = reader.getRequiredValue(row, "col", String)
+
+        then:
+        value == "value"
+        1 * row.get("col", String) >> { throw new IllegalArgumentException("No such column: col") }
+        1 * row.get("COL", String) >> "value"
+        0 * row.get("col")
+        0 * row.get("COL")
+    }
 }

@@ -27,18 +27,20 @@ class ParentSuspendRepositoryTest : AbstractMongoSpec() {
         )
         val saved = repository.save(parent)
         assertNotNull(saved.id)
-        saved.children.forEach { assertNotNull(it.id) }
-        assertEquals(3, saved.children.size)
+        val savedChildren = requireNotNull(saved.children)
+        savedChildren.forEach { assertNotNull(it.id) }
+        assertEquals(3, savedChildren.size)
 
         val found = repository.findById(saved.id!!).get()
-        found.children.forEach { assertNull(it.parent) }
-        assertEquals(3, found.children.size)
+        val foundChildren = requireNotNull(found.children)
+        foundChildren.forEach { assertNull(it.parent) }
+        assertEquals(3, foundChildren.size)
 
         val modifiedParent = found.copy(name = found.name + " mod!")
         repository.update(modifiedParent)
         val found2 = repository.findById(saved.id!!).get()
         assertTrue(found2.name.endsWith(" mod!"))
-        assertEquals(3, found2.children.size)
+        assertEquals(3, requireNotNull(found2.children).size)
 
     }
 }

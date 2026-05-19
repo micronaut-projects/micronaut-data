@@ -123,6 +123,7 @@ import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 import static io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.SqlSelectionVisitor.getCastDbType;
+import static io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport.SCORE_FUNCTION;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -141,6 +142,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String FROM_CLAUSE = " FROM ";
     protected static final String WHERE_CLAUSE = " WHERE ";
     protected static final String WITH_CLAUSE = " WITH ";
+    protected static final String FLEX_COLUMN = " FLEX COLUMN ";
     protected static final char COMMA = ',';
     protected static final char CLOSE_BRACKET = ')';
     protected static final char OPEN_BRACKET = '(';
@@ -164,6 +166,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
+    private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
@@ -753,29 +756,33 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 lowerExpression = true;
                 expr = ue.getExpression();
             }
-            QueryPropertyPath propertyPath = queryState.findProperty(requireProperty(expr).getPropertyPath());
-            String currentAlias = propertyPath.getTableAlias();
-            boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
-                || lowerExpression;
-            if (ignoreCase) {
-                buff.append("LOWER(");
-            }
-            if (currentAlias != null) {
-                buff.append(currentAlias).append(DOT);
-            }
-            if (jsonEntityColumn != null) {
-                buff.append(jsonEntityColumn).append(DOT);
-            }
-            if (computePropertyPaths() && jsonEntityColumn == null) {
-                buff.append(propertyPath.getColumnName());
-            } else {
-                buff.append(propertyPath.getPath());
-                if (jsonEntityColumn != null) {
-                    appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+            if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+                String currentAlias = propertyPath.getTableAlias();
+                boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
+                    || lowerExpression;
+                if (ignoreCase) {
+                    buff.append("LOWER(");
                 }
-            }
-            if (ignoreCase) {
-                buff.append(")");
+                if (currentAlias != null) {
+                    buff.append(currentAlias).append(DOT);
+                }
+                if (jsonEntityColumn != null) {
+                    buff.append(jsonEntityColumn).append(DOT);
+                }
+                if (computePropertyPaths() && jsonEntityColumn == null) {
+                    buff.append(propertyPath.getColumnName());
+                } else {
+                    buff.append(propertyPath.getPath());
+                    if (jsonEntityColumn != null) {
+                        appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+                    }
+                }
+                if (ignoreCase) {
+                    buff.append(")");
+                }
+            } else {
+                new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
             }
             buff.append(SPACE);
             if (order.isAscending()) {
@@ -2380,6 +2387,101 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_INSIDE(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Within(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STWithin(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoWithin is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> rightExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_ANYINTERACT(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2, MYSQL -> {
+                    query.append("ST_Intersects(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STIntersects(");
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(") = 1");
+                }
+                default -> throw new UnsupportedOperationException("GeoIntersects is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            switch (getDialect()) {
+                case ORACLE -> {
+                    query.append("SDO_WITHIN_DISTANCE(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    query.append("'distance=' || ");
+                    appendExpression(distanceExpression);
+                    query.append(EQUAL_TO_TRUE_SUFFIX);
+                }
+                case POSTGRES, H2 -> {
+                    query.append("ST_DWithin(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(COMMA);
+                    appendExpression(distanceExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case MYSQL -> {
+                    query.append("ST_Distance(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression);
+                }
+                case SQL_SERVER -> {
+                    appendExpression(leftExpression);
+                    query.append(".STDistance(");
+                    appendExpression(geometryExpression, leftExpression);
+                    query.append(") <= ");
+                    appendExpression(distanceExpression);
+                }
+                default -> throw new UnsupportedOperationException("Near is not supported by dialect: " + getDialect());
+            }
+        }
+
+        @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftExpression, expression, ignoreCase, "'%'", "?");
         }
@@ -2619,6 +2721,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         protected final void appendFunction(String functionName, List<Expression<?>> expressions) {
+            if (SCORE_FUNCTION.equals(functionName) && expressions.size() == 2) {
+                VectorSimilarityDialect dialect = VectorSimilarityDialect.forDialect(getDialect());
+                if (dialect == null) {
+                    throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
+                }
+                dialect.appendVectorScore(query, expressions.get(0), expressions.get(1), this::appendExpression);
+                return;
+            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -2663,6 +2773,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String writeTransformer = getDataTransformerWriteValue(qpp.tableAlias, entityPropertyPath.getProperty()).orElse(null);
                 if (writeTransformer != null) {
                     appendTransformed(query, writeTransformer, pushParameter);
+                } else if (AbstractSqlLikeQueryBuilder.this instanceof SqlQueryBuilder sqlQueryBuilder
+                    && sqlQueryBuilder.isJsonOrWktGeometry(entityPropertyPath.getProperty())) {
+                    sqlQueryBuilder.appendUpdateSetParameter(query, qpp.tableAlias, entityPropertyPath.getProperty(), pushParameter);
                 } else {
                     pushParameter.run();
                 }
@@ -3291,6 +3404,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private void appendFunction(String functionName, List<Expression<?>> expressions) {
+            if (SCORE_FUNCTION.equals(functionName) && expressions.size() == 2) {
+                appendVectorScore(expressions.get(0), expressions.get(1));
+                return;
+            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -3335,6 +3452,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(AS_CLAUSE);
             query.append(getCastDbType(type, getDialect()));
             query.append(CLOSE_BRACKET);
+        }
+
+        private void appendVectorScore(Expression<?> left, Expression<?> right) {
+            VectorSimilarityDialect dialect = VectorSimilarityDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
+            }
+            dialect.appendVectorScore(query, left, right, this::appendExpression);
         }
 
         private void appendExpression(Expression<?> expression) {

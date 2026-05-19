@@ -80,7 +80,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.property = property;
         this.annotationMetadata = annotationMetadata;
         this.type = ReflectionUtils.getWrapperType(property.getType());
-        this.dataType = PersistentProperty.super.getDataType();
+        DataType dt = PersistentProperty.super.getDataType();
+        if (dt == DataType.OBJECT) {
+            dt = DataType.forType(this.type);
+        }
+        this.dataType = dt;
         this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : JsonDataType.DEFAULT;
         this.constructorArg = constructorArg;
         this.argument = argument;
