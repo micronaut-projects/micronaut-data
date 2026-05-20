@@ -66,7 +66,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -1519,48 +1518,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return param;
     }
 
-    private static final class InsertValueSlot {
-        @Nullable
-        private final PersistentProperty property;
-        private final String @Nullable [] propertyPath;
-        @Nullable
-        private final String fixedExpression;
-
-        private InsertValueSlot(@Nullable PersistentProperty property, String @Nullable [] propertyPath, @Nullable String fixedExpression) {
-            this.property = property;
-            this.propertyPath = propertyPath;
-            this.fixedExpression = fixedExpression;
-        }
-
-        private static InsertValueSlot binding(PersistentProperty property, String[] propertyPath) {
-            return new InsertValueSlot(property, propertyPath, null);
-        }
-
-        private static InsertValueSlot literal(String fixedExpression) {
-            return new InsertValueSlot(null, null, fixedExpression);
-        }
-
-        private boolean isLiteral() {
-            return fixedExpression != null;
-        }
-
-        private PersistentProperty getProperty() {
-            return Objects.requireNonNull(property);
-        }
-
-        private String @Nullable [] getPropertyPath() {
-            return propertyPath;
-        }
-
-        private String[] getRequiredPropertyPath() {
-            return Objects.requireNonNull(propertyPath);
-        }
-
-        private String getFixedExpression() {
-            return Objects.requireNonNull(fixedExpression);
-        }
-    }
-
     @Override
     protected void appendUpdateSetParameter(StringBuilder sb, @Nullable String alias, PersistentProperty prop, Runnable appendParameter) {
         String transformed = getDataTransformerWriteValue(alias, prop).orElse(null);
@@ -2492,6 +2449,48 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     query.append(AS_CLAUSE).append(columnAlias);
                 }
             }
+        }
+    }
+
+    private static final class InsertValueSlot {
+        @Nullable
+        private final PersistentProperty property;
+        private final String @Nullable [] propertyPath;
+        @Nullable
+        private final String fixedExpression;
+
+        private InsertValueSlot(@Nullable PersistentProperty property, String @Nullable [] propertyPath, @Nullable String fixedExpression) {
+            this.property = property;
+            this.propertyPath = propertyPath;
+            this.fixedExpression = fixedExpression;
+        }
+
+        private static InsertValueSlot binding(PersistentProperty property, String[] propertyPath) {
+            return new InsertValueSlot(property, propertyPath, null);
+        }
+
+        private static InsertValueSlot literal(String fixedExpression) {
+            return new InsertValueSlot(null, null, fixedExpression);
+        }
+
+        private boolean isLiteral() {
+            return fixedExpression != null;
+        }
+
+        private PersistentProperty getProperty() {
+            return Objects.requireNonNull(property);
+        }
+
+        private String @Nullable [] getPropertyPath() {
+            return propertyPath;
+        }
+
+        private String[] getRequiredPropertyPath() {
+            return Objects.requireNonNull(propertyPath);
+        }
+
+        private String getFixedExpression() {
+            return Objects.requireNonNull(fixedExpression);
         }
     }
 
