@@ -10,6 +10,9 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = false
+    }
 }
 
 dependencies {
