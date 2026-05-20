@@ -76,40 +76,23 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
 
     @Override
     protected void doCommit(DefaultTransactionStatus<Connection> status) {
-        Connection connection = status.getConnection();
-        TransactionDefinition definition = status.getTransactionDefinition();
-
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.SUSPEND) {
-            suspend(unwrapRequiredOracleForCompletion(connection));
-            return;
+        TransactionDefinition.Propagation propagation = status.getTransactionDefinition().getPropagationBehavior();
+        if (propagation == TransactionDefinition.Propagation.SUSPEND) {
+            suspend(unwrapRequiredOracleForCompletion(status.getConnection()));
+        } else if (propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            commitResumedSessionlessTransaction(status);
+        } else {
+            super.doCommit(status);
         }
-
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            Optional<OracleSessionlessTransactionId> element = findSessionlessTransactionId();
-            try {
-                super.doCommit(status);
-            } finally {
-                element.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
-            }
-            return;
-        }
-
-        super.doCommit(status);
     }
 
     @Override
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
         if (status.getTransactionDefinition().getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            Optional<OracleSessionlessTransactionId> element = findSessionlessTransactionId();
-            try {
-                super.doRollback(status);
-            } finally {
-                element.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
-            }
-            return;
+            rollbackResumedSessionlessTransaction(status);
+        } else {
+            super.doRollback(status);
         }
-
-        super.doRollback(status);
     }
 
     private static void startSessionlessTransaction(Connection connection, TransactionDefinition definition) {
@@ -121,6 +104,24 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         OracleSessionlessTransactionId element = findSessionlessTransactionId()
             .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
         resume(unwrapRequiredOracleForBegin(connection), element.gtrid());
+    }
+
+    private void commitResumedSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
+        Optional<OracleSessionlessTransactionId> transactionId = findSessionlessTransactionId();
+        try {
+            super.doCommit(status);
+        } finally {
+            transactionId.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
+        }
+    }
+
+    private void rollbackResumedSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
+        Optional<OracleSessionlessTransactionId> transactionId = findSessionlessTransactionId();
+        try {
+            super.doRollback(status);
+        } finally {
+            transactionId.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
+        }
     }
 
     @Nullable
