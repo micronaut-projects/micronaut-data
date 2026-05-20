@@ -304,6 +304,116 @@ interface CompanyRepository extends CrudRepository<Restaurant, Long> {
         getParameterPropertyPaths(method) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
     }
 
+    void "shared identity join columns are not updated from relation path"() {
+        given:
+        def repository = buildRepository('test.AssetRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.persistence.JoinColumn;
+import java.util.UUID;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface AssetRepository extends CrudRepository<Asset, AssetId> {
+}
+
+@Embeddable
+class AssetId {
+    @MappedProperty("container_id")
+    private UUID containerId;
+
+    @MappedProperty("asset_id")
+    private Integer assetId;
+
+    UUID getContainerId() {
+        return containerId;
+    }
+
+    void setContainerId(UUID containerId) {
+        this.containerId = containerId;
+    }
+
+    Integer getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Integer assetId) {
+        this.assetId = assetId;
+    }
+}
+
+@MappedEntity("asset")
+class Asset {
+    @EmbeddedId
+    private AssetId id;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "container_id", referencedColumnName = "container_id")
+    @JoinColumn(name = "asset_id", referencedColumnName = "asset_id")
+    private AssetMetadata metadata;
+
+    AssetId getId() {
+        return id;
+    }
+
+    void setId(AssetId id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    AssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(AssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("assetmetadata")
+class AssetMetadata {
+    @EmbeddedId
+    private AssetId id;
+
+    private String author;
+
+    AssetId getId() {
+        return id;
+    }
+
+    void setId(AssetId id) {
+        this.id = id;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE `asset` SET `title`=? WHERE (`container_id` = ? AND `asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["title", "id.containerId", "id.assetId"] as String[]
+    }
 
     void "test build update by ID"() {
         given:

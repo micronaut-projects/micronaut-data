@@ -69,6 +69,22 @@ CREATE TABLE assetmetadata (
         saved.title == 'title'
     }
 
+    void 'update owning one-to-one does not write shared identity from relation path'() {
+        given:
+        def id = new AssetId(containerId: UUID.randomUUID(), assetId: 1)
+        assetRepository.save(new Asset(id: id, title: 'title'))
+
+        when:
+        assetRepository.update(new Asset(id: id, title: 'updated', metadata: null))
+        def updated = assetRepository.findById(id).orElse(null)
+
+        then:
+        updated != null
+        updated.id.containerId == id.containerId
+        updated.id.assetId == id.assetId
+        updated.title == 'updated'
+    }
+
     void 'fetch join owning one-to-one with composite join columns and embedded id'() {
         given:
         def id = new AssetId(containerId: UUID.fromString('6f8d3ed4-46e3-4656-9e89-cd61ac1e4cf8'), assetId: 1)

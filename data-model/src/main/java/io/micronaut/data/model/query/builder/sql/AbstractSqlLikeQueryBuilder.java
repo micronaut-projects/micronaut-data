@@ -962,11 +962,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (generated) {
                             return;
                         }
+                        String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                        if (SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName)) {
+                            return;
+                        }
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = getMappedName(namingStrategy, associations, property);
+                        String columnName = unescapedColumnName;
                         if (queryState.escape) {
                             columnName = quote(columnName);
                         }
