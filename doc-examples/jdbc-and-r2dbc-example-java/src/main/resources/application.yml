@@ -9,8 +9,6 @@ datasources:
 r2dbc:
   datasources:
     r2dbc:
-      url: r2dbc:h2:mem:///testdb
+      url: r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=10
       schema-generate: CREATE_DROP
       dialect: H2
-      options:
-        DB_CLOSE_DELAY: "10"
