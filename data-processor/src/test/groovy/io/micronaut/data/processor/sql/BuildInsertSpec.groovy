@@ -1210,19 +1210,19 @@ class GeneratedSharedIdentityAssetMetadata {
         getParameterPropertyPaths(method) == ["title"] as String[]
     }
 
-    void "shared identity sequence insert keeps contiguous postgres placeholders for r2dbc"() {
+    // Simulates r2dbc positional parameters
+    void "shared identity sequence insert keeps contiguous postgres placeholders"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """
-import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import jakarta.persistence.JoinColumn;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
+@JdbcRepository(dialect = Dialect.POSTGRES)
 @RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 @SqlQueryConfiguration(
     @SqlQueryConfiguration.DialectConfiguration(
@@ -1230,14 +1230,6 @@ import java.lang.annotation.RetentionPolicy;
         positionalParameterFormat = "\$%s"
     )
 )
-@Retention(RetentionPolicy.RUNTIME)
-@Repository
-@interface TestPostgresRepository {
-    @AliasFor(annotation = Repository.class, member = "dialect")
-    Dialect dialect() default Dialect.ANSI;
-}
-
-@TestPostgresRepository(dialect = Dialect.POSTGRES)
 @io.micronaut.context.annotation.Executable
 interface SharedSequenceAssetRepository extends CrudRepository<SharedSequenceAsset, Long> {
 }
