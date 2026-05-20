@@ -1301,6 +1301,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
                             } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
+                                if (existingIndex != -1) {
+                                    // The relation pass may have added the shared identity column before we knew it was database-generated.
+                                    columns.remove(existingIndex);
+                                    valueSlots.remove(existingIndex);
+                                }
                                 // Property skipped
                                 return;
                             }

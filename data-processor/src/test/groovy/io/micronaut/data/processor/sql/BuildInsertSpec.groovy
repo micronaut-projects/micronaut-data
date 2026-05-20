@@ -1018,6 +1018,94 @@ class ConflictingEmbeddedInsertValue {
         ex.message.contains("Conflicting insert mapping for column [id]")
     }
 
+    void "shared identity generated insert omits generated physical id column"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.GeneratedSharedIdentityAssetRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface GeneratedSharedIdentityAssetRepository extends CrudRepository<GeneratedSharedIdentityAsset, Long> {
+}
+
+@MappedEntity("generated_asset")
+class GeneratedSharedIdentityAsset {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private GeneratedSharedIdentityAssetMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    GeneratedSharedIdentityAssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(GeneratedSharedIdentityAssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("generated_assetmetadata")
+class GeneratedSharedIdentityAssetMetadata {
+    @Id
+    private Long id;
+
+    private String author;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("save")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.GeneratedSharedIdentityAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'INSERT INTO `generated_asset` (`title`) VALUES (?)'
+        getParameterPropertyPaths(method) == ["title"] as String[]
+    }
+
     void "shared identity sequence insert keeps contiguous postgres placeholders for r2dbc"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """
