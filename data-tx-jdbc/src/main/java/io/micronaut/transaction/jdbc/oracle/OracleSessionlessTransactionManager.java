@@ -85,11 +85,11 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         }
 
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            Optional<OracleSessionlessTransactionContext> element = findOracleElement();
+            Optional<OracleSessionlessTransactionId> element = findSessionlessTransactionId();
             try {
                 super.doCommit(status);
             } finally {
-                element.ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
+                element.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
             }
             return;
         }
@@ -100,11 +100,11 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
     @Override
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
         if (status.getTransactionDefinition().getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            Optional<OracleSessionlessTransactionContext> element = findOracleElement();
+            Optional<OracleSessionlessTransactionId> element = findSessionlessTransactionId();
             try {
                 super.doRollback(status);
             } finally {
-                element.ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
+                element.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
             }
             return;
         }
@@ -114,11 +114,11 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
 
     private static void startSessionlessTransaction(Connection connection, TransactionDefinition definition) {
         byte[] gtrid = startTransaction(unwrapRequiredOracleForBegin(connection), getTimeoutSeconds(definition));
-        putOracleElement(new OracleSessionlessTransactionContext(gtrid));
+        propagateSessionlessTransactionId(new OracleSessionlessTransactionId(gtrid));
     }
 
     private static void resumeSessionlessTransaction(Connection connection) {
-        OracleSessionlessTransactionContext element = findOracleElement()
+        OracleSessionlessTransactionId element = findSessionlessTransactionId()
             .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
         resume(unwrapRequiredOracleForBegin(connection), element.gtrid());
     }
@@ -193,15 +193,17 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         }
     }
 
-    private static Optional<OracleSessionlessTransactionContext> findOracleElement() {
-        return OracleSessionlessTransactionContext.find();
+    private static Optional<OracleSessionlessTransactionId> findSessionlessTransactionId() {
+        return OracleSessionlessTransactionId.find();
     }
 
-    private static void putOracleElement(OracleSessionlessTransactionContext element) {
-        OracleSessionlessTransactionContext.withoutExisting(PropagatedContext.getOrEmpty()).plus(element).propagate();
+    private static void propagateSessionlessTransactionId(OracleSessionlessTransactionId transactionId) {
+        OracleSessionlessTransactionId.withoutExisting(PropagatedContext.getOrEmpty())
+            .plus(transactionId)
+            .propagate();
     }
 
-    private static void removeOracleElement(OracleSessionlessTransactionContext element) {
-        PropagatedContext.getOrEmpty().minus(element).propagate();
+    private static void clearSessionlessTransactionId(OracleSessionlessTransactionId transactionId) {
+        PropagatedContext.getOrEmpty().minus(transactionId).propagate();
     }
 }

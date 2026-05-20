@@ -53,7 +53,7 @@ final class OracleSessionlessTransactionHttpServerFilter {
             return;
         }
         try {
-            replaceTransactionContext(propagatedContext, OracleSessionlessTransactionContext.decode(value.get()));
+            replaceTransactionContext(propagatedContext, OracleSessionlessTransactionId.decode(value.get()));
         } catch (IllegalArgumentException e) {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Invalid Oracle sessionless transaction id");
         }
@@ -62,18 +62,18 @@ final class OracleSessionlessTransactionHttpServerFilter {
     @ResponseFilter
     void writeTransactionId(MutableHttpResponse<?> response, MutablePropagatedContext propagatedContext) {
         PropagatedContext context = propagatedContext.getContext();
-        Optional<OracleSessionlessTransactionContext> transactionContext = OracleSessionlessTransactionContext.find(context == null ? PropagatedContext.empty() : context);
+        Optional<OracleSessionlessTransactionId> transactionContext = OracleSessionlessTransactionId.find(context == null ? PropagatedContext.empty() : context);
         if (transactionContext.isPresent()) {
             response.getHeaders().set(configuration.getHeaderName(), transactionContext.get().encode());
         }
     }
 
     private static void replaceTransactionContext(MutablePropagatedContext propagatedContext,
-                                                  OracleSessionlessTransactionContext transactionContext) {
+                                                  OracleSessionlessTransactionId transactionContext) {
         PropagatedContext context = propagatedContext.getContext();
         if (context != null) {
-            List<OracleSessionlessTransactionContext> transactionContexts = context.findAll(OracleSessionlessTransactionContext.class).toList();
-            for (OracleSessionlessTransactionContext existingTransactionContext : transactionContexts) {
+            List<OracleSessionlessTransactionId> transactionContexts = context.findAll(OracleSessionlessTransactionId.class).toList();
+            for (OracleSessionlessTransactionId existingTransactionContext : transactionContexts) {
                 propagatedContext.remove(existingTransactionContext);
             }
         }

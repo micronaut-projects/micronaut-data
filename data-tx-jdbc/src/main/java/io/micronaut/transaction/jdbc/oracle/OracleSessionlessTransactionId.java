@@ -26,14 +26,14 @@ import java.util.Optional;
 /**
  * Propagated Oracle sessionless transaction state.
  */
-final class OracleSessionlessTransactionContext implements PropagatedContextElement {
+final class OracleSessionlessTransactionId implements PropagatedContextElement {
 
     private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
 
     private final byte[] gtrid;
 
-    OracleSessionlessTransactionContext(byte[] gtrid) {
+    OracleSessionlessTransactionId(byte[] gtrid) {
         this.gtrid = Objects.requireNonNull(gtrid, "gtrid").clone();
     }
 
@@ -45,25 +45,25 @@ final class OracleSessionlessTransactionContext implements PropagatedContextElem
         return ENCODER.encodeToString(gtrid);
     }
 
-    static OracleSessionlessTransactionContext decode(String value) {
+    static OracleSessionlessTransactionId decode(String value) {
         byte[] decoded = DECODER.decode(value);
         if (decoded.length == 0) {
             throw new IllegalArgumentException("Oracle sessionless transaction id cannot be empty");
         }
-        return new OracleSessionlessTransactionContext(decoded);
+        return new OracleSessionlessTransactionId(decoded);
     }
 
-    static Optional<OracleSessionlessTransactionContext> find() {
+    static Optional<OracleSessionlessTransactionId> find() {
         return find(PropagatedContext.getOrEmpty());
     }
 
-    static Optional<OracleSessionlessTransactionContext> find(PropagatedContext context) {
-        return context.findAll(OracleSessionlessTransactionContext.class).findFirst();
+    static Optional<OracleSessionlessTransactionId> find(PropagatedContext context) {
+        return context.findAll(OracleSessionlessTransactionId.class).findFirst();
     }
 
     static PropagatedContext withoutExisting(PropagatedContext context) {
         PropagatedContext current = context;
-        for (OracleSessionlessTransactionContext element : context.findAll(OracleSessionlessTransactionContext.class).toList()) {
+        for (OracleSessionlessTransactionId element : context.findAll(OracleSessionlessTransactionId.class).toList()) {
             current = current.minus(element);
         }
         return current;
@@ -74,7 +74,7 @@ final class OracleSessionlessTransactionContext implements PropagatedContextElem
         if (o == this) {
             return true;
         }
-        if (!(o instanceof OracleSessionlessTransactionContext that)) {
+        if (!(o instanceof OracleSessionlessTransactionId that)) {
             return false;
         }
         return Arrays.equals(gtrid, that.gtrid);
