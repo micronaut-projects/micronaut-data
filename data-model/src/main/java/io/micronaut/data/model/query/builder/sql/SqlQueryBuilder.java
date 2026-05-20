@@ -1232,7 +1232,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         return;
                     }
 
-                    String[] path = asStringPath(associations, property);
+                    String[] path = SqlQueryBuilderUtils.asPath(associations, property);
                     int existingIndex = columns.indexOf(columnName);
                     if (existingIndex != -1) {
                         InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
@@ -1275,12 +1275,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (escape) {
                         columnName = quote(columnName);
                     }
-                    String[] path = asStringPath(associations, property);
+                    String[] path = SqlQueryBuilderUtils.asPath(associations, property);
                     int existingIndex = columns.indexOf(columnName);
                     if (existingIndex != -1) {
                         InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
                         String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
-                        if (!isAllowedSharedIdentityColumnReuse(existingValueSlot, path)) {
+                        if (!SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(path, existingPath, existingValueSlot.isSharedIdentityJoinColumn())) {
                             failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                         }
                     }
@@ -1396,42 +1396,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private void failOnConflictingInsertColumn(PersistentEntity entity, String columnName, String @Nullable [] existingPath, String[] path) {
         throw new MappingException("Conflicting insert mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
             + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
-    }
-
-    /**
-     * Allows the identity pass to replace a previously added relation join-column value.
-     *
-     * <p>Shared primary-key/foreign-key one-to-one mappings can surface the same physical column first through the
-     * relation path and later through the entity identity path. That reuse is valid only when the existing slot was
-     * already proven to be an explicit shared-identity join column; suffix matching alone would also match unrelated
-     * embedded paths such as {@code details.id}, which must remain a mapping error.</p>
-     */
-    private boolean isAllowedSharedIdentityColumnReuse(InsertValueSlot existingValueSlot, String[] identityPath) {
-        String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
-        if (existingPath == null || existingPath.length <= identityPath.length) {
-            return false;
-        }
-        if (!existingValueSlot.isSharedIdentityJoinColumn()) {
-            return false;
-        }
-        for (int i = 1; i <= identityPath.length; i++) {
-            if (!Objects.equals(existingPath[existingPath.length - i], identityPath[identityPath.length - i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
     }
 
     private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {

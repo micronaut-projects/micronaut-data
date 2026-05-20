@@ -211,7 +211,7 @@ public final class SqlSchemaUtils {
         for (PersistentProperty identity : identities) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 String columnName = namingStrategy.mappedName(associations, property);
-                String[] path = asStringPath(associations, property);
+                String[] path = SqlQueryBuilderUtils.asPath(associations, property);
                 identityColumnPaths.putIfAbsent(columnName, path);
                 columnPaths.putIfAbsent(columnName, new TableColumnPath(path, false));
             });
@@ -231,7 +231,7 @@ public final class SqlSchemaUtils {
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
             boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, columnName);
-            addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, asStringPath(associations, property), sharedIdentityJoinColumn, column);
+            addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, SqlQueryBuilderUtils.asPath(associations, property), sharedIdentityJoinColumn, column);
         };
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -289,35 +289,10 @@ public final class SqlSchemaUtils {
         }
         String[] existingPath = existingColumnPath.path();
         String[] newPath = newColumnPath.path();
-        return (Arrays.equals(existingPath, identityPath) && newColumnPath.sharedIdentityJoinColumn() && hasMatchingSuffix(newPath, identityPath))
-            || (Arrays.equals(newPath, identityPath) && existingColumnPath.sharedIdentityJoinColumn() && hasMatchingSuffix(existingPath, identityPath));
-    }
-
-    /**
-     * Matches paths such as {@code metadata.id} to {@code id} without accepting the same-length identity path twice.
-     */
-    private static boolean hasMatchingSuffix(String[] longerPath, String[] shorterPath) {
-        if (longerPath.length <= shorterPath.length) {
-            return false;
-        }
-        for (int i = 1; i <= shorterPath.length; i++) {
-            if (!longerPath[longerPath.length - i].equals(shorterPath[shorterPath.length - i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
+        return (Arrays.equals(existingPath, identityPath)
+            && SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(identityPath, newPath, newColumnPath.sharedIdentityJoinColumn()))
+            || (Arrays.equals(newPath, identityPath)
+            && SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(identityPath, existingPath, existingColumnPath.sharedIdentityJoinColumn()));
     }
 
     /**
