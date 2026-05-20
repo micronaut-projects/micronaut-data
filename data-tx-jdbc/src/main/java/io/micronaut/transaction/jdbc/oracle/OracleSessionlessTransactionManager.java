@@ -22,14 +22,14 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionOperations;
-import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
-import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
+import io.micronaut.transaction.support.TransactionExecutionListener;
+import jakarta.inject.Inject;
 import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -37,7 +37,6 @@ import org.jspecify.annotations.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -48,49 +47,30 @@ import java.util.Optional;
 @Replaces(DataSourceTransactionManager.class)
 public class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
 
+    @Inject
+    public OracleSessionlessTransactionManager(@NonNull DataSource dataSource,
+                                               @Parameter ConnectionOperations<Connection> connectionOperations,
+                                               @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager,
+                                               List<TransactionExecutionListener<Connection>> transactionExecutionListeners) {
+        super(dataSource, connectionOperations, synchronousConnectionManager, transactionExecutionListeners);
+    }
+
     public OracleSessionlessTransactionManager(@NonNull DataSource dataSource,
                                                @Parameter ConnectionOperations<Connection> connectionOperations,
                                                @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
-        super(dataSource, connectionOperations, synchronousConnectionManager);
+        this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
     }
 
     @Override
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
+        super.doBegin(status);
+
         TransactionDefinition definition = status.getTransactionDefinition();
-        Connection connection = status.getConnection();
-
-        List<Runnable> onComplete = new ArrayList<>(5);
-
-        definition.isReadOnly()
-            .ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
-        definition.getIsolationLevel()
-            .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
-        JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
-
-        OracleConnection oracle = unwrapOracle(connection).orElse(null);
-        if (oracle != null) {
-            if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.SUSPEND) {
-                byte[] gtrid = startTransaction(oracle, getTimeoutSeconds(definition));
-                putOracleElement(new OracleSessionlessTransactionContext(gtrid));
-            } else if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-                Optional<OracleSessionlessTransactionContext> element = findOracleElement();
-                if (element.isEmpty()) {
-                    throw new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume");
-                }
-                resume(oracle, element.get().gtrid());
+        switch (definition.getPropagationBehavior()) {
+            case SUSPEND -> startSessionlessTransaction(status.getConnection(), definition);
+            case REQUIRES_SUSPENDED -> resumeSessionlessTransaction(status.getConnection());
+            default -> {
             }
-        }
-
-        if (!onComplete.isEmpty()) {
-            Collections.reverse(onComplete);
-            status.getConnectionStatus().registerSynchronization(new ConnectionSynchronization() {
-                @Override
-                public void executionComplete() {
-                    for (Runnable runnable : onComplete) {
-                        runnable.run();
-                    }
-                }
-            });
         }
     }
 
@@ -99,24 +79,48 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         Connection connection = status.getConnection();
         TransactionDefinition definition = status.getTransactionDefinition();
 
-        OracleConnection oracle = unwrapOracle(connection).orElse(null);
-        if (oracle != null && definition.getPropagationBehavior() == TransactionDefinition.Propagation.SUSPEND) {
-            suspend(oracle);
+        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.SUSPEND) {
+            suspend(unwrapRequiredOracleForCompletion(connection));
+            return;
+        }
+
+        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            Optional<OracleSessionlessTransactionContext> element = findOracleElement();
+            try {
+                super.doCommit(status);
+            } finally {
+                element.ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
+            }
             return;
         }
 
         super.doCommit(status);
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            findOracleElement().ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
-        }
     }
 
     @Override
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
-        super.doRollback(status);
         if (status.getTransactionDefinition().getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            findOracleElement().ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
+            Optional<OracleSessionlessTransactionContext> element = findOracleElement();
+            try {
+                super.doRollback(status);
+            } finally {
+                element.ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
+            }
+            return;
         }
+
+        super.doRollback(status);
+    }
+
+    private static void startSessionlessTransaction(Connection connection, TransactionDefinition definition) {
+        byte[] gtrid = startTransaction(unwrapRequiredOracleForBegin(connection), getTimeoutSeconds(definition));
+        putOracleElement(new OracleSessionlessTransactionContext(gtrid));
+    }
+
+    private static void resumeSessionlessTransaction(Connection connection) {
+        OracleSessionlessTransactionContext element = findOracleElement()
+            .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
+        resume(unwrapRequiredOracleForBegin(connection), element.gtrid());
     }
 
     @Nullable
@@ -137,20 +141,23 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         }
     }
 
-    private Optional<OracleConnection> unwrapOracle(@Nullable Connection connection) {
-        if (connection == null) {
-            return Optional.empty();
-        }
+    private static OracleConnection unwrapRequiredOracleForBegin(Connection connection) {
         try {
-            OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
-            return Optional.ofNullable(oracleConnection);
-        } catch (Exception e) {
-            logger.error("Failed to unwrap Oracle connection", e);
-            return Optional.empty();
+            return connection.unwrap(OracleConnection.class);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Oracle sessionless transactions require an Oracle JDBC connection", e);
         }
     }
 
-    private byte[] startTransaction(OracleConnection oracle, @Nullable Integer timeout) {
+    private static OracleConnection unwrapRequiredOracleForCompletion(Connection connection) {
+        try {
+            return connection.unwrap(OracleConnection.class);
+        } catch (SQLException e) {
+            throw new TransactionSystemException("Oracle sessionless transactions require an Oracle JDBC connection", e);
+        }
+    }
+
+    private static byte[] startTransaction(OracleConnection oracle, @Nullable Integer timeout) {
         try {
             byte[] gtrid = timeout == null ? oracle.startTransaction() : oracle.startTransaction(timeout);
             if (gtrid == null) {
@@ -167,22 +174,21 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
 
     private static void suspend(OracleConnection oracle) {
         try {
+            oracle.suspendTransactionImmediately();
+        } catch (Exception immediateFailure) {
             try {
-                oracle.suspendTransactionImmediately();
-                return;
-            } catch (Exception ignored) {
+                oracle.suspendTransaction();
+            } catch (Exception fallbackFailure) {
+                fallbackFailure.addSuppressed(immediateFailure);
+                throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", fallbackFailure);
             }
-            oracle.suspendTransaction();
-        } catch (Exception e) {
-            throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", e);
         }
     }
 
-    private void resume(OracleConnection oracle, byte[] gtrid) {
+    private static void resume(OracleConnection oracle, byte[] gtrid) {
         try {
             oracle.resumeTransaction(gtrid);
         } catch (Exception e) {
-            logger.error("Failed to resume Oracle transaction", e);
             throw new TransactionSystemException("Could not resume Oracle sessionless transaction", e);
         }
     }
