@@ -957,6 +957,67 @@ class ConflictingInsertEntity {
         ex.message.contains("Conflicting insert mapping for column [shared_value]")
     }
 
+    void "plain embedded property mapped to identity column fails insert mapping"() {
+        when:
+        buildRepository('test.ConflictingEmbeddedInsertEntityRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ConflictingEmbeddedInsertEntityRepository extends CrudRepository<ConflictingEmbeddedInsertEntity, Long> {
+}
+
+@MappedEntity("conflicting_embedded_insert_entity")
+class ConflictingEmbeddedInsertEntity {
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private ConflictingEmbeddedInsertValue details;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    ConflictingEmbeddedInsertValue getDetails() {
+        return details;
+    }
+
+    void setDetails(ConflictingEmbeddedInsertValue details) {
+        this.details = details;
+    }
+}
+
+@Embeddable
+class ConflictingEmbeddedInsertValue {
+    @MappedProperty("id")
+    private Long id;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Conflicting insert mapping for column [id]")
+    }
+
     void "shared identity sequence insert keeps contiguous postgres placeholders for r2dbc"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """

@@ -121,6 +121,45 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
+     * Detects the narrow case where a relation deliberately reuses an entity identity column.
+     *
+     * <p>The duplicate insert/DDL column checks use this to distinguish a valid shared primary-key/foreign-key
+     * one-to-one mapping from an accidental duplicate column mapping. Plain embedded paths are intentionally
+     * rejected because they do not have join metadata proving that the duplicate column is a shared identity column.</p>
+     *
+     * @param associations The property path associations that lead to {@code property}
+     * @param property The associated identity property
+     * @param columnName The owner-side column name being written or generated
+     * @return {@code true} if an explicit owning relation join column maps {@code columnName} to {@code property}
+     */
+    static boolean isExplicitSharedIdentityJoinColumn(List<Association> associations,
+                                                      PersistentProperty property,
+                                                      String columnName) {
+        Association foreignAssociation = null;
+        for (Association association : associations) {
+            if (association.getKind() != Relation.Kind.EMBEDDED) {
+                foreignAssociation = association;
+                break;
+            }
+        }
+        if (foreignAssociation == null || foreignAssociation.isForeignKey()) {
+            return false;
+        }
+        AnnotationValue<JoinColumns> joinColumns = foreignAssociation.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        if (joinColumns == null) {
+            return false;
+        }
+        for (AnnotationValue<?> joinColumn : joinColumns.getAnnotations(AnnotationMetadata.VALUE_MEMBER)) {
+            String name = joinColumn.stringValue("name").orElse(null);
+            String referencedColumnName = joinColumn.stringValue("referencedColumnName").orElse(null);
+            if (columnName.equals(name) && property.getPersistedName().equals(referencedColumnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Retrieves the joined columns from the provided annotation metadata.
      *
      * This method checks for the presence of the {@code @JoinTable} annotation and extracts the joined columns

@@ -1239,13 +1239,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         failOnConflictingInsertColumn(entity, unescapedColumnName, existingValueSlot.getPropertyPath(), path);
                     }
                     if (existingIndex == -1) {
-                        valueSlots.add(InsertValueSlot.binding(property, path));
+                        boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
+                        valueSlots.add(InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
                         unescapedColumns.add(unescapedColumnName);
                         columns.add(columnName);
                         resultColumns.add(columnName);
                         resultColumnTypes.add(property.getDataType());
                     } else {
-                        valueSlots.set(existingIndex, InsertValueSlot.binding(property, path));
+                        boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
+                        valueSlots.set(existingIndex, InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
                     }
                 });
             }
@@ -1278,7 +1280,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (existingIndex != -1) {
                         InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
                         String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
-                        if (!isAllowedSharedIdentityColumnReuse(existingPath, path)) {
+                        if (!isAllowedSharedIdentityColumnReuse(existingValueSlot, path)) {
                             failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                         }
                     }
@@ -1391,8 +1393,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
     }
 
-    private boolean isAllowedSharedIdentityColumnReuse(String @Nullable [] existingPath, String[] identityPath) {
+    /**
+     * Allows the identity pass to replace a previously added relation join-column value.
+     *
+     * <p>Shared primary-key/foreign-key one-to-one mappings can surface the same physical column first through the
+     * relation path and later through the entity identity path. That reuse is valid only when the existing slot was
+     * already proven to be an explicit shared-identity join column; suffix matching alone would also match unrelated
+     * embedded paths such as {@code details.id}, which must remain a mapping error.</p>
+     */
+    private boolean isAllowedSharedIdentityColumnReuse(InsertValueSlot existingValueSlot, String[] identityPath) {
+        String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
         if (existingPath == null || existingPath.length <= identityPath.length) {
+            return false;
+        }
+        if (!existingValueSlot.isSharedIdentityJoinColumn()) {
             return false;
         }
         for (int i = 1; i <= identityPath.length; i++) {
@@ -2461,21 +2475,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         @Nullable
         private final PersistentProperty property;
         private final String @Nullable [] propertyPath;
+        private final boolean sharedIdentityJoinColumn;
         @Nullable
         private final String fixedExpression;
 
-        private InsertValueSlot(@Nullable PersistentProperty property, String @Nullable [] propertyPath, @Nullable String fixedExpression) {
+        private InsertValueSlot(@Nullable PersistentProperty property,
+                                String @Nullable [] propertyPath,
+                                boolean sharedIdentityJoinColumn,
+                                @Nullable String fixedExpression) {
             this.property = property;
             this.propertyPath = propertyPath;
+            this.sharedIdentityJoinColumn = sharedIdentityJoinColumn;
             this.fixedExpression = fixedExpression;
         }
 
         private static InsertValueSlot binding(PersistentProperty property, String[] propertyPath) {
-            return new InsertValueSlot(property, propertyPath, null);
+            return binding(property, propertyPath, false);
+        }
+
+        private static InsertValueSlot binding(PersistentProperty property, String[] propertyPath, boolean sharedIdentityJoinColumn) {
+            return new InsertValueSlot(property, propertyPath, sharedIdentityJoinColumn, null);
         }
 
         private static InsertValueSlot literal(String fixedExpression) {
-            return new InsertValueSlot(null, null, fixedExpression);
+            return new InsertValueSlot(null, null, false, fixedExpression);
         }
 
         private boolean isLiteral() {
@@ -2488,6 +2511,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         private String @Nullable [] getPropertyPath() {
             return propertyPath;
+        }
+
+        private boolean isSharedIdentityJoinColumn() {
+            return sharedIdentityJoinColumn;
         }
 
         private String[] getRequiredPropertyPath() {

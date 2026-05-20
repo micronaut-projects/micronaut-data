@@ -141,6 +141,64 @@ class AssetMetadata {
         sql.count("`asset_id`") == 2
     }
 
+    void "plain embedded property mapped to identity column fails ddl mapping"() {
+        given:
+        def entity = buildEntity('test.ConflictingEmbeddedEntity', '''
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+
+@MappedEntity("conflicting_embedded_entity")
+class ConflictingEmbeddedEntity {
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private ConflictingEmbeddedValue details;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    ConflictingEmbeddedValue getDetails() {
+        return details;
+    }
+
+    void setDetails(ConflictingEmbeddedValue details) {
+        this.details = details;
+    }
+}
+
+@Embeddable
+class ConflictingEmbeddedValue {
+    @MappedProperty("id")
+    private Long id;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        builder.buildBatchCreateTableStatement(List.of(), entity)
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Conflicting table mapping for column [id]")
+    }
+
     @Unroll
     void "test build create table for JSON type for dialect #dialect"() {
         given:
