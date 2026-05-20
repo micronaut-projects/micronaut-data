@@ -51,6 +51,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
@@ -2266,9 +2267,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                 query.append(COMMA);
 
-                boolean includeIdentity = association.isForeignKey();
-                // in the case of a foreign key association the ID is not in the table,
-                // so we need to retrieve it
+                boolean includeIdentity = association.isForeignKey()
+                    || (associatedEntity.hasIdentity()
+                    && associatedEntity.getIdentity() instanceof Embedded
+                    && association.getAnnotationMetadata().hasAnnotation(JoinColumns.class));
+                // In the case of a foreign key association the ID is not in the owner table,
+                // so we need to retrieve it. Embedded IDs also need the joined aliases so
+                // constructor/record materialization can resolve the fetched association ID.
                 PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
 
                     String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);
