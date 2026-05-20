@@ -1,11 +1,26 @@
-package io.micronaut.transaction.jdbc;
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
@@ -14,12 +29,14 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
 import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,11 +45,12 @@ import java.util.Optional;
 @Internal
 @EachBean(DataSource.class)
 @Requires(classes = OracleConnection.class)
-public class OracleDataSourceTransactionManager extends DataSourceTransactionManager {
+@Replaces(DataSourceTransactionManager.class)
+public class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
 
-    public OracleDataSourceTransactionManager(@NonNull DataSource dataSource,
-                                              @Parameter ConnectionOperations<Connection> connectionOperations,
-                                              @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
+    public OracleSessionlessTransactionManager(@NonNull DataSource dataSource,
+                                               @Parameter ConnectionOperations<Connection> connectionOperations,
+                                               @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
         super(dataSource, connectionOperations, synchronousConnectionManager);
     }
 
@@ -52,24 +70,16 @@ public class OracleDataSourceTransactionManager extends DataSourceTransactionMan
         OracleConnection oracle = unwrapOracle(connection).orElse(null);
         if (oracle != null) {
             if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.SUSPEND) {
-                Integer timeout = null;
-                if (definition.getTimeout().isPresent()) {
-                    timeout = Math.toIntExact(definition.getTimeout().get().toSeconds());
-                }
-                byte[] gtrid = startTransaction(oracle, timeout).orElseGet(() -> getTransactionId(oracle).orElse(null));
-                if (gtrid == null) {
-                    throw new CannotCreateTransactionException("Could not start Oracle sessionless transaction");
-                }
-                putOracleElement(new OracleSessionlessElement(gtrid));
+                byte[] gtrid = startTransaction(oracle, getTimeoutSeconds(definition));
+                putOracleElement(new OracleSessionlessTransactionContext(gtrid));
             } else if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-                Optional<OracleSessionlessElement> element = findOracleElement();
+                Optional<OracleSessionlessTransactionContext> element = findOracleElement();
                 if (element.isEmpty()) {
                     throw new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume");
                 }
                 resume(oracle, element.get().gtrid());
             }
         }
-
 
         if (!onComplete.isEmpty()) {
             Collections.reverse(onComplete);
@@ -97,7 +107,7 @@ public class OracleDataSourceTransactionManager extends DataSourceTransactionMan
 
         super.doCommit(status);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            findOracleElement().ifPresent(OracleDataSourceTransactionManager::removeOracleElement);
+            findOracleElement().ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
         }
     }
 
@@ -105,11 +115,29 @@ public class OracleDataSourceTransactionManager extends DataSourceTransactionMan
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
         super.doRollback(status);
         if (status.getTransactionDefinition().getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            findOracleElement().ifPresent(OracleDataSourceTransactionManager::removeOracleElement);
+            findOracleElement().ifPresent(OracleSessionlessTransactionManager::removeOracleElement);
         }
     }
 
-    private Optional<OracleConnection> unwrapOracle(Connection connection) {
+    @Nullable
+    private static Integer getTimeoutSeconds(TransactionDefinition definition) {
+        return definition.getTimeout()
+            .map(timeout -> toTimeoutSeconds(timeout.toSeconds()))
+            .orElse(null);
+    }
+
+    private static int toTimeoutSeconds(long timeoutSeconds) {
+        try {
+            return Math.toIntExact(timeoutSeconds);
+        } catch (ArithmeticException e) {
+            throw new CannotCreateTransactionException(
+                "Oracle sessionless transaction timeout exceeds supported range",
+                e
+            );
+        }
+    }
+
+    private Optional<OracleConnection> unwrapOracle(@Nullable Connection connection) {
         if (connection == null) {
             return Optional.empty();
         }
@@ -122,21 +150,18 @@ public class OracleDataSourceTransactionManager extends DataSourceTransactionMan
         }
     }
 
-    private Optional<byte[]> startTransaction(OracleConnection oracle, Integer timeout) {
+    private byte[] startTransaction(OracleConnection oracle, @Nullable Integer timeout) {
         try {
-            return Optional.ofNullable(timeout == null ? oracle.startTransaction() : oracle.startTransaction(timeout));
-        } catch (Exception e) {
-            logger.error("Failed to start Oracle transaction", e);
-            return Optional.empty();
-        }
-    }
-
-    private Optional<byte[]> getTransactionId(OracleConnection oracle) {
-        try {
-            return Optional.ofNullable(oracle.getTransactionId());
-        } catch (Exception e) {
-            logger.error("Failed to obtain Oracle transaction id", e);
-            return Optional.empty();
+            byte[] gtrid = timeout == null ? oracle.startTransaction() : oracle.startTransaction(timeout);
+            if (gtrid == null) {
+                gtrid = oracle.getTransactionId();
+            }
+            if (gtrid == null) {
+                throw new CannotCreateTransactionException("Could not obtain Oracle sessionless transaction id");
+            }
+            return gtrid;
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not start Oracle sessionless transaction", e);
         }
     }
 
@@ -162,18 +187,15 @@ public class OracleDataSourceTransactionManager extends DataSourceTransactionMan
         }
     }
 
-    private static Optional<OracleSessionlessElement> findOracleElement() {
-        return PropagatedContext.getOrEmpty().findAll(OracleSessionlessElement.class).findFirst();
+    private static Optional<OracleSessionlessTransactionContext> findOracleElement() {
+        return OracleSessionlessTransactionContext.find();
     }
 
-    private static void putOracleElement(OracleSessionlessElement element) {
-        PropagatedContext.getOrEmpty().plus(element).propagate();
+    private static void putOracleElement(OracleSessionlessTransactionContext element) {
+        OracleSessionlessTransactionContext.withoutExisting(PropagatedContext.getOrEmpty()).plus(element).propagate();
     }
 
-    private static void removeOracleElement(OracleSessionlessElement element) {
+    private static void removeOracleElement(OracleSessionlessTransactionContext element) {
         PropagatedContext.getOrEmpty().minus(element).propagate();
-    }
-
-    private record OracleSessionlessElement(byte[] gtrid) implements PropagatedContextElement {
     }
 }
