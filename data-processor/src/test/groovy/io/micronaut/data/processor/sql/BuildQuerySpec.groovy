@@ -1575,6 +1575,73 @@ class CustomBook {
         getResultDataType(findAllMethod) == DataType.ENTITY
     }
 
+    void "test many-to-one with explicit join column name different from derived name"() {
+        given:
+        def repository = buildRepository('test.ArticleRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@Join("author")
+interface ArticleRepository extends GenericRepository<Article, Long> {
+    List<Article> findAll();
+}
+
+@MappedEntity("writer")
+class Writer {
+    @GeneratedValue
+    @Id
+    private Long id;
+
+    @MappedProperty("writer_code")
+    private Long code;
+
+    private String name;
+
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getCode() { return code; }
+    void setCode(Long code) { this.code = code; }
+    String getName() { return name; }
+    void setName(String name) { this.name = name; }
+}
+
+@MappedEntity("article")
+class Article {
+    @GeneratedValue
+    @Id
+    private Long id;
+
+    private String title;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn(name = "writer_key", referencedColumnName = "writer_code")
+    private Writer author;
+
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    String getTitle() { return title; }
+    void setTitle(String title) { this.title = title; }
+    Writer getAuthor() { return author; }
+    void setAuthor(Writer author) { this.author = author; }
+}
+""")
+
+        def findAllMethod = repository.getRequiredMethod("findAll")
+
+        expect:
+        getQuery(findAllMethod) == 'SELECT article_.`id`,article_.`title`,article_.`writer_key`,article_author_.`writer_code` AS author_writer_code,article_author_.`name` AS author_name FROM `article` article_ INNER JOIN `writer` article_author_ ON article_.`writer_key`=article_author_.`writer_code`'
+        getResultDataType(findAllMethod) == DataType.ENTITY
+    }
+
     void "test DTO with association and join"() {
         given:
             def repository = buildRepository('test.AuthorRepository', """
