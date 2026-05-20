@@ -963,7 +963,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             return;
                         }
                         String unescapedColumnName = getMappedName(namingStrategy, associations, property);
-                        if (SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName)) {
+                        if (isSharedIdentityUpdateColumn(queryState.getEntity(), namingStrategy, associations, property, unescapedColumnName)) {
                             return;
                         }
                         String tableAlias = propertyPath.getTableAlias();
@@ -1021,6 +1021,47 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         } else {
             appendParameter.run();
         }
+    }
+
+    /**
+     * Checks whether an update column comes from a relation path that reuses the entity identity column.
+     *
+     * <p>Normal owning relations also point at an associated identity column, but they must remain updateable
+     * foreign-key columns. The update skip is only safe for shared primary-key relations where the owner-side
+     * join column is one of the root entity identity columns and should therefore be bound from the identity
+     * predicate, not from the relation path.</p>
+     */
+    private boolean isSharedIdentityUpdateColumn(PersistentEntity entity,
+                                                 NamingStrategy namingStrategy,
+                                                 List<Association> associations,
+                                                 PersistentProperty property,
+                                                 String columnName) {
+        if (!SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, columnName)) {
+            return false;
+        }
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            if (isIdentityColumn(namingStrategy, identity, columnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Resolves the root entity identity property tree to physical column names.
+     *
+     * <p>This is needed for embedded ids where a single identity property expands to multiple columns. Matching
+     * against the resolved identity columns prevents regular foreign keys from being mistaken for shared identity
+     * columns during update generation.</p>
+     */
+    private boolean isIdentityColumn(NamingStrategy namingStrategy, PersistentProperty identity, String columnName) {
+        boolean[] match = {false};
+        PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+            if (columnName.equals(getMappedName(namingStrategy, associations, property))) {
+                match[0] = true;
+            }
+        });
+        return match[0];
     }
 
     /**
