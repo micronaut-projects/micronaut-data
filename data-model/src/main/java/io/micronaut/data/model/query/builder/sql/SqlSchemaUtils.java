@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -205,13 +206,23 @@ public final class SqlSchemaUtils {
         List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
+        Map<String, String[]> identityColumnPaths = new LinkedHashMap<>();
+        Map<String, String[]> columnPaths = new LinkedHashMap<>();
+        for (PersistentProperty identity : identities) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                String columnName = namingStrategy.mappedName(associations, property);
+                String[] path = asStringPath(associations, property);
+                identityColumnPaths.putIfAbsent(columnName, path);
+                columnPaths.putIfAbsent(columnName, path);
+            });
+        }
 
         if (entity.hasVersion()) {
             PersistentProperty version = entity.getVersion();
             if (!version.isGenerated()) {
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
                 SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect);
-                columns.add(column);
+                addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, new String[]{version.getName()}, column);
             }
         }
 
@@ -219,7 +230,7 @@ public final class SqlSchemaUtils {
             String columnName = namingStrategy.mappedName(associations, property);
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
-            columns.add(column);
+            addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, asStringPath(associations, property), column);
         };
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -234,6 +245,60 @@ public final class SqlSchemaUtils {
             indexes, auxiliaryStatements);
         tables.add(table);
         return tables;
+    }
+
+    private static void addTableColumn(PersistentEntity entity,
+                                       List<SqlColumnMapping> columns,
+                                       Map<String, String[]> columnPaths,
+                                       Map<String, String[]> identityColumnPaths,
+                                       String columnName,
+                                       String[] path,
+                                       SqlColumnMapping column) {
+        String[] existingPath = columnPaths.get(columnName);
+        if (existingPath != null) {
+            String @Nullable [] identityPath = identityColumnPaths.get(columnName);
+            if (Arrays.equals(existingPath, path) || isAllowedSharedIdentityColumnReuse(identityPath, existingPath, path)) {
+                return;
+            }
+            throw new MappingException("Conflicting table mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
+                + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
+        }
+        columnPaths.put(columnName, path);
+        columns.add(column);
+    }
+
+    private static boolean isAllowedSharedIdentityColumnReuse(String @Nullable [] identityPath,
+                                                              String[] existingPath,
+                                                              String[] newPath) {
+        if (identityPath == null) {
+            return false;
+        }
+        return (Arrays.equals(existingPath, identityPath) && hasMatchingSuffix(newPath, identityPath))
+            || (Arrays.equals(newPath, identityPath) && hasMatchingSuffix(existingPath, identityPath));
+    }
+
+    private static boolean hasMatchingSuffix(String[] longerPath, String[] shorterPath) {
+        if (longerPath.length <= shorterPath.length) {
+            return false;
+        }
+        for (int i = 1; i <= shorterPath.length; i++) {
+            if (!longerPath[longerPath.length - i].equals(shorterPath[shorterPath.length - i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String[] asStringPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
+        }
+        List<String> path = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            path.add(association.getName());
+        }
+        path.add(property.getName());
+        return path.toArray(new String[0]);
     }
 
     /**

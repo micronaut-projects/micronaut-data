@@ -957,4 +957,119 @@ class ConflictingInsertEntity {
         ex.message.contains("Conflicting insert mapping for column [shared_value]")
     }
 
+    void "shared identity sequence insert keeps contiguous postgres placeholders for r2dbc"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """
+import io.micronaut.context.annotation.AliasFor;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
+import jakarta.persistence.JoinColumn;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "\$%s"
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface TestPostgresRepository {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+
+@TestPostgresRepository(dialect = Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface SharedSequenceAssetRepository extends CrudRepository<SharedSequenceAsset, Long> {
+}
+
+@MappedEntity("sequence_asset")
+class SharedSequenceAsset {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "sequence_asset_seq")
+    private Long id;
+
+    private String title;
+
+    @Version
+    private Long version;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private SharedSequenceAssetMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    Long getVersion() {
+        return version;
+    }
+
+    void setVersion(Long version) {
+        this.version = version;
+    }
+
+    SharedSequenceAssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(SharedSequenceAssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("sequence_assetmetadata")
+class SharedSequenceAssetMetadata {
+    @Id
+    private Long id;
+
+    private String author;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("save")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.SharedSequenceAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'INSERT INTO "sequence_asset" ("title","id","version") VALUES ($1,nextval(\'sequence_asset_seq\'),$2)'
+        getParameterPropertyPaths(method) == ["title", "version"] as String[]
+    }
+
 }
