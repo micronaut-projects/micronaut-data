@@ -963,6 +963,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             return;
                         }
                         String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                        // Shared primary-key one-to-one mappings can traverse the relation id path here
+                        // (for example metadata.id.containerId), but those columns belong to the owner
+                        // identity and must remain driven by the WHERE predicate instead of being written
+                        // through the relation path in SET.
                         if (SqlQueryBuilderUtils.isSharedIdentityColumn(queryState.getEntity(), namingStrategy, associations, property, unescapedColumnName)) {
                             return;
                         }

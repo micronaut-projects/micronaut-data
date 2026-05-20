@@ -1240,6 +1240,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
                     if (existingIndex == -1) {
                         boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
+                        // Relation properties are visited before the entity identity, so an explicit shared
+                        // PK/FK one-to-one can legitimately claim the physical column first. We record that
+                        // fact on the slot so the identity pass below can decide whether the duplicate is
+                        // valid shared-identity reuse or a real conflicting mapping.
                         valueSlots.add(InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
                         unescapedColumns.add(unescapedColumnName);
                         columns.add(columnName);
@@ -1280,6 +1284,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (existingIndex != -1) {
                         InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
                         String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
+                        // At this point the real entity identity is being processed. Reusing an existing
+                        // column slot is allowed only when the earlier relation path was already proven to
+                        // be an explicit shared-identity join column to this same identity path.
                         if (!SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(path, existingPath, existingValueSlot.isSharedIdentityJoinColumn())) {
                             failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                         }
@@ -1302,7 +1309,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 isSequence = true;
                             } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
                                 if (existingIndex != -1) {
-                                    // The relation pass may have added the shared identity column before we knew it was database-generated.
+                                    // The earlier relation slot was only a placeholder for a shared identity
+                                    // column. If the real identity is database-generated, that physical column
+                                    // must disappear from the INSERT instead of being bound from the relation.
                                     columns.remove(existingIndex);
                                     valueSlots.remove(existingIndex);
                                 }
@@ -1317,6 +1326,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         if (existingIndex == -1) {
                             valueSlots.add(InsertValueSlot.literal(sequenceStatement));
                         } else {
+                            // Shared sequence identities keep the relation-discovered column but replace its
+                            // bound value with the sequence expression so placeholder numbering stays contiguous.
                             valueSlots.set(existingIndex, InsertValueSlot.literal(sequenceStatement));
                         }
                     } else {
