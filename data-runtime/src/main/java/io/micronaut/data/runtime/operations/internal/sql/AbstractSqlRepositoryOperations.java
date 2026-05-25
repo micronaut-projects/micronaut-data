@@ -24,11 +24,10 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
@@ -64,6 +63,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
@@ -78,6 +78,7 @@ import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.persistence.Tuple;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -949,7 +950,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 name = projection.stringValue().orElse(name);
             }
             RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
-            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+            if (entityProperty == null || !isSamePropertyType(entityProperty.getProperty().asArgument(), p.asArgument())) {
                 return p;
             }
             return new BeanPropertyWithAnnotationMetadata<>(
@@ -957,6 +958,23 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
             );
         }).toList();
+    }
+
+    private static boolean isSamePropertyType(Argument<?> entityArgument, Argument<?> dtoArgument) {
+        if (!ReflectionUtils.getWrapperType(entityArgument.getType()).equals(ReflectionUtils.getWrapperType(dtoArgument.getType()))) {
+            return false;
+        }
+        Argument<?>[] entityTypeParameters = entityArgument.getTypeParameters();
+        Argument<?>[] dtoTypeParameters = dtoArgument.getTypeParameters();
+        if (entityTypeParameters.length != dtoTypeParameters.length) {
+            return false;
+        }
+        for (int i = 0; i < entityTypeParameters.length; i++) {
+            if (!isSamePropertyType(entityTypeParameters[i], dtoTypeParameters[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String resolveEnvPlaceholderValues(String value) {
