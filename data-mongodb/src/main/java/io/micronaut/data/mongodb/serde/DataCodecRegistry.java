@@ -16,17 +16,20 @@
 package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -75,10 +78,11 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
-        if (clazz.isEnum() || (entityNames != null && !entityNames.contains(clazz.getName()))) {
+        Optional<BeanIntrospection<T>> introspection = BeanIntrospector.SHARED.findIntrospection(clazz);
+        if (clazz.isEnum() || isExcluded(clazz, introspection)) {
             return null;
         }
-        if (BeanIntrospector.SHARED.findIntrospection(clazz).isPresent()) {
+        if (introspection.isPresent()) {
             RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(clazz);
             if (entity.isAnnotationPresent(MappedEntity.class)) {
                 codec = new MappedEntityCodec<>(dataSerdeRegistry, entity, clazz, registry);
@@ -90,6 +94,17 @@ final class DataCodecRegistry implements CodecRegistry {
             return codec;
         }
         return null;
+    }
+
+    private <T> boolean isExcluded(Class<T> clazz, Optional<BeanIntrospection<T>> introspection) {
+        if (entityNames == null || entityNames.contains(clazz.getName())) {
+            return false;
+        }
+        return introspection
+            .map(BeanIntrospection::getAnnotationMetadata)
+            .map(annotationMetadata -> !annotationMetadata.hasStereotype(MappedEntity.class)
+                && !annotationMetadata.hasStereotype(Embeddable.class))
+            .orElse(true);
     }
 
 }

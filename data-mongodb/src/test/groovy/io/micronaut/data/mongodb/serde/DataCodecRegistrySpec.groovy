@@ -17,6 +17,8 @@ package io.micronaut.data.mongodb.serde
 
 import com.mongodb.MongoClientSettings
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.document.mongodb.entities.ComplexValue
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import spock.lang.Specification
@@ -48,6 +50,24 @@ class DataCodecRegistrySpec extends Specification {
         context?.close()
     }
 
+    void "data codec registry accepts mapped entities when scan result is empty"() {
+        when:
+        def context = ApplicationContext.run()
+        def dataCodecRegistry = new DataCodecRegistry(
+                [],
+                context.getBean(DataSerdeRegistry),
+                context.getBean(RuntimeEntityRegistry)
+        )
+        def codec = dataCodecRegistry.get(EmptyScanEntity, MongoClientSettings.defaultCodecRegistry)
+
+        then:
+        codec != null
+        codec.encoderClass == EmptyScanEntity
+
+        cleanup:
+        context?.close()
+    }
+
     private static Class<?> reloadEntityClass(Class<?> entityClass) {
         URL location = entityClass.getProtectionDomain().getCodeSource().getLocation()
         def classLoader = new URLClassLoader(new URL[] { location }, entityClass.classLoader) {
@@ -71,5 +91,12 @@ class DataCodecRegistrySpec extends Specification {
         } finally {
             classLoader.close()
         }
+    }
+
+    @MappedEntity
+    static class EmptyScanEntity {
+        @Id
+        String id
+        String name
     }
 }
