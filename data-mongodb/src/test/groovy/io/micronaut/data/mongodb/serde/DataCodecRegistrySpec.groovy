@@ -66,6 +66,10 @@ class DataCodecRegistrySpec extends Specification {
                 return super.loadClass(name, resolve)
             }
         }
-        return classLoader.loadClass(entityClass.name)
+        try {
+            return classLoader.loadClass(entityClass.name)
+        } finally {
+            classLoader.close()
+        }
     }
 }
