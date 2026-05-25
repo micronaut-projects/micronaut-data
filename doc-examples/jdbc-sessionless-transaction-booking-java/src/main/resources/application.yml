@@ -1,6 +1,11 @@
 micronaut:
   application:
     name: jdbc-sessionless-transaction-booking-java
+  data:
+    oracle:
+      sessionless:
+        http:
+          enabled: true
 
 datasources:
   default:

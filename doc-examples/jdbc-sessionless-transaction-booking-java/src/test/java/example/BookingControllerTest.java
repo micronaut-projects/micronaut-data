@@ -1,0 +1,65 @@
+package example;
+
+import io.micronaut.context.annotation.Property;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Property(name = "micronaut.http.client.read-timeout", value = "600")
+@MicronautTest(transactional = false)
+public class BookingControllerTest {
+
+    private static final String SESSIONLESS_TRANSACTION_HEADER = "Oracle-Sessionless-Transaction-Id";
+
+    @Inject
+    @Client("/")
+    HttpClient client;
+
+    @Inject
+    SeatRepository seatRepository;
+
+    @BeforeEach
+    void cleanUp() {
+        seatRepository.deleteAll();
+    }
+
+    @Test
+    void testTransactionSuspendedAndResumedOverHttp() {
+        HttpResponse<String> holdResponse = client.toBlocking()
+            .exchange(HttpRequest.POST("/bookings/hold/JU501/2c/msid", ""), String.class);
+
+        assertEquals(HttpStatus.OK, holdResponse.getStatus());
+        String transactionId = holdResponse.getHeaders().get(SESSIONLESS_TRANSACTION_HEADER);
+        assertNotNull(transactionId);
+        Long seatId = Long.valueOf(holdResponse.getBody().orElseThrow());
+
+        List<Seat> seats = seatRepository.findAll();
+        assertTrue(CollectionUtils.isEmpty(seats));
+
+        HttpRequest<String> ticketRequest = HttpRequest.POST("/bookings/ticket/" + seatId, "")
+            .header(SESSIONLESS_TRANSACTION_HEADER, transactionId);
+        HttpResponse<Void> ticketResponse = client.toBlocking().exchange(ticketRequest, Void.class);
+
+        assertEquals(HttpStatus.NO_CONTENT, ticketResponse.getStatus());
+        assertFalse(ticketResponse.getHeaders().contains(SESSIONLESS_TRANSACTION_HEADER));
+
+        seats = seatRepository.findAll();
+        assertFalse(CollectionUtils.isEmpty(seats));
+        assertEquals(1, seats.size());
+        assertEquals("TICKETED", seats.getFirst().getStatus());
+    }
+}
