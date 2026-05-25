@@ -27,7 +27,6 @@ import io.micronaut.http.annotation.ResponseFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.exceptions.HttpStatusException;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,16 +48,23 @@ final class OracleSessionlessTransactionHttpServerFilter {
 
     @RequestFilter
     void readTransactionId(HttpRequest<?> request, MutablePropagatedContext mutablePropagatedContext) {
+        PropagatedContext propagatedContext = mutablePropagatedContext.getContext();
+        if (propagatedContext != null && OracleSessionlessTransactionState.find(propagatedContext).isPresent()) {
+            throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oracle sessionless transaction state already exists");
+        }
+
         OracleSessionlessTransactionState state = new OracleSessionlessTransactionState();
-        Optional<String> value = request.getHeaders().findFirst(configuration.getHeaderName());
-        if (value.isPresent()) {
+
+        Optional<String> encodedTransactionId = request.getHeaders().findFirst(configuration.getHeaderName());
+        if (encodedTransactionId.isPresent()) {
             try {
-                state.setGtrid(transactionIdCodec.decode(value.get()));
+                state.setGtrid(transactionIdCodec.decode(encodedTransactionId.get()));
             } catch (IllegalArgumentException e) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Invalid Oracle sessionless transaction id");
             }
         }
-        replaceTransactionState(mutablePropagatedContext, state);
+
+        mutablePropagatedContext.add(state);
     }
 
     @ResponseFilter
@@ -71,17 +77,5 @@ final class OracleSessionlessTransactionHttpServerFilter {
                 .map(transactionIdCodec::encode)
                 .ifPresent(transactionId -> response.getHeaders().set(configuration.getHeaderName(), transactionId));
         }
-    }
-
-    private static void replaceTransactionState(MutablePropagatedContext mutablePropagatedContext,
-                                                OracleSessionlessTransactionState transactionState) {
-        PropagatedContext propagatedContext = mutablePropagatedContext.getContext();
-        if (propagatedContext != null) {
-            List<OracleSessionlessTransactionState> transactionStates = propagatedContext.findAll(OracleSessionlessTransactionState.class).toList();
-            for (OracleSessionlessTransactionState existingTransactionState : transactionStates) {
-                mutablePropagatedContext.remove(existingTransactionState);
-            }
-        }
-        mutablePropagatedContext.add(transactionState);
     }
 }

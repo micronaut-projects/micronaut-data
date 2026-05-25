@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,11 +52,11 @@ public class BookingServiceTest {
 
     @Test
     void testCurrentTransactionIdExportsSuspendedTransactionId() {
-        SuspendedSeat suspendedSeat = transactionPropagationOperations.withPropagation(() -> {
+        SuspendedSeat suspendedSeat = requireNonNull(transactionPropagationOperations.withPropagation(() -> {
             Long seatId = bookingService.holdSeat(new Seat("JU502", "3a", "msid"));
             String transactionId = transactionPropagationOperations.currentTransactionId().orElseThrow();
             return new SuspendedSeat(seatId, transactionId);
-        });
+        }));
 
         transactionPropagationOperations.withPropagation(suspendedSeat.transactionId(), () -> {
             bookingService.ticketSeat(suspendedSeat.seatId());
@@ -67,11 +68,11 @@ public class BookingServiceTest {
 
     @Test
     void testSetTransactionIdImportsIntoActivePropagationState() {
-        SuspendedSeat suspendedSeat = transactionPropagationOperations.withPropagation(() -> {
+        SuspendedSeat suspendedSeat = requireNonNull(transactionPropagationOperations.withPropagation(() -> {
             Long seatId = bookingService.holdSeat(new Seat("JU503", "4b", "msid"));
             String transactionId = transactionPropagationOperations.currentTransactionId().orElseThrow();
             return new SuspendedSeat(seatId, transactionId);
-        });
+        }));
 
         transactionPropagationOperations.withPropagation(() -> {
             assertTrue(transactionPropagationOperations.currentTransactionId().isEmpty());

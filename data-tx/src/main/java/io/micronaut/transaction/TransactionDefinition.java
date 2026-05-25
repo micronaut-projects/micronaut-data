@@ -158,7 +158,30 @@ public interface TransactionDefinition {
          * nested transactions as well.
          */
         NESTED,
+        /**
+         * Start an Oracle sessionless transaction and suspend it instead of committing when the
+         * transactional boundary completes.
+         * <p>This propagation mode is intended for top-level Oracle sessionless transaction workflow
+         * boundaries, such as an HTTP request that starts work and returns a suspended transaction
+         * identifier to the caller. When an existing transaction is already active, Micronaut's
+         * generic transaction orchestration treats this as participation in the existing transaction;
+         * it does not create a nested sessionless transaction or suspend the existing transaction.
+         * <p><b>NOTE:</b> This mode requires a transaction manager that supports Oracle sessionless
+         * transactions and an active Oracle sessionless transaction propagation context.
+         */
         SUSPEND,
+        /**
+         * Resume an Oracle sessionless transaction from the current propagation context and complete
+         * it when the transactional boundary completes.
+         * <p>This propagation mode is intended for top-level Oracle sessionless transaction workflow
+         * boundaries, such as a later HTTP request that supplies a previously suspended transaction
+         * identifier. When an existing transaction is already active, Micronaut's generic transaction
+         * orchestration treats this as participation in the existing transaction; it does not resume
+         * the sessionless transaction from the propagation context.
+         * <p><b>NOTE:</b> This mode requires a transaction manager that supports Oracle sessionless
+         * transactions and a transaction identifier in the active Oracle sessionless transaction
+         * propagation context.
+         */
         REQUIRES_SUSPENDED
     }
 
