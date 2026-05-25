@@ -35,7 +35,7 @@ import java.util.Optional;
  */
 @ServerFilter(ServerFilter.MATCH_ALL_PATTERN)
 @Requires(classes = {HttpRequest.class, MutableHttpResponse.class})
-@Requires(property = OracleSessionlessTransactionHttpConfiguration.PREFIX + ".enabled", value = StringUtils.TRUE)
+@Requires(property = OracleSessionlessTransactionHttpConfiguration.PREFIX + ".propagation-enabled", value = StringUtils.TRUE)
 final class OracleSessionlessTransactionHttpServerFilter {
 
     private final OracleSessionlessTransactionHttpConfiguration configuration;

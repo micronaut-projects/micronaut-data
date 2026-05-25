@@ -15,11 +15,9 @@
  */
 package io.micronaut.transaction.jdbc.oracle;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import jakarta.inject.Singleton;
-import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -27,7 +25,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 @Singleton
-@Requires(classes = OracleConnection.class)
 final class DefaultOracleSessionlessTransactionPropagationOperations implements OracleSessionlessTransactionPropagationOperations {
 
     private final OracleSessionlessTransactionIdCodec transactionIdCodec;

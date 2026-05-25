@@ -5,7 +5,7 @@ micronaut:
     oracle:
       sessionless:
         http:
-          enabled: true
+          propagation-enabled: true
 
 datasources:
   default:

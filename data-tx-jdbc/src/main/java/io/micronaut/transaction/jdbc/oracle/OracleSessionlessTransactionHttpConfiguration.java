@@ -36,23 +36,23 @@ public class OracleSessionlessTransactionHttpConfiguration {
      */
     public static final String DEFAULT_HEADER_NAME = "Oracle-Sessionless-Transaction-Id";
 
-    private boolean enabled;
+    private boolean propagationEnabled;
     private String headerName = DEFAULT_HEADER_NAME;
 
     /**
      * @return Whether HTTP propagation of Oracle sessionless transaction ids is enabled.
      */
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isPropagationEnabled() {
+        return propagationEnabled;
     }
 
     /**
      * Sets whether HTTP propagation of Oracle sessionless transaction ids is enabled.
      *
-     * @param enabled Whether HTTP propagation is enabled
+     * @param propagationEnabled Whether HTTP propagation is enabled
      */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setPropagationEnabled(boolean propagationEnabled) {
+        this.propagationEnabled = propagationEnabled;
     }
 
     /**

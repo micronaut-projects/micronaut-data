@@ -18,7 +18,6 @@ package io.micronaut.transaction.jdbc.oracle;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
@@ -45,7 +44,6 @@ import java.util.Optional;
  */
 @Internal
 @EachBean(DataSource.class)
-@Requires(classes = OracleConnection.class)
 @Replaces(DataSourceTransactionManager.class)
 public class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
 

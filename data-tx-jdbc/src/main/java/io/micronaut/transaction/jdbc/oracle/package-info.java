@@ -23,7 +23,12 @@
  * string representation is handled by {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec},
  * which applications may replace to add signing, encryption, or another transport encoding.</p>
  */
+@Configuration
+@Requires(classes = OracleConnection.class)
 @NullMarked
 package io.micronaut.transaction.jdbc.oracle;
 
+import io.micronaut.context.annotation.Configuration;
+import io.micronaut.context.annotation.Requires;
+import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.NullMarked;
