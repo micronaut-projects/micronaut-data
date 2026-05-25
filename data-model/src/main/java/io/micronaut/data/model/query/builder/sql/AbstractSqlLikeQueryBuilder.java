@@ -142,7 +142,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String FROM_CLAUSE = " FROM ";
     protected static final String WHERE_CLAUSE = " WHERE ";
     protected static final String WITH_CLAUSE = " WITH ";
-    protected static final String FLEX_COLUMN = " FLEX COLUMN ";
+    protected static final String FLEX_COLUMN = "FLEX COLUMN";
     protected static final char COMMA = ',';
     protected static final char CLOSE_BRACKET = ')';
     protected static final char OPEN_BRACKET = '(';
