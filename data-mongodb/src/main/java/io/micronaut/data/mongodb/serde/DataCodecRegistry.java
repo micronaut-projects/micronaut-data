@@ -27,7 +27,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * The Micronaut Data codec registry.
@@ -39,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class DataCodecRegistry implements CodecRegistry {
 
     @Nullable
-    private final Collection<Class<?>> entities;
+    private final Set<String> entityNames;
     private final DataSerdeRegistry dataSerdeRegistry;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final Map<Class, Codec> codecs = new ConcurrentHashMap<>();
@@ -54,7 +56,9 @@ final class DataCodecRegistry implements CodecRegistry {
     DataCodecRegistry(@Nullable Collection<Class<?>> entities,
                       DataSerdeRegistry dataSerdeRegistry,
                       RuntimeEntityRegistry runtimeEntityRegistry) {
-        this.entities = entities;
+        this.entityNames = entities == null ? null : entities.stream()
+            .map(Class::getName)
+            .collect(Collectors.toUnmodifiableSet());
         this.dataSerdeRegistry = dataSerdeRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
@@ -71,7 +75,7 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
-        if (clazz.isEnum() || entities != null && !entities.contains(clazz)) {
+        if (clazz.isEnum() || (entityNames != null && !entityNames.contains(clazz.getName()))) {
             return null;
         }
         if (BeanIntrospector.SHARED.findIntrospection(clazz).isPresent()) {
