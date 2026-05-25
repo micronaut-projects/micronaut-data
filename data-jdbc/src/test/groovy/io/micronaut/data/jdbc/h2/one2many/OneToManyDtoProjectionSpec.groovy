@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Projection
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -48,6 +49,22 @@ class OneToManyDtoProjectionSpec extends Specification implements H2TestProperty
         complete.lastName == "del Amo"
         complete.phones == ["111-111-1111"]
     }
+
+    void "explicit projection list property with same name as entity association keeps DTO element type"() {
+        given:
+        DtoContact contact = contactRepository.save(new DtoContact(firstName: "Sergio", lastName: "del Amo", phones: []))
+        phoneRepository.save(new DtoPhone(phone: "222-222-2222", contact: contact))
+
+        when:
+        DtoContactComplete complete = contactRepository.findCompleteProjectionById(contact.id).orElse(null)
+
+        then:
+        complete != null
+        complete.id == contact.id
+        complete.firstName == "Sergio"
+        complete.lastName == "del Amo"
+        complete.phones == ["222-222-2222"]
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -61,6 +78,19 @@ interface DtoContactRepository extends CrudRepository<DtoContact, Long> {
         group by c.id
         """)
     Optional<DtoContactComplete> findCompleteById(Long id)
+
+    @Projection("id")
+    @Projection("firstName")
+    @Projection("lastName")
+    @Projection("phones")
+    @Query("""
+        select c.id, c.first_name, c.last_name, group_concat(p.phone) as phones
+        from dto_contact c
+        left outer join dto_phone p on c.id = p.contact_id
+        where c.id = :id
+        group by c.id
+        """)
+    Optional<DtoContactComplete> findCompleteProjectionById(Long id)
 }
 
 @JdbcRepository(dialect = Dialect.H2)

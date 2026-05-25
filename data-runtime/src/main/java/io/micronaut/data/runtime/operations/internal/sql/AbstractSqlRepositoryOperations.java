@@ -892,10 +892,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
                 MutableAnnotationMetadata mutableAnnotationMetadata = new MutableAnnotationMetadata();
                 mutableAnnotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                AnnotationMetadata propertyAnnotationMetadata = new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), mutableAnnotationMetadata);
+                if (isSamePropertyType(entityProperty.asArgument(), dtoProp.getProperty().asArgument())) {
+                    propertyAnnotationMetadata = new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata);
+                }
                 properties.add(new BeanPropertyWithAnnotationMetadata<>(
                     dtoProp.getName(),
                     dtoProp.getProperty(),
-                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata)
+                    propertyAnnotationMetadata
                 ));
             }
             return new RuntimePersistentEntity<>(
