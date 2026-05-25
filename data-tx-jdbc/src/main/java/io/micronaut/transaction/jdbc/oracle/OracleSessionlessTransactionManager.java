@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -41,6 +40,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Oracle JDBC transaction manager with sessionless transaction propagation support.
+ */
 @Internal
 @EachBean(DataSource.class)
 @Requires(classes = OracleConnection.class)
@@ -63,14 +65,28 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
 
     @Override
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
-        super.doBegin(status);
-
         TransactionDefinition definition = status.getTransactionDefinition();
-        switch (definition.getPropagationBehavior()) {
-            case SUSPEND -> startSessionlessTransaction(status.getConnection(), definition);
-            case REQUIRES_SUSPENDED -> resumeSessionlessTransaction(status.getConnection());
-            default -> {
+        TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();
+        if (propagation == TransactionDefinition.Propagation.SUSPEND) {
+            Optional<OracleSessionlessTransactionState> state = findSessionlessTransactionState();
+            if (state.isEmpty()) {
+                throw new CannotCreateTransactionException("Oracle sessionless transaction propagation is not active");
             }
+            if (state.get().getGtrid().isPresent()) {
+                throw new CannotCreateTransactionException("Oracle sessionless transaction context already contains a transaction id");
+            }
+            super.doBegin(status);
+            byte[] gtrid = startTransaction(unwrapRequiredOracleForBegin(status.getConnection()), getTimeoutSeconds(definition));
+            if (!state.get().setGtridIfAbsent(gtrid)) {
+                throw new CannotCreateTransactionException("Oracle sessionless transaction context already contains a transaction id");
+            }
+        } else if (propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            byte[] gtrid = findSessionlessTransactionState().flatMap(OracleSessionlessTransactionState::getGtrid)
+                .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
+            super.doBegin(status);
+            resume(unwrapRequiredOracleForBegin(status.getConnection()), gtrid);
+        } else {
+            super.doBegin(status);
         }
     }
 
@@ -95,32 +111,21 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         }
     }
 
-    private static void startSessionlessTransaction(Connection connection, TransactionDefinition definition) {
-        byte[] gtrid = startTransaction(unwrapRequiredOracleForBegin(connection), getTimeoutSeconds(definition));
-        propagateSessionlessTransactionId(new OracleSessionlessTransactionId(gtrid));
-    }
-
-    private static void resumeSessionlessTransaction(Connection connection) {
-        OracleSessionlessTransactionId element = findSessionlessTransactionId()
-            .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
-        resume(unwrapRequiredOracleForBegin(connection), element.gtrid());
-    }
-
     private void commitResumedSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
-        Optional<OracleSessionlessTransactionId> transactionId = findSessionlessTransactionId();
+        Optional<OracleSessionlessTransactionState> state = findSessionlessTransactionState();
         try {
             super.doCommit(status);
         } finally {
-            transactionId.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
+            state.ifPresent(OracleSessionlessTransactionState::clearGtrid);
         }
     }
 
     private void rollbackResumedSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
-        Optional<OracleSessionlessTransactionId> transactionId = findSessionlessTransactionId();
+        Optional<OracleSessionlessTransactionState> state = findSessionlessTransactionState();
         try {
             super.doRollback(status);
         } finally {
-            transactionId.ifPresent(OracleSessionlessTransactionManager::clearSessionlessTransactionId);
+            state.ifPresent(OracleSessionlessTransactionState::clearGtrid);
         }
     }
 
@@ -194,17 +199,7 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
         }
     }
 
-    private static Optional<OracleSessionlessTransactionId> findSessionlessTransactionId() {
-        return OracleSessionlessTransactionId.find();
-    }
-
-    private static void propagateSessionlessTransactionId(OracleSessionlessTransactionId transactionId) {
-        OracleSessionlessTransactionId.withoutExisting(PropagatedContext.getOrEmpty())
-            .plus(transactionId)
-            .propagate();
-    }
-
-    private static void clearSessionlessTransactionId(OracleSessionlessTransactionId transactionId) {
-        PropagatedContext.getOrEmpty().minus(transactionId).propagate();
+    private static Optional<OracleSessionlessTransactionState> findSessionlessTransactionState() {
+        return OracleSessionlessTransactionState.current();
     }
 }

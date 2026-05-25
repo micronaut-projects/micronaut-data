@@ -16,9 +16,10 @@
 /**
  * Oracle-specific JDBC transaction support.
  *
- * <p>Includes sessionless transaction integration for Oracle JDBC connections, with transaction identifiers
- * propagated through Micronaut's {@link io.micronaut.core.propagation.PropagatedContext} and, when enabled,
- * through HTTP request and response headers.</p>
+ * <p>Includes sessionless transaction integration for Oracle JDBC connections. Transaction identifiers
+ * are held in Micronaut's {@link io.micronaut.core.propagation.PropagatedContext}, installed automatically
+ * for HTTP requests when HTTP propagation is enabled, or programmatically through
+ * {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations}.</p>
  */
 @NullMarked
 package io.micronaut.transaction.jdbc.oracle;

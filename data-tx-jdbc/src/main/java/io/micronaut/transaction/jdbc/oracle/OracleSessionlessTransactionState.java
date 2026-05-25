@@ -17,8 +17,8 @@ package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
+import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,62 +26,70 @@ import java.util.Optional;
 /**
  * Propagated Oracle sessionless transaction state.
  */
-final class OracleSessionlessTransactionId implements PropagatedContextElement {
+final class OracleSessionlessTransactionState implements PropagatedContextElement {
 
     private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
 
-    private final byte[] gtrid;
+    private byte @Nullable [] gtrid;
 
-    OracleSessionlessTransactionId(byte[] gtrid) {
-        this.gtrid = Objects.requireNonNull(gtrid, "gtrid").clone();
+    Optional<byte[]> getGtrid() {
+        return Optional.ofNullable(gtrid).map(byte[]::clone);
     }
 
-    byte[] gtrid() {
-        return gtrid.clone();
+    void setGtrid(byte[] gtrid) {
+        this.gtrid = copy(gtrid);
     }
 
-    String encode() {
+    boolean setGtridIfAbsent(byte[] gtrid) {
+        if (this.gtrid != null) {
+            return false;
+        }
+        this.gtrid = copy(gtrid);
+        return true;
+    }
+
+    Optional<String> getEncodedGtrid() {
+        return getGtrid().map(OracleSessionlessTransactionState::encodeGtrid);
+    }
+
+    void setEncodedGtrid(String encodedGtrid) {
+        setGtrid(decodeGtrid(encodedGtrid));
+    }
+
+    void clearGtrid() {
+        gtrid = null;
+    }
+
+    static String encodeGtrid(byte[] gtrid) {
         return ENCODER.encodeToString(gtrid);
     }
 
-    static OracleSessionlessTransactionId decode(String value) {
-        byte[] decoded = DECODER.decode(value);
+    static byte[] decodeGtrid(String encodedGtrid) {
+        byte[] decoded = DECODER.decode(encodedGtrid);
         if (decoded.length == 0) {
             throw new IllegalArgumentException("Oracle sessionless transaction id cannot be empty");
         }
-        return new OracleSessionlessTransactionId(decoded);
+        return decoded;
     }
 
-    static Optional<OracleSessionlessTransactionId> find() {
+    static Optional<OracleSessionlessTransactionState> current() {
         return find(PropagatedContext.getOrEmpty());
     }
 
-    static Optional<OracleSessionlessTransactionId> find(PropagatedContext context) {
-        return context.findAll(OracleSessionlessTransactionId.class).findFirst();
+    static Optional<OracleSessionlessTransactionState> find(PropagatedContext context) {
+        return context.findAll(OracleSessionlessTransactionState.class).findFirst();
     }
 
     static PropagatedContext withoutExisting(PropagatedContext context) {
         PropagatedContext current = context;
-        for (OracleSessionlessTransactionId element : context.findAll(OracleSessionlessTransactionId.class).toList()) {
+        for (OracleSessionlessTransactionState element : context.findAll(OracleSessionlessTransactionState.class).toList()) {
             current = current.minus(element);
         }
         return current;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof OracleSessionlessTransactionId that)) {
-            return false;
-        }
-        return Arrays.equals(gtrid, that.gtrid);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(gtrid);
+    private static byte[] copy(byte[] gtrid) {
+        return Objects.requireNonNull(gtrid, "gtrid").clone();
     }
 }
