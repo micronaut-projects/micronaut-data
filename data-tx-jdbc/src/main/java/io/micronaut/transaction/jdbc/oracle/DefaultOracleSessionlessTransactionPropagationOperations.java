@@ -35,7 +35,8 @@ final class DefaultOracleSessionlessTransactionPropagationOperations implements 
 
     @Override
     public <T extends @Nullable Object> T withPropagation(Supplier<T> supplier) {
-        return withPropagation(new OracleSessionlessTransactionState(), supplier);
+        OracleSessionlessTransactionState state = new OracleSessionlessTransactionState();
+        return withPropagation(state, supplier);
     }
 
     @Override
