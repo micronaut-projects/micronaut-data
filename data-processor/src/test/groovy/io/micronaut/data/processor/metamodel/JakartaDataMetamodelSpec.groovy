@@ -146,14 +146,14 @@ record FirstLast(String first, String last) {
                 def field = metamodelClass.getField(fieldName)
                 assert field.getType().getName().contains("NumericAttribute"), "Field $fieldName should be NumericAttribute"
             }
-        // BooleanAttribute for boolean and comparable types
+        // BooleanAttribute for boolean
         def booleanFields = ['primitiveBoolean', 'wrapperBoolean']
         booleanFields.each { fieldName ->
             def field = metamodelClass.getField(fieldName)
             assert field.getType().getName().contains("BooleanAttribute"), "Field $fieldName should be BooleanAttribute"
         }
 
-            // ComparableAttribute for boolean and comparable types
+        // ComparableAttribute for comparable types
         def comparableFields = ['uuid', 'testEnum']
             comparableFields.each { fieldName ->
                 def field = metamodelClass.getField(fieldName)
