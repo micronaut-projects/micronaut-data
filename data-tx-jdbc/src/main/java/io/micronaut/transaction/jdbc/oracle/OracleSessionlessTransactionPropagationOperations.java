@@ -45,7 +45,7 @@ public interface OracleSessionlessTransactionPropagationOperations {
     /**
      * Executes the supplier with an Oracle sessionless transaction identifier already available to resume.
      *
-     * @param encodedTransactionId The Base64 URL-safe encoded transaction identifier
+     * @param encodedTransactionId The transaction identifier encoded by {@link OracleSessionlessTransactionIdCodec}
      * @param supplier The supplier to execute
      * @param <T> The result type
      * @return The supplier result
@@ -53,14 +53,14 @@ public interface OracleSessionlessTransactionPropagationOperations {
     <T extends @Nullable Object> T withPropagation(String encodedTransactionId, Supplier<T> supplier);
 
     /**
-     * @return The current Base64 URL-safe encoded transaction identifier, if one is available
+     * @return The current transaction identifier encoded by {@link OracleSessionlessTransactionIdCodec}, if one is available
      */
     Optional<String> currentTransactionId();
 
     /**
      * Replaces the current transaction identifier in the active propagation state.
      *
-     * @param encodedTransactionId The Base64 URL-safe encoded transaction identifier
+     * @param encodedTransactionId The transaction identifier encoded by {@link OracleSessionlessTransactionIdCodec}
      */
     void setTransactionId(String encodedTransactionId);
 

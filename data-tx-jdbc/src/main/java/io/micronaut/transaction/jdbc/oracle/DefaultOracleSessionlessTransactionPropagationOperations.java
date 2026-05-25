@@ -30,6 +30,12 @@ import java.util.function.Supplier;
 @Requires(classes = OracleConnection.class)
 final class DefaultOracleSessionlessTransactionPropagationOperations implements OracleSessionlessTransactionPropagationOperations {
 
+    private final OracleSessionlessTransactionIdCodec transactionIdCodec;
+
+    DefaultOracleSessionlessTransactionPropagationOperations(OracleSessionlessTransactionIdCodec transactionIdCodec) {
+        this.transactionIdCodec = transactionIdCodec;
+    }
+
     @Override
     public <T extends @Nullable Object> T withPropagation(Supplier<T> supplier) {
         return withPropagation(new OracleSessionlessTransactionState(), supplier);
@@ -38,19 +44,19 @@ final class DefaultOracleSessionlessTransactionPropagationOperations implements 
     @Override
     public <T extends @Nullable Object> T withPropagation(String encodedTransactionId, Supplier<T> supplier) {
         OracleSessionlessTransactionState state = new OracleSessionlessTransactionState();
-        state.setEncodedGtrid(encodedTransactionId);
+        state.setGtrid(transactionIdCodec.decode(encodedTransactionId));
         return withPropagation(state, supplier);
     }
 
     @Override
     public Optional<String> currentTransactionId() {
         return currentState()
-            .flatMap(OracleSessionlessTransactionState::getEncodedGtrid);
+            .flatMap(state -> state.getGtrid().map(transactionIdCodec::encode));
     }
 
     @Override
     public void setTransactionId(String encodedTransactionId) {
-        requiredState().setEncodedGtrid(encodedTransactionId);
+        requiredState().setGtrid(transactionIdCodec.decode(encodedTransactionId));
     }
 
     @Override

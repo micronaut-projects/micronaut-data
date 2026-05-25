@@ -19,7 +19,9 @@
  * <p>Includes sessionless transaction integration for Oracle JDBC connections. Transaction identifiers
  * are held in Micronaut's {@link io.micronaut.core.propagation.PropagatedContext}, installed automatically
  * for HTTP requests when HTTP propagation is enabled, or programmatically through
- * {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations}.</p>
+ * {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations}. The external
+ * string representation is handled by {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec},
+ * which applications may replace to add signing, encryption, or another transport encoding.</p>
  */
 @NullMarked
 package io.micronaut.transaction.jdbc.oracle;

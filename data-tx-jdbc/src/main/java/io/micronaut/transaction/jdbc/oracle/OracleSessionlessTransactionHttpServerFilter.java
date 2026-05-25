@@ -39,9 +39,12 @@ import java.util.Optional;
 final class OracleSessionlessTransactionHttpServerFilter {
 
     private final OracleSessionlessTransactionHttpConfiguration configuration;
+    private final OracleSessionlessTransactionIdCodec transactionIdCodec;
 
-    OracleSessionlessTransactionHttpServerFilter(OracleSessionlessTransactionHttpConfiguration configuration) {
+    OracleSessionlessTransactionHttpServerFilter(OracleSessionlessTransactionHttpConfiguration configuration,
+                                                 OracleSessionlessTransactionIdCodec transactionIdCodec) {
         this.configuration = configuration;
+        this.transactionIdCodec = transactionIdCodec;
     }
 
     @RequestFilter
@@ -50,7 +53,7 @@ final class OracleSessionlessTransactionHttpServerFilter {
         Optional<String> value = request.getHeaders().findFirst(configuration.getHeaderName());
         if (value.isPresent()) {
             try {
-                state.setEncodedGtrid(value.get());
+                state.setGtrid(transactionIdCodec.decode(value.get()));
             } catch (IllegalArgumentException e) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Invalid Oracle sessionless transaction id");
             }
@@ -64,7 +67,8 @@ final class OracleSessionlessTransactionHttpServerFilter {
         if (propagatedContext != null) {
             propagatedContext.findAll(OracleSessionlessTransactionState.class)
                 .findFirst()
-                .flatMap(OracleSessionlessTransactionState::getEncodedGtrid)
+                .flatMap(OracleSessionlessTransactionState::getGtrid)
+                .map(transactionIdCodec::encode)
                 .ifPresent(transactionId -> response.getHeaders().set(configuration.getHeaderName(), transactionId));
         }
     }

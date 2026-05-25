@@ -19,7 +19,6 @@ import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -27,9 +26,6 @@ import java.util.Optional;
  * Propagated Oracle sessionless transaction state.
  */
 final class OracleSessionlessTransactionState implements PropagatedContextElement {
-
-    private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
-    private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
 
     private byte @Nullable [] gtrid;
 
@@ -49,28 +45,8 @@ final class OracleSessionlessTransactionState implements PropagatedContextElemen
         return true;
     }
 
-    Optional<String> getEncodedGtrid() {
-        return getGtrid().map(OracleSessionlessTransactionState::encodeGtrid);
-    }
-
-    void setEncodedGtrid(String encodedGtrid) {
-        setGtrid(decodeGtrid(encodedGtrid));
-    }
-
     void clearGtrid() {
         gtrid = null;
-    }
-
-    static String encodeGtrid(byte[] gtrid) {
-        return ENCODER.encodeToString(gtrid);
-    }
-
-    static byte[] decodeGtrid(String encodedGtrid) {
-        byte[] decoded = DECODER.decode(encodedGtrid);
-        if (decoded.length == 0) {
-            throw new IllegalArgumentException("Oracle sessionless transaction id cannot be empty");
-        }
-        return decoded;
     }
 
     static Optional<OracleSessionlessTransactionState> current() {
