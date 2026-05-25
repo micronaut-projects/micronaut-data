@@ -47,18 +47,20 @@ final class DefaultOracleSessionlessTransactionPropagationOperations implements 
 
     @Override
     public Optional<String> currentTransactionId() {
-        return currentState()
+        return OracleSessionlessTransactionState.current()
             .flatMap(state -> state.getGtrid().map(transactionIdCodec::encode));
     }
 
     @Override
     public void setTransactionId(String encodedTransactionId) {
-        requiredState().setGtrid(transactionIdCodec.decode(encodedTransactionId));
+        OracleSessionlessTransactionState.current().orElseThrow(() ->
+            new TransactionUsageException("Oracle sessionless transaction propagation is not active")
+        ).setGtrid(transactionIdCodec.decode(encodedTransactionId));
     }
 
     @Override
     public void clearTransactionId() {
-        currentState().ifPresent(OracleSessionlessTransactionState::clearGtrid);
+        OracleSessionlessTransactionState.current().ifPresent(OracleSessionlessTransactionState::clearGtrid);
     }
 
     private static <T extends @Nullable Object> T withPropagation(OracleSessionlessTransactionState state,
@@ -68,15 +70,5 @@ final class DefaultOracleSessionlessTransactionPropagationOperations implements 
             .withoutExisting(PropagatedContext.getOrEmpty())
             .plus(state);
         return context.propagate(supplier);
-    }
-
-    private static Optional<OracleSessionlessTransactionState> currentState() {
-        return OracleSessionlessTransactionState.current();
-    }
-
-    private static OracleSessionlessTransactionState requiredState() {
-        return currentState().orElseThrow(() ->
-            new TransactionUsageException("Oracle sessionless transaction propagation is not active")
-        );
     }
 }
