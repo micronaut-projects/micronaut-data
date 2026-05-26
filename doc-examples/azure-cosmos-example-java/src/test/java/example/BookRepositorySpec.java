@@ -59,7 +59,7 @@ class BookRepositorySpec extends AbstractAzureCosmosTest {
         // tag::save[]
         Book book = new Book("The Stand", 1000);
         book.setItemPrice(new ItemPrice(200));
-        bookRepository.insert(book);
+        book = bookRepository.insert(book);
         // end::save[]
         String id = book.getId();
         assertNotNull(id);

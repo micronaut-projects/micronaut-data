@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.type.Argument
-import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.GenderAware
@@ -180,8 +179,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
-            bookRepository.insert(book1)
-            bookRepository.insert(book2)
+            book1 = bookRepository.insert(book1)
+            book2 = bookRepository.insert(book2)
             def notLoadedBook = bookRepository.queryById(UUID.randomUUID().toString())
             def loadedBook1 = bookRepository.queryById(book1.id)
             def loadedBook2 = bookRepository.queryById(book2.id)
@@ -243,7 +242,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             def newBook1 = new CosmosBook("A Game of Thrones", 900)
             def newBook2 = new CosmosBook("A Clash of Kings", 1100)
-            def savedNewBooks = CollectionUtils.iterableToList(bookRepository.insertAll(Arrays.asList(newBook1, newBook2)))
+            def savedNewBooks = bookRepository.insertAll(Arrays.asList(newBook1, newBook2))
         then:"Make sure id and versions are assigned in multi save"
             savedNewBooks.size() == 2
             savedNewBooks[0].id == newBook1.id

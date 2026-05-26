@@ -41,7 +41,7 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
             // tag::save[]
             def book = new Book("The Stand", 1000)
             book.itemPrice = new ItemPrice(99.5)
-            bookRepository.insert(book)
+            book = bookRepository.insert(book)
             def id = book.id
             // end::save[]
         then:
