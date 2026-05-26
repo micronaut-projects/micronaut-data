@@ -62,6 +62,11 @@ public class OracleSessionlessTransactionManager extends DataSourceTransactionMa
     }
 
     @Override
+    protected boolean supportsOracleSessionlessTransactions() {
+        return true;
+    }
+
+    @Override
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
         TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();

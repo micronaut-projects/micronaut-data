@@ -23,6 +23,7 @@ import io.micronaut.core.order.OrderUtil;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
@@ -30,6 +31,7 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
@@ -145,8 +147,22 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
     }
 
     @Override
+    protected ConnectionDefinition getConnectionDefinition(TransactionDefinition transactionDefinition) {
+        validateOracleSessionlessPropagation(transactionDefinition);
+        return super.getConnectionDefinition(transactionDefinition);
+    }
+
+    @Override
+    protected DefaultTransactionStatus<Connection> createExistingTransactionStatus(TransactionDefinition definition,
+                                                                                   DefaultTransactionStatus<Connection> existingTransaction) {
+        validateOracleSessionlessPropagation(definition);
+        return super.createExistingTransactionStatus(definition, existingTransaction);
+    }
+
+    @Override
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
+        validateOracleSessionlessPropagation(definition);
         Connection connection = status.getConnection();
 
         List<Runnable> onComplete = new ArrayList<>(5);
@@ -176,6 +192,26 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
         }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
+        }
+    }
+
+    /**
+     * @return Whether this manager supports Oracle sessionless transaction propagation modes.
+     */
+    protected boolean supportsOracleSessionlessTransactions() {
+        return false;
+    }
+
+    private void validateOracleSessionlessPropagation(TransactionDefinition definition) {
+        TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();
+        if (propagation != TransactionDefinition.Propagation.SUSPEND
+            && propagation != TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            return;
+        }
+        if (!supportsOracleSessionlessTransactions()) {
+            throw new TransactionSuspensionNotSupportedException(
+                "Propagation '" + propagation + "' requires Oracle sessionless transaction support"
+            );
         }
     }
 
