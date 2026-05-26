@@ -87,9 +87,10 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
 
         then:
         response.headers.get(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME) == encodedGtrid
+        OracleSessionlessTransactionState.find(context.context).isEmpty()
     }
 
-    def "does not write a response header when no transaction id remains in context"() {
+    def "does not write a response header and removes state when no transaction id remains in context"() {
         given:
         def configuration = new OracleSessionlessTransactionHttpConfiguration()
         def filter = new OracleSessionlessTransactionHttpServerFilter(configuration, new DefaultOracleSessionlessTransactionIdCodec())
@@ -103,6 +104,7 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
 
         then:
         !response.headers.contains(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME)
+        OracleSessionlessTransactionState.find(context.context).isEmpty()
     }
 
     def "uses a custom configured header name"() {
@@ -123,6 +125,7 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
         then:
         response.headers.get("X-Oracle-Sessionless-Tx") == encodedGtrid
         !response.headers.contains(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME)
+        OracleSessionlessTransactionState.find(context.context).isEmpty()
     }
 
     def "rejects malformed transaction id header values"() {
@@ -153,12 +156,13 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
 
         when:
         filter.readTransactionId(request, context)
+        def state = OracleSessionlessTransactionState.find(context.context).orElseThrow()
         filter.writeTransactionId(response, context)
 
         then:
-        def state = OracleSessionlessTransactionState.find(context.context).orElseThrow()
         Arrays.equals([1, 2, 3, 4] as byte[], state.gtrid.orElseThrow())
         response.headers.get(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME) == "4,3,2,1"
+        OracleSessionlessTransactionState.find(context.context).isEmpty()
     }
 
     def "http filter is enabled by the propagation enabled property"() {

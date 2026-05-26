@@ -71,11 +71,12 @@ final class OracleSessionlessTransactionHttpServerFilter {
     void writeTransactionId(MutableHttpResponse<?> response, MutablePropagatedContext mutablePropagatedContext) {
         PropagatedContext propagatedContext = mutablePropagatedContext.getContext();
         if (propagatedContext != null) {
-            propagatedContext.findAll(OracleSessionlessTransactionState.class)
-                .findFirst()
-                .flatMap(OracleSessionlessTransactionState::getGtrid)
-                .map(transactionIdCodec::encode)
-                .ifPresent(transactionId -> response.getHeaders().set(configuration.getHeaderName(), transactionId));
+            OracleSessionlessTransactionState.find(propagatedContext).ifPresent(transactionState -> {
+                transactionState.getGtrid()
+                    .map(transactionIdCodec::encode)
+                    .ifPresent(transactionId -> response.getHeaders().set(configuration.getHeaderName(), transactionId));
+                mutablePropagatedContext.remove(transactionState);
+            });
         }
     }
 }
