@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -11,7 +13,10 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
-        enabled = false
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
 }
 
@@ -27,4 +32,6 @@ dependencies {
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.ojdbc11
     runtimeOnly mnLogging.logback.classic
+
+    testResourcesService mnSerde.micronaut.serde.jackson
 }
