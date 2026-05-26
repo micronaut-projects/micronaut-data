@@ -16,24 +16,25 @@
 package io.micronaut.data.runtime.support
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.aop.MethodInvocationContext
+import io.micronaut.core.convert.ConversionService
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.intercept.RepositoryMethodKey
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.operations.RepositoryOperations
+import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor
 import spock.lang.Specification
 
 class DefaultRuntimeEntityRegistrySpec extends Specification {
-
-    private static final String MICRONAUT_INTROSPECTIONS_USE_CONTEXT_CLASSLOADER = "micronaut.introspections.use.context.classloader"
 
     void "runtime entity registry resolves introspection from the entity classloader"() {
         given:
         Class<?> reloadedEntity = reloadEntityClass(ClassLoaderOnlyEntity)
         ClassLoader previousClassLoader = Thread.currentThread().contextClassLoader
-        String previousIntrospectionClassLoaderProperty = System.getProperty(MICRONAUT_INTROSPECTIONS_USE_CONTEXT_CLASSLOADER)
         ApplicationContext context = null
 
         when:
-        System.setProperty(MICRONAUT_INTROSPECTIONS_USE_CONTEXT_CLASSLOADER, "true")
         Thread.currentThread().contextClassLoader = DefaultRuntimeEntityRegistrySpec.classLoader
         context = ApplicationContext.run()
         def entity = context.getBean(RuntimeEntityRegistry).getEntity(reloadedEntity)
@@ -46,7 +47,34 @@ class DefaultRuntimeEntityRegistrySpec extends Specification {
         cleanup:
         context?.close()
         Thread.currentThread().contextClassLoader = previousClassLoader
-        restoreSystemProperty(MICRONAUT_INTROSPECTIONS_USE_CONTEXT_CLASSLOADER, previousIntrospectionClassLoaderProperty)
+        closeClassLoader(reloadedEntity.classLoader)
+    }
+
+    void "query interceptor instantiates entity using runtime entity introspection"() {
+        given:
+        Class<?> reloadedEntity = reloadEntityClass(ClassLoaderOnlyEntity)
+        ClassLoader previousClassLoader = Thread.currentThread().contextClassLoader
+        ApplicationContext context = null
+
+        when:
+        Thread.currentThread().contextClassLoader = DefaultRuntimeEntityRegistrySpec.classLoader
+        context = ApplicationContext.run()
+        def entity = context.getBean(RuntimeEntityRegistry).getEntity(reloadedEntity)
+        def operations = Stub(RepositoryOperations) {
+            getApplicationContext() >> context
+            getConversionService() >> ConversionService.SHARED
+            getEntity(reloadedEntity) >> entity
+        }
+        def instance = new TestQueryInterceptor(operations).instantiate(reloadedEntity, [id: 1L, name: "R2DBC"])
+
+        then:
+        instance.class.is(reloadedEntity)
+        entity.introspection.getRequiredProperty("id", Long).get(instance) == 1L
+        entity.introspection.getRequiredProperty("name", String).get(instance) == "R2DBC"
+
+        cleanup:
+        context?.close()
+        Thread.currentThread().contextClassLoader = previousClassLoader
         closeClassLoader(reloadedEntity.classLoader)
     }
 
@@ -79,14 +107,6 @@ class DefaultRuntimeEntityRegistrySpec extends Specification {
         return name == entityName || name.startsWith(entityName + '$') || name.startsWith(generatedPrefix + '$')
     }
 
-    private static void restoreSystemProperty(String name, String previousValue) {
-        if (previousValue == null) {
-            System.clearProperty(name)
-        } else {
-            System.setProperty(name, previousValue)
-        }
-    }
-
     private static void closeClassLoader(ClassLoader classLoader) {
         if (classLoader instanceof Closeable) {
             classLoader.close()
@@ -98,5 +118,21 @@ class DefaultRuntimeEntityRegistrySpec extends Specification {
         @Id
         Long id
         String name
+    }
+
+    private static final class TestQueryInterceptor extends AbstractQueryInterceptor<Object, Object> {
+
+        TestQueryInterceptor(RepositoryOperations operations) {
+            super(operations)
+        }
+
+        Object instantiate(Class<?> rootEntity, Map<String, Object> parameterValues) {
+            instantiateEntity(rootEntity, parameterValues)
+        }
+
+        @Override
+        Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+            throw new UnsupportedOperationException()
+        }
     }
 }
