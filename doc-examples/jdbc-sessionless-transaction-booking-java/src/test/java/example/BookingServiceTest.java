@@ -52,6 +52,7 @@ public class BookingServiceTest {
 
     @Test
     void testCurrentTransactionIdExportsSuspendedTransactionId() {
+        // tag::propagation[]
         SuspendedSeat suspendedSeat = requireNonNull(transactionPropagationOperations.withPropagation(() -> {
             Long seatId = bookingService.holdSeat(new Seat("JU502", "3a", "msid"));
             String transactionId = transactionPropagationOperations.currentTransactionId().orElseThrow();
@@ -62,7 +63,7 @@ public class BookingServiceTest {
             bookingService.ticketSeat(suspendedSeat.seatId());
             return null;
         });
-
+        // end::propagation[]
         assertTicketedSeat();
     }
 
