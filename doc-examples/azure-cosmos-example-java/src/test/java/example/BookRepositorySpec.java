@@ -59,7 +59,7 @@ class BookRepositorySpec extends AbstractAzureCosmosTest {
         // tag::save[]
         Book book = new Book("The Stand", 1000);
         book.setItemPrice(new ItemPrice(200));
-        bookRepository.save(book);
+        bookRepository.insert(book);
         // end::save[]
         String id = book.getId();
         assertNotNull(id);
@@ -96,7 +96,7 @@ class BookRepositorySpec extends AbstractAzureCosmosTest {
     @Test
     void testPageable() {
         // tag::saveall[]
-        bookRepository.saveAll(Arrays.asList(
+        bookRepository.insertAll(Arrays.asList(
             new Book("The Stand", 1000),
             new Book("The Shining", 600),
             new Book("The Power of the Dog", 500),
@@ -126,7 +126,7 @@ class BookRepositorySpec extends AbstractAzureCosmosTest {
 
     @Test
     void testDto() {
-        bookRepository.save(new Book("The Shining", 400));
+        bookRepository.insert(new Book("The Shining", 400));
         BookDTO book = bookRepository.findOne("The Shining");
 
         assertEquals("The Shining", book.getTitle());

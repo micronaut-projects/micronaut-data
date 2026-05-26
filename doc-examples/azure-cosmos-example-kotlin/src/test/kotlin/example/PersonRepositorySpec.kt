@@ -30,7 +30,7 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
 
     @BeforeEach
     fun beforeEach() {
-        personRepository.saveAll(listOf(
+        personRepository.insertAll(listOf(
                 Person(
                         "Denis",
                         13
@@ -69,7 +69,7 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
 
     @Test
     fun testNameAndAgeMatch() {
-        personRepository.save(Person("Josh", 14))
+        personRepository.insert(Person("Josh", 14))
         val peopleWithNameOrAge = personRepository.findAll(nameAndAgeMatch(25, "Josh"))
         assertEquals(2, peopleWithNameOrAge.size)
     }
