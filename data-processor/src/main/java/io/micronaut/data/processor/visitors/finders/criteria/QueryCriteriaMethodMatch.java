@@ -130,6 +130,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity, MethodMatchContext matchContext, List<AnnotationValue<Join>> joinSpecs) {
         return !joinSpecs.isEmpty()
+            && requiresPaginationSubquery(persistentEntity, joinSpecs)
             && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
             // MySQL doesn't support subquery with limits
             && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
@@ -228,6 +229,16 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 applyJoinSpecs(root, List.of(joinSpec));
             }
         }
+    }
+
+    private boolean requiresPaginationSubquery(PersistentEntity persistentEntity, List<AnnotationValue<Join>> joinSpecs) {
+        for (AnnotationValue<Join> joinSpec : joinSpecs) {
+            String path = joinSpec.stringValue().orElse(null);
+            if (path == null || !isToOneJoinPath(persistentEntity, path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isToOneJoinPath(PersistentEntity persistentEntity, String path) {

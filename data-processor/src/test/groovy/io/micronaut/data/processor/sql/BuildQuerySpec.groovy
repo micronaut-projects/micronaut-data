@@ -1766,7 +1766,7 @@ interface EntityWithIdClassRepository extends GenericRepository<Book, Long> {
 """)
             def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_ WHERE (book_.id IN (SELECT book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_ JOIN book_book_.author book_book_author_ WHERE (book_book_.id IN (SELECT book_book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_book_ JOIN book_book_book_.author book_book_book_author_))))'
+            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_'
             getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(book_)) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
     }
 
@@ -2391,15 +2391,15 @@ interface TestRepository extends GenericRepository<Book, Long> {
 
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
+        def expectedQuery = """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id`"""
         expect:
-            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id` WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getQuery(findAll) == expectedQuery
             getQueryParts(findAll) == [
-                """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id` WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))""",
-                "))",
+                expectedQuery,
                 ""
             ] as String[]
-            getParameterRoles(findAll) == ["pageableRequired", "sort"]
-            getParameterTableAliases(findAll) == ["book_book_", "book_"]
+            getParameterRoles(findAll) == ["pageable"]
+            getParameterTableAliases(findAll) == ["book_"]
     }
 
     void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
@@ -2463,10 +2463,9 @@ class CarManufacturer {
         """)
         def findAll = repository.getRequiredMethod("findAll", Pageable)
         def getAll = repository.getRequiredMethod("getAll", Pageable)
-        def expectedQuery = """SELECT car_.`id`,car_.`license_plate`,car_.`manufacturer_id`,car_manufacturer_.`name` AS manufacturer_name FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id` WHERE (car_.`id` IN (SELECT car_car_.`id` FROM `the_car` car_car_ LEFT JOIN `the_car_manufacturer` car_car_manufacturer_ ON car_car_.`manufacturer_id`=car_car_manufacturer_.`id` WHERE (car_car_.`id` IN (SELECT car_car_car_.`id` FROM `the_car` car_car_car_ LEFT JOIN `the_car_manufacturer` car_car_car_manufacturer_ ON car_car_car_.`manufacturer_id`=car_car_car_manufacturer_.`id`))"""
+        def expectedQuery = """SELECT car_.`id`,car_.`license_plate`,car_.`manufacturer_id`,car_manufacturer_.`name` AS manufacturer_name FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id`"""
         def expectedQueryParts = [
             expectedQuery,
-            "))",
             ""
         ] as String[]
 
@@ -2474,13 +2473,13 @@ class CarManufacturer {
         getQuery(findAll) == expectedQuery
         getQueryParts(findAll) == expectedQueryParts
         getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(car_.`id`)) FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id`'
-        getParameterRoles(findAll) == ["pageableRequired", "sort"]
-        getParameterTableAliases(findAll) == ["car_car_", "car_"]
+        getParameterRoles(findAll) == ["pageable"]
+        getParameterTableAliases(findAll) == ["car_"]
 
         getQuery(getAll) == expectedQuery
         getQueryParts(getAll) == expectedQueryParts
-        getParameterRoles(getAll) == ["pageableRequired", "sort"]
-        getParameterTableAliases(getAll) == ["car_car_", "car_"]
+        getParameterRoles(getAll) == ["pageable"]
+        getParameterTableAliases(getAll) == ["car_"]
     }
 
     void "test issue 3851 pageable join criteria rejects non association join path"() {
