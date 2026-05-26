@@ -68,10 +68,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getDataSource()" tabindex="0">getDataSource()</a></li>
 <li><a href="#setEnforceReadOnly(boolean)" tabindex="0">setEnforceReadOnly(boolean)</a></li>
 <li><a href="#isEnforceReadOnly()" tabindex="0">isEnforceReadOnly()</a></li>
-<li><a href="#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getConnectionDefinition(TransactionDefinition)</a></li>
-<li><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">createExistingTransactionStatus(TransactionDefinition, DefaultTransactionStatus)</a></li>
 <li><a href="#doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doBegin(DefaultTransactionStatus)</a></li>
-<li><a href="#supportsOracleSessionlessTransactions()" tabindex="0">supportsOracleSessionlessTransactions()</a></li>
 <li><a href="#doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doCommit(DefaultTransactionStatus)</a></li>
 <li><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doRollback(DefaultTransactionStatus)</a></li>
 <li><a href="#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doNestedBegin(DefaultTransactionStatus)</a></li>
@@ -102,16 +99,12 @@ loadScripts(document, 'script');</script>
 <dt>All Implemented Interfaces:</dt>
 <dd><code><a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="../TransactionManager.html" title="interface in io.micronaut.transaction">TransactionManager</a>, <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
 </dl>
-<dl class="notes">
-<dt>Direct Known Subclasses:</dt>
-<dd><code><a href="oracle/OracleSessionlessTransactionManager.html" title="class in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionManager</a></code></dd>
-</dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 @EachBean(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>.class)
 @Requires(condition=io.micronaut.transaction.jdbc.JdbcTransactionManagerCondition.class)
-</span><span class="modifiers">public class </span><span class="element-name type-name-label">DataSourceTransactionManager</span>
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">DataSourceTransactionManager</span>
 <span class="extends-implements">extends <a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</span></div>
 <div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.
 Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java</div>
@@ -169,52 +162,41 @@ Partially based on https://github.com/spring-projects/spring-framework/blob/main
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">createExistingTransactionStatus</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;existingTransaction)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create transaction status with existing transaction.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Begin a new transaction with semantics according to the given transaction
 definition.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual commit of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doBegin(T)"><code>AbstractTransactionOperations.doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doCommit(T)"><code>AbstractTransactionOperations.doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doRollback(T)"><code>AbstractTransactionOperations.doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual rollback of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Obtains the connection for the current transaction.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getConnectionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns connection definition.</div>
+<div class="block">Obtains the connection for the current transaction.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDataSource()" class="member-name-link">getDataSource</a>()</code></div>
@@ -236,18 +218,15 @@ definition.</div>
 through an explicit statement on the transactional connection:
 "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsOracleSessionlessTransactions()" class="member-name-link">supportsOracleSessionlessTransactions</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractDefaultTransactionOperations">Methods inherited from class&nbsp;<a href="../support/AbstractDefaultTransactionOperations.html#method-summary" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a></h3>
-<code><a href="../support/AbstractDefaultTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" title="createNewTransactionStatus(ConnectionStatus, TransactionDefinition)">createNewTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" title="createNoTxTransactionStatus(ConnectionStatus, TransactionDefinition)">createNoTxTransactionStatus</a></code></div>
+<code><a href="../support/AbstractDefaultTransactionOperations.html#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)" title="createExistingTransactionStatus(TransactionDefinition, DefaultTransactionStatus)">createExistingTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" title="createNewTransactionStatus(ConnectionStatus, TransactionDefinition)">createNewTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" title="createNoTxTransactionStatus(ConnectionStatus, TransactionDefinition)">createNoTxTransactionStatus</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractTransactionOperations">Methods inherited from class&nbsp;<a href="../support/AbstractTransactionOperations.html#method-summary" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></h3>
-<code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" title="commit(TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)" title="determineTimeout(TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="doExecute(TransactionDefinition, TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)" title="doResume(DefaultTransactionStatus)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)" title="doSuspend(DefaultTransactionStatus)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" title="getTransaction(TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#hasConnection()" title="hasConnection()">hasConnection</a>, <a href="../support/AbstractTransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)" title="managesTransaction(TransactionStatus)">managesTransaction</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" title="rollback(TransactionStatus)">rollback</a></code></div>
+<code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" title="commit(TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)" title="determineTimeout(TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="doExecute(TransactionDefinition, TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)" title="doResume(DefaultTransactionStatus)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)" title="doSuspend(DefaultTransactionStatus)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" title="getConnectionDefinition(TransactionDefinition)">getConnectionDefinition</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" title="getTransaction(TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#hasConnection()" title="hasConnection()">hasConnection</a>, <a href="../support/AbstractTransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)" title="managesTransaction(TransactionStatus)">managesTransaction</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" title="rollback(TransactionStatus)">rollback</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations">Methods inherited from class&nbsp;<a href="../support/AbstractPropagatedStatusTransactionOperations.html#method-summary" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></h3>
 <code><a href="../support/AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="execute(TransactionDefinition, TransactionCallback)">execute</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()" title="findTransactionStatus()">findTransactionStatus</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatusInternal()" title="findTransactionStatusInternal()">findTransactionStatusInternal</a></code></div>
@@ -385,44 +364,6 @@ through an explicit statement on the transactional connection.</dd>
 </section>
 </li>
 <li>
-<section class="detail" id="getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">
-<h3>getConnectionDefinition</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../../data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></span>&nbsp;<span class="element-name">getConnectionDefinition</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">AbstractTransactionOperations</a></code></span></div>
-<div class="block">Returns connection definition.</div>
-<dl class="notes">
-<dt>Overrides:</dt>
-<dd><code><a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">getConnectionDefinition</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>transactionDefinition</code> - The transaction definition</dd>
-<dt>Returns:</dt>
-<dd>connection definition</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)">
-<h3>createExistingTransactionStatus</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</span>&nbsp;<span class="element-name">createExistingTransactionStatus</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- <a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;existingTransaction)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)">AbstractTransactionOperations</a></code></span></div>
-<div class="block">Create transaction status with existing transaction.</div>
-<dl class="notes">
-<dt>Overrides:</dt>
-<dd><code><a href="../support/AbstractDefaultTransactionOperations.html#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)">createExistingTransactionStatus</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>definition</code> - The transaction definition</dd>
-<dd><code>existingTransaction</code> - The existing transaction</dd>
-<dt>Returns:</dt>
-<dd>new transaction status</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
 <section class="detail" id="doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)">
 <h3>doBegin</h3>
 <div class="horizontal-scroll">
@@ -439,18 +380,6 @@ previous transaction has been suspended.</div>
 <dd><code><a href="../support/AbstractTransactionOperations.html#doBegin(T)">doBegin</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>status</code> - The transaction</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="supportsOracleSessionlessTransactions()">
-<h3>supportsOracleSessionlessTransactions</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsOracleSessionlessTransactions</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>Whether this manager supports Oracle sessionless transaction propagation modes.</dd>
 </dl>
 </div>
 </section>

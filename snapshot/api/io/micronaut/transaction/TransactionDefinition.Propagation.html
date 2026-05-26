@@ -67,8 +67,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#NOT_SUPPORTED" tabindex="0">NOT_SUPPORTED</a></li>
 <li><a href="#NEVER" tabindex="0">NEVER</a></li>
 <li><a href="#NESTED" tabindex="0">NESTED</a></li>
-<li><a href="#SUSPEND" tabindex="0">SUSPEND</a></li>
-<li><a href="#REQUIRES_SUSPENDED" tabindex="0">REQUIRES_SUSPENDED</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -157,19 +155,9 @@ exists.</div>
 <div class="col-last odd-row-color">
 <div class="block">Create a new transaction, suspending the current transaction if one exists.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#REQUIRES_SUSPENDED" class="member-name-link">REQUIRES_SUSPENDED</a></code></div>
+<div class="col-first even-row-color"><code><a href="#SUPPORTS" class="member-name-link">SUPPORTS</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Resume an Oracle sessionless transaction from the current propagation context and complete
-it when the transactional boundary completes.</div>
-</div>
-<div class="col-first odd-row-color"><code><a href="#SUPPORTS" class="member-name-link">SUPPORTS</a></code></div>
-<div class="col-last odd-row-color">
 <div class="block">Support a current transaction; execute non-transactionally if none exists.</div>
-</div>
-<div class="col-first even-row-color"><code><a href="#SUSPEND" class="member-name-link">SUSPEND</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Start an Oracle sessionless transaction and suspend it instead of committing when the
-transactional boundary completes.</div>
 </div>
 </div>
 </section>
@@ -323,41 +311,6 @@ analogous feature in EJB.
 specific transaction managers. Out of the box, this only applies to JDBC
 when working on a JDBC 3.0 driver. Some JTA providers might support
 nested transactions as well.</div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="SUSPEND">
-<h3>SUSPEND</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></span>&nbsp;<span class="element-name">SUSPEND</span></div>
-<div class="block">Start an Oracle sessionless transaction and suspend it instead of committing when the
-transactional boundary completes.
-<p>This propagation mode is intended for top-level Oracle sessionless transaction workflow
-boundaries, such as an HTTP request that starts work and returns a suspended transaction
-identifier to the caller. When an existing transaction is already active, Micronaut's
-generic transaction orchestration treats this as participation in the existing transaction;
-it does not create a nested sessionless transaction or suspend the existing transaction.
-<p><b>NOTE:</b> This mode requires a transaction manager that supports Oracle sessionless
-transactions and an active Oracle sessionless transaction propagation context.</div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="REQUIRES_SUSPENDED">
-<h3>REQUIRES_SUSPENDED</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></span>&nbsp;<span class="element-name">REQUIRES_SUSPENDED</span></div>
-<div class="block">Resume an Oracle sessionless transaction from the current propagation context and complete
-it when the transactional boundary completes.
-<p>This propagation mode is intended for top-level Oracle sessionless transaction workflow
-boundaries, such as a later HTTP request that supplies a previously suspended transaction
-identifier. When an existing transaction is already active, Micronaut's generic transaction
-orchestration treats this as participation in the existing transaction; it does not resume
-the sessionless transaction from the propagation context.
-<p><b>NOTE:</b> This mode requires a transaction manager that supports Oracle sessionless
-transactions and a transaction identifier in the active Oracle sessionless transaction
-propagation context.</div>
 </div>
 </section>
 </li>
