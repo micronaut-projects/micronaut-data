@@ -249,10 +249,28 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
-        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
+        QueryResult queryResult = getQueryResult(
+            matchContext,
+            queryString,
+            parameters,
+            namedParameters,
+            entityParam,
+            persistentEntity,
+            methodMatchInfo.getResultType(),
+            operationType
+        );
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
             .orElse(null);
-        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity, methodMatchInfo.getResultType());
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(
+            matchContext,
+            cq,
+            parameters,
+            namedParameters,
+            entityParam,
+            persistentEntity,
+            methodMatchInfo.getResultType(),
+            DataMethod.OperationType.QUERY
+        );
         boolean encodeEntityParameters;
         if (implicitQueries) {
             encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
@@ -275,7 +293,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        @Nullable
                                        SourcePersistentEntity persistentEntity,
                                        @Nullable
-                                       TypedElement resultType) {
+                                       TypedElement resultType,
+                                       DataMethod.OperationType operationType) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
@@ -320,7 +339,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
         String cleanLower = SQL_COMMENT_PATTERN.matcher(finalQueryString).replaceAll("").trim().toLowerCase(Locale.ENGLISH);
         boolean hasReturning = containsReturningClause(cleanLower);
-        if (hasReturning) {
+        if (hasReturning && isReturningOperation(operationType)) {
             Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
                 .orElse(Dialect.ANSI);
             if (dialect == Dialect.ORACLE) {
@@ -338,6 +357,12 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
         // Default: no transformation
         return QueryResult.of(finalQueryString, queryParts, parameterBindings);
+    }
+
+    private static boolean isReturningOperation(DataMethod.OperationType operationType) {
+        return operationType == DataMethod.OperationType.INSERT_RETURNING
+            || operationType == DataMethod.OperationType.UPDATE_RETURNING
+            || operationType == DataMethod.OperationType.DELETE_RETURNING;
     }
 
     private static boolean containsReturningClause(String query) {
