@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +79,7 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
-        Optional<BeanIntrospection<T>> introspection = BeanIntrospector.SHARED.findIntrospection(clazz);
+        Optional<BeanIntrospection<T>> introspection = findIntrospection(clazz);
         if (clazz.isEnum() || isExcluded(clazz, introspection)) {
             return null;
         }
@@ -105,6 +106,32 @@ final class DataCodecRegistry implements CodecRegistry {
             .map(annotationMetadata -> !annotationMetadata.hasStereotype(MappedEntity.class)
                 && !annotationMetadata.hasStereotype(Embeddable.class))
             .orElse(true);
+    }
+
+    private <T> Optional<BeanIntrospection<T>> findIntrospection(Class<T> type) {
+        ClassLoader classLoader = type.getClassLoader();
+        if (classLoader == null) {
+            classLoader = runtimeEntityRegistry.getApplicationContext().getClassLoader();
+        }
+        ClassLoader introspectionClassLoader = classLoader;
+        return withContextClassLoader(
+            introspectionClassLoader,
+            () -> BeanIntrospector.forClassLoader(introspectionClassLoader).findIntrospection(type)
+        );
+    }
+
+    private static <T> T withContextClassLoader(ClassLoader classLoader, Supplier<T> action) {
+        Thread thread = Thread.currentThread();
+        ClassLoader previous = thread.getContextClassLoader();
+        if (previous == classLoader) {
+            return action.get();
+        }
+        thread.setContextClassLoader(classLoader);
+        try {
+            return action.get();
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
     }
 
 }

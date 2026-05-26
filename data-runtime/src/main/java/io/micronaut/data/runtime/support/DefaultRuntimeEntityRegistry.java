@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * A registry for entities looking up instances of {@link RuntimeEntityRegistry}.
@@ -191,9 +192,6 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
         if (classLoader == null) {
             classLoader = applicationContext.getClassLoader();
         }
-        if (classLoader == null) {
-            return BeanIntrospection.getIntrospection(type);
-        }
         ClassLoader introspectionClassLoader = classLoader;
         return withContextClassLoader(
                 introspectionClassLoader,
@@ -201,7 +199,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
         );
     }
 
-    private static <T> T withContextClassLoader(ClassLoader classLoader, java.util.function.Supplier<T> action) {
+    private static <T> T withContextClassLoader(ClassLoader classLoader, Supplier<T> action) {
         Thread thread = Thread.currentThread();
         ClassLoader previous = thread.getContextClassLoader();
         if (previous == classLoader) {
