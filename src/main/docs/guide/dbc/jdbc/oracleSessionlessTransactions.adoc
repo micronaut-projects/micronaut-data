@@ -13,7 +13,7 @@ For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwr
 
 The following service starts a sessionless transaction, suspends it, and later resumes it:
 
-snippet::example.BookingService[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+snippet::example.BookingService[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
 
 For a method declared with `SUSPEND`, the Oracle transaction manager:
 
@@ -76,15 +76,15 @@ After a resumed transaction commits or rolls back, the transaction manager clear
 
 The following controller does not need to handle the header directly:
 
-snippet::example.BookingController[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+snippet::example.BookingController[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
 
 The HTTP client sends one request that starts and suspends the transaction:
 
-snippet::example.BookingControllerTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-suspend", indent="0"]
+snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-suspend", indent="0"]
 
 Then sends the returned header back on a later request that resumes and completes it:
 
-snippet::example.BookingControllerTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-resume", indent="0"]
+snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-resume", indent="0"]
 
 The header value is encoded through api:transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec[]. The default codec
 uses URL-safe Base64 without padding. Applications can provide their own `OracleSessionlessTransactionIdCodec` bean to sign,
@@ -100,7 +100,7 @@ For non-HTTP workflows, inject api:transaction.jdbc.oracle.OracleSessionlessTran
 an explicit propagation scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export
 and import the encoded transaction id itself.
 
-snippet::example.BookingServiceTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
+snippet::example.BookingServiceTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
 
 The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
 `currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`
