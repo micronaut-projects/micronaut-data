@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(transactional = false)
-public class BookingControllerTest {
+class BookingControllerTest {
 
     private static final String SESSIONLESS_TRANSACTION_HEADER = "Oracle-Sessionless-Transaction-Id";
 
