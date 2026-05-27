@@ -181,7 +181,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
         then:
             !optFamily1.present
         when:
-            familyRepository.saveAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()))
+            familyRepository.insertAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()))
             optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
             optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
@@ -209,7 +209,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
             !optFamily1.present
             !optFamily2.present
         when:
-            familyRepository.save(createAndersenFamily())
+            familyRepository.insert(createAndersenFamily())
             def lastName = familyRepository.findById(ANDERSEN_FAMILY.id).get().lastName
             familyRepository.deleteByLastName(lastName, new PartitionKey(lastName))
             optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
@@ -291,7 +291,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
     }
 
     void saveSampleFamilies() {
-        familyRepository.save(createAndersenFamily())
-        familyRepository.save(createWakefieldFamily())
+        familyRepository.insert(createAndersenFamily())
+        familyRepository.insert(createWakefieldFamily())
     }
 }

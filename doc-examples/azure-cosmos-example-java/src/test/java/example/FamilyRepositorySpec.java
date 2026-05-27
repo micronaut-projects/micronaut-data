@@ -106,8 +106,8 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
     @Test
     void testCrud() {
-        familyRepository.save(createAndersenFamily());
-        familyRepository.save(createWakefieldFamily());
+        familyRepository.insert(createAndersenFamily());
+        familyRepository.insert(createWakefieldFamily());
 
         Optional<Family> optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.getId());
         Optional<Family> optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.getId());
@@ -245,7 +245,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.getId());
         assertFalse(optFamily1.isPresent());
 
-        familyRepository.saveAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()));
+        familyRepository.insertAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()));
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.getId());
         optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.getId());
         assertTrue(optFamily1.isPresent());
@@ -269,7 +269,7 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
         assertFalse(optFamily1.isPresent());
         assertFalse(optFamily2.isPresent());
 
-        familyRepository.save(createAndersenFamily());
+        familyRepository.insert(createAndersenFamily());
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.getId());
         assertTrue(optFamily1.isPresent());
         String lastName = optFamily1.get().getLastName();
@@ -296,8 +296,8 @@ class FamilyRepositorySpec extends AbstractAzureCosmosTest {
     }
 
     void saveSampleFamilies() {
-        familyRepository.save(createAndersenFamily());
-        familyRepository.save(createWakefieldFamily());
+        familyRepository.insert(createAndersenFamily());
+        familyRepository.insert(createWakefieldFamily());
     }
 
     private static Family createAndersenFamily() {
