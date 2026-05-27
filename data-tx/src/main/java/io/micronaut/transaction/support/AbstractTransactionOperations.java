@@ -185,7 +185,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                         }
                     });
                     return transactionStatus;
-                } catch (Exception e) {
+                } catch (RuntimeException e) {
                     synchronousConnectionManager.complete(newConnectionStatus);
                     throw e;
                 }
@@ -211,7 +211,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                     }
                 });
                 return newTransaction;
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 try {
                     if (newConnection != null) {
                         synchronousConnectionManager.complete(newConnection);
