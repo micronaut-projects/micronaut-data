@@ -105,8 +105,10 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
 
     @Override
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
-        if (status.getTransactionDefinition().getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
-            rollbackResumedSessionlessTransaction(status);
+        TransactionDefinition.Propagation propagation = status.getTransactionDefinition().getPropagationBehavior();
+        if (propagation == TransactionDefinition.Propagation.SUSPEND
+            || propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            rollbackSessionlessTransaction(status);
         } else {
             super.doRollback(status);
         }
@@ -121,7 +123,7 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
         }
     }
 
-    private void rollbackResumedSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
+    private void rollbackSessionlessTransaction(DefaultTransactionStatus<Connection> status) {
         Optional<OracleSessionlessTransactionState> state = findSessionlessTransactionState();
         try {
             super.doRollback(status);

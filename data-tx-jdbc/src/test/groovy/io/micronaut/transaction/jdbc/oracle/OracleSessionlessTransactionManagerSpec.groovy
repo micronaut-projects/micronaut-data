@@ -133,6 +133,56 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         0 * connection.commit()
     }
 
+    def "suspended transaction context is cleared on rollback"() {
+        given:
+        def manager = newTransactionManager()
+        def connection = Mock(Connection)
+        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def status = txStatus(connection, definition, manager)
+        def state = new OracleSessionlessTransactionState()
+        state.setGtrid([1, 2, 3] as byte[])
+
+        when:
+        Boolean presentAfterRollback = null
+        PropagatedContext.empty().plus(state).propagate({
+            manager.doRollback(status)
+            presentAfterRollback = state.gtrid.isPresent()
+        })
+
+        then:
+        1 * connection.rollback()
+        !presentAfterRollback
+        state.gtrid.isEmpty()
+    }
+
+    def "suspended transaction context is cleared when rollback fails"() {
+        given:
+        def manager = newTransactionManager()
+        def connection = Mock(Connection)
+        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def status = txStatus(connection, definition, manager)
+        def state = new OracleSessionlessTransactionState()
+        state.setGtrid([1, 2, 3] as byte[])
+
+        when:
+        TransactionSystemException thrownException = null
+        Boolean presentAfterRollback = null
+        PropagatedContext.empty().plus(state).propagate({
+            try {
+                manager.doRollback(status)
+            } catch (TransactionSystemException e) {
+                thrownException = e
+                presentAfterRollback = state.gtrid.isPresent()
+            }
+        })
+
+        then:
+        1 * connection.rollback() >> { throw new SQLException("rollback failed") }
+        thrownException != null
+        !presentAfterRollback
+        state.gtrid.isEmpty()
+    }
+
     def "resumed transaction context is cleared when commit fails"() {
         given:
         def manager = newTransactionManager()
