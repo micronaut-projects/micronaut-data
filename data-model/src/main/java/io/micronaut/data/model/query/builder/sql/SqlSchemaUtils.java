@@ -714,6 +714,26 @@ public final class SqlSchemaUtils {
         return primaryKeyColumns;
     }
 
+    @SuppressWarnings("ArrayRecordComponent")
     private record TableColumnPath(String[] path, boolean sharedIdentityJoinColumn) {
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof TableColumnPath other
+                && Arrays.equals(path, other.path)
+                && sharedIdentityJoinColumn == other.sharedIdentityJoinColumn;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Arrays.hashCode(path);
+            result = 31 * result + Boolean.hashCode(sharedIdentityJoinColumn);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TableColumnPath[path=" + Arrays.toString(path) + ", sharedIdentityJoinColumn=" + sharedIdentityJoinColumn + ']';
+        }
     }
 }
