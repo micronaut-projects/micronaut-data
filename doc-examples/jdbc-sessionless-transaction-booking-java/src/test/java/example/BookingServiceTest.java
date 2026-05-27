@@ -12,6 +12,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(transactional = false)
@@ -53,12 +54,16 @@ public class BookingServiceTest {
     @Test
     void testCurrentTransactionIdExportsSuspendedTransactionId() {
         // tag::propagation[]
-        SuspendedSeat suspendedSeat = requireNonNull(transactionPropagationOperations.withPropagation(() -> {
+        SuspendedSeat suspendedSeat = transactionPropagationOperations.withPropagation(() -> {
             Long seatId = bookingService.holdSeat(new Seat("JU502", "3a", "msid"));
             String transactionId = transactionPropagationOperations.currentTransactionId().orElseThrow();
             return new SuspendedSeat(seatId, transactionId);
-        }));
+        });
 
+        // end::propagation[]
+        assertNotNull(suspendedSeat);
+
+        // tag::propagation[]
         transactionPropagationOperations.withPropagation(suspendedSeat.transactionId(), () -> {
             bookingService.ticketSeat(suspendedSeat.seatId());
             return null;

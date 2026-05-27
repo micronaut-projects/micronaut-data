@@ -1,12 +1,12 @@
-Oracle sessionless transactions allow a JDBC transaction to be suspended and later resumed, potentially from a different request.
-Micronaut Data supports this for Oracle JDBC by adding two transaction propagation modes:
+Oracle sessionless transactions allow a JDBC transaction to be suspended and later resumed, potentially from a different
+request. Micronaut Data supports this for Oracle JDBC by adding two transaction propagation modes:
 
-* api:transaction.TransactionDefinition.Propagation[] `SUSPEND`
-* api:transaction.TransactionDefinition.Propagation[] `REQUIRES_SUSPENDED`
+* api:transaction.TransactionDefinition.Propagation#SUSPEND[]
+* api:transaction.TransactionDefinition.Propagation#REQUIRES_SUSPENDED[]
 
-The feature is intended for top-level workflow boundaries.
-Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another active transaction.
-If a parent transaction is already active, Micronaut's generic transaction orchestration treats the inner method as participating in that existing transaction, so the Oracle sessionless begin or resume lifecycle is not started.
+The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another
+active transaction. If a parent transaction is already active, Micronaut's generic transaction orchestration treats
+the inner method as participating in that existing transaction, so the Oracle sessionless begin or resume lifecycle is not started.
 
 Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
 For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
@@ -34,7 +34,8 @@ For a method declared with `REQUIRES_SUSPENDED`, the Oracle transaction manager:
 * commits or rolls back the JDBC transaction normally
 * clears the GTRID from the propagation state after completion
 
-Because `SUSPEND` leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction until a later `REQUIRES_SUSPENDED` transaction completes it.
+Because `SUSPEND` leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction
+until a later `REQUIRES_SUSPENDED` transaction completes it.
 
 == HTTP Propagation
 
@@ -64,10 +65,11 @@ micronaut:
           header-name: X-Oracle-Sessionless-Transaction-Id
 ----
 
-On each HTTP request, the filter creates the request-scoped Oracle sessionless propagation state.
-If the configured header is present, the filter decodes the header and stores the GTRID in that state so a `REQUIRES_SUSPENDED` method can resume it.
-If the request contains a malformed transaction id, the filter fails the request with a bad request response.
-If another component has already created Oracle sessionless transaction state before the filter runs, the filter fails fast because the HTTP filter owns the request-level state.
+On each HTTP request, the filter creates the request-scoped Oracle sessionless propagation state. If the configured header
+is present, the filter decodes the header and stores the GTRID in that state so a `REQUIRES_SUSPENDED` method can resume it.
+If the request contains a malformed transaction id, the filter fails the request with a bad request response. If another
+component has already created Oracle sessionless transaction state before the filter runs, the filter fails fast because
+the HTTP filter owns the request-level state.
 
 On the response, if the request still has a suspended transaction id, the filter writes it to the configured header.
 After a resumed transaction commits or rolls back, the transaction manager clears the id, so the response does not contain the header.
@@ -84,24 +86,25 @@ Then sends the returned header back on a later request that resumes and complete
 
 snippet::example.BookingControllerTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-resume", indent="0"]
 
-The header value is encoded through api:transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec[].
-The default codec uses URL-safe Base64 without padding.
-Applications can provide their own `OracleSessionlessTransactionIdCodec` bean to sign, encrypt, or otherwise protect the value before it is exposed outside the process.
+The header value is encoded through api:transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec[]. The default codec
+uses URL-safe Base64 without padding. Applications can provide their own `OracleSessionlessTransactionIdCodec` bean to sign,
+encrypt, or otherwise protect the value before it is exposed outside the process.
 
 IMPORTANT: The encoded transaction id is a capability to resume the suspended Oracle transaction.
-Only enable HTTP propagation for trusted workflows, protect the request with normal authentication and transport security, and use short transaction timeouts.
+Only enable HTTP propagation for trusted workflows, protect the request with normal authentication and transport security,
+and use short transaction timeouts.
 
 == Programmatic Propagation
 
-For non-HTTP workflows, inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] and create an explicit propagation scope.
-This is useful for tests, messaging, scheduled work, or any transport that needs to export and import the encoded transaction id itself.
+For non-HTTP workflows, inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] and create
+an explicit propagation scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export
+and import the encoded transaction id itself.
 
 snippet::example.BookingServiceTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
 
-The first `withPropagation` call creates an empty propagation state.
-After the `SUSPEND` method returns, `currentTransactionId()` exposes the encoded transaction id from that state.
-The second `withPropagation(transactionId, ...)` call creates a state that already contains the id, so the `REQUIRES_SUSPENDED` method can resume and complete the transaction.
+The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
+`currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`
+call creates a state that already contains the id, so the `REQUIRES_SUSPENDED` method can resume and complete the transaction.
 
-The programmatic propagation scope is lexical.
-Code invoked in the same scope sees the same transaction id.
+The programmatic propagation scope is lexical. Code invoked in the same scope sees the same transaction id.
 A nested `withPropagation(...)` call creates a scoped override and restores the previous state after the supplier returns.
