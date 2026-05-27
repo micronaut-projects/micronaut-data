@@ -355,7 +355,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 5.0.1 </p>
+        <p><strong>Version:</strong> 5.0.2 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -18920,20 +18920,20 @@ The simple name of the class annotated with @MappedEntity will be used as the co
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book("The Stand", 1000);
 book.setItemPrice(new ItemPrice(200));
-bookRepository.save(book);</code></pre>
+book = bookRepository.insert(book);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">var book = Book(null,"The Stand", 1000, ItemPrice(199.99))
-bookRepository.save(book)</code></pre>
+bookRepository.insert(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">def book = new Book("The Stand", 1000)
 book.itemPrice = new ItemPrice(99.5)
-bookRepository.save(book)
+book = bookRepository.insert(book)
 def id = book.id</code></pre>
 </div>
 </div>
