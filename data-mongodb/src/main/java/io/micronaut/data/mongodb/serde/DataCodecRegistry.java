@@ -16,18 +16,24 @@
 package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.Nullable;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * The Micronaut Data codec registry.
@@ -39,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 final class DataCodecRegistry implements CodecRegistry {
 
     @Nullable
-    private final Collection<Class<?>> entities;
+    private final Set<String> entityNames;
     private final DataSerdeRegistry dataSerdeRegistry;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final Map<Class, Codec> codecs = new ConcurrentHashMap<>();
@@ -54,7 +60,9 @@ final class DataCodecRegistry implements CodecRegistry {
     DataCodecRegistry(@Nullable Collection<Class<?>> entities,
                       DataSerdeRegistry dataSerdeRegistry,
                       RuntimeEntityRegistry runtimeEntityRegistry) {
-        this.entities = entities;
+        this.entityNames = entities == null ? null : entities.stream()
+            .map(Class::getName)
+            .collect(Collectors.toUnmodifiableSet());
         this.dataSerdeRegistry = dataSerdeRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
@@ -71,10 +79,11 @@ final class DataCodecRegistry implements CodecRegistry {
         if (codec != null) {
             return codec;
         }
-        if (clazz.isEnum() || entities != null && !entities.contains(clazz)) {
+        Optional<BeanIntrospection<T>> introspection = findIntrospection(clazz);
+        if (clazz.isEnum() || isExcluded(clazz, introspection)) {
             return null;
         }
-        if (BeanIntrospector.SHARED.findIntrospection(clazz).isPresent()) {
+        if (introspection.isPresent()) {
             RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(clazz);
             if (entity.isAnnotationPresent(MappedEntity.class)) {
                 codec = new MappedEntityCodec<>(dataSerdeRegistry, entity, clazz, registry);
@@ -86,6 +95,43 @@ final class DataCodecRegistry implements CodecRegistry {
             return codec;
         }
         return null;
+    }
+
+    private <T> boolean isExcluded(Class<T> clazz, Optional<BeanIntrospection<T>> introspection) {
+        if (entityNames == null || entityNames.contains(clazz.getName())) {
+            return false;
+        }
+        return introspection
+            .map(BeanIntrospection::getAnnotationMetadata)
+            .map(annotationMetadata -> !annotationMetadata.hasStereotype(MappedEntity.class)
+                && !annotationMetadata.hasStereotype(Embeddable.class))
+            .orElse(true);
+    }
+
+    private <T> Optional<BeanIntrospection<T>> findIntrospection(Class<T> type) {
+        ClassLoader classLoader = type.getClassLoader();
+        if (classLoader == null) {
+            classLoader = runtimeEntityRegistry.getApplicationContext().getClassLoader();
+        }
+        ClassLoader introspectionClassLoader = classLoader;
+        return withContextClassLoader(
+            introspectionClassLoader,
+            () -> BeanIntrospector.forClassLoader(introspectionClassLoader).findIntrospection(type)
+        );
+    }
+
+    private static <T> T withContextClassLoader(ClassLoader classLoader, Supplier<T> action) {
+        Thread thread = Thread.currentThread();
+        ClassLoader previous = thread.getContextClassLoader();
+        if (previous == classLoader) {
+            return action.get();
+        }
+        thread.setContextClassLoader(classLoader);
+        try {
+            return action.get();
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
     }
 
 }

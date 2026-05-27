@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.core.type.Argument
-import io.micronaut.core.util.CollectionUtils
 import io.micronaut.core.util.StringUtils
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.GenderAware
@@ -137,8 +136,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
     }
 
     void saveSampleFamilies() {
-        familyRepository.save(createAndersenFamily())
-        familyRepository.save(createWakefieldFamily())
+        familyRepository.insert(createAndersenFamily())
+        familyRepository.insert(createWakefieldFamily())
     }
 
     def "test find by id"() {
@@ -147,7 +146,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book.id = UUID.randomUUID().toString()
             book.title = "The Stand"
             book.totalPages = 1000
-            bookRepository.save(book)
+            book = bookRepository.insert(book)
         when:
             def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
         then:
@@ -180,8 +179,8 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book2.title = "Ice And Fire"
             book2.totalPages = 200
         when:
-            bookRepository.save(book1)
-            bookRepository.save(book2)
+            book1 = bookRepository.insert(book1)
+            book2 = bookRepository.insert(book2)
             def notLoadedBook = bookRepository.queryById(UUID.randomUUID().toString())
             def loadedBook1 = bookRepository.queryById(book1.id)
             def loadedBook2 = bookRepository.queryById(book2.id)
@@ -243,7 +242,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         when:
             def newBook1 = new CosmosBook("A Game of Thrones", 900)
             def newBook2 = new CosmosBook("A Clash of Kings", 1100)
-            def savedNewBooks = CollectionUtils.iterableToList(bookRepository.saveAll(Arrays.asList(newBook1, newBook2)))
+            def savedNewBooks = bookRepository.insertAll(Arrays.asList(newBook1, newBook2))
         then:"Make sure id and versions are assigned in multi save"
             savedNewBooks.size() == 2
             savedNewBooks[0].id == newBook1.id
@@ -420,7 +419,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
         then:
             !optFamily1.present
         when:
-            familyRepository.saveAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()))
+            familyRepository.insertAll(Arrays.asList(createAndersenFamily(), createWakefieldFamily()))
             optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
             optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         then:
@@ -448,7 +447,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             !optFamily1.present
             !optFamily2.present
         when:
-            familyRepository.save(createAndersenFamily())
+            familyRepository.insert(createAndersenFamily())
             def lastName = familyRepository.findById(ANDERSEN_FAMILY.id).get().lastName
             familyRepository.deleteByLastName(lastName, new PartitionKey(lastName))
             optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
@@ -483,7 +482,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             book.id = UUID.randomUUID().toString()
             book.title = "New Book"
             book.totalPages = 500
-            bookRepository.save(book)
+            bookRepository.insert(book)
         when:
             def loadedBook = bookRepository.queryById(book.id)
         then:
@@ -504,7 +503,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
 
     void "test pageable"() {
         given:
-            bookRepository.saveAll(Arrays.asList(
+            bookRepository.insertAll(Arrays.asList(
                     new CosmosBook("The Stand", 1000),
                     new CosmosBook("The Shining", 600),
                     new CosmosBook("The Power of the Dog", 500),
@@ -531,15 +530,15 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             def entity2 = new UUIDEntity()
             entity2.name = "entity2"
             entity2.number = UUID.randomUUID()
-            uuidEntityRepository.saveAll(Arrays.asList(entity1, entity2))
+            uuidEntityRepository.insertAll(Arrays.asList(entity1, entity2))
             def user1 = new User()
             user1.userId = 1L
             user1.userName = "user1"
-            userRepository.save(user1)
+            userRepository.insert(user1)
             def user2 = new User()
             user2.userId = 2L
             user2.userName = "user2"
-            userRepository.save(user2)
+            userRepository.insert(user2)
         when:
             def entities = uuidEntityRepository.findAll()
             def users = userRepository.findAll()

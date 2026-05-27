@@ -2815,6 +2815,106 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
+    void "test oracle raw select keeps json returning clauses as query syntax"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = :id")
+    String serializeProduct(Long id);
+
+    @Query("SELECT json_arrayagg(p.name ORDER BY p.name RETURNING CLOB) FROM product p")
+    String aggregateNames();
+
+    @Query("SELECT json_serialize(json_object('action' VALUE 'needs update now' RETURNING CLOB) RETURNING CLOB) FROM product p")
+    String serializeAction();
+}
+""")
+        def serializeProductMethod = repository.getRequiredMethod("serializeProduct", Long)
+        def aggregateNamesMethod = repository.getRequiredMethod("aggregateNames")
+        def serializeActionMethod = repository.getRequiredMethod("serializeAction")
+
+        expect:
+        getRawQuery(serializeProductMethod) == "SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = ?"
+        serializeProductMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(aggregateNamesMethod) == "SELECT json_arrayagg(p.name ORDER BY p.name RETURNING CLOB) FROM product p"
+        aggregateNamesMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(serializeActionMethod) == "SELECT json_serialize(json_object('action' VALUE 'needs update now' RETURNING CLOB) RETURNING CLOB) FROM product p"
+        serializeActionMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
+    void "test raw operation detection ignores nested and quoted keywords"() {
+        given:
+        def repository = buildRepository('test.RawKeywordRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface RawKeywordRepository extends GenericRepository<Product, Long> {
+
+    @Query("WITH \\"update\\" AS (SELECT p.id FROM product p WHERE p.name = 'needs update') SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = :id")
+    String cteSelect(Long id);
+
+    @Query("SELECT * FROM product WHERE id = :id FOR UPDATE")
+    Product selectForUpdate(Long id);
+
+    @Query("UPDATE book SET title = 'not returning'' yet' WHERE id = :id")
+    int updateWithEscapedQuote(Long id);
+
+    @Query("UPDATE book SET title = json_serialize(json_object('label' VALUE 'nested') RETURNING CLOB) WHERE id = :id")
+    int updateWithNestedReturning(Long id);
+
+    @Query("CALL read_something(:id)")
+    String readProcedure(Long id);
+
+    @Query(value = "CALL write_something(:id)", readOnly = false)
+    int writeProcedure(Long id);
+}
+""")
+        def cteSelectMethod = repository.getRequiredMethod("cteSelect", Long)
+        def selectForUpdateMethod = repository.getRequiredMethod("selectForUpdate", Long)
+        def updateWithEscapedQuoteMethod = repository.getRequiredMethod("updateWithEscapedQuote", Long)
+        def updateWithNestedReturningMethod = repository.getRequiredMethod("updateWithNestedReturning", Long)
+        def readProcedureMethod = repository.getRequiredMethod("readProcedure", Long)
+        def writeProcedureMethod = repository.getRequiredMethod("writeProcedure", Long)
+
+        expect:
+        getOperationType(cteSelectMethod) == DataMethod.OperationType.QUERY
+        cteSelectMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(cteSelectMethod) == "WITH \"update\" AS (SELECT p.id FROM product p WHERE p.name = 'needs update') SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = ?"
+
+        getOperationType(selectForUpdateMethod) == DataMethod.OperationType.QUERY
+        selectForUpdateMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(selectForUpdateMethod) == "SELECT * FROM product WHERE id = ? FOR UPDATE"
+
+        getOperationType(updateWithEscapedQuoteMethod) == DataMethod.OperationType.UPDATE
+        updateWithEscapedQuoteMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(updateWithEscapedQuoteMethod) == "UPDATE book SET title = 'not returning'' yet' WHERE id = ?"
+
+        getOperationType(updateWithNestedReturningMethod) == DataMethod.OperationType.UPDATE
+        updateWithNestedReturningMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(updateWithNestedReturningMethod) == "UPDATE book SET title = json_serialize(json_object('label' VALUE 'nested') RETURNING CLOB) WHERE id = ?"
+
+        getOperationType(readProcedureMethod) == DataMethod.OperationType.QUERY
+        readProcedureMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(readProcedureMethod) == "CALL read_something(?)"
+
+        getOperationType(writeProcedureMethod) == DataMethod.OperationType.UPDATE
+        writeProcedureMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(writeProcedureMethod) == "CALL write_something(?)"
+    }
+
     void "test raw REPLACE INTO is treated as UPDATE (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """

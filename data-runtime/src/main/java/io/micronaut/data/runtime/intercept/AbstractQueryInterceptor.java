@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -809,8 +809,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected Object instantiateEntity(@NonNull Class<?> rootEntity, @NonNull Map<String, Object> parameterValues) {
-        PersistentEntity entity = operations.getEntity(rootEntity);
-        BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(rootEntity);
+        RuntimePersistentEntity<?> entity = operations.getEntity(rootEntity);
+        BeanIntrospection<?> introspection = entity.getIntrospection();
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Object instance;
         if (ArrayUtils.isNotEmpty(constructorArguments)) {
@@ -840,18 +840,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             instance = introspection.instantiate();
         }
 
-        BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         if (entity.hasIdentity()) {
-            setProperty(wrapper, entity.getIdentity(), parameterValues);
+            setProperty(introspection, instance, entity.getIdentity(), parameterValues);
         }
         if (entity.hasCompositeIdentity()) {
             for (PersistentProperty compositeIdentity : entity.getCompositeIdentity()) {
-                setProperty(wrapper, compositeIdentity, parameterValues);
+                setProperty(introspection, instance, compositeIdentity, parameterValues);
             }
         }
         for (PersistentProperty prop : persistentProperties) {
-            setProperty(wrapper, prop, parameterValues);
+            setProperty(introspection, instance, prop, parameterValues);
         }
         return instance;
     }
@@ -1101,14 +1100,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Sets the property value for given persistent property of the {@link BeanWrapper} if property
+     * Sets the property value for given persistent property of the {@link BeanIntrospection} if property
      * present in given parameter values and property not readonly or generated.
      *
-     * @param wrapper the bean wrapper
+     * @param introspection the bean introspection
+     * @param instance the bean instance
      * @param prop the persistent property
      * @param parameterValues the parameter value map
      */
-    private static void setProperty(BeanWrapper<Object> wrapper, PersistentProperty prop, Map<String, Object> parameterValues) {
+    private static void setProperty(BeanIntrospection<?> introspection, Object instance, PersistentProperty prop, Map<String, Object> parameterValues) {
         if (!prop.isReadOnly() && !prop.isGenerated()) {
             String propName = prop.getName();
             if (parameterValues.containsKey(propName)) {
@@ -1117,14 +1117,25 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 if (v == null && !prop.isOptional()) {
                     throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
                 }
-                wrapper.setProperty(propName, v);
+                setBeanProperty(introspection, instance, propName, v);
             } else if (prop.isRequired()) {
-                final Optional<Object> p = wrapper.getProperty(propName, Object.class);
-                if (p.isEmpty()) {
+                if (!hasPropertyValue(introspection, instance, propName)) {
                     throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
                 }
             }
         }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void setBeanProperty(BeanIntrospection introspection, Object instance, String propName, Object value) {
+        introspection.getProperty(propName)
+            .ifPresent(property -> ((BeanProperty) property).convertAndSet(instance, value));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static boolean hasPropertyValue(BeanIntrospection introspection, Object instance, String propName) {
+        Optional<BeanProperty> property = introspection.getProperty(propName);
+        return property.isPresent() && property.get().get(instance) != null;
     }
 
     private record StoredQueryKey(RepositoryMethodKey methodKey, StoredQuery.OperationType operationType) {
