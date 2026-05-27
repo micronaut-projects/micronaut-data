@@ -15,11 +15,13 @@
  */
 package io.micronaut.transaction.jdbc;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.transaction.support.AbstractDataSourceTransactionManagerCondition;
 
+@Internal
 @Introspected
-final class JdbcTransactionManagerCondition extends AbstractDataSourceTransactionManagerCondition {
+public final class JdbcTransactionManagerCondition extends AbstractDataSourceTransactionManagerCondition {
 
     @Override
     protected String getTransactionManagerName() {

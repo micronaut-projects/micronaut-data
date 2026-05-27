@@ -1,5 +1,6 @@
 package io.micronaut.transaction.jdbc.oracle
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.core.propagation.PropagatedContext
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.ConnectionOperations
@@ -19,6 +20,20 @@ import java.sql.SQLException
 import java.time.Duration
 
 class OracleSessionlessTransactionManagerSpec extends Specification {
+
+    def "oracle manager is disabled when datasource selects another transaction manager"() {
+        given:
+        def context = ApplicationContext.run([
+            "datasources.default.url"                : "jdbc:h2:mem:oracleSessionlessTxCondition;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
+            "datasources.default.transaction-manager": "hibernate"
+        ])
+
+        expect:
+        !context.containsBean(OracleSessionlessTransactionManager)
+
+        cleanup:
+        context.close()
+    }
 
     def "begin delegates JDBC setup and starts sessionless transaction with listener support"() {
         given:

@@ -18,6 +18,7 @@ package io.micronaut.transaction.jdbc.oracle;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -25,6 +26,7 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
+import io.micronaut.transaction.jdbc.JdbcTransactionManagerCondition;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import jakarta.inject.Inject;
 import oracle.jdbc.OracleConnection;
@@ -43,6 +45,7 @@ import java.util.Optional;
  */
 @EachBean(DataSource.class)
 @Replaces(DataSourceTransactionManager.class)
+@Requires(condition = JdbcTransactionManagerCondition.class)
 final class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
 
     @Inject
