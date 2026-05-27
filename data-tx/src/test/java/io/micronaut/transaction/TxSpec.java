@@ -16,6 +16,7 @@
 package io.micronaut.transaction;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -238,6 +239,28 @@ public class TxSpec {
             Assertions.assertEquals(List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "COMMIT TX CONNECTION_1", "CLOSE CONNECTION_1"), opLogger.getLogs());
             Assertions.assertEquals(List.of("Doing job: job1 in transaction: CONNECTION_1", "Doing job: job2 in transaction: CONNECTION_1"), results);
         }
+    }
+
+    @Test
+    public void testReactiveTxRejectsOracleSessionlessPropagation() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
+
+            assertUnsupportedReactiveOracleSessionlessPropagation(txManager, TransactionDefinition.Propagation.SUSPEND);
+            assertUnsupportedReactiveOracleSessionlessPropagation(txManager, TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+        }
+    }
+
+    private static void assertUnsupportedReactiveOracleSessionlessPropagation(ReactiveTxManager txManager,
+                                                                              TransactionDefinition.Propagation propagation) {
+        TransactionSuspensionNotSupportedException exception = Assertions.assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.withTransactionMono(TransactionDefinition.of(propagation), status -> Mono.just("ignored"))
+        );
+        Assertions.assertEquals(
+            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
+        );
     }
 
     // end::test[]

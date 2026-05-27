@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies that doRollbackOnCommitException dispatches to the correct
@@ -135,6 +137,22 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
+    @Test
+    void unsupportedOracleSessionlessPropagationIsRejectedBeforeTransactionalWork() {
+        assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation.SUSPEND);
+        assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+
+        assertEquals(List.of(), txManager.calls);
+    }
+
+    @Test
+    void unsupportedOracleSessionlessPropagationIsRejectedBeforeProgrammaticTransactionCreation() {
+        assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation.SUSPEND);
+        assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+
+        assertEquals(List.of(), txManager.calls);
+    }
+
     private static void registerThrowingBeforeCommit(Object status) {
         ((InternalTransaction<?>) status).registerInvocationSynchronization(
             new TransactionSynchronization() {
@@ -143,6 +161,28 @@ class DoRollbackOnCommitExceptionTest {
                     throw new RuntimeException("simulated beforeCommit failure");
                 }
             }
+        );
+    }
+
+    private void assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation propagation) {
+        TransactionSuspensionNotSupportedException exception = assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.execute(TransactionDefinition.of(propagation), status -> null)
+        );
+        assertEquals(
+            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
+        );
+    }
+
+    private void assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation propagation) {
+        TransactionSuspensionNotSupportedException exception = assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.getTransaction(TransactionDefinition.of(propagation))
+        );
+        assertEquals(
+            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
         );
     }
 

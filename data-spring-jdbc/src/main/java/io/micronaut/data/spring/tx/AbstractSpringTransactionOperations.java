@@ -28,6 +28,7 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
+import io.micronaut.transaction.support.TransactionUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -111,6 +112,7 @@ public abstract class AbstractSpringTransactionOperations
 
     @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
+        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
@@ -255,4 +257,3 @@ public abstract class AbstractSpringTransactionOperations
         }
     }
 }
-

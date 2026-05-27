@@ -23,6 +23,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -99,6 +100,25 @@ public final class TransactionUtil {
             return parseOraclePriority(priority.name());
         }
         return null;
+    }
+
+    /**
+     * Validates whether a transaction definition that uses Oracle sessionless propagation is supported.
+     *
+     * @param definition The transaction definition
+     * @param supported Whether the transaction manager supports Oracle sessionless transaction propagation
+     */
+    public static void validateOracleSessionlessPropagation(TransactionDefinition definition, boolean supported) {
+        TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();
+        if (propagation != TransactionDefinition.Propagation.SUSPEND
+            && propagation != TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+            return;
+        }
+        if (!supported) {
+            throw new TransactionSuspensionNotSupportedException(
+                "Propagation '" + propagation + "' requires Oracle sessionless transaction support"
+            );
+        }
     }
 
     private static OracleTransactional.Priority parseOraclePriority(String priority) {

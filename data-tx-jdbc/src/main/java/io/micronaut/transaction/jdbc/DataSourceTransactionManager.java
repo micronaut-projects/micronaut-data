@@ -195,13 +195,6 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
         }
     }
 
-    /**
-     * @return Whether this manager supports Oracle sessionless transaction propagation modes.
-     */
-    protected boolean supportsOracleSessionlessTransactions() {
-        return false;
-    }
-
     private void validateOracleSessionlessPropagation(TransactionDefinition definition) {
         TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();
         if (propagation != TransactionDefinition.Propagation.SUSPEND
