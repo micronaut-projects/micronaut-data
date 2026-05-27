@@ -16,15 +16,13 @@
 package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 
 /**
  * Configuration for HTTP propagation of Oracle sessionless transaction ids.
  */
-@Internal
 @ConfigurationProperties(OracleSessionlessTransactionHttpConfiguration.PREFIX)
-public class OracleSessionlessTransactionHttpConfiguration {
+final class OracleSessionlessTransactionHttpConfiguration {
 
     /**
      * The configuration prefix for Oracle sessionless transaction HTTP propagation.

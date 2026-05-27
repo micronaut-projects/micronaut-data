@@ -18,7 +18,6 @@ package io.micronaut.transaction.jdbc.oracle;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -42,10 +41,9 @@ import java.util.Optional;
 /**
  * Oracle JDBC transaction manager with sessionless transaction propagation support.
  */
-@Internal
 @EachBean(DataSource.class)
 @Replaces(DataSourceTransactionManager.class)
-public class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
+final class OracleSessionlessTransactionManager extends DataSourceTransactionManager {
 
     @Inject
     public OracleSessionlessTransactionManager(@NonNull DataSource dataSource,

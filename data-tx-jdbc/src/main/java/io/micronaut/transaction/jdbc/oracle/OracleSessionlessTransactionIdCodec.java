@@ -24,7 +24,7 @@ import io.micronaut.core.annotation.Experimental;
  * <p>Applications can provide their own bean implementation to apply additional protection, for
  * example signing or encrypting the encoded value before it is exposed over HTTP.</p>
  *
- * @since 5.0.1
+ * @since 5.1.0
  */
 @Experimental
 public interface OracleSessionlessTransactionIdCodec {

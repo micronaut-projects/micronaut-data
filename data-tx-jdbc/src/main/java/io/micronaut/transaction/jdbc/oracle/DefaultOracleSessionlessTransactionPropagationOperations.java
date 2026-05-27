@@ -16,6 +16,7 @@
 package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
@@ -24,11 +25,26 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * Default implementation of {@link OracleSessionlessTransactionPropagationOperations}.
+ *
+ * <p>This implementation creates a lexical {@link PropagatedContext} scope that contains a single
+ * {@link OracleSessionlessTransactionState}. The transaction manager uses that state to publish the
+ * GTRID produced by {@link TransactionDefinition.Propagation#SUSPEND} and to
+ * consume the GTRID required by {@link TransactionDefinition.Propagation#REQUIRES_SUSPENDED}.
+ * Encoded transaction identifiers are converted through {@link OracleSessionlessTransactionIdCodec}, so
+ * applications can replace the codec without changing propagation mechanics.</p>
+ */
 @Singleton
 final class DefaultOracleSessionlessTransactionPropagationOperations implements OracleSessionlessTransactionPropagationOperations {
 
     private final OracleSessionlessTransactionIdCodec transactionIdCodec;
 
+    /**
+     * Creates the default propagation operations.
+     *
+     * @param transactionIdCodec The codec used to encode and decode transaction identifiers
+     */
     DefaultOracleSessionlessTransactionPropagationOperations(OracleSessionlessTransactionIdCodec transactionIdCodec) {
         this.transactionIdCodec = transactionIdCodec;
     }
@@ -64,6 +80,18 @@ final class DefaultOracleSessionlessTransactionPropagationOperations implements 
         OracleSessionlessTransactionState.current().ifPresent(OracleSessionlessTransactionState::clearGtrid);
     }
 
+    /**
+     * Executes the supplier with the provided sessionless transaction state installed in the current
+     * propagation context.
+     *
+     * <p>Programmatic propagation is lexical: the new state is visible only while the supplier runs,
+     * and any previous state is restored by {@link PropagatedContext} when the supplier exits.</p>
+     *
+     * @param state The state to propagate
+     * @param supplier The supplier to execute
+     * @param <T> The result type
+     * @return The supplier result
+     */
     private static <T extends @Nullable Object> T withPropagation(OracleSessionlessTransactionState state,
                                                                   Supplier<T> supplier) {
         Objects.requireNonNull(supplier, "supplier");

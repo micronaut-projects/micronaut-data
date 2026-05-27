@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * HTTP can use this API to create an equivalent propagation scope and exchange encoded transaction
  * identifiers with other transports.</p>
  *
- * @since 5.0.1
+ * @since 5.1.0
  */
 @Experimental
 public interface OracleSessionlessTransactionPropagationOperations {
