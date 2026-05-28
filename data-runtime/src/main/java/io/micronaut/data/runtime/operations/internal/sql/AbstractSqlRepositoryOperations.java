@@ -589,11 +589,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
-        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-        if (sqlStoredQuery.getOperationType() == OperationType.INSERT_RETURNING) {
-            return false;
-        }
-        return isSupportsBatchInsert(persistentEntity, sqlStoredQuery.getDialect());
+        return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, sqlStoredQuery);
     }
 
     /**
@@ -604,18 +600,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
-        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-        return switch (dialect) {
-            case SQL_SERVER -> false;
-            case MYSQL, ORACLE -> {
-                if (persistentEntity.hasIdentity()) {
-                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-                    yield !persistentEntity.getIdentity().isGenerated();
-                }
-                yield false;
-            }
-            default -> true;
-        };
+        return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, dialect);
     }
 
     /**
