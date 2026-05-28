@@ -65,7 +65,7 @@ jobs:
         id: disable_tfo
         run: |
           TESTPILOT_CONNECTION_STRING_SUFFIX=${{ steps.create_database.outputs.connection_string_suffix }}
-          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//USE_TCP_FAST_OPEN=ON/USE_TCP_FAST_OPEN=OFF}
+          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//useTcpFastOpen=true/useTcpFastOpen=false}
           echo "TESTPILOT_CONNECTION_STRING_SUFFIX=$TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO" >> $GITHUB_ENV
         shell: bash
 
