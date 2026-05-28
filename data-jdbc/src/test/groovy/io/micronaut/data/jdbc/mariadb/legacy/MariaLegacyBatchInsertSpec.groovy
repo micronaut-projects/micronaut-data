@@ -81,6 +81,22 @@ class MariaLegacyBatchInsertSpec extends Specification {
         repository.findAll()*.title as Set == ["Solaris", "Fiasco"] as Set
     }
 
+    void "saveAll populates ids on MariaDB 5.5 via generated-key fallback"() {
+        given:
+        def books = [
+            new MariaLegacyBatchBook(title: "The Cyberiad"),
+            new MariaLegacyBatchBook(title: "His Master's Voice")
+        ]
+
+        when:
+        def saved = repository.saveAll(books)
+
+        then:
+        saved*.id.every { it != null }
+        books*.id.every { it != null }
+        repository.count() == 2
+    }
+
     private Map<String, Object> properties() {
         String prefix = "datasources." + DATASOURCE_NAME
         [
