@@ -17804,9 +17804,21 @@ entity.</div>
 <dd>
 <div class="block">Does supports batch for update queries.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchInsert(PersistentEntity, Dialect)</a> - Static method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport</a></dt>
+<dd>
+<div class="block">Resolves whether insert batching is supported for a SQL dialect.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String,boolean)" class="member-name-link">isSupportsBatchInsert(PersistentEntity, Dialect, String, boolean)</a> - Static method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport</a></dt>
+<dd>
+<div class="block">Resolves whether MariaDB can use batch inserts without generated-key retrieval.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert(PersistentEntity, SqlStoredQuery)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Does supports batch for update queries.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert(PersistentEntity, SqlStoredQuery)</a> - Static method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport</a></dt>
+<dd>
+<div class="block">Resolves whether insert batching is supported for a stored query.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchUpdate(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">isSupportsBatchUpdate(Ctx, RuntimePersistentEntity)</a> - Method in interface io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></dt>
 <dd>
@@ -24244,6 +24256,10 @@ can be produced by this query.</div>
 <dd>
 <div class="block">A requires new definition.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html#requiresBatchGeneratedKeys(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">requiresBatchGeneratedKeys(RuntimePersistentEntity, InsertBatchOperation)</a> - Static method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport</a></dt>
+<dd>
+<div class="block">Resolves whether a batch insert operation needs generated keys to be returned.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#requiresPreviousPopulatedValue()" class="member-name-link">requiresPreviousPopulatedValue()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/conf/RequiresReactiveHibernate.html" class="type-name-link" title="annotation interface in io.micronaut.data.hibernate.conf">RequiresReactiveHibernate</a> - Annotation Interface in <a href="io/micronaut/data/hibernate/conf/package-summary.html">io.micronaut.data.hibernate.conf</a></dt>
@@ -27733,6 +27749,10 @@ pagination operations.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#SQL_SERVER_FOR_UPDATE_CLAUSE" class="member-name-link">SQL_SERVER_FOR_UPDATE_CLAUSE</a> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport</a> - Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
+<dd>
+<div class="block">Shared SQL batch-operation capability checks.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a> - Interface in <a href="io/micronaut/data/model/runtime/convert/package-summary.html">io.micronaut.data.model.runtime.convert</a></dt>
 <dd>
 <div class="block">Extension interface to provide vendor-specific SQL column definitions during schema generation.</div>
