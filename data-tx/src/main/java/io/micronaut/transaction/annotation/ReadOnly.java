@@ -26,7 +26,9 @@ import java.lang.annotation.Target;
 
 /**
  * Stereotype annotation for demarcating a read-only transaction. Since the
- * {@code jakarta.transaction.Transactional}
+ * {@code jakarta.transaction.Transactional} annotation does not support a
+ * {@code readOnly} attribute, this annotation acts as a shortcut for
+ * {@link Transactional @Transactional(readOnly = true)}.
  *
  * @author graemerocher
  * @since 1.0.0

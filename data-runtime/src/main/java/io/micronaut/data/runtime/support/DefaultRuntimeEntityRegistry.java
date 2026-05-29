@@ -17,9 +17,10 @@ package io.micronaut.data.runtime.support;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.event.PostLoad;
@@ -39,6 +40,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * A registry for entities looking up instances of {@link RuntimeEntityRegistry}.
@@ -128,7 +131,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
     @NonNull
     @Override
     public <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type) {
-        return new RuntimePersistentEntity<>(type) {
+        return new RuntimePersistentEntity<>(resolveIntrospection(type)) {
             final boolean hasPrePersistEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PrePersist.class);
             final boolean hasPreRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreRemove.class);
             final boolean hasPreUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreUpdate.class);
@@ -182,6 +185,32 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
                 return hasPostPersistEventListeners;
             }
         };
+    }
+
+    private <T> BeanIntrospection<T> resolveIntrospection(Class<T> type) {
+        ClassLoader classLoader = type.getClassLoader();
+        if (classLoader == null) {
+            classLoader = applicationContext.getClassLoader();
+        }
+        ClassLoader introspectionClassLoader = classLoader;
+        return withContextClassLoader(
+                introspectionClassLoader,
+                () -> BeanIntrospector.forClassLoader(introspectionClassLoader).getIntrospection(type)
+        );
+    }
+
+    private static <T> T withContextClassLoader(ClassLoader classLoader, Supplier<T> action) {
+        Thread thread = Thread.currentThread();
+        ClassLoader previous = thread.getContextClassLoader();
+        if (previous == classLoader) {
+            return action.get();
+        }
+        thread.setContextClassLoader(classLoader);
+        try {
+            return action.get();
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
     }
 
     @Override

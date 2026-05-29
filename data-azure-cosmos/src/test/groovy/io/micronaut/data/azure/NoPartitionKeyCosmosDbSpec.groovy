@@ -58,7 +58,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entity1.name = "Entity1"
             entity1.grade = 2
             entity1.customName = "CustomEnt2"
-            repository.save(entity1)
+            repository.insert(entity1)
             def entity2 = new NoPartitionKeyEntity()
             entity2.id = "2"
             entity2.name = "Entity2"
@@ -67,7 +67,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
             entity2.rating = 3.5
             // should not be persisted
             entity2.comment = "Entity2 comment"
-            repository.save(entity2)
+            repository.insert(entity2)
         when:
             def maxGrade = repository.findMaxGradeByIdIn(Arrays.asList(entity1.id, entity2.id))
             def sumGrade = repository.findSumGrade()
