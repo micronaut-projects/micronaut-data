@@ -22,13 +22,17 @@ import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -42,6 +46,7 @@ import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
@@ -61,12 +66,6 @@ import java.util.regex.Pattern;
  */
 public class RawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern UPDATE_PATTERN = Pattern.compile("(?<!['\"])\\bupdate\\b(?!['\"])");
-    private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
-    private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
-    private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
-    private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
@@ -117,14 +116,17 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     ClassElement resultType = entry.returnType();
                     ClassElement interceptorType = entry.interceptor();
 
-                    if (interceptorType.getSimpleName().startsWith("SaveOne")) {
+                    if (entityParameter == null
+                        && entitiesParameter == null
+                        && operationType == DataMethod.OperationType.INSERT
+                        && (interceptorType.getSimpleName().startsWith("SaveOne") || interceptorType.getSimpleName().startsWith("InsertOne"))) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
-                        operationType = DataMethod.OperationType.UPDATE;
                         FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
                         resultType = e.returnType();
                         interceptorType = e.interceptor();
+                        operationType = DataMethod.OperationType.UPDATE;
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {
@@ -181,26 +183,30 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         query = query.trim().toLowerCase(Locale.ENGLISH);
         query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
 
-        if (DELETE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+        SqlStatement statement = findSqlStatement(query);
+        if (statement == SqlStatement.DELETE) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
-        } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+        } else if (statement == SqlStatement.INSERT) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }
             return DataMethod.OperationType.INSERT;
-        } else if (UPDATE_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
+        } else if (statement == SqlStatement.REPLACE) {
+            if (containsReturningClause(query)) {
+                return DataMethod.OperationType.UPDATE_RETURNING;
+            }
+            return DataMethod.OperationType.UPDATE;
+        } else if (statement == SqlStatement.UPDATE) {
+            if (containsReturningClause(query)) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
             }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
                 return DataMethod.OperationType.DELETE;
             }
-            if (!FOR_UPDATE_PATTERN.matcher(query).find()) {
-                return DataMethod.OperationType.UPDATE;
-            }
+            return DataMethod.OperationType.UPDATE;
         }
         if (readOnly) {
             return DataMethod.OperationType.QUERY;
@@ -237,10 +243,28 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
 
-        QueryResult queryResult = getQueryResult(matchContext, queryString, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult queryResult = getQueryResult(
+            matchContext,
+            queryString,
+            parameters,
+            namedParameters,
+            entityParam,
+            persistentEntity,
+            methodMatchInfo.getResultType(),
+            operationType
+        );
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
             .orElse(null);
-        QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
+        QueryResult countQueryResult = cq == null ? null : getQueryResult(
+            matchContext,
+            cq,
+            parameters,
+            namedParameters,
+            entityParam,
+            persistentEntity,
+            methodMatchInfo.getResultType(),
+            DataMethod.OperationType.QUERY
+        );
         boolean encodeEntityParameters;
         if (implicitQueries) {
             encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
@@ -261,7 +285,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        @Nullable
                                        ParameterElement entityParam,
                                        @Nullable
-                                       SourcePersistentEntity persistentEntity) {
+                                       SourcePersistentEntity persistentEntity,
+                                       @Nullable
+                                       TypedElement resultType,
+                                       DataMethod.OperationType operationType) {
         String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
         Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
@@ -303,20 +330,190 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
         String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
-        return new QueryResult() {
+
+        if (isReturningOperation(operationType)) {
+            Dialect dialect = matchContext.getRepositoryClass().enumValue(Repository.class, "dialect", Dialect.class)
+                .orElse(Dialect.ANSI);
+            if (dialect == Dialect.ORACLE) {
+                SourcePersistentEntity entity = persistentEntity != null ? persistentEntity : matchContext.getRootEntity();
+                return OracleRawQueryReturningSupport.buildQueryResult(
+                    finalQueryString,
+                    queryParts,
+                    parameterBindings,
+                    entity,
+                    resultType,
+                    RawQueryMethodMatcher::createOutBinding
+                );
+            }
+        }
+
+        // Default: no transformation
+        return QueryResult.of(finalQueryString, queryParts, parameterBindings);
+    }
+
+    private static boolean isReturningOperation(DataMethod.OperationType operationType) {
+        return operationType == DataMethod.OperationType.INSERT_RETURNING
+            || operationType == DataMethod.OperationType.UPDATE_RETURNING
+            || operationType == DataMethod.OperationType.DELETE_RETURNING;
+    }
+
+    private static boolean containsReturningClause(String query) {
+        return containsTopLevelKeywordOutsideQuotes(query, "returning");
+    }
+
+    private static boolean containsTopLevelKeywordOutsideQuotes(String query, String keyword) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int depth = 0;
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= query.length() || query.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                    i++;
+                }
+                continue;
+            }
+            if (inDoubleQuote) {
+                if (c == '"' && (i + 1 >= query.length() || query.charAt(i + 1) != '"')) {
+                    inDoubleQuote = false;
+                } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
+                    i++;
+                }
+                continue;
+            }
+            if (c == '\'') {
+                inSingleQuote = true;
+                continue;
+            }
+            if (c == '"') {
+                inDoubleQuote = true;
+                continue;
+            }
+            if (c == '(') {
+                depth++;
+                continue;
+            }
+            if (c == ')') {
+                if (depth > 0) {
+                    depth--;
+                }
+                continue;
+            }
+            if (depth > 0) {
+                continue;
+            }
+            if (isKeywordAt(query, keyword, i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isKeywordBoundary(String query, int index) {
+        if (index < 0 || index >= query.length()) {
+            return true;
+        }
+        char c = query.charAt(index);
+        return !Character.isLetterOrDigit(c) && c != '_';
+    }
+
+    private static SqlStatement findSqlStatement(String query) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int depth = 0;
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'' && (i + 1 >= query.length() || query.charAt(i + 1) != '\'')) {
+                    inSingleQuote = false;
+                } else if (c == '\'' && i + 1 < query.length() && query.charAt(i + 1) == '\'') {
+                    i++;
+                }
+                continue;
+            }
+            if (inDoubleQuote) {
+                if (c == '"' && (i + 1 >= query.length() || query.charAt(i + 1) != '"')) {
+                    inDoubleQuote = false;
+                } else if (c == '"' && i + 1 < query.length() && query.charAt(i + 1) == '"') {
+                    i++;
+                }
+                continue;
+            }
+            if (c == '\'') {
+                inSingleQuote = true;
+                continue;
+            }
+            if (c == '"') {
+                inDoubleQuote = true;
+                continue;
+            }
+            if (c == '(') {
+                depth++;
+                continue;
+            }
+            if (c == ')') {
+                if (depth > 0) {
+                    depth--;
+                }
+                continue;
+            }
+            if (depth > 0) {
+                continue;
+            }
+            if (isKeywordAt(query, "select", i)) {
+                return SqlStatement.QUERY;
+            }
+            if (isKeywordAt(query, "delete", i)) {
+                return SqlStatement.DELETE;
+            }
+            if (isKeywordAt(query, "insert", i)) {
+                return SqlStatement.INSERT;
+            }
+            if (isKeywordAt(query, "update", i)) {
+                return SqlStatement.UPDATE;
+            }
+            if (isKeywordAt(query, "replace", i) && isNextKeyword(query, i + "replace".length(), "into")) {
+                return SqlStatement.REPLACE;
+            }
+        }
+        return SqlStatement.UNKNOWN;
+    }
+
+    private static boolean isKeywordAt(String query, String keyword, int index) {
+        return query.regionMatches(true, index, keyword, 0, keyword.length())
+            && isKeywordBoundary(query, index - 1)
+            && isKeywordBoundary(query, index + keyword.length());
+    }
+
+    private static boolean isNextKeyword(String query, int index, String keyword) {
+        int i = index;
+        while (i < query.length() && Character.isWhitespace(query.charAt(i))) {
+            i++;
+        }
+        return isKeywordAt(query, keyword, i);
+    }
+
+    private enum SqlStatement {
+        QUERY,
+        DELETE,
+        INSERT,
+        UPDATE,
+        REPLACE,
+        UNKNOWN
+    }
+
+    private static QueryOutParameterBinding createOutBinding(String column, DataType dataType) {
+        return new QueryOutParameterBinding() {
             @Override
-            public String getQuery() {
-                return finalQueryString;
+            public String getName() {
+                return column;
             }
 
             @Override
-            public List<String> getQueryParts() {
-                return queryParts;
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
+            public DataType getDataType() {
+                return dataType;
             }
         };
     }

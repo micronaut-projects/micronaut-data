@@ -21,6 +21,9 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
@@ -61,6 +64,14 @@ public interface JpaSpecificationCrudRepository extends ReactorCrudRepository<Pe
     Mono<Integer> getSumAgeByNameLike(String name);
 
     Mono<Long> getAvgAgeByNameLike(String name);
+
+    Mono<Person> findOne(CriteriaQueryBuilder<Person> builder);
+
+    Flux<Person> findAll(CriteriaQueryBuilder<Person> builder);
+
+    Mono<Long> deleteAll(CriteriaDeleteBuilder<Person> builder);
+
+    Mono<Long> updateAll(CriteriaUpdateBuilder<Person> builder);
 
     Flux<Integer> readAgeByNameLike(String name);
 

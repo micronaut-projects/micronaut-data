@@ -17,13 +17,12 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -97,6 +96,11 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
+    public List<QueryOutParameterBinding> getOutParameterBindings() {
+        return getStoredQueryDelegate().getOutParameterBindings();
+    }
+
+    @Override
     public boolean isExpandableQuery() {
         return expandableQuery;
     }
@@ -121,16 +125,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
         return storedQuery.getQueryBindings().stream()
             .filter(b -> b.isAutoPopulated() && b.isRequiresPreviousPopulatedValue())
             .map(b -> {
-                if (b.getPropertyPath() == null) {
-                    throw new IllegalStateException("Missing property path for query parameter: " + b);
-                }
-                Object value = entity;
-                for (String property : b.getPropertyPath()) {
-                    if (value == null) {
-                        break;
-                    }
-                    value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
-                }
+                var value = getRequiredPropertyPath(b, getPersistentEntity()).getPropertyValue(entity);
                 return new AbstractMap.SimpleEntry<>(b, value);
             })
             .filter(e -> e.getValue() != null)

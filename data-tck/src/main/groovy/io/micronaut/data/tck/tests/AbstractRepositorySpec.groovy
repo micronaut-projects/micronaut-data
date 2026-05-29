@@ -80,8 +80,12 @@ import spock.lang.Unroll
 import java.sql.Connection
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -862,8 +866,8 @@ abstract class AbstractRepositorySpec extends Specification {
         io.micronaut.data.tck.jdbc.entities.User user1 = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("user1@email.com"))
         io.micronaut.data.tck.jdbc.entities.Role role1 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("manager"))
         io.micronaut.data.tck.jdbc.entities.Role role2 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("developer"))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
-        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
+        userRoleRepository.insert(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
         def userRoleCount = userRoleRepository.count()
         def userRoleDistinctCount = userRoleRepository.countDistinct()
 
@@ -2093,7 +2097,7 @@ abstract class AbstractRepositorySpec extends Specification {
         Role role = roleRepository.save(new Role("ROLE_USER"))
 
         when:
-        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
+        UserRole userRole = userRoleRepository.insert(adminUser, adminRole)
 
         then:
         userRoleRepository.count() == 1
@@ -2101,8 +2105,8 @@ abstract class AbstractRepositorySpec extends Specification {
         userRole.role.id == adminRole.id
 
         when:
-        userRoleRepository.save(adminUser, role)
-        userRoleRepository.save(user, role)
+        userRoleRepository.insert(adminUser, role)
+        userRoleRepository.insert(user, role)
 
         then:
         userRoleRepository.count() == 3
@@ -3116,7 +3120,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e)
+        entityWithIdClassRepository.insert(e)
         e = entityWithIdClassRepository.findById(k).get()
 
         then:
@@ -3125,14 +3129,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f)
+        entityWithIdClassRepository.insert(f)
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g)
+        entityWithIdClassRepository.insert(g)
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
 
         then:
@@ -3180,7 +3184,7 @@ abstract class AbstractRepositorySpec extends Specification {
         k.id2 = 22
 
         when:
-        entityWithIdClass2Repository.save(e)
+        entityWithIdClass2Repository.insert(e)
         e = entityWithIdClass2Repository.findById(k).get()
 
         then:
@@ -3189,14 +3193,14 @@ abstract class AbstractRepositorySpec extends Specification {
         e.name() == "Xyz"
 
         when:
-        entityWithIdClass2Repository.save(f)
+        entityWithIdClass2Repository.insert(f)
         List<EntityWithIdClass2> ef = entityWithIdClass2Repository.findById2(e.id2())
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClass2Repository.save(g)
+        entityWithIdClass2Repository.insert(g)
         List<EntityWithIdClass2> eg = entityWithIdClass2Repository.findById1(e.id1())
 
         then:
@@ -3248,6 +3252,60 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             })
             count == 50
+    }
+
+    void "test criteria current temporal expressions"() {
+        given:
+            def dateTimeProvider = context.getBean(MockedDateTimeProvider)
+            def now = OffsetDateTime.of(2025, 1, 2, 3, 4, 5, 0, ZoneOffset.UTC)
+            dateTimeProvider.setValue(now)
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Temporal", age: 1))
+            basicTypeRepository.deleteAll()
+            def basicTypes = new BasicTypes()
+            basicTypes.localDate = now.toLocalDate()
+            basicTypes.localTime = now.toLocalTime()
+            basicTypes.localDateTime = now.toLocalDateTime()
+            basicTypeRepository.save(basicTypes)
+
+        when:
+            def currentTemporalMatches = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<String>get("name"), "Temporal"),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentDate()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTime()),
+                            criteriaBuilder.isNotNull(criteriaBuilder.currentTimestamp())
+                    ))
+                    return query
+                }
+            })
+            def localTemporalMatches = basicTypeRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(BasicTypes)
+                    query.select(criteriaBuilder.count(root))
+                    query.where(criteriaBuilder.and(
+                            criteriaBuilder.equal(root.<LocalDate>get("localDate"), criteriaBuilder.localDate()),
+                            criteriaBuilder.equal(root.<LocalTime>get("localTime"), criteriaBuilder.localTime()),
+                            criteriaBuilder.equal(root.<LocalDateTime>get("localDateTime"), criteriaBuilder.localDateTime())
+                    ))
+                    return query
+                }
+            })
+
+        then:
+            currentTemporalMatches == 1
+            localTemporalMatches == 1
+
+        cleanup:
+            dateTimeProvider.setValue(null)
+            basicTypeRepository.deleteAll()
     }
 
     void "test sum function"() {
@@ -3470,7 +3528,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "test query specification with uppercase/lowercase column names"() {
         given:
-        exampleEntityRepository.save(new ExampleEntity(1, "foo", "bar"))
+        exampleEntityRepository.insert(new ExampleEntity(1, "foo", "bar"))
         when:
         QuerySpecification<ExampleEntity> qs = (root, query, criteriaBuilder) -> {
             query.multiselect(

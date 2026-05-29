@@ -60,7 +60,7 @@ import java.lang.annotation.Target;
  * <ul>
  * <li>the <em>Query by Method Name</em> {@code OrderBy} keyword in its
  *     name, nor</li>
- * <li>a {@link Query @Query} annotation specifying a JDQL or JPQL query
+ * <li>a {@link Query @Query} annotation specifying a Jakarta Query or JPQL query
  *     with an {@code ORDER BY} clause.</li>
  * </ul>
  */

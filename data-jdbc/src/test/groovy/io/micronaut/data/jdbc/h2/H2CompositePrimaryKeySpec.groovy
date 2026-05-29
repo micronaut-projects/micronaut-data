@@ -34,7 +34,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         def id = new ProjectId(10, 1)
         def p = new Project(id, "Project 1")
         p.setOrg("test")
-        def project = projectRepository.save(p)
+        def project = projectRepository.insert(p)
 
         then:"The save worked"
         project.projectId.departmentId == 10

@@ -16,6 +16,7 @@
 package io.micronaut.transaction;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Blocking;
 
 import java.util.Optional;
@@ -61,7 +62,7 @@ public interface TransactionOperations<T> {
      * @param <R> The result
      * @return The result
      */
-    <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<T, R> callback);
+    <R extends @Nullable Object> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<T, R> callback);
 
     /**
      * Execute a read-only transaction within the context of the function.
@@ -70,7 +71,7 @@ public interface TransactionOperations<T> {
      * @param <R> The result
      * @return The result
      */
-    default <R> R executeRead(@NonNull TransactionCallback<T, R> callback) {
+    default <R extends @Nullable Object> R executeRead(@NonNull TransactionCallback<T, R> callback) {
         return execute(TransactionDefinition.READ_ONLY, callback);
     }
 
@@ -81,7 +82,7 @@ public interface TransactionOperations<T> {
      * @param <R> The result
      * @return The result
      */
-    default <R> R executeWrite(@NonNull TransactionCallback<T, R> callback) {
+    default <R extends @Nullable Object> R executeWrite(@NonNull TransactionCallback<T, R> callback) {
         return execute(TransactionDefinition.DEFAULT, callback);
     }
 

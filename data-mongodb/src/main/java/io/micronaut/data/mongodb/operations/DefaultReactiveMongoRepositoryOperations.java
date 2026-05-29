@@ -339,6 +339,11 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         });
     }
 
+    @Override
+    public <R> Flux<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return withClientSessionMany(clientSession -> execute(clientSession, getMongoPreparedQuery(preparedQuery)));
+    }
+
     private <T, R> Flux<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         if (preparedQuery.isCount()) {
             return getCount(clientSession, preparedQuery).flux();
@@ -347,6 +352,44 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             return findAllAggregated(clientSession, preparedQuery, preparedQuery.isDtoProjection());
         }
         return Flux.from(find(clientSession, preparedQuery));
+    }
+
+    private <T, R> Flux<R> execute(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        StoredQuery.OperationType operationType = preparedQuery.getOperationType();
+        if (operationType == StoredQuery.OperationType.UPDATE_RETURNING) {
+            return executeUpdateReturning(clientSession, preparedQuery);
+        }
+        return Flux.error(new DataAccessException("Unsupported MongoDB execute operation: " + operationType + ". Expected update returning single entity, DTO or scalar."));
+    }
+
+    private <T, R> Flux<R> executeUpdateReturning(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
+        Class<?> declaredReturnType = preparedQuery.getResultArgument().getType();
+        if (declaredReturnType.isArray() || Iterable.class.isAssignableFrom(declaredReturnType)) {
+            return Flux.error(new DataAccessException("MongoDB update returning supports only a single result, but found declared return type: "
+                + declaredReturnType.getName()
+                + ". Use a non-collection single value type, or a single-item reactive type like Mono<T>."));
+        }
+        MongoFindOneAndUpdate updateOne = preparedQuery.getFindOneAndUpdate();
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Mongo 'findOneAndUpdate' with filter: {} and update: {}",
+                updateOne.getFilter().toBsonDocument().toJson(),
+                updateOne.getUpdate().toBsonDocument().toJson());
+        }
+        Class<T> rootType = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
+        RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+        MongoDatabase database = getDatabase(preparedQuery);
+        if (resultType.isAssignableFrom(rootType)) {
+            MongoCollection<T> collection = getCollection(database, persistentEntity, rootType);
+            return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
+                .map(entity -> triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, entity))
+                .cast(resultType)
+                .flux();
+        }
+        MongoCollection<BsonDocument> collection = getCollection(database, persistentEntity, BsonDocument.class);
+        return Mono.from(collection.findOneAndUpdate(clientSession, updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()))
+            .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()))
+            .flux();
     }
 
     private <T, R> Mono<R> getCount(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
@@ -755,7 +798,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     return Mono.from(collection.replaceOne(ctx.clientSession, filter, bsonDocument, getReplaceOptions(ctx.annotationMetadata))).map(updateResult -> {
                         d.rowsUpdated = updateResult.getModifiedCount();
                         if (persistentEntity.hasVersion()) {
-                            checkOptimisticLocking(1, (int) d.rowsUpdated);
+                            checkOptimisticLocking(1, getModifiedOrUpsertedCount(updateResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, 1, getMatchedOrUpsertedCount(updateResult));
                         }
                         return d;
                     });
@@ -803,7 +848,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     return Mono.from(collection.bulkWrite(ctx.clientSession, replaces)).map(bulkWriteResult -> {
                         if (persistentEntity.hasVersion()) {
-                            checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
+                            checkOptimisticLocking(replaces.size(), getModifiedOrUpsertedCount(bulkWriteResult));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, replaces.size(), getMatchedOrUpsertedCount(bulkWriteResult));
                         }
                         return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
@@ -833,7 +880,9 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                     }
                     Mono<Long> modifiedCount = Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates)).map(result -> {
                         if (storedQuery.isOptimisticLock()) {
-                            checkOptimisticLocking(updates.size(), result.getModifiedCount());
+                            checkOptimisticLocking(updates.size(), getModifiedOrUpsertedCount(result));
+                        } else {
+                            checkSaveMatchedCount(ctx.annotationMetadata, persistentEntity, updates.size(), getMatchedOrUpsertedCount(result));
                         }
                         return (long) result.getModifiedCount();
                     });

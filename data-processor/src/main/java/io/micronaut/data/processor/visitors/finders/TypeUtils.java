@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.async.annotation.SingleResult;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
@@ -286,7 +287,7 @@ public class TypeUtils {
      */
     public static boolean isReactiveType(@Nullable ClassElement type) {
         return type != null && (type.isAssignable(Publisher.class)
-                || type.getPackageName().equals("io.reactivex")
+                || type.getPackageName().equals("io.reactivex.rxjava3.core")
                 || type.getPackageName().startsWith("kotlinx.coroutines.flow"));
     }
 
@@ -313,6 +314,27 @@ public class TypeUtils {
             return false;
         }
         return isReactiveType(type) || isFutureType(type);
+    }
+
+    /**
+     * Is the reactive type a single-result type, i.e. emits at most one item.
+     * <p>
+     * A reactive type is considered single-result if it meets any of the following conditions:
+     * <ul>
+     *   <li>has the {@link io.micronaut.core.async.annotation.SingleResult} stereotype</li>
+     *   <li>is {@code reactor.core.publisher.Mono}</li>
+     *   <li>is {@code io.reactivex.rxjava3.core.Single}</li>
+     * </ul>
+     * @param type The type
+     * @return True if is a single-result reactive type
+     */
+    public static boolean isReactiveSingleResult(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.hasStereotype(SingleResult.class)
+            || type.isAssignable("io.reactivex.rxjava3.core.Single")
+            || type.isAssignable("reactor.core.publisher.Mono");
     }
 
     /**
@@ -519,13 +541,10 @@ public class TypeUtils {
      */
     public static @Nullable String resolveDataConverter(ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
-        if (explicitConverter.isPresent()) {
-            return explicitConverter.get();
-        }
-        return dataConverters.keySet()
-                .stream()
-                .filter(type::isAssignable)
-                .findFirst().orElse(null);
+        return explicitConverter.orElseGet(() -> dataConverters.keySet()
+            .stream()
+            .filter(type::isAssignable)
+            .findFirst().orElse(null));
     }
 
     /**
@@ -565,6 +584,9 @@ public class TypeUtils {
             if (type.isArray()) {
                 if (type.isAssignable(String.class)) {
                     return DataType.STRING_ARRAY;
+                }
+                if (type.isAssignable(UUID.class)) {
+                    return DataType.UUID_ARRAY;
                 }
                 if (type.isAssignable(Short.class)) {
                     return DataType.SHORT_ARRAY;
@@ -659,7 +681,7 @@ public class TypeUtils {
         if (leftType.getName().equals(rightTypeName)) {
             return true;
         }
-        if (leftType.isAssignable(rightTypeName)) {
+        if (leftType.isAssignable(rightTypeName) || rightType.isAssignable(leftType.getName())) {
             return true;
         }
         if (getTypeName(leftType).equals(getTypeName(rightType))) {

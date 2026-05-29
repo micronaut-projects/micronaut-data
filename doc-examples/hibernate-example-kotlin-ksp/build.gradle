@@ -10,15 +10,15 @@ application {
 dependencies {
     ksp projects.micronautDataProcessor
 
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
     implementation projects.micronautDataHibernateJpa
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation(mnSql.jakarta.persistence.api)
     implementation(mnSql.jakarta.transaction.api)
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.h2

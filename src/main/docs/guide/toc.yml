@@ -95,8 +95,10 @@ dbc:
     sqlAssociationFetching: Association Fetching
     columnTransformer: Using @ColumnTransformer
     mappedPropertyAlias: Using @MappedProperty alias
+    sqlGeospatial: Geospatial Support
     sqlJsonType: JSON Column Support
     sqlJsonView: JSON View
+    sqlVectorType: SQL Vector Type Mapping
     javaRecords: Support for Java 16 Records
     kotlinData: Support for Kotlin immutable data classes
   dbcDataTypes: Data Types

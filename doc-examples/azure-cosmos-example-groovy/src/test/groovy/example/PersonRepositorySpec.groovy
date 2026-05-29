@@ -15,7 +15,7 @@ class PersonRepositorySpec extends AbstractAzureCosmosSpec {
     PersonRepository personRepository
 
     def setup() {
-        personRepository.saveAll(Arrays.asList(
+        personRepository.insertAll(Arrays.asList(
                 new Person(
                         "Denis",
                         13

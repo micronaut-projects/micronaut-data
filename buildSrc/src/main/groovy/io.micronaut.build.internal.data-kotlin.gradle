@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     compileOnly libs.kotlin.stdlib
-    compileOnly libs.kotlin.coroutines
+    compileOnly(mn.kotlinx.coroutines.core)
 }
 
 kotlin {

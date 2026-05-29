@@ -17,6 +17,7 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -55,13 +56,11 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonObjectId;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +72,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,6 +100,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     private final RuntimePersistentEntity<E> persistentEntity;
     @Nullable
     private final UpdateData updateData;
+    @Nullable
+    private final UpdateReturningData updateReturningData;
     @Nullable
     private final FindData findData;
     @Nullable
@@ -194,6 +196,21 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else {
             updateData = null;
         }
+
+        if (operationType == OperationType.UPDATE_RETURNING) {
+            if (StringUtils.isEmpty(updateJson)) {
+                throw new IllegalStateException("Update query is expected!");
+            }
+            String query = storedQuery.getQuery();
+            updateReturningData = new UpdateReturningData(
+                BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                getParameterInRole(MongoRoles.FILTER_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
+            );
+        } else {
+            updateReturningData = null;
+        }
     }
 
     private List<Bson> parseAggregation(String query, boolean isCount) {
@@ -287,6 +304,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             throw new IllegalStateException("Expected update query!");
         }
         return updateData.getUpdateOne(entity);
+    }
+
+    @Override
+    public MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
+        if (updateReturningData == null) {
+            throw new IllegalStateException("Expected update returning query!");
+        }
+        return updateReturningData.getFindOneAndUpdate(invocationContext);
     }
 
     @Override
@@ -600,8 +625,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
         }
 
-        if (isIdentity && value instanceof String) {
-            return new BsonObjectId(new ObjectId((String) value));
+        if (isIdentity && value instanceof String string) {
+            return MongoUtils.generatedStringIdValue(string);
         }
         if (value instanceof Object[] objects) {
             List<Object> valueList = Arrays.asList(objects);
@@ -609,7 +634,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
                     Object item = iterator.next();
                     if (item instanceof String string) {
-                        item = new BsonObjectId(new ObjectId(string));
+                        item = MongoUtils.generatedStringIdValue(string);
                     }
                     iterator.set(item);
                 }
@@ -620,7 +645,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             final boolean isIdentityField = isIdentity;
             return new BsonArray(values.stream().map(val -> {
                 if (isIdentityField && val instanceof String string) {
-                    return new BsonObjectId(new ObjectId(string));
+                    return MongoUtils.generatedStringIdValue(string);
                 }
                 return MongoUtils.toBsonValue(val, codecRegistry.get());
             }).toList());
@@ -780,9 +805,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 throw new IllegalStateException("Update query is not provided!");
             }
             update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
-            if (update == null) {
-                throw new IllegalStateException("Update query is not provided!");
-            }
             return update;
         }
 
@@ -819,6 +841,207 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 return getParameterAtIndex(invocationContext, filterParameterIndex);
             }
             return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+    }
+
+    private final class UpdateReturningData extends CollationSupported {
+        @Nullable
+        private final Bson update;
+        private final boolean updateNeedsProcessing;
+        @Nullable
+        private final Bson filter;
+        private final boolean filterNeedsProcessing;
+        @Nullable
+        private final FindOneAndUpdateOptions options;
+        @Nullable
+        private final Bson projection;
+        @Nullable
+        private final Bson sort;
+        private final int filterParameterIndex;
+        private final int updateParameterIndex;
+        private final int optionsParameterIndex;
+
+        private UpdateReturningData(@Nullable Bson update, @Nullable Bson filter, @Nullable String filterParameter, @Nullable String updateParameter,
+                                    @Nullable String optionsParameter) {
+            this.update = update;
+            this.updateNeedsProcessing = needsProcessing(update);
+            this.filter = filter;
+            this.filterNeedsProcessing = needsProcessing(filter);
+            this.filterParameterIndex = getParameterIndexByName(filterParameter);
+            this.updateParameterIndex = getParameterIndexByName(updateParameter);
+            this.optionsParameterIndex = getParameterIndexByName(optionsParameter);
+            String projectionJson = storedQuery.getAnnotationMetadata().stringValue(MongoProjection.class).orElse(null);
+            this.projection = projectionJson == null ? null : parseProjectionOrSortJson(projectionJson, "MongoProjection");
+            String sortJson = storedQuery.getAnnotationMetadata().stringValue(MongoSort.class).orElse(null);
+            this.sort = sortJson == null ? null : parseProjectionOrSortJson(sortJson, "MongoSort");
+            this.options = MongoOptionsUtils.buildFindOneAndUpdateOptions(storedQuery.getAnnotationMetadata(), false).orElse(null);
+        }
+
+        /**
+         * Parse BSON JSON for MongoProjection/MongoSort annotations.
+         * <p>
+         * Projection and sort definitions are expected to be constant JSON. Using
+         * {@code :param}-style placeholders is not supported and will result in
+         * a {@link DataAccessException}.
+         *
+         * @param json         The raw JSON from the annotation.
+         * @param annotationId The annotation identifier (for error messages).
+         * @return The parsed {@link BsonDocument}.
+         */
+        @NonNull
+        private BsonDocument parseProjectionOrSortJson(@NonNull String json, @NonNull String annotationId) {
+            try {
+                return BsonDocument.parse(json);
+            } catch (RuntimeException e) {
+                throw new DataAccessException(
+                        "Failed to parse " + annotationId + " JSON. " +
+                        annotationId + " must contain constant JSON and does not support :param-style placeholders. " +
+                        "Invalid value: " + json,
+                        e
+                );
+            }
+        }
+
+        private FindOneAndUpdateOptions copy(FindOneAndUpdateOptions options) {
+            FindOneAndUpdateOptions newOptions = new FindOneAndUpdateOptions();
+            newOptions.collation(options.getCollation());
+            newOptions.upsert(options.isUpsert());
+            newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
+            newOptions.hint(options.getHint());
+            newOptions.hintString(options.getHintString());
+            newOptions.arrayFilters(options.getArrayFilters());
+            newOptions.returnDocument(options.getReturnDocument());
+            newOptions.projection(options.getProjection());
+            newOptions.sort(options.getSort());
+            if (options.getComment() != null) {
+                newOptions.comment(options.getComment());
+            }
+            if (options.getLet() != null) {
+                newOptions.let(options.getLet());
+            }
+            long maxTimeMs = options.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                newOptions.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
+            }
+            return newOptions;
+        }
+
+        private void copyNonNullFrom(FindOneAndUpdateOptions to, FindOneAndUpdateOptions from) {
+            if (from.getCollation() != null) {
+                to.collation(from.getCollation());
+            }
+            if (from.isUpsert()) {
+                to.upsert(from.isUpsert());
+            }
+            if (from.getBypassDocumentValidation() != null) {
+                to.bypassDocumentValidation(from.getBypassDocumentValidation());
+            }
+            if (from.getHint() != null) {
+                to.hint(from.getHint());
+            }
+            if (from.getHintString() != null) {
+                to.hintString(from.getHintString());
+            }
+            if (from.getArrayFilters() != null) {
+                to.arrayFilters(from.getArrayFilters());
+            }
+            if (from.getReturnDocument() != null && to.getReturnDocument() == null) {
+                to.returnDocument(from.getReturnDocument());
+            }
+            if (from.getProjection() != null) {
+                to.projection(from.getProjection());
+            }
+            if (from.getSort() != null) {
+                to.sort(from.getSort());
+            }
+            if (from.getComment() != null) {
+                to.comment(from.getComment());
+            }
+            if (from.getLet() != null) {
+                to.let(from.getLet());
+            }
+            long maxTimeMs = from.getMaxTime(TimeUnit.MILLISECONDS);
+            if (maxTimeMs > 0) {
+                to.maxTime(maxTimeMs, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        private MongoFindOneAndUpdate getFindOneAndUpdate(InvocationContext<?, ?> invocationContext) {
+            return new MongoFindOneAndUpdate(
+                getUpdate(invocationContext, null),
+                getFilter(invocationContext, null),
+                getOptions(invocationContext));
+        }
+
+        private Bson getUpdate(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            Bson update = this.update;
+            if (updateParameterIndex != -1) {
+                update = getParameterAtIndex(invocationContext, updateParameterIndex);
+            }
+            if (update == null) {
+                throw new IllegalStateException("Update query is not provided!");
+            }
+            update = updateNeedsProcessing ? replaceQueryParameters(update, invocationContext, entity) : update;
+            return update;
+        }
+
+        @NonNull
+        private FindOneAndUpdateOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
+            FindOneAndUpdateOptions options = this.options;
+            if (optionsParameterIndex != -1) {
+                FindOneAndUpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
+                if (paramOptions != null) {
+                    if (options == null) {
+                        options = copy(paramOptions);
+                    } else {
+                        options = copy(options);
+                        copyNonNullFrom(options, paramOptions);
+                    }
+                }
+            }
+            if (options == null) {
+                options = new FindOneAndUpdateOptions();
+            }
+            Collation collation = getCollation(invocationContext, null);
+            if (collation != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.collation(collation);
+            }
+            Bson projection = getProjection(invocationContext, null);
+            if (projection != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.projection(projection);
+            }
+            Bson sort = getSort(invocationContext, null);
+            if (sort != null) {
+                if (options == this.options) {
+                    options = copy(options);
+                }
+                options.sort(sort);
+            }
+            return options;
+        }
+
+        @Nullable
+        private Bson getFilter(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            if (filterParameterIndex != -1) {
+                return getParameterAtIndex(invocationContext, filterParameterIndex);
+            }
+            return filterNeedsProcessing ? replaceQueryParameters(Objects.requireNonNull(filter), invocationContext, entity) : filter;
+        }
+
+        @Nullable
+        private Bson getProjection(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            return projection;
+        }
+
+        @Nullable
+        private Bson getSort(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
+            return sort;
         }
     }
 

@@ -241,8 +241,12 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
                 o = resultSet.getBlob(name);
             } else if (Clob.class.isAssignableFrom(type)) {
                 o = resultSet.getClob(name);
+            } else if (String.class.isAssignableFrom(type)) {
+                o = resultSet.getString(name);
+            } else if (byte[].class.isAssignableFrom(type)) {
+                o = resultSet.getBytes(name);
             } else {
-                o = resultSet.getObject(name);
+                o = getObject(resultSet, name, type);
             }
             if (o == null) {
                 return null;
@@ -261,5 +265,13 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
 
     private DataAccessException exceptionForColumn(String name, Exception e) {
         return new DataAccessException("Error reading object for name [" + name + "] from result set: " + e.getMessage(), e);
+    }
+
+    private static <T> Object getObject(ResultSet resultSet, String name, Class<T> type) throws SQLException {
+        try {
+            return resultSet.getObject(name, type);
+        } catch (SQLException | ClassCastException e) {
+            return resultSet.getObject(name);
+        }
     }
 }

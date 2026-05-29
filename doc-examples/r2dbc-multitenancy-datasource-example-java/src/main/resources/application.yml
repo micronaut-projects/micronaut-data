@@ -10,10 +10,12 @@ micronaut:
 r2dbc:
   datasources:
     foo:
+      protocol: mariadb
       db-type: mariadb
       schema-generate: CREATE_DROP
       dialect: MYSQL
     bar:
+      protocol: mariadb
       db-type: mariadb
       schema-generate: CREATE_DROP
       dialect: MYSQL
@@ -21,4 +23,4 @@ r2dbc:
 test-resources:
   containers:
     mysql:
-      image-name: mysql:8.4.5
+      image-name: container-registry.oracle.com/mysql/community-server:9.6.0

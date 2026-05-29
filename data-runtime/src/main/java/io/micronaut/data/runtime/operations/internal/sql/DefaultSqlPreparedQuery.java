@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.util.CollectionUtils;
@@ -40,6 +42,8 @@ import io.micronaut.data.model.Sort.Order;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -58,6 +62,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.hasReturnTypeInRole;
+import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.getParametersOfType;
 
 /**
  * Implementation of {@link SqlPreparedQuery}.
@@ -76,24 +81,88 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     protected List<PersistentPropertyPath> cursorProperties;
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
+    @Nullable
+    private ScoringFunction vectorScoringFunction;
+    private final VectorScoringDialectSupport vectorScoringSupport;
     private final boolean bindPageableOrSort;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
+        this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate(), null);
     }
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery, SqlStoredQuery<E, R> sqlStoredQuery) {
+        this(preparedQuery, sqlStoredQuery, null);
+    }
+
+    public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery,
+                                   SqlStoredQuery<E, R> sqlStoredQuery,
+                                   @Nullable VectorScoringSupportResolver vectorScoringSupportResolver) {
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.vectorScoringSupport = resolveVectorScoringSupport(sqlStoredQuery.getDialect(), vectorScoringSupportResolver);
+        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction();
+        applyAndValidateVectorScoringFunction();
         bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
+        this(sqlStoredQuery, null);
+    }
+
+    public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery,
+                                   @Nullable VectorScoringSupportResolver vectorScoringSupportResolver) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.vectorScoringSupport = resolveVectorScoringSupport(sqlStoredQuery.getDialect(), vectorScoringSupportResolver);
+        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction();
         bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
+    }
+
+    private static VectorScoringDialectSupport resolveVectorScoringSupport(
+        Dialect dialect,
+        @Nullable VectorScoringSupportResolver resolver
+    ) {
+        if (resolver != null) {
+            return resolver.resolve(dialect);
+        }
+                return DefaultVectorScoringDialectSupport.INSTANCE;
+    }
+
+    private void applyAndValidateVectorScoringFunction() {
+        InvocationContext<?, ?> invocationContext = this.invocationContext;
+        if (invocationContext == null) {
+            return;
+        }
+        if (!(invocationContext instanceof MethodInvocationContext<?, ?> methodInvocationContext)) {
+            return;
+        }
+        List<ScoringFunction> scoringFunctions = getParametersOfType(Argument.of(ScoringFunction.class),
+            methodInvocationContext,
+            getConversionService());
+        if (scoringFunctions.isEmpty()) {
+            return;
+        }
+        if (scoringFunctions.size() > 1) {
+            throw new IllegalArgumentException("Only one ScoringFunction parameter is allowed for vector derived search queries");
+        }
+        ScoringFunction selected = scoringFunctions.get(0);
+        var supported = vectorScoringSupport.supportedScoringFunctions();
+        if (!supported.contains(selected)) {
+            throw new IllegalArgumentException("Scoring function " + selected + " is not supported for dialect " + getDialect() +
+                ". Supported functions for current derived vector search are " + supported + ".");
+        }
+        this.vectorScoringFunction = selected;
+        this.query = vectorScoringSupport.adaptQueryForScoringFunction(this.query, selected);
+    }
+
+    /**
+     * @return vector scoring function
+     */
+    @Nullable
+    public ScoringFunction getVectorScoringFunction() {
+        return vectorScoringFunction;
     }
 
     @Override

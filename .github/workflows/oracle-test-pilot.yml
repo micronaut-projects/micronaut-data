@@ -36,6 +36,7 @@ jobs:
 
     steps:
       - name: Remove system JDKs
+        if: runner.environment == 'github-hosted'
         run: |
           sudo rm -rf /usr/lib/jvm/*
           unset JAVA_HOME

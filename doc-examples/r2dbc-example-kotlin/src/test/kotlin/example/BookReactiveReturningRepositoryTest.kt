@@ -11,10 +11,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @MicronautTest(transactional = false)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BookReactiveReturningRepositoryTest : AbstractTest(false) {
 
     @Inject

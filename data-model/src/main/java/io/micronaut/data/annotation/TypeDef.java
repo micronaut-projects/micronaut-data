@@ -18,7 +18,13 @@ package io.micronaut.data.annotation;
 import io.micronaut.data.annotation.repeatable.TypeDefinitions;
 import io.micronaut.data.model.DataType;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Type definitions allow associating existing types with a specific {@link DataType}. Can be applied

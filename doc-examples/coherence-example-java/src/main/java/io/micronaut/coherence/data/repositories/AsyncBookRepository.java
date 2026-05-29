@@ -16,6 +16,7 @@
 package io.micronaut.coherence.data.repositories;
 
 import com.tangosol.util.UUID;
+import io.micronaut.coherence.data.annotation.AsyncPersistEventSource;
 import io.micronaut.coherence.data.annotation.CoherenceRepository;
 import io.micronaut.coherence.data.model.Author;
 import io.micronaut.coherence.data.model.Book;
@@ -31,6 +32,10 @@ import java.util.concurrent.CompletableFuture;
  */
 @CoherenceRepository("book")
 public interface AsyncBookRepository extends AsyncCrudRepository<Book, UUID> {
+
+    @Override
+    @AsyncPersistEventSource
+    <S extends Book> CompletableFuture<S> insert(S entity);
 
     CompletableFuture<Boolean> existsByAuthor(Author author);
 
@@ -87,5 +92,5 @@ public interface AsyncBookRepository extends AsyncCrudRepository<Book, UUID> {
     // deletes
     CompletableFuture<Integer> deleteByTitleStartingWith(String title);
 
-    CompletableFuture<Collection<Book>> saveBooks(Collection<Book> books);
+    CompletableFuture<Collection<Book>> insertBooks(Collection<Book> books);
 }

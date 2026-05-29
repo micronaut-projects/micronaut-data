@@ -31,6 +31,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link TransactionOperations} that uses Spring managed transactions.
@@ -52,7 +53,7 @@ public final class SpringJdbcTransactionOperations extends AbstractSpringTransac
      */
     SpringJdbcTransactionOperations(DataSourceTransactionManager transactionManager) {
         super(transactionManager);
-        this.dataSource = transactionManager.getDataSource();
+        this.dataSource = Objects.requireNonNull(transactionManager.getDataSource());
     }
 
     public DataSource getDataSource() {

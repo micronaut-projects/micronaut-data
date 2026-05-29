@@ -22,8 +22,8 @@ dependencies {
 
     implementation projects.micronautDataAzureCosmos
     implementation(mnSql.jakarta.persistence.api)
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
     implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly mnLogging.logback.classic

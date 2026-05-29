@@ -22,7 +22,7 @@ dependencies {
     compileOnly mnTest.micronaut.test.spock
     compileOnly mn.micronaut.core.reactive
     compileOnly mn.jackson.annotations
-    compileOnly libs.kotlin.coroutines.reactor
+    compileOnly(mn.kotlinx.coroutines.reactor)
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
