@@ -29,7 +29,7 @@ dependencies {
     annotationProcessor mnSql.hibernate.jpamodelgen
     compileOnly mnSerde.micronaut.serde.api
     implementation mn.micronaut.http.client
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mnSql.micronaut.hibernate.jpa
     implementation projects.micronautDataHibernateJpa
     implementation mnValidation.validation

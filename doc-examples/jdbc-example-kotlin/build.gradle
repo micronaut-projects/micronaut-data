@@ -18,7 +18,7 @@ micronaut {
 dependencies {
     kapt projects.micronautDataProcessor
 
-    implementation mnRxjava2.micronaut.rxjava2
+    implementation(mnRxjava3.micronaut.rxjava3)
     implementation mnReactor.micronaut.reactor
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime

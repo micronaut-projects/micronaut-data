@@ -32,7 +32,7 @@ class AssignedUuidCascadePersistSpec extends Specification implements H2TestProp
         }
 
         when:
-        tenantRepository.save(t)
+        tenantRepository.insert(t)
 
         then:
         tenantRepository.findById(tenantId).present

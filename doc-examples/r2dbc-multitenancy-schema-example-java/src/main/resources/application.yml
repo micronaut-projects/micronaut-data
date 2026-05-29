@@ -10,6 +10,7 @@ micronaut:
 r2dbc:
   datasources:
     default:
+      protocol: mariadb
       db-type: mariadb
       schema-generate: CREATE_DROP
       schema-generate-names:

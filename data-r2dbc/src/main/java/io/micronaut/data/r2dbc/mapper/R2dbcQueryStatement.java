@@ -26,7 +26,11 @@ import io.r2dbc.spi.Statement;
 
 import java.math.BigDecimal;
 import java.sql.Time;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.UUID;
 
@@ -93,6 +97,9 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
                 break;
                 case STRING_ARRAY:
                     statement.bindNull(index, String[].class);
+                break;
+                case UUID_ARRAY:
+                    statement.bindNull(index, UUID[].class);
                 break;
                 case INTEGER_ARRAY:
                     statement.bindNull(index, Integer[].class);

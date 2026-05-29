@@ -69,6 +69,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
     private void doSubscribe(Subscriber<? super T> actualSubscriber, @Nullable CoreSubscriber<? super T> coreSubscriber) {
         actualPublisher.subscribe(new CoreSubscriber<>() {
 
+            @Nullable
             Subscription actualSubscription;
 
             @Override
@@ -86,6 +87,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
             }
 
             @Override
+            @SuppressWarnings("NullAway")
             public void onNext(T t) {
                 if (isMono) {
                     actualSubscription.cancel();

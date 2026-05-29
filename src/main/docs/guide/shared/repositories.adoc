@@ -56,6 +56,17 @@ The following table summarizes the repository interfaces that come with Micronau
 |Extends api:data.repository.kotlin.CoroutineCrudRepository[] and adds methods for pagination
 |===
 
+The built-in CRUD repository interfaces provide three distinct write operations:
+`save` / `saveAll` perform a conditional save, inserting entities without an identity value and updating entities with a generated or always auto-populated identity value already present.
+Entities with non-generated assigned identities are inserted by default.
+`insert` / `insertAll` require an insert operation.
+`update` / `updateAll` require an update operation.
+
+To temporarily restore the Micronaut Data 4 behavior where `save` and `saveAll` always issue insert operations, set `micronaut.data.save-as-insert` to `true`.
+For new code, prefer `insert` and `insertAll` when an insert is required.
+For entities with non-generated assigned identity values, `micronaut.data.save-assigned-id-fallback-to-update` can be enabled to try an insert first and fall back to update when the insert fails because the row already exists.
+This fallback is not applied to entities that define a version property for optimistic locking; a duplicate insert failure is propagated.
+
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/hibernate-example", source="main"]

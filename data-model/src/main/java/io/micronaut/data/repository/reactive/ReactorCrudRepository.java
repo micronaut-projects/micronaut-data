@@ -34,7 +34,13 @@ public interface ReactorCrudRepository<E, ID> extends ReactiveStreamsCrudReposit
     <S extends E> Mono<S> save(S entity);
 
     @Override
+    <S extends E> Mono<S> insert(S entity);
+
+    @Override
     <S extends E> Flux<S> saveAll(Iterable<S> entities);
+
+    @Override
+    <S extends E> Flux<S> insertAll(Iterable<S> entities);
 
     @Override
     <S extends E> Mono<S> update(S entity);

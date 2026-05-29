@@ -23,7 +23,8 @@ class MySqlMultitenancySpec extends AbstractR2dbcMultitenancySpec implements Cle
         return [
                 'db-type'        : 'mysql',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'MYSQL'
+                'dialect'        : 'MYSQL',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

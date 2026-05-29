@@ -37,7 +37,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
         def prefix = 'datasources.' + dataSourceName
         return [
                 (prefix + '.url')            : "jdbc:h2:mem:${dataSourceName};LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
-                (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.schema-generate'): schemaGenerate().name(),
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

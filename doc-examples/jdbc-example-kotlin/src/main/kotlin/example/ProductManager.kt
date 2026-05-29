@@ -48,7 +48,7 @@ class ProductManager(
 
     fun findUsingRepo(name: String): Product? {
         return transactionManager.executeRead { status -> // <5>
-            productRepository.findByName(name).orElse(null)
+            productRepository.findByName(name)
         }
     }
 }

@@ -127,6 +127,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     public static final String SPRING_REPO = "org.springframework.data.repository.Repository";
     public static final String JAKARTA_DATA_REPO = "jakarta.data.repository.DataRepository";
+    private static final String JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.JpaSpecificationExecutor";
+    private static final String ASYNC_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor";
+    private static final String REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor";
+    private static final String REACTOR_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor";
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -628,7 +632,39 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 methodInfo.getResultType(),
                 methodInfo.getResultDataType(),
                 parameterBinding,
-                methodInfo.isEncodeEntityParameters());
+                methodInfo.isEncodeEntityParameters(),
+                methodInfo.isOptimisticLock());
+
+            List<AnnotationValue<Annotation>> additionalQueryAnnotations = new ArrayList<>(methodInfo.getAdditionalQueries().size());
+            for (MethodMatchInfo.QueryDefinition queryDefinition : methodInfo.getAdditionalQueries()) {
+                QueryResult additionalQueryResult = queryDefinition.queryResult();
+                List<QueryParameterBinding> additionalParameterBinding = additionalQueryResult.getParameterBindings();
+                bindAdditionalParameters(methodMatchContext, additionalParameterBinding, additionalQueryResult.getAdditionalRequiredParameters());
+
+                AnnotationValueBuilder<Annotation> builder = AnnotationValue.builder(DataMethodQuery.class.getName());
+                String query = additionalQueryResult.getQuery();
+                if (methodInfo.isRawQuery()) {
+                    query = addRawQueryParameterPlaceholders(queryEncoder, query, additionalQueryResult.getQueryParts());
+                }
+                builder.member(AnnotationMetadata.VALUE_MEMBER, query);
+                builder.member(DataMethodQuery.META_MEMBER_NATIVE, method.booleanValue(Query.class,
+                    DataMethodQuery.META_MEMBER_NATIVE).orElse(false));
+
+                addQueryDefinition(methodMatchContext,
+                    builder,
+                    queryDefinition.operationType(),
+                    additionalQueryResult,
+                    queryDefinition.resultType(),
+                    methodInfo.getResultDataType(),
+                    additionalParameterBinding,
+                    methodInfo.isEncodeEntityParameters(),
+                    queryDefinition.optimisticLock());
+
+                additionalQueryAnnotations.add(builder.build());
+            }
+            if (!additionalQueryAnnotations.isEmpty()) {
+                annotationBuilder.member(DataMethod.META_MEMBER_QUERIES, additionalQueryAnnotations.toArray(AnnotationValue[]::new));
+            }
 
             QueryResult countQuery = methodInfo.getCountQueryResult();
             if (countQuery != null) {
@@ -653,7 +689,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     methodMatchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(),
                     null,
                     countParametersBindings,
-                    methodInfo.isEncodeEntityParameters());
+                    methodInfo.isEncodeEntityParameters(),
+                    false);
 
                 annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, builder.build());
             }
@@ -670,17 +707,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     @Nullable
                                     DataType resultDataType,
                                     List<QueryParameterBinding> parameterBinding,
-                                    boolean encodeEntityParameters) {
+                                    boolean encodeEntityParameters,
+                                    boolean optimisticLock) {
 
         if (methodMatchContext.getMethodElement().hasAnnotation(Procedure.class)) {
             annotationBuilder.member(DataMethodQuery.META_MEMBER_PROCEDURE, true);
         }
 
         annotationBuilder.member(DataMethodQuery.META_MEMBER_OPERATION_TYPE, operationType);
+        if (optimisticLock) {
+            annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIMISTIC_LOCK, true);
+        }
 
         if (resultType != null) {
             String stringType = resultType.getName();
-            if (resultType.isArray()) {
+            if (resultType.isArray() && !stringType.endsWith("[]")) {
                 stringType += "[]";
             }
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
@@ -981,23 +1022,64 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Nullable
     private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        Map<String, ClassElement> typeArguments = repositoryClass.getTypeArguments(GenericRepository.class);
-        String argName = "E";
+        SourcePersistentEntity entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, GenericRepository.class, "E");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, SPRING_REPO, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JAKARTA_DATA_REPO, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, JPA_SPECIFICATION_EXECUTOR, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, ASYNC_JPA_SPECIFICATION_EXECUTOR, "T");
+        if (entity != null) {
+            return entity;
+        }
+        entity = resolveEntityForCurrentClass(repositoryClass, entityResolver, REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR, "T");
+        if (entity != null) {
+            return entity;
+        }
+        return resolveEntityForCurrentClass(repositoryClass, entityResolver, REACTOR_JPA_SPECIFICATION_EXECUTOR, "T");
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               Class<?> repositoryType,
+                                                               String argName) {
+        return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               String repositoryType,
+                                                               String argName) {
+        return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
+    }
+
+    @Nullable
+    private SourcePersistentEntity resolveEntityFromTypeArguments(Map<String, ClassElement> typeArguments,
+                                                                  Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                                  String argName) {
         if (typeArguments.isEmpty()) {
-            argName = "T";
-            typeArguments = repositoryClass.getTypeArguments(SPRING_REPO);
+            return null;
         }
-        if (typeArguments.isEmpty()) {
-            argName = "T";
-            typeArguments = repositoryClass.getTypeArguments(JAKARTA_DATA_REPO);
+        ClassElement classElement = typeArguments.get(argName);
+        if (classElement == null) {
+            classElement = typeArguments.values().iterator().next();
         }
-        if (!typeArguments.isEmpty()) {
-            ClassElement ce = typeArguments.get(argName);
-            if (ce != null) {
-                return entityResolver.apply(ce);
-            }
+        if (classElement == null) {
+            return null;
         }
-        return null;
+        return entityResolver.apply(classElement);
     }
 
     private void annotateEntityRepresentationIfPresent(ClassElement repositoryClass, Function<ClassElement, SourcePersistentEntity> entityResolver) {

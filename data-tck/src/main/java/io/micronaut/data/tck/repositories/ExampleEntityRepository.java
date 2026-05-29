@@ -5,7 +5,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.entities.ExampleEntity;
 
 public interface ExampleEntityRepository extends GenericRepository<ExampleEntity, Integer> {
-    void save(ExampleEntity entity);
+    void insert(ExampleEntity entity);
 
     ExampleEntity find(QuerySpecification<ExampleEntity> querySpecification);
 

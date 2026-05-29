@@ -79,6 +79,9 @@ public final class MatchUtils {
     private static boolean isIsDto(ClassElement repositoryClass,
                                    ClassElement queryResultType,
                                    ClassElement resultType) {
+        if (isObjectArrayResult(resultType)) {
+            return true;
+        }
         if (TypeUtils.areTypesCompatible(resultType, queryResultType)) {
             return false;
         }
@@ -91,7 +94,11 @@ public final class MatchUtils {
             return false;
         }
         return (resultType.hasStereotype(Introspected.class) && entityType.hasStereotype(MappedEntity.class))
-            || (resultType.isArray() && resultType.getName().equals(Object.class.getName())); // Allow Object[] as a DTO
+            || isObjectArrayResult(resultType); // Allow Object[] as a DTO
+    }
+
+    private static boolean isObjectArrayResult(ClassElement resultType) {
+        return resultType.isArray() && (resultType.getName().equals(Object.class.getName()) || resultType.getName().equals(Object[].class.getName()));
     }
 
     private static boolean isVoid(ClassElement resultType) {

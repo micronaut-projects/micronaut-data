@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Projection;
@@ -158,7 +159,13 @@ public interface NamingStrategy {
                 foreignAssociation = association;
             }
             final String originalAssocName = association.getName();
-            String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(StringUtils.EMPTY_STRING) : originalAssocName;
+            String assocName = association.getKind() == Relation.Kind.EMBEDDED
+                ? association.getAnnotationMetadata().stringValue(MappedProperty.class)
+                    .orElseGet(() -> association.getAnnotationMetadata().enumValue(EmbeddedNaming.class, EmbeddedNaming.Strategy.class)
+                        .filter(EmbeddedNaming.Strategy.LEGACY::equals)
+                        .map(strategy -> originalAssocName)
+                        .orElse(StringUtils.EMPTY_STRING))
+                : originalAssocName;
             if (StringUtils.isNotEmpty(assocName)) {
                 if (!sb.isEmpty()) {
                     sb.append(mappedAssociatedName(assocName));
