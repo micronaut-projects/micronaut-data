@@ -19,7 +19,7 @@ package io.micronaut.data.mongodb.annotation.index;
  * MongoDB index direction.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 public enum MongoIndexDirection {
     ASC,

@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
  * Declares a field within a compound MongoDB index.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

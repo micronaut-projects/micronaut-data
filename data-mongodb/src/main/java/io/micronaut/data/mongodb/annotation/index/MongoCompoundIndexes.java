@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * Repeatable annotation for {@link MongoCompoundIndex}.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})

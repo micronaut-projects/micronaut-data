@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * Declares a simple MongoDB index for a property.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})

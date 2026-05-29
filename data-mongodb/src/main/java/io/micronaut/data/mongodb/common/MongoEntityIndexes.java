@@ -54,7 +54,7 @@ import java.util.Objects;
  * Mongo index metadata resolved at runtime.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 @SuppressWarnings("java:S6541")
 @Internal

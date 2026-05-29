@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Declares a compound MongoDB index for an entity.
  *
  * @author radovanradic
- * @since 5.0.0
+ * @since 5.1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
