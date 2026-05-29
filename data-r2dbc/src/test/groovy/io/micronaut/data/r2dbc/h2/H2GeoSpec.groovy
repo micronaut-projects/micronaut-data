@@ -8,6 +8,8 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
 
@@ -34,6 +36,18 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
         return context.getBean(H2SchoolRepository)
     }
 
+    @Memoized
+    @Override
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(H2HotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(H2HotelWktRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
@@ -44,7 +58,7 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
         def prefix = 'r2dbc.datasources.' + dataSourceName
         return [
                 (prefix + '.url')            : "r2dbc:h2:mem:///${dataSourceName};${H2_URL_PROPERTIES}",
-                (prefix + '.schema-generate'): schemaGenerate(),
+                (prefix + '.schema-generate'): schemaGenerate().name(),
                 (prefix + '.dialect')        : 'h2',
                 (prefix + '.username')       : '',
                 (prefix + '.password')       : '',

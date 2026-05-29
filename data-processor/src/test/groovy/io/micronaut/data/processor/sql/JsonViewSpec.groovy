@@ -125,7 +125,26 @@ record Person(@Id @GeneratedValue @MappedProperty("_id") Long id, String name, i
 ''')
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("@JsonView mapped entities do not support @Version fields")
+        ex.message.contains("@Version cannot be used in class annotated with @JsonView/@JsonSubView. Instead use @JsonProperty(\"_metadata\") on a property to enable optimistic locking.")
+    }
+
+    void "test JsonSubView entity with @Version not supported"() {
+        when:
+        buildEntity('test.SubPerson', '''
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonSubView(entity = Person.class)
+record PersonView(@Id @GeneratedValue @MappedProperty("_id") Long id, String name, int age, @Version Long version) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("@Version cannot be used in class annotated with @JsonView/@JsonSubView. Instead use @JsonProperty(\"_metadata\") on a property to enable optimistic locking.")
     }
 
     void "test JsonView property name doesn't match MappedEntity property name"() {

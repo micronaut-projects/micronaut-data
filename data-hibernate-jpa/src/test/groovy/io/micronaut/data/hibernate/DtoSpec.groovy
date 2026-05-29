@@ -105,13 +105,13 @@ class DtoSpec extends Specification {
     void "test dto projection with embedded id"() {
         given:
         def id = new ShipmentId("a", "b")
-        shipmentRepository.save(new Shipment(id, "test"))
+        shipmentRepository.insert(new Shipment(id, "test"))
 
         def id2 = new ShipmentId("a", "c")
-        shipmentRepository.save(new Shipment(id2, "test2"))
+        shipmentRepository.insert(new Shipment(id2, "test2"))
 
         def id3 = new ShipmentId("b", "d")
-        shipmentRepository.save(new Shipment(id3, "test3"))
+        shipmentRepository.insert(new Shipment(id3, "test3"))
         when:
         def shipments = shipmentRepository.findAllByShipmentIdCountry("a")
         def shipmentDtos = shipmentRepository.queryAllByShipmentIdCountry("a")

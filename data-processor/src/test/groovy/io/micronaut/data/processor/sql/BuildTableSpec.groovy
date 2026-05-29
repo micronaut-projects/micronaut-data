@@ -31,7 +31,7 @@ class BuildTableSpec extends AbstractDataSpec {
         given:
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def entity = PersistentEntity.of(Restaurant)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
@@ -88,7 +88,7 @@ class Test {
 }
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -289,7 +289,7 @@ class Test {
 ''')
 
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -324,7 +324,7 @@ class Test {
     }}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -404,7 +404,7 @@ class Emb {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'

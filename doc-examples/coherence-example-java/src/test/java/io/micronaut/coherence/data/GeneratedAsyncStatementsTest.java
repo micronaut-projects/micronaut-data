@@ -398,7 +398,7 @@ class GeneratedAsyncStatementsTest extends AbstractDataTest {
             Calendar.APRIL, 6, 0, 0)));
         setNewBooks.add(new Book("God Emperor of Dune", 496, FRANK_HERBERT, new GregorianCalendar(1981,
             Calendar.FEBRUARY, 6, 0, 0)));
-        repo.saveBooks(setNewBooks)
+        repo.insertBooks(setNewBooks)
             .thenAcceptAsync(unused -> Assertions.assertTrue(repo.findByTitleIn(
                     Arrays.asList("Children of Dune", "God Emperor of Dune")).join().
                 containsAll(setNewBooks))).join();

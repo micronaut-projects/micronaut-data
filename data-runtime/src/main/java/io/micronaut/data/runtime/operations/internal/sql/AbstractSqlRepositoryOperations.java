@@ -24,11 +24,10 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
@@ -46,6 +45,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -56,20 +56,26 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.runtime.mapper.sql.SearchResultsMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
+import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.inject.BeanDefinition;
@@ -78,6 +84,7 @@ import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.persistence.Tuple;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -114,7 +121,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     HintsCapableRepository {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -127,10 +133,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final PropertyPlaceholderResolver propertyPlaceholderResolver;
+    protected final VectorScoringSupportResolver vectorScoringSupportResolver;
+    protected final VectorParameterBinder vectorParameterBinder;
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+    private final DatabaseConversionContextFactory conversionContextFactory;
 
     /**
      * Default constructor.
@@ -146,6 +155,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param attributeConverterRegistry  The attribute converter registry
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param conversionContextFactory .  The conversion context factory
      */
     protected AbstractSqlRepositoryOperations(
         String dataSourceName,
@@ -159,7 +169,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         AttributeConverterRegistry attributeConverterRegistry,
         @Nullable
         JsonMapper jsonMapper,
-        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
+        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
+        DatabaseConversionContextFactory conversionContextFactory) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -167,6 +178,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
+        this.conversionContextFactory = conversionContextFactory;
+        this.vectorScoringSupportResolver = beanContext.findBean(VectorScoringSupportResolver.class)
+            .orElseThrow(() -> new IllegalStateException("Missing VectorScoringSupportResolver bean"));
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Collection<VectorTypeConverter<?>> vectorTypeConverters = (Collection) beanContext.getBeansOfType(VectorTypeConverter.class);
+        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters);
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -183,6 +200,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
+     * @return the database conversion context factory used by SQL result mappers
+     */
+    protected final DatabaseConversionContextFactory getConversionContextFactory() {
+        return conversionContextFactory;
+    }
+
+    /**
      * @return The result reader that will check for the column existence and return null for {@link ResultReader#readDynamic(Object, Object, DataType)}
      */
     protected ResultReader<RS, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
@@ -191,7 +215,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
     @Override
     public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
-        return new DefaultSqlPreparedQuery<>(preparedQuery);
+        return new DefaultSqlPreparedQuery<>(preparedQuery,
+            (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate(),
+            vectorScoringSupportResolver);
     }
 
     @Override
@@ -281,6 +307,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         dataType = dialect.getDataType(dataType);
+
+        VectorParameterBinder.PreparedParameter preparedParameter = vectorParameterBinder.bind(dialect, dataType, value);
+        dataType = preparedParameter.dataType();
+        value = preparedParameter.value();
 
         if (QUERY_LOG.isTraceEnabled()) {
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
@@ -541,7 +571,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final <E, R> SqlStoredQuery<E, R> getSqlStoredQuery(@Nullable StoredQuery<E, R> storedQuery) {
         if (storedQuery instanceof SqlStoredQuery<E, R> sqlStoredQuery) {
             if (sqlStoredQuery.isExpandableQuery() && !(sqlStoredQuery instanceof SqlPreparedQuery)) {
-                return new DefaultSqlPreparedQuery<>(sqlStoredQuery);
+                return new DefaultSqlPreparedQuery<>(sqlStoredQuery, vectorScoringSupportResolver);
             }
             return sqlStoredQuery;
         }
@@ -775,6 +805,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @since 4.2.0
      */
     protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
+        if (preparedQuery.getResultType().equals(SearchResults.class)) {
+            return (SqlTypeMapper<RS, R>) createSearchResultsMapper(preparedQuery, rsType);
+        }
         if (preparedQuery.getResultType().equals(Tuple.class)) {
             return (SqlTypeMapper<RS, R>) createTupleMapper();
         }
@@ -827,7 +860,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 loadListener,
-                conversionService);
+                conversionService,
+                conversionContextFactory);
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
@@ -842,7 +876,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 null,
-                conversionService);
+                conversionService,
+                conversionContextFactory);
         }
         return new SqlTypeMapper<>() {
             @Override
@@ -870,6 +905,82 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         };
     }
 
+    /**
+     * Creates a {@link SearchResultsMapper} that maps each row to an entity + score pair.
+     *
+     * <p>The underlying query is expected to return all columns required to materialize the entity plus a numeric
+     * score column named {@code mn_score}. The {@code mn_score} value is then normalized (when applicable) using
+     * the resolved {@link ScoringFunction}.
+     *
+     * @param preparedQuery The SQL prepared query
+     * @param rsType The result set type (different for R2DBC and JDBC)
+     * @param <E> The entity type
+     * @return A mapper for row-by-row mapping of {@link SearchResults}
+     */
+    protected <E> SearchResultsMapper<RS, E> createSearchResultsResultMapper(SqlStoredQuery<E, ?> preparedQuery, Class<RS> rsType) {
+        RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
+        SqlTypeMapper<RS, E> entityMapper = new SqlResultEntityTypeMapper<>(
+            getEntity(persistentEntity.getIntrospection().getBeanType()),
+            preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader,
+            preparedQuery.getJoinPaths(),
+            sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+            null,
+            conversionService,
+            conversionContextFactory);
+        return new SearchResultsMapper<>(
+            entityMapper,
+            columnNameResultSetReader,
+            "mn_score",
+            resolveVectorScoringFunction(preparedQuery)
+        );
+    }
+
+    /**
+     * Creates a {@link SqlTypeMapper} that maps the entire result set into a single {@link SearchResults} instance.
+     *
+     * <p>This mapper delegates row mapping to {@link #createSearchResultsResultMapper(SqlStoredQuery, Class)} and
+     * then collects all rows using {@link SearchResultsMapper#mapAll(Object, Class)}.
+     *
+     * @param preparedQuery The SQL prepared query
+     * @param rsType The result set type (different for R2DBC and JDBC)
+     * @param <E> The entity type
+     * @return A mapper that maps the whole result set into {@link SearchResults}
+     */
+    protected <E> SqlTypeMapper<RS, SearchResults<E>> createSearchResultsMapper(SqlStoredQuery<E, ?> preparedQuery, Class<RS> rsType) {
+        RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
+        SearchResultsMapper<RS, E> mapper = createSearchResultsResultMapper(preparedQuery, rsType);
+        return new SqlTypeMapper<>() {
+            @Override
+            public @NonNull SearchResults<@NonNull E> map(RS object, @NonNull Class<SearchResults<@NonNull E>> type) {
+                return mapper.mapAll(object, persistentEntity.getIntrospection().getBeanType());
+            }
+
+            @Override
+            public @Nullable Object read(RS object, @NonNull String name) {
+                throw new IllegalStateException("Not supported!");
+            }
+
+            @Override
+            public boolean hasNext(RS resultSet) {
+                return mapper.hasNext(resultSet);
+            }
+        };
+    }
+
+    /**
+     * Resolves scoring function metadata used for similarity normalization in {@link SearchResultsMapper}.
+     *
+     * @param preparedQuery The SQL query metadata
+     * @return The resolved scoring function, or {@code null} when no function applies
+     */
+    @Nullable
+    protected final ScoringFunction resolveVectorScoringFunction(SqlStoredQuery<?, ?> preparedQuery) {
+        if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+            return sqlPreparedQuery.getVectorScoringFunction();
+        }
+        return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
+    }
+
     protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,
                                                                                  RuntimePersistentEntity<E> persistentEntity,
                                                                                  RuntimePersistentEntity<R> resultPersistentEntity) {
@@ -891,10 +1002,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) propertyByName.getProperty();
                 MutableAnnotationMetadata mutableAnnotationMetadata = new MutableAnnotationMetadata();
                 mutableAnnotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                AnnotationMetadata propertyAnnotationMetadata = new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), mutableAnnotationMetadata);
+                if (isSamePropertyType(entityProperty.asArgument(), dtoProp.getProperty().asArgument())) {
+                    propertyAnnotationMetadata = new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata);
+                }
                 properties.add(new BeanPropertyWithAnnotationMetadata<>(
                     dtoProp.getName(),
                     dtoProp.getProperty(),
-                    new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), mutableAnnotationMetadata)
+                    propertyAnnotationMetadata
                 ));
             }
             return new RuntimePersistentEntity<>(
@@ -949,7 +1064,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 name = projection.stringValue().orElse(name);
             }
             RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
-            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+            if (entityProperty == null || !isSamePropertyType(entityProperty.getProperty().asArgument(), p.asArgument())) {
                 return p;
             }
             return new BeanPropertyWithAnnotationMetadata<>(
@@ -957,6 +1072,23 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
             );
         }).toList();
+    }
+
+    private static boolean isSamePropertyType(Argument<?> entityArgument, Argument<?> dtoArgument) {
+        if (!ReflectionUtils.getWrapperType(entityArgument.getType()).equals(ReflectionUtils.getWrapperType(dtoArgument.getType()))) {
+            return false;
+        }
+        Argument<?>[] entityTypeParameters = entityArgument.getTypeParameters();
+        Argument<?>[] dtoTypeParameters = dtoArgument.getTypeParameters();
+        if (entityTypeParameters.length != dtoTypeParameters.length) {
+            return false;
+        }
+        for (int i = 0; i < entityTypeParameters.length; i++) {
+            if (!isSamePropertyType(entityTypeParameters[i], dtoTypeParameters[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String resolveEnvPlaceholderValues(String value) {

@@ -118,7 +118,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
+            def sql = builder.buildBatchCreateTableStatement(List.of(), PersistentEntity.of(EnumEntity))
 
         then:
             sql == 'CREATE TABLE `enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
@@ -129,7 +129,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))
+            def sql = builder.buildBatchCreateTableStatement(List.of(), PersistentEntity.of(JpaEnumEntity))
 
         then:
             sql == 'CREATE TABLE `jpa_enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` INT NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
@@ -140,7 +140,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
+            def sql = builder.buildBatchCreateTableStatement(List.of(), PersistentEntity.of(EnumEntity))
 
         then:
             sql == 'CREATE TABLE `enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
@@ -151,7 +151,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))
+            def sql = builder.buildBatchCreateTableStatement(List.of(), PersistentEntity.of(JpaEnumEntity))
 
         then:
             sql == 'CREATE TABLE `jpa_enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` INT NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'

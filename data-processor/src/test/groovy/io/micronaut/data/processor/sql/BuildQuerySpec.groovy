@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
@@ -123,6 +124,256 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
             getResultDataType(method) == DataType.ENTITY
+    }
+
+    @Unroll
+    void "test #dialect vector search score projection has a single alias"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchByEmbeddingNear(Vector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+
+        then:
+            query.contains(' AS mn_score FROM ')
+            query.count(' AS mn_score') == 1
+            !query.contains(' AS mn_score AS mn_score')
+
+        where:
+            dialect << ["POSTGRES", "ORACLE", "MYSQL"]
+    }
+
+    @Unroll
+    void "test #dialect vector top search orders by vector score"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+
+        then:
+            query.contains(' ORDER BY ')
+            query.indexOf(' ORDER BY ') > query.indexOf(' WHERE ')
+            query.indexOf(' ORDER BY ') < query.indexOf(limitToken)
+            query.contains(scoreToken)
+
+        where:
+            dialect    | limitToken       | scoreToken
+            "POSTGRES" | " LIMIT 2"       | " <=> "
+            "ORACLE"   | "FETCH NEXT 2"   | "VECTOR_DISTANCE("
+            "MYSQL"    | " LIMIT 2"       | "DISTANCE("
+    }
+
+    void "test vector search score projection uses vector parameter for matching predicate"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector referenceEmbedding;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getReferenceEmbedding() {
+        return referenceEmbedding;
+    }
+
+    public void setReferenceEmbedding(FloatVector referenceEmbedding) {
+        this.referenceEmbedding = referenceEmbedding;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchTop2ByReferenceEmbeddingAndEmbeddingNear(Vector reference, Vector query, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            def method = repository.getRequiredMethod(
+                    "searchTop2ByReferenceEmbeddingAndEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            )
+
+        then:
+            getQuery(method).contains(' AS mn_score FROM ')
+            getParameterBindingIndexes(method).first() == "1"
+            getParameterBindingIndexes(method).last() == "1"
+    }
+
+    void "test vector search score projection ignores role parameters when resolving vector predicate"() {
+        given:
+            def repository = buildRepository('test.VectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class VectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
+    SearchResults<VectorDoc> searchByEmbeddingNear(Sort sort, Vector query, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            def method = repository.getRequiredMethod(
+                    "searchByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.Sort"),
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            )
+
+        then:
+            getQuery(method).contains(' AS mn_score FROM ')
+            getParameterBindingIndexes(method).first() == "1"
+            getParameterBindingIndexes(method)[1] == "1"
     }
 
     void "test POSTGRES custom query - expression"() {
@@ -2766,7 +3017,107 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         method.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
-    void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
+    void "test oracle raw select keeps json returning clauses as query syntax"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = :id")
+    String serializeProduct(Long id);
+
+    @Query("SELECT json_arrayagg(p.name ORDER BY p.name RETURNING CLOB) FROM product p")
+    String aggregateNames();
+
+    @Query("SELECT json_serialize(json_object('action' VALUE 'needs update now' RETURNING CLOB) RETURNING CLOB) FROM product p")
+    String serializeAction();
+}
+""")
+        def serializeProductMethod = repository.getRequiredMethod("serializeProduct", Long)
+        def aggregateNamesMethod = repository.getRequiredMethod("aggregateNames")
+        def serializeActionMethod = repository.getRequiredMethod("serializeAction")
+
+        expect:
+        getRawQuery(serializeProductMethod) == "SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = ?"
+        serializeProductMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(aggregateNamesMethod) == "SELECT json_arrayagg(p.name ORDER BY p.name RETURNING CLOB) FROM product p"
+        aggregateNamesMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(serializeActionMethod) == "SELECT json_serialize(json_object('action' VALUE 'needs update now' RETURNING CLOB) RETURNING CLOB) FROM product p"
+        serializeActionMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
+    void "test raw operation detection ignores nested and quoted keywords"() {
+        given:
+        def repository = buildRepository('test.RawKeywordRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface RawKeywordRepository extends GenericRepository<Product, Long> {
+
+    @Query("WITH \\"update\\" AS (SELECT p.id FROM product p WHERE p.name = 'needs update') SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = :id")
+    String cteSelect(Long id);
+
+    @Query("SELECT * FROM product WHERE id = :id FOR UPDATE")
+    Product selectForUpdate(Long id);
+
+    @Query("UPDATE book SET title = 'not returning'' yet' WHERE id = :id")
+    int updateWithEscapedQuote(Long id);
+
+    @Query("UPDATE book SET title = json_serialize(json_object('label' VALUE 'nested') RETURNING CLOB) WHERE id = :id")
+    int updateWithNestedReturning(Long id);
+
+    @Query("CALL read_something(:id)")
+    String readProcedure(Long id);
+
+    @Query(value = "CALL write_something(:id)", readOnly = false)
+    int writeProcedure(Long id);
+}
+""")
+        def cteSelectMethod = repository.getRequiredMethod("cteSelect", Long)
+        def selectForUpdateMethod = repository.getRequiredMethod("selectForUpdate", Long)
+        def updateWithEscapedQuoteMethod = repository.getRequiredMethod("updateWithEscapedQuote", Long)
+        def updateWithNestedReturningMethod = repository.getRequiredMethod("updateWithNestedReturning", Long)
+        def readProcedureMethod = repository.getRequiredMethod("readProcedure", Long)
+        def writeProcedureMethod = repository.getRequiredMethod("writeProcedure", Long)
+
+        expect:
+        getOperationType(cteSelectMethod) == DataMethod.OperationType.QUERY
+        cteSelectMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(cteSelectMethod) == "WITH \"update\" AS (SELECT p.id FROM product p WHERE p.name = 'needs update') SELECT json_serialize(json_object('id' VALUE p.id) RETURNING CLOB) FROM product p WHERE p.id = ?"
+
+        getOperationType(selectForUpdateMethod) == DataMethod.OperationType.QUERY
+        selectForUpdateMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(selectForUpdateMethod) == "SELECT * FROM product WHERE id = ? FOR UPDATE"
+
+        getOperationType(updateWithEscapedQuoteMethod) == DataMethod.OperationType.UPDATE
+        updateWithEscapedQuoteMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(updateWithEscapedQuoteMethod) == "UPDATE book SET title = 'not returning'' yet' WHERE id = ?"
+
+        getOperationType(updateWithNestedReturningMethod) == DataMethod.OperationType.UPDATE
+        updateWithNestedReturningMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(updateWithNestedReturningMethod) == "UPDATE book SET title = json_serialize(json_object('label' VALUE 'nested') RETURNING CLOB) WHERE id = ?"
+
+        getOperationType(readProcedureMethod) == DataMethod.OperationType.QUERY
+        readProcedureMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getRawQuery(readProcedureMethod) == "CALL read_something(?)"
+
+        getOperationType(writeProcedureMethod) == DataMethod.OperationType.UPDATE
+        writeProcedureMethod.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(writeProcedureMethod) == "CALL write_something(?)"
+    }
+
+    void "test raw REPLACE INTO is treated as UPDATE (MySQL)"() {
         given:
         def repository = buildRepository('test.Repo', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -2785,7 +3136,31 @@ interface Repo extends GenericRepository<Book, Long> {
 
         expect:
         getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
         getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
+    }
+
+    void "test raw INSERT with explicit parameters is treated as UPDATE operation"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("INSERT INTO book (title, total_pages) VALUES (:title, :totalPages)")
+    int insertCustom(String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("insertCustom", String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
+        getRawQuery(method) == 'INSERT INTO book (title, total_pages) VALUES (?, ?)'
     }
 
     void "test EmbeddedId naming strategy"() {

@@ -16,6 +16,7 @@
 package io.micronaut.transaction.support;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
@@ -42,7 +43,7 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
      * @param <R>        The result type
      * @return The result
      */
-    protected abstract <R> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
+    protected abstract <R extends @Nullable Object> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
 
     @Override
     public final Optional<TransactionStatus<C>> findTransactionStatus() {
@@ -58,8 +59,8 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
     }
 
     @Override
-    public final <R> R execute(@NonNull TransactionDefinition definition,
-                               @NonNull TransactionCallback<C, R> callback) {
+    public final <R extends @Nullable Object> R execute(@NonNull TransactionDefinition definition,
+                                                        @NonNull TransactionCallback<C, R> callback) {
         return doExecute(definition, status -> status.propagate(() -> {
             try {
                 return callback.call(status);

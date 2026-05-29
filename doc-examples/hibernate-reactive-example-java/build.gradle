@@ -22,7 +22,7 @@ dependencies {
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.mysql.client
     // Testcontainers wait function needs the driver
-    runtimeOnly mnSql.mysql.connector.java
+    runtimeOnly mnSql.mysql.connector.j
 }
 
 micronaut {

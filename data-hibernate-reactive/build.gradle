@@ -33,9 +33,10 @@ dependencies {
 
     testRuntimeOnly mnSql.vertx.pg.client
     testRuntimeOnly mnSql.vertx.mysql.client
+    testRuntimeOnly mnSql.postgresql
 
     // Needed for test resources
-    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.mysql.connector.j
     testResourcesService mnSql.postgresql
 }
 

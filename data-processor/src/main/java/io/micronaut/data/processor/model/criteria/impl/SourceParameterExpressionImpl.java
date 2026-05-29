@@ -151,7 +151,10 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
                 int index = Arrays.asList(parameters).indexOf(parameterElement);
                 DataType dataType = getDataType(null, parameterElement, expressionType);
                 JsonDataType jsonDataType = dataType == DataType.JSON ? getJsonDataType(null, parameterElement, expressionType) : JsonDataType.DEFAULT;
-                String converter = parameterElement.stringValue(TypeDef.class, "converter").orElse(null);
+                String converter = parameterElement.stringValue(TypeDef.class, "converter").orElseGet(() -> {
+                    ClassElement t = expressionType != null ? expressionType : parameterElement.getType();
+                    return t.stringValue(TypeDef.class, "converter").orElse(null);
+                });
                 boolean isExpandable = isExpandable(bindingContext, dataType);
                 return new QueryParameterBinding() {
 

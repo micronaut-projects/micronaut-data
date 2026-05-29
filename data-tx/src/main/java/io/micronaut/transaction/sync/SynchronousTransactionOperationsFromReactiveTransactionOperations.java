@@ -16,8 +16,8 @@
 package io.micronaut.transaction.sync;
 
 import io.micronaut.core.annotation.Internal;
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -70,7 +70,8 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
     }
 
     @Override
-    public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
+    @SuppressWarnings("NullAway")
+    public <R extends @Nullable Object> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
         Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> Mono.deferContextual(contextView -> {
             DefaultTransactionStatus<T> transactionStatus = new DefaultTransactionStatus<>(status, this);
             PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
@@ -143,7 +144,7 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
         }
 
         @Override
-        public @NotNull K getConnection() {
+        public @NonNull K getConnection() {
             throw noSupported();
         }
 

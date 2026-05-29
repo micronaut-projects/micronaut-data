@@ -336,7 +336,7 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     void "find by embedded entity field"() {
         when:
         def bookEntity = new BookEntity(1L, new ResourceEntity<BookState>("1984", BookState.BORROWED))
-        bookEntityRepository.save(bookEntity)
+        bookEntityRepository.insert(bookEntity)
         def result = bookEntityRepository.findAllByResourceState(BookState.BORROWED)
         then:
         result

@@ -1,18 +1,19 @@
 
 package example
 
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
+
 // tag::join[]
 // tag::async[]
 @JdbcRepository(dialect = Dialect.H2)
-interface ProductRepository : CrudRepository<Product, Long> {
+interface ProductRepository : KotlinCrudRepository<Product, Long> {
 // end::join[]
 // end::async[]
 
@@ -45,7 +46,7 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // end::native[]
 
     @Join("manufacturer")
-    fun findByName(str: String): Optional<Product>
+    fun findByName(str: String): Product?
 
 // tag::join[]
 // tag::async[]

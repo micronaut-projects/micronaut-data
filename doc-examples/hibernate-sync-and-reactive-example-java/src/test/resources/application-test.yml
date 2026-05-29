@@ -26,4 +26,4 @@ jpa:
 test-resources:
   containers:
     mysql:
-      image-name: mysql:8.4.5
+      image-name: container-registry.oracle.com/mysql/community-server:9.6.0

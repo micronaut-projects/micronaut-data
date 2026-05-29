@@ -216,7 +216,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery) {
         return operation(session -> {
-            // TODO: Until this issue https://github.com/hibernate/hibernate-reactive/issues/1551 is fixed
+            // Until this issue https://github.com/hibernate/hibernate-reactive/issues/1551 is fixed
             // we should not limit maxResults or else we could start having bugs
             // FirstResultCollector<R> collector = new FirstResultCollector<>(!preparedQuery.isNative());
             FirstResultCollector<R> collector = new FirstResultCollector<>(false);

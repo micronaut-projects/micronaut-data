@@ -56,13 +56,11 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonObjectId;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -627,8 +625,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
         }
 
-        if (isIdentity && value instanceof String) {
-            return new BsonObjectId(new ObjectId((String) value));
+        if (isIdentity && value instanceof String string) {
+            return MongoUtils.generatedStringIdValue(string);
         }
         if (value instanceof Object[] objects) {
             List<Object> valueList = Arrays.asList(objects);
@@ -636,7 +634,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
                     Object item = iterator.next();
                     if (item instanceof String string) {
-                        item = new BsonObjectId(new ObjectId(string));
+                        item = MongoUtils.generatedStringIdValue(string);
                     }
                     iterator.set(item);
                 }
@@ -647,7 +645,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             final boolean isIdentityField = isIdentity;
             return new BsonArray(values.stream().map(val -> {
                 if (isIdentityField && val instanceof String string) {
-                    return new BsonObjectId(new ObjectId(string));
+                    return MongoUtils.generatedStringIdValue(string);
                 }
                 return MongoUtils.toBsonValue(val, codecRegistry.get());
             }).toList());

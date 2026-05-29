@@ -21,7 +21,7 @@ class ManyToManyAttributeSpec extends Specification {
                     "test",
                     List.of()
             )
-            studentRepository.save(student)
+            studentRepository.insert(student)
         then:
             studentRepository.findById(student.id()).get() == student
     }
@@ -33,14 +33,14 @@ class ManyToManyAttributeSpec extends Specification {
                     "computer science",
                     List.of()
             )
-            courseRepository.save(course)
+            courseRepository.insert(course)
             // create a new student and join the existing course
             Student student = new Student(
                     new StudentId(UUID.randomUUID()),
                     "test",
                     List.of(course)
             )
-            studentRepository.save(student) == student
+            studentRepository.insert(student) == student
 
         then:
             // we should now be able to find the student that attends the course

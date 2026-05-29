@@ -62,7 +62,7 @@ class BookRepositorySpec : AbstractAzureCosmosTest() {
         // Create: Save a new book
         // tag::save[]
         var book = Book(null,"The Stand", 1000, ItemPrice(199.99))
-        bookRepository.save(book)
+        bookRepository.insert(book)
         // end::save[]
 
         val id = book.id.orEmpty()
@@ -100,7 +100,7 @@ class BookRepositorySpec : AbstractAzureCosmosTest() {
     @Test
     fun testPageable() {
         // tag::saveall[]
-        bookRepository.saveAll(listOf(
+        bookRepository.insertAll(listOf(
                 Book(null,"The Stand", 1000),
                 Book(null,"The Shining", 600),
                 Book(null,"The Power of the Dog", 500),
@@ -134,7 +134,7 @@ class BookRepositorySpec : AbstractAzureCosmosTest() {
     @Test
     fun testDto() {
         val book = Book(null, "The Shining", 400)
-        bookRepository.save(book)
+        bookRepository.insert(book)
         val bookDTO = bookRepository.findOne("The Shining")
 
         assertEquals("The Shining", bookDTO.title)

@@ -30,6 +30,7 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.BookRepository;
 
+import io.micronaut.transaction.annotation.OracleTransactional;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
@@ -64,6 +65,7 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Override
     @ClientInfo.Attribute(name = "OCSID.MODULE", value = "CustomModule")
     @ClientInfo.Attribute(name = "OCSID.ACTION", value = "INSERT")
+    @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
     public abstract @NonNull Book save(@NonNull Book book);
 
     public abstract Book saveReturning(Book book);

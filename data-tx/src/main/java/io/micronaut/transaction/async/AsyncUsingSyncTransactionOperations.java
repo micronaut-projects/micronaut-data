@@ -17,6 +17,7 @@ package io.micronaut.transaction.async;
 
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
@@ -52,8 +53,8 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
     }
 
     @Override
-    public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
-                                                  Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
+    public <T extends @Nullable Object> CompletionStage<T> withTransaction(TransactionDefinition definition,
+                                                                          Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         CompletableFuture<T> newResult = new CompletableFuture<>();
         TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
         CompletionStage<T> result;
