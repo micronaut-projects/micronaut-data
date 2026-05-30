@@ -1153,35 +1153,46 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T updateEntityId(io.micronaut.core.beans.BeanProperty<T, Object> property, T entity, Object id) {
-    if (property != null) {
-      property.set(entity, id);
+    if (property == null) {
+      return entity;
     }
-    return entity;
+    if (property.getType().isInstance(id)) {
+      property.set(entity, id);
+      return entity;
+    }
+    return conversionService.convert(id, property.getType())
+        .map(converted -> {
+            property.set(entity, converted);
+            return entity;
+        })
+        .orElse(entity);
   }
 
   @Override
   public Object toFilterValue(Object value) {
-    return value;
+    return entityMapper.toFilterValue(value);
   }
 
   @Override
   public void logInsert(String collection, Object doc) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("INSERT INTO {} VALUES {}", collection, doc);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}", collection, doc);
     }
   }
 
   @Override
   public void logUpdate(String collection, Filter filter, Document update) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("UPDATE {} SET {} WHERE {}", collection, update, filter);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
+          collection, filter != null ? filter : "Filter.ALL", update);
     }
   }
 
   @Override
   public void logFind(String collection, Filter filter) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("SELECT * FROM {} WHERE {}", collection, filter);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
+          collection, filter != null ? filter : "Filter.ALL");
     }
   }
 }
