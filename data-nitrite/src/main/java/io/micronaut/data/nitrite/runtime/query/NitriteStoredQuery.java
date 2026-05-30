@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.runtime.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
 
 import java.util.Map;
 
@@ -37,6 +38,15 @@ public interface NitriteStoredQuery<E, R> extends StoredQuery<E, R> {
    */
   @Nullable
   Map<String, Object> getFilterMap();
+
+  /**
+   * Returns the compiled filter.
+   * @return The pre-compiled filter structure if available
+   */
+  @Nullable
+  default CompiledNitriteFilter getCompiledFilter() {
+    return null;
+  }
 
   /**
    * Returns the update map.

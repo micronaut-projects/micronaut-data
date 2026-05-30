@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import org.dizitart.no2.filters.Filter;
 
@@ -34,11 +35,9 @@ import java.util.Map;
 @Internal
 public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements NitritePreparedQuery<E, R> {
 
-    @NonNull
     private final Filter nitriteFilter;
-    @Nullable
     private final Map<String, Object> filterMap;
-    @Nullable
+    private final CompiledNitriteFilter compiledFilter;
     private final Map<String, Object> updateMap;
     private final boolean sql;
 
@@ -48,6 +47,7 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
      * @param delegate The original prepared query
      * @param nitriteFilter The pre-calculated Nitrite filter
      * @param filterMap The pre-parsed filter map (JSON queries) or {@code null}
+     * @param compiledFilter The pre-compiled filter structure
      * @param updateMap The pre-parsed update map (JSON {@code $set}) or {@code null}
      * @param sql Whether the underlying query is SQL-like
      */
@@ -55,11 +55,13 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
         @NonNull PreparedQuery<E, R> delegate,
         @NonNull Filter nitriteFilter,
         @Nullable Map<String, Object> filterMap,
+        @Nullable CompiledNitriteFilter compiledFilter,
         @Nullable Map<String, Object> updateMap,
         boolean sql) {
         super(delegate);
         this.nitriteFilter = nitriteFilter;
         this.filterMap = filterMap;
+        this.compiledFilter = compiledFilter;
         this.updateMap = updateMap;
         this.sql = sql;
     }
@@ -74,6 +76,12 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
     @Nullable
     public Map<String, Object> getFilterMap() {
         return filterMap;
+    }
+
+    @Override
+    @Nullable
+    public CompiledNitriteFilter getCompiledFilter() {
+        return compiledFilter;
     }
 
     @Override

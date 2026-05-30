@@ -134,6 +134,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @param conversionService the conversion service
    * @param attributeConverterRegistry the attribute converter registry
    * @param transactionHolder the transaction holder
+   * @param serdeObjectMapper the Micronaut Serde ObjectMapper
    */
   public DefaultNitriteRepositoryOperations(
       final Nitrite database,
@@ -142,13 +143,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       final RuntimeEntityRegistry runtimeEntityRegistry,
       final DataConversionService conversionService,
       final AttributeConverterRegistry attributeConverterRegistry,
-      final NitriteTransactionHolder transactionHolder) {
+      final NitriteTransactionHolder transactionHolder,
+      final io.micronaut.serde.ObjectMapper serdeObjectMapper) {
     super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
     this.database = database;
     this.configuration = configuration;
     this.entityMapper =
         new NitriteEntityMapper(
-            conversionService, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
+            conversionService, serdeObjectMapper, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
     this.transactionHolder = transactionHolder;
     this.queryParser = new NitriteQueryParser();
     this.filterBuilder = new NitriteFilterBuilder(entityMapper);
@@ -676,7 +678,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String upper = query.trim().toUpperCase(Locale.ROOT);
       sql = upper.startsWith("SELECT") || upper.startsWith("DELETE") || upper.startsWith("UPDATE");
     }
-    return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, updateMap, sql);
+    return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, null, updateMap, sql);
   }
 
   /**
@@ -698,7 +700,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     } else {
       storedQuery = createNitriteStoredQuery(preparedQuery);
     }
-    return new DefaultNitritePreparedQuery<>(preparedQuery, buildFilterFromPreparedQuery(preparedQuery, storedQuery), storedQuery.getFilterMap(), storedQuery.getUpdateMap(), storedQuery.isSql());
+    return new DefaultNitritePreparedQuery<>(preparedQuery, buildFilterFromPreparedQuery(preparedQuery, storedQuery), storedQuery.getFilterMap(), null, storedQuery.getUpdateMap(), storedQuery.isSql());
   }
 
   @NonNull
@@ -713,8 +715,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private Filter buildFilterFromPreparedQuery(@NonNull final PreparedQuery<?, ?> q, @NonNull NitriteStoredQuery<?, ?> stored) {
     Map<String, Object> namedParameters = buildNamedParameterValues(q);
     Map<String, Object> filterMap = stored.getFilterMap();
+    RuntimePersistentEntity<?> entity = getEntity(stored.getRootEntity());
     if (filterMap != null) {
-      return filterBuilder.buildFilterFromJson(filterMap, ensureJsonParamsForFilter(filterMap, q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
+      return filterBuilder.buildFilterFromJson(entity, filterMap, ensureJsonParamsForFilter(filterMap, q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
     }
     String queryString = q.getQuery().trim();
     if (queryString.isEmpty()) {
@@ -722,20 +725,20 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
     String upper = queryString.toUpperCase(Locale.ROOT);
     if (upper.startsWith("DELETE")) {
-      return parseFilterFromDeleteStatement(queryString, q.getParameterArray(), namedParameters);
+      return parseFilterFromDeleteStatement(queryString, q.getParameterArray(), namedParameters, entity);
     }
     if (upper.startsWith("SELECT")) {
-      return parseFilterFromSelectStatement(queryString, q.getParameterArray(), namedParameters);
+      return parseFilterFromSelectStatement(queryString, q.getParameterArray(), namedParameters, entity);
     }
     if (upper.startsWith("UPDATE")) {
-      return parseFilterFromUpdateStatement(queryString, reorderParamsForSql(q), namedParameters);
+      return parseFilterFromUpdateStatement(queryString, reorderParamsForSql(q), namedParameters, entity);
     }
     throw new IllegalStateException("Unsupported query format: " + queryString);
   }
 
   @NonNull
   private Filter parseFilterFromDeleteStatement(
-      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters) {
+      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters, @NonNull final RuntimePersistentEntity<?> entity) {
     int whereIdx = sql.toUpperCase(Locale.ROOT).indexOf(" WHERE ");
     if (whereIdx < 0) {
       return Filter.ALL;
@@ -743,12 +746,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     String where = sql.substring(whereIdx + 7);
     int orderByIdx = where.toUpperCase(Locale.ROOT).indexOf(" ORDER BY");
     return parseWhereClause(
-        orderByIdx >= 0 ? where.substring(0, orderByIdx) : where, params, namedParameters);
+        orderByIdx >= 0 ? where.substring(0, orderByIdx) : where, params, namedParameters, entity);
   }
 
   @NonNull
   private Filter parseFilterFromSelectStatement(
-      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters) {
+      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters, @NonNull final RuntimePersistentEntity<?> entity) {
     int whereIdx = sql.toUpperCase(Locale.ROOT).indexOf(" WHERE ");
     if (whereIdx < 0) {
       return Filter.ALL;
@@ -759,12 +762,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return parseWhereClause(
         w.startsWith("(") && w.endsWith(")") ? w.substring(1, w.length() - 1) : w,
         params,
-        namedParameters);
+        namedParameters,
+        entity);
   }
 
   @NonNull
   private Filter parseWhereClause(
-      @NonNull String where, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters) {
+      @NonNull String where, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters, @NonNull final RuntimePersistentEntity<?> entity) {
     List<Filter> filters = new ArrayList<>();
     String emptyPat = "(?:\\w+\\.)?(\\w+)\\s+IS\\s+NULL\\s+OR\\s+(?:\\w+\\.)?\\1\\s*=\\s*''";
     Matcher mEmpty =
@@ -776,6 +780,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (mEmpty.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              entity,
               entityMapper.normalizeFieldName(Objects.requireNonNull(mEmpty.group(1))),
               Collections.singletonMap("$empty", true),
               params,
@@ -798,6 +803,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           };
       filters.add(
           filterBuilder.buildFieldFilter(
+              entity,
               entityMapper.normalizeFieldName(Objects.requireNonNull(m.group(1))),
               Collections.singletonMap(
                   filterOp,
@@ -809,6 +815,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              entity,
               entityMapper.normalizeFieldName(Objects.requireNonNull(m.group(1))),
               Collections.singletonMap("$notNull", true),
               params,
@@ -818,6 +825,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
+              entity,
               entityMapper.normalizeFieldName(Objects.requireNonNull(m.group(1))),
               Collections.singletonMap("$null", true),
               params,
@@ -1013,6 +1021,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Object[] jsonParams = buildJsonParameterValues(nq);
     Map<String, Object> namedParameters = buildNamedParameterValues(nq);
     Map<String, Object> filterMap = nq.getFilterMap();
+    RuntimePersistentEntity<?> entity = getEntity(nq.getRootEntity());
     if (filterMap != null) {
       Map<String, Object> rawSetFields = (Map<String, Object>) filterMap.get("$set");
       if (rawSetFields != null) {
@@ -1021,7 +1030,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
         }
       }
-      filter = filterBuilder.buildFilterFromJson(filterMap, jsonParams, namedParameters);
+      filter = filterBuilder.buildFilterFromJson(entity, filterMap, jsonParams, namedParameters);
     } else if (nq.getQuery().trim().toUpperCase(Locale.ROOT).startsWith("UPDATE")) {
       Object[] sqlParams = reorderParamsForSql(nq);
       setFields =
@@ -1029,7 +1038,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
               nq.getQuery(),
               sqlParams,
               (pname, ps) -> entityMapper.toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
-      filter = parseFilterFromUpdateStatement(nq.getQuery(), sqlParams, namedParameters);
+      filter = parseFilterFromUpdateStatement(nq.getQuery(), sqlParams, namedParameters, entity);
     } else {
       throw new UnsupportedOperationException("executeUpdate() called with non-UPDATE statement: " + nq.getQuery());
     }
@@ -1072,14 +1081,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @NonNull
   private Filter parseFilterFromUpdateStatement(
-      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters) {
+      @NonNull final String sql, @Nullable final Object[] params, @NonNull final Map<String, Object> namedParameters, @NonNull final RuntimePersistentEntity<?> entity) {
     int whereIdx = sql.toUpperCase(Locale.ROOT).indexOf(" WHERE ");
     if (whereIdx < 0) {
       return Filter.ALL;
     }
     String w = sql.substring(whereIdx + 7).trim();
     String clause = w.startsWith("(") && w.endsWith(")") ? w.substring(1, w.length() - 1) : w;
-    return parseWhereClause(clause, params, namedParameters);
+    return parseWhereClause(clause, params, namedParameters, entity);
   }
 
   @Override
