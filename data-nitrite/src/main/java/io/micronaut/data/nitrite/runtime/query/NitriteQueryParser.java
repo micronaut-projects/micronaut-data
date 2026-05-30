@@ -367,4 +367,121 @@ public final class NitriteQueryParser {
 
     return result;
   }
+
+  /**
+   * Parse the SELECT clause from a SQL-like query to extract field names for projection.
+   * <p>
+   * Example usage in repository method:
+   * <pre>{@code
+   * @Query("SELECT name FROM Person WHERE active = true")
+   * List<String> findActivePersonNames();
+   *
+   * @Query("SELECT id, name FROM Person ORDER BY name")
+   * List<PersonName> findAllPersonNames();
+   * }</pre>
+   *
+   * @param sql the SQL query string
+   * @return list of field names to project, or null if no SELECT clause found
+   */
+  public List<String> parseSelectClause(final String sql) {
+    if (sql == null || sql.trim().isEmpty()) {
+      return null;
+    }
+    String upper = sql.trim().toUpperCase();
+    if (!upper.startsWith("SELECT ")) {
+      return null;
+    }
+
+    // Find FROM clause to isolate SELECT fields
+    int fromIdx = upper.indexOf(" FROM ");
+    if (fromIdx < 0) {
+      return null;
+    }
+
+    // Extract fields between SELECT and FROM
+    String fieldsPart = sql.trim().substring(7, fromIdx).trim();
+
+    // Handle SELECT * - return null to indicate no projection
+    if (fieldsPart.equals("*")) {
+      return null;
+    }
+
+    // Split by comma and extract field names
+    List<String> fields = new ArrayList<>();
+    for (String field : fieldsPart.split(",")) {
+      String f = field.trim();
+      // Handle "table.field" or "field" or "field AS alias"
+      int spaceIdx = f.indexOf(' ');
+      if (spaceIdx > 0) {
+        // Check for AS keyword
+        String rest = f.substring(spaceIdx).trim().toUpperCase();
+        if (rest.startsWith("AS ")) {
+          f = f.substring(0, spaceIdx).trim();
+        } else {
+          // Just take the first part (field name)
+          f = f.substring(0, spaceIdx).trim();
+        }
+      }
+      // Extract just the field name if it's qualified (table.field)
+      int dotIdx = f.lastIndexOf('.');
+      if (dotIdx >= 0) {
+        f = f.substring(dotIdx + 1).trim();
+      }
+      // Remove any quotes or backticks
+      f = f.replaceAll("[\"`]", "");
+      if (!f.isEmpty()) {
+        fields.add(f);
+      }
+    }
+
+    return fields.isEmpty() ? null : fields;
+  }
+
+  /**
+   * Extract the projection field from a JSON query that uses $project syntax.
+   * <p>
+   * Example usage in repository method:
+   * <pre>{@code
+   * // JSON with $project syntax:
+   * @Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
+   * List<String> findActivePersonNames();
+   *
+   * // SQL SELECT syntax (alternative):
+   * @Query("SELECT name FROM Person WHERE active = true")
+   * List<String> findActivePersonNames();
+   * }</pre>
+   *
+   * @param jsonQuery the JSON query string
+   * @return the field name to project, or null if not using $project syntax
+   */
+  public String extractProjectionField(String jsonQuery) {
+    if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
+      return null;
+    }
+    try {
+      Object parsed = parseJson(jsonQuery);
+      if (parsed instanceof Map) {
+        Map<?, ?> map = (Map<?, ?>) parsed;
+        if (map.containsKey("$project")) {
+          Object projectValue = map.get("$project");
+          if (projectValue instanceof String) {
+            return (String) projectValue;
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Ignore parsing errors
+    }
+    return null;
+  }
+
+  /**
+   * Check if a JSON query uses $project syntax.
+   *
+   * @param jsonQuery the JSON query string
+   * @return true if using $project syntax
+   */
+  public boolean hasProjection(String jsonQuery) {
+    return extractProjectionField(jsonQuery) != null;
+  }
 }

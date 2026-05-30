@@ -375,7 +375,7 @@ public final class NitriteFilterBuilder {
         if (value instanceof String s && ("id".equals(field) || "_id".equals(field))) {
             try {
                 return UUID.fromString(s);
-            } catch (Exception ignored) {
+            } catch (IllegalArgumentException ignored) {
             }
         }
         return value;
