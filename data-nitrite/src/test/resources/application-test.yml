@@ -1,0 +1,13 @@
+micronaut:
+  test:
+    transactional: false
+  application:
+    name: micronaut-data-nitritedb-test
+  packages:
+    - io.micronaut.data.nitrite
+  logger:
+    levels:
+      io.micronaut.data: DEBUG
+
+nitrite:
+  db-path: memory

@@ -1,0 +1,69 @@
+[[nitriteConfiguration]]
+== Configuration
+
+Nitrite configuration is bound from `nitrite.*` properties.
+
+The following settings are supported:
+
+- `nitrite.db-path`: Path to the database file. If not provided, an in-memory database is created.
+- `nitrite.storage-mode`: The storage engine to use. Supported values are:
+    * `MVSTORE`: (Default) MVStore-backed persistent database.
+    * `IN_MEMORY`: Pure in-memory database (equivalent to leaving `db-path` empty).
+    * `ROCKSDB`: RocksDB-backed persistent database.
+- `nitrite.field-separator`: The character used to separate nested fields in query strings (default: `.`).
+- `nitrite.username`: Optional username (for authenticated databases).
+- `nitrite.password`: Optional password.
+
+Example (Persistent):
+
+[source,yaml]
+----
+nitrite:
+  db-path: /data/myapp.db
+----
+
+If no `db-path` is provided, an in-memory database is created by default.
+
+== Optional Modules
+
+Micronaut Data Nitrite supports optional Nitrite modules that provide additional functionality:
+
+=== ROCKSDB Storage Engine
+
+To use the `ROCKSDB` storage mode, add the Nitrite ROCKSDB adapter dependency:
+
+dependency:org.dizitart:nitrite-rocksdb-adapter[scope="runtime"]
+
+Then configure the storage mode:
+
+[source,yaml]
+----
+nitrite:
+  db-path: /data/myapp.db
+  storage-mode: ROCKSDB
+----
+
+See the https://nitrite.dizitart.com/java-sdk/modules/store-modules/rocksdb/index.html[Nitrite ROCKSDB Adapter documentation] for more details.
+
+=== Spatial Module
+
+To use spatial queries with Geometry types (points, polygons, etc.), add the Nitrite spatial module:
+
+dependency:org.dizitart:nitrite-spatial[scope="runtime"]
+
+And the Jackson JTS library:
+
+dependency:com.graphhopper.external:jackson-datatype-jts[version="2.21.0", scope="runtime"]
+
+The spatial module enables:
+
+- <<nitriteSpatial, Spatial indexes>> on Geometry fields
+- <<nitriteSpatial, Spatial filters>> (`$near`, `$within`, `$intersects`)
+
+See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module documentation] and https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Spatial Filters documentation] for more details.
+
+=== Jackson Mapper
+
+The Jackson mapper is included by default and provides JSON serialization support. No additional configuration is required.
+
+See the https://nitrite.dizitart.com/java-sdk/modules/jackson/index.html#jackson-mapper[Nitrite Jackson Mapper documentation] for more details.

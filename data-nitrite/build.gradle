@@ -1,0 +1,113 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id "groovy"
+}
+
+// Source sets for testing with optional dependencies present
+sourceSets {
+    rocksDbPresentTest {
+        groovy.srcDir file('src/rocksDbPresentTest/groovy')
+        resources.srcDir file('src/rocksDbPresentTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    spatialPresentTest {
+        groovy.srcDir file('src/spatialPresentTest/groovy')
+        resources.srcDir file('src/spatialPresentTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    rocksDbPresentTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
+    spatialPresentTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
+    spatialPresentTestCompileOnly {
+        extendsFrom configurations.testCompileOnly
+    }
+    spatialPresentTestAnnotationProcessor {
+        extendsFrom configurations.testAnnotationProcessor
+    }
+    spatialPresentTestImplementation {
+        extendsFrom configurations.testImplementation
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
+    api projects.micronautDataConnection
+
+    api libs.nitrite
+    api libs.nitrite.mvstore.adapter
+    api libs.nitrite.jackson.mapper
+    compileOnly libs.nitrite.rocksdb.adapter
+    compileOnly libs.nitrite.spatial
+    compileOnly libs.jackson.datatype.jts
+    api libs.jackson.datatype.jsr310
+    api libs.managed.javax.persistence.api
+    compileOnly mnSql.jakarta.persistence.api
+
+    compileOnly mn.micronaut.inject.groovy
+
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataNitrite
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnTest.micronaut.test.spock
+
+    testImplementation project(':micronaut-data-document-tck')
+    testImplementation mnSql.jakarta.persistence.api
+    testImplementation libs.managed.jakarta.data.api
+    testImplementation project(':micronaut-data-tck')
+    testImplementation project(':micronaut-data-runtime')
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation mnTest.micronaut.test.spock
+
+    // Optional dependency tests - ROCKSDB adapter (only for rocksDbPresentTest source set)
+    rocksDbPresentTestRuntimeOnly libs.nitrite.rocksdb.adapter
+    // Optional dependency tests - Spatial module (only for spatialPresentTest source set)
+    spatialPresentTestCompileOnly libs.nitrite.spatial
+    spatialPresentTestRuntimeOnly libs.nitrite.spatial
+    spatialPresentTestRuntimeOnly libs.jackson.datatype.jts
+    spatialPresentTestAnnotationProcessor projects.micronautDataNitrite
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.register('rocksDbPresentTest', Test) {
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.rocksDbPresentTest.output.classesDirs
+    classpath = sourceSets.rocksDbPresentTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+tasks.register('spatialPresentTest', Test) {
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.spatialPresentTest.output.classesDirs
+    classpath = sourceSets.spatialPresentTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('rocksDbPresentTest')
+    dependsOn tasks.named('spatialPresentTest')
+}
+
+// Disable baseline check for new module until first release
+tasks.named("findBaseline").configure {
+    enabled = false
+}

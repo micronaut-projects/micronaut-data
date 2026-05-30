@@ -1,0 +1,25 @@
+[[nitriteCriteriaExecuteUpdate]]
+This section complements the shared Criteria API guide (see <<criteriaExecuteUpdate, Updating>>).
+
+Nitrite updates are applied as partial updates (a document of fields to change).
+
+To implement an update, use the `updateAll` method from api:data.repository.JpaSpecificationExecutor[]:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="update", indent="0"]
+
+Updating specific properties can be done using `jakarta.persistence.criteria.CriteriaUpdate`:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="setUpdate", indent="0"]
+
+You can define reusable update specifications:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="allSpecifications", indent="0"]
+
+Then combine them with predicate specifications:
+
+snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="update", indent="0"]
+
+Nitrite-specific notes:
+
+- Some encodings represent an update as a wrapper document that contains a `$set` document. The Nitrite runtime unwraps `$set` before applying updates.
+- If you use explicit JSON `@Query` methods for updates, keep the filter document and update document separate and use named parameters (for example `:id`, `:title`).

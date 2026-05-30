@@ -1,0 +1,22 @@
+[[nitriteCriteriaExecuteQuery]]
+This section complements the shared Criteria API guide (see <<criteriaExecuteQuery, Querying>>).
+
+With Nitrite, criteria queries are encoded as JSON filters and executed against Nitrite collections.
+
+To use the Criteria API, implement a repository that extends api:data.repository.JpaSpecificationExecutor[]:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="repository", indent="0"]
+
+You can then use `PredicateSpecification` and `QuerySpecification` methods (see shared guide for details):
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="find", indent="0"]
+
+And execute the specifications from application code:
+
+snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="find", indent="0"]
+
+Nitrite-specific notes:
+
+- Parameters are bound positionally using placeholders of the form `"$mn_qp:<index>"`.
+- `Instant` values are stored and queried as numeric timestamps; query parameters are normalized to match the stored representation.
+- Numeric equality comparisons are tolerant to representation differences introduced by the mapping layer (for example `Long` vs `BigDecimal`).

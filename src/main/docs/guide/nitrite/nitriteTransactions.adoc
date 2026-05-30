@@ -1,0 +1,14 @@
+[[nitriteTransactions]]
+== Transactions
+
+Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.micronaut.data.nitrite.transaction.NitriteTransactionManager` and the `NitriteTransactionHolder`. When a transaction is active, repository calls use the bound `org.dizitart.no2.transaction.Transaction`, so all reads/writes participate in the same MVStore transaction and are committed or rolled back together. Keep units of work short to avoid blocking other threads that need to mutate the store.
+
+=== Examples
+
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
+
+=== Rollback control
+
+If you need to mark the current transaction rollback-only after some condition, use the `TransactionOperations` helper (`executeWrite`/`executeRead`) to set the status without throwing an exception.

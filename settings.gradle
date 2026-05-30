@@ -69,6 +69,7 @@ include 'data-tx-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-azure-cosmos'
+include 'data-nitrite'
 
 // Spring compatibility
 include 'data-spring'
@@ -135,6 +136,10 @@ include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
 
+include 'doc-examples:nitrite-example-java'
+include 'doc-examples:nitrite-example-groovy'
+include 'doc-examples:nitrite-example-kotlin'
+
 include 'doc-examples:coherence-example-java'
 
 include 'doc-examples:jdbc-spring-tx-example-java'
@@ -156,6 +161,7 @@ include 'test-suite-data-jdbc-sqlite'
 include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
 include 'benchmarks:benchmark-micronaut-data-mongodb'
+include 'benchmarks:benchmark-micronaut-data-nitrite'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'

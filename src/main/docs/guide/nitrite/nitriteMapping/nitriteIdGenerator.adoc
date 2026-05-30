@@ -1,0 +1,17 @@
+[[nitriteIdGenerator]]
+== ID Generation
+
+Micronaut Data Nitrite supports simple identifier generation using ann:data.annotation.GeneratedValue[].
+
+When ann:data.annotation.GeneratedValue[] is present on the identity property, the Nitrite runtime assigns an identifier before insert:
+
+- `String`: UUID string
+- `java.util.UUID`: UUID
+- `Long` / `long`: timestamp-based (`System.currentTimeMillis()`)
+- `Integer` / `int`: timestamp-based (modulo `Integer.MAX_VALUE`)
+
+Example:
+
+snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book"]
+
+If you require a specific ID generation strategy (for example database sequences), assign the identifier in your application code instead of relying on generated IDs.

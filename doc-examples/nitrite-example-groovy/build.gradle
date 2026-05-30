@@ -1,0 +1,28 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    // Override app plugin version
+    compileOnly projects.micronautDataProcessor
+    compileOnly projects.micronautDataDocumentProcessor
+
+    implementation projects.micronautDataNitrite
+    implementation libs.nitrite.spatial
+    implementation libs.jackson.datatype.jts
+    implementation mnSql.jakarta.persistence.api
+
+    runtimeOnly mnLogging.logback.classic
+}
+

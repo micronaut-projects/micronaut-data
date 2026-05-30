@@ -1,0 +1,3 @@
+nitrite:
+  storage-mode: IN_MEMORY
+  create-indexes: true

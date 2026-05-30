@@ -1,0 +1,26 @@
+[[nitriteIndexes]]
+== Automated Index Creation
+
+Micronaut Data Nitrite automatically creates indexes based on standard Micronaut Data annotations.
+
+You can define indexes at the class level or property level using ann:data.annotation.Index[] or ann:data.annotation.Indexes[].
+
+=== Primary Key Index
+
+The identity property (mapped to the `id` field) is automatically indexed with a unique index to ensure optimal lookup performance.
+
+=== Property-level Index
+
+Applying `@Index` to a property creates a non-unique index on that field:
+
+snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="property-index"]
+
+=== Compound Index
+
+You can define multi-column indexes at the class level:
+
+snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="compound-index"]
+
+=== Configuration
+
+Automatic index creation can be disabled by setting `nitrite.create-indexes` to `false` in your application configuration.

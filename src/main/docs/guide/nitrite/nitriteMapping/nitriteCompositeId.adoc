@@ -1,0 +1,15 @@
+[[nitriteCompositeId]]
+== Composite Primary Keys
+
+Composite primary keys can be defined using ann:data.annotation.EmbeddedId[].
+
+A composite ID requires an additional class to represent the key. The class should define fields that correspond to the attributes making up the key.
+
+snippet::example.ProjectId[project-base="doc-examples/nitrite-example", source="main", tags="projectId"]
+
+The entity then references the composite key using ann:data.annotation.EmbeddedId[]:
+
+snippet::example.Project[project-base="doc-examples/nitrite-example", source="main", tags="project"]
+
+TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+TIP: When using Java, define getters for the fields making up your composite key.
