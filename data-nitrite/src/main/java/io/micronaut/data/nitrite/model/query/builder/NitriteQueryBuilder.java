@@ -73,7 +73,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
     ArgumentUtils.requireNonNull("selectQueryDefinition", query);
 
-    NitriteQueryState queryState = new NitriteQueryState(query, true);
+    NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity(), true);
     Map<String, Object> predicateObj = new LinkedHashMap<>();
     Map<String, Object> sortObj = new LinkedHashMap<>();
 
@@ -127,7 +127,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
     ArgumentUtils.requireNonNull("updateQueryDefinition", definition);
 
-    NitriteQueryState queryState = new NitriteQueryState(definition, false);
+    NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity(), true);
     Map<String, Object> updateObj = new LinkedHashMap<>();
     Map<String, Object> setClause = new LinkedHashMap<>();
 
@@ -165,7 +165,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
     ArgumentUtils.requireNonNull("deleteQueryDefinition", definition);
 
-    NitriteQueryState queryState = new NitriteQueryState(definition, false);
+    NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity(), true);
     Map<String, Object> deleteObj = new LinkedHashMap<>();
 
     Object p = definition.predicate();
