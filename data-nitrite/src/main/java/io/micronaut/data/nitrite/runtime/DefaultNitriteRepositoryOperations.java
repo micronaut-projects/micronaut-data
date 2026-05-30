@@ -60,7 +60,10 @@ import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
+import java.util.function.Predicate;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Singleton;
@@ -102,7 +105,8 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
 @Internal
 @SuppressWarnings({"removal", "unchecked", "rawtypes"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
-    implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
+    implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator,
+               SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext>, NitriteOperationsHelper {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -123,6 +127,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
+  private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
 
   /**
    * Default constructor.
@@ -155,6 +160,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.queryParser = new NitriteQueryParser();
     this.filterBuilder = new NitriteFilterBuilder(entityMapper);
     this.updateExecutor = new NitriteUpdateExecutor(entityMapper);
+    this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
   }
 
   @Override
@@ -190,7 +196,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return (mappedEntity != null && !mappedEntity.value().isEmpty()) ? mappedEntity.value() : type.getSimpleName();
   }
 
-  private NitriteCollection getCollection(final Class<?> type) {
+  public NitriteCollection getCollection(final Class<?> type) {
     String name = getCollectionName(type);
     NitriteCollection collection;
     NitriteTransactionContext ctx = transactionHolder.get();
@@ -256,7 +262,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
   }
 
-  private <T> void generateIdIfNecessary(@NonNull final T entity, @NonNull final Class<T> type) {
+  public <T> void generateIdIfNecessary(@NonNull final T entity, @NonNull final Class<T> type) {
     RuntimePersistentEntity<T> persistentEntity = getEntity(type);
     var idProperty = persistentEntity.getIdentity();
     if (idProperty != null && idProperty.isAnnotationPresent(GeneratedValue.class)) {
@@ -280,78 +286,72 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   @NonNull
   public <T> T persist(@NonNull final InsertOperation<T> operation) {
-    T entity = operation.getEntity();
-    Class<T> type = operation.getRootEntity();
-    generateIdIfNecessary(entity, type);
-    getCollection(type).insert(entityMapper.toDocument(entity));
-    return entity;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    return persistOne(ctx, operation.getEntity(), getEntity(operation.getRootEntity()));
   }
 
   @Override
   @NonNull
   public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
-    Class<T> type = operation.getRootEntity();
-    NitriteCollection collection = getCollection(type);
-    for (T entity : operation) {
-      generateIdIfNecessary(entity, type);
-      collection.insert(entityMapper.toDocument(entity));
-    }
-    return operation;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation, true);
+    op.persist();
+    return op.getEntities();
   }
 
   @Override
   @NonNull
   public <T> T update(@NonNull final UpdateOperation<T> operation) {
-    T entity = operation.getEntity();
-    Class<T> type = operation.getRootEntity();
-    Object idValue = entityMapper.getEntityIdValue(entity, type);
-    if (idValue != null) {
-      getCollection(type).update(entityMapper.idEqualsFilter(type, idValue), entityMapper.toDocument(entity));
-    }
-    return entity;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation.getEntity(), NitriteEntityOperations.OperationType.UPDATE);
+    op.update();
+    return op.getEntity();
   }
 
   @Override
   @NonNull
   public <T> Iterable<T> updateAll(@NonNull final UpdateBatchOperation<T> operation) {
-    Class<T> type = operation.getRootEntity();
-    NitriteCollection collection = getCollection(type);
-    for (T entity : operation) {
-      Object idValue = entityMapper.getEntityIdValue(entity, type);
-      if (idValue != null) {
-        collection.update(entityMapper.idEqualsFilter(type, idValue), entityMapper.toDocument(entity));
-      }
-    }
-    return operation;
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation, false);
+    op.persist();
+    return op.getEntities();
   }
 
   @Override
   public <T> int delete(@NonNull final DeleteOperation<T> operation) {
-    Class<T> type = operation.getRootEntity();
-    Object idValue = entityMapper.getEntityIdValue(operation.getEntity(), type);
-    if (idValue == null) {
-      return 0;
-    }
-    return getCollection(type).remove(entityMapper.idEqualsFilter(type, idValue), false).getAffectedCount();
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation.getEntity(), NitriteEntityOperations.OperationType.DELETE);
+    op.delete();
+    return 1;
   }
 
   @Override
   @NonNull
   public <T> Optional<Number> deleteAll(@NonNull final DeleteBatchOperation<T> operation) {
-    Class<T> type = operation.getRootEntity();
-    NitriteCollection collection = getCollection(type);
+    NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
     if (operation.all()) {
+      NitriteCollection collection = getCollection(operation.getRootEntity());
       collection.clear();
       return Optional.of(-1);
     }
-    int count = 0;
-    for (T entity : operation) {
-      Object idValue = entityMapper.getEntityIdValue(entity, type);
-      if (idValue != null && collection.remove(entityMapper.idEqualsFilter(type, idValue), false).getAffectedCount() > 0) {
-        count++;
-      }
-    }
-    return Optional.of(count);
+    NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
+        operation, false);
+    op.delete();
+    return Optional.of((long) op.getEntities().size());
   }
 
   @NonNull
@@ -408,8 +408,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return options;
   }
 
-  @Nullable
-  private Sort parseSortFromSqlQuery(@Nullable final String sql) {
+  @Override
+  public Sort parseSortFromSqlQuery(final String sql) {
     if (sql == null) {
       return null;
     }
@@ -431,8 +431,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return orders.isEmpty() ? null : Sort.of(orders);
   }
 
-  @Nullable
-  private Sort parseSortFromJsonQuery(@Nullable final String queryString) {
+  @Override
+  public Sort parseSortFromJsonQuery(final String queryString) {
     if (queryString == null || !queryString.contains("\"$sort\"")) {
       return null;
     }
@@ -452,8 +452,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return null;
   }
 
-  @Nullable
-  private Sort parseSortFromHints(@Nullable final Map<String, Object> hints) {
+  @Override
+  public Sort parseSortFromHints(final Map<String, Object> hints) {
     if (hints == null || hints.isEmpty() || !(hints.get("sort") instanceof String sortStr) || sortStr.isEmpty()) {
       return null;
     }
@@ -1104,5 +1104,84 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     List<R> list = new ArrayList<>();
     findAll(q).forEach(list::add);
     return list;
+  }
+
+  @Override
+  public void persistManyAssociation(NitriteOperationContext ctx, RuntimeAssociation association,
+          Object parent, RuntimePersistentEntity<Object> parentEntity,
+          Object child, RuntimePersistentEntity<Object> childEntity) {
+    // Not needed for Nitrite
+  }
+
+  @Override
+  public void persistManyAssociationBatch(NitriteOperationContext ctx, RuntimeAssociation association,
+          Object parent, RuntimePersistentEntity<Object> parentEntity,
+          Iterable<Object> children, RuntimePersistentEntity<Object> childEntity) {
+    // Not needed for Nitrite
+  }
+
+  @Override
+  public <T> T persistOne(NitriteOperationContext ctx, T entity, RuntimePersistentEntity<T> persistentEntity) {
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        persistentEntity, conversionService, entityMapper, this, entity,
+        NitriteEntityOperations.OperationType.INSERT);
+    op.persist();
+    return op.getEntity();
+  }
+
+  @Override
+  public <T> List<T> persistBatch(NitriteOperationContext ctx, Iterable<T> entities,
+          RuntimePersistentEntity<T> persistentEntity, Predicate<T> predicate) {
+    List<T> results = new ArrayList<>();
+    for (T entity : entities) {
+      if (predicate != null && predicate.test(entity)) continue;
+      results.add(persistOne(ctx, entity, persistentEntity));
+    }
+    return results;
+  }
+
+  @Override
+  public <T> T updateOne(NitriteOperationContext ctx, T entity, RuntimePersistentEntity<T> persistentEntity) {
+    NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
+        ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
+        persistentEntity, conversionService, entityMapper, this, entity,
+        NitriteEntityOperations.OperationType.UPDATE);
+    op.update();
+    return op.getEntity();
+  }
+
+  @Override
+  public <T> T updateEntityId(io.micronaut.core.beans.BeanProperty<T, Object> property, T entity, Object id) {
+    if (property != null) {
+      property.set(entity, id);
+    }
+    return entity;
+  }
+
+  @Override
+  public Object toFilterValue(Object value) {
+    return value;
+  }
+
+  @Override
+  public void logInsert(String collection, Object doc) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("INSERT INTO {} VALUES {}", collection, doc);
+    }
+  }
+
+  @Override
+  public void logUpdate(String collection, Filter filter, Document update) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("UPDATE {} SET {} WHERE {}", collection, update, filter);
+    }
+  }
+
+  @Override
+  public void logFind(String collection, Filter filter) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("SELECT * FROM {} WHERE {}", collection, filter);
+    }
   }
 }
