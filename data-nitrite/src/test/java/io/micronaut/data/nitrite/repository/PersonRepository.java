@@ -22,6 +22,7 @@ import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,7 @@ import java.util.Optional;
  */
 @NitriteRepository
 public interface PersonRepository
-    extends CrudRepository<Person, String>, PageableRepository<Person, String> {
+    extends CrudRepository<Person, String>, PageableRepository<Person, String>, JpaSpecificationExecutor<Person> {
   /**
    * Finds a person by the exact name.
    *
@@ -38,6 +39,14 @@ public interface PersonRepository
    * @return optional person
    */
   Optional<Person> findByName(String name);
+
+  /**
+   * Finds a person by age.
+   *
+   * @param age the age
+   * @return matching persons
+   */
+  List<Person> findByAge(int age);
 
   /**
    * Finds all persons older than the supplied age.
@@ -219,4 +228,21 @@ public interface PersonRepository
    * @return number of updated records
    */
   long updateByName(String name, @Parameter("age") int age);
+
+  /**
+   * Finds all person names (projection to single property using SQL SELECT).
+   *
+   * @return list of names
+   */
+  @io.micronaut.data.annotation.Query("SELECT name FROM Person")
+  java.util.List<String> findAllNames();
+
+  /**
+   * Finds names of active persons using JSON query with explicit $project field.
+   * The $project syntax explicitly specifies which field to return.
+   *
+   * @return list of names of active persons
+   */
+  @io.micronaut.data.annotation.Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
+  java.util.List<String> findActivePersonNames();
 }

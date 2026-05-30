@@ -15,11 +15,14 @@
  */
 package io.micronaut.data.nitrite.model;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Embeddable;
+import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
-public class ProjectId {
+@Introspected
+public class ProjectId implements Serializable {
   private final int departmentId;
   private final int projectNumber;
 
@@ -41,9 +44,10 @@ public class ProjectId {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ProjectId other)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    ProjectId other = (ProjectId) o;
     return departmentId == other.departmentId && projectNumber == other.projectNumber;
   }
 
@@ -51,4 +55,6 @@ public class ProjectId {
   public int hashCode() {
     return Objects.hash(departmentId, projectNumber);
   }
+
+  private static final long serialVersionUID = 1L;
 }

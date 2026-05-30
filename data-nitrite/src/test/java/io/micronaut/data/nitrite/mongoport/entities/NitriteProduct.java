@@ -1,0 +1,58 @@
+package io.micronaut.data.nitrite.mongoport.entities;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@MappedEntity("nitrite_product")
+public class NitriteProduct {
+    @Id
+    @GeneratedValue
+    private String id;
+    private String name;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private NitriteCategory category;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "product", cascade = Relation.Cascade.ALL)
+    private List<NitriteProductOption> productOption = new ArrayList<>();
+
+    public NitriteProduct() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public NitriteCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(NitriteCategory category) {
+        this.category = category;
+    }
+
+    public List<NitriteProductOption> getProductOption() {
+        return productOption;
+    }
+
+    public void setProductOption(List<NitriteProductOption> productOption) {
+        this.productOption = productOption;
+    }
+}

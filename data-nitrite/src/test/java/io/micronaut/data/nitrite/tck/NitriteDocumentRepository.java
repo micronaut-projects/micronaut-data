@@ -27,6 +27,7 @@ import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import java.util.Optional;
 
 @NitriteRepository
+@RepositoryConfiguration(queryBuilder = NitriteQueryBuilder.class)
 public interface NitriteDocumentRepository extends DocumentRepository {
 
   @Query("{\"title\": :title}")

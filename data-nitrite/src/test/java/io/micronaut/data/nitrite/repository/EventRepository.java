@@ -15,12 +15,15 @@
  */
 package io.micronaut.data.nitrite.repository;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.Event;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /** Repository for testing event patterns. */
 /**
@@ -28,7 +31,7 @@ import java.util.List;
  */
 @NitriteRepository
 public interface EventRepository
-    extends CrudRepository<Event, String>, PageableRepository<Event, String> {
+    extends CrudRepository<Event, String>, PageableRepository<Event, String>, JpaSpecificationExecutor<Event> {
 
   /**
    * Finds events having the exact supplied type.
@@ -121,4 +124,11 @@ public interface EventRepository
    * @return matching events
    */
   List<Event> findByOccurredAtAfter(Instant cutoff);
+
+  /**
+   * KNOWN BUG: Uses @Query with field filter which silently returns empty in Nitrite.
+   * The field filter does not work.
+   */
+  @Query("{\"type\": {\"$eq\": :type}}")
+  Optional<Event> findByTypeWithQuery(String type);
 }
