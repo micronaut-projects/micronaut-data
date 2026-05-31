@@ -17,11 +17,9 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,14 +40,17 @@ public final class NitriteUpdateExecutor {
       Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*=\\s*:(\\w+)");
 
   private final NitriteEntityMapper entityMapper;
+  private final NitriteFilterBuilder filterBuilder;
 
   /**
    * Create a new update executor.
    *
    * @param entityMapper the entity mapper
+   * @param filterBuilder the filter builder
    */
-  public NitriteUpdateExecutor(@NonNull NitriteEntityMapper entityMapper) {
+  public NitriteUpdateExecutor(NitriteEntityMapper entityMapper, NitriteFilterBuilder filterBuilder) {
     this.entityMapper = entityMapper;
+    this.filterBuilder = filterBuilder;
   }
 
   /**
@@ -82,46 +83,40 @@ public final class NitriteUpdateExecutor {
         continue;
       }
       Object value = e.getValue();
-      if (value instanceof String s) {
-        if (s.startsWith("$mn_qp:")) {
-          try {
-            int idx = Integer.parseInt(s.substring(7));
-            if (idx >= 0 && idx < jsonParams.length) {
-              value = entityMapper.toFilterValue(jsonParams[idx]);
-            }
-          } catch (NumberFormatException ignored) {
-              // ignore invalid JSON parameter index format
-          }
-        } else if (s.startsWith(":")) {
-          String name = s.substring(1);
-          if (namedParameters.containsKey(name)) {
-            value = namedParameters.get(name);
-          }
+      if (value instanceof String s && s.startsWith("$mn_qp:")) {
+        int idx = Integer.parseInt(s.substring(7));
+        if (idx >= 0 && idx < jsonParams.length) {
+          value = entityMapper.toFilterValue(jsonParams[idx]);
+        }
+      } else if (value instanceof String s && s.startsWith(":")) {
+        String name = s.substring(1);
+        if (namedParameters.containsKey(name)) {
+          value = namedParameters.get(name);
         }
       }
       updateDoc.put(fieldName, value);
     }
 
-    // Nitrite updates are partial updates using the document fields as the set clause
-    var result = collection.update(filter, updateDoc, UpdateOptions.updateOptions(false));
+    Document wrapper = Document.createDocument();
+    wrapper.put("$set", updateDoc);
+    var result = collection.update(filter, wrapper, UpdateOptions.updateOptions(false));
     return result.getAffectedCount();
   }
 
   /**
    * Parse the SET clause of a SQL-like update statement.
    *
-   * @param sql      the SQL string
-   * @param params   the positional parameters
+   * @param sql the SQL string
+   * @param params the positional parameters
    * @param resolver a function to resolve parameter values
    * @return a map of fields to their new values
    */
-  @NonNull
   public Map<String, Object> parseSetClause(
-      @NonNull final String sql, @Nullable final Object[] params, @NonNull final java.util.function.BiFunction<String, Object[], Object> resolver) {
-    int setIdx = sql.toUpperCase(Locale.ROOT).indexOf(" SET ");
-    int whereIdx = sql.toUpperCase(Locale.ROOT).indexOf(" WHERE ");
+      final String sql, final Object[] params, final java.util.function.BiFunction<String, Object[], Object> resolver) {
+    int setIdx = sql.toUpperCase().indexOf(" SET ");
+    int whereIdx = sql.toUpperCase().indexOf(" WHERE ");
     if (setIdx < 0) {
-      return new LinkedHashMap<>();
+      return Map.of();
     }
     String setClause =
         whereIdx >= 0 ? sql.substring(setIdx + 5, whereIdx) : sql.substring(setIdx + 5);
@@ -130,10 +125,8 @@ public final class NitriteUpdateExecutor {
     while (m.find()) {
       String field = m.group(1);
       String pname = m.group(2);
-      if (field != null && pname != null) {
-          Object val = resolver.apply(pname, params);
-          fields.put(field, val);
-      }
+      Object val = resolver.apply(pname, params);
+      fields.put(field, val);
     }
     return fields;
   }

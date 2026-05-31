@@ -117,6 +117,20 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
   }
 
   @Override
+  protected void doSuspend(final DefaultTransactionStatus<Session> transaction) {
+    holder.clear();
+  }
+
+  @Override
+  protected void doResume(final DefaultTransactionStatus<Session> transaction) {
+    Session session = transaction.getConnection();
+    Object txObj = transaction.getTransaction();
+    if (txObj instanceof Transaction nitriteTx) {
+      holder.bind(new NitriteTransactionContext(session, nitriteTx));
+    }
+  }
+
+  @Override
   protected DefaultTransactionStatus<Session> createNewTransactionStatus(
       final ConnectionStatus<Session> connectionStatus, final TransactionDefinition definition) {
     return DefaultTransactionStatus.newTx(connectionStatus, definition, this);

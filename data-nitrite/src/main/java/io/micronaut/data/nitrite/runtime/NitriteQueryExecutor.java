@@ -182,8 +182,10 @@ public final class NitriteQueryExecutor {
         // Handle count queries
         if (Number.class.isAssignableFrom(nq.getResultType())) {
             String methodName = q.getName();
+            String queryStr = nq.getQuery();
             boolean isCountQuery = methodName.startsWith("count") ||
-                (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
+                (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
+                (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
                 return (R) Long.valueOf(coll.find(filter).size());
             }
@@ -247,8 +249,10 @@ public final class NitriteQueryExecutor {
         // Handle count queries
         if (Number.class.isAssignableFrom(nq.getResultType())) {
             String methodName = q.getName();
+            String queryStr = nq.getQuery();
             boolean isCountQuery = methodName.startsWith("count") ||
-                (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT);
+                (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
+                (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
                 return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
             }

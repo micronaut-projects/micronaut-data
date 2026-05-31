@@ -4,14 +4,13 @@ import groovy.transform.CompileStatic
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
 import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
@@ -82,7 +81,7 @@ class NitriteCriteriaSpec extends Specification {
     }
 
     @Unroll
-    void "test criteria predicate"(Specification specification) {
+    void "test criteria predicate"(QuerySpecification specification) {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
             def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
@@ -98,30 +97,30 @@ class NitriteCriteriaSpec extends Specification {
             specification << [
                     { root, query, cb ->
                         cb.between(root.get("enabled"), true, false)
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         def parameter = cb.parameter(Integer)
                         cb.between(root.get("amount"), parameter, parameter)
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         query.where(root.get("enabled"))
                         null
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         cb.isTrue(root.get("enabled"))
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         cb.and(cb.isTrue(root.get("enabled")), cb.isTrue(root.get("enabled")))
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         root.get("name").in("A", "B", "C")
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         cb.in(root.get("name")).value("A").value("B").value("C")
-                    } as Specification,
+                    } as QuerySpecification,
                     { root, query, cb ->
                         root.get("name").in("A", "B", "C").not()
-                    } as Specification,
+                    } as QuerySpecification,
             ]
             expectedWhereQuery << [
                     '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
@@ -292,23 +291,23 @@ class NitriteCriteriaSpec extends Specification {
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaDelete<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getQuery()
     }
 
     private static String getUpdateQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getUpdate()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getUpdate()
     }
 
     @CompileStatic
-    interface Specification<T> {
+    interface QuerySpecification<T> {
         Predicate toPredicate(@NonNull Root<T> root, @NonNull CriteriaQuery<?> query, @NonNull CriteriaBuilder criteriaBuilder);
     }
 

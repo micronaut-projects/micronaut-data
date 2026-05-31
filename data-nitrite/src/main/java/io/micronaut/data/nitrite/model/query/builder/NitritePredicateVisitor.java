@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.model.query.builder;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -104,7 +105,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final jakarta.persistence.criteria.Expression leftExpression,
       final jakarta.persistence.criteria.Expression rightExpression,
       final boolean ignoreCase) {
-    appendOperatorExpression(leftExpression, "$eq", rightExpression);
+    if (ignoreCase) {
+      handleRegexExpression(leftExpression, true, false, false, false, rightExpression, false);
+    } else {
+      appendOperatorExpression(leftExpression, "$eq", rightExpression);
+    }
   }
 
   @Override
@@ -112,7 +117,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
       final jakarta.persistence.criteria.Expression leftExpression,
       final jakarta.persistence.criteria.Expression rightExpression,
       final boolean ignoreCase) {
-    appendOperatorExpression(leftExpression, "$ne", rightExpression);
+    if (ignoreCase) {
+      handleRegexExpression(leftExpression, true, true, false, false, rightExpression, false);
+    } else {
+      appendOperatorExpression(leftExpression, "$ne", rightExpression);
+    }
   }
 
   @Override
@@ -146,7 +155,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {
-          String path = asPath(associations, property);
+          String path = getFieldNameForNullCheck(associations, property);
           query.put(path, null); // Nitrite: FluentFilter.where(field).eq(null)
         });
   }
@@ -158,7 +167,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     PersistentEntityUtils.traversePersistentProperties(
         propertyPath,
         (associations, property) -> {
-          String path = asPath(associations, property);
+          String path = getFieldNameForNullCheck(associations, property);
           query.put(path, Collections.singletonMap("$ne", null)); // notEq(null)
         });
   }
@@ -456,7 +465,8 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath propertyPathExpr) {
       final PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
       final String fieldName = getFieldName(propertyPath);
-      Object regexValue;
+      final String ciPrefix = ignoreCase ? "(?i)" : "";
+      String regexValue;
       if (rightExpression instanceof LiteralExpression literal) {
         Object literalValue = literal.getValue();
         String pattern = literalValue != null ? literalValue.toString() : "";
@@ -469,25 +479,15 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         } else {
           pattern = ".*" + Pattern.quote(pattern) + ".*";
         }
-        if (ignoreCase) {
-          pattern = "(?i)" + pattern;
-        }
-        regexValue = new RegexPattern(pattern);
+        regexValue = ciPrefix + pattern;
       } else {
-        regexValue = rightExpression;
+        String prefix = startsWith ? "^" : ".*";
+        String suffix = endsWith ? "$" : ".*";
+        String paramPlaceholder = String.valueOf(valueRepresentation(propertyPath, rightExpression));
+        regexValue = ciPrefix + prefix + paramPlaceholder + suffix;
       }
       Map<String, Object> fieldFilter = new LinkedHashMap<>();
-      if (regexValue instanceof RegexPattern rp) {
-        fieldFilter.put(REGEX, rp.value());
-      } else {
-        fieldFilter.put(
-            REGEX,
-            valueRepresentation(
-                propertyPath, (jakarta.persistence.criteria.Expression) regexValue));
-      }
-      if (ignoreCase) {
-        fieldFilter.put("$options", "i");
-      }
+      fieldFilter.put(REGEX, regexValue);
       query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
     }
   }
@@ -579,11 +579,50 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     } catch (IllegalStateException e) {
         identity = null;
     }
-    if (identity != null && identity.equals(property)) {
+    if (identity != null && identity.equals(property) && propertyPath.getAssociations().isEmpty()) {
       return ID_FIELD;
     }
-    // Return simple name for top-level properties
-    return property.getName();
+
+    if (propertyPath.getAssociations().isEmpty()) {
+      return property.getPersistedName();
+    }
+
+    StringBuilder sb = new StringBuilder();
+    for (Association association : propertyPath.getAssociations()) {
+      if (association.isEmbedded()) {
+        sb.append(association.getPersistedName()).append(".");
+      } else {
+        if (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY) {
+          sb.append(association.getPersistedName()).append(".");
+        } else {
+          return association.getPersistedName();
+        }
+      }
+    }
+    sb.append(property.getPersistedName());
+    return sb.toString();
+  }
+
+  private static String getFieldNameForNullCheck(
+      final Collection<Association> associations, final PersistentProperty property) {
+    if (associations.isEmpty()) {
+      return property.getPersistedName();
+    }
+    Association lastAssoc = null;
+    for (Association assoc : associations) {
+      if (!assoc.isEmbedded()) {
+        lastAssoc = assoc;
+      }
+    }
+    if (lastAssoc != null) {
+      return lastAssoc.getPersistedName();
+    }
+    StringBuilder sb = new StringBuilder();
+    for (Association association : associations) {
+      sb.append(association.getPersistedName()).append(".");
+    }
+    sb.append(property.getPersistedName());
+    return sb.toString();
   }
 
   static BindingParameter.BindingContext newBindingContext(
@@ -669,13 +708,13 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
   static String asPath(
       final Collection<Association> associations, final PersistentProperty property) {
     if (associations.isEmpty()) {
-      return property.getName();
+      return property.getPersistedName();
     }
     StringBuilder sb = new StringBuilder();
     for (Association association : associations) {
-      sb.append(association.getName()).append(".");
+      sb.append(association.getPersistedName()).append(".");
     }
-    sb.append(property.getName());
+    sb.append(property.getPersistedName());
     return sb.toString();
   }
 

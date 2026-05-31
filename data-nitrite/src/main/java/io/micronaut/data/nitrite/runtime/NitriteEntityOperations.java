@@ -224,14 +224,14 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 // Entity has ID - use upsert (update with insert-if-absent)
                 // Initialize version to 0 if not set (for optimistic locking)
                 if (repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
                 }
                 Document doc = repositoryWriter.toDocument(entity);
                 Filter filter = entityMapper.idEqualsFilter(meta, entityId);
                 helper.logUpdate(collection.getName(), filter, doc);
                 long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
-                if (persistentEntity.getVersion() != null) {
+                if (meta.versionProp() != null) {
                     checkOptimisticLocking(1, rows);
                 }
             } else {
@@ -239,7 +239,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 helper.generateIdIfNecessary(entity, type);
                 // Initialize version to 0 if not set (for optimistic locking)
                 if (repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                    BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
                 }
                 Document doc = repositoryWriter.toDocument(entity);
@@ -259,12 +259,12 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Use cached idAccessor from meta - eliminates chained lookups
             Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
             Filter filter = entityMapper.idEqualsFilter(meta, id);
-            if (persistentEntity.getVersion() != null) {
+            if (meta.versionProp() != null) {
                 Object versionValue = preVersionValue;
                 if (versionValue == null) {
-                    versionValue = persistentEntity.getVersion().getProperty().get(entity);
+                    versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
             Document update = repositoryWriter.toDocument(entity);
             helper.logUpdate(collection.getName(), filter, update);
@@ -275,12 +275,12 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Use cached idAccessor from meta - eliminates chained lookups
             Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
             Filter filter = entityMapper.idEqualsFilter(meta, id);
-            if (persistentEntity.getVersion() != null) {
+            if (meta.versionProp() != null) {
                 Object versionValue = preVersionValue;
                 if (versionValue == null) {
-                    versionValue = persistentEntity.getVersion().getProperty().get(entity);
+                    versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
             helper.logFind(collection.getName(), filter);
             long rows = collection.remove(filter, false).getAffectedCount();
@@ -324,7 +324,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     }
 
     private void checkOptimisticLocking(int expected, long received) {
-        if (persistentEntity.getVersion() != null && received != expected) {
+        if (entityMapper.getOrBuildMeta((Class<T>) persistentEntity.getIntrospection().getBeanType()).versionProp() != null && received != expected) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expected + " got: " + received);
         }
     }
@@ -372,8 +372,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        if ((operationType == OperationType.UPDATE || operationType == OperationType.DELETE) && persistentEntity.getVersion() != null) {
-            preVersionValue = persistentEntity.getVersion().getProperty().get(entity);
+        NitriteEntityMapper.NitriteEntityMeta<T> triggerMeta = entityMapper.getOrBuildMeta((Class<T>) persistentEntity.getIntrospection().getBeanType());
+        if ((operationType == OperationType.UPDATE || operationType == OperationType.DELETE) && triggerMeta.versionProp() != null) {
+            preVersionValue = triggerMeta.versionProp().getProperty().get(entity);
         }
         final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
         boolean vetoed = !fn.apply((EntityEventContext<Object>) event);

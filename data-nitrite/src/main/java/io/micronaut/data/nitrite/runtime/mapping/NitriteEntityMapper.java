@@ -231,11 +231,19 @@ public final class NitriteEntityMapper {
   public <T> Object getEntityIdValue(final T entity, final Class<T> type) {
     RuntimePersistentEntity<T> persistentEntity =
         (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(type);
-    RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+    RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
     if (idProp != null) {
       return idProp.getProperty().get(entity);
     }
     return null;
+  }
+
+  private <E> RuntimePersistentProperty<E> safeGetIdentity(RuntimePersistentEntity<E> persistentEntity) {
+    try {
+      return persistentEntity.getIdentity();
+    } catch (IllegalStateException e) {
+      return null;
+    }
   }
 
   /**
@@ -257,7 +265,7 @@ public final class NitriteEntityMapper {
    */
   public String normalizeFieldName(final String field, @Nullable final RuntimePersistentEntity<?> entity) {
     if (entity != null) {
-      RuntimePersistentProperty<?> idProperty = entity.getIdentity();
+      RuntimePersistentProperty<?> idProperty = safeGetIdentity(entity);
       if (idProperty != null && (idProperty.getName().equals(field) || "_id".equals(field) || "id".equals(field))) {
         return ID_FIELD;
       }
@@ -433,12 +441,12 @@ public final class NitriteEntityMapper {
     Object reservedId = doc.get("_id");
     if (reservedId != null && !(reservedId instanceof NitriteId)) {
       doc.remove("_id");
-      RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+      RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
       String idField = idProp != null ? idProp.getName() : "id";
       doc.put(idField, toFilterValue(reservedId));
     }
 
-    RuntimePersistentProperty<T> idProperty = persistentEntity.getIdentity();
+    RuntimePersistentProperty<T> idProperty = safeGetIdentity(persistentEntity);
     Object normalizedId = null;
     Object idValue = idProperty != null ? idProperty.getProperty().get(entity) : null;
     boolean embeddedIdProperty = idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class);
@@ -476,7 +484,7 @@ public final class NitriteEntityMapper {
           return null;
       }
       RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) runtimeEntityRegistry.getEntity(entity.getClass());
-      RuntimePersistentProperty<Object> idProp = persistentEntity.getIdentity();
+      RuntimePersistentProperty<Object> idProp = safeGetIdentity(persistentEntity);
       if (idProp != null) {
           Object idValue = idProp.getProperty().get(entity);
           if (idValue != null) {
@@ -595,7 +603,12 @@ public final class NitriteEntityMapper {
         } else if (assoc.isEmbedded()) {
           strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
         } else {
-          RuntimePersistentProperty<?> idPropRaw = assoc.getAssociatedEntity().getIdentity();
+          RuntimePersistentProperty<?> idPropRaw;
+          try {
+            idPropRaw = assoc.getAssociatedEntity().getIdentity();
+          } catch (IllegalStateException e) {
+            idPropRaw = null;
+          }
           if (idPropRaw == null) {
             strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
           } else {
@@ -632,16 +645,27 @@ public final class NitriteEntityMapper {
 
     // Cache ID accessor for fast ID property access
     BeanProperty<T, Object> idAccessor = null;
-    RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+    RuntimePersistentProperty<T> idProp = null;
+    try {
+      idProp = persistentEntity.getIdentity();
+    } catch (IllegalStateException e) {
+      // entity has no identity (e.g. embedded) – leave null
+    }
     if (idProp != null) {
       idAccessor = (BeanProperty<T, Object>) idProp.getProperty();
     }
 
+    RuntimePersistentProperty<T> versionProp = null;
+    try {
+      versionProp = persistentEntity.getVersion();
+    } catch (IllegalStateException e) {
+      // entity has no version – leave null
+    }
     return new NitriteEntityMeta<>(
         List.copyOf(writableList),
         List.copyOf(mappedByList),
         idProp,
-        persistentEntity.getVersion(),
+        versionProp,
         persistentEntity,
         List.copyOf(cascadeList),
         hasBackRefs,
@@ -797,7 +821,7 @@ public final class NitriteEntityMapper {
       
       if (visited.contains(value)) {
           RuntimePersistentEntity<?> associatedEntity = (RuntimePersistentEntity<?>) association.getAssociatedEntity();
-          RuntimePersistentProperty<?> idProp = associatedEntity.getIdentity();
+          RuntimePersistentProperty<?> idProp = safeGetIdentity(associatedEntity);
           if (idProp != null) {
               @SuppressWarnings("rawtypes")
               BeanProperty property = idProp.getProperty();
@@ -1213,7 +1237,7 @@ public final class NitriteEntityMapper {
             RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(name);
             String storedName = prop != null ? prop.getPersistedName() : name;
             
-            RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+            RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
             if (idProp != null && idProp.getName().equals(name)) {
                 storedName = ID_FIELD;
             }
@@ -1238,7 +1262,7 @@ public final class NitriteEntityMapper {
     }
 
     // Set identity early so mappedBy hydration can use it
-    RuntimePersistentProperty<T> idProp = persistentEntity.getIdentity();
+    RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
     if (idProp != null) {
         Object storedId = doc.get(ID_FIELD);
         if (storedId == null) {
@@ -1278,8 +1302,16 @@ public final class NitriteEntityMapper {
         }
 
         if (value != null) {
-            boolean associationStoredEmbedded = prop instanceof RuntimeAssociation association
-                && (association.isEmbedded() || association.getAssociatedEntity().getIdentity() == null);
+            boolean associationStoredEmbedded;
+            if (prop instanceof RuntimeAssociation association && !association.isEmbedded()) {
+                try {
+                    associationStoredEmbedded = association.getAssociatedEntity().getIdentity() == null;
+                } catch (IllegalStateException e) {
+                    associationStoredEmbedded = true;
+                }
+            } else {
+                associationStoredEmbedded = prop instanceof RuntimeAssociation association && association.isEmbedded();
+            }
             if (prop instanceof RuntimeAssociation association && !associationStoredEmbedded) {
                 if (helper != null) {
                     Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
@@ -1328,7 +1360,7 @@ public final class NitriteEntityMapper {
     }
 
     // Handle version property explicitly (might not be in persistent properties or value could be 0)
-    RuntimePersistentProperty<T> versionProp = persistentEntity.getVersion();
+    RuntimePersistentProperty<T> versionProp = getOrBuildMeta(type).versionProp();
     if (versionProp != null && !versionProp.isReadOnly()) {
         BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) versionProp.getProperty();
         String versionStoredName = versionProp.getPersistedName();

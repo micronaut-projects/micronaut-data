@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.operations;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.dizitart.no2.Nitrite;
 
@@ -24,7 +25,7 @@ import org.dizitart.no2.Nitrite;
  *
  * @since 1.0.0
  */
-public interface NitriteRepositoryOperations extends RepositoryOperations {
+public interface NitriteRepositoryOperations extends RepositoryOperations, PrimaryRepositoryOperations {
 
   /**
    * Returns the underlying Nitrite database.

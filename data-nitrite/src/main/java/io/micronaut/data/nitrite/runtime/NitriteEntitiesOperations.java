@@ -231,6 +231,9 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             return;
         }
 
+        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+
         // First pass: capture pre-version values and trigger pre-remove events
         List<Filter> filters = new ArrayList<>();
         List<T> entitiesToDelete = new ArrayList<>();
@@ -245,11 +248,11 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             Filter filter = entityMapper.idEqualsFilter((Class<T>) persistentEntity.getIntrospection().getBeanType(), idValue);
 
             // Add version filter for optimistic locking
-            if (persistentEntity.getVersion() != null) {
-                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+            if (meta.versionProp() != null) {
+                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
                 Object versionValue = versionProperty.get(entity);
                 preVersionValues.add(versionValue);
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             } else {
                 preVersionValues.add(null);
             }
@@ -275,7 +278,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
 
         // Check optimistic locking - process all before throwing
-        if (persistentEntity.getVersion() != null && count != entitiesToDelete.size()) {
+        if (meta.versionProp() != null && count != entitiesToDelete.size()) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + entitiesToDelete.size() + " got: " + count);
         }
 
@@ -319,7 +322,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     // Entity has ID - use upsert (update with insert-if-absent)
                     // Initialize version to 0 if not set (for optimistic locking)
                     if (repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
                     }
@@ -327,7 +330,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     Filter filter = entityMapper.idEqualsFilter(meta, id);
                     helper.logUpdate(collection.getName(), filter, doc);
                     long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
-                    if (persistentEntity.getVersion() != null) {
+                    if (meta.versionProp() != null) {
                         if (rows != 1) {
                             throw new OptimisticLockException("Upsert expected 1 row but got " + rows);
                         }
@@ -338,7 +341,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     helper.generateIdIfNecessary(entity, type);
                     // Initialize version to 0 if not set (for optimistic locking)
                     if (repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) persistentEntity.getVersion().getProperty();
+                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
                     }
@@ -367,25 +370,25 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 // Use cached idAccessor from meta - eliminates chained lookups
                 Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
                 Filter filter = entityMapper.idEqualsFilter(meta, id);
-                if (persistentEntity.getVersion() != null) {
+                if (meta.versionProp() != null) {
                     Object versionValue = (preVersionValues != null && i < preVersionValues.size()) ? preVersionValues.get(i) : null;
                     if (versionValue == null) {
-                        versionValue = persistentEntity.getVersion().getProperty().get(entity);
+                        versionValue = meta.versionProp().getProperty().get(entity);
                     }
-                    filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(persistentEntity.getVersion().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                    filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
                     // Increment version (preVersionValue has the OLD version, add 1)
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
-                    entity = helper.updateEntityId((BeanProperty<T, Object>) persistentEntity.getVersion().getProperty(), entity, nextVersion);
+                    entity = helper.updateEntityId((BeanProperty<T, Object>) meta.versionProp().getProperty(), entity, nextVersion);
                     entities.set(i, entity);
                 }
                 Document update = repositoryWriter.toDocument(entity);
                 helper.logUpdate(collection.getName(), filter, update);
-                long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
+                long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
                 affectedCount += rows;
             }
 
             // Check optimistic locking after processing all entities
-            if (persistentEntity.getVersion() != null && affectedCount != expectedCount) {
+            if (meta.versionProp() != null && affectedCount != expectedCount) {
                 throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expectedCount + " got: " + affectedCount);
             }
         }
@@ -395,11 +398,12 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
         boolean vetoed = false;
         preVersionValues = new ArrayList<>();
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) persistentEntity.getIntrospection().getBeanType());
         // First pass: capture pre-version values BEFORE event listeners are triggered
         for (int i = 0; i < entities.size(); i++) {
             T entity = entities.get(i);
-            if (!insert && persistentEntity.getVersion() != null) {
-                preVersionValues.add(persistentEntity.getVersion().getProperty().get(entity));
+            if (!insert && meta.versionProp() != null) {
+                preVersionValues.add(meta.versionProp().getProperty().get(entity));
             } else {
                 preVersionValues.add(null);
             }

@@ -49,7 +49,13 @@ public final class ObjectRepositoryWriter<T> {
     public ObjectRepositoryWriter(NitriteEntityMapper entityMapper, RuntimePersistentEntity<T> persistentEntity) {
         this.entityMapper = entityMapper;
         this.persistentEntity = persistentEntity;
-        this.versionProperty = persistentEntity.getVersion();
+        RuntimePersistentProperty<T> version = null;
+        try {
+            version = persistentEntity.getVersion();
+        } catch (IllegalStateException e) {
+            // entity has no version – leave null
+        }
+        this.versionProperty = version;
     }
 
     /**

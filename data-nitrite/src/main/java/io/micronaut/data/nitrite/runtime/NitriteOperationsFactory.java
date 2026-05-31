@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ClassUtils;
@@ -212,6 +213,7 @@ public final class NitriteOperationsFactory {
    * @return the repository operations
    */
   @Bean
+  @Primary
   @Singleton
   public NitriteRepositoryOperations nitriteRepositoryOperations(
       Nitrite database,
