@@ -20,6 +20,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.collection.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ import java.util.List;
  */
 @Internal
 public final class ObjectRepositoryWriter<T> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectRepositoryWriter.class);
 
     private final NitriteEntityMapper entityMapper;
     private final RuntimePersistentEntity<T> persistentEntity;
@@ -53,7 +57,7 @@ public final class ObjectRepositoryWriter<T> {
         try {
             version = persistentEntity.getVersion();
         } catch (IllegalStateException e) {
-            // entity has no version – leave null
+            LOG.debug("Entity {} has no version property: {}", persistentEntity.getName(), e.getMessage());
         }
         this.versionProperty = version;
     }

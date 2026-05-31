@@ -32,6 +32,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -161,7 +162,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
-  private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
   private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
 
   // Patterns for parsing SQL WHERE clauses from document processor
@@ -187,7 +187,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
   private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
-  private final io.micronaut.data.model.query.builder.QueryBuilder queryBuilder;
+  private final QueryBuilder queryBuilder;
   private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
@@ -409,8 +409,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public <T> T updateOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
     NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
         ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
-        persistentEntity, conversionService, entityMapper, this, entityValue, NitriteEntityOperations.OperationType.INSERT);
-    op.persist();
+        persistentEntity, conversionService, entityMapper, this, entityValue, NitriteEntityOperations.OperationType.UPDATE);
+    op.update();
     return op.getEntity();
   }
 
@@ -1338,7 +1338,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
     return filters.isEmpty()
         ? Filter.ALL
-        : filters.size() == 1 ? filters.get(0) : Filter.and(filters.toArray(new Filter[0]));
+        : filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
   }
 
   /**
@@ -1643,7 +1643,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   public Optional<Number> executeUpdate(@NonNull final PreparedQuery<?, Number> q) {
     NitritePreparedQuery<?, Number> nq = getNitritePreparedQuery(q);
     Map<String, Object> setFields = null;
-    Filter filter = null;
+    Filter filter;
     Object[] jsonParams = buildJsonParameterValues(nq);
     Map<String, Object> namedParameters = buildNamedParameterValues(nq);
     if (nq.getFilterMap() != null) {

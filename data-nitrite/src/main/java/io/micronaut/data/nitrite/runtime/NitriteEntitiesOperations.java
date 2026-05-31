@@ -383,7 +383,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
                 Document update = repositoryWriter.toDocument(entity);
                 helper.logUpdate(collection.getName(), filter, update);
-                long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
+                boolean upsert = meta.versionProp() == null;
+                long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(upsert)).getAffectedCount();
                 affectedCount += rows;
             }
 

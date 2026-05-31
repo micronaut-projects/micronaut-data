@@ -268,7 +268,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             }
             Document update = repositoryWriter.toDocument(entity);
             helper.logUpdate(collection.getName(), filter, update);
-            long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(false)).getAffectedCount();
+            boolean upsert = meta.versionProp() == null;
+            long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(upsert)).getAffectedCount();
             checkOptimisticLocking(1, rows);
         } else {
             // Delete operation
@@ -293,7 +294,12 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             RuntimePersistentEntity<Object> associatedEntity =
                 (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity();
-            RuntimePersistentProperty<Object> associatedId = associatedEntity.getIdentity();
+            RuntimePersistentProperty<Object> associatedId;
+            try {
+                associatedId = associatedEntity.getIdentity();
+            } catch (IllegalStateException e) {
+                continue;
+            }
             BeanProperty<Object, Object> backRefProperty = null;
             String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
             if (mappedBy != null) {
