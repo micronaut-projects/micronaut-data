@@ -246,6 +246,40 @@ record MyEntity(@Id @GeneratedValue Long id,
         ex.message.contains("@GeneratedETag cannot be applied to a @Transient property: eTag")
     }
 
+    void "test @GeneratedETag rejects ColumnTransformer on generated ETag property"() {
+        when:
+        buildEntity('test.MyEntity', '''
+import io.micronaut.data.annotation.sql.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ETagValue;
+import io.micronaut.data.annotation.sql.GeneratedETag;
+
+@MappedEntity
+record MyEntity(@Id @GeneratedValue Long id,
+    @ETagValue String name,
+    @ColumnTransformer(read = "CUSTOM_ETAG(@.e_tag)") @GeneratedETag(function = "custom") String eTag) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("@GeneratedETag cannot be combined with @ColumnTransformer or @DataTransformer on entity test.MyEntity: eTag")
+    }
+
+    void "test @GeneratedETag rejects DataTransformer on generated ETag property"() {
+        when:
+        buildEntity('test.MyEntity', '''
+import io.micronaut.data.annotation.DataTransformer;
+import io.micronaut.data.annotation.sql.ETagValue;
+import io.micronaut.data.annotation.sql.GeneratedETag;
+
+@MappedEntity
+record MyEntity(@Id @GeneratedValue Long id,
+    @ETagValue String name,
+    @DataTransformer(read = "CUSTOM_ETAG(@.e_tag)") @GeneratedETag(function = "custom") String eTag) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("@GeneratedETag cannot be combined with @ColumnTransformer or @DataTransformer on entity test.MyEntity: eTag")
+    }
+
     void "test @GeneratedETag rejects identity property"() {
         when:
         buildEntity('test.MyEntity', '''

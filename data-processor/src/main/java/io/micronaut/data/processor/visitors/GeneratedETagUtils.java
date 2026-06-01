@@ -171,9 +171,10 @@ final class GeneratedETagUtils {
         }
 
         PropertyElement etagPropertyElement = etagProp.getPropertyElement();
+        String expr = buildEtagReadExpression(function, parts);
+        validateNoConflictingTransformer(entity, etagProp, expr);
         etagPropertyElement.annotate(Version.class, b -> { });
         etagPropertyElement.annotate(GeneratedValue.class, b -> { });
-        String expr = buildEtagReadExpression(function, parts);
         etagPropertyElement.annotate(ColumnTransformer.class, builder -> builder.member("read", expr));
         etagPropertyElement.annotate(DataTransformer.class, builder -> builder.member("read", expr));
         etagPropertyElement.getReadMethod().ifPresent(m -> {
@@ -203,6 +204,45 @@ final class GeneratedETagUtils {
             joiner.add("@." + p);
         }
         return function + "(" + joiner + ")";
+    }
+
+    private static void validateNoConflictingTransformer(SourcePersistentEntity entity,
+                                                         SourcePersistentProperty etagProp,
+                                                         String expr) {
+        PropertyElement propertyElement = etagProp.getPropertyElement();
+        if (!propertyElement.hasAnnotation(ColumnTransformer.class) && !propertyElement.hasAnnotation(DataTransformer.class)) {
+            return;
+        }
+        if (isSynthesizedGeneratedETagTransformer(etagProp, expr)) {
+            return;
+        }
+        throw new ProcessingException(propertyElement, "@GeneratedETag cannot be combined with @ColumnTransformer or @DataTransformer on entity "
+            + entity.getName() + ": " + propertyElement.getName());
+    }
+
+    private static boolean isSynthesizedGeneratedETagTransformer(SourcePersistentProperty etagProp, String expr) {
+        AnnotationMetadata metadata = etagProp.getAnnotationMetadata();
+        return metadata.hasAnnotation(Version.class)
+            && metadata.hasAnnotation(GeneratedValue.class)
+            && readTransformerMatches(metadata, ColumnTransformer.class, expr)
+            && readTransformerMatches(metadata, DataTransformer.class, expr)
+            && writeTransformerEmpty(metadata, ColumnTransformer.class)
+            && writeTransformerEmpty(metadata, DataTransformer.class);
+    }
+
+    private static boolean readTransformerMatches(AnnotationMetadata metadata,
+                                                  Class<?> annotationType,
+                                                  String expr) {
+        return metadata.stringValue(annotationType.getName(), "read")
+            .map(expr::equals)
+            .orElse(false);
+    }
+
+    private static boolean writeTransformerEmpty(AnnotationMetadata metadata,
+                                                 Class<?> annotationType) {
+        return metadata.stringValue(annotationType.getName(), "write")
+            .map(String::isEmpty)
+            .orElse(true);
     }
 
     private static List<SourcePersistentProperty> allProperties(SourcePersistentEntity entity,
