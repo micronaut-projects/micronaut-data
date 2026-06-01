@@ -159,21 +159,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
   private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
 
-  // Patterns for parsing SQL WHERE clauses from document processor
-  private static final Pattern SQL_COMPARISON =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>|>|<|>=|<=)\\s*:(\\w+)");
-  private static final Pattern SQL_IN_CLAUSE =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+(NOT\\s+)?IN\\s*\\(\\s*:(\\w+)\\s*\\)", Pattern.CASE_INSENSITIVE);
-  private static final Pattern SQL_IS_NOT_NULL =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+NOT\\s+NULL");
-  private static final Pattern SQL_IS_NULL =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+(?!NOT\\s+)NULL");
-  private static final Pattern SQL_LIKE_CONCAT =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+LIKE\\s+CONCAT\\(([^)]+)\\)");
-  private static final Pattern SQL_LITERAL_BOOL =
-      Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>)\\s*(true|false)", Pattern.CASE_INSENSITIVE);
-  private static final Pattern SQL_LITERAL_EMPTY_STR = Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*=\\s*''");
-
   private final Nitrite database;
   private final NitriteConfiguration configuration;
   private final NitriteEntityMapper entityMapper;
@@ -963,20 +948,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
   }
 
-  /**
-   * Extract placeholder index from a value (String "$mn_qp:N" or Map {"$mn_qp": N}).
-   *
-   * @param value the value to extract the index from
-   * @return the placeholder index, or null if not found
-   */
   private Integer extractPlaceholderIndex(final Object value) {
-    if (value instanceof String s && s.startsWith("$mn_qp:")) {
-      try {
-        return Integer.parseInt(s.substring(7));
-      } catch (NumberFormatException ignored) {
-      }
-    }
-    return (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) ? idx : null;
+    return NitriteQueryBinder.extractPlaceholderIndex(value);
   }
 
   /**
@@ -1229,7 +1202,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       where = where.substring(0, mEmpty.start()) + "PROCESSED" + where.substring(mEmpty.end());
       mEmpty = Pattern.compile(emptyPat, Pattern.CASE_INSENSITIVE).matcher(where);
     }
-    Matcher m = SQL_COMPARISON.matcher(where);
+    Matcher m = NitriteQueryBinder.SQL_COMPARISON.matcher(where);
     while (m.find()) {
       String op = m.group(2);
       String filterOp =
@@ -1247,11 +1220,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
               entityMapper.normalizeFieldName(m.group(1), entity),
               Collections.singletonMap(
                   filterOp,
-                  toFilterValue(resolveSqlParam(m.group(3), params, namedParameters))),
+                  toFilterValue(NitriteQueryBinder.resolveSqlParam(m.group(3), params, namedParameters))),
               params,
               namedParameters));
     }
-    m = SQL_IS_NOT_NULL.matcher(where);
+    m = NitriteQueryBinder.SQL_IS_NOT_NULL.matcher(where);
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
@@ -1261,7 +1234,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
               params,
               namedParameters));
     }
-    m = SQL_IS_NULL.matcher(where);
+    m = NitriteQueryBinder.SQL_IS_NULL.matcher(where);
     while (m.find()) {
       filters.add(
           filterBuilder.buildFieldFilter(
@@ -1272,7 +1245,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
               namedParameters));
     }
     // Handle IN (:param) and NOT IN (:param) clauses
-    Matcher inMatcher = SQL_IN_CLAUSE.matcher(where);
+    Matcher inMatcher = NitriteQueryBinder.SQL_IN_CLAUSE.matcher(where);
     while (inMatcher.find()) {
       String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1), entity);
       boolean notIn = inMatcher.group(2) != null;
@@ -1281,7 +1254,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       // Resolve the parameter value - namedParameters uses names without colon prefix
       Object paramValue = namedParameters != null && namedParameters.containsKey(paramName)
           ? namedParameters.get(paramName)
-          : resolveParam(":" + paramName, params);
+          : NitriteQueryBinder.resolveParam(":" + paramName, params);
 
       filters.add(
           filterBuilder.buildFieldFilter(
@@ -1296,42 +1269,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         : filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
   }
 
-    /**
-   * Resolve :pN to actual method arg.
-   *
-   * @param pname the parameter name
-   * @param params the method parameters
-   * @return the parameter value
-   */
-  private Object resolveParam(final String pname, final Object[] params) {
-    try {
-      if (pname.startsWith("p")) {
-        int idx = Integer.parseInt(pname.substring(1)) - 1;
-        if (params != null && idx >= 0 && idx < params.length) {
-          return params[idx];
-        }
-      }
-    } catch (NumberFormatException ignored) {
-    }
-    return null;
-  }
-
-  /**
-   * Resolve a SQL parameter name to its value. Supports both positional {@code :pN} placeholders and
-   * descriptive names (for example {@code :id}, {@code :name}).
-   *
-   * @param pname the parameter name without the ':' prefix
-   * @param params the positional parameter array
-   * @param namedParameters bound named parameters
-   * @return the resolved value or {@code null}
-   */
-  private Object resolveSqlParam(
-      final String pname, final Object[] params, final Map<String, Object> namedParameters) {
-    if (namedParameters != null && namedParameters.containsKey(pname)) {
-      return namedParameters.get(pname);
-    }
-    return resolveParam(pname, params);
-  }
 
     /**
    * Resolves parameter value from JSON placeholder or named parameter.
@@ -1347,33 +1284,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @return the resolved parameter value, or {@code null} if the parameter is null
    */
   private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
-    if (value instanceof String s) {
-      Object resolved = null;
-      boolean isPlaceholder = false;
-      if (s.startsWith("$mn_qp:")) {
-        isPlaceholder = true;
-        try {
-          int idx = Integer.parseInt(s.substring(7));
-          if (jsonParams != null && idx >= 0 && idx < jsonParams.length) {
-            resolved = jsonParams[idx];
-          }
-        } catch (Exception ignored) {
-        }
-      } else if (s.startsWith(":")) {
-        isPlaceholder = true;
-        String pname = s.substring(1);
-        if (namedParameters.containsKey(pname)) {
-          resolved = namedParameters.get(pname);
-        }
-      }
-      if (isPlaceholder) {
-        return toFilterValue(resolved);
-      }
-    }
-    if (value instanceof Map vm && vm.get("$mn_qp") instanceof Integer idx && idx >= 0 && idx < jsonParams.length) {
-      return toFilterValue(jsonParams[idx]);
-    }
-    return value;
+    return NitriteQueryBinder.resolveParameterValue(value, jsonParams, namedParameters, this::toFilterValue);
   }
 
   @Override
@@ -1472,27 +1383,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return Page.of(list, q.getPageable(), count(q));
   }
 
-    /** Reorder params for SQL to match positional placeholders. */
+  /** Reorder params for SQL to match positional placeholders. */
   private Object[] reorderParamsForSql(final PreparedQuery<?, ?> q) {
-    Object[] raw = q.getParameterArray();
-    List<QueryParameterBinding> bindings = q.getQueryBindings();
-    if (bindings == null || bindings.isEmpty() || raw == null) {
-      return raw;
-    }
-    Object[] reordered = new Object[bindings.size()];
-    for (QueryParameterBinding b : bindings) {
-      if (b.getName() != null && b.getName().startsWith("p")) {
-        try {
-          int pos = Integer.parseInt(b.getName().substring(1)) - 1;
-          if (pos >= 0 && pos < reordered.length && b.getParameterIndex() >= 0 && b.getParameterIndex() < raw.length) {
-            reordered[pos] = raw[b.getParameterIndex()];
-          }
-        } catch (NumberFormatException ignored) {
-          // ignore format exceptions
-        }
-      }
-    }
-    return reordered;
+    return NitriteQueryBinder.reorderParamsForSql(q);
   }
 
   @Override
@@ -1520,7 +1413,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           updateExecutor.parseSetClause(
               nq.getQuery(),
               sqlParams,
-              (pname, ps) -> toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
+              (pname, ps) -> toFilterValue(NitriteQueryBinder.resolveSqlParam(pname, ps, namedParameters)));
       filter = parseFilterFromUpdateStatement(nq.getQuery(), sqlParams, namedParameters, getEntity(nq.getRootEntity()));
     } else {
       throw new UnsupportedOperationException("executeUpdate() called with non-UPDATE statement: " + nq.getQuery());
@@ -1577,30 +1470,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   /** Build named parameter map from bindings and arguments. */
   private Map<String, Object> buildNamedParameterValues(@NonNull final PreparedQuery<?, ?> q) {
-    Object[] params = q.getParameterArray();
-    if (params == null || params.length == 0) {
-      return Collections.emptyMap();
-    }
-    Map<String, Object> result = new HashMap<>();
-    List<QueryParameterBinding> bindings = q.getQueryBindings();
-    if (bindings != null) {
-      for (QueryParameterBinding b : bindings) {
-        if (b.getName() != null && b.getParameterIndex() >= 0 && b.getParameterIndex() < params.length) {
-          result.put(b.getName(), toFilterValue(params[b.getParameterIndex()]));
-        }
-      }
-    }
-    Argument[] args = q.getArguments();
-    if (args != null) {
-      int len = Math.min(args.length, params.length);
-      for (int i = 0; i < len; i++) {
-          args[i].getName();
-          if (!args[i].getName().isEmpty()) {
-          result.putIfAbsent(args[i].getName(), toFilterValue(params[i]));
-        }
-      }
-    }
-    return result;
+    return NitriteQueryBinder.buildNamedParameterValues(q, this::toFilterValue);
   }
 
   private Filter parseFilterFromUpdateStatement(

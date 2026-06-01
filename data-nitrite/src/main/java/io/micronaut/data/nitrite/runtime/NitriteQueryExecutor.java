@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
@@ -67,15 +66,6 @@ import java.util.regex.Pattern;
 public final class NitriteQueryExecutor {
 
     private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d+)");
-
-    private static final Pattern SQL_COMPARISON =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>|>|<|>=|<=)\\s*:(\\w+)");
-    private static final Pattern SQL_IN_CLAUSE =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+(NOT\\s+)?IN\\s*\\(\\s*:(\\w+)\\s*\\)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SQL_IS_NOT_NULL =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+NOT\\s+NULL");
-    private static final Pattern SQL_IS_NULL =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+(?!NOT\\s+)NULL");
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -395,7 +385,7 @@ public final class NitriteQueryExecutor {
             }
         } else if (nq.getQuery().trim().toUpperCase().startsWith("UPDATE")) {
             Object[] sqlParams = reorderParamsForSql(nq);
-            setFields = updateExecutor.parseSetClause(nq.getQuery(), sqlParams, (pname, ps) -> toFilterValue(resolveSqlParam(pname, ps, namedParameters)));
+            setFields = updateExecutor.parseSetClause(nq.getQuery(), sqlParams, (pname, ps) -> toFilterValue(NitriteQueryBinder.resolveSqlParam(pname, ps, namedParameters)));
             filter = parseFilterFromUpdateStatement(nq.getQuery(), sqlParams, namedParameters);
         }
         if (setFields == null || setFields.isEmpty()) {
@@ -417,30 +407,7 @@ public final class NitriteQueryExecutor {
      * @return the map of named parameter values
      */
     public Map<String, Object> buildNamedParameterValues(@NonNull final PreparedQuery<?, ?> q) {
-        Object[] params = q.getParameterArray();
-        if (params == null || params.length == 0) {
-            return Collections.emptyMap();
-        }
-        Map<String, Object> result = new HashMap<>();
-        List<QueryParameterBinding> bindings = q.getQueryBindings();
-        if (bindings != null) {
-            for (QueryParameterBinding b : bindings) {
-                if (b.getName() != null && b.getParameterIndex() >= 0 && b.getParameterIndex() < params.length) {
-                    result.put(b.getName(), toFilterValue(params[b.getParameterIndex()]));
-                }
-            }
-        }
-        Argument[] args = q.getArguments();
-        if (args != null) {
-            int len = Math.min(args.length, params.length);
-            for (int i = 0; i < len; i++) {
-                args[i].getName();
-                if (!args[i].getName().isEmpty()) {
-                    result.putIfAbsent(args[i].getName(), toFilterValue(params[i]));
-                }
-            }
-        }
-        return result;
+        return NitriteQueryBinder.buildNamedParameterValues(q, this::toFilterValue);
     }
 
     /**
@@ -538,54 +505,11 @@ public final class NitriteQueryExecutor {
     }
 
     private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
-        if (value instanceof String s) {
-            Object resolved = null;
-            boolean isPlaceholder = false;
-            if (s.startsWith("$mn_qp:")) {
-                isPlaceholder = true;
-                try {
-                    int idx = Integer.parseInt(s.substring(7));
-                    if (jsonParams != null && idx >= 0 && idx < jsonParams.length) {
-                        resolved = jsonParams[idx];
-                    }
-                } catch (Exception ignored) {
-                }
-            } else if (s.startsWith(":")) {
-                isPlaceholder = true;
-                String pname = s.substring(1);
-                if (namedParameters.containsKey(pname)) {
-                    resolved = namedParameters.get(pname);
-                }
-            }
-            if (isPlaceholder) {
-                return toFilterValue(resolved);
-            }
-        }
-        if (value instanceof Map vm && vm.get("$mn_qp") instanceof Integer idx && idx >= 0 && idx < jsonParams.length) {
-            return toFilterValue(jsonParams[idx]);
-        }
-        return value;
+        return NitriteQueryBinder.resolveParameterValue(value, jsonParams, namedParameters, this::toFilterValue);
     }
 
     private Object[] reorderParamsForSql(final PreparedQuery<?, ?> q) {
-        Object[] raw = q.getParameterArray();
-        List<QueryParameterBinding> bindings = q.getQueryBindings();
-        if (bindings == null || bindings.isEmpty() || raw == null) {
-            return raw;
-        }
-        Object[] reordered = new Object[bindings.size()];
-        for (QueryParameterBinding b : bindings) {
-            if (b.getName() != null && b.getName().startsWith("p")) {
-                try {
-                    int pos = Integer.parseInt(b.getName().substring(1)) - 1;
-                    if (pos >= 0 && pos < reordered.length && b.getParameterIndex() >= 0 && b.getParameterIndex() < raw.length) {
-                        reordered[pos] = raw[b.getParameterIndex()];
-                    }
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-        return reordered;
+        return NitriteQueryBinder.reorderParamsForSql(q);
     }
 
     /**
@@ -627,7 +551,7 @@ public final class NitriteQueryExecutor {
             where = where.substring(0, mEmpty.start()) + "PROCESSED" + where.substring(mEmpty.end());
             mEmpty = Pattern.compile(emptyPat, Pattern.CASE_INSENSITIVE).matcher(where);
         }
-        Matcher m = SQL_COMPARISON.matcher(where);
+        Matcher m = NitriteQueryBinder.SQL_COMPARISON.matcher(where);
         while (m.find()) {
             String op = m.group(2);
             String filterOp = switch (op) {
@@ -638,46 +562,27 @@ public final class NitriteQueryExecutor {
                 case "<=" -> "$lte";
                 default -> "$eq";
             };
-            filters.add(filterBuilder.buildFieldFilter(null, entityMapper.normalizeFieldName(m.group(1)), Collections.singletonMap(filterOp, toFilterValue(resolveSqlParam(m.group(3), params, namedParameters))), params, namedParameters));
+            filters.add(filterBuilder.buildFieldFilter(null, entityMapper.normalizeFieldName(m.group(1)), Collections.singletonMap(filterOp, toFilterValue(NitriteQueryBinder.resolveSqlParam(m.group(3), params, namedParameters))), params, namedParameters));
         }
-        m = SQL_IS_NOT_NULL.matcher(where);
+        m = NitriteQueryBinder.SQL_IS_NOT_NULL.matcher(where);
         while (m.find()) {
             filters.add(filterBuilder.buildFieldFilter(null, entityMapper.normalizeFieldName(m.group(1)), Collections.singletonMap("$notNull", true), params, namedParameters));
         }
-        m = SQL_IS_NULL.matcher(where);
+        m = NitriteQueryBinder.SQL_IS_NULL.matcher(where);
         while (m.find()) {
             filters.add(filterBuilder.buildFieldFilter(null, entityMapper.normalizeFieldName(m.group(1)), Collections.singletonMap("$null", true), params, namedParameters));
         }
-        Matcher inMatcher = SQL_IN_CLAUSE.matcher(where);
+        Matcher inMatcher = NitriteQueryBinder.SQL_IN_CLAUSE.matcher(where);
         while (inMatcher.find()) {
             String fieldName = entityMapper.normalizeFieldName(inMatcher.group(1));
             boolean notIn = inMatcher.group(2) != null;
             String paramName = inMatcher.group(3);
-            Object paramValue = namedParameters != null && namedParameters.containsKey(paramName) ? namedParameters.get(paramName) : resolveParam(":" + paramName, params);
+            Object paramValue = namedParameters != null && namedParameters.containsKey(paramName) ? namedParameters.get(paramName) : NitriteQueryBinder.resolveParam(":" + paramName, params);
             filters.add(filterBuilder.buildFieldFilter(null, fieldName, Collections.singletonMap(notIn ? "$nin" : "$in", paramValue), params, namedParameters));
         }
         return filters.isEmpty() ? Filter.ALL : filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
     }
 
-    private Object resolveSqlParam(final String pname, final Object[] params, final Map<String, Object> namedParameters) {
-        if (namedParameters != null && namedParameters.containsKey(pname)) {
-            return namedParameters.get(pname);
-        }
-        return resolveParam(pname, params);
-    }
-
-    private Object resolveParam(final String pname, final Object[] params) {
-        try {
-            if (pname.startsWith("p")) {
-                int idx = Integer.parseInt(pname.substring(1)) - 1;
-                if (params != null && idx >= 0 && idx < params.length) {
-                    return params[idx];
-                }
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        return null;
-    }
 
     private Object[] ensureJsonParamsForFilter(final Map<String, Object> filterMap, final Object[] methodParams, final Object[] jsonParams) {
         int max = findMaxPlaceholderIndex(filterMap);
@@ -706,16 +611,7 @@ public final class NitriteQueryExecutor {
     }
 
     private Integer extractPlaceholderIndex(final Object value) {
-        if (value instanceof String s && s.startsWith("$mn_qp:")) {
-            try {
-                return Integer.parseInt(s.substring(7));
-            } catch (Exception ignored) {
-            }
-        }
-        if (value instanceof Map m && m.get("$mn_qp") instanceof Integer idx) {
-            return idx;
-        }
-        return null;
+        return NitriteQueryBinder.extractPlaceholderIndex(value);
     }
 
     private void fillMissingParamsFromFilter(final Map<String, Object> filterMap, final Object[] methodParams, final Object[] out) {
