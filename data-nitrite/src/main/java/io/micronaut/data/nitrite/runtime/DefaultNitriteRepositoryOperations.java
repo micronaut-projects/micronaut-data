@@ -16,15 +16,12 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Index;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
@@ -48,8 +45,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
-import io.micronaut.data.nitrite.annotation.FullTextIndex;
-import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -78,8 +73,6 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.index.IndexOptions;
-import org.dizitart.no2.index.IndexType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,13 +90,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.dizitart.no2.index.IndexOptions.indexOptions;
 
 /**
  * Default Nitrite repository operations. Implements core CRUD using Nitrite's Document codec.
@@ -163,13 +154,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteQueryParser queryParser;
   private final NitriteFilterBuilder filterBuilder;
   private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
-    private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
+  private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
   private final ValueConverter valueConverter;
-  private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
-  /** Cache for non-transactional collections - keyed by collection name to handle discriminators. */
-  private final Map<String, NitriteCollection> collectionCache = new ConcurrentHashMap<>();
+  private final NitriteCollectionRegistry collectionRegistry;
 
   /**
    * Create Nitrite repository operations.
@@ -195,31 +184,32 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
     this.database = database;
     this.configuration = configuration;
+    this.transactionHolder = transactionHolder;
+    this.collectionRegistry = new NitriteCollectionRegistry(database, transactionHolder, configuration, this::getEntity);
     this.entityMapper =
         new NitriteEntityMapper(
             conversionService, serdeObjectMapper, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
     this.entityMapper.setHelper(this);
-    this.transactionHolder = transactionHolder;
     this.queryParser = new NitriteQueryParser();
     // Create filter builder with sub-query executor for auto-join on MANY_TO_ONE associations
     this.filterBuilder = createFilterBuilderWithSubQueryExecutor();
     this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
     this.valueConverter = new ValueConverter(conversionService);
-      QueryBuilder queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
+    QueryBuilder queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
     this.criteriaBuilder = new io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder(runtimeEntityRegistry);
     this.criteriaExecutor = new NitriteCriteriaExecutor(
         queryBuilder,
         entityMapper,
         queryParser,
         filterBuilder,
-        this::getCollection,
+        collectionRegistry::getCollection,
         this::getEntity);
     this.queryExecutor = new NitriteQueryExecutor(
         entityMapper,
         queryParser,
         filterBuilder,
         conversionService,
-        this::getCollection,
+        collectionRegistry::getCollection,
         this::getEntity,
         this::buildFindOptions,
         this,
@@ -265,26 +255,20 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public void logFind(String collection, Filter filter) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
-          collection, filter != null ? filter : "Filter.ALL");
-    }
+    LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
+        collection, filter != null ? filter : "Filter.ALL");
   }
 
   @Override
   public void logInsert(String collection, Object entityOrDocs) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}",
-          collection, entityOrDocs);
-    }
+    LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}",
+        collection, entityOrDocs);
   }
 
   @Override
   public void logUpdate(String collection, Filter filter, Document update) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
-          collection, filter != null ? filter : "Filter.ALL", update);
-    }
+    LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
+        collection, filter != null ? filter : "Filter.ALL", update);
   }
 
   // ========== CriteriaRepositoryOperations implementation ==========
@@ -333,9 +317,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   @SuppressWarnings("unchecked")
   public <T> T persistOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
-    if (LOG.isDebugEnabled()) {
-        LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
-    }
+    LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
 
     // Set back-references using pre-computed mappedBy metadata — no annotation lookups on hot path.
     NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
@@ -448,90 +430,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   /** Get collection name from entity class. */
   private String getCollectionName(final Class<?> type) {
-    MappedEntity mappedEntity = type.getAnnotation(MappedEntity.class);
-    return (mappedEntity != null && !mappedEntity.value().isEmpty()) ? mappedEntity.value() : type.getSimpleName();
+    return collectionRegistry.getCollectionName(type);
   }
 
   /** Get Nitrite collection for entity type. */
   @Override
   public NitriteCollection getCollection(final Class<?> type) {
-    String name = getCollectionName(type);
-    NitriteCollection collection;
-    if (transactionHolder.isActive()) {
-      // Transaction path: never cache, always dynamic
-      // Nitrite transactions require the collection to pre-exist before the transaction started.
-      // Touch the collection on the database first (idempotent: creates if absent).
-      database.getCollection(name);
-      collection = transactionHolder.get().getCollection(name);
-    } else {
-      // Non-transaction path: safe to cache by collection name (handles discriminators)
-      collection = collectionCache.computeIfAbsent(name, database::getCollection);
-    }
-    ensureIndexes(type, collection, name);
-    return collection;
-  }
-
-  private void ensureIndexes(Class<?> type, NitriteCollection collection, String name) {
-    if (!configuration.isCreateIndexes() || indexedCollections.contains(name)) {
-      return;
-    }
-    indexedCollections.add(name);
-    RuntimePersistentEntity<?> entity = getEntity(type);
-    List<AnnotationValue<Index>> indexes = entity.getAnnotationMetadata().getAnnotationValuesByType(Index.class);
-    for (AnnotationValue<Index> index : indexes) {
-      String[] columns = index.getRequiredValue("columns", String[].class);
-      String[] translatedColumns = new String[columns.length];
-      for (int i = 0; i < columns.length; i++) {
-          String col = columns[i];
-          RuntimePersistentProperty<?> prop = entity.getPropertyByName(col);
-          translatedColumns[i] = prop != null ? prop.getPersistedName() : col;
-      }
-      boolean unique = index.booleanValue("unique").orElse(false);
-      IndexOptions options = indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE);
-      try {
-        collection.createIndex(options, translatedColumns);
-      } catch (Exception e) {
-        if (LOG.isWarnEnabled()) {
-          LOG.warn("Could not create index for collection {}: {}", collection.getName(), e.getMessage());
-        }
-      }
-    }
-    // Also check for @Index, @FullTextIndex, @SpatialIndex on properties
-    for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-      if (property.getAnnotationMetadata().hasAnnotation(Index.class)) {
-        AnnotationValue<Index> index = property.getAnnotationMetadata().getAnnotation(Index.class);
-        boolean unique = index.booleanValue("unique").orElse(false);
-        try {
-          collection.createIndex(indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE), property.getPersistedName());
-        } catch (Exception e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Could not create index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
-          }
-        }
-      }
-      if (property.getAnnotationMetadata().hasAnnotation(FullTextIndex.class)) {
-        try {
-          collection.createIndex(indexOptions(IndexType.FULL_TEXT), property.getPersistedName());
-        } catch (Exception e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Could not create full-text index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
-          }
-        }
-      }
-      if (property.getAnnotationMetadata().hasAnnotation(SpatialIndex.class)) {
-        try {
-          collection.createIndex(indexOptions("Spatial"), property.getPersistedName());
-        } catch (Exception e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Could not create spatial index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
-          }
-        }
-      }
-    }
-    // Note: Do not create a unique index on the "id" field.
-    // Nitrite handles document uniqueness internally via its _id field.
-    // Creating a unique index on "id" causes constraint violations when
-    // multiple documents are inserted rapidly with timestamp-based IDs.
+    return collectionRegistry.getCollection(type);
   }
 
   /** Generate and set ID on entity if @GeneratedValue is present and ID is null. */
