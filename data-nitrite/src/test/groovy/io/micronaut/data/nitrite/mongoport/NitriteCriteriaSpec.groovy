@@ -1,20 +1,17 @@
 package io.micronaut.data.nitrite.mongoport
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.core.annotation.NonNull
+import org.jspecify.annotations.NonNull
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
 import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
+import io.micronaut.data.document.tck.entities.Settlement
+import io.micronaut.data.document.tck.entities.SettlementPk
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.model.runtime.RuntimeEntityRegistry
-import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.model.runtime.RuntimePersistentProperty
-import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaDelete
@@ -22,6 +19,8 @@ import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -36,33 +35,7 @@ class NitriteCriteriaSpec extends Specification {
     PersistentEntityCriteriaUpdate criteriaUpdate
 
     void setup() {
-        Map<Class, RuntimePersistentEntity> map = new HashMap<>();
-        criteriaBuilder = new RuntimeCriteriaBuilder(new RuntimeEntityRegistry() {
-            @Override
-            EntityEventListener<Object> getEntityEventListener() {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new)
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            ApplicationContext getApplicationContext() {
-                throw new IllegalStateException()
-            }
-        })
+        criteriaBuilder = new RuntimeCriteriaBuilder()
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(NitriteTestEntity)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(NitriteTestEntity)
@@ -78,6 +51,30 @@ class NitriteCriteriaSpec extends Specification {
 
     PersistentEntityRoot createRoot(CriteriaUpdate query) {
         return query.from(NitriteTestEntity)
+    }
+
+    void "test embedded predicate"(QuerySpecification specification) {
+        given:
+            PersistentEntityCriteriaQuery criteriaQuery = criteriaBuilder.createQuery()
+            PersistentEntityRoot entityRoot = criteriaQuery.from(Settlement)
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == expectedWhereQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        cb.equal(root.get("id"), cb.parameter(SettlementPk))
+                    } as QuerySpecification
+            ]
+            expectedWhereQuery << [
+                    '''{'_id.code':{$eq:{$mn_qp:0}},'_id.code_id':{$eq:{$mn_qp:1}},'_id.county._id.id':{$eq:{$mn_qp:2}},'_id.county._id.state_id._id':{$eq:{$mn_qp:3}}}''',
+            ]
     }
 
     @Unroll
@@ -107,6 +104,11 @@ class NitriteCriteriaSpec extends Specification {
                         null
                     } as QuerySpecification,
                     { root, query, cb ->
+                        query.where(root.get("enabled"))
+                        query.orderBy(cb.desc(root.get("amount")), cb.asc(root.get("budget")))
+                        null
+                    } as QuerySpecification,
+                    { root, query, cb ->
                         cb.isTrue(root.get("enabled"))
                     } as QuerySpecification,
                     { root, query, cb ->
@@ -121,16 +123,70 @@ class NitriteCriteriaSpec extends Specification {
                     { root, query, cb ->
                         root.get("name").in("A", "B", "C").not()
                     } as QuerySpecification,
+                    {
+                        root, query, cb ->
+                            def colors = Arrays.asList("red", "white")
+                            def parameter = cb.literal(colors)
+                            ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("colors"), parameter)
+                    } as QuerySpecification,
             ]
             expectedWhereQuery << [
-                    '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
-                    '{amount:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
+                    '{enabled:{$between:[{$mn_qp:0},{$mn_qp:1}]}}',
+                    '{amount:{$between:[{$mn_qp:0},{$mn_qp:1}]}}',
                     '{enabled:{$eq:true}}',
+                    '[{$match:{enabled:{$eq:true}}},{$sort:{amount:-1,budget:1}}]',
                     '{enabled:{$eq:true}}',
                     '{$and:[{enabled:{$eq:true}},{enabled:{$eq:true}}]}',
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '''{name:{$nin:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
+                    '{colors:{$all:[{$mn_qp:0}]}}'
+            ]
+    }
+
+    @Ignore
+    @Unroll
+    void "test joins"(QuerySpecification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String q = getQuery(criteriaQuery)
+
+        expect:
+            q == expectedQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        def othersJoin = root.join("others")
+                        cb.and(cb.equal(root.get("amount"), othersJoin.get("amount")))
+                    } as QuerySpecification,
+
+                    { root, query, cb ->
+                        def othersJoin = root.join("others")
+                        def simpleJoin = othersJoin.join("simple")
+                        cb.and(
+                                cb.equal(root.get("amount"), othersJoin.get("amount")),
+                                cb.equal(root.get("amount"), simpleJoin.get("amount")),
+                        )
+                    } as QuerySpecification,
+                    { root, query, cb ->
+                        def oneOthersJoin = root.join("oneOther")
+                        cb.equal(oneOthersJoin.get("name"), "xyz")
+                    } as QuerySpecification,
+                    { root, query, cb ->
+                        def oneOthersJoin = root.join("manyToOneOther")
+                        cb.equal(oneOthersJoin.get("name"), "xyz")
+                    } as QuerySpecification
+            ]
+            expectedQuery << [
+                    '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',as:'others'}},{$match:{$expr:{$eq:['$amount','$others.amount']}}}]''',
+                    '''[{$lookup:{from:'other_entity',localField:'_id',foreignField:'test._id',pipeline:[{$lookup:{from:'simple_entity',localField:'simple._id',foreignField:'_id',as:'simple'}},{$unwind:{path:'$simple',preserveNullAndEmptyArrays:true}}],as:'others'}},{$match:{$and:[{$expr:{$eq:['$amount','$others.amount']}},{$expr:{$eq:['$amount','$others.simple.amount']}}]}}]''',
+                    '''[{$lookup:{from:'other_entity',localField:'oneOther._id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
+                    '''[{$lookup:{from:'other_entity',localField:'manyToOneOther._id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
             ]
     }
 
@@ -212,12 +268,19 @@ class NitriteCriteriaSpec extends Specification {
                         query.set(root.get("amount"), cb.parameter(Integer))
                         cb.lessThan(root.get("amount"), 1000)
                     } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", "test")
+                        query.set(root.get("amount"), cb.parameter(Integer))
+                        cb.le(root.get("amount"), 1000)
+                    } as UpdateSpecification,
             ]
             expectedPredicateQuery << [
                     '''{amount:{$gte:{$mn_qp:0}}}''',
                     '''{amount:{$lt:{$mn_qp:0}}}''',
+                    '''{amount:{$lte:{$mn_qp:0}}}''',
             ]
             expectedUpdateQuery << [
+                    '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
                     '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
                     '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
             ]
@@ -236,10 +299,39 @@ class NitriteCriteriaSpec extends Specification {
         where:
             property   | predicate          | expectedWhereQuery
             "enabled"  | "isTrue"           | '{enabled:{$eq:true}}'
+            "enabled2" | "isTrue"           | '{enabled2:{$eq:true}}'
             "enabled"  | "isFalse"          | '{enabled:{$eq:false}}'
+            "enabled2" | "isFalse"          | '{enabled2:{$eq:false}}'
             "enabled"  | "isNull"           | '{enabled:{$eq:null}}'
+            "enabled2" | "isNull"           | '{enabled2:{$eq:null}}'
             "enabled"  | "isNotNull"        | '{enabled:{$ne:null}}'
+            "enabled2" | "isNotNull"        | '{enabled2:{$ne:null}}'
             "name"     | "isNotNull"        | '{name:{$ne:null}}'
+            "name"     | "isEmptyString"    | '''{$or:[{name:{$eq:''}},{name:{$exists:false}}]}'''
+            "name"     | "isNotEmptyString" | '''{$and:[{name:{$ne:''}},{name:{$exists:true}}]}'''
+    }
+
+    @Unroll
+    void "test not #predicate predicate produces where query: #expectedWhereQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property)).not())
+            def predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == expectedWhereQuery
+
+        where:
+            property   | predicate   | expectedWhereQuery
+            "enabled"  | "isTrue"    | '{enabled:{$eq:false}}'
+            "enabled2" | "isTrue"    | '{enabled2:{$eq:false}}'
+            "enabled"  | "isFalse"   | '{enabled:{$eq:true}}'
+            "enabled2" | "isFalse"   | '{enabled2:{$eq:true}}'
+            "enabled"  | "isNull"    | '{enabled:{$ne:null}}'
+            "enabled2" | "isNull"    | '{enabled2:{$ne:null}}'
+            "enabled"  | "isNotNull" | '{enabled:{$eq:null}}'
+            "enabled2" | "isNotNull" | '{enabled2:{$eq:null}}'
+            "name"     | "isNotNull" | '{name:{$eq:null}}'
     }
 
     @Unroll
@@ -267,6 +359,30 @@ class NitriteCriteriaSpec extends Specification {
     }
 
     @Unroll
+    void "test properties not #predicate predicate produces where query: #expectedWhereQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), entityRoot.get(property2)).not())
+            def predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == expectedWhereQuery
+
+        where:
+            property1 | property2  | predicate              | expectedWhereQuery
+            "enabled" | "enabled2" | "equal"                | '''{$expr:{$ne:['$enabled','$enabled2']}}'''
+            "enabled" | "enabled2" | "notEqual"             | '''{$expr:{$eq:['$enabled','$enabled2']}}'''
+            "enabled" | "enabled2" | "greaterThan"          | '''{$expr:{$not:{$gt:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '''{$expr:{$not:{$gte:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "lessThan"             | '''{$expr:{$not:{$lt:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '''{$expr:{$not:{$lte:['$enabled','$enabled2']}}}'''
+            "amount"  | "budget"   | "gt"                   | '''{$expr:{$not:{$gt:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "ge"                   | '''{$expr:{$not:{$gte:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "lt"                   | '''{$expr:{$not:{$lt:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "le"                   | '''{$expr:{$not:{$lte:['$amount','$budget']}}}'''
+    }
+
+    @Unroll
     void "test property value #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
@@ -290,6 +406,30 @@ class NitriteCriteriaSpec extends Specification {
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$lte:{$mn_qp:0}}}'
     }
 
+    @Unroll
+    void "test property value not #predicate predicate produces where query: #expectedWhereQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder."$predicate"(entityRoot.get(property1), value).not())
+            def predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == expectedWhereQuery
+
+        where:
+            property1 | value                   | predicate              | expectedWhereQuery
+            "enabled" | true                    | "equal"                | '{enabled:{$ne:{$mn_qp:0}}}'
+            "enabled" | true                    | "notEqual"             | '{enabled:{$eq:{$mn_qp:0}}}'
+            "enabled" | true                    | "greaterThan"          | '{enabled:{$not:{$gt:{$mn_qp:0}}}}'
+            "enabled" | true                    | "greaterThanOrEqualTo" | '{enabled:{$not:{$gte:{$mn_qp:0}}}}'
+            "enabled" | true                    | "lessThan"             | '{enabled:{$not:{$lt:{$mn_qp:0}}}}'
+            "enabled" | true                    | "lessThanOrEqualTo"    | '{enabled:{$not:{$lte:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "gt"                   | '{amount:{$not:{$gt:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "ge"                   | '{amount:{$not:{$gte:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$not:{$lt:{$mn_qp:0}}}}'
+            "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$not:{$lte:{$mn_qp:0}}}}'
+    }
+
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
         return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getQuery()
     }
@@ -304,11 +444,6 @@ class NitriteCriteriaSpec extends Specification {
 
     private static String getUpdateQuery(PersistentEntityCriteriaUpdate<Object> query) {
         return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getUpdate()
-    }
-
-    @CompileStatic
-    interface QuerySpecification<T> {
-        Predicate toPredicate(@NonNull Root<T> root, @NonNull CriteriaQuery<?> query, @NonNull CriteriaBuilder criteriaBuilder);
     }
 
     @CompileStatic

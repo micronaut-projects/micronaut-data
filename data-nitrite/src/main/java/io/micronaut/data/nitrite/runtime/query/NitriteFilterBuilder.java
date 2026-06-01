@@ -814,7 +814,7 @@ public final class NitriteFilterBuilder {
             }
             if (prop == null) {
                 RuntimePersistentProperty<?> identity = entity.getIdentity();
-                if (identity != null && (identity.getName().equals(firstPart) || identity.getPersistedName().equals(firstPart))) {
+                if (identity != null && (identity.getName().equals(firstPart) || identity.getPersistedName().equals(firstPart) || "_id".equals(firstPart))) {
                     prop = identity;
                 }
             }

@@ -56,6 +56,29 @@ public final class NitriteQueryParser {
   }
 
   /**
+   * Given the result of {@link #parseJson}, extracts the filter map.
+   * <p>If the parsed value is a Map, it is returned directly.
+   * If it is a pipeline List, the {@code $match} stage map is returned,
+   * or an empty map when no {@code $match} stage is present (= match all).
+   * Returns {@code null} for any other type.
+   */
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> extractFilterMap(final Object parsed) {
+    if (parsed instanceof List<?> pipeline) {
+      for (Object stage : pipeline) {
+        if (stage instanceof Map<?, ?> stageMap && stageMap.containsKey("$match")) {
+          return (Map<String, Object>) stageMap.get("$match");
+        }
+      }
+      return Map.of();
+    }
+    if (parsed instanceof Map<?, ?> m) {
+      return (Map<String, Object>) m;
+    }
+    return null;
+  }
+
+  /**
    * Parse a JSON object string into a Map.
    *
    * @param json the JSON object string
@@ -73,28 +96,33 @@ public final class NitriteQueryParser {
 
     int i = 0;
     while (i < json.length()) {
-      // Skip whitespace
-      while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
+      // Parse key — handle double-quoted, single-quoted, or unquoted keys
+      String key;
+      if (json.charAt(i) == '"') {
         i++;
-      }
-      if (i >= json.length()) {
-        break;
-      }
-
-      // Parse key
-      if (json.charAt(i) != '"') {
-        throw new IllegalArgumentException("Expected '\"' at index " + i + " in [" + json + "], found '" + json.charAt(i) + "'");
-      }
-      i++;
-      int keyStart = i;
-      while (i < json.length() && json.charAt(i) != '"') {
-        if (json.charAt(i) == '\\') {
+        int keyStart = i;
+        while (i < json.length() && json.charAt(i) != '"') {
+          if (json.charAt(i) == '\\') { i++; }
           i++;
         }
+        key = json.substring(keyStart, i);
+        i++; // skip closing quote
+      } else if (json.charAt(i) == '\'') {
         i++;
+        int keyStart = i;
+        while (i < json.length() && json.charAt(i) != '\'') {
+          if (json.charAt(i) == '\\') { i++; }
+          i++;
+        }
+        key = json.substring(keyStart, i);
+        i++; // skip closing quote
+      } else {
+        int keyStart = i;
+        while (i < json.length() && json.charAt(i) != ':' && !Character.isWhitespace(json.charAt(i))) {
+          i++;
+        }
+        key = json.substring(keyStart, i);
       }
-      String key = json.substring(keyStart, i);
-      i++; // skip closing quote
 
       // Skip to colon
       while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
@@ -138,6 +166,30 @@ public final class NitriteQueryParser {
         }
         value = sb.toString();
         i++; // skip closing quote
+      } else if (c == '\'') {
+        i++;
+        StringBuilder sb = new StringBuilder();
+        while (i < json.length() && json.charAt(i) != '\'') {
+          if (json.charAt(i) == '\\') {
+            i++;
+            if (i < json.length()) {
+              char escaped = json.charAt(i);
+              switch (escaped) {
+                case '\'' -> sb.append('\'');
+                case '\\' -> sb.append('\\');
+                case 'n' -> sb.append('\n');
+                case 'r' -> sb.append('\r');
+                case 't' -> sb.append('\t');
+                default -> sb.append(escaped);
+              }
+            }
+          } else {
+            sb.append(json.charAt(i));
+          }
+          i++;
+        }
+        value = sb.toString();
+        i++; // skip closing quote
       } else if (c == '{') {
         int start = i;
         int depth = 1;
@@ -167,19 +219,17 @@ public final class NitriteQueryParser {
         }
         value = parseJsonArray(json.substring(start, i));
       } else if (c == 't' || c == 'f') {
-        // boolean or potential placeholder
-        int start = i;
-        while (i < json.length() && (Character.isLetter(json.charAt(i)) || json.charAt(i) == ':')) {
-          i++;
-        }
-        String s = json.substring(start, i);
-        if (s.startsWith(":") || s.startsWith("$mn_qp:")) {
-          value = s;
-        } else if (s.equals("true") || s.equals("false")) {
-          value = Boolean.parseBoolean(s);
-        } else {
-          value = s;
-        }
+         // boolean or potential placeholder
+         int start = i;
+         while (i < json.length() && (Character.isLetter(json.charAt(i)) || json.charAt(i) == ':')) {
+           i++;
+         }
+         String s = json.substring(start, i);
+         if (s.equals("true") || s.equals("false")) {
+           value = Boolean.parseBoolean(s);
+         } else {
+           value = s;
+         }
       } else if (c == ':') {
         // Bare named parameter: :title
         int start = i;
@@ -211,15 +261,7 @@ public final class NitriteQueryParser {
           i++;
         }
         String s = json.substring(start, i).trim();
-        if (s.startsWith("$mn_qp:") || s.startsWith(":")) {
-          value = s;
-        } else if (s.equals("true")) {
-          value = true;
-        } else if (s.equals("false")) {
-          value = false;
-        } else if (s.equals("null")) {
-          value = null;
-        } else if (s.contains(".")) {
+        if (s.contains(".")) {
           try {
             value = Double.parseDouble(s);
           } catch (NumberFormatException e) {
@@ -299,6 +341,30 @@ public final class NitriteQueryParser {
         }
         value = sb.toString();
         i++; // skip closing quote
+      } else if (c == '\'') {
+        i++;
+        StringBuilder sb = new StringBuilder();
+        while (i < json.length() && json.charAt(i) != '\'') {
+          if (json.charAt(i) == '\\') {
+            i++;
+            if (i < json.length()) {
+              char escaped = json.charAt(i);
+              switch (escaped) {
+                case '\'' -> sb.append('\'');
+                case '\\' -> sb.append('\\');
+                case 'n' -> sb.append('\n');
+                case 'r' -> sb.append('\r');
+                case 't' -> sb.append('\t');
+                default -> sb.append(escaped);
+              }
+            }
+          } else {
+            sb.append(json.charAt(i));
+          }
+          i++;
+        }
+        value = sb.toString();
+        i++; // skip closing quote
       } else if (c == '{') {
         int start = i;
         int depth = 1;
@@ -327,40 +393,40 @@ public final class NitriteQueryParser {
           i++;
         }
         value = parseJsonArray(json.substring(start, i));
-      } else {
-        int start = i;
-        while (i < json.length()
-            && (Character.isDigit(json.charAt(i))
-                || Character.isLetter(json.charAt(i))
-                || json.charAt(i) == '.'
-                || json.charAt(i) == '-'
-                || json.charAt(i) == ':'
-                || json.charAt(i) == '$')) {
-          i++;
-        }
-        String s = json.substring(start, i).trim();
-        if (s.startsWith("$mn_qp:") || s.startsWith(":")) {
-          value = s;
-        } else if (s.equals("true")) {
-          value = true;
-        } else if (s.equals("false")) {
-          value = false;
-        } else if (s.equals("null")) {
-          value = null;
-        } else if (s.contains(".")) {
-          try {
-            value = Double.parseDouble(s);
-          } catch (NumberFormatException e) {
-            value = s;
-          }
         } else {
-          try {
-            value = Integer.parseInt(s);
-          } catch (NumberFormatException e) {
+          int start = i;
+          while (i < json.length()
+              && (Character.isDigit(json.charAt(i))
+                  || Character.isLetter(json.charAt(i))
+                  || json.charAt(i) == '.'
+                  || json.charAt(i) == '-'
+                  || json.charAt(i) == ':'
+                  || json.charAt(i) == '$')) {
+            i++;
+          }
+          String s = json.substring(start, i).trim();
+          if (s.startsWith("$mn_qp:") || s.startsWith(":")) {
             value = s;
+          } else if (s.equals("true")) {
+            value = true;
+          } else if (s.equals("false")) {
+            value = false;
+          } else if (s.equals("null")) {
+            value = null;
+          } else if (s.contains(".")) {
+            try {
+              value = Double.parseDouble(s);
+            } catch (NumberFormatException e) {
+              value = s;
+            }
+          } else {
+            try {
+              value = Integer.parseInt(s);
+            } catch (NumberFormatException e) {
+              value = s;
+            }
           }
         }
-      }
 
       result.add(value);
     }
@@ -458,19 +524,12 @@ public final class NitriteQueryParser {
     if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
       return null;
     }
-    try {
-      Object parsed = parseJson(jsonQuery);
-      if (parsed instanceof Map) {
-        Map<?, ?> map = (Map<?, ?>) parsed;
-        if (map.containsKey("$project")) {
-          Object projectValue = map.get("$project");
-          if (projectValue instanceof String) {
-            return (String) projectValue;
-          }
-        }
+    Object parsed = parseJson(jsonQuery);
+    if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
+      Object projectValue = map.get("$project");
+      if (projectValue instanceof String s) {
+        return s;
       }
-    } catch (Exception e) {
-      // Ignore parsing errors
     }
     return null;
   }

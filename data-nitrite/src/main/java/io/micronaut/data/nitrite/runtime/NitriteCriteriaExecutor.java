@@ -271,7 +271,7 @@ public final class NitriteCriteriaExecutor {
             return Filter.ALL;
         }
         try {
-            Map<String, Object> filterMap = (Map<String, Object>) queryParser.parseJson(queryString);
+            Map<String, Object> filterMap = queryParser.extractFilterMap(queryParser.parseJson(queryString));
             if (filterMap == null || filterMap.isEmpty()) {
                 return Filter.ALL;
             }
@@ -329,25 +329,33 @@ public final class NitriteCriteriaExecutor {
         String queryString = queryResult.getQuery();
         if (queryString != null && !queryString.isEmpty()) {
             try {
-                Map<String, Object> queryMap = (Map<String, Object>) queryParser.parseJson(queryString);
-                if (queryMap == null) {
+                Object parsed = queryParser.parseJson(queryString);
+                List<Map<?, ?>> stages;
+                if (parsed instanceof Map<?, ?> m) {
+                    stages = List.of(m);
+                } else if (parsed instanceof List<?> pipeline) {
+                    List<Map<?, ?>> pipelineStages = new ArrayList<>();
+                    for (Object s : pipeline) {
+                        if (s instanceof Map<?, ?> sm) pipelineStages.add(sm);
+                    }
+                    stages = pipelineStages;
+                } else {
                     return options;
                 }
 
-                // Extract sort if present
-                if (queryMap.containsKey("$sort")) {
-                    Map<String, Object> sortMap = (Map<String, Object>) queryMap.get("$sort");
-                    for (Map.Entry<String, Object> entry : sortMap.entrySet()) {
-                        SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
-                        options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey(), persistentEntity), order);
+                for (Map<?, ?> stage : stages) {
+                    if (stage.get("$sort") instanceof Map<?, ?> sortMap) {
+                        for (Map.Entry<?, ?> entry : sortMap.entrySet()) {
+                            SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
+                            options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey().toString(), persistentEntity), order);
+                        }
                     }
-                }
-                // Extract skip/limit if not already provided as parameters
-                if (offset <= 0 && queryMap.containsKey("$skip")) {
-                    options.skip(((Number) queryMap.get("$skip")).longValue());
-                }
-                if (limit <= 0 && queryMap.containsKey("$limit")) {
-                    options.limit(((Number) queryMap.get("$limit")).longValue());
+                    if (offset <= 0 && stage.get("$skip") instanceof Number skip) {
+                        options.skip(skip.longValue());
+                    }
+                    if (limit <= 0 && stage.get("$limit") instanceof Number lim) {
+                        options.limit(lim.longValue());
+                    }
                 }
 
             } catch (Exception e) {

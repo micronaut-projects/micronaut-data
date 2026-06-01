@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
@@ -779,21 +780,31 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   /** Parses sort from a JSON query string's $sort key. */
   @Override
   public Sort parseSortFromJsonQuery(final String queryString) {
-    if (queryString == null || !queryString.contains("\"$sort\"")) {
+    if (queryString == null || !queryString.contains("$sort")) {
       return null;
     }
     try {
       Object parsed = queryParser.parseJson(queryString);
-      if (parsed instanceof Map m && m.get("$sort") instanceof Map sortObj) {
+      Map<?, ?> sortObj = null;
+      if (parsed instanceof Map<?, ?> m) {
+        sortObj = m.get("$sort") instanceof Map<?, ?> s ? s : null;
+      } else if (parsed instanceof List<?> pipeline) {
+        for (Object stage : pipeline) {
+          if (stage instanceof Map<?, ?> sm && sm.get("$sort") instanceof Map<?, ?> s) {
+            sortObj = s;
+            break;
+          }
+        }
+      }
+      if (sortObj != null) {
         List<Sort.Order> orders = new ArrayList<>();
-        for (Map.Entry<?, ?> e : ((Map<?, ?>) sortObj).entrySet()) {
-          int dir = e.getValue() instanceof Number ? ((Number) e.getValue()).intValue() : 1;
+        for (Map.Entry<?, ?> e : sortObj.entrySet()) {
+          int dir = e.getValue() instanceof Number n ? n.intValue() : 1;
           orders.add(dir >= 1 ? Sort.Order.asc(e.getKey().toString()) : Sort.Order.desc(e.getKey().toString()));
         }
         return orders.isEmpty() ? null : Sort.of(orders);
       }
     } catch (Exception ignored) {
-      // ignore parse exceptions
     }
     return null;
   }
@@ -1124,24 +1135,44 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Map<String, Object> updateMap = null;
     boolean sql = false;
     String query = storedQuery.getQuery();
-    if (query.trim().startsWith("{")) {
+    String trimmedQuery = query.trim();
+    if (trimmedQuery.startsWith("{") || trimmedQuery.startsWith("[")) {
       try {
         Object parsed = queryParser.parseJson(query);
-        if (parsed instanceof Map m) {
-          // Separate $project from filter criteria
-          filterMap = new LinkedHashMap<>(m);
-          filterMap.remove("$project");  // Remove projection field from filter
+        filterMap = new LinkedHashMap<>(queryParser.extractFilterMap(parsed));
+        if (parsed instanceof Map<?, ?> m) {
+          filterMap.remove("$project");
           updateMap = (Map<String, Object>) m.get("$set");
-          compiledFilter = filterBuilder.compile(getEntity(storedQuery.getRootEntity()), filterMap);
+          if (updateMap == null) {
+            updateMap = parseUpdateMapFromAnnotation(storedQuery);
+          }
         }
+        compiledFilter = filterBuilder.compile(getEntity(storedQuery.getRootEntity()), filterMap);
       } catch (Exception ignored) {
       }
     } else {
-      String upper = query.trim().toUpperCase();
+      String upper = trimmedQuery.toUpperCase();
       sql = upper.startsWith("SELECT") || upper.startsWith("DELETE") || upper.startsWith("UPDATE");
     }
     return new DefaultNitriteStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), conversionService, filterMap, compiledFilter, updateMap, sql);
   }
+
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> parseUpdateMapFromAnnotation(final StoredQuery<?, ?> storedQuery) {
+    try {
+      String updateStr = storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+      if (updateStr == null || updateStr.isBlank()) {
+        return null;
+      }
+      Object parsed = queryParser.parseJson(updateStr);
+      if (parsed instanceof Map<?, ?> m && m.get("$set") instanceof Map<?, ?> setMap) {
+        return new LinkedHashMap<>((Map<String, Object>) setMap);
+      }
+    } catch (Exception ignored) {
+    }
+    return null;
+  }
+
 
   /**
    * Create a specialized NitritePreparedQuery.
@@ -1648,6 +1679,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     Map<String, Object> namedParameters = buildNamedParameterValues(nq);
     if (nq.getFilterMap() != null) {
       Map<String, Object> rawSetFields = (Map<String, Object>) nq.getFilterMap().get("$set");
+      if (rawSetFields == null) {
+        rawSetFields = nq.getUpdateMap(); // fallback: $set stored separately in annotation
+      }
       if (rawSetFields != null) {
         setFields = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : rawSetFields.entrySet()) {
