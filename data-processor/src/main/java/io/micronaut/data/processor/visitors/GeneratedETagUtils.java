@@ -53,6 +53,8 @@ import java.util.StringJoiner;
 @Internal
 final class GeneratedETagUtils {
 
+    private static final String EXCLUDE = "exclude";
+
     private GeneratedETagUtils() {
     }
 
@@ -104,12 +106,12 @@ final class GeneratedETagUtils {
                 return;
             }
             boolean excludedByAssociationPath = associations.stream()
-                .anyMatch(association -> association.getAnnotationMetadata().booleanValue(ETagValue.class, "exclude").orElse(false));
+                .anyMatch(association -> association.getAnnotationMetadata().booleanValue(ETagValue.class, EXCLUDE).orElse(false));
             if (excludedByAssociationPath) {
                 return;
             }
             AnnotationMetadata metadata = property.getAnnotationMetadata();
-            boolean excluded = metadata.booleanValue(ETagValue.class, "exclude").orElse(false);
+            boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
             if (excluded) {
                 return;
             }
@@ -130,7 +132,7 @@ final class GeneratedETagUtils {
         if (entityETaggable && includeForeignKeys) {
             for (SourcePersistentProperty p : allProperties) {
                 AnnotationMetadata metadata = p.getAnnotationMetadata();
-                boolean excluded = metadata.booleanValue(ETagValue.class, "exclude").orElse(false);
+                boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
                 if (excluded) {
                     continue;
                 }
@@ -142,7 +144,7 @@ final class GeneratedETagUtils {
 
         for (SourcePersistentProperty p : allProperties) {
             AnnotationMetadata metadata = p.getAnnotationMetadata();
-            boolean excluded = metadata.booleanValue(ETagValue.class, "exclude").orElse(false);
+            boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
             if (excluded) {
                 continue;
             }
@@ -268,7 +270,7 @@ final class GeneratedETagUtils {
         return associations.stream()
             .filter(association -> association instanceof Embedded)
             .anyMatch(association -> association.getAnnotationMetadata().hasAnnotation(ETagValue.class)
-                && !association.getAnnotationMetadata().booleanValue(ETagValue.class, "exclude").orElse(false));
+                && !association.getAnnotationMetadata().booleanValue(ETagValue.class, EXCLUDE).orElse(false));
     }
 
     private static boolean isOwningForeignKeyAssociation(Association association) {
@@ -316,7 +318,7 @@ final class GeneratedETagUtils {
     private static void validateNoTransientETagValues(SourcePersistentEntity entity) {
         for (PropertyElement propertyElement : entity.getClassElement().getBeanProperties()) {
             if (propertyElement.hasAnnotation(ETagValue.class)
-                && !propertyElement.booleanValue(ETagValue.class, "exclude").orElse(false)
+                && !propertyElement.booleanValue(ETagValue.class, EXCLUDE).orElse(false)
                 && propertyElement.hasStereotype(Transient.class)) {
                 throw new ProcessingException(propertyElement, "Explicit @ETagValue cannot be applied to transient property: " + propertyElement.getName());
             }

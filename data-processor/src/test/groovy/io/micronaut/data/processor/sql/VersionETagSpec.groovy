@@ -524,6 +524,16 @@ record Other(@Id @GeneratedValue Long id) {}
         readExpression(FkEntityExplicitAssociation) == 'SYS_ROW_ETAG(@.other_id)'
     }
 
+    void "explicit relation ETagValue honors explicit single join column"() {
+        expect:
+        readExpression(CustomJoinColumnFkEntity) == 'SYS_ROW_ETAG(@.custom_other_id)'
+    }
+
+    void "includeForeignKeys falls back to naming strategy when join column has no name"() {
+        expect:
+        readExpression(UnnamedJoinColumnFkEntity) == 'SYS_ROW_ETAG(@.id, @.other_id)'
+    }
+
     void "generated id is eligible but generated non-id property is excluded"() {
         expect:
         readExpression(ETagGeneratedIdBook) == 'SYS_ROW_ETAG(@.id, @.title)'
@@ -675,6 +685,35 @@ class FkEntityExplicitAssociation {
 
     @ETagValue
     @Relation(Relation.Kind.MANY_TO_ONE)
+    Other other
+
+    @GeneratedETag(function = "SYS_ROW_ETAG")
+    String etag
+}
+
+@MappedEntity
+class CustomJoinColumnFkEntity {
+    @Id
+    @GeneratedValue
+    Long id
+
+    @ETagValue
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn(name = "custom_other_id")
+    Other other
+
+    @GeneratedETag(function = "SYS_ROW_ETAG")
+    String etag
+}
+
+@MappedEntity
+@ETaggable(includeForeignKeys = true)
+class UnnamedJoinColumnFkEntity {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn
     Other other
 
     @GeneratedETag(function = "SYS_ROW_ETAG")
