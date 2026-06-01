@@ -49,8 +49,8 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- * NitriteDB query builder implementing both QueryBuilder and QueryBuilder2 for compatibility.
- * Primary implementation uses JPA Criteria (QueryBuilder2) to align with Micronaut Data 5.0.x.
+ * Builds Nitrite JSON filter queries from Micronaut Data criteria expressions.
+ * Generates JSON that is interpreted at runtime by {@link io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder}.
  */
 @Internal
 @Introspected

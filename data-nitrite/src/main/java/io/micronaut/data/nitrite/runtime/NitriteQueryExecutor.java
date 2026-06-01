@@ -27,7 +27,6 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
@@ -40,12 +39,9 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +65,6 @@ public final class NitriteQueryExecutor {
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
     private final NitriteFilterBuilder filterBuilder;
-    private final ConversionService conversionService;
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
     private final BiFunction<Pageable, Sort, FindOptions> findOptionsFactory;
@@ -81,6 +76,7 @@ public final class NitriteQueryExecutor {
     private final CollectionProjectionMapper projectionMapper;
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
+    private final JoinFetcher joinFetcher;
 
     /**
      * Creates a new NitriteQueryExecutor.
@@ -107,7 +103,6 @@ public final class NitriteQueryExecutor {
         this.entityMapper = entityMapper;
         this.queryParser = queryParser;
         this.filterBuilder = filterBuilder;
-        this.conversionService = conversionService;
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
         this.findOptionsFactory = findOptionsFactory;
@@ -119,6 +114,7 @@ public final class NitriteQueryExecutor {
         this.projectionMapper = new CollectionProjectionMapper(valueConverter, entityMapper);
         this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter, entityMapper);
         this.aggregationHandler = new CollectionAggregator();
+        this.joinFetcher = new JoinFetcher(entityMapper, collectionFactory, entityFactory, conversionService);
     }
 
     /**
@@ -207,7 +203,7 @@ public final class NitriteQueryExecutor {
         // Fetch joined associations if specified
         Set<JoinPath> joinPaths = nq.getJoinPaths();
         if (joinPaths != null && !joinPaths.isEmpty()) {
-            fetchJoins(Collections.singletonList(entity), joinPaths, nq.getRootEntity());
+            joinFetcher.fetch(Collections.singletonList(entity), joinPaths, nq.getRootEntity());
         }
 
         return entity;
@@ -340,7 +336,7 @@ public final class NitriteQueryExecutor {
         // Fetch joined associations if specified
         Set<JoinPath> joinPaths = nq.getJoinPaths();
         if (joinPaths != null && !joinPaths.isEmpty()) {
-            fetchJoins(results, joinPaths, nq.getRootEntity());
+            joinFetcher.fetch(results, joinPaths, nq.getRootEntity());
         }
 
         return results;
@@ -486,206 +482,4 @@ public final class NitriteQueryExecutor {
         }
     }
 
-    /**
-     * Fetch and populate joined associations for loaded entities.
-     * For ONE_TO_MANY and MANY_TO_MANY associations, queries the associated collection
-     * and populates the results on the parent entities.
-     *
-     * @param entities the loaded entities
-     * @param joinPaths the join paths to fetch
-     * @param entityType the entity type
-     */
-    private <R> void fetchJoins(List<R> entities, Set<JoinPath> joinPaths, Class<?> entityType) {
-        if (entities == null || entities.isEmpty() || joinPaths == null || joinPaths.isEmpty()) {
-            return;
-        }
-
-        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Map<String, List<String>> nestedPaths = new LinkedHashMap<>();
-
-        for (JoinPath joinPath : joinPaths) {
-            String path = joinPath.getPath();
-            int dotIndex = path.indexOf('.');
-            if (dotIndex == -1) {
-                nestedPaths.computeIfAbsent(path, ignored -> new ArrayList<>());
-            } else {
-                String head = path.substring(0, dotIndex);
-                String tail = path.substring(dotIndex + 1);
-                nestedPaths.computeIfAbsent(head, ignored -> new ArrayList<>()).add(tail);
-            }
-        }
-
-        for (Map.Entry<String, List<String>> entry : nestedPaths.entrySet()) {
-            List<Object> children = fetchSingleLevelJoin(entities, persistentEntity, entry.getKey());
-            if (!entry.getValue().isEmpty() && !children.isEmpty()) {
-                var assocProp = persistentEntity.getPropertyByName(entry.getKey());
-                if (assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association) {
-                    fetchJoinsForPaths(children, association.getAssociatedEntity(), entry.getValue());
-                }
-            }
-        }
-    }
-
-    private void fetchJoinsForPaths(List<?> entities, RuntimePersistentEntity<?> persistentEntity, List<String> paths) {
-        if (entities == null || entities.isEmpty() || paths == null || paths.isEmpty()) {
-            return;
-        }
-
-        Map<String, List<String>> nestedPaths = new LinkedHashMap<>();
-        for (String path : paths) {
-            int dotIndex = path.indexOf('.');
-            if (dotIndex == -1) {
-                nestedPaths.computeIfAbsent(path, ignored -> new ArrayList<>());
-            } else {
-                String head = path.substring(0, dotIndex);
-                String tail = path.substring(dotIndex + 1);
-                nestedPaths.computeIfAbsent(head, ignored -> new ArrayList<>()).add(tail);
-            }
-        }
-
-        for (Map.Entry<String, List<String>> entry : nestedPaths.entrySet()) {
-            List<Object> children = fetchSingleLevelJoin(entities, persistentEntity, entry.getKey());
-            if (!entry.getValue().isEmpty() && !children.isEmpty()) {
-                var assocProp = persistentEntity.getPropertyByName(entry.getKey());
-                if (assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association) {
-                    fetchJoinsForPaths(children, association.getAssociatedEntity(), entry.getValue());
-                }
-            }
-        }
-    }
-
-    /**
-     * Fetch a single-level join association.
-     *
-     * @param entities the parent entities
-     * @param persistentEntity the parent entity metadata
-     * @param associationName the association name to fetch
-     */
-    private List<Object> fetchSingleLevelJoin(List<?> entities, RuntimePersistentEntity<?> persistentEntity, String associationName) {
-        // Find the association property
-        var assocProp = persistentEntity.getPropertyByName(associationName);
-        if (!(assocProp instanceof io.micronaut.data.model.runtime.RuntimeAssociation<?> association)) {
-            return List.of();
-        }
-
-        // Only handle ONE_TO_MANY and MANY_TO_MANY (mappedBy associations)
-        var kind = association.getKind();
-        if (kind != io.micronaut.data.annotation.Relation.Kind.ONE_TO_MANY &&
-            kind != io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
-            return List.of();
-        }
-
-        String mappedBy = association.getAnnotationMetadata()
-            .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
-        if (mappedBy == null) {
-            return List.of();
-        }
-
-        // Get parent IDs
-        RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
-
-        List<Object> parentIds = new ArrayList<>();
-        for (Object entity : entities) {
-            Object idValue = ((io.micronaut.core.beans.BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
-            if (idValue != null) {
-                parentIds.add(entityMapper.toFilterValue(idValue));
-            }
-        }
-
-        if (parentIds.isEmpty()) {
-            return List.of();
-        }
-
-        // Query associated entities
-        Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
-        NitriteCollection assocCollection = collectionFactory.apply(associatedType);
-        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
-        RuntimePersistentProperty<?> backProp = associatedEntity.getPropertyByName(mappedBy);
-
-        if (backProp == null) {
-            return List.of();
-        }
-
-        String backFieldName = backProp.getPersistedName();
-        associatedEntity.getIdentity();
-        if (associatedEntity.getIdentity().equals(backProp)) {
-            backFieldName = "id";
-        }
-        final String finalBackFieldName = backFieldName;
-
-        // Build filter: backFieldName contains any of parentIds
-        Filter filter;
-        Comparable<?>[] comparableIds = parentIds.stream()
-            .map(id -> id instanceof Comparable<?> ? (Comparable<?>) id : id.toString())
-            .toArray(Comparable<?>[]::new);
-
-        if (kind == io.micronaut.data.annotation.Relation.Kind.MANY_TO_MANY) {
-            // For MANY_TO_MANY, backFieldName is a collection in the document.
-            // Standard Nitrite filters like 'eq' or 'in' might not consistently handle 'contains'
-            // for non-indexed collection fields in all versions. A custom filter is more reliable.
-            // In Nitrite 4.x, Filter receives a Pair<NitriteId, Document>.
-            filter = pair -> {
-                org.dizitart.no2.collection.Document doc = pair.getSecond();
-                Object val = doc.get(finalBackFieldName);
-                if (val instanceof Collection<?> coll) {
-                    for (Object id : parentIds) {
-                        if (coll.contains(id)) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            };
-        } else {
-            // ONE_TO_MANY: backFieldName is a scalar
-            if (parentIds.size() == 1) {
-                filter = FluentFilter.where(finalBackFieldName).eq(parentIds.getFirst());
-            } else {
-                filter = FluentFilter.where(finalBackFieldName).in(comparableIds);
-            }
-        }
-
-        // Group results by parent ID
-        // For ONE_TO_MANY: backRefValue is a scalar (single parent ID)
-        // For MANY_TO_MANY: backRefValue is a collection of parent IDs
-        Map<Object, List<Object>> resultsByParentId = new HashMap<>();
-        List<Object> fetchedChildren = new ArrayList<>();
-        for (Document doc : assocCollection.find(filter)) {
-            Object backRefValue = doc.get(finalBackFieldName);
-            if (backRefValue != null) {
-                Object assocEntity = entityMapper.fromDocument(doc, associatedType);
-                fetchedChildren.add(assocEntity);
-
-                // Handle MANY_TO_MANY where backRefValue is a collection
-                if (backRefValue instanceof Collection<?> collection) {
-                    for (Object parentId : collection) {
-                        Object filterParentId = entityMapper.toFilterValue(parentId);
-                        if (!resultsByParentId.containsKey(filterParentId)) {
-                            resultsByParentId.put(filterParentId, new ArrayList<>());
-                        }
-                        resultsByParentId.get(filterParentId).add(assocEntity);
-                    }
-                } else {
-                    // ONE_TO_MANY: backRefValue is a scalar
-                    Object filterParentId = entityMapper.toFilterValue(backRefValue);
-                    if (!resultsByParentId.containsKey(filterParentId)) {
-                        resultsByParentId.put(filterParentId, new ArrayList<>());
-                    }
-                    resultsByParentId.get(filterParentId).add(assocEntity);
-                }
-            }
-        }
-
-        // Set associations on parent entities (always set — even empty list — so joined fields are non-null)
-        var beanProperty = (io.micronaut.core.beans.BeanProperty<Object, Object>) association.getProperty();
-        for (Object entity : entities) {
-            Object parentId = ((io.micronaut.core.beans.BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
-            if (parentId != null) {
-                Object filterParentId = entityMapper.toFilterValue(parentId);
-                List<Object> children = resultsByParentId.getOrDefault(filterParentId, new ArrayList<>());
-                beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
-            }
-        }
-        return fetchedChildren;
-    }
 }
