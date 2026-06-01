@@ -11517,7 +11517,8 @@ class Book {
 </div>
 </div>
 <div class="paragraph">
-<p>When <code>function</code> is omitted on <code>@GeneratedETag</code>, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to <code>SYS_ROW_ETAG</code>; for other dialects you must provide an explicit function value.</p>
+<p>When <code>function</code> is omitted on <code>@GeneratedETag</code>, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to <code>SYS_ROW_ETAG</code>; for other dialects you must provide an explicit function value.
+The <code>function</code> value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.</p>
 </div>
 
 <h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>6.3.3 Pessimistic Locking</h2>

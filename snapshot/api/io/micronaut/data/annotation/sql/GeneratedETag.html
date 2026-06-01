@@ -175,6 +175,10 @@ by the MappedEntityVisitor in the data-processor module during annotation proces
 <div class="block">The SQL function name to compute the ETag (e.g. <code>SYS_ROW_ETAG</code>) using values
 annotated by <a href="ETagValue.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>ETagValue</code></a> or implicitly included via <a href="ETaggable.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>ETaggable</code></a>.
 <p>
+The value should be a function name, which may be schema-qualified, such as <code>SYS_ROW_ETAG</code>
+or <code>MY_SCHEMA.MY_ETAG_FUNCTION</code>. Do not include parentheses, argument placeholders, or column
+references; Micronaut Data supplies the resolved ETag input columns.
+<p>
 If not specified, the function may be resolved from the SQL dialect at query-build time.
 Currently, Oracle defaults to <code>SYS_ROW_ETAG</code>; other dialects require an explicit function.</div>
 <dl class="notes">
