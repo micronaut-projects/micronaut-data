@@ -216,7 +216,7 @@ final class GeneratedETagUtils {
         if (isSynthesizedGeneratedETagTransformer(etagProp, expr)) {
             return;
         }
-        throw new ProcessingException(propertyElement, "@GeneratedETag cannot be combined with @ColumnTransformer or @DataTransformer on entity "
+        throw new ProcessingException(entity, "@GeneratedETag cannot be combined with @ColumnTransformer or @DataTransformer on entity "
             + entity.getName() + ": " + propertyElement.getName());
     }
 
