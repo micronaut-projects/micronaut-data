@@ -25,6 +25,7 @@ import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -137,7 +138,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
             // Cache NitriteEntityMeta at method start - avoids repeated registry lookups
             Class<T> type = persistentEntity.getIntrospection().getBeanType();
-            NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+            NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
             // Check if entity has an existing ID - if so, use update lifecycle
             boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
@@ -182,7 +183,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     protected void execute() throws RuntimeException {
         // Cache NitriteEntityMeta at method start - avoids repeated registry lookups
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
         execute(meta);
     }
 
@@ -190,7 +191,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
      * Execute with pre-computed metadata.
      * @param meta the pre-computed entity metadata
      */
-    private void execute(NitriteEntityMapper.NitriteEntityMeta<T> meta) throws RuntimeException {
+    private void execute(NitriteEntityMeta<T> meta) throws RuntimeException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("execute: operationType={}, entity={}", operationType, entity);
         }
@@ -281,7 +282,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     }
 
     @SuppressWarnings("unchecked")
-    private void persistNewCascadeChildren(NitriteEntityMapper.NitriteEntityMeta<T> meta) {
+    private void persistNewCascadeChildren(NitriteEntityMeta<T> meta) {
         for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             RuntimePersistentEntity<Object> associatedEntity =
                 (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity();
@@ -337,7 +338,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         helper.generateIdIfNecessary(entity, type);
 
         // Use pre-computed cascadeProps from metadata - avoids iterating all properties + instanceof checks
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
         for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             Object value = assoc.getProperty().get(entity);
             if (value instanceof Iterable<?> iterable) {
@@ -369,7 +370,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        NitriteEntityMapper.NitriteEntityMeta<T> triggerMeta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
+        NitriteEntityMeta<T> triggerMeta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
         if ((operationType == OperationType.UPDATE || operationType == OperationType.DELETE) && triggerMeta.versionProp() != null) {
             preVersionValue = triggerMeta.versionProp().getProperty().get(entity);
         }

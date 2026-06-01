@@ -53,6 +53,8 @@ import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
+import io.micronaut.data.nitrite.runtime.mapping.WritablePropertyMeta;
 import io.micronaut.data.nitrite.runtime.query.DefaultNitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.DefaultNitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
@@ -82,11 +84,7 @@ import org.dizitart.no2.index.IndexType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -187,6 +185,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
+  private final ValueConverter valueConverter;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
   /** Cache for non-transactional collections - keyed by collection name to handle discriminators. */
   private final Map<String, NitriteCollection> collectionCache = new ConcurrentHashMap<>();
@@ -225,6 +224,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.filterBuilder = createFilterBuilderWithSubQueryExecutor();
     this.updateExecutor = new NitriteUpdateExecutor();
     this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
+    this.valueConverter = new ValueConverter(conversionService);
       QueryBuilder queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
     this.criteriaBuilder = new io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder(runtimeEntityRegistry);
     this.criteriaExecutor = new NitriteCriteriaExecutor(
@@ -359,10 +359,10 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     // Set back-references using pre-computed mappedBy metadata — no annotation lookups on hot path.
-    NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
+    NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
     // Early exit if no back-references to set
     if (meta.hasBackReferences()) {
-      for (NitriteEntityMapper.WritablePropertyMeta<T> assocMeta : meta.mappedByAssocs()) {
+      for (WritablePropertyMeta<T> assocMeta : meta.mappedByAssocs()) {
         Object value = assocMeta.prop().getProperty().get(entityValue);
         if (value instanceof Iterable<?> iterable) {
           // Move null check outside inner loop - loop-invariant hoist
@@ -559,7 +559,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   @Override
   public <T> void generateIdIfNecessary(final T entity, final Class<T> type) {
     // Use cached metadata with pre-computed idAccessor
-    NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+    NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
     var idProperty = meta.idProp();
     var idAccessor = meta.idAccessor();
     if (idProperty != null && idProperty.isAnnotationPresent(GeneratedValue.class)) {
@@ -992,7 +992,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
     Object arg = methodParams[0];
     if ("id".equals(property) || "_id".equals(property)) {
-      return entityMapper.toNitriteFilterValue(arg, property);
+      return entityMapper.toNitriteFilterValue(arg);
     }
     String[] parts = property.split("\\.");
     for (int start = 0; start < parts.length; start++) {
@@ -1004,17 +1004,17 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         }
       }
       if (current != null) {
-        return entityMapper.toNitriteFilterValue(current, property);
+        return entityMapper.toNitriteFilterValue(current);
       }
     }
-    return entityMapper.toNitriteFilterValue(arg, property);
+    return entityMapper.toNitriteFilterValue(arg);
   }
 
   private Object readSegmentValue(Object current, String segment) {
     if (current == null) {
       return null;
     }
-    String alt = snakeToCamel(segment);
+    String alt = NameUtils.snakeToCamel(segment);
     if (current instanceof Map<?, ?> m) {
       Object value = m.get(segment);
       return value != null || segment.equals(alt) ? value : m.get(alt);
@@ -1030,26 +1030,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     } catch (Exception ignored) {
       return null;
     }
-  }
-
-  private String snakeToCamel(String value) {
-    if (value == null || value.indexOf('_') < 0) {
-      return value;
-    }
-    StringBuilder result = new StringBuilder(value.length());
-    boolean upperNext = false;
-    for (int i = 0; i < value.length(); i++) {
-      char ch = value.charAt(i);
-      if (ch == '_') {
-        upperNext = true;
-      } else if (upperNext) {
-        result.append(Character.toUpperCase(ch));
-        upperNext = false;
-      } else {
-        result.append(ch);
-      }
-    }
-    return result.toString();
   }
 
   @Override
@@ -1449,33 +1429,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @return the converted value
    */
   private Object convertValue(Object value, Class<?> targetType) {
-    if (value == null) {
-      return null;
-    }
-    if (targetType.isInstance(value)) {
-      return value;
-    }
-
-    // Reverse the epoch-number storage format produced by NitriteEntityMapper.toFilterValue.
-    // Nitrite's Jackson may return Integer, Long, or Double for stored numeric values.
-    if (value instanceof Number n) {
-      if (targetType == Instant.class) {
-        return NitriteEntityMapper.fromEpochNanos(n.longValue());
-      }
-      if (targetType == LocalDate.class) {
-        return LocalDate.ofEpochDay(n.longValue());
-      }
-      if (targetType == LocalDateTime.class) {
-        return LocalDateTime.ofInstant(NitriteEntityMapper.fromEpochNanos(n.longValue()), ZoneOffset.UTC);
-      }
-      if (targetType == LocalTime.class) {
-        return LocalTime.ofNanoOfDay(n.longValue());
-      }
-    }
-
-    return conversionService.convert(value, targetType)
-        .map(obj -> (Object) obj)
-        .orElse(value);
+    return valueConverter.convertWithTemporalHandling(value, targetType);
   }
 
     /**

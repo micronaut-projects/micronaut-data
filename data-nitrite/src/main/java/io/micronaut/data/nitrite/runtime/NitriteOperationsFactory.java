@@ -36,6 +36,7 @@ import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
+import org.dizitart.no2.common.module.NitritePlugin;
 import org.dizitart.no2.mapper.jackson.JacksonMapper;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.slf4j.Logger;
@@ -253,7 +254,7 @@ public final class NitriteOperationsFactory {
     }
 
     @Override
-    public java.util.Set<org.dizitart.no2.common.module.NitritePlugin> plugins() {
+    public java.util.Set<NitritePlugin> plugins() {
       return java.util.Collections.singleton(jacksonMapper);
     }
   }

@@ -215,9 +215,9 @@ public final class NitriteFilterBuilder {
     /**
      * Prepare a value for filtering (coercion, conversion, UUID handling).
      */
-    public Object prepareFilterValue(String persistedName, Object value, String rawField) {
+    public Object prepareFilterValue(String persistedName, Object value) {
         return entityMapper.toNitriteFilterValue(
-            valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(persistedName, value)), rawField);
+            valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(persistedName, value)));
     }
 
     /**
@@ -355,7 +355,7 @@ public final class NitriteFilterBuilder {
             String op = opEntry.getKey();
             Object value = valueResolver.resolveValue(opEntry.getValue(), params, namedParameters);
             Object finalValue = entityMapper.toNitriteFilterValue(
-                valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)), fullPath);
+                valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
             Filter f = buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
             if (f != null && f != Filter.ALL) fieldFilters.add(f);
         }

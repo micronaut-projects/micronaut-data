@@ -59,7 +59,7 @@ public final class CollectionAggregator {
                 Object val = d.get(fieldName);
                 if (val == null) {
                     // Try snake_case conversion
-                    String snakeCase = toSnakeCase(fieldName);
+                    String snakeCase = NameUtils.camelToSnake(fieldName);
                     if (!snakeCase.equals(fieldName)) {
                         val = d.get(snakeCase);
                     }
@@ -74,16 +74,6 @@ public final class CollectionAggregator {
         }
 
         return executeAggregate(aggFunc, values);
-    }
-
-    /**
-     * Convert camelCase to snake_case.
-     */
-    private String toSnakeCase(String camelCase) {
-        if (camelCase == null) {
-            return null;
-        }
-        return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
     }
 
     /**

@@ -45,7 +45,7 @@ final class SpatialFilterFactory {
     Filter buildNearFilter(String field, Object value, Object[] params, Map<String, Object> namedParameters) {
         if (value instanceof Map<?, ?> m) {
             Object center = entityMapper.toNitriteFilterValue(
-                valueResolver.preConvertForFilter(valueResolver.resolveValue(m.get("center"), params, namedParameters)), field);
+                valueResolver.preConvertForFilter(valueResolver.resolveValue(m.get("center"), params, namedParameters)));
             Object distanceObj = valueResolver.resolveValue(m.get("distance"), params, namedParameters);
             double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
 

@@ -24,6 +24,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncEntitiesOperations;
@@ -42,7 +43,6 @@ import java.util.stream.IntStream;
 
 /**
  * Internal entities operations for Nitrite with automatic event firing and version handling.
- * Uses CollectionWriter for batch entity-to-Document conversion.
  * <p>
  * <b>Save All (INSERT) Operation:</b> Uses upsert semantics for each entity:
  * <ul>
@@ -133,7 +133,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
             // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
             Class<T> type = persistentEntity.getIntrospection().getBeanType();
-            NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+            NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
@@ -233,7 +233,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
 
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         // First pass: capture pre-version values and trigger pre-remove events
         List<Filter> filters = new ArrayList<>();
@@ -299,7 +299,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
         // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+        NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         if (insert) {
             // saveAll() operation uses upsert semantics for each entity:
@@ -396,7 +396,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
         boolean vetoed = false;
         preVersionValues = new ArrayList<>();
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
+        NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
         // First pass: capture pre-version values BEFORE event listeners are triggered
         for (T entity : entities) {
             if (!insert && meta.versionProp() != null) {

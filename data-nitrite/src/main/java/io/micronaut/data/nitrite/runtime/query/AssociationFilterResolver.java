@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
@@ -292,9 +293,9 @@ final class AssociationFilterResolver {
         }
 
         if (prop != null) {
-            return operatorFiltersForPath.build(entity, prop.getName() + "." + snakeToCamelPath(remaining), operators, params, namedParameters);
+            return operatorFiltersForPath.build(entity, prop.getName() + "." + NameUtils.snakeToCamelPath(remaining), operators, params, namedParameters);
         }
-        return operatorFiltersForPath.build(entity, snakeToCamelPath(fieldPath), operators, params, namedParameters);
+        return operatorFiltersForPath.build(entity, NameUtils.snakeToCamelPath(fieldPath), operators, params, namedParameters);
     }
 
     private boolean looksLikeId(String value, Class<?> idType) {
@@ -307,26 +308,6 @@ final class AssociationFilterResolver {
             return false;
         }
         return true;
-    }
-
-    private String snakeToCamelPath(String path) {
-        if (path == null || path.indexOf('_') < 0) return path;
-        String[] parts = path.split("\\.");
-        for (int i = 0; i < parts.length; i++) parts[i] = snakeToCamel(parts[i]);
-        return String.join(".", parts);
-    }
-
-    private String snakeToCamel(String value) {
-        if (value == null || value.indexOf('_') < 0) return value;
-        StringBuilder result = new StringBuilder(value.length());
-        boolean upperNext = false;
-        for (int i = 0; i < value.length(); i++) {
-            char ch = value.charAt(i);
-            if (ch == '_') { upperNext = true; }
-            else if (upperNext) { result.append(Character.toUpperCase(ch)); upperNext = false; }
-            else { result.append(ch); }
-        }
-        return result.toString();
     }
 
     private static Comparable<?>[] toComparableArray(List<Object> values) {

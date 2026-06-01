@@ -17,10 +17,12 @@ package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteTypeRegistry;
+
+import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Centralized value conversion for Nitrite operations.
@@ -41,6 +43,40 @@ public final class ValueConverter {
      */
     public ValueConverter(ConversionService conversionService) {
         this.conversionService = conversionService;
+    }
+
+    public static long epochNanos(Instant instant) {
+        return Math.addExact(
+            Math.multiplyExact(instant.getEpochSecond(), 1_000_000_000L),
+            instant.getNano());
+    }
+
+    public static Instant fromEpochNanos(long nanos) {
+        return Instant.ofEpochSecond(
+            Math.floorDiv(nanos, 1_000_000_000L),
+            (int) Math.floorMod(nanos, 1_000_000_000L));
+    }
+
+    /**
+     * Convert a value to a format suitable for Nitrite Filters.
+     * <p>
+     * This static variant handles only conversions that don't require instance state
+     * (entity registry lookups). For entity-ID extraction, use {@link NitriteEntityMapper#toFilterValue}.
+     *
+     * @param value the raw value
+     * @return the normalized value, or the value itself if no conversion applies
+     */
+    public static Object toFilterValueStatic(Object value) {
+      return switch (value) {
+        case null            -> null;
+        case String s        -> s;
+        case Number n        -> n;
+        case Boolean b       -> b;
+        case Character c     -> c;
+        case Enum<?> e       -> e.name();
+        case Optional<?> opt -> toFilterValueStatic(opt.orElse(null));
+        default              -> NitriteTypeRegistry.write(value);
+      };
     }
 
     /**
@@ -64,8 +100,8 @@ public final class ValueConverter {
 
     /**
      * Convert a value to the target type with explicit temporal type handling.
-     * This method provides direct parsing for temporal types before falling
-     * back to ConversionService.
+     * Handles both directions: Number→temporal (reverse of {@code toFilterValue})
+     * and String→temporal (legacy ISO format).
      *
      * @param value the value to convert
      * @param targetType the target type
@@ -81,27 +117,9 @@ public final class ValueConverter {
             return (T) value;
         }
 
-        // Handle temporal types from String (legacy ISO format or other string sources)
-        if (value instanceof String str) {
-            if (targetType == LocalDate.class) {
-                try {
-                    return (T) LocalDate.parse(str);
-                } catch (Exception ignored) {
-                    // Fall through to conversion service
-                }
-            } else if (targetType == LocalDateTime.class) {
-                try {
-                    return (T) LocalDateTime.parse(str);
-                } catch (Exception ignored) {
-                    // Fall through to conversion service
-                }
-            } else if (targetType == LocalTime.class) {
-                try {
-                    return (T) LocalTime.parse(str);
-                } catch (Exception ignored) {
-                    // Fall through to conversion service
-                }
-            }
+        T registered = NitriteTypeRegistry.read(value, targetType);
+        if (registered != null) {
+            return registered;
         }
 
         return conversionService.convert(value, targetType).orElse((T) value);

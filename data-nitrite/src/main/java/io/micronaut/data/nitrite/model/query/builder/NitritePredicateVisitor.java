@@ -38,15 +38,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.criteria.Expression;
-import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -668,22 +662,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     private static Object convertValue(final Object value) {
-        if (value instanceof Instant instant) {
-            return NitriteEntityMapper.epochNanos(instant);
-        }
-        if (value instanceof LocalDate localDate) {
-            return localDate.toEpochDay();
-        }
-        if (value instanceof LocalDateTime localDateTime) {
-            return NitriteEntityMapper.epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
-        }
-        if (value instanceof ZonedDateTime zonedDateTime) {
-            return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        }
-        if (value instanceof ZoneId zoneId) {
-            return zoneId.getId();
-        }
-        return value;
+        return ValueConverter.toFilterValueStatic(value);
     }
 
     // -------------------------------------------------------------------------

@@ -104,7 +104,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
-            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue, rawField);
+            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue);
             return builder.buildOperatorFilter(entity, persistedName, "$eq", finalValue, params, namedParameters);
         }
     }
@@ -150,7 +150,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     record OperatorBinding(String op, CompiledValue valueExpression) {
         public Filter toFilter(NitriteFilterBuilder builder, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
-            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue, rawField);
+            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue);
             return builder.buildOperatorFilter(entity, persistedName, op, finalValue, params, namedParameters);
         }
     }

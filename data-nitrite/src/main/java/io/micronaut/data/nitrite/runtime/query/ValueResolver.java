@@ -17,15 +17,11 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteTypeRegistry;
 import io.micronaut.data.nitrite.runtime.query.compiled.CompiledValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -93,14 +89,7 @@ final class ValueResolver {
     }
 
     Object preConvertForFilter(Object value) {
-        return switch (value) {
-            case null -> null;
-            case Instant instant -> NitriteEntityMapper.epochNanos(instant);
-            case LocalDate localDate -> localDate.toEpochDay();
-            case LocalDateTime ldt -> NitriteEntityMapper.epochNanos(ldt.toInstant(ZoneOffset.UTC));
-            case LocalTime localTime -> localTime.toNanoOfDay();
-            default -> value;
-        };
+        return NitriteTypeRegistry.write(value);
     }
 
     Object maybeCoerceUuid(String field, Object value) {
@@ -131,13 +120,13 @@ final class ValueResolver {
             Object resolved = resolveValue(list.getFirst(), params, namedParameters);
             if (resolved instanceof Collection<?> coll) {
                 for (Object item : coll) {
-                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(item), null);
+                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(item));
                     if (r instanceof Comparable<?> c) resolvedValues.add(c);
                 }
             } else if (resolved != null && resolved.getClass().isArray()) {
                 int len = java.lang.reflect.Array.getLength(resolved);
                 for (int i = 0; i < len; i++) {
-                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(java.lang.reflect.Array.get(resolved, i)), null);
+                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(java.lang.reflect.Array.get(resolved, i)));
                     if (r instanceof Comparable<?> c) resolvedValues.add(c);
                 }
             } else if (resolved instanceof Comparable<?> c) {
@@ -145,12 +134,12 @@ final class ValueResolver {
             }
         } else if (finalValue instanceof Collection<?> coll) {
             for (Object item : coll) {
-                Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)), null);
+                Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                 if (r instanceof Comparable<?> c) resolvedValues.add(c);
             }
         } else if (finalValue instanceof Object[] array) {
             for (Object item : array) {
-                Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)), null);
+                Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(resolveValue(item, params, namedParameters)));
                 if (r instanceof Comparable<?> c) resolvedValues.add(c);
             }
         }
