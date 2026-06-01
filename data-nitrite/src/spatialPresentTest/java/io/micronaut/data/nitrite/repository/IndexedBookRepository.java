@@ -4,8 +4,9 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.IndexedBook;
 import io.micronaut.data.repository.CrudRepository;
-import java.util.List;
 import org.locationtech.jts.geom.Geometry;
+
+import java.util.List;
 
 /**
  * Repository for {@link IndexedBook} used in index creation tests.

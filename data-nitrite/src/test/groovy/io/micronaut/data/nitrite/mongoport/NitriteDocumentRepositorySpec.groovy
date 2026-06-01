@@ -1,14 +1,14 @@
 package io.micronaut.data.nitrite.mongoport
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.nitrite.mongoport.entities.NitriteDocument
 import io.micronaut.data.nitrite.mongoport.entities.NitriteDocumentOwner
 import io.micronaut.data.nitrite.mongoport.entities.NitriteMpPerson
 import io.micronaut.data.nitrite.mongoport.repositories.NitriteCriteriaPersonRepository
 import io.micronaut.data.nitrite.mongoport.repositories.NitriteDocumentEntityRepository
 import io.micronaut.data.nitrite.mongoport.repositories.NitriteMpPersonRepository
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

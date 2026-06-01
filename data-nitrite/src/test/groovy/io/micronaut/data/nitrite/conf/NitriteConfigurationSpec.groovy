@@ -1,12 +1,12 @@
 package io.micronaut.data.nitrite.conf
 
 import io.micronaut.context.ApplicationContext
-import spock.lang.Specification
 import spock.lang.AutoCleanup
+import spock.lang.Specification
 
 /**
  * Tests for NitriteConfiguration binding and setter methods.
- * 
+ *
  * This spec covers:
  * - All setter methods (setDbPath, setUsername, setPassword, setStorageMode, setFieldSeparator, setCreateIndexes)
  * - All StorageMode enum values (MVSTORE, IN_MEMORY, ROCKSDB)

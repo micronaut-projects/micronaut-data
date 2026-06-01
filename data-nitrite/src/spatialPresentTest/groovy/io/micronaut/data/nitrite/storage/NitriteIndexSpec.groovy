@@ -4,10 +4,8 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.IndexedBook
 import io.micronaut.data.nitrite.repository.IndexedBookRepository
 import org.dizitart.no2.Nitrite
-import org.dizitart.no2.index.IndexType
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.Polygon
 import spock.lang.Specification
 
 class NitriteIndexSpec extends Specification {

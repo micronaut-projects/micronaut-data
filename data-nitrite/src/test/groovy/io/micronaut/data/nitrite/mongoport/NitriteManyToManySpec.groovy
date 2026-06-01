@@ -1,8 +1,8 @@
 package io.micronaut.data.nitrite.mongoport
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.nitrite.mongoport.entities.NitriteMtmStudent
 import io.micronaut.data.nitrite.mongoport.entities.NitriteMtmCourse
+import io.micronaut.data.nitrite.mongoport.entities.NitriteMtmStudent
 import io.micronaut.data.nitrite.mongoport.repositories.NitriteMtmStudentRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

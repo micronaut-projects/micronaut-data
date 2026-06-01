@@ -1,14 +1,12 @@
 package io.micronaut.data.nitrite.repository
 
 import io.micronaut.data.nitrite.model.CriteriaPerson
+import io.micronaut.data.nitrite.model.Person
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import io.micronaut.data.nitrite.model.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
-
-import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
 @MicronautTest(transactional = false)
 class NitriteRefactorRegressionSpec extends Specification {

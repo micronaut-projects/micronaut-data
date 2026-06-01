@@ -1,8 +1,14 @@
 package io.micronaut.data.nitrite
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.nitrite.model.*
-import io.micronaut.data.nitrite.repository.*
+import io.micronaut.data.nitrite.model.DuplicateTestEntity
+import io.micronaut.data.nitrite.model.LongIdEntity
+import io.micronaut.data.nitrite.model.StringIdEntity
+import io.micronaut.data.nitrite.model.VersionedRecord
+import io.micronaut.data.nitrite.repository.DuplicateTestRepository
+import io.micronaut.data.nitrite.repository.LongIdRepository
+import io.micronaut.data.nitrite.repository.StringIdRepository
+import io.micronaut.data.nitrite.repository.VersionedRecordRepository
 import spock.lang.Specification
 import spock.lang.Unroll
 

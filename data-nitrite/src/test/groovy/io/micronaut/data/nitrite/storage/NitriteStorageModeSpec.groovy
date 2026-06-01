@@ -3,7 +3,6 @@ package io.micronaut.data.nitrite.storage
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.Book
 import io.micronaut.data.nitrite.repository.BookRepository
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

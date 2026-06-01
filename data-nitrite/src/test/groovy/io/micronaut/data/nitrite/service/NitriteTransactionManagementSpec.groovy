@@ -5,7 +5,6 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 import spock.lang.Stepwise
-import io.micronaut.transaction.annotation.Transactional
 
 @MicronautTest(transactional = false, rollback = false)
 @Stepwise

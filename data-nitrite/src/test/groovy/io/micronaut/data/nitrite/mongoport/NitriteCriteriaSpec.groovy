@@ -2,25 +2,15 @@ package io.micronaut.data.nitrite.mongoport
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
-import org.jspecify.annotations.NonNull
-import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
-import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
 import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
-import jakarta.persistence.criteria.CriteriaBuilder
-import jakarta.persistence.criteria.CriteriaDelete
-import jakarta.persistence.criteria.CriteriaQuery
-import jakarta.persistence.criteria.CriteriaUpdate
-import jakarta.persistence.criteria.Predicate
-import jakarta.persistence.criteria.Root
+import io.micronaut.data.model.jpa.criteria.*
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
+import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
-import spock.lang.Ignore
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import jakarta.persistence.criteria.*
+import org.jspecify.annotations.NonNull
 import spock.lang.Specification
 import spock.lang.Unroll
 

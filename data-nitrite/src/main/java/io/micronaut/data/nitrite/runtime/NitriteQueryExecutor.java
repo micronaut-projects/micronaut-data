@@ -32,12 +32,11 @@ import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import io.micronaut.data.nitrite.runtime.query.NitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
-import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import org.dizitart.no2.collection.Document;
-import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
@@ -49,7 +48,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**

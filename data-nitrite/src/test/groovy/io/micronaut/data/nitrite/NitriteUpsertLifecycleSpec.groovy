@@ -7,8 +7,6 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.time.LocalDateTime
-
 class NitriteUpsertLifecycleSpec extends Specification {
 
     @AutoCleanup

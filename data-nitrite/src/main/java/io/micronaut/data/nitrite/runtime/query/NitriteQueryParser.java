@@ -16,7 +16,6 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

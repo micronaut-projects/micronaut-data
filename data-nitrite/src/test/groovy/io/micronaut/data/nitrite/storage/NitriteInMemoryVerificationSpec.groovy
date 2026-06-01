@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.Book
 import io.micronaut.data.nitrite.repository.BookRepository
 import spock.lang.Specification
+
 import java.nio.file.Files
 
 class NitriteInMemoryVerificationSpec extends Specification {

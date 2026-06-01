@@ -1,13 +1,11 @@
 package io.micronaut.data.nitrite
 
-
 import io.micronaut.data.nitrite.model.Event
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
-import spock.lang.Ignore
 
 import java.time.Instant
 
@@ -188,7 +186,7 @@ class QueryBuilder2BugSpec extends Specification {
         given: "Events with different Instants"
         def earlier = Instant.ofEpochSecond(1609459200) // 2021-01-01
         def later = Instant.ofEpochSecond(1640995200)   // 2022-01-01
-        
+
         def e1 = new Event("E1", "p1")
         e1.setOccurredAt(earlier)
         def e2 = new Event("E2", "p2")

@@ -19,9 +19,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
@@ -76,19 +75,15 @@ import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
@@ -398,23 +393,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> T updateEntityId(BeanProperty<T, Object> property, T entity, Object id) {
-      LOG.debug("updateEntityId: property={}, entity={}, id={}", property.getName(), entity, id);
-      if (id == null) {
-          return entity;
+      if (id != null) {
+          if (property.getType().isInstance(id)) {
+              property.set(entity, id);
+          } else {
+              conversionService.convert(id, property.getType()).ifPresent(converted -> property.set(entity, converted));
+          }
       }
-      if (property.getType().isInstance(id)) {
-          property.set(entity, id);
-          LOG.debug("updateEntityId: property set directly. entity after={}", entity);
-          return entity;
-      }
-      return conversionService.convert(id, property.getType()).map(converted -> {
-          property.set(entity, converted);
-          LOG.debug("updateEntityId: property set after conversion. entity after={}", entity);
-          return entity;
-      }).orElseGet(() -> {
-          LOG.debug("updateEntityId: conversion failed for id={}", id);
-          return entity;
-      });
+      return entity;
   }
 
 

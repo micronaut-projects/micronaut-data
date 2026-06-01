@@ -1,20 +1,16 @@
 package io.micronaut.data.nitrite.mongoport
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefA;
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefB;
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefC;
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteRefARepository;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.test.extensions.spock.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import spock.lang.AutoCleanup;
-import spock.lang.Shared;
-import spock.lang.Specification;
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.nitrite.mongoport.entities.NitriteRefA
+import io.micronaut.data.nitrite.mongoport.entities.NitriteRefB
+import io.micronaut.data.nitrite.mongoport.entities.NitriteRefC
+import io.micronaut.data.nitrite.mongoport.repositories.NitriteRefARepository
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+import spock.lang.Specification
 
 @MicronautTest
 class NitriteOneToOneSpec extends Specification implements NitriteTestPropertyProvider {
