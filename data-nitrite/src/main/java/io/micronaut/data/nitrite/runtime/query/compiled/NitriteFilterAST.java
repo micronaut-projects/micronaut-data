@@ -156,23 +156,35 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     }
 
     /**
-     * A fallback node for complex paths (associations, dot-notation).
-     * Uses the full dynamic logic to ensure 100% correctness.
+     * Evaluates association and nested-path fields at bind time.
+     * Implemented by {@link NitriteFilterBuilder} to avoid a direct dependency on it from AST nodes.
+     */
+    @FunctionalInterface
+    interface AssociationFieldEvaluator {
+        Filter evaluate(RuntimePersistentEntity<?> entity, String rawField, String persistedName,
+                        Map<String, Object> operators, Object[] params, Map<String, Object> namedParameters);
+    }
+
+    /**
+     * A node for association and nested-path fields (dot-notation, {@code ONE_TO_MANY}, etc.).
+     * Resolution is fully deferred to bind time via the evaluator.
      *
-     * @param builder the Nitrite filter builder
+     * @param evaluator the bind-time evaluator
      * @param entity the runtime persistent entity
      * @param rawField the raw field name
-     * @param operators the map of operators
+     * @param persistedName the resolved persisted field name (used as fallback when no association matches)
+     * @param operators the map of operators (raw, unresolved)
      */
-    record DynamicFieldNode(
-        NitriteFilterBuilder builder,
+    record AssociationFieldNode(
+        AssociationFieldEvaluator evaluator,
         RuntimePersistentEntity<?> entity,
         String rawField,
+        String persistedName,
         Map<String, Object> operators
     ) implements NitriteFilterAST {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
-            return builder.buildFieldFilter(entity, rawField, operators, params, namedParameters);
+            return evaluator.evaluate(entity, rawField, persistedName, operators, params, namedParameters);
         }
     }
 
