@@ -41,9 +41,7 @@ final class ValueResolver {
 
     Object resolveValue(Object value, Object[] params, Map<String, Object> namedParameters) {
         Object resolved = resolveValueInternal(value, params, namedParameters);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("resolveValue: value={}, resolved={}", value, resolved);
-        }
+        LOG.debug("resolveValue: value={}, resolved={}", value, resolved);
         return resolved;
     }
 

@@ -296,9 +296,7 @@ public final class NitriteEntityMapper {
    * @return the Nitrite Filter
    */
   public <E> Filter eqWithNumericCoercion(final RuntimePersistentEntity<E> entity, final String field, final Object value, final String dottedPath) {
-    if (LOG.isDebugEnabled()) {
-        LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
-    }
+    LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
 
     Filter base = FluentFilter.where(dottedPath).eq(value);
     if (!(value instanceof Number n)) {
@@ -980,9 +978,7 @@ public final class NitriteEntityMapper {
         }
     }
 
-    if (LOG.isDebugEnabled()) {
-        LOG.debug("fromDocumentInternal: type={}, doc={}", type.getName(), doc);
-    }
+    LOG.debug("fromDocumentInternal: type={}, doc={}", type.getName(), doc);
     RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
     BeanIntrospection<T> introspection = persistentEntity.getIntrospection();
 

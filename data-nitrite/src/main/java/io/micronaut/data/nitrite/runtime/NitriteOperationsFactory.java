@@ -133,9 +133,7 @@ public final class NitriteOperationsFactory {
         Class<?> spatialModuleClass = Class.forName(SPATIAL_MODULE_CLASS);
         return Optional.of((NitriteModule) spatialModuleClass.getDeclaredConstructor().newInstance());
       } catch (Exception e) {
-        if (LOG.isWarnEnabled()) {
-          LOG.warn("Spatial module found on classpath but could not be initialized: {}", e.getMessage());
-        }
+        LOG.warn("Spatial module found on classpath but could not be initialized: {}", e.getMessage());
       }
     }
     return Optional.empty();
@@ -168,9 +166,7 @@ public final class NitriteOperationsFactory {
       Class<?> nitriteIdModuleClass = Class.forName("org.dizitart.no2.mapper.jackson.modules.NitriteIdModule");
       mapper.registerModule((Module) nitriteIdModuleClass.getDeclaredConstructor().newInstance());
     } catch (Exception e) {
-      if (LOG.isWarnEnabled()) {
-        LOG.warn("NitriteIdModule found but could not be registered: {}", e.getMessage());
-      }
+      LOG.warn("NitriteIdModule found but could not be registered: {}", e.getMessage());
     }
 
     if (ClassUtils.isPresent(GEOMETRY_MODULE_CLASS, null)) {
@@ -178,13 +174,9 @@ public final class NitriteOperationsFactory {
         Class<?> geometryModuleClass = Class.forName(GEOMETRY_MODULE_CLASS);
         Object geometryModule = geometryModuleClass.getDeclaredConstructor().newInstance();
         mapper.registerModule((Module) geometryModule);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("GeometryModule registered for JTS Geometry serialization");
-        }
+        LOG.debug("GeometryModule registered for JTS Geometry serialization");
       } catch (Exception e) {
-        if (LOG.isWarnEnabled()) {
-          LOG.warn("GeometryModule found but could not be registered: {}", e.getMessage());
-        }
+        LOG.warn("GeometryModule found but could not be registered: {}", e.getMessage());
       }
     }
 

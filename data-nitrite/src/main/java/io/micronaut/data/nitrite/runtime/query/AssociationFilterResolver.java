@@ -157,10 +157,8 @@ final class AssociationFilterResolver {
         Map<String, Object> subFilterMap = Collections.singletonMap(
             targetProperty.getPersistedName(), Collections.singletonMap("$eq", value));
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
-                associatedEntity.getName(), subFilterMap, backRefPersistedName);
-        }
+        LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
+            associatedEntity.getName(), subFilterMap, backRefPersistedName);
 
         List<Object> matchingValues = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
@@ -263,10 +261,8 @@ final class AssociationFilterResolver {
                 if (backRefProp == null) return NONE;
                 String backRefPersistedName = backRefProp.getPersistedName();
 
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
-                        associatedEntity.getName(), subFilterMap, backRefPersistedName);
-                }
+                LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
+                    associatedEntity.getName(), subFilterMap, backRefPersistedName);
 
                 List<Object> matchingValues = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);

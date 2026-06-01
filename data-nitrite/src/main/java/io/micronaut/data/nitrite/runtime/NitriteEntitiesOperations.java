@@ -293,9 +293,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
     @Override
     protected void execute() throws RuntimeException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
-        }
+        LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
 
         // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
         Class<T> type = persistentEntity.getIntrospection().getBeanType();

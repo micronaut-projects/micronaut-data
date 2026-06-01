@@ -87,9 +87,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     public QueryResult buildSelect(
         @NonNull final AnnotationMetadata annotationMetadata,
         @NonNull final SelectQueryDefinition query) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("buildSelect: entity={}, predicate={}", query.persistentEntity().getName(), query.predicate());
-        }
+        LOG.debug("buildSelect: entity={}, predicate={}", query.persistentEntity().getName(), query.predicate());
         NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity());
         List<Map<String, Object>> lookupPipeline = new ArrayList<>();
         addLookups(query.getJoinPaths(), query.persistentEntity(), lookupPipeline);

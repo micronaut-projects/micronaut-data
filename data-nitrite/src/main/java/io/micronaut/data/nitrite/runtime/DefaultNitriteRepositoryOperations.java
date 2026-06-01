@@ -392,37 +392,27 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   }
 
   private void logDelete(String collection, Filter filter) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
-          collection, filter != null ? filter : "Filter.ALL");
-    }
+    LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
+        collection, filter != null ? filter : "Filter.ALL");
   }
 
   @Override
   public <T> T updateEntityId(BeanProperty<T, Object> property, T entity, Object id) {
-      if (LOG.isDebugEnabled()) {
-          LOG.debug("updateEntityId: property={}, entity={}, id={}", property.getName(), entity, id);
-      }
+      LOG.debug("updateEntityId: property={}, entity={}, id={}", property.getName(), entity, id);
       if (id == null) {
           return entity;
       }
       if (property.getType().isInstance(id)) {
           property.set(entity, id);
-          if (LOG.isDebugEnabled()) {
-              LOG.debug("updateEntityId: property set directly. entity after={}", entity);
-          }
+          LOG.debug("updateEntityId: property set directly. entity after={}", entity);
           return entity;
       }
       return conversionService.convert(id, property.getType()).map(converted -> {
           property.set(entity, converted);
-          if (LOG.isDebugEnabled()) {
-              LOG.debug("updateEntityId: property set after conversion. entity after={}", entity);
-          }
+          LOG.debug("updateEntityId: property set after conversion. entity after={}", entity);
           return entity;
       }).orElseGet(() -> {
-          if (LOG.isDebugEnabled()) {
-              LOG.debug("updateEntityId: conversion failed for id={}", id);
-          }
+          LOG.debug("updateEntityId: conversion failed for id={}", id);
           return entity;
       });
   }

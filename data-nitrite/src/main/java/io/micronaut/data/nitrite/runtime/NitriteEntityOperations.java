@@ -192,14 +192,10 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
      * @param meta the pre-computed entity metadata
      */
     private void execute(NitriteEntityMeta<T> meta) throws RuntimeException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("execute: operationType={}, entity={}", operationType, entity);
-        }
+        LOG.debug("execute: operationType={}, entity={}", operationType, entity);
         // Skip if already persisted in this context
         if (operationType == OperationType.INSERT && ctx.persisted.contains(entity)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("execute: skipping INSERT because already persisted");
-            }
+            LOG.debug("execute: skipping INSERT because already persisted");
             return;
         }
 
@@ -329,9 +325,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @Override
     protected boolean triggerPrePersist() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("triggerPrePersist: entity={}", entity);
-        }
+        LOG.debug("triggerPrePersist: entity={}", entity);
 
         // Generate ID early so children can reference it
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
@@ -354,17 +348,13 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         }
 
         boolean result = super.triggerPrePersist();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("triggerPrePersist: result={}", result);
-        }
+        LOG.debug("triggerPrePersist: result={}", result);
         return result;
     }
 
     @Override
     protected void triggerPostPersist() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("triggerPostPersist: entity={}", entity);
-        }
+        LOG.debug("triggerPostPersist: entity={}", entity);
         super.triggerPostPersist();
     }
 

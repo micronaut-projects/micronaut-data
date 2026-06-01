@@ -671,9 +671,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
     static String getFieldName(final PersistentPropertyPath propertyPath) {
         String result = getFieldNameInternal(propertyPath);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
-        }
+        LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
         return result;
     }
 
