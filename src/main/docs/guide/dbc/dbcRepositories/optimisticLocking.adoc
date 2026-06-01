@@ -16,3 +16,27 @@ snippet::example.Student[project-base="doc-examples/hibernate-example", source="
 It's possible to use ann:data.annotation.Version[] in a partial update or a delete method, in this case the version needs to match the version of the stored record.
 
 snippet::example.StudentRepository[project-base="doc-examples/hibernate-example", source="main", tags="studentRepository", indent="0"]
+
+For SQL dialects, you can also compute optimistic locking values with ann:io.micronaut.data.annotation.sql.GeneratedETag[], ann:io.micronaut.data.annotation.sql.ETagValue[], and ann:io.micronaut.data.annotation.sql.ETaggable[].
+Annotate a `String` version property with `@GeneratedETag`, mark individual input fields with `@ETagValue`, or annotate the entity with `@ETaggable` to include all eligible persistent scalar fields by default.
+Use `@ETagValue(exclude = true)` to exclude a field from class-level `@ETaggable` input selection.
+Owning-side foreign-key columns are included only when `@ETaggable(includeForeignKeys = true)` is set or when the relation property is explicitly annotated with `@ETagValue`.
+
+[source,java]
+----
+@MappedEntity
+@ETaggable
+class Book {
+    @Id
+    Long id;
+
+    @ETagValue(exclude = true)
+    String notes;
+
+    @GeneratedETag
+    String etag;
+}
+----
+
+When `function` is omitted on `@GeneratedETag`, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to `SYS_ROW_ETAG`; for other dialects you must provide an explicit function value.
+The `function` value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.
