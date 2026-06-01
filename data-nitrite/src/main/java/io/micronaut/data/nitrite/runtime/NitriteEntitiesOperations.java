@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 /**
  * Internal entities operations for Nitrite with automatic event firing and version handling.
@@ -67,7 +68,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final boolean insert;
     private final NitriteEntityMapper entityMapper;
     private final ObjectRepositoryWriter<T> repositoryWriter;
-    private final CollectionWriter<T> collectionWriter;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
     private final EntityEventListener<Object> entityEventListener;
@@ -104,7 +104,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         this.helper = helper;
         this.collection = helper.getCollection(persistentEntity.getIntrospection().getBeanType());
         this.repositoryWriter = new ObjectRepositoryWriter<>(entityMapper, persistentEntity);
-        this.collectionWriter = new CollectionWriter<>(repositoryWriter);
         if (entities instanceof List) {
             this.entities = (List<T>) entities;
         } else {
@@ -133,7 +132,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             collectAutoPopulatedPreviousValues();
 
             // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
-            Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+            Class<T> type = persistentEntity.getIntrospection().getBeanType();
             NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
             List<T> newEntities = new ArrayList<>();
@@ -157,8 +156,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     if (persistentEntity.cascadesPersist()) {
                         cascadePre(Relation.Cascade.PERSIST);
                     }
-                    // execute() handles both new and existing via its own internal branching, 
-                    // but we call it here for the new ones. 
+                    // execute() handles both new and existing via its own internal branching,
+                    // but we call it here for the new ones.
                     // Actually, we can just let execute() run once for all if we handle events correctly.
                 }
                 this.entities = originalEntities;
@@ -185,7 +184,9 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             List<T> finalExistingEntities = new ArrayList<>();
             for (T entity : entities) {
                 // Use cached idAccessor from meta - eliminates chained lookups
-                boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
+                if (meta.idAccessor() != null) {
+                    meta.idAccessor().get(entity);
+                }
                 // Note: new entities now HAVE IDs if they were generated
                 // So we should have tracked them before.
                 // For simplicity, fire appropriate events based on initial state
@@ -231,7 +232,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             return;
         }
 
-        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         // First pass: capture pre-version values and trigger pre-remove events
@@ -240,16 +241,16 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         preVersionValues = new ArrayList<>();
 
         for (T entity : entities) {
-            Object idValue = entityMapper.getEntityIdValue(entity, (Class<T>) persistentEntity.getIntrospection().getBeanType());
+            Object idValue = entityMapper.getEntityIdValue(entity, persistentEntity.getIntrospection().getBeanType());
             if (idValue == null) {
                 continue;
             }
 
-            Filter filter = entityMapper.idEqualsFilter((Class<T>) persistentEntity.getIntrospection().getBeanType(), idValue);
+            Filter filter = entityMapper.idEqualsFilter(persistentEntity.getIntrospection().getBeanType(), idValue);
 
             // Add version filter for optimistic locking
             if (meta.versionProp() != null) {
-                BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
+                BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                 Object versionValue = versionProperty.get(entity);
                 preVersionValues.add(versionValue);
                 filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
@@ -297,7 +298,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
 
         // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
-        Class<T> type = (Class<T>) persistentEntity.getIntrospection().getBeanType();
+        Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         if (insert) {
@@ -322,7 +323,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     // Entity has ID - use upsert (update with insert-if-absent)
                     // Initialize version to 0 if not set (for optimistic locking)
                     if (repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
+                        BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
                     }
@@ -341,7 +342,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     helper.generateIdIfNecessary(entity, type);
                     // Initialize version to 0 if not set (for optimistic locking)
                     if (repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) meta.versionProp().getProperty();
+                        BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
                     }
@@ -353,17 +354,13 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             if (!docsToInsert.isEmpty()) {
                 helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
                 collection.insert(docsToInsert.toArray(new Document[0]));
-                for (T entity : entities) {
-                    if (!ctx.persisted.contains(entity)) {
-                        ctx.persisted.add(entity);
-                    }
-                }
+                ctx.persisted.addAll(entities);
             }
         } else {
             // updateAll() operation: replace existing documents by ID
             // Requires all entities to have IDs; throws OptimisticLockException if version mismatch
             int expectedCount = entities.size();
-            int affectedCount = 0;
+            long affectedCount = 0;
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
@@ -378,7 +375,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
                     // Increment version (preVersionValue has the OLD version, add 1)
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
-                    entity = helper.updateEntityId((BeanProperty<T, Object>) meta.versionProp().getProperty(), entity, nextVersion);
+                    entity = helper.updateEntityId(meta.versionProp().getProperty(), entity, nextVersion);
                     entities.set(i, entity);
                 }
                 Document update = repositoryWriter.toDocument(entity);
@@ -399,10 +396,9 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
         boolean vetoed = false;
         preVersionValues = new ArrayList<>();
-        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) persistentEntity.getIntrospection().getBeanType());
+        NitriteEntityMapper.NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
         // First pass: capture pre-version values BEFORE event listeners are triggered
-        for (int i = 0; i < entities.size(); i++) {
-            T entity = entities.get(i);
+        for (T entity : entities) {
             if (!insert && meta.versionProp() != null) {
                 preVersionValues.add(meta.versionProp().getProperty().get(entity));
             } else {
@@ -427,7 +423,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
     @Override
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-        for (int i = 0; i < entities.size(); i++) {
+        IntStream.range(0, entities.size()).forEach(i -> {
             T entity = entities.get(i);
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             fn.accept((EntityEventContext<Object>) event);
@@ -435,7 +431,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             if (entity != newEntity) {
                 entities.set(i, newEntity);
             }
-        }
+        });
     }
 
     @Override
@@ -445,16 +441,12 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
     @Override
     protected void cascadePre(Relation.Cascade cascadeType) {
-        for (int i = 0; i < entities.size(); i++) {
-            entities.set(i, cascadeOperations.cascadeEntity(ctx, entities.get(i), persistentEntity, false, cascadeType));
-        }
+        entities.replaceAll(entity -> cascadeOperations.cascadeEntity(ctx, entity, persistentEntity, false, cascadeType));
     }
 
     @Override
     protected void cascadePost(Relation.Cascade cascadeType) {
-        for (int i = 0; i < entities.size(); i++) {
-            entities.set(i, cascadeOperations.cascadeEntity(ctx, entities.get(i), persistentEntity, true, cascadeType));
-        }
+        entities.replaceAll(entity -> cascadeOperations.cascadeEntity(ctx, entity, persistentEntity, true, cascadeType));
     }
 
     @Override

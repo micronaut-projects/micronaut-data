@@ -66,8 +66,6 @@ public class NitriteConnectionOperations extends AbstractConnectionOperations<Se
   @Override
   protected void closeConnection(ConnectionStatus<Session> connectionStatus) {
     Session session = connectionStatus.getConnection();
-    if (session != null) {
       session.close();
-    }
   }
 }

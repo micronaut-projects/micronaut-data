@@ -53,8 +53,8 @@ import java.lang.annotation.Target;
  */
 @RepositoryConfiguration(
     queryBuilder = NitriteQueryBuilder.class,
-    operations = NitriteRepositoryOperations.class,
-    implicitQueries = true)
+    operations = NitriteRepositoryOperations.class
+)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented

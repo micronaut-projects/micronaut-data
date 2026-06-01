@@ -23,7 +23,6 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.filters.Filter;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 
 @Internal

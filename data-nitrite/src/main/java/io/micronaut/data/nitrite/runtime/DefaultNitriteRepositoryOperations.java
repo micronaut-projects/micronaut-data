@@ -25,7 +25,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
@@ -62,7 +61,6 @@ import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteUpdateExecutor;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
-import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
@@ -81,11 +79,9 @@ import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.index.IndexOptions;
 import org.dizitart.no2.index.IndexType;
-import org.dizitart.no2.repository.ObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -155,7 +151,7 @@ import static org.dizitart.no2.index.IndexOptions.indexOptions;
  */
 @Singleton
 @Internal
-@SuppressWarnings({"removal", "unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
                SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext>,
@@ -188,8 +184,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private final NitriteFilterBuilder filterBuilder;
   private final NitriteUpdateExecutor updateExecutor;
   private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
-  private final QueryBuilder queryBuilder;
-  private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
+    private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
   private final NitriteCriteriaExecutor criteriaExecutor;
   private final NitriteQueryExecutor queryExecutor;
   private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
@@ -228,9 +223,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.queryParser = new NitriteQueryParser();
     // Create filter builder with sub-query executor for auto-join on MANY_TO_ONE associations
     this.filterBuilder = createFilterBuilderWithSubQueryExecutor();
-    this.updateExecutor = new NitriteUpdateExecutor(entityMapper, filterBuilder);
+    this.updateExecutor = new NitriteUpdateExecutor();
     this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
-    this.queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
+      QueryBuilder queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
     this.criteriaBuilder = new io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder(runtimeEntityRegistry);
     this.criteriaExecutor = new NitriteCriteriaExecutor(
         queryBuilder,
@@ -269,7 +264,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 String fieldName = targetField;
                 if (fieldName == null) {
                     RuntimePersistentProperty<?> identity = associatedEntity.getIdentity();
-                    fieldName = identity != null ? identity.getPersistedName() : "_id";
+                    fieldName = identity.getPersistedName();
                 }
                 Object val = doc.get(fieldName);
                 Object filterVal = entityMapper.toFilterValue(val);
@@ -491,7 +486,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       collection = transactionHolder.get().getCollection(name);
     } else {
       // Non-transaction path: safe to cache by collection name (handles discriminators)
-      collection = collectionCache.computeIfAbsent(name, k -> database.getCollection(k));
+      collection = collectionCache.computeIfAbsent(name, database::getCollection);
     }
     ensureIndexes(type, collection, name);
     return collection;
@@ -590,8 +585,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (doc == null) {
       return null;
     }
-    T entity = entityMapper.fromDocument(doc, type);
-    return entity;
+      return entityMapper.fromDocument(doc, type);
   }
 
   @Override
@@ -611,24 +605,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return op.getEntities();
   }
 
-  /**
-   * Persists cascaded entities for ONE_TO_MANY and MANY_TO_MANY relationships with cascade ALL or PERSIST.
-   * <p>
-   * This method recursively persists associated entities before the parent entity is inserted,
-   * ensuring that child entities with cascade relationships are stored in the database.
-   * </p>
-   *
-   * @param ctx the operation context
-   * @param <T> the entity type
-   * @param entity the parent entity containing cascaded associations
-   * @param type the parent entity class
-   */
-  @SuppressWarnings("unchecked")
-  private <T> void persistCascadedEntities(NitriteOperationContext ctx, T entity, Class<T> type) {
-    cascadeOperations.cascadeEntity(ctx, entity, getEntity(type), false, Relation.Cascade.PERSIST);
-  }
-
-  @Override
+    @Override
   public <T> T update(@NonNull final UpdateOperation<T> operation) {
     NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
     return updateOne(ctx, operation.getEntity(), getEntity(operation.getRootEntity()));
@@ -673,40 +650,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return Optional.of((long) op.getEntities().size());
   }
 
-  private FindOptions buildFindOptions(final Pageable pageable, final String jsonQuery) {
-    return buildFindOptions(pageable, (Sort) null, null, jsonQuery);
-  }
-
-  /** Build FindOptions with pagination and sorting. */
-  private FindOptions buildFindOptions(final Pageable pageable, final Sort additionalSort, final Limit limit, final String jsonQuery) {
-    FindOptions options = buildFindOptions(pageable, additionalSort, limit);
-    if (jsonQuery != null && jsonQuery.trim().startsWith("{")) {
-      try {
-        Object parsed = queryParser.parseJson(jsonQuery);
-        if (parsed instanceof Map m) {
-          if (m.get("$skip") instanceof Number n) {
-            options.skip(n.longValue());
-          }
-          if (m.get("$limit") instanceof Number n) {
-            options.limit(n.intValue());
-          }
-          if (m.get("$sort") instanceof Map sortMap) {
-              for (Object entryObj : sortMap.entrySet()) {
-                  Map.Entry entry = (Map.Entry) entryObj;
-                  String field = entry.getKey().toString();
-                  int order = entry.getValue() instanceof Number n ? n.intValue() : 1;
-                  options.thenOrderBy(field, order == 1 ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending);
-              }
-          }
-        }
-      } catch (Exception ignored) {
-        // ignore parse exceptions
-      }
-    }
-    return options;
-  }
-
-  /** Build FindOptions with pagination and sorting, merging additional sort from QueryModel. */
+    /** Build FindOptions with pagination and sorting, merging additional sort from QueryModel. */
   private FindOptions buildFindOptions(final Pageable pageable, final Sort additionalSort) {
     return buildFindOptions(pageable, additionalSort, null);
   }
@@ -733,7 +677,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         mergedOrders.put(order.getProperty(), order);
       }
     }
-    if (pageable.getSort() != null && pageable.getSort().isSorted()) {
+      pageable.getSort();
+      if (pageable.getSort().isSorted()) {
       for (var order : pageable.getSort().getOrderBy()) {
         mergedOrders.put(order.getProperty(), order);
       }
@@ -744,7 +689,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         String property = order.getProperty();
         // Sort properties coming from the document processor may include an entity alias prefix
         // (for example "person.age"). Nitrite stores plain field names, so strip any prefix.
-        if (property != null && property.contains(".")) {
+        if (property.contains(".")) {
           property = property.substring(property.lastIndexOf('.') + 1);
         }
         options.thenOrderBy(entityMapper.normalizeFieldName(property, null), sortOrder);
@@ -827,7 +772,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
   @Override
   public <T> Iterable<T> findAll(@NonNull final PagedQuery<T> query) {
-    Class<T> type = (Class<T>) query.getRootEntity();
+    Class<T> type = query.getRootEntity();
     Filter filter = Filter.ALL;
     Sort sort = null;
     Limit limit = query.getQueryLimit();
@@ -1309,8 +1254,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       String op = m.group(2);
       String filterOp =
           switch (op) {
-            case "=" -> "$eq";
-            case "!=", "<>" -> "$ne";
+              case "!=", "<>" -> "$ne";
             case ">" -> "$gt";
             case ">=" -> "$gte";
             case "<" -> "$lt";
@@ -1372,23 +1316,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         : filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
   }
 
-  /**
-   * Extract :pN param name.
-   *
-   * @param concatArgs the concat arguments
-   * @return the parameter name
-   */
-  private String extractParamName(final String concatArgs) {
-    for (String part : concatArgs.split(",\\s*")) {
-      String t = part.trim();
-      if (t.startsWith(":")) {
-        return t.substring(1);
-      }
-    }
-    return null;
-  }
-
-  /**
+    /**
    * Resolve :pN to actual method arg.
    *
    * @param pname the parameter name
@@ -1425,28 +1353,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return resolveParam(pname, params);
   }
 
-  /**
-   * Coerce String to UUID if identity type is UUID.
-   *
-   * @param id the id
-   * @param entityType the entity type
-   * @return the coerced id
-   */
-  private Object coerceIdIfNecessary(Object id, Class<?> entityType) {
-    if (id == null) {
-      return null;
-    }
-    RuntimePersistentProperty<?> idProp = getEntity(entityType).getIdentity();
-    if (idProp != null && idProp.getType() == UUID.class && id instanceof String s) {
-      try {
-        return UUID.fromString(s);
-      } catch (Exception ignored) {
-      }
-    }
-    return id;
-  }
-
-  /**
+    /**
    * Resolves parameter value from JSON placeholder or named parameter.
    * <p>
    * This method handles both positional placeholders (e.g., {@code $mn_qp:0}) and named parameters
@@ -1457,10 +1364,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
    * @param value the raw parameter value which may contain placeholders
    * @param jsonParams the JSON parameters array
    * @param namedParameters the named parameters map
-   * @param q the prepared query
    * @return the resolved parameter value, or {@code null} if the parameter is null
    */
-  private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters, PreparedQuery<?, ?> q) {
+  private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
     if (value instanceof String s) {
       Object resolved = null;
       boolean isPlaceholder = false;
@@ -1516,19 +1422,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return converted;
   }
 
-  /**
-   * Find an optional entity by prepared query.
-   *
-   * @param <T> the entity type
-   * @param <R> the result type
-   * @param q the prepared query
-   * @return the optional result
-   */
-   public <T, R> Optional<R> findOptional(@NonNull final PreparedQuery<T, R> q) {
-     return Optional.ofNullable(findOne(q));
-   }
-
-  /**
+    /**
    * Check if an entity exists by prepared query.
    *
    * @param <T> the entity type
@@ -1584,18 +1478,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         .orElse(value);
   }
 
-  /**
-   * Check if one type can be converted to another.
-   *
-   * @param fromType the source type
-   * @param toType the target type
-   * @return true if conversion is possible
-   */
-  private boolean canConvert(Class<?> fromType, Class<?> toType) {
-    return conversionService.canConvert(fromType, toType);
-  }
-
-  /**
+    /**
    * Find a stream by prepared query.
    *
    * @param <T> the entity type
@@ -1635,19 +1518,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     return Page.of(list, q.getPageable(), count(q));
   }
 
-  /**
-   * Find a slice by prepared query.
-   *
-   * @param <T> the entity type
-   * @param <R> the result type
-   * @param q the prepared query
-   * @return the slice
-   */
-  public <T, R> R findSlice(@NonNull final PreparedQuery<T, R> q) {
-    return (R) findAll(q);
-  }
-
-  /** Reorder params for SQL to match positional placeholders. */
+    /** Reorder params for SQL to match positional placeholders. */
   private Object[] reorderParamsForSql(final PreparedQuery<?, ?> q) {
     Object[] raw = q.getParameterArray();
     List<QueryParameterBinding> bindings = q.getQueryBindings();
@@ -1685,7 +1556,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       if (rawSetFields != null) {
         setFields = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : rawSetFields.entrySet()) {
-          setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters, nq));
+          setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
         }
       }
       filter = filterBuilder.buildFilterFromJson(getEntity(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
@@ -1712,20 +1583,18 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (isOptimisticLocking(q)) {
         RuntimePersistentEntity<?> persistentEntity = getEntity(nq.getRootEntity());
         RuntimePersistentProperty<?> versionProp = persistentEntity.getVersion();
-        if (versionProp != null) {
-            String vPersistedName = versionProp.getPersistedName();
-            String vPropName = versionProp.getName();
+        String vPersistedName = versionProp.getPersistedName();
+        String vPropName = versionProp.getName();
 
-            Object currentValInUpdate = updateDoc.get(vPersistedName);
-            if (currentValInUpdate == null) {
-                // Find current version from named parameters or arguments
-                Object currentVersion = namedParameters.get(vPropName);
-                if (currentVersion == null) {
-                    currentVersion = namedParameters.get(vPersistedName);
-                }
-                if (currentVersion instanceof Number n) {
-                    updateDoc.put(vPersistedName, n.longValue() + 1);
-                }
+        Object currentValInUpdate = updateDoc.get(vPersistedName);
+        if (currentValInUpdate == null) {
+            // Find current version from named parameters or arguments
+            Object currentVersion = namedParameters.get(vPropName);
+            if (currentVersion == null) {
+                currentVersion = namedParameters.get(vPersistedName);
+            }
+            if (currentVersion instanceof Number n) {
+                updateDoc.put(vPersistedName, n.longValue() + 1);
             }
         }
     }
@@ -1744,15 +1613,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
     // Check if method name suggests versioned update/delete (common in TCK)
     String methodName = q.getName();
-    if (methodName != null && (methodName.contains("AndVersion") || methodName.contains("ByVersion"))) {
+    if (methodName.contains("AndVersion") || methodName.contains("ByVersion")) {
         return true;
     }
     // Check if query has "version" in its filters/assignments
     String query = q.getQuery().toLowerCase();
-    if (query.contains("version")) {
-        return true;
-    }
-    return false;
+      return query.contains("version");
   }
 
   /** Build named parameter map from bindings and arguments. */
@@ -1774,7 +1640,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     if (args != null) {
       int len = Math.min(args.length, params.length);
       for (int i = 0; i < len; i++) {
-        if (args[i].getName() != null && !args[i].getName().isEmpty()) {
+          args[i].getName();
+          if (!args[i].getName().isEmpty()) {
           result.putIfAbsent(args[i].getName(), toFilterValue(params[i]));
         }
       }

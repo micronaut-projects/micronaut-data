@@ -255,10 +255,6 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             });
     }
 
-    public void visitIn(final Expression<?> expression, final Collection<?> values) {
-        visitIn(expression, values, false);
-    }
-
     /**
      * Visit IN predicate, handling both literal collections and collection parameters.
      * <p>
@@ -282,14 +278,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
         // Handle null or empty collection - IN with no values matches nothing, NOT IN matches all
         if (values == null || values.isEmpty()) {
-            if (negated) {
-                // NOT IN with empty set matches all - don't add any filter
-                return;
-            } else {
+            if (!negated) {
                 // IN with empty set matches nothing - add impossible condition
                 query.put("_id", Collections.singletonMap("$eq", null));
-                return;
             }
+            return;
         }
 
         // Handle case where values is a single BindingParameter representing a collection
@@ -303,12 +296,10 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             } else if (singleValue instanceof Collection<?> nestedColl) {
                 // Handle nested collection from Criteria API
                 if (nestedColl.isEmpty()) {
-                    if (negated) {
-                        return;
-                    } else {
+                    if (!negated) {
                         query.put("_id", Map.of("$eq", null));
-                        return;
                     }
+                    return;
                 }
                 resolvedValues = nestedColl.stream()
                     .map(val -> valueRepresentation(queryState, propertyPath, val))
@@ -324,12 +315,10 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
         // After resolving, check if we ended up with no values (defensive check)
         if (resolvedValues.isEmpty()) {
-            if (negated) {
-                return;  // NOT IN with empty set matches all
-            } else {
+            if (!negated) {
                 query.put("_id", Collections.singletonMap("$eq", null));  // IN with empty set matches nothing
-                return;
             }
+            return;  // NOT IN with empty set matches all
         }
 
         query.put(
@@ -602,7 +591,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                 // Get the parameter placeholder — always use string format in regex patterns
                 // because the runtime resolves "$mn_qp:N" inline within strings
                 Object paramPlaceholder = valueRepresentation(
-                    queryState, propertyPath, propertyPath, (Expression<?>) rightExpression);
+                    queryState, propertyPath, propertyPath, rightExpression);
                 String paramStr;
                 if (paramPlaceholder instanceof Map<?, ?> m
                         && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
@@ -620,7 +609,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     private Object valueRepresentation(
-        final NitriteQueryState queryState, final Expression<?> expression) {
+        final Expression<?> expression) {
         if (expression instanceof LiteralExpression<?> literal) {
             Object value = literal.getValue();
             if (value instanceof RegexPattern regex) {
@@ -646,7 +635,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             return bindParameter(queryState, bindingParameter, propertyPath);
         }
         if (value instanceof Expression<?> expr) {
-            return valueRepresentation(queryState, expr);
+            return valueRepresentation(expr);
         }
         return convertValue(value);
     }
@@ -733,7 +722,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                 boolean isIdentityAssoc = false;
                 try {
                     PersistentProperty ownerIdentity = association.getOwner().getIdentity();
-                    isIdentityAssoc = ownerIdentity != null && ownerIdentity.equals(association);
+                    isIdentityAssoc = ownerIdentity.equals(association);
                 } catch (IllegalStateException ignored) {
                 }
                 String segment = isIdentityAssoc ? "_id" : association.getPersistedName();
@@ -747,7 +736,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                     boolean isAssocIdentity = false;
                     try {
                         PersistentProperty assocOwnerIdentity = association.getOwner().getIdentity();
-                        isAssocIdentity = assocOwnerIdentity != null && assocOwnerIdentity.equals(association);
+                        isAssocIdentity = assocOwnerIdentity.equals(association);
                     } catch (IllegalStateException ignored) {
                     }
                     // Use explicit @MappedProperty value if set; otherwise use Java property name.
@@ -772,7 +761,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             boolean isPropertyIdentity = false;
             try {
                 PersistentProperty ownerIdentity = property.getOwner().getIdentity();
-                isPropertyIdentity = ownerIdentity != null && ownerIdentity.equals(property);
+                isPropertyIdentity = ownerIdentity.equals(property);
             } catch (IllegalStateException ignored) {
             }
             sb.append(isPropertyIdentity ? "_id" : property.getPersistedName());
@@ -795,45 +784,49 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     static String toJsonString(final Object obj) {
-        if (obj == null) {
-            return "null";
-        }
-        if (obj instanceof Map<?, ?> map) {
-            StringBuilder sb = new StringBuilder("{");
-            boolean first = true;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (!first) {
-                    sb.append(",");
-                }
-                first = false;
-                String k = entry.getKey().toString();
-                sb.append(needsQuoting(k) ? "'" + k + "'" : k).append(":");
-                sb.append(toJsonString(entry.getValue()));
+        switch (obj) {
+            case null -> {
+                return "null";
             }
-            sb.append("}");
-            return sb.toString();
-        }
-        if (obj instanceof Collection<?> coll) {
-            StringBuilder sb = new StringBuilder("[");
-            boolean first = true;
-            for (Object item : coll) {
-                if (!first) {
-                    sb.append(",");
+            case Map<?, ?> map -> {
+                StringBuilder sb = new StringBuilder("{");
+                boolean first = true;
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (!first) {
+                        sb.append(",");
+                    }
+                    first = false;
+                    String k = entry.getKey().toString();
+                    sb.append(needsQuoting(k) ? "'" + k + "'" : k).append(":");
+                    sb.append(toJsonString(entry.getValue()));
                 }
-                first = false;
-                sb.append(toJsonString(item));
+                sb.append("}");
+                return sb.toString();
             }
-            sb.append("]");
-            return sb.toString();
-        }
-        if (obj instanceof String str) {
-            return "'" + str.replace("'", "\\'") + "'";
-        }
-        if (obj instanceof Boolean b) {
-            return b ? "true" : "false";
-        }
-        if (obj instanceof Number) {
-            return obj.toString();
+            case Collection<?> coll -> {
+                StringBuilder sb = new StringBuilder("[");
+                boolean first = true;
+                for (Object item : coll) {
+                    if (!first) {
+                        sb.append(",");
+                    }
+                    first = false;
+                    sb.append(toJsonString(item));
+                }
+                sb.append("]");
+                return sb.toString();
+            }
+            case String str -> {
+                return "'" + str.replace("'", "\\'") + "'";
+            }
+            case Boolean b -> {
+                return b.toString();
+            }
+            case Number _ -> {
+                return obj.toString();
+            }
+            default -> {
+            }
         }
         return "'" + obj.toString().replace("'", "\\'") + "'";
     }

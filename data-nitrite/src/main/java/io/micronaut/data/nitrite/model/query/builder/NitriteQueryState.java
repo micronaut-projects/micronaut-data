@@ -30,25 +30,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class NitriteQueryState {
 
   private final PersistentEntity persistentEntity;
-  private final boolean allowJoins;
-  private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
+    private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
   private final AtomicInteger position = new AtomicInteger(0);
 
   NitriteQueryState(
-      final PersistentEntity persistentEntity, final boolean allowJoins) {
+      final PersistentEntity persistentEntity) {
     this.persistentEntity = persistentEntity;
-    this.allowJoins = allowJoins;
   }
 
   public PersistentEntity getEntity() {
     return persistentEntity;
   }
 
-  public boolean isAllowJoins() {
-    return allowJoins;
-  }
-
-  public List<QueryParameterBinding> getParameterBindings() {
+    public List<QueryParameterBinding> getParameterBindings() {
     return parameterBindings;
   }
 

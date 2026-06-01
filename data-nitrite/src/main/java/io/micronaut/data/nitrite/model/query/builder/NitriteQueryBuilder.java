@@ -84,7 +84,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         if (LOG.isDebugEnabled()) {
             LOG.debug("buildSelect: entity={}, predicate={}", query.persistentEntity().getName(), query.predicate());
         }
-        NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity(), true);
+        NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity());
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
@@ -132,7 +132,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 pipeline.add(Map.of("$limit", query.limit()));
             }
             String queryString = NitritePredicateVisitor.toJsonString(pipeline);
-            return QueryResult.of(queryString, Collections.<String>emptyList(), queryState.getParameterBindings());
+            return QueryResult.of(queryString, Collections.emptyList(), queryState.getParameterBindings());
         }
 
         Map<String, Object> topLevel = new LinkedHashMap<>();
@@ -151,14 +151,14 @@ public final class NitriteQueryBuilder implements QueryBuilder {
 
         String queryString = topLevel.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(topLevel);
         return QueryResult.of(
-            queryString, Collections.<String>emptyList(), queryState.getParameterBindings());
+            queryString, Collections.emptyList(), queryState.getParameterBindings());
     }
 
     @Override
     public QueryResult buildUpdate(
         @NonNull final AnnotationMetadata annotationMetadata,
         @NonNull final UpdateQueryDefinition definition) {
-        NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity(), true);
+        NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity());
         Predicate predicate = definition.predicate();
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         if (predicate != null) {
@@ -204,7 +204,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     public QueryResult buildDelete(
         @NonNull final AnnotationMetadata annotationMetadata,
         @NonNull final DeleteQueryDefinition definition) {
-        NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity(), true);
+        NitriteQueryState queryState = new NitriteQueryState(definition.persistentEntity());
         Predicate predicate = definition.predicate();
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         if (predicate != null) {
@@ -214,7 +214,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             predicateObj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(predicateObj);
         return QueryResult.of(
             queryString,
-            Collections.<String>emptyList(),
+            Collections.emptyList(),
             queryState.getParameterBindings());
     }
 
@@ -229,15 +229,6 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             obj.put("$limit", (int) limit);
         }
         return obj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(obj);
-    }
-
-    /**
-     * Checks if this query builder supports regex queries.
-     *
-     * @return true if regex is supported
-     */
-    public boolean supportsRegex() {
-        return true;
     }
 
     private Map<String, Object> buildWhereClauseFromCriteria(
@@ -256,28 +247,31 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     }
 
     private void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {
-        if (selection == null) {
-            return;
-        }
-        if (selection instanceof UnaryExpression<?> unary) {
-            switch (unary.getType()) {
-                case SUM, AVG, MAX, MIN -> {
-                    PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
-                    String op = switch (unary.getType()) {
-                        case SUM -> "$sum";
-                        case AVG -> "$avg";
-                        case MAX -> "$max";
-                        case MIN -> "$min";
-                        default -> throw new IllegalStateException("Unexpected: " + unary.getType());
-                    };
-                    group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + propertyPath.getPath()));
+        switch (selection) {
+            case UnaryExpression<?> unary -> {
+                switch (unary.getType()) {
+                    case SUM, AVG, MAX, MIN -> {
+                        PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
+                        String op = switch (unary.getType()) {
+                            case SUM -> "$sum";
+                            case AVG -> "$avg";
+                            case MAX -> "$max";
+                            case MIN -> "$min";
+                            default ->
+                                throw new IllegalStateException("Unexpected: " + unary.getType());
+                        };
+                        group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + propertyPath.getPath()));
+                    }
+                    case COUNT, COUNT_DISTINCT -> countObj.put("$count", "result");
+                    default -> { /* ignore */ }
                 }
-                case COUNT, COUNT_DISTINCT -> countObj.put("$count", "result");
-                default -> { /* ignore */ }
             }
-        } else if (selection instanceof CompoundSelection<?> compound) {
-            for (Selection<?> item : compound.getCompoundSelectionItems()) {
-                buildProjection(item, group, countObj);
+            case CompoundSelection<?> compound -> {
+                for (Selection<?> item : compound.getCompoundSelectionItems()) {
+                    buildProjection(item, group, countObj);
+                }
+            }
+            case null, default -> {
             }
         }
     }

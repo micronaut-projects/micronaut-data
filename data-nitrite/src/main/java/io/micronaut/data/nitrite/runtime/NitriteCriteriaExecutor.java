@@ -18,8 +18,12 @@ package io.micronaut.data.nitrite.runtime;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -34,11 +38,6 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,7 +110,7 @@ public final class NitriteCriteriaExecutor {
                 .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Class<R> resultType = (Class<R>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
+        Class<R> resultType = (Class<R>) ((PersistentEntityQuery) query).getResultType();
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
         FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
 
@@ -121,7 +120,7 @@ public final class NitriteCriteriaExecutor {
         }
 
         Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
-        return doc == null ? null : (R) entityMapper.fromDocument(doc, resultType);
+        return doc == null ? null : entityMapper.fromDocument(doc, resultType);
     }
 
     /**
@@ -134,7 +133,7 @@ public final class NitriteCriteriaExecutor {
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
         QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
                 .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
-        Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
+        Class<T> type = (Class<T>) ((PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
@@ -158,7 +157,7 @@ public final class NitriteCriteriaExecutor {
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
         QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
                 .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
-        Class<T> type = (Class<T>) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getResultType();
+        Class<T> type = (Class<T>) ((PersistentEntityQuery) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
@@ -180,7 +179,7 @@ public final class NitriteCriteriaExecutor {
         // For Nitrite, we need to fetch entities, apply updates, and save back
         try {
             // Build the query result to get the filter
-            QueryResult queryResult = ((io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate<?>) query)
+            QueryResult queryResult = ((AbstractPersistentEntityCriteriaUpdate<?>) query)
                     .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
 
             Class<?> entityType = getEntityType(query);
@@ -216,10 +215,9 @@ public final class NitriteCriteriaExecutor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private Map<String, Object> getUpdateValues(jakarta.persistence.criteria.CriteriaUpdate<?> query) {
-        if (query instanceof io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate<?> update) {
-            Map<String, Object> rawValues = (Map<String, Object>) update.getUpdateValues();
+        if (query instanceof AbstractPersistentEntityCriteriaUpdate<?> update) {
+            Map<String, Object> rawValues = update.getUpdateValues();
             Map<String, Object> resolvedValues = new java.util.LinkedHashMap<>();
             for (Map.Entry<String, Object> entry : rawValues.entrySet()) {
                 Object value = entry.getValue();
@@ -257,11 +255,11 @@ public final class NitriteCriteriaExecutor {
 
     private Class<?> getEntityType(Object query) {
         if (query instanceof jakarta.persistence.criteria.CriteriaUpdate<?> update) {
-            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity) ((PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
         } else if (query instanceof jakarta.persistence.criteria.CriteriaDelete<?> delete) {
-            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity) ((PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
         } else {
-            return ((RuntimePersistentEntity) ((io.micronaut.data.model.jpa.criteria.PersistentEntityQuery) query).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity) ((PersistentEntityQuery) query).getPersistentEntity()).getIntrospection().getBeanType();
         }
     }
 
@@ -363,54 +361,5 @@ public final class NitriteCriteriaExecutor {
             }
         }
         return options;
-    }
-
-    private Object toFilterValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Iterable<?> iterable && !(value instanceof Document)) {
-            List<Object> list = new ArrayList<>();
-            for (Object o : iterable) {
-                list.add(toFilterValue(o));
-            }
-            return list;
-        }
-        if (value instanceof Instant instant) {
-            return NitriteEntityMapper.epochNanos(instant);
-        }
-        if (value instanceof LocalDate localDate) {
-            return localDate.toEpochDay();
-        }
-        if (value instanceof LocalDateTime localDateTime) {
-            return NitriteEntityMapper.epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
-        }
-        if (value instanceof LocalTime localTime) {
-            return localTime.toNanoOfDay();
-        }
-        if (value instanceof Number || value instanceof Boolean || value instanceof Character) {
-            return value;
-        }
-        // Handle numeric strings from JSON parsing
-        if (value instanceof String str) {
-            // Try to parse as integer first
-            try {
-                return Integer.parseInt(str);
-            } catch (NumberFormatException e1) {
-                // Try long
-                try {
-                    return Long.parseLong(str);
-                } catch (NumberFormatException e2) {
-                    // Try double
-                    try {
-                        return Double.parseDouble(str);
-                    } catch (NumberFormatException e3) {
-                        // Return as string if not a number
-                        return str;
-                    }
-                }
-            }
-        }
-        return value;
     }
 }

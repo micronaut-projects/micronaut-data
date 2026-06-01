@@ -16,6 +16,8 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.NonNull;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -93,6 +95,11 @@ public final class NitriteQueryParser {
         String fieldsPart = trimmed.substring(7, fromIdx).trim();
         if (fieldsPart.equals("*")) return null;
 
+        List<String> fields = getFields(fieldsPart);
+        return fields.isEmpty() ? null : fields;
+    }
+
+    private static @NonNull List<String> getFields(String fieldsPart) {
         List<String> fields = new ArrayList<>();
         for (String part : fieldsPart.split(",")) {
             String f = part.trim();
@@ -105,8 +112,7 @@ public final class NitriteQueryParser {
             f = f.replaceAll("[\"'`]", "");
             if (!f.isEmpty()) fields.add(f);
         }
-
-        return fields.isEmpty() ? null : fields;
+        return fields;
     }
 
     /**

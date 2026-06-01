@@ -17,6 +17,7 @@ package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.event.EntityEventListener;
@@ -85,7 +86,6 @@ public final class NitriteQueryExecutor {
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
     private final BiFunction<Pageable, Sort, FindOptions> findOptionsFactory;
     private final NitriteOperationsHelper helper;
-    private final EntityEventListener<Object> entityEventListener;
 
     // Centralized strategy classes for result handling
     private final ObjectRepositoryMapper entityMapperHandler;
@@ -127,7 +127,6 @@ public final class NitriteQueryExecutor {
         this.entityFactory = entityFactory;
         this.findOptionsFactory = findOptionsFactory;
         this.helper = helper;
-        this.entityEventListener = entityEventListener;
 
         // Initialize centralized strategy classes
         this.valueConverter = new ValueConverter(conversionService);
@@ -199,7 +198,7 @@ public final class NitriteQueryExecutor {
             String fieldName = aggregationHandler.extractFieldName(methodName);
             List<Document> docs = coll.find(filter).toList();
             Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
-            return (R) valueConverter.convertWithTemporalHandling(result, nq.getResultType());
+            return valueConverter.convertWithTemporalHandling(result, nq.getResultType());
         }
 
         Document doc = coll.find(filter).firstOrNull();
@@ -285,7 +284,7 @@ public final class NitriteQueryExecutor {
         FindOptions findOptions = findOptionsFactory.apply(nq.getPageable(), s);
         if (limit.maxResults() > 0) {
             findOptions.limit((long) limit.maxResults());
-            findOptions.skip((long) limit.offset());
+            findOptions.skip(limit.offset());
         }
 
         String methodName = q.getName();
@@ -299,7 +298,7 @@ public final class NitriteQueryExecutor {
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
             Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
-            return Collections.singletonList((R) valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+            return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
         }
 
         // Handle DTO projection
@@ -333,7 +332,7 @@ public final class NitriteQueryExecutor {
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
                 if (projectedFields.size() == 1) {
                     List<R> results = new ArrayList<>();
-                    String field = projectedFields.get(0);
+                    String field = projectedFields.getFirst();
                     for (Document doc : cursor) {
                         R result = nativeProjectionHandler.project(doc, field, entity, nq.getResultType());
                         if (result != null) {
@@ -412,18 +411,6 @@ public final class NitriteQueryExecutor {
     }
 
     /**
-     * Executes a delete query.
-     *
-     * @param q the prepared query
-     * @param nq the nitrite prepared query
-     * @return optional containing the number of deleted entities
-     */
-    public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
-        NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
-        return Optional.of(coll.remove(nq.getNitriteFilter()).getAffectedCount());
-    }
-
-    /**
      * Builds a map of named parameter values from a prepared query.
      *
      * @param q the prepared query
@@ -447,7 +434,8 @@ public final class NitriteQueryExecutor {
         if (args != null) {
             int len = Math.min(args.length, params.length);
             for (int i = 0; i < len; i++) {
-                if (args[i].getName() != null && !args[i].getName().isEmpty()) {
+                args[i].getName();
+                if (!args[i].getName().isEmpty()) {
                     result.putIfAbsent(args[i].getName(), toFilterValue(params[i]));
                 }
             }
@@ -643,7 +631,6 @@ public final class NitriteQueryExecutor {
         while (m.find()) {
             String op = m.group(2);
             String filterOp = switch (op) {
-                case "=" -> "$eq";
                 case "!=", "<>" -> "$ne";
                 case ">" -> "$gt";
                 case ">=" -> "$gte";
@@ -669,7 +656,7 @@ public final class NitriteQueryExecutor {
             Object paramValue = namedParameters != null && namedParameters.containsKey(paramName) ? namedParameters.get(paramName) : resolveParam(":" + paramName, params);
             filters.add(filterBuilder.buildFieldFilter(null, fieldName, Collections.singletonMap(notIn ? "$nin" : "$in", paramValue), params, namedParameters));
         }
-        return filters.isEmpty() ? Filter.ALL : filters.size() == 1 ? filters.get(0) : Filter.and(filters.toArray(new Filter[0]));
+        return filters.isEmpty() ? Filter.ALL : filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
     }
 
     private Object resolveSqlParam(final String pname, final Object[] params, final Map<String, Object> namedParameters) {
@@ -751,7 +738,7 @@ public final class NitriteQueryExecutor {
         Object arg = methodParams[0];
         try {
             return io.micronaut.core.beans.BeanIntrospection.getIntrospection(arg.getClass())
-                .getProperty(property).map(p -> ((io.micronaut.core.beans.BeanProperty) p).get(arg)).orElse(null);
+                .getProperty(property).map(p -> ((BeanProperty) p).get(arg)).orElse(null);
         } catch (Exception e) {
             return null;
         }
@@ -854,9 +841,6 @@ public final class NitriteQueryExecutor {
 
         // Get parent IDs
         RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
-        if (idProp == null) {
-            return List.of();
-        }
 
         List<Object> parentIds = new ArrayList<>();
         for (Object entity : entities) {
@@ -881,7 +865,8 @@ public final class NitriteQueryExecutor {
         }
 
         String backFieldName = backProp.getPersistedName();
-        if (associatedEntity.getIdentity() != null && associatedEntity.getIdentity().equals(backProp)) {
+        associatedEntity.getIdentity();
+        if (associatedEntity.getIdentity().equals(backProp)) {
             backFieldName = "id";
         }
         final String finalBackFieldName = backFieldName;
@@ -912,7 +897,7 @@ public final class NitriteQueryExecutor {
         } else {
             // ONE_TO_MANY: backFieldName is a scalar
             if (parentIds.size() == 1) {
-                filter = FluentFilter.where(finalBackFieldName).eq(parentIds.get(0));
+                filter = FluentFilter.where(finalBackFieldName).eq(parentIds.getFirst());
             } else {
                 filter = FluentFilter.where(finalBackFieldName).in(comparableIds);
             }

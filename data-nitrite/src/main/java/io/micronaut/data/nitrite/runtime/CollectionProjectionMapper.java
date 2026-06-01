@@ -117,11 +117,11 @@ public final class CollectionProjectionMapper {
 
         if (fields.size() == 1) {
             // Single field projection - extract and convert the value
-            Object value = getProjectedValue(doc, fields.get(0), entity);
+            Object value = getProjectedValue(doc, fields.getFirst(), entity);
             return valueConverter.convert(value, resultType);
         } else if (isDto) {
             // DTO projection with multiple fields - use Micronaut introspection-based mapping
-            return (R) entityMapper.fromDocument(doc, resultType);
+            return entityMapper.fromDocument(doc, resultType);
         } else {
             // Multi-field native projection - return Document (rare case, for backwards compatibility)
             return (R) doc;

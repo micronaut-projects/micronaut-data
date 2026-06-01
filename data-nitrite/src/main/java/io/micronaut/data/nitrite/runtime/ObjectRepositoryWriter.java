@@ -24,8 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Writer for converting entities/DTOs to Nitrite Documents.
@@ -41,7 +39,6 @@ public final class ObjectRepositoryWriter<T> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectRepositoryWriter.class);
 
     private final NitriteEntityMapper entityMapper;
-    private final RuntimePersistentEntity<T> persistentEntity;
     private final RuntimePersistentProperty<T> versionProperty;
 
     /**
@@ -52,7 +49,6 @@ public final class ObjectRepositoryWriter<T> {
      */
     public ObjectRepositoryWriter(NitriteEntityMapper entityMapper, RuntimePersistentEntity<T> persistentEntity) {
         this.entityMapper = entityMapper;
-        this.persistentEntity = persistentEntity;
         RuntimePersistentProperty<T> version = null;
         try {
             version = persistentEntity.getVersion();
@@ -109,67 +105,4 @@ public final class ObjectRepositoryWriter<T> {
         return currentVersion;
     }
 
-    /**
-     * Get the current version value from the entity.
-     *
-     * @param entity the entity
-     * @return the version value, or null if no version property
-     */
-    public Object getVersionValue(T entity) {
-        if (versionProperty == null || entity == null) {
-            return null;
-        }
-        return versionProperty.getProperty().get(entity);
-    }
-
-    /**
-     * Get the persisted name of the version property.
-     *
-     * @return the persisted name, or null if no version property
-     */
-    public String getVersionPersistedName() {
-        return versionProperty != null ? versionProperty.getPersistedName() : null;
-    }
-
-    /**
-     * Increment the version property on the entity.
-     *
-     * @param entity the entity
-     */
-    @SuppressWarnings("unchecked")
-    private void incrementVersion(T entity) {
-        if (entity == null) {
-            return;
-        }
-        Object currentVersion = versionProperty.getProperty().get(entity);
-        Object newVersion;
-        if (currentVersion instanceof Number number) {
-            newVersion = number.longValue() + 1;
-        } else if (currentVersion instanceof Instant instant) {
-            newVersion = Instant.now();
-        } else {
-            newVersion = currentVersion;
-        }
-        versionProperty.getProperty().set(entity, newVersion);
-    }
-
-    /**
-     * Convert multiple entities to Documents.
-     *
-     * @param entities the entities
-     * @return list of Documents
-     */
-    public List<Document> toDocuments(Iterable<T> entities) {
-        if (entities == null) {
-            return null;
-        }
-        List<Document> documents = new ArrayList<>();
-        for (T entity : entities) {
-            Document doc = toDocument(entity);
-            if (doc != null) {
-                documents.add(doc);
-            }
-        }
-        return documents;
-    }
 }

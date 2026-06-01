@@ -95,7 +95,7 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
     Session session = tx.getConnection();
     Transaction transaction = session.beginTransaction();
     tx.setTransaction(transaction);
-    holder.bind(new NitriteTransactionContext(session, transaction));
+    holder.bind(new NitriteTransactionContext(transaction));
   }
 
   @Override
@@ -126,7 +126,7 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
     Session session = transaction.getConnection();
     Object txObj = transaction.getTransaction();
     if (txObj instanceof Transaction nitriteTx) {
-      holder.bind(new NitriteTransactionContext(session, nitriteTx));
+      holder.bind(new NitriteTransactionContext(nitriteTx));
     }
   }
 

@@ -93,12 +93,14 @@ final class ValueResolver {
     }
 
     Object preConvertForFilter(Object value) {
-        if (value == null) return null;
-        if (value instanceof Instant instant) return NitriteEntityMapper.epochNanos(instant);
-        if (value instanceof LocalDate localDate) return localDate.toEpochDay();
-        if (value instanceof LocalDateTime ldt) return NitriteEntityMapper.epochNanos(ldt.toInstant(ZoneOffset.UTC));
-        if (value instanceof LocalTime localTime) return localTime.toNanoOfDay();
-        return value;
+        return switch (value) {
+            case null -> null;
+            case Instant instant -> NitriteEntityMapper.epochNanos(instant);
+            case LocalDate localDate -> localDate.toEpochDay();
+            case LocalDateTime ldt -> NitriteEntityMapper.epochNanos(ldt.toInstant(ZoneOffset.UTC));
+            case LocalTime localTime -> localTime.toNanoOfDay();
+            default -> value;
+        };
     }
 
     Object maybeCoerceUuid(String field, Object value) {

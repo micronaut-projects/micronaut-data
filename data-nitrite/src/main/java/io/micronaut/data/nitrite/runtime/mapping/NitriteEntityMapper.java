@@ -124,40 +124,45 @@ public final class NitriteEntityMapper {
     if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character) {
       return value;
     }
-    if (value instanceof Instant instant) {
-      return epochNanos(instant);
-    }
-    if (value instanceof UUID uuid) {
-      return uuid.toString();
-    }
-    if (value instanceof LocalDate localDate) {
-      return localDate.toEpochDay();
-    }
-    if (value instanceof LocalDateTime localDateTime) {
-      return epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
-    }
-    if (value instanceof LocalTime localTime) {
-      return localTime.toNanoOfDay();
-    }
-    // BigDecimal should NOT be converted to String to preserve numeric comparison.
-    // Nitrite can handle BigDecimal directly for numeric filters.
-    if (value instanceof URL url) {
-      return url.toString();
-    }
-    if (value instanceof URI uri) {
-      return uri.toString();
-    }
-    if (value instanceof Charset charset) {
-      return charset.name();
-    }
-    if (value instanceof Enum<?> e) {
-      return e.name();
-    }
-    if (value instanceof Optional<?> opt) {
-      return toFilterValue(opt.orElse(null));
-    }
-    
-    Class<?> clazz = value.getClass();
+      switch (value) {
+          case Instant instant -> {
+              return epochNanos(instant);
+          }
+          case UUID uuid -> {
+              return uuid.toString();
+          }
+          case LocalDate localDate -> {
+              return localDate.toEpochDay();
+          }
+          case LocalDateTime localDateTime -> {
+              return epochNanos(localDateTime.toInstant(ZoneOffset.UTC));
+          }
+          case LocalTime localTime -> {
+              return localTime.toNanoOfDay();
+          }
+
+          // BigDecimal should NOT be converted to String to preserve numeric comparison.
+          // Nitrite can handle BigDecimal directly for numeric filters.
+          case URL url -> {
+              return url.toString();
+          }
+          case URI uri -> {
+              return uri.toString();
+          }
+          case Charset charset -> {
+              return charset.name();
+          }
+          case Enum<?> e -> {
+              return e.name();
+          }
+          case Optional<?> opt -> {
+              return toFilterValue(opt.orElse(null));
+          }
+          default -> {
+          }
+      }
+
+      Class<?> clazz = value.getClass();
     // Skip expensive entity registry lookups for JDK classes (Strings, Numbers, Collections, Arrays, etc.)
     if (clazz.getName().startsWith("java.")) {
         return value;
@@ -168,11 +173,9 @@ public final class NitriteEntityMapper {
         RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) clazz);
         if (entity != null) {
             RuntimePersistentProperty<Object> idProp = entity.getIdentity();
-            if (idProp != null) {
-                Object idValue = idProp.getProperty().get(value);
-                if (idValue != null) {
-                    return toFilterValue(idValue);
-                }
+            Object idValue = idProp.getProperty().get(value);
+            if (idValue != null) {
+                return toFilterValue(idValue);
             }
         }
     } catch (Exception ignored) {
@@ -201,12 +204,10 @@ public final class NitriteEntityMapper {
         RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) clazz);
         if (entity != null) {
           RuntimePersistentProperty<Object> idProp = entity.getIdentity();
-          if (idProp != null) {
             Object idValue = idProp.getProperty().get(val);
             if (idValue != null) {
               return normalizeIdentityValue(idProp, idValue);
             }
-          }
         }
       } catch (Exception ignored) {
       }
@@ -229,8 +230,7 @@ public final class NitriteEntityMapper {
    * @param <T> the entity type
    */
   public <T> Object getEntityIdValue(final T entity, final Class<T> type) {
-    RuntimePersistentEntity<T> persistentEntity =
-        (RuntimePersistentEntity<T>) runtimeEntityRegistry.getEntity(type);
+    RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
     RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
     if (idProp != null) {
       return idProp.getProperty().get(entity);
@@ -351,13 +351,13 @@ public final class NitriteEntityMapper {
         Class<?> targetType = property.getType();
         // If the target type is a number, we can use metadata for precise coercion.
         if (Number.class.isAssignableFrom(targetType) || targetType.isPrimitive()) {
-          Optional<?> converted = ((Optional<Object>) conversionService.convert(n, targetType));
+          Optional<?> converted = conversionService.convert(n, targetType);
           if (converted.isPresent()) {
             return FluentFilter.where(dottedPath).eq(converted.get());
           }
         }
       }
-      
+
       // If we have entity metadata but couldn't convert precisely, try to infer from the actual field type
       // This helps with compound index scenarios by avoiding OR filters when possible
       if (property != null) {
@@ -379,7 +379,7 @@ public final class NitriteEntityMapper {
     }
 
     Filter base = FluentFilter.where(dottedPath).eq(value);
-    if (!(value instanceof Number n) || value == null) {
+    if (!(value instanceof Number n)) {
       return base;
     }
 
@@ -411,7 +411,6 @@ public final class NitriteEntityMapper {
    * @return the Nitrite Document
    * @param <T> the entity type
    */
-  @SuppressWarnings("unchecked")
   public <T> Document toDocument(final T entity) {
     if (entity == null) {
       return null;
@@ -549,8 +548,9 @@ public final class NitriteEntityMapper {
     }
     try {
       RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) type);
-      if (entity != null && entity.getIdentity() != null) {
-        return PropertyStrategy.ENTITY_ID_REF;
+      if (entity != null) {
+          entity.getIdentity();
+          return PropertyStrategy.ENTITY_ID_REF;
       }
     } catch (Exception ignored) {
     }
@@ -571,7 +571,7 @@ public final class NitriteEntityMapper {
    * @param persistentEntity the runtime persistent entity
    * @return the pre-computed entity metadata
    */
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked"})
   private <T> NitriteEntityMeta<T> buildEntityMeta(RuntimePersistentEntity<T> persistentEntity) {
     List<WritablePropertyMeta<T>> writableList = new ArrayList<>();
     List<WritablePropertyMeta<T>> mappedByList = new ArrayList<>();
@@ -626,8 +626,9 @@ public final class NitriteEntityMapper {
         if (strategy == PropertyStrategy.ENTITY_ID_REF) {
           try {
             RuntimePersistentEntity<Object> refEntity = runtimeEntityRegistry.getEntity((Class<Object>) prop.getType());
-            if (refEntity != null && refEntity.getIdentity() != null) {
-              associatedIdProp = (BeanProperty<Object, Object>) refEntity.getIdentity().getProperty();
+            if (refEntity != null) {
+                refEntity.getIdentity();
+                associatedIdProp = refEntity.getIdentity().getProperty();
             }
           } catch (Exception ignored) {
           }
@@ -652,7 +653,7 @@ public final class NitriteEntityMapper {
       // entity has no identity (e.g. embedded) – leave null
     }
     if (idProp != null) {
-      idAccessor = (BeanProperty<T, Object>) idProp.getProperty();
+      idAccessor = idProp.getProperty();
     }
 
     RuntimePersistentProperty<T> versionProp = null;
@@ -708,30 +709,22 @@ public final class NitriteEntityMapper {
     Document doc = Document.createDocument();
 
     for (WritablePropertyMeta<T> wpm : meta.writableProps()) {
-      Object value = ((BeanProperty<T, Object>) wpm.prop().getProperty()).get(entity);
+      Object value = wpm.prop().getProperty().get(entity);
       if (value == null) {
         continue;
       }
       String fieldName = wpm.fieldName();
       switch (wpm.strategy()) {
-        case JAVA_PASSTHROUGH -> doc.put(fieldName, value);
+        case JAVA_PASSTHROUGH, GEOMETRY -> doc.put(fieldName, value);
         case INSTANT         -> doc.put(fieldName, epochNanos((Instant) value));
-        case UUID            -> doc.put(fieldName, value.toString());
+        case UUID, URI, URL -> doc.put(fieldName, value.toString());
         case ENUM            -> doc.put(fieldName, ((Enum<?>) value).name());
         case LOCAL_DATE      -> doc.put(fieldName, ((LocalDate) value).toEpochDay());
         case LOCAL_DATETIME  -> doc.put(fieldName, epochNanos(((LocalDateTime) value).toInstant(ZoneOffset.UTC)));
         case LOCAL_TIME      -> doc.put(fieldName, ((LocalTime) value).toNanoOfDay());
-        case URL             -> doc.put(fieldName, value.toString());
-        case URI             -> doc.put(fieldName, value.toString());
-        case CHARSET         -> doc.put(fieldName, ((Charset) value).name());
-        case GEOMETRY        -> doc.put(fieldName, value);
-        case OPTIONAL        -> {
-          Object inner = ((Optional<?>) value).orElse(null);
-          if (inner != null) {
-            doc.put(fieldName, toFilterValue(inner));
-          }
-        }
-        case ENTITY_ID_REF   -> {
+          case CHARSET         -> doc.put(fieldName, ((Charset) value).name());
+          case OPTIONAL        -> ((Optional<?>) value).ifPresent(inner -> doc.put(fieldName, toFilterValue(inner)));
+        case ENTITY_ID_REF, ASSOCIATION_ID_REF -> {
           if (wpm.associatedIdProp() != null) {
             Object idValue = wpm.associatedIdProp().get(value);
             if (idValue != null) {
@@ -750,15 +743,7 @@ public final class NitriteEntityMapper {
         }
         case ASSOCIATION_EMBEDDED ->
           doc.put(fieldName, convertAssociation(value, (RuntimeAssociation) wpm.prop(), visited));
-        case ASSOCIATION_ID_REF   -> {
-          if (wpm.associatedIdProp() != null) {
-            Object idValue = wpm.associatedIdProp().get(value);
-            if (idValue != null) {
-              doc.put(fieldName, toFilterValue(idValue));
-            }
-          }
-        }
-        case ASSOCIATION_IDS_REF  -> {
+          case ASSOCIATION_IDS_REF  -> {
           List<Object> ids = new ArrayList<>();
           for (Object item : (Iterable<?>) value) {
             if (item != null && wpm.associatedIdProp() != null) {
@@ -782,7 +767,7 @@ public final class NitriteEntityMapper {
     // Identity
     RuntimePersistentProperty<T> idProp = meta.idProp();
     if (idProp != null) {
-      Object idValue = ((BeanProperty<T, Object>) idProp.getProperty()).get(entity);
+      Object idValue = idProp.getProperty().get(entity);
       if (idValue != null) {
         doc.put(ID_FIELD, normalizeIdentityValue(idProp, idValue));
       }
@@ -791,7 +776,7 @@ public final class NitriteEntityMapper {
     // Version
     RuntimePersistentProperty<T> versionProp = meta.versionProp();
     if (versionProp != null) {
-      Object versionValue = ((BeanProperty<T, Object>) versionProp.getProperty()).get(entity);
+      Object versionValue = versionProp.getProperty().get(entity);
       if (versionValue != null) {
         doc.put(versionProp.getPersistedName(), toFilterValue(versionValue));
       }
@@ -818,7 +803,7 @@ public final class NitriteEntityMapper {
       if (value == null) {
           return null;
       }
-      
+
       if (visited.contains(value)) {
           RuntimePersistentEntity<?> associatedEntity = (RuntimePersistentEntity<?>) association.getAssociatedEntity();
           RuntimePersistentProperty<?> idProp = safeGetIdentity(associatedEntity);
@@ -833,7 +818,7 @@ public final class NitriteEntityMapper {
           }
           return null;
       }
-      
+
       // Embed the full association if not visited
       return toDocumentInternal(value, visited);
   }
@@ -878,7 +863,6 @@ public final class NitriteEntityMapper {
    * @param <P> the target POJO type
    * @return a populated instance of the target type
    */
-  @SuppressWarnings("unchecked")
   private <P> P mapToPojo(Map<?, ?> map, BeanIntrospection<P> intro) {
     Argument<?>[] ctorArgs = intro.getConstructorArguments();
     P pojo;
@@ -939,9 +923,7 @@ public final class NitriteEntityMapper {
     String camel = snakeToCamel(name);
     if (!Objects.equals(name, camel)) {
       value = map.get(camel);
-      if (value != null) {
         return value;
-      }
     }
     return null;
   }
@@ -970,7 +952,7 @@ public final class NitriteEntityMapper {
    * Check if an object is a JTS Geometry. Uses the class reference cached at construction time.
    */
   private boolean isGeometry(Object value) {
-    return value != null && geometryClass != null && geometryClass.isInstance(value);
+    return geometryClass != null && geometryClass.isInstance(value);
   }
 
   /**
@@ -980,10 +962,10 @@ public final class NitriteEntityMapper {
    * @return true if the type is a simple type
    */
   public boolean isSimpleType(Class<?> type) {
-    return type.isPrimitive() || 
-           Number.class.isAssignableFrom(type) || 
-           String.class.equals(type) || 
-           Boolean.class.equals(type) || 
+    return type.isPrimitive() ||
+           Number.class.isAssignableFrom(type) ||
+           String.class.equals(type) ||
+           Boolean.class.equals(type) ||
            Character.class.equals(type) ||
            java.util.Date.class.isAssignableFrom(type) ||
            java.time.temporal.Temporal.class.isAssignableFrom(type) ||
@@ -1114,25 +1096,29 @@ public final class NitriteEntityMapper {
   }
 
   private Document toDocumentValue(Object value) {
-    if (value == null) {
-      return null;
-    }
-    if (value instanceof Document document) {
-      return document;
-    }
-    if (value instanceof Map<?, ?> map) {
-      Document document = Document.createDocument();
-      for (Map.Entry<?, ?> entry : map.entrySet()) {
-        Object nested = entry.getValue();
-        if (nested instanceof Map<?, ?> nestedMap) {
-          document.put(String.valueOf(entry.getKey()), toDocumentValue(nestedMap));
-        } else {
-          document.put(String.valueOf(entry.getKey()), serializeForDocument(nested));
-        }
+      switch (value) {
+          case null -> {
+              return null;
+          }
+          case Document document -> {
+              return document;
+          }
+          case Map<?, ?> map -> {
+              Document document = Document.createDocument();
+              for (Map.Entry<?, ?> entry : map.entrySet()) {
+                  Object nested = entry.getValue();
+                  if (nested instanceof Map<?, ?> nestedMap) {
+                      document.put(String.valueOf(entry.getKey()), toDocumentValue(nestedMap));
+                  } else {
+                      document.put(String.valueOf(entry.getKey()), serializeForDocument(nested));
+                  }
+              }
+              return document;
+          }
+          default -> {
+          }
       }
-      return document;
-    }
-    Optional<BeanIntrospection<Object>> maybeIntro =
+      Optional<BeanIntrospection<Object>> maybeIntro =
         BeanIntrospector.SHARED.findIntrospection((Class<Object>) value.getClass());
     if (maybeIntro.isPresent()) {
       Document document = Document.createDocument();
@@ -1207,7 +1193,7 @@ public final class NitriteEntityMapper {
     if (doc == null) {
         return null;
     }
-    
+
     // Check if we've already hydrated this document to avoid infinite recursion
     Object id = doc.get(ID_FIELD);
     if (id == null) {
@@ -1215,7 +1201,7 @@ public final class NitriteEntityMapper {
     }
     String cacheKey = null;
     if (id != null) {
-        cacheKey = type.getName() + ":" + id.toString();
+        cacheKey = type.getName() + ":" + id;
         if (visited.containsKey(cacheKey)) {
             return (T) visited.get(cacheKey);
         }
@@ -1226,7 +1212,7 @@ public final class NitriteEntityMapper {
     }
     RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
     BeanIntrospection<T> introspection = persistentEntity.getIntrospection();
-    
+
     T entity;
     Argument<?>[] ctorArgs = introspection.getConstructorArguments();
     if (ctorArgs.length > 0) {
@@ -1236,12 +1222,12 @@ public final class NitriteEntityMapper {
             String name = arg.getName();
             RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(name);
             String storedName = prop != null ? prop.getPersistedName() : name;
-            
+
             RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
             if (idProp != null && idProp.getName().equals(name)) {
                 storedName = ID_FIELD;
             }
-            
+
             Object val = doc.get(storedName);
             if (val == null && !storedName.equals(name)) {
                 val = doc.get(name);
@@ -1255,7 +1241,7 @@ public final class NitriteEntityMapper {
     } else {
         entity = introspection.instantiate();
     }
-    
+
     // Add to visited BEFORE populating properties to handle back-references
     if (cacheKey != null) {
         visited.put(cacheKey, entity);
@@ -1292,7 +1278,7 @@ public final class NitriteEntityMapper {
             storedName = ID_FIELD;
         }
 
-        BeanProperty<T, Object> property = (BeanProperty<T, Object>) prop.getProperty();
+        BeanProperty<T, Object> property = prop.getProperty();
         Object value = doc.get(storedName);
         if (value == null && !storedName.equals(prop.getName())) {
             value = doc.get(prop.getName());
@@ -1302,39 +1288,30 @@ public final class NitriteEntityMapper {
         }
 
         if (value != null) {
-            boolean associationStoredEmbedded;
-            if (prop instanceof RuntimeAssociation association && !association.isEmbedded()) {
-                try {
-                    associationStoredEmbedded = association.getAssociatedEntity().getIdentity() == null;
-                } catch (IllegalStateException e) {
-                    associationStoredEmbedded = true;
-                }
-            } else {
-                associationStoredEmbedded = prop instanceof RuntimeAssociation association && association.isEmbedded();
-            }
+            boolean associationStoredEmbedded = isAssociationStoredEmbedded(prop);
             if (prop instanceof RuntimeAssociation association && !associationStoredEmbedded) {
                 if (helper != null) {
-                    Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+                    Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
                     if (value instanceof Iterable<?> ids) {
                         List<Object> associatedEntities = new ArrayList<>();
                         for (Object associatedId : ids) {
-                            Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter((Class<Object>) associatedType, associatedId)).firstOrNull();
+                            Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter(associatedType, associatedId)).firstOrNull();
                             if (associatedDoc != null) {
-                                associatedEntities.add(fromDocumentInternal(associatedDoc, (Class<Object>) associatedType, visited));
+                                associatedEntities.add(fromDocumentInternal(associatedDoc, associatedType, visited));
                             }
                         }
                         property.set(entity, conversionService.convert(associatedEntities, property.asArgument()).orElse(null));
                         continue;
-                    } else if (!(value instanceof Document)) {
+                    } else {
                         // It's a single ID
-                        Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter((Class<Object>) associatedType, value)).firstOrNull();
+                        Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter(associatedType, value)).firstOrNull();
                         if (associatedDoc != null) {
-                            property.set(entity, fromDocumentInternal(associatedDoc, (Class<Object>) associatedType, visited));
+                            property.set(entity, fromDocumentInternal(associatedDoc, associatedType, visited));
                             continue;
                         }
                     }
                 }
-            } else if (prop instanceof RuntimeAssociation association && associationStoredEmbedded) {
+            } else if (prop instanceof RuntimeAssociation association) {
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, (Class<Object>) association.getAssociatedEntity().getIntrospection().getBeanType(), visited));
                     continue;
@@ -1349,7 +1326,7 @@ public final class NitriteEntityMapper {
                     continue;
                 }
             }
-            
+
             Object converted = convertFromDocumentValue(value, property.asArgument());
             if (converted != null) {
                 property.set(entity, converted);
@@ -1362,7 +1339,7 @@ public final class NitriteEntityMapper {
     // Handle version property explicitly (might not be in persistent properties or value could be 0)
     RuntimePersistentProperty<T> versionProp = getOrBuildMeta(type).versionProp();
     if (versionProp != null && !versionProp.isReadOnly()) {
-        BeanProperty<T, Object> versionProperty = (BeanProperty<T, Object>) versionProp.getProperty();
+        BeanProperty<T, Object> versionProperty = versionProp.getProperty();
         String versionStoredName = versionProp.getPersistedName();
         Object versionValue = doc.get(versionStoredName);
         if (versionValue == null && !versionStoredName.equals(versionProp.getName())) {
@@ -1385,7 +1362,22 @@ public final class NitriteEntityMapper {
     return entity;
   }
 
-  // ========== Pre-computed entity metadata ==========
+    private static <T> boolean isAssociationStoredEmbedded(RuntimePersistentProperty<T> prop) {
+        boolean associationStoredEmbedded;
+        if (prop instanceof RuntimeAssociation association && !association.isEmbedded()) {
+            try {
+                association.getAssociatedEntity().getIdentity();
+                associationStoredEmbedded = false;
+            } catch (IllegalStateException e) {
+                associationStoredEmbedded = true;
+            }
+        } else {
+            associationStoredEmbedded = prop instanceof RuntimeAssociation association && association.isEmbedded();
+        }
+        return associationStoredEmbedded;
+    }
+
+    // ========== Pre-computed entity metadata ==========
 
   /**
    * Serialization strategy for a persistent property, classified once from its declared type

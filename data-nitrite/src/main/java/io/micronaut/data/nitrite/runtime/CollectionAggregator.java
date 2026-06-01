@@ -21,6 +21,7 @@ import org.dizitart.no2.collection.Document;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -65,7 +66,7 @@ public final class CollectionAggregator {
                 }
                 return val;
             })
-            .filter(v -> v != null)
+            .filter(Objects::nonNull)
             .toList();
 
         if (values.isEmpty()) {
@@ -97,7 +98,7 @@ public final class CollectionAggregator {
             return null;
         }
 
-        Object first = values.get(0);
+        Object first = values.getFirst();
 
         // Handle numeric aggregation
         if (first instanceof Number) {

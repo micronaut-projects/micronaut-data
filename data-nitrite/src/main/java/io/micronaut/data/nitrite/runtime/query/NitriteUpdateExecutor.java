@@ -16,17 +16,11 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.dizitart.no2.collection.Document;
-import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.filters.Filter;
 
 /**
  * Executor for Nitrite update operations.
@@ -39,71 +33,14 @@ public final class NitriteUpdateExecutor {
   private static final Pattern SQL_SET_ASSIGNMENT =
       Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*=\\s*:(\\w+)");
 
-  private final NitriteEntityMapper entityMapper;
-  private final NitriteFilterBuilder filterBuilder;
-
-  /**
+    /**
    * Create a new update executor.
    *
-   * @param entityMapper the entity mapper
-   * @param filterBuilder the filter builder
-   */
-  public NitriteUpdateExecutor(NitriteEntityMapper entityMapper, NitriteFilterBuilder filterBuilder) {
-    this.entityMapper = entityMapper;
-    this.filterBuilder = filterBuilder;
+     */
+  public NitriteUpdateExecutor() {
   }
 
-  /**
-   * Execute a JSON-based update.
-   *
-   * @param q the prepared query
-   * @param filter the Nitrite filter
-   * @param updateMap the pre-parsed update map
-   * @param jsonParams the bound JSON parameters
-   * @param namedParameters the bound named parameters
-   * @param collection the Nitrite collection
-   * @return the number of affected documents
-   */
-  public int executeJsonUpdate(
-      @NonNull final PreparedQuery<?, ?> q,
-      @NonNull final Filter filter,
-      @NonNull final Map<String, Object> updateMap,
-      @NonNull final Object[] jsonParams,
-      @NonNull final Map<String, Object> namedParameters,
-      @NonNull final NitriteCollection collection) {
-    Object rawSet = updateMap.get("$set");
-    if (!(rawSet instanceof Map<?, ?> setFields) || setFields.isEmpty()) {
-      return 0;
-    }
-
-    Document updateDoc = Document.createDocument();
-    for (Map.Entry<?, ?> e : setFields.entrySet()) {
-      Object key = e.getKey();
-      if (!(key instanceof String fieldName)) {
-        continue;
-      }
-      Object value = e.getValue();
-      if (value instanceof String s && s.startsWith("$mn_qp:")) {
-        int idx = Integer.parseInt(s.substring(7));
-        if (idx >= 0 && idx < jsonParams.length) {
-          value = entityMapper.toFilterValue(jsonParams[idx]);
-        }
-      } else if (value instanceof String s && s.startsWith(":")) {
-        String name = s.substring(1);
-        if (namedParameters.containsKey(name)) {
-          value = namedParameters.get(name);
-        }
-      }
-      updateDoc.put(fieldName, value);
-    }
-
-    Document wrapper = Document.createDocument();
-    wrapper.put("$set", updateDoc);
-    var result = collection.update(filter, wrapper, UpdateOptions.updateOptions(false));
-    return result.getAffectedCount();
-  }
-
-  /**
+    /**
    * Parse the SET clause of a SQL-like update statement.
    *
    * @param sql the SQL string

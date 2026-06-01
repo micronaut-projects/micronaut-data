@@ -61,7 +61,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                     results.add(f);
                 }
             }
-            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.and(results.toArray(new Filter[0]));
+            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.and(results.toArray(new Filter[0]));
         }
     }
 
@@ -80,7 +80,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                     results.add(f);
                 }
             }
-            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.or(results.toArray(new Filter[0]));
+            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.or(results.toArray(new Filter[0]));
         }
     }
 
@@ -128,7 +128,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             if (operators.size() == 1) {
-                return operators.get(0).toFilter(builder, entity, persistedName, rawField, params, namedParameters);
+                return operators.getFirst().toFilter(builder, entity, persistedName, rawField, params, namedParameters);
             }
             List<Filter> results = new ArrayList<>(operators.size());
             for (OperatorBinding op : operators) {
@@ -137,7 +137,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                     results.add(f);
                 }
             }
-            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.get(0) : Filter.and(results.toArray(new Filter[0]));
+            return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.and(results.toArray(new Filter[0]));
         }
     }
 

@@ -134,15 +134,10 @@ public final class CollectionFieldMapper {
         // If not found in method name, try SELECT clause
         List<String> projectedFields = queryParser.parseSelectClause(query);
         if (projectedFields != null && projectedFields.size() == 1) {
-            return projectedFields.get(0);
+            return projectedFields.getFirst();
         }
 
         // Try $project field
-        String projectField = queryParser.extractProjectionField(query);
-        if (projectField != null) {
-            return projectField;
-        }
-
-        return null;
+        return queryParser.extractProjectionField(query);
     }
 }
