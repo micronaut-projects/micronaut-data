@@ -54,10 +54,4 @@ public interface NitriteStoredQuery<E, R> extends StoredQuery<E, R> {
    */
   @Nullable
   Map<String, Object> getUpdateMap();
-
-  /**
-   * Checks if this is a SQL-like query.
-   * @return True if this is a SQL-like query
-   */
-  boolean isSql();
 }

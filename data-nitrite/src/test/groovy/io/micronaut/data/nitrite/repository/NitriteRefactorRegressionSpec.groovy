@@ -24,18 +24,6 @@ class NitriteRefactorRegressionSpec extends Specification {
         criteriaRepository.deleteAll()
     }
 
-    void "SQL UPDATE must resolve named parameters like :name"() {
-        given:
-        repository.save(new Person("John", 30))
-
-        when:
-        int updated = repository.updateAgeByName("John", 35)
-
-        then:
-        updated == 1
-        repository.findByName("John").get().age == 35
-    }
-
     void "JSON update must ignore \$set in filter building"() {
         given:
         repository.save(new Person("John", 30))

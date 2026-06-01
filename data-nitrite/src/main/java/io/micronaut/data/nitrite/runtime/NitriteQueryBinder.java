@@ -25,26 +25,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
- * Shared SQL/JSON parameter-binding utilities used by both
+ * Shared JSON parameter-binding utilities used by both
  * {@link DefaultNitriteRepositoryOperations} and {@link NitriteQueryExecutor}.
- *
- * <p>All methods are static. SQL regex constants are package-private so callers in the same
- * package reference them directly without a getter call.</p>
  */
 @Internal
 final class NitriteQueryBinder {
-
-    static final Pattern SQL_COMPARISON =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s*(=|!=|<>|>|<|>=|<=)\\s*:(\\w+)");
-    static final Pattern SQL_IN_CLAUSE =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+(NOT\\s+)?IN\\s*\\(\\s*:(\\w+)\\s*\\)", Pattern.CASE_INSENSITIVE);
-    static final Pattern SQL_IS_NOT_NULL =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+NOT\\s+NULL");
-    static final Pattern SQL_IS_NULL =
-        Pattern.compile("(?:\\w+\\.)?(\\w+)\\s+IS\\s+(?!NOT\\s+)NULL");
 
     private NitriteQueryBinder() {}
 
@@ -63,59 +50,6 @@ final class NitriteQueryBinder {
             return idx;
         }
         return null;
-    }
-
-    /**
-     * Resolves a {@code :pN} positional parameter name to the corresponding method argument.
-     * Returns {@code null} if the name is not positional or the index is out of range.
-     */
-    static Object resolveParam(String pname, Object[] params) {
-        try {
-            if (pname.startsWith("p")) {
-                int idx = Integer.parseInt(pname.substring(1)) - 1;
-                if (params != null && idx >= 0 && idx < params.length) {
-                    return params[idx];
-                }
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        return null;
-    }
-
-    /**
-     * Resolves a SQL parameter name: checks named parameters first, then falls back to
-     * positional {@code :pN} resolution via {@link #resolveParam}.
-     */
-    static Object resolveSqlParam(String pname, Object[] params, Map<String, Object> namedParameters) {
-        if (namedParameters != null && namedParameters.containsKey(pname)) {
-            return namedParameters.get(pname);
-        }
-        return resolveParam(pname, params);
-    }
-
-    /**
-     * Reorders method parameters into SQL positional order using {@code QueryParameterBinding}
-     * name hints (e.g. {@code "p1"}, {@code "p2"}).
-     */
-    static Object[] reorderParamsForSql(PreparedQuery<?, ?> q) {
-        Object[] raw = q.getParameterArray();
-        List<QueryParameterBinding> bindings = q.getQueryBindings();
-        if (bindings == null || bindings.isEmpty() || raw == null) {
-            return raw;
-        }
-        Object[] reordered = new Object[bindings.size()];
-        for (QueryParameterBinding b : bindings) {
-            if (b.getName() != null && b.getName().startsWith("p")) {
-                try {
-                    int pos = Integer.parseInt(b.getName().substring(1)) - 1;
-                    if (pos >= 0 && pos < reordered.length && b.getParameterIndex() >= 0 && b.getParameterIndex() < raw.length) {
-                        reordered[pos] = raw[b.getParameterIndex()];
-                    }
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        }
-        return reordered;
     }
 
     /**

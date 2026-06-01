@@ -8,9 +8,6 @@ import java.util.Optional;
 
 @NitriteRepository
 public interface RegressionRepository extends CrudRepository<Person, String> {
-    @Query("UPDATE person SET age = :age WHERE name = :name")
-    int updateAgeByName(String name, int age);
-
     @Query("{\"name\": \":name\", \"$set\": {\"age\": \":age\"}}")
     int updateAgeJson(String name, int age);
 

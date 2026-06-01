@@ -363,30 +363,6 @@ class NitriteQueryParserSpec extends Specification {
         "array of objects"                  | '[{"a":1},{"b":2}]'   | [[a: 1], [b: 2]]
     }
 
-    // PC 516: f.isEmpty() false branch — fields collapse to empty after stripping quotes
-
-    @Unroll
-    def "parseSelectClause: #desc"() {
-        expect:
-        parser.parseSelectClause(sql) == expected
-
-        where:
-        desc                                  | sql                                  | expected
-        "whitespace-only fields → null"       | "SELECT  ,  FROM T"                  | null
-        "SELECT * → null"                     | "SELECT * FROM Person"               | null
-        "single field"                        | "SELECT name FROM Person"            | ["name"]
-        "multiple fields"                     | "SELECT id, name FROM Person"        | ["id", "name"]
-        "AS alias"                            | "SELECT name AS fullName FROM Person" | ["name"]
-        "table-qualified field"               | "SELECT p.name FROM Person p"        | ["name"]
-        "backtick-quoted field"               | 'SELECT `name` FROM Person'          | ["name"]
-        "no FROM → null"                      | "SELECT name"                        | null
-        "null input → null"                   | null                                 | null
-        "blank input → null"                  | "   "                                | null
-        "non-SELECT → null"                   | "DELETE FROM Person"                 | null
-        "empty backtick field skipped"        | 'SELECT ``, name FROM Person'        | ["name"]
-        "space no AS → takes first token"     | "SELECT name age FROM Person"        | ["name"]
-    }
-
     // ─── PC 547 — extractProjectionField instanceof Map false branch ──────────────
     // A {-prefixed query always produces a Map from parseJson, so the false branch
     // (parsed instanceof Map == false) is genuinely unreachable in practice.

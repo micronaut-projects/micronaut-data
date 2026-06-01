@@ -22,7 +22,6 @@ import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import org.dizitart.no2.collection.Document;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -129,12 +128,6 @@ public final class CollectionFieldMapper {
                 String fieldName = matcher.group(1);
                 return Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
             }
-        }
-
-        // If not found in method name, try SELECT clause
-        List<String> projectedFields = queryParser.parseSelectClause(query);
-        if (projectedFields != null && projectedFields.size() == 1) {
-            return projectedFields.getFirst();
         }
 
         // Try $project field

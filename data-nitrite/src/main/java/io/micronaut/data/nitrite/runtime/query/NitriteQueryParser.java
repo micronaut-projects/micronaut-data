@@ -69,53 +69,6 @@ public final class NitriteQueryParser {
     }
 
     /**
-     * Parse the SELECT clause from a SQL-like query to extract field names for projection.
-     * <p>
-     * Example usage in repository method:
-     * <pre>{@code
-     * @Query("SELECT name FROM Person WHERE active = true")
-     * List<String> findActivePersonNames();
-     *
-     * @Query("SELECT id, name FROM Person ORDER BY name")
-     * List<PersonName> findAllPersonNames();
-     * }</pre>
-     *
-     * @param sql the SQL query string
-     * @return list of field names to project, or null if no SELECT clause found
-     */
-    public List<String> parseSelectClause(String sql) {
-        if (sql == null || sql.isBlank()) return null;
-        String trimmed = sql.trim();
-        String upper = trimmed.toUpperCase();
-        if (!upper.startsWith("SELECT ")) return null;
-
-        int fromIdx = upper.indexOf(" FROM ");
-        if (fromIdx < 0) return null;
-
-        String fieldsPart = trimmed.substring(7, fromIdx).trim();
-        if (fieldsPart.equals("*")) return null;
-
-        List<String> fields = getFields(fieldsPart);
-        return fields.isEmpty() ? null : fields;
-    }
-
-    private static @NonNull List<String> getFields(String fieldsPart) {
-        List<String> fields = new ArrayList<>();
-        for (String part : fieldsPart.split(",")) {
-            String f = part.trim();
-            // Drop AS alias or any trailing qualifier
-            int spaceIdx = f.indexOf(' ');
-            if (spaceIdx > 0) f = f.substring(0, spaceIdx).trim();
-            // Drop table prefix (table.field → field)
-            int dotIdx = f.lastIndexOf('.');
-            if (dotIdx >= 0) f = f.substring(dotIdx + 1).trim();
-            f = f.replaceAll("[\"'`]", "");
-            if (!f.isEmpty()) fields.add(f);
-        }
-        return fields;
-    }
-
-    /**
      * Extract the projection field from a JSON query that uses {@code $project} syntax.
      * <p>
      * Example usage in repository method:

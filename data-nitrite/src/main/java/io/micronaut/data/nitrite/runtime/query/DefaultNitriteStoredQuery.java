@@ -38,7 +38,6 @@ public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParame
     private final Map<String, Object> filterMap;
     private final CompiledNitriteFilter compiledFilter;
     private final Map<String, Object> updateMap;
-    private final boolean sql;
 
     /**
      * Default constructor.
@@ -49,7 +48,6 @@ public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParame
      * @param filterMap The filter map
      * @param compiledFilter The pre-compiled filter
      * @param updateMap The update map
-     * @param sql Whether the underlying query is SQL-like
      */
     public DefaultNitriteStoredQuery(
         @NonNull StoredQuery<E, R> delegate,
@@ -57,13 +55,11 @@ public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParame
         @NonNull ConversionService conversionService,
         @Nullable Map<String, Object> filterMap,
         @Nullable CompiledNitriteFilter compiledFilter,
-        @Nullable Map<String, Object> updateMap,
-        boolean sql) {
+        @Nullable Map<String, Object> updateMap) {
         super(delegate, runtimePersistentEntity, conversionService);
         this.filterMap = filterMap;
         this.compiledFilter = compiledFilter;
         this.updateMap = updateMap;
-        this.sql = sql;
     }
 
     @Override
@@ -84,9 +80,5 @@ public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParame
         return updateMap;
     }
 
-    @Override
-    public boolean isSql() {
-        return sql;
-    }
 
 }

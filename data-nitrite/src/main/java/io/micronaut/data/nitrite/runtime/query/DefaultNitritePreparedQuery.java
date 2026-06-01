@@ -39,7 +39,6 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
     private final Map<String, Object> filterMap;
     private final CompiledNitriteFilter compiledFilter;
     private final Map<String, Object> updateMap;
-    private final boolean sql;
 
     /**
      * Create a delegating Nitrite prepared query.
@@ -49,21 +48,18 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
      * @param filterMap The pre-parsed filter map (JSON queries) or {@code null}
      * @param compiledFilter The pre-compiled filter structure
      * @param updateMap The pre-parsed update map (JSON {@code $set}) or {@code null}
-     * @param sql Whether the underlying query is SQL-like
      */
     public DefaultNitritePreparedQuery(
         @NonNull PreparedQuery<E, R> delegate,
         @NonNull Filter nitriteFilter,
         @Nullable Map<String, Object> filterMap,
         @Nullable CompiledNitriteFilter compiledFilter,
-        @Nullable Map<String, Object> updateMap,
-        boolean sql) {
+        @Nullable Map<String, Object> updateMap) {
         super(delegate);
         this.nitriteFilter = nitriteFilter;
         this.filterMap = filterMap;
         this.compiledFilter = compiledFilter;
         this.updateMap = updateMap;
-        this.sql = sql;
     }
 
     @Override
@@ -90,9 +86,5 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
         return updateMap;
     }
 
-    @Override
-    public boolean isSql() {
-        return sql;
-    }
 
 }

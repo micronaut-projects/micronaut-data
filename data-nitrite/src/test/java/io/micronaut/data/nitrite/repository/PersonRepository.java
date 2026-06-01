@@ -234,7 +234,7 @@ public interface PersonRepository
    *
    * @return list of names
    */
-  @io.micronaut.data.annotation.Query("SELECT name FROM Person")
+  @io.micronaut.data.annotation.Query("{\"$project\": \"name\"}")
   java.util.List<String> findAllNames();
 
   /**

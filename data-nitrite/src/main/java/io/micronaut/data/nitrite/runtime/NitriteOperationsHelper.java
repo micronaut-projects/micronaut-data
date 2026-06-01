@@ -94,14 +94,6 @@ public interface NitriteOperationsHelper {
     void logFind(String collection, Filter filter);
 
     /**
-     * Parses a sort from a SQL query.
-     *
-     * @param sql the SQL query
-     * @return the parsed sort
-     */
-    Sort parseSortFromSqlQuery(String sql);
-
-    /**
      * Parses a sort from a JSON query.
      *
      * @param queryString the JSON query string
