@@ -29,518 +29,259 @@ import java.util.Map;
 @Internal
 public final class NitriteQueryParser {
 
-  /**
-   * Default constructor.
-   */
-  public NitriteQueryParser() {
-  }
+    /** Default constructor. */
+    public NitriteQueryParser() {}
 
-  /**
-   * Parse a JSON query string into a Map/List structure.
-   *
-   * @param jsonStr the JSON string
-   * @return the parsed object
-   */
-  public Object parseJson(final String jsonStr) {
-    String json = jsonStr.trim();
-    if (json.equals("{}")) {
-      return Map.of();
-    }
-    if (json.startsWith("{")) {
-      return parseJsonObject(json);
-    }
-    if (json.startsWith("[")) {
-      return parseJsonArray(json);
-    }
-    throw new IllegalArgumentException("Invalid JSON: " + json);
-  }
-
-  /**
-   * Given the result of {@link #parseJson}, extracts the filter map.
-   * <p>If the parsed value is a Map, it is returned directly.
-   * If it is a pipeline List, the {@code $match} stage map is returned,
-   * or an empty map when no {@code $match} stage is present (= match all).
-   * Returns {@code null} for any other type.
-   */
-  @SuppressWarnings("unchecked")
-  public Map<String, Object> extractFilterMap(final Object parsed) {
-    if (parsed instanceof List<?> pipeline) {
-      for (Object stage : pipeline) {
-        if (stage instanceof Map<?, ?> stageMap && stageMap.containsKey("$match")) {
-          return (Map<String, Object>) stageMap.get("$match");
+    /**
+     * Parse a JSON query string into a Map/List structure.
+     *
+     * @param jsonStr the JSON string
+     * @return the parsed object
+     */
+    public Object parseJson(String jsonStr) {
+        String json = jsonStr.trim();
+        if (!json.startsWith("{") && !json.startsWith("[")) {
+            throw new IllegalArgumentException("Invalid JSON: " + json);
         }
-      }
-      return Map.of();
-    }
-    if (parsed instanceof Map<?, ?> m) {
-      return (Map<String, Object>) m;
-    }
-    return null;
-  }
-
-  /**
-   * Parse a JSON object string into a Map.
-   *
-   * @param json the JSON object string
-   * @return the parsed map
-   */
-  private Map<String, Object> parseJsonObject(String json) {
-    Map<String, Object> result = new LinkedHashMap<>();
-    json = json.trim();
-    if (json.equals("{}")) {
-      return result;
+        return new JsonParser(json).parse();
     }
 
-    // Remove outer braces
-    json = json.substring(1, json.length() - 1).trim();
-
-    int i = 0;
-    while (i < json.length()) {
-      // Parse key — handle double-quoted, single-quoted, or unquoted keys
-      String key;
-      if (json.charAt(i) == '"') {
-        i++;
-        int keyStart = i;
-        while (i < json.length() && json.charAt(i) != '"') {
-          if (json.charAt(i) == '\\') { i++; }
-          i++;
-        }
-        key = json.substring(keyStart, i);
-        i++; // skip closing quote
-      } else if (json.charAt(i) == '\'') {
-        i++;
-        int keyStart = i;
-        while (i < json.length() && json.charAt(i) != '\'') {
-          if (json.charAt(i) == '\\') { i++; }
-          i++;
-        }
-        key = json.substring(keyStart, i);
-        i++; // skip closing quote
-      } else {
-        int keyStart = i;
-        while (i < json.length() && json.charAt(i) != ':' && !Character.isWhitespace(json.charAt(i))) {
-          i++;
-        }
-        key = json.substring(keyStart, i);
-      }
-
-      // Skip to colon
-      while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
-        i++;
-      }
-      if (i < json.length() && json.charAt(i) == ':') {
-        i++;
-      }
-      // Skip whitespace after colon
-      while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
-        i++;
-      }
-
-      // Parse value
-      Object value;
-      if (i >= json.length()) {
-        break;
-      }
-      char c = json.charAt(i);
-      if (c == '"') {
-        i++;
-        StringBuilder sb = new StringBuilder();
-        while (i < json.length() && json.charAt(i) != '"') {
-          if (json.charAt(i) == '\\') {
-            i++;
-            if (i < json.length()) {
-              char escaped = json.charAt(i);
-              switch (escaped) {
-                case '"' -> sb.append('"');
-                case '\\' -> sb.append('\\');
-                case 'n' -> sb.append('\n');
-                case 'r' -> sb.append('\r');
-                case 't' -> sb.append('\t');
-                default -> sb.append(escaped);
-              }
+    /**
+     * Given the result of {@link #parseJson}, extracts the filter map.
+     * <p>If the parsed value is a Map it is returned directly. If it is a
+     * pipeline List, the {@code $match} stage map is returned, or an empty
+     * map when no {@code $match} stage is present (= match all).
+     * Returns {@code null} for any other type.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> extractFilterMap(Object parsed) {
+        if (parsed instanceof List<?> pipeline) {
+            for (Object stage : pipeline) {
+                if (stage instanceof Map<?, ?> m && m.containsKey("$match")) {
+                    return (Map<String, Object>) m.get("$match");
+                }
             }
-          } else {
-            sb.append(json.charAt(i));
-          }
-          i++;
+            return Map.of();
         }
-        value = sb.toString();
-        i++; // skip closing quote
-      } else if (c == '\'') {
-        i++;
-        StringBuilder sb = new StringBuilder();
-        while (i < json.length() && json.charAt(i) != '\'') {
-          if (json.charAt(i) == '\\') {
-            i++;
-            if (i < json.length()) {
-              char escaped = json.charAt(i);
-              switch (escaped) {
-                case '\'' -> sb.append('\'');
-                case '\\' -> sb.append('\\');
-                case 'n' -> sb.append('\n');
-                case 'r' -> sb.append('\r');
-                case 't' -> sb.append('\t');
-                default -> sb.append(escaped);
-              }
-            }
-          } else {
-            sb.append(json.charAt(i));
-          }
-          i++;
-        }
-        value = sb.toString();
-        i++; // skip closing quote
-      } else if (c == '{') {
-        int start = i;
-        int depth = 1;
-        i++;
-        while (i < json.length() && depth > 0) {
-          if (json.charAt(i) == '{') {
-            depth++;
-          }
-          if (json.charAt(i) == '}') {
-            depth--;
-          }
-          i++;
-        }
-        value = parseJsonObject(json.substring(start, i));
-      } else if (c == '[') {
-        int start = i;
-        int depth = 1;
-        i++;
-        while (i < json.length() && depth > 0) {
-          if (json.charAt(i) == '[') {
-            depth++;
-          }
-          if (json.charAt(i) == ']') {
-            depth--;
-          }
-          i++;
-        }
-        value = parseJsonArray(json.substring(start, i));
-      } else if (c == 't' || c == 'f') {
-         // boolean or potential placeholder
-         int start = i;
-         while (i < json.length() && (Character.isLetter(json.charAt(i)) || json.charAt(i) == ':')) {
-           i++;
-         }
-         String s = json.substring(start, i);
-         if (s.equals("true") || s.equals("false")) {
-           value = Boolean.parseBoolean(s);
-         } else {
-           value = s;
-         }
-      } else if (c == ':') {
-        // Bare named parameter: :title
-        int start = i;
-        while (i < json.length() && (Character.isLetterOrDigit(json.charAt(i)) || json.charAt(i) == ':')) {
-          i++;
-        }
-        value = json.substring(start, i);
-      } else if (c == '$') {
-        // Bare placeholder: $mn_qp:0
-        int start = i;
-        while (i < json.length() && (Character.isLetterOrDigit(json.charAt(i)) || json.charAt(i) == ':' || json.charAt(i) == '$' || json.charAt(i) == '_')) {
-          i++;
-        }
-        value = json.substring(start, i);
-      } else if (c == 'n') {
-        // null
-        i += 4;
-        value = null;
-      } else {
-        // number or potential placeholder
-        int start = i;
-        while (i < json.length()
-            && (Character.isDigit(json.charAt(i))
-                || Character.isLetter(json.charAt(i))
-                || json.charAt(i) == '.'
-                || json.charAt(i) == '-'
-                || json.charAt(i) == ':'
-                || json.charAt(i) == '$')) {
-          i++;
-        }
-        String s = json.substring(start, i).trim();
-        if (s.contains(".")) {
-          try {
-            value = Double.parseDouble(s);
-          } catch (NumberFormatException e) {
-            value = s;
-          }
-        } else {
-          try {
-            value = Integer.parseInt(s);
-          } catch (NumberFormatException e) {
-            value = s;
-          }
-        }
-      }
-
-      result.put(key, value);
-
-      // Skip comma
-      while (i < json.length()
-          && (Character.isWhitespace(json.charAt(i)) || json.charAt(i) == ',')) {
-        i++;
-      }
+        return parsed instanceof Map<?, ?> m ? (Map<String, Object>) m : null;
     }
 
-    return result;
-  }
+    /**
+     * Parse the SELECT clause from a SQL-like query to extract field names for projection.
+     * <p>
+     * Example usage in repository method:
+     * <pre>{@code
+     * @Query("SELECT name FROM Person WHERE active = true")
+     * List<String> findActivePersonNames();
+     *
+     * @Query("SELECT id, name FROM Person ORDER BY name")
+     * List<PersonName> findAllPersonNames();
+     * }</pre>
+     *
+     * @param sql the SQL query string
+     * @return list of field names to project, or null if no SELECT clause found
+     */
+    public List<String> parseSelectClause(String sql) {
+        if (sql == null || sql.isBlank()) return null;
+        String trimmed = sql.trim();
+        String upper = trimmed.toUpperCase();
+        if (!upper.startsWith("SELECT ")) return null;
 
-  /**
-   * Parse a JSON array string into a List.
-   *
-   * @param json the JSON array string
-   * @return the parsed list
-   */
-  private List<Object> parseJsonArray(String json) {
-    List<Object> result = new ArrayList<>();
-    json = json.trim();
-    if (json.equals("[]")) {
-      return result;
+        int fromIdx = upper.indexOf(" FROM ");
+        if (fromIdx < 0) return null;
+
+        String fieldsPart = trimmed.substring(7, fromIdx).trim();
+        if (fieldsPart.equals("*")) return null;
+
+        List<String> fields = new ArrayList<>();
+        for (String part : fieldsPart.split(",")) {
+            String f = part.trim();
+            // Drop AS alias or any trailing qualifier
+            int spaceIdx = f.indexOf(' ');
+            if (spaceIdx > 0) f = f.substring(0, spaceIdx).trim();
+            // Drop table prefix (table.field → field)
+            int dotIdx = f.lastIndexOf('.');
+            if (dotIdx >= 0) f = f.substring(dotIdx + 1).trim();
+            f = f.replaceAll("[\"'`]", "");
+            if (!f.isEmpty()) fields.add(f);
+        }
+
+        return fields.isEmpty() ? null : fields;
     }
 
-    // Remove outer brackets
-    json = json.substring(1, json.length() - 1).trim();
-
-    int i = 0;
-    while (i < json.length()) {
-      // Skip whitespace and commas
-      while (i < json.length()
-          && (Character.isWhitespace(json.charAt(i)) || json.charAt(i) == ',')) {
-        i++;
-      }
-      if (i >= json.length()) {
-        break;
-      }
-
-      char c = json.charAt(i);
-      Object value;
-      if (c == '"') {
-        i++;
-        StringBuilder sb = new StringBuilder();
-        while (i < json.length() && json.charAt(i) != '"') {
-          if (json.charAt(i) == '\\') {
-            i++;
-            if (i < json.length()) {
-              char escaped = json.charAt(i);
-              switch (escaped) {
-                case '"' -> sb.append('"');
-                case '\\' -> sb.append('\\');
-                case 'n' -> sb.append('\n');
-                case 'r' -> sb.append('\r');
-                case 't' -> sb.append('\t');
-                default -> sb.append(escaped);
-              }
+    /**
+     * Extract the projection field from a JSON query that uses {@code $project} syntax.
+     * <p>
+     * Example usage in repository method:
+     * <pre>{@code
+     * @Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
+     * List<String> findActivePersonNames();
+     * }</pre>
+     *
+     * @param jsonQuery the JSON query string
+     * @return the field name to project, or null if not using $project syntax
+     */
+    public String extractProjectionField(String jsonQuery) {
+        if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) return null;
+        try {
+            Object parsed = parseJson(jsonQuery);
+            if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
+                Object val = map.get("$project");
+                if (val instanceof String s) return s;
             }
-          } else {
-            sb.append(json.charAt(i));
-          }
-          i++;
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
+     * Check if a JSON query uses {@code $project} syntax.
+     *
+     * @param jsonQuery the JSON query string
+     * @return true if using $project syntax
+     */
+    public boolean hasProjection(String jsonQuery) {
+        return extractProjectionField(jsonQuery) != null;
+    }
+
+    // ─── Private recursive-descent parser ────────────────────────────────────────
+
+    private static final class JsonParser {
+
+        private final String src;
+        private int pos;
+
+        JsonParser(String src) {
+            this.src = src;
         }
-        value = sb.toString();
-        i++; // skip closing quote
-      } else if (c == '\'') {
-        i++;
-        StringBuilder sb = new StringBuilder();
-        while (i < json.length() && json.charAt(i) != '\'') {
-          if (json.charAt(i) == '\\') {
-            i++;
-            if (i < json.length()) {
-              char escaped = json.charAt(i);
-              switch (escaped) {
-                case '\'' -> sb.append('\'');
-                case '\\' -> sb.append('\\');
-                case 'n' -> sb.append('\n');
-                case 'r' -> sb.append('\r');
-                case 't' -> sb.append('\t');
-                default -> sb.append(escaped);
-              }
+
+        Object parse() {
+            skipWhitespace();
+            if (pos >= src.length()) throw new IllegalArgumentException("Invalid JSON: " + src);
+            return parseValue();
+        }
+
+        // ── Dispatch ─────────────────────────────────────────────────────────────
+
+        private Object parseValue() {
+            skipWhitespace();
+            if (pos >= src.length()) return null;
+            return switch (src.charAt(pos)) {
+                case '{'  -> parseObject();
+                case '['  -> parseArray();
+                case '"'  -> parseString('"');
+                case '\'' -> parseString('\'');
+                default   -> parseLiteral();
+            };
+        }
+
+        // ── Object ───────────────────────────────────────────────────────────────
+
+        private Map<String, Object> parseObject() {
+            pos++; // skip '{'
+            Map<String, Object> result = new LinkedHashMap<>();
+            while (pos < src.length()) {
+                skipWhitespaceAndCommas();
+                if (pos >= src.length()) break;
+                if (src.charAt(pos) == '}') { pos++; break; }
+
+                String key = parseKey();
+                skipWhitespace();
+                if (pos < src.length() && src.charAt(pos) == ':') pos++;
+                result.put(key, parseValue());
             }
-          } else {
-            sb.append(json.charAt(i));
-          }
-          i++;
+            return result;
         }
-        value = sb.toString();
-        i++; // skip closing quote
-      } else if (c == '{') {
-        int start = i;
-        int depth = 1;
-        i++;
-        while (i < json.length() && depth > 0) {
-          if (json.charAt(i) == '{') {
-            depth++;
-          }
-          if (json.charAt(i) == '}') {
-            depth--;
-          }
-          i++;
+
+        // ── Array ────────────────────────────────────────────────────────────────
+
+        private List<Object> parseArray() {
+            pos++; // skip '['
+            List<Object> result = new ArrayList<>();
+            while (pos < src.length()) {
+                skipWhitespaceAndCommas();
+                if (pos >= src.length()) break;
+                if (src.charAt(pos) == ']') { pos++; break; }
+                result.add(parseValue());
+            }
+            return result;
         }
-        value = parseJsonObject(json.substring(start, i));
-      } else if (c == '[') {
-        int start = i;
-        int depth = 1;
-        i++;
-        while (i < json.length() && depth > 0) {
-          if (json.charAt(i) == '[') {
-            depth++;
-          }
-          if (json.charAt(i) == ']') {
-            depth--;
-          }
-          i++;
+
+        // ── Key ──────────────────────────────────────────────────────────────────
+
+        private String parseKey() {
+            if (pos >= src.length()) return "";
+            char c = src.charAt(pos);
+            if (c == '"' || c == '\'') return parseString(c);
+            // Unquoted key — read until ':' or whitespace
+            int start = pos;
+            while (pos < src.length() && src.charAt(pos) != ':' && !Character.isWhitespace(src.charAt(pos))) pos++;
+            return src.substring(start, pos);
         }
-        value = parseJsonArray(json.substring(start, i));
-        } else {
-          int start = i;
-          while (i < json.length()
-              && (Character.isDigit(json.charAt(i))
-                  || Character.isLetter(json.charAt(i))
-                  || json.charAt(i) == '.'
-                  || json.charAt(i) == '-'
-                  || json.charAt(i) == ':'
-                  || json.charAt(i) == '$')) {
-            i++;
-          }
-          String s = json.substring(start, i).trim();
-          if (s.startsWith("$mn_qp:") || s.startsWith(":")) {
-            value = s;
-          } else if (s.equals("true")) {
-            value = true;
-          } else if (s.equals("false")) {
-            value = false;
-          } else if (s.equals("null")) {
-            value = null;
-          } else if (s.contains(".")) {
+
+        // ── String ───────────────────────────────────────────────────────────────
+
+        private String parseString(char quote) {
+            pos++; // skip opening quote
+            StringBuilder sb = new StringBuilder();
+            while (pos < src.length() && src.charAt(pos) != quote) {
+                if (src.charAt(pos) == '\\') {
+                    pos++;
+                    if (pos < src.length()) sb.append(unescape(src.charAt(pos)));
+                } else {
+                    sb.append(src.charAt(pos));
+                }
+                pos++;
+            }
+            if (pos < src.length()) pos++; // skip closing quote
+            return sb.toString();
+        }
+
+        private static char unescape(char c) {
+            return switch (c) {
+                case 'n'  -> '\n';
+                case 'r'  -> '\r';
+                case 't'  -> '\t';
+                default   -> c; // handles '"', '\'', '\\', etc.
+            };
+        }
+
+        // ── Literal: boolean / null / number / placeholder ────────────────────
+
+        private Object parseLiteral() {
+            int start = pos;
+            while (pos < src.length()) {
+                char c = src.charAt(pos);
+                if (c == ',' || c == '}' || c == ']' || Character.isWhitespace(c)) break;
+                pos++;
+            }
+            String s = src.substring(start, pos).trim();
+            return switch (s) {
+                case "true"  -> Boolean.TRUE;
+                case "false" -> Boolean.FALSE;
+                case "null"  -> null;
+                default      -> parseNumber(s);
+            };
+        }
+
+        private static Object parseNumber(String s) {
+            // Named parameters and positional placeholders are returned as-is
+            if (s.startsWith(":") || s.startsWith("$mn_qp:")) return s;
             try {
-              value = Double.parseDouble(s);
-            } catch (NumberFormatException e) {
-              value = s;
+                if (s.contains(".")) return Double.parseDouble(s);
+                return Integer.parseInt(s);
+            } catch (NumberFormatException ignored) {
+                return s;
             }
-          } else {
-            try {
-              value = Integer.parseInt(s);
-            } catch (NumberFormatException e) {
-              value = s;
-            }
-          }
         }
 
-      result.add(value);
-    }
+        // ── Utilities ────────────────────────────────────────────────────────────
 
-    return result;
-  }
-
-  /**
-   * Parse the SELECT clause from a SQL-like query to extract field names for projection.
-   * <p>
-   * Example usage in repository method:
-   * <pre>{@code
-   * @Query("SELECT name FROM Person WHERE active = true")
-   * List<String> findActivePersonNames();
-   *
-   * @Query("SELECT id, name FROM Person ORDER BY name")
-   * List<PersonName> findAllPersonNames();
-   * }</pre>
-   *
-   * @param sql the SQL query string
-   * @return list of field names to project, or null if no SELECT clause found
-   */
-  public List<String> parseSelectClause(final String sql) {
-    if (sql == null || sql.trim().isEmpty()) {
-      return null;
-    }
-    String upper = sql.trim().toUpperCase();
-    if (!upper.startsWith("SELECT ")) {
-      return null;
-    }
-
-    // Find FROM clause to isolate SELECT fields
-    int fromIdx = upper.indexOf(" FROM ");
-    if (fromIdx < 0) {
-      return null;
-    }
-
-    // Extract fields between SELECT and FROM
-    String fieldsPart = sql.trim().substring(7, fromIdx).trim();
-
-    // Handle SELECT * - return null to indicate no projection
-    if (fieldsPart.equals("*")) {
-      return null;
-    }
-
-    // Split by comma and extract field names
-    List<String> fields = new ArrayList<>();
-    for (String field : fieldsPart.split(",")) {
-      String f = field.trim();
-      // Handle "table.field" or "field" or "field AS alias"
-      int spaceIdx = f.indexOf(' ');
-      if (spaceIdx > 0) {
-        // Check for AS keyword
-        String rest = f.substring(spaceIdx).trim().toUpperCase();
-        if (rest.startsWith("AS ")) {
-          f = f.substring(0, spaceIdx).trim();
-        } else {
-          // Just take the first part (field name)
-          f = f.substring(0, spaceIdx).trim();
+        private void skipWhitespace() {
+            while (pos < src.length() && Character.isWhitespace(src.charAt(pos))) pos++;
         }
-      }
-      // Extract just the field name if it's qualified (table.field)
-      int dotIdx = f.lastIndexOf('.');
-      if (dotIdx >= 0) {
-        f = f.substring(dotIdx + 1).trim();
-      }
-      // Remove any quotes or backticks
-      f = f.replaceAll("[\"`]", "");
-      if (!f.isEmpty()) {
-        fields.add(f);
-      }
-    }
 
-    return fields.isEmpty() ? null : fields;
-  }
-
-  /**
-   * Extract the projection field from a JSON query that uses $project syntax.
-   * <p>
-   * Example usage in repository method:
-   * <pre>{@code
-   * // JSON with $project syntax:
-   * @Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
-   * List<String> findActivePersonNames();
-   *
-   * // SQL SELECT syntax (alternative):
-   * @Query("SELECT name FROM Person WHERE active = true")
-   * List<String> findActivePersonNames();
-   * }</pre>
-   *
-   * @param jsonQuery the JSON query string
-   * @return the field name to project, or null if not using $project syntax
-   */
-  public String extractProjectionField(String jsonQuery) {
-    if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
-      return null;
+        private void skipWhitespaceAndCommas() {
+            while (pos < src.length() && (Character.isWhitespace(src.charAt(pos)) || src.charAt(pos) == ',')) pos++;
+        }
     }
-    Object parsed = parseJson(jsonQuery);
-    if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
-      Object projectValue = map.get("$project");
-      if (projectValue instanceof String s) {
-        return s;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Check if a JSON query uses $project syntax.
-   *
-   * @param jsonQuery the JSON query string
-   * @return true if using $project syntax
-   */
-  public boolean hasProjection(String jsonQuery) {
-    return extractProjectionField(jsonQuery) != null;
-  }
 }
