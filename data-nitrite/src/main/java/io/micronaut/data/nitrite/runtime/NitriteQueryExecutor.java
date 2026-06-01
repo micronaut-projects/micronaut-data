@@ -934,16 +934,14 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        // Set associations on parent entities
+        // Set associations on parent entities (always set — even empty list — so joined fields are non-null)
         var beanProperty = (io.micronaut.core.beans.BeanProperty<Object, Object>) association.getProperty();
         for (Object entity : entities) {
             Object parentId = ((io.micronaut.core.beans.BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
             if (parentId != null) {
                 Object filterParentId = entityMapper.toFilterValue(parentId);
-                List<Object> children = resultsByParentId.get(filterParentId);
-                if (children != null) {
-                    beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
-                }
+                List<Object> children = resultsByParentId.getOrDefault(filterParentId, new ArrayList<>());
+                beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
             }
         }
         return fetchedChildren;

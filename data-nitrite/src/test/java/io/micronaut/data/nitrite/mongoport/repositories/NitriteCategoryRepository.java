@@ -21,4 +21,6 @@ public interface NitriteCategoryRepository extends CrudRepository<NitriteCategor
     @Join(value = "productList.productOption")
     @Join(value = "productList.productOption.option")
     Iterable<NitriteCategory> listAll();
+
+    Optional<NitriteCategory> queryById(String id);
 }

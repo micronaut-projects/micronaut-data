@@ -14,8 +14,20 @@ import java.util.List;
 public interface NitriteMpPersonRepository extends CrudRepository<NitriteMpPerson, String>, PageableRepository<NitriteMpPerson, String> {
 
     List<NitriteMpPerson> findAllByNameBetween(String startName, String endName);
-    
+
     List<NitriteMpPerson> findAllByNameNotBetween(String startName, String endName);
+
+    List<NitriteMpPerson> findByIdIn(List<String> ids);
+
+    List<NitriteMpPerson> findByIdNotIn(List<String> ids);
+
+    List<NitriteMpPerson> findByNameIn(List<String> names);
+
+    List<NitriteMpPerson> findByNameIn(String[] names);
+
+    List<NitriteMpPerson> findByNameLike(String pattern);
+
+    List<NitriteMpPerson> findByNameNotLike(String pattern);
 
     List<NitriteMpPerson> findAllByNameRegexOrderByName(String pattern);
 

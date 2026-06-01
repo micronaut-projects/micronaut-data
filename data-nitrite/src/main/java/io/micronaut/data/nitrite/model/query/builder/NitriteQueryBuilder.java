@@ -20,13 +20,17 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -37,10 +41,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * NitriteDB query builder implementing both QueryBuilder and QueryBuilder2 for compatibility.
@@ -85,6 +92,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             LOG.debug("buildSelect: entity={}, predicate={}", query.persistentEntity().getName(), query.predicate());
         }
         NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity());
+        List<Map<String, Object>> lookupPipeline = new ArrayList<>();
+        addLookups(query.getJoinPaths(), query.persistentEntity(), lookupPipeline);
+
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
@@ -108,10 +118,11 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 });
         }
 
+        boolean hasLookups = !lookupPipeline.isEmpty();
         boolean hasAggregation = !group.isEmpty() || !countObj.isEmpty();
-        boolean needsPipeline = hasAggregation || (!sortObj.isEmpty() && !predicateObj.isEmpty());
+        boolean needsPipeline = hasLookups || hasAggregation || (!sortObj.isEmpty() && !predicateObj.isEmpty());
         if (needsPipeline) {
-            List<Map<String, Object>> pipeline = new ArrayList<>();
+            List<Map<String, Object>> pipeline = new ArrayList<>(lookupPipeline);
             if (!predicateObj.isEmpty()) {
                 pipeline.add(Map.of("$match", predicateObj));
             }
@@ -244,6 +255,105 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 "Unsupported predicate type: " + predicate.getClass().getName());
         }
         return queryMap;
+    }
+
+    private void addLookups(Collection<JoinPath> joins, PersistentEntity rootEntity, List<Map<String, Object>> pipeline) {
+        if (joins == null || joins.isEmpty()) return;
+        List<String> sorted = joins.stream().map(JoinPath::getPath)
+            .sorted((a, b) -> Integer.compare(a.length(), b.length()) != 0 ? Integer.compare(a.length(), b.length()) : a.compareTo(b))
+            .toList();
+        Map<String, LookupsStage> subLookupMap = new HashMap<>();
+        for (String join : sorted) {
+            PersistentEntity currentEntity = rootEntity;
+            List<Map<String, Object>> currentPipeline = pipeline;
+            Map<String, LookupsStage> currentSubLookups = subLookupMap;
+            StringJoiner processedPath = new StringJoiner(".");
+            for (String segment : join.split("\\.")) {
+                processedPath.add(segment);
+                String pathKey = processedPath.toString();
+                if (currentSubLookups.containsKey(pathKey)) {
+                    LookupsStage existing = currentSubLookups.get(pathKey);
+                    currentPipeline = existing.pipeline;
+                    currentSubLookups = existing.subLookups;
+                    currentEntity = existing.entity;
+                    continue;
+                }
+                PersistentPropertyPath propPath = currentEntity.getPropertyPath(segment);
+                if (propPath == null || !(propPath.getProperty() instanceof Association association)) continue;
+                if (association.isEmbedded()) continue;
+
+                LookupsStage stage = new LookupsStage(association.getAssociatedEntity());
+                String joinedCollection = association.getAssociatedEntity().getPersistedName();
+                boolean isForeignKey = association.isForeignKey();
+                boolean hasMappedBy = association.getAnnotationMetadata()
+                    .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").isPresent();
+
+                if (isForeignKey || hasMappedBy) {
+                    // ONE_TO_MANY: localField=_id, foreignField=FK persisted name in other entity
+                    String mappedBy = association.getAnnotationMetadata()
+                        .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+                    if (mappedBy == null) continue;
+                    PersistentPropertyPath backPropPath = association.getAssociatedEntity().getPropertyPath(mappedBy);
+                    if (backPropPath == null) continue;
+                    String foreignField = backPropPath.getProperty().getPersistedName();
+                    currentPipeline.add(lookup(joinedCollection, "_id", foreignField, stage.pipeline, segment));
+                } else {
+                    // MANY_TO_ONE / ONE_TO_ONE: localField=FK persisted name, foreignField=_id
+                    String localField = association.getPersistedName();
+                    currentPipeline.add(lookup(joinedCollection, localField, "_id", stage.pipeline, segment));
+                    if (association.getKind().isSingleEnded()) {
+                        currentPipeline.add(unwind("$" + segment, true));
+                    }
+                }
+                currentSubLookups.put(pathKey, stage);
+                currentPipeline = stage.pipeline;
+                currentSubLookups = stage.subLookups;
+                currentEntity = stage.entity;
+            }
+        }
+    }
+
+    private static Map<String, Object> lookup(String from, List<String> localFields, List<String> foreignFields,
+                                               List<Map<String, Object>> pipeline, String as) {
+        if (localFields.size() == 1) {
+            return lookup(from, localFields.get(0), foreignFields.get(0), pipeline, as);
+        }
+        Map<String, Object> let = new LinkedHashMap<>();
+        List<Map<String, Object>> matches = new ArrayList<>();
+        int i = 1;
+        for (int j = 0; j < localFields.size(); j++) {
+            String var = "v" + i++;
+            let.put(var, "$" + localFields.get(j));
+            matches.add(Map.of("$eq", List.of("$$" + var, "$" + foreignFields.get(j))));
+        }
+        Map<String, Object> matchExpr = matches.size() == 1 ? matches.get(0) : Map.of("$and", matches);
+        pipeline.add(0, Map.of("$match", Map.of("$expr", matchExpr)));
+        Map<String, Object> lookupDoc = new LinkedHashMap<>();
+        lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
+        return Map.of("$lookup", lookupDoc);
+    }
+
+    private static Map<String, Object> lookup(String from, String localField, String foreignField,
+                                               List<Map<String, Object>> pipeline, String as) {
+        Map<String, Object> lookupDoc = new LinkedHashMap<>();
+        lookupDoc.put("from", from); lookupDoc.put("localField", localField);
+        lookupDoc.put("foreignField", foreignField);
+        lookupDoc.put("pipeline", pipeline);  // always include so nested lookups added later are reflected
+        lookupDoc.put("as", as);
+        return Map.of("$lookup", lookupDoc);
+    }
+
+    private static Map<String, Object> unwind(String path, boolean preserveNull) {
+        Map<String, Object> u = new LinkedHashMap<>();
+        u.put("path", path); u.put("preserveNullAndEmptyArrays", preserveNull);
+        return Map.of("$unwind", u);
+    }
+
+    private static final class LookupsStage {
+        final PersistentEntity entity;
+        final List<Map<String, Object>> pipeline = new ArrayList<>();
+        final Map<String, LookupsStage> subLookups = new HashMap<>();
+        LookupsStage(PersistentEntity entity) { this.entity = entity; }
     }
 
     private void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {

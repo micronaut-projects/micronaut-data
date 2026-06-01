@@ -752,8 +752,18 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                 } else if (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY) {
                     sb.append(association.getPersistedName()).append(".");
                 } else {
-                    // MANY_TO_ONE: stop at FK field
-                    return association.getPersistedName();
+                    // MANY_TO_ONE/ONE_TO_ONE: if accessing the associated entity's identity → FK field.
+                    // If accessing any other field (join context) → use property name as join alias.
+                    List<Association> assocs = propertyPath.getAssociations();
+                    boolean isLast = association == assocs.get(assocs.size() - 1);
+                    boolean isIdentityAccess = false;
+                    if (isLast) {
+                        try { isIdentityAccess = association.getAssociatedEntity().getIdentity().equals(property); } catch (Exception ignored) {}
+                    }
+                    if (isLast && isIdentityAccess) {
+                        return association.getPersistedName();
+                    }
+                    sb.append(association.getName()).append(".");
                 }
             }
         }
@@ -792,13 +802,15 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
                 StringBuilder sb = new StringBuilder("{");
                 boolean first = true;
                 for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    Object val = entry.getValue();
+                    if (val instanceof Collection<?> c && c.isEmpty()) continue;
                     if (!first) {
                         sb.append(",");
                     }
                     first = false;
                     String k = entry.getKey().toString();
                     sb.append(needsQuoting(k) ? "'" + k + "'" : k).append(":");
-                    sb.append(toJsonString(entry.getValue()));
+                    sb.append(toJsonString(val));
                 }
                 sb.append("}");
                 return sb.toString();

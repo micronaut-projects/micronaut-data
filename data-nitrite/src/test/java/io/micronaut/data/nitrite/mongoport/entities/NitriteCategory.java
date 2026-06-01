@@ -5,7 +5,6 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @MappedEntity("nitrite_category")
@@ -16,7 +15,7 @@ public class NitriteCategory {
     private String name;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "category", cascade = Relation.Cascade.ALL)
-    private List<NitriteProduct> productList = new ArrayList<>();
+    private List<NitriteProduct> productList;
 
     public NitriteCategory() {
     }

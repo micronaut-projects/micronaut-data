@@ -95,6 +95,16 @@ class NitriteMultiOneToManySpec extends Specification implements NitriteTestProp
             category.productList[1].productOption[1].option.size() == 3
     }
 
+    void 'test not-joined collection should be null'() {
+        given:
+            NitriteCategory category = new NitriteCategory(name: "Cats", productList: [])
+        when:
+            categoryRepository.save(category)
+            category = categoryRepository.queryById(category.id).get()
+        then:
+            category.productList == null
+    }
+
     void 'test joined collection should not be null'() {
         given:
             NitriteCategory category = new NitriteCategory(name: "Cats", productList: [])

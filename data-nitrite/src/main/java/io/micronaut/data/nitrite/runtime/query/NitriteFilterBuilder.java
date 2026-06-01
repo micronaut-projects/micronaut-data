@@ -316,6 +316,7 @@ public final class NitriteFilterBuilder {
             ? Filter.or(FluentFilter.where(f).eq(""), FluentFilter.where(f).eq(null))
             : Filter.and(FluentFilter.where(f).notEq(""), FluentFilter.where(f).notEq(null)));
         r.put("$text",       (e, f, v, p, n) -> FluentFilter.where(f).text(v != null ? v.toString() : ""));
+        r.put("$all", (e, f, v, p, n) -> buildArrayContainsFilter(f, v, p, n));
         r.put("$near",       (e, f, v, p, n) -> spatialFactory.buildNearFilter(f, v, p, n));
         r.put("$within",     (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "within"));
         r.put("$intersects", (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "intersects"));
@@ -326,6 +327,14 @@ public final class NitriteFilterBuilder {
         if (finalValue == null) return NONE;
         List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
         return values.isEmpty() ? NONE : FluentFilter.where(field).in(values.toArray(new Comparable[0]));
+    }
+
+    private Filter buildArrayContainsFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
+        List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
+        if (values.isEmpty()) return Filter.ALL;
+        if (values.size() == 1) return FluentFilter.where(field).elemMatch(FluentFilter.$.eq(values.getFirst()));
+        Filter[] filters = values.stream().map(elem -> (Filter) FluentFilter.where(field).elemMatch(FluentFilter.$.eq(elem))).toArray(Filter[]::new);
+        return Filter.and(filters);
     }
 
     private Filter buildNotInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
