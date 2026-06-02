@@ -7,6 +7,7 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -60,6 +61,12 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(OracleXEDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(OracleXEDeliveryDriverWktGeographyRepository)
     }
 
     @Override

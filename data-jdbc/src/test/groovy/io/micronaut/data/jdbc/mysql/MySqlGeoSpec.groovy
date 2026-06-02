@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -52,6 +53,12 @@ class MySqlGeoSpec extends AbstractGeoSpec implements MySQLTestPropertyProvider 
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(MySqlDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(MySqlDeliveryDriverWktGeographyRepository)
     }
 
     @Override

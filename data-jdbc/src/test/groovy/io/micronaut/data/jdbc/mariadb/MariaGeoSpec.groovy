@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.mariadb
 
 import groovy.transform.Memoized
 import io.micronaut.data.jdbc.mysql.MySqlDeliveryDriverJsonRepository
+import io.micronaut.data.jdbc.mysql.MySqlDeliveryDriverWktGeographyRepository
 import io.micronaut.data.jdbc.mysql.MySqlDeliveryDriverWktRepository
 import io.micronaut.data.jdbc.mysql.MySqlGeometryEntityJsonRepository
 import io.micronaut.data.jdbc.mysql.MySqlGeometryEntityWktRepository
@@ -9,6 +10,7 @@ import io.micronaut.data.jdbc.mysql.MySqlHotelJsonRepository
 import io.micronaut.data.jdbc.mysql.MySqlHotelWktRepository
 import io.micronaut.data.jdbc.mysql.MySqlSchoolRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -59,6 +61,12 @@ class MariaGeoSpec extends AbstractGeoSpec implements MariaTestPropertyProvider 
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(MySqlDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(MySqlDeliveryDriverWktGeographyRepository)
     }
 
     @Override

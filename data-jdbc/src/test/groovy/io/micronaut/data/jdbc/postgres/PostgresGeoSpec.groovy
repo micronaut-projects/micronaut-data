@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -67,6 +68,12 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(PostgresDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(PostgresDeliveryDriverWktGeographyRepository)
     }
 
     @Override
