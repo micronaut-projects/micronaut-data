@@ -18,7 +18,9 @@ package io.micronaut.data.nitrite.runtime;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -26,6 +28,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
@@ -38,6 +41,7 @@ import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -332,34 +336,83 @@ public final class NitriteQueryExecutor {
      * @return optional containing the number of updated entities
      */
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
-        Map<String, Object> setFields = null;
-        Filter filter = null;
+        if (nq.getFilterMap() == null) {
+            throw new UnsupportedOperationException("executeUpdate() requires a JSON filter map: " + nq.getQuery());
+        }
         Object[] jsonParams = buildJsonParameterValues(nq);
         Map<String, Object> namedParameters = buildNamedParameterValues(nq);
-        if (nq.getFilterMap() != null) {
-            Map<String, Object> rawSetFields = (Map<String, Object>) nq.getFilterMap().get("$set");
-            if (rawSetFields != null) {
-                setFields = new LinkedHashMap<>();
-                for (Map.Entry<String, Object> entry : rawSetFields.entrySet()) {
-                    setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
-                }
-            }
-            if (nq.getCompiledFilter() != null) {
-                filter = nq.getCompiledFilter().bind(jsonParams, namedParameters);
-            } else {
-                filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
-            }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> rawSetFields = (Map<String, Object>) nq.getFilterMap().get("$set");
+        if (rawSetFields == null) {
+            rawSetFields = nq.getUpdateMap();
         }
-        if (setFields == null || setFields.isEmpty()) {
+        if (rawSetFields == null || rawSetFields.isEmpty()) {
             return Optional.of(0);
         }
+        Map<String, Object> setFields = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : rawSetFields.entrySet()) {
+            setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
+        }
+
+        Filter filter;
+        if (nq.getCompiledFilter() != null) {
+            filter = nq.getCompiledFilter().bind(jsonParams, namedParameters);
+        } else {
+            filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
+        }
+
         Document updateDoc = Document.createDocument();
-        for (Map.Entry<String, Object> entry : setFields.entrySet()) {
-            updateDoc.put(entry.getKey(), entry.getValue());
+        setFields.forEach(updateDoc::put);
+        if (isOptimisticLocking(q)) {
+            applyVersionIncrement(updateDoc, entityFactory.apply(nq.getRootEntity()), namedParameters);
         }
         Filter finalFilter = filter != null ? filter : nq.getNitriteFilter();
         helper.logUpdate(collectionFactory.apply(nq.getRootEntity()).getName(), finalFilter, updateDoc);
-        return Optional.of(collectionFactory.apply(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount());
+        long count = collectionFactory.apply(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
+        if (count == 0 && finalFilter != Filter.ALL && isOptimisticLocking(q)) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
+        }
+        return Optional.of(count);
+    }
+
+    public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
+        helper.logDelete(collectionFactory.apply(nq.getRootEntity()).getName(), nq.getNitriteFilter());
+        long count = collectionFactory.apply(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount();
+        if (count == 0 && nq.getNitriteFilter() != Filter.ALL && isOptimisticLocking(q)) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
+        }
+        return Optional.of(count);
+    }
+
+    public long count(@NonNull PreparedQuery<?, ?> q, NitritePreparedQuery<?, ?> nq) {
+        return collectionFactory.apply(nq.getRootEntity()).find(nq.getNitriteFilter()).size();
+    }
+
+    boolean isOptimisticLocking(@NonNull PreparedQuery<?, ?> q) {
+        if (q.getArguments() != null && Arrays.stream(q.getArguments()).anyMatch(arg -> arg.getAnnotationMetadata().hasAnnotation(Version.class))) {
+            return true;
+        }
+        String methodName = q.getName();
+        if (methodName.contains("AndVersion") || methodName.contains("ByVersion")) {
+            return true;
+        }
+        return q.getQuery().toLowerCase().contains("version");
+    }
+
+    private void applyVersionIncrement(Document updateDoc, RuntimePersistentEntity<?> entity, Map<String, Object> namedParameters) {
+        RuntimePersistentProperty<?> versionProp = entity.getVersion();
+        String vPersistedName = versionProp.getPersistedName();
+        Object currentValInUpdate = updateDoc.get(vPersistedName);
+        if (currentValInUpdate == null) {
+            Object currentVersion = namedParameters.get(entity.getVersion().getName());
+            if (currentVersion == null) {
+                currentVersion = namedParameters.get(vPersistedName);
+            }
+            if (currentVersion instanceof Number n) {
+                updateDoc.put(vPersistedName, n.longValue() + 1);
+            }
+        }
     }
 
     /**

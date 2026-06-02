@@ -94,6 +94,14 @@ public interface NitriteOperationsHelper {
     void logFind(String collection, Filter filter);
 
     /**
+     * Logs a delete operation.
+     *
+     * @param collection the collection name
+     * @param filter the delete filter
+     */
+    void logDelete(String collection, Filter filter);
+
+    /**
      * Parses a sort from a JSON query.
      *
      * @param queryString the JSON query string

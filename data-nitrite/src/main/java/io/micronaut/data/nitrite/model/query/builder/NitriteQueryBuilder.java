@@ -110,7 +110,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 order -> {
                     io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath =
                         CriteriaUtils.requireProperty(order.getExpression());
-                    String fieldName = NitritePredicateVisitor.getFieldName(propertyPath.getPropertyPath());
+                    String fieldName = NitriteFieldNameResolver.getFieldName(propertyPath.getPropertyPath());
                     sortObj.put(fieldName, order.isAscending() ? 1 : -1);
                 });
         }
@@ -139,7 +139,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             if (query.limit() != -1) {
                 pipeline.add(Map.of("$limit", query.limit()));
             }
-            String queryString = NitritePredicateVisitor.toJsonString(pipeline);
+            String queryString = NitriteQuerySerializer.toJsonString(pipeline);
             return QueryResult.of(queryString, Collections.emptyList(), queryState.getParameterBindings());
         }
 
@@ -157,7 +157,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             topLevel.put("$limit", query.limit());
         }
 
-        String queryString = topLevel.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(topLevel);
+        String queryString = topLevel.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(topLevel);
         return QueryResult.of(
             queryString, Collections.emptyList(), queryState.getParameterBindings());
     }
@@ -193,8 +193,8 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             }
         }
 
-        String predicateString = predicateObj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(predicateObj);
-        String updateString = setObj.isEmpty() ? null : NitritePredicateVisitor.toJsonString(Collections.singletonMap("$set", setObj));
+        String predicateString = predicateObj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(predicateObj);
+        String updateString = setObj.isEmpty() ? null : NitriteQuerySerializer.toJsonString(Collections.singletonMap("$set", setObj));
         List<QueryParameterBinding> parameterBindings = queryState.getParameterBindings();
         return new QueryResult() {
             @Override
@@ -219,7 +219,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClauseFromCriteria(predicate, queryState);
         }
         String queryString =
-            predicateObj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(predicateObj);
+            predicateObj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(predicateObj);
         return QueryResult.of(
             queryString,
             Collections.emptyList(),
@@ -236,7 +236,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         if (limit > 0) {
             obj.put("$limit", (int) limit);
         }
-        return obj.isEmpty() ? "{}" : NitritePredicateVisitor.toJsonString(obj);
+        return obj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(obj);
     }
 
     private Map<String, Object> buildWhereClauseFromCriteria(

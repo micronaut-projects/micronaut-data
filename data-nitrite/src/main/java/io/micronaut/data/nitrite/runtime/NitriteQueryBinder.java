@@ -16,15 +16,25 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.collection.Document;
 
+import java.time.temporal.Temporal;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -35,7 +45,13 @@ import java.util.function.Function;
 @Internal
 final class NitriteQueryBinder {
 
-    private NitriteQueryBinder() {}
+    private final NitriteEntityMapper entityMapper;
+    private final Nitrite database;
+
+    NitriteQueryBinder(NitriteEntityMapper entityMapper, Nitrite database) {
+        this.entityMapper = entityMapper;
+        this.database = database;
+    }
 
     /**
      * Extracts the numeric placeholder index from a {@code "$mn_qp:N"} string or
@@ -170,5 +186,153 @@ final class NitriteQueryBinder {
             }
         }
         return result;
+    }
+
+    // ─── Instance methods: PreparedQuery parameter resolution ─────────────────────
+
+    Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q) {
+        Object[] methodParams = q.getParameterArray();
+        List<QueryParameterBinding> bindings = q.getQueryBindings();
+        if (bindings == null || bindings.isEmpty()) {
+            return methodParams;
+        }
+        Object[] values = new Object[bindings.size()];
+        for (int i = 0; i < bindings.size(); i++) {
+            values[i] = resolveJsonBindingValue(bindings.get(i), methodParams);
+        }
+        return values;
+    }
+
+    Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
+                                       @NonNull Object[] methodParams,
+                                       @Nullable Object[] jsonParams) {
+        return NitriteQueryBinder.ensureJsonParamsForFilter(
+            filterMap, jsonParams, out -> fillMissingParamsFromFilter(filterMap, methodParams, out));
+    }
+
+    private Object resolveJsonBindingValue(@NonNull QueryParameterBinding binding, @Nullable Object[] methodParams) {
+        Object bindingValue = binding.getValue();
+        if (bindingValue != null && !(bindingValue instanceof BindingParameter)) {
+            return toFilterValue(bindingValue);
+        }
+        int idx = binding.getParameterIndex();
+        Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
+        String[] parameterBindingPath = binding.getParameterBindingPath();
+        String[] path = parameterBindingPath != null ? parameterBindingPath : binding.getPropertyPath();
+        if (path == null || path.length == 0 || isDirectBindableScalar(base)
+                || base instanceof Collection || (base != null && base.getClass().isArray())) {
+            return toFilterValue(base);
+        }
+        Object current = base;
+        for (String segment : path) {
+            if (current == null) break;
+            current = readSegmentValue(current, segment);
+        }
+        return toFilterValue(current);
+    }
+
+    private static boolean isDirectBindableScalar(@Nullable Object value) {
+        return switch (value) {
+            case CharSequence ignored -> true;
+            case Number ignored -> true;
+            case Boolean ignored -> true;
+            case Character ignored -> true;
+            case Enum<?> ignored -> true;
+            case UUID ignored -> true;
+            case Temporal ignored -> true;
+            case Date ignored -> true;
+            case null, default -> false;
+        };
+    }
+
+    private void fillMissingParamsFromFilter(Map<String, Object> filterMap, Object[] methodParams, Object[] out) {
+        for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
+            Object value = entry.getValue();
+            if (("$and".equals(entry.getKey()) || "$or".equals(entry.getKey())) && value instanceof List<?> list) {
+                for (Object item : list) {
+                    if (item instanceof Map<?, ?> im) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> sub = (Map<String, Object>) im;
+                        fillMissingParamsFromFilter(sub, methodParams, out);
+                    }
+                }
+                continue;
+            }
+            if (value instanceof Map<?, ?> ops) {
+                for (Object opVal : ops.values()) {
+                    Integer idx = extractPlaceholderIndex(opVal);
+                    if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
+                        out[idx] = extractPropertyFromSingleArg(methodParams, entry.getKey());
+                    } else if (opVal instanceof Map<?, ?> nestedMap) {
+                        for (Object nestedVal : nestedMap.values()) {
+                            Integer nestedIdx = extractPlaceholderIndex(nestedVal);
+                            if (nestedIdx != null && nestedIdx >= 0 && nestedIdx < out.length && out[nestedIdx] == null
+                                    && methodParams != null && nestedIdx < methodParams.length) {
+                                out[nestedIdx] = toFilterValue(methodParams[nestedIdx]);
+                            }
+                        }
+                    }
+                }
+            } else {
+                Integer idx = extractPlaceholderIndex(value);
+                if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
+                    out[idx] = extractPropertyFromSingleArg(methodParams, entry.getKey());
+                }
+            }
+        }
+    }
+
+    private Object extractPropertyFromSingleArg(@Nullable Object[] methodParams, String property) {
+        if (methodParams == null || methodParams.length != 1 || methodParams[0] == null) {
+            return null;
+        }
+        Object arg = methodParams[0];
+        if ("id".equals(property) || "_id".equals(property)) {
+            return entityMapper.toNitriteFilterValue(arg);
+        }
+        String[] parts = property.split("\\.");
+        for (int start = 0; start < parts.length; start++) {
+            Object current = arg;
+            for (int i = start; i < parts.length; i++) {
+                current = readSegmentValue(current, parts[i]);
+                if (current == null) break;
+            }
+            if (current != null) {
+                return entityMapper.toNitriteFilterValue(current);
+            }
+        }
+        return entityMapper.toNitriteFilterValue(arg);
+    }
+
+    @Nullable
+    private Object readSegmentValue(@Nullable Object current, String segment) {
+        if (current == null) return null;
+        String alt = NameUtils.snakeToCamel(segment);
+        return switch (current) {
+            case Document d -> {
+                Object v = d.get(segment);
+                yield v != null || segment.equals(alt) ? v : d.get(alt);
+            }
+            case Map<?, ?> m -> {
+                Object v = m.get(segment);
+                yield v != null || segment.equals(alt) ? v : m.get(alt);
+            }
+            default -> tryConvertAndRead(current, segment, alt);
+        };
+    }
+
+    @Nullable
+    private Object tryConvertAndRead(Object current, String segment, String alt) {
+        try {
+            Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(current, Document.class);
+            Object v = doc.get(segment);
+            return v != null || segment.equals(alt) ? v : doc.get(alt);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Object toFilterValue(Object value) {
+        return entityMapper.toFilterValue(value);
     }
 }

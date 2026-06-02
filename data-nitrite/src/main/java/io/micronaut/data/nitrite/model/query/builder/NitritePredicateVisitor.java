@@ -16,8 +16,6 @@
 package io.micronaut.data.nitrite.model.query.builder;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -699,96 +697,11 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     // -------------------------------------------------------------------------
-    // Static utility methods (also used by NitriteQueryBuilder2)
+    // Static utility methods (also used by NitriteQueryBuilder)
     // -------------------------------------------------------------------------
 
     static String getFieldName(final PersistentPropertyPath propertyPath) {
-        String result = getFieldNameInternal(propertyPath);
-        LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
-        return result;
-    }
-
-    private static String getFieldNameInternal(final PersistentPropertyPath propertyPath) {
-        PersistentProperty property = propertyPath.getProperty();
-        PersistentEntity owner = property.getOwner();
-        PersistentProperty identity;
-        try {
-            identity = owner.getIdentity();
-        } catch (IllegalStateException e) {
-            identity = null;
-        }
-        if (identity != null && identity.equals(property) && propertyPath.getAssociations().isEmpty()) {
-            return ID_FIELD;
-        }
-
-        if (propertyPath.getAssociations().isEmpty()) {
-            return property.getPersistedName();
-        }
-
-        StringBuilder sb = new StringBuilder();
-        boolean inIdentityPath = false;
-        for (Association association : propertyPath.getAssociations()) {
-            if (association.isEmbedded()) {
-                boolean isIdentityAssoc = false;
-                try {
-                    PersistentProperty ownerIdentity = association.getOwner().getIdentity();
-                    isIdentityAssoc = ownerIdentity.equals(association);
-                } catch (IllegalStateException ignored) {
-                }
-                String segment = isIdentityAssoc ? "_id" : association.getPersistedName();
-                sb.append(segment).append(".");
-                if (isIdentityAssoc) {
-                    inIdentityPath = true;
-                }
-            } else {
-                if (inIdentityPath) {
-                    // Inside a composite identity, associated entities are stored inline — traverse fully.
-                    boolean isAssocIdentity = false;
-                    try {
-                        PersistentProperty assocOwnerIdentity = association.getOwner().getIdentity();
-                        isAssocIdentity = assocOwnerIdentity.equals(association);
-                    } catch (IllegalStateException ignored) {
-                    }
-                    // Use explicit @MappedProperty value if set; otherwise use Java property name.
-                    String embeddedName;
-                    if (isAssocIdentity) {
-                        embeddedName = "_id";
-                    } else if (association.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()) {
-                        embeddedName = association.getPersistedName();
-                    } else {
-                        embeddedName = association.getName();
-                    }
-                    sb.append(embeddedName).append(".");
-                } else if (association.getKind() == Relation.Kind.ONE_TO_MANY || association.getKind() == Relation.Kind.MANY_TO_MANY) {
-                    sb.append(association.getPersistedName()).append(".");
-                } else {
-                    // MANY_TO_ONE/ONE_TO_ONE: if accessing the associated entity's identity → FK field.
-                    // If accessing any other field (join context) → use property name as join alias.
-                    List<Association> assocs = propertyPath.getAssociations();
-                    boolean isLast = association == assocs.get(assocs.size() - 1);
-                    boolean isIdentityAccess = false;
-                    if (isLast) {
-                        try { isIdentityAccess = association.getAssociatedEntity().getIdentity().equals(property); } catch (Exception ignored) {}
-                    }
-                    if (isLast && isIdentityAccess) {
-                        return association.getPersistedName();
-                    }
-                    sb.append(association.getName()).append(".");
-                }
-            }
-        }
-        if (inIdentityPath) {
-            boolean isPropertyIdentity = false;
-            try {
-                PersistentProperty ownerIdentity = property.getOwner().getIdentity();
-                isPropertyIdentity = ownerIdentity.equals(property);
-            } catch (IllegalStateException ignored) {
-            }
-            sb.append(isPropertyIdentity ? "_id" : property.getPersistedName());
-        } else {
-            sb.append(property.getPersistedName());
-        }
-        return sb.toString();
+        return NitriteFieldNameResolver.getFieldName(propertyPath);
     }
 
     static BindingParameter.BindingContext newBindingContext(
@@ -804,83 +717,18 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     static String toJsonString(final Object obj) {
-        switch (obj) {
-            case null -> {
-                return "null";
-            }
-            case Map<?, ?> map -> {
-                StringBuilder sb = new StringBuilder("{");
-                boolean first = true;
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    Object val = entry.getValue();
-                    if (val instanceof Collection<?> c && c.isEmpty()) continue;
-                    if (!first) {
-                        sb.append(",");
-                    }
-                    first = false;
-                    String k = entry.getKey().toString();
-                    sb.append(needsQuoting(k) ? "'" + k + "'" : k).append(":");
-                    sb.append(toJsonString(val));
-                }
-                sb.append("}");
-                return sb.toString();
-            }
-            case Collection<?> coll -> {
-                StringBuilder sb = new StringBuilder("[");
-                boolean first = true;
-                for (Object item : coll) {
-                    if (!first) {
-                        sb.append(",");
-                    }
-                    first = false;
-                    sb.append(toJsonString(item));
-                }
-                sb.append("]");
-                return sb.toString();
-            }
-            case String str -> {
-                return "'" + str.replace("'", "\\'") + "'";
-            }
-            case Boolean b -> {
-                return b.toString();
-            }
-            case Number _ -> {
-                return obj.toString();
-            }
-            default -> {
-            }
-        }
-        return "'" + obj.toString().replace("'", "\\'") + "'";
-    }
-
-    private static boolean needsQuoting(final String key) {
-        for (char c : key.toCharArray()) {
-            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {
-                return true;
-            }
-        }
-        return false;
+        return NitriteQuerySerializer.toJsonString(obj);
     }
 
     static String asPath(
         final Collection<Association> associations, final PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return property.getPersistedName();
-        }
-        StringBuilder sb = new StringBuilder();
-        for (Association association : associations) {
-            sb.append(association.getPersistedName()).append(".");
-        }
-        sb.append(property.getPersistedName());
-        return sb.toString();
+        return NitriteFieldNameResolver.asPath(associations, property);
     }
 
     static String convertLikeToRegex(final String likePattern) {
         // We do NOT escape standard regex characters because legacy tests (and likely users)
         // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
         // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
-        return likePattern
-            .replace("%", ".*")
-            .replace("_", ".");
+        return NitriteQuerySerializer.convertLikeToRegex(likePattern);
     }
 }

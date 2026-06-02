@@ -16,6 +16,9 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -100,6 +103,57 @@ public final class NitriteQueryParser {
     public boolean hasProjection(String jsonQuery) {
         return extractProjectionField(jsonQuery) != null;
     }
+
+    /**
+     * Parses a stored query's JSON string and the optional {@code @Query(update=...)} annotation
+     * into filter and update maps. The caller is responsible for compiling the filter.
+     *
+     * @param storedQuery the stored query
+     * @return parsed filter and update maps
+     */
+    public ParsedJsonQuery parseStoredQuery(StoredQuery<?, ?> storedQuery) {
+        Map<String, Object> filterMap = null;
+        Map<String, Object> updateMap = null;
+        String query = storedQuery.getQuery();
+        String trimmedQuery = query.trim();
+        if (trimmedQuery.startsWith("{") || trimmedQuery.startsWith("[")) {
+            try {
+                Object parsed = parseJson(query);
+                filterMap = new LinkedHashMap<>(extractFilterMap(parsed));
+                if (parsed instanceof Map<?, ?> m) {
+                    filterMap.remove("$project");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> setMap = m.get("$set") instanceof Map<?, ?> s ? (Map<String, Object>) s : null;
+                    updateMap = setMap != null ? new LinkedHashMap<>(setMap) : parseUpdateAnnotation(storedQuery);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return new ParsedJsonQuery(filterMap, updateMap);
+    }
+
+    private @Nullable Map<String, Object> parseUpdateAnnotation(StoredQuery<?, ?> storedQuery) {
+        try {
+            String updateStr = storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null);
+            if (updateStr == null || updateStr.isBlank()) {
+                return null;
+            }
+            Object parsed = parseJson(updateStr);
+            if (parsed instanceof Map<?, ?> m && m.get("$set") instanceof Map<?, ?> s) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> setMap = (Map<String, Object>) s;
+                return new LinkedHashMap<>(setMap);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    /** Holds the filter and update maps parsed from a stored query's JSON. */
+    public record ParsedJsonQuery(
+        @Nullable Map<String, Object> filterMap,
+        @Nullable Map<String, Object> updateMap
+    ) {}
 
     // ─── Private recursive-descent parser ────────────────────────────────────────
 
