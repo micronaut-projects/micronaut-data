@@ -462,11 +462,14 @@ abstract class AbstractGeoSpec extends Specification {
                 orderLocation,
                 5_000d
         )
+        List<String> names = candidates.stream()
+                .map(DeliveryDriverJson::name)
+                .toList()
 
         then:
-        candidates.size() == 2
-        candidates.contains(nearby)
-        candidates.contains(closest)
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 
     void "test findByLocationNear when geographic coordinate reference system and wkt conversion used"() {
@@ -485,11 +488,14 @@ abstract class AbstractGeoSpec extends Specification {
                 orderLocation,
                 5_000d
         )
+        List<String> names = candidates.stream()
+                .map(DeliveryDriverWkt::name)
+                .toList()
 
         then:
-        candidates.size() == 2
-        candidates.contains(nearby)
-        candidates.contains(closest)
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 
     protected boolean supportsGeometryJsonConversion() {
