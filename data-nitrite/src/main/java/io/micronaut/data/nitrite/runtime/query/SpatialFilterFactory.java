@@ -43,85 +43,86 @@ final class SpatialFilterFactory {
     }
 
     Filter buildNearFilter(String field, Object value, Object[] params, Map<String, Object> namedParameters) {
-        if (value instanceof Map<?, ?> m) {
-            Object center = entityMapper.toNitriteFilterValue(
-                valueResolver.preConvertForFilter(valueResolver.resolveValue(m.get("center"), params, namedParameters)));
-            Object distanceObj = valueResolver.resolveValue(m.get("distance"), params, namedParameters);
-            double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
+        if (!(value instanceof Map<?, ?> m)) {
+            return Filter.ALL;
+        }
+        if (!ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
+            throw new DataAccessException("Spatial filters require nitrite-spatial on the classpath. Add the nitrite-spatial dependency to use $near.");
+        }
+        Object center = entityMapper.toNitriteFilterValue(
+            valueResolver.preConvertForFilter(valueResolver.resolveValue(m.get("center"), params, namedParameters)));
+        Object distanceObj = valueResolver.resolveValue(m.get("distance"), params, namedParameters);
+        double distance = distanceObj instanceof Number n ? n.doubleValue() : 0.0;
+        try {
+            Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
+            Object sff = spatialClass.getMethod("where", String.class).invoke(null, field);
 
-            if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
-                try {
-                    Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
-                    Object sff = spatialClass.getMethod("where", String.class).invoke(null, field);
-
-                    if (center != null && ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
-                        Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
-                        if (geoPointClass.isInstance(center)) {
-                            Object point = geoPointClass.getMethod("getPoint").invoke(center);
-                            return (Filter) sff.getClass().getMethod("near", Class.forName(JTS_POINT_CLASS), Double.class).invoke(sff, point, distance);
-                        }
-                    }
-                    if (center != null && ClassUtils.isPresent(JTS_POINT_CLASS, null)) {
-                        Class<?> pointClass = Class.forName(JTS_POINT_CLASS);
-                        if (pointClass.isInstance(center)) {
-                            return (Filter) sff.getClass().getMethod("near", pointClass, Double.class).invoke(sff, center, distance);
-                        }
-                    }
-                    if (center != null && ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
-                        Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
-                        if (geometryClass.isInstance(center)) {
-                            Object coord = geometryClass.getMethod("getCoordinate").invoke(center);
-                            if (coord != null) {
-                                return (Filter) sff.getClass().getMethod("near", Class.forName(JTS_COORDINATE_CLASS), Double.class).invoke(sff, coord, distance);
-                            }
-                        }
-                    }
-                    if (center != null && ClassUtils.isPresent(JTS_COORDINATE_CLASS, null)) {
-                        Class<?> coordClass = Class.forName(JTS_COORDINATE_CLASS);
-                        if (coordClass.isInstance(center)) {
-                            return (Filter) sff.getClass().getMethod("near", coordClass, Double.class).invoke(sff, center, distance);
-                        }
-                    }
-                    if (center != null) {
-                        throw new DataAccessException("Unsupported center type for $near spatial filter: " + center.getClass().getName());
-                    }
-                } catch (DataAccessException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new DataAccessException("Failed to create $near spatial filter on field '" + field + "': " + e.getMessage(), e);
+            if (center != null && ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
+                Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
+                if (geoPointClass.isInstance(center)) {
+                    Object point = geoPointClass.getMethod("getPoint").invoke(center);
+                    return (Filter) sff.getClass().getMethod("near", Class.forName(JTS_POINT_CLASS), Double.class).invoke(sff, point, distance);
                 }
             }
+            if (center != null && ClassUtils.isPresent(JTS_POINT_CLASS, null)) {
+                Class<?> pointClass = Class.forName(JTS_POINT_CLASS);
+                if (pointClass.isInstance(center)) {
+                    return (Filter) sff.getClass().getMethod("near", pointClass, Double.class).invoke(sff, center, distance);
+                }
+            }
+            if (center != null && ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
+                Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
+                if (geometryClass.isInstance(center)) {
+                    Object coord = geometryClass.getMethod("getCoordinate").invoke(center);
+                    if (coord != null) {
+                        return (Filter) sff.getClass().getMethod("near", Class.forName(JTS_COORDINATE_CLASS), Double.class).invoke(sff, coord, distance);
+                    }
+                }
+            }
+            if (center != null && ClassUtils.isPresent(JTS_COORDINATE_CLASS, null)) {
+                Class<?> coordClass = Class.forName(JTS_COORDINATE_CLASS);
+                if (coordClass.isInstance(center)) {
+                    return (Filter) sff.getClass().getMethod("near", coordClass, Double.class).invoke(sff, center, distance);
+                }
+            }
+            if (center != null) {
+                throw new DataAccessException("Unsupported center type for $near spatial filter: " + center.getClass().getName());
+            }
+        } catch (DataAccessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to create $near spatial filter on field '" + field + "': " + e.getMessage(), e);
         }
         return Filter.ALL;
     }
 
     Filter createSpatialFilter(String field, Object geometry, String method) {
         if (geometry == null) return Filter.ALL;
-        if (ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
-            try {
-                Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
-                Object sff = spatialClass.getMethod("where", String.class).invoke(null, field);
-
-                if (ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
-                    Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
-                    if (geoPointClass.isInstance(geometry)) {
-                        Object point = geoPointClass.getMethod("getPoint").invoke(geometry);
-                        return (Filter) sff.getClass().getMethod(method, Class.forName(JTS_POINT_CLASS)).invoke(sff, point);
-                    }
-                }
-                if (ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
-                    Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
-                    if (geometryClass.isInstance(geometry)) {
-                        return (Filter) sff.getClass().getMethod(method, geometryClass).invoke(sff, geometry);
-                    }
-                }
-                throw new DataAccessException("Unsupported geometry type for $" + method + " spatial filter: " + geometry.getClass().getName());
-            } catch (DataAccessException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new DataAccessException("Failed to create $" + method + " spatial filter on field '" + field + "': " + e.getMessage(), e);
-            }
+        if (!ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
+            throw new DataAccessException("Spatial filters require nitrite-spatial on the classpath. Add the nitrite-spatial dependency to use $" + method + ".");
         }
-        return Filter.ALL;
+        try {
+            Class<?> spatialClass = Class.forName(SPATIAL_FLUENT_FILTER_CLASS);
+            Object sff = spatialClass.getMethod("where", String.class).invoke(null, field);
+
+            if (ClassUtils.isPresent(GEO_POINT_CLASS, null)) {
+                Class<?> geoPointClass = Class.forName(GEO_POINT_CLASS);
+                if (geoPointClass.isInstance(geometry)) {
+                    Object point = geoPointClass.getMethod("getPoint").invoke(geometry);
+                    return (Filter) sff.getClass().getMethod(method, Class.forName(JTS_POINT_CLASS)).invoke(sff, point);
+                }
+            }
+            if (ClassUtils.isPresent(JTS_GEOMETRY_CLASS, null)) {
+                Class<?> geometryClass = Class.forName(JTS_GEOMETRY_CLASS);
+                if (geometryClass.isInstance(geometry)) {
+                    return (Filter) sff.getClass().getMethod(method, geometryClass).invoke(sff, geometry);
+                }
+            }
+            throw new DataAccessException("Unsupported geometry type for $" + method + " spatial filter: " + geometry.getClass().getName());
+        } catch (DataAccessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to create $" + method + " spatial filter on field '" + field + "': " + e.getMessage(), e);
+        }
     }
 }

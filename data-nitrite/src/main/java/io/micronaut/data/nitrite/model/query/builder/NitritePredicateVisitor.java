@@ -382,6 +382,40 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     }
 
     @Override
+    public void visitGeoWithin(final Expression<?> leftExpression, final Expression<?> expression) {
+        PersistentPropertyPath propertyPath =
+            CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+        String fieldName = getFieldName(propertyPath);
+        Object geoValue = valueRepresentation(queryState, propertyPath, expression);
+        query.put(fieldName, Collections.singletonMap("$within", geoValue));
+    }
+
+    @Override
+    public void visitGeoIntersects(final Expression<?> leftExpression, final Expression<?> expression) {
+        PersistentPropertyPath propertyPath =
+            CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+        String fieldName = getFieldName(propertyPath);
+        Object geoValue = valueRepresentation(queryState, propertyPath, expression);
+        query.put(fieldName, Collections.singletonMap("$intersects", geoValue));
+    }
+
+    @Override
+    public void visitNear(
+        final Expression<?> leftExpression,
+        final Expression<?> geometryExpression,
+        final Expression<? extends Number> distanceExpression) {
+        PersistentPropertyPath propertyPath =
+            CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+        String fieldName = getFieldName(propertyPath);
+        Object geoValue = valueRepresentation(queryState, propertyPath, geometryExpression);
+        Object distValue = valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression);
+        Map<String, Object> nearMap = new LinkedHashMap<>();
+        nearMap.put("center", geoValue);
+        nearMap.put("distance", distValue);
+        query.put(fieldName, Collections.singletonMap("$near", nearMap));
+    }
+
+    @Override
     public void visitArrayContains(
         final Expression<?> leftExpression, final Expression<?> expression) {
         PersistentPropertyPath propertyPath =

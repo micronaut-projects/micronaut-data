@@ -74,13 +74,10 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.temporal.Temporal;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -747,6 +744,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
           Integer idx = NitriteQueryBinder.extractPlaceholderIndex(opVal);
           if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
             out[idx] = extractPropertyFromSingleArg(methodParams, entry.getKey());
+          } else if (opVal instanceof Map<?, ?> nestedMap) {
+            // handles $near: {center: {$mn_qp:0}, distance: {$mn_qp:1}}
+            for (Object nestedVal : nestedMap.values()) {
+              Integer nestedIdx = NitriteQueryBinder.extractPlaceholderIndex(nestedVal);
+              if (nestedIdx != null && nestedIdx >= 0 && nestedIdx < out.length && out[nestedIdx] == null
+                  && methodParams != null && nestedIdx < methodParams.length) {
+                out[nestedIdx] = toFilterValue(methodParams[nestedIdx]);
+              }
+            }
           }
         }
       } else {

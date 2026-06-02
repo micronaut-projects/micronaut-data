@@ -5,6 +5,7 @@ import io.micronaut.data.nitrite.model.IndexedBook
 import io.micronaut.data.nitrite.repository.IndexedBookRepository
 import org.dizitart.no2.Nitrite
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import spock.lang.Specification
 
@@ -33,6 +34,9 @@ class NitriteIndexSpec extends Specification {
 
         then: "Books should be saved"
         repository.findAll().size() == 2
+
+        and: "GEOMETRY strategy preserves the Geometry object — not serialized to a Map or String"
+        repository.findAll().every { it.location == null || it.location instanceof Geometry }
 
         and: "Indexes should be present in the collection"
         def collection = db.getCollection("IndexedBook")
@@ -81,6 +85,29 @@ class NitriteIndexSpec extends Specification {
         def intersectsResults = repository.findByLocationIntersects(intersectingLine)
         intersectsResults.size() == 1
         intersectsResults[0].title == "The Stand"
+
+        and: "Compound index works - test queries that use the compound index"
+        // Add more books to test compound index queries
+        def book3 = new IndexedBook("The Stand", 800, "Another version of the same book", maine) // Same title, different pages
+        def book4 = new IndexedBook("Different Title", 1000, "Different book", colorado) // Different title, same pages as book1
+        repository.save(book3)
+        repository.save(book4)
+
+        // Test compound index: find by title AND pages combination
+        def compoundResults = repository.findByTitleAndPages("The Stand", 1000)
+        compoundResults.size() == 1
+        compoundResults[0].title == "The Stand"
+        compoundResults[0].pages == 1000
+
+        // Test compound index: find by title AND pages for different combination
+        def compoundResults2 = repository.findByTitleAndPages("The Stand", 800)
+        compoundResults2.size() == 1
+        compoundResults2[0].title == "The Stand"
+        compoundResults2[0].pages == 800
+
+        // Test compound index: find by title AND pages with no match
+        def compoundResults3 = repository.findByTitleAndPages("Nonexistent", 999)
+        compoundResults3.size() == 0
 
         cleanup:
         ctx.close()

@@ -120,9 +120,18 @@ final class NitriteQueryBinder {
         int max = -1;
         for (Object value : filterMap.values()) {
             if (value instanceof Map<?, ?> m) {
-                for (Object opVal : m.values()) {
+                for (Map.Entry<?, ?> opEntry : m.entrySet()) {
+                    Object opVal = opEntry.getValue();
                     Integer idx = extractPlaceholderIndex(opVal);
-                    if (idx != null) max = Math.max(max, idx);
+                    if (idx != null) {
+                        max = Math.max(max, idx);
+                    } else if (opVal instanceof Map<?, ?> nestedMap) {
+                        // handles $near: {center: {$mn_qp:0}, distance: {$mn_qp:1}}
+                        for (Object nestedVal : nestedMap.values()) {
+                            idx = extractPlaceholderIndex(nestedVal);
+                            if (idx != null) max = Math.max(max, idx);
+                        }
+                    }
                 }
             } else {
                 Integer idx = extractPlaceholderIndex(value);
