@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.runtime.write;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
@@ -23,6 +23,7 @@ import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;

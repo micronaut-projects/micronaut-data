@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.nitrite.runtime.NameUtils;
 import org.dizitart.no2.collection.Document;
 
 import java.time.LocalDate;

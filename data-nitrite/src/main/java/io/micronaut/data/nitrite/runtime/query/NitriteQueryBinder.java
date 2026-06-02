@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -22,7 +22,10 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.nitrite.runtime.DefaultNitriteRepositoryOperations;
+import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.read.NitriteQueryExecutor;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
 
@@ -44,12 +47,12 @@ import java.util.function.Function;
  * {@link DefaultNitriteRepositoryOperations} and {@link NitriteQueryExecutor}.
  */
 @Internal
-final class NitriteQueryBinder {
+public final class NitriteQueryBinder {
 
     private final NitriteEntityMapper entityMapper;
     private final Nitrite database;
 
-    NitriteQueryBinder(NitriteEntityMapper entityMapper, Nitrite database) {
+    public NitriteQueryBinder(NitriteEntityMapper entityMapper, Nitrite database) {
         this.entityMapper = entityMapper;
         this.database = database;
     }
@@ -58,7 +61,7 @@ final class NitriteQueryBinder {
      * Extracts the numeric placeholder index from a {@code "$mn_qp:N"} string or
      * a {@code {"$mn_qp": N}} map. Returns {@code null} if the value is not a placeholder.
      */
-    static Integer extractPlaceholderIndex(Object value) {
+    public static Integer extractPlaceholderIndex(Object value) {
         if (value instanceof String s && s.startsWith("$mn_qp:")) {
             try {
                 return Integer.parseInt(s.substring(7));
@@ -77,7 +80,7 @@ final class NitriteQueryBinder {
      * {@code toFilterValue}. Returns the value unchanged if it is not a placeholder.
      */
     @SuppressWarnings({"rawtypes"})
-    static Object resolveParameterValue(Object value, Object[] jsonParams,
+    public static Object resolveParameterValue(Object value, Object[] jsonParams,
                                         Map<String, Object> namedParameters,
                                         Function<Object, Object> toFilterValue) {
         if (value instanceof String s) {
@@ -163,7 +166,7 @@ final class NitriteQueryBinder {
      * Builds a named-parameter map from query bindings and method argument names.
      * Values are converted via {@code toFilterValue} before being stored.
      */
-    static Map<String, Object> buildNamedParameterValues(PreparedQuery<?, ?> q,
+    public static Map<String, Object> buildNamedParameterValues(PreparedQuery<?, ?> q,
                                                           Function<Object, Object> toFilterValue) {
         Object[] params = q.getParameterArray();
         if (params == null || params.length == 0) {
@@ -192,7 +195,7 @@ final class NitriteQueryBinder {
 
     // ─── Instance methods: PreparedQuery parameter resolution ─────────────────────
 
-    Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q) {
+    public Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q) {
         return buildJsonParameterValues(q, this::toFilterValue, this::readSegmentValue);
     }
 
@@ -204,7 +207,7 @@ final class NitriteQueryBinder {
      * @param readSegmentValue the segment reader function (optional)
      * @return the array of JSON parameter values
      */
-    static Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q,
+    public static Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q,
                                               @NonNull Function<Object, Object> toFilterValue,
                                               @Nullable BiFunction<Object, String, Object> readSegmentValue) {
         Object[] methodParams = q.getParameterArray();
@@ -215,7 +218,7 @@ final class NitriteQueryBinder {
         return bindings.stream().map(binding -> resolveJsonBindingValue(binding, methodParams, toFilterValue, readSegmentValue)).toArray();
     }
 
-    Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
+    public Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
                                        @NonNull Object[] methodParams,
                                        @Nullable Object[] jsonParams) {
         return NitriteQueryBinder.ensureJsonParamsForFilter(

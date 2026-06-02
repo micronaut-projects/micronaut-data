@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import org.dizitart.no2.collection.Document;
