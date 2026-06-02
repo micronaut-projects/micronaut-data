@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
+import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
@@ -71,16 +72,17 @@ final class AssociationFilterResolver {
 
         if (!operators.containsKey("$eq")) return null;
 
-        RuntimePersistentProperty<?> directProp = entity.getPropertyByName(field);
-        if (directProp != null && !(directProp instanceof RuntimeAssociation<?>)) return null;
-
         Object value = valueResolver.resolveValue(operators.get("$eq"), params, namedParameters);
         if (value == null) return null;
 
-        AssociationMatch match = findAssociation(entity, field);
-        if (match == null) return null;
+        PathResolution resolution = PathResolver.resolve(entity, field);
+        if (!resolution.isReference()) return null;
+        if (resolution.chain().isEmpty()) return null;
 
-        RuntimePersistentProperty<?> assocIdentity = match.association().getAssociatedEntity().getIdentity();
+        RuntimeAssociation<?> headAssoc = resolution.chain().get(0);
+        Relation.Kind kind = headAssoc.getKind();
+
+        RuntimePersistentProperty<?> assocIdentity = headAssoc.getAssociatedEntity().getIdentity();
         boolean useSubQuery = false;
         if (value instanceof String strValue) {
             if (assocIdentity.getType() == java.util.UUID.class) {
@@ -89,45 +91,23 @@ final class AssociationFilterResolver {
                 useSubQuery = strValue.contains(" ");
             }
         }
-        if (!useSubQuery || subQueryExecutor == null) return null;
 
-        if (match.isReverseLookup()) {
-            return buildReverseLookupFilter(entity, match.association(), match.targetField(), value, params, namedParameters);
-        } else {
-            return buildForwardLookupFilter(field, match.association(), value, params, namedParameters);
+        if (kind == Relation.Kind.MANY_TO_ONE) {
+            // Dotted MANY_TO_ONE paths (e.g. "author.name") go through buildNestedFilter.
+            if (field.contains(".")) return null;
+            if (!useSubQuery || subQueryExecutor == null) return null;
+            return buildForwardLookupFilter(field, headAssoc, value, params, namedParameters);
         }
-    }
 
-    private record AssociationMatch(RuntimeAssociation<?> association, boolean isReverseLookup, String targetField) {}
+        if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
+            if (!useSubQuery || subQueryExecutor == null) return null;
+            // For dotted paths (e.g. "children.name"), extract target from the resolved terminal.
+            String targetPropertyName = (field.contains(".") && resolution.terminal() != null)
+                ? resolution.terminal().getName()
+                : null;
+            return buildReverseLookupFilter(entity, headAssoc, targetPropertyName, value, params, namedParameters);
+        }
 
-    private AssociationMatch findAssociation(RuntimePersistentEntity<?> entity, String field) {
-        for (RuntimePersistentProperty<?> prop : entity.getPersistentProperties()) {
-            if (prop instanceof RuntimeAssociation<?> assoc && assoc.getKind() == Relation.Kind.MANY_TO_ONE
-                    && assoc.getPersistedName().equals(field)) {
-                return new AssociationMatch(assoc, false, null);
-            }
-        }
-        if (field.contains("_") || field.contains(".")) {
-            for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                if (p instanceof RuntimeAssociation<?> assoc) {
-                    Relation.Kind kind = assoc.getKind();
-                    if (kind != Relation.Kind.ONE_TO_MANY && kind != Relation.Kind.MANY_TO_MANY) continue;
-                    String pn = assoc.getPersistedName();
-                    String sn = assoc.getAssociatedEntity().getSimpleName();
-                    String dn = assoc.getAssociatedEntity().getDecapitalizedName();
-                    if (field.contains(".")) {
-                        String assocPart = field.substring(0, field.indexOf('.'));
-                        if (assocPart.equals(pn) || assocPart.equals(sn) || assocPart.equals(dn)) {
-                            return new AssociationMatch(assoc, true, field.substring(field.indexOf('.') + 1));
-                        }
-                    }
-                    if (field.startsWith(pn + "_")) return new AssociationMatch(assoc, true, field.substring(pn.length() + 1));
-                    if (field.startsWith(sn + "_")) return new AssociationMatch(assoc, true, field.substring(sn.length() + 1));
-                    if (field.startsWith(dn + "_")) return new AssociationMatch(assoc, true, field.substring(dn.length() + 1));
-                    if (field.equals(pn))           return new AssociationMatch(assoc, true, null);
-                }
-            }
-        }
         return null;
     }
 
@@ -203,23 +183,16 @@ final class AssociationFilterResolver {
         String firstPart = fieldPath.substring(0, dotIdx);
         String remaining = fieldPath.substring(dotIdx + 1);
 
-        RuntimePersistentProperty<?> prop = null;
-        if (entity != null) {
-            prop = entity.getPropertyByName(firstPart);
-            if (prop == null) {
-                for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                    if (p.getPersistedName().equals(firstPart)) { prop = p; break; }
-                }
-            }
-            if (prop == null) {
-                RuntimePersistentProperty<?> identity = entity.getIdentity();
-                if (identity.getName().equals(firstPart) || identity.getPersistedName().equals(firstPart) || "_id".equals(firstPart)) {
-                    prop = identity;
-                }
-            }
+        // Resolve the first segment via metadata instead of name-guessing heuristics.
+        PathResolution firstResolution = PathResolver.resolve(entity, firstPart);
+        RuntimePersistentProperty<?> prop = firstResolution.chain().isEmpty()
+            ? null
+            : firstResolution.chain().get(0);
+        if (prop == null && firstResolution.terminal() != null) {
+            prop = firstResolution.terminal();
         }
 
-        String fieldName = prop != null ? prop.getPersistedName() : firstPart;
+        String fieldName = firstResolution.persistedField();
 
         if (prop instanceof RuntimeAssociation<?> assoc) {
             Relation.Kind kind = assoc.getKind();
@@ -288,10 +261,8 @@ final class AssociationFilterResolver {
             }
         }
 
-        if (prop != null) {
-            return operatorFiltersForPath.build(entity, prop.getName() + "." + NameUtils.snakeToCamelPath(remaining), operators, params, namedParameters);
-        }
-        return operatorFiltersForPath.build(entity, NameUtils.snakeToCamelPath(fieldPath), operators, params, namedParameters);
+        // Non-association property or unresolved path — use persisted field name for dotted access.
+        return operatorFiltersForPath.build(entity, fieldName + "." + remaining, operators, params, namedParameters);
     }
 
     private boolean looksLikeId(String value, Class<?> idType) {

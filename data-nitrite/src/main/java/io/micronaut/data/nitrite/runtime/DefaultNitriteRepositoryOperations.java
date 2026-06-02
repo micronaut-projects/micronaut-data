@@ -209,11 +209,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      * first querying the associated entity and then filtering by ID.
      */
     private NitriteFilterBuilder createFilterBuilderWithSubQueryExecutor() {
-        NitriteFilterBuilder builder = new NitriteFilterBuilder(entityMapper);
+        // Use a mutable ref so the closure captures the fully-wired builder, not the plain one.
+        // Without this, nested association paths (e.g. review.book.author.name) would silently
+        // return no results because the inner sub-query builder lacks sub-query support.
+        NitriteFilterBuilder[] builderRef = new NitriteFilterBuilder[1];
         NitriteFilterBuilder.SubQueryExecutor subQueryExecutor = (associatedEntity, filterMap, targetField, params, namedParameters) -> {
             NitriteCollection assocCollection = getCollection(associatedEntity.getIntrospection().getBeanType());
             Filter subFilter = filterMap != null && !filterMap.isEmpty()
-                ? builder.buildFilterFromJson(associatedEntity, filterMap, params, namedParameters)
+                ? builderRef[0].buildFilterFromJson(associatedEntity, filterMap, params, namedParameters)
                 : Filter.ALL;
             return assocCollection.find(subFilter).toList().stream()
                 .flatMap(doc -> {
@@ -232,7 +235,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 .distinct()
                 .toList();
         };
-        return new NitriteFilterBuilder(entityMapper, subQueryExecutor);
+        builderRef[0] = new NitriteFilterBuilder(entityMapper, subQueryExecutor);
+        return builderRef[0];
     }
 
     @Override

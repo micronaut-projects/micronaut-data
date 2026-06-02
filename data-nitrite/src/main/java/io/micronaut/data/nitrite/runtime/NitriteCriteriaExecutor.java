@@ -212,7 +212,7 @@ public final class NitriteCriteriaExecutor {
 
             return Optional.of(docs.size());
         } catch (Exception e) {
-            return Optional.empty();
+            throw new IllegalStateException("Failed to update entities by criteria", e);
         }
     }
 
@@ -284,7 +284,8 @@ public final class NitriteCriteriaExecutor {
                     params,
                     Collections.emptyMap());
         } catch (Exception e) {
-            return Filter.ALL;
+            throw new IllegalStateException(
+                "Failed to build Nitrite filter from criteria query: " + queryString, e);
         }
     }
 

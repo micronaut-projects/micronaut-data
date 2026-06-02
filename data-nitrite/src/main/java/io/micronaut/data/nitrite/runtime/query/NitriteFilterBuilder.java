@@ -16,8 +16,6 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -139,49 +137,18 @@ public final class NitriteFilterBuilder {
             final String rawField,
             final Object rawValue) {
 
-        String persistedName = rawField;
-        RuntimePersistentProperty<?> property;
-        RuntimeAssociation<?> association = null;
+        PathResolver.PathResolution resolution = PathResolver.resolve(entity, rawField);
+        String persistedName = resolution.persistedField();
 
-        if (entity != null) {
-            RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity.getName().equals(rawField) || "id".equals(rawField) || "_id".equals(rawField)) {
-                persistedName = entityMapper.normalizeFieldName(rawField, entity);
-                property = identity;
-            } else {
-                property = entity.getPropertyByName(rawField);
-                if (property != null) {
-                    persistedName = property.getPersistedName();
-                } else {
-                    for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                        if (p.getPersistedName().equals(rawField)) { property = p; persistedName = rawField; break; }
-                    }
+        // Identity fields need the entity-mapper normalization (e.g. "id" → Nitrite's internal name).
+        if (!resolution.isReference() && entity != null) {
+            try {
+                RuntimePersistentProperty<?> identity = entity.getIdentity();
+                if (identity != null && (identity.getName().equals(rawField)
+                        || "id".equals(rawField) || "_id".equals(rawField))) {
+                    persistedName = entityMapper.normalizeFieldName(rawField, entity);
                 }
-            }
-
-            if (property instanceof RuntimeAssociation<?> assoc) {
-                association = assoc;
-            } else if (property == null) {
-                for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
-                    if (p instanceof RuntimeAssociation<?> assoc) {
-                        Relation.Kind kind = assoc.getKind();
-                        if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
-                            String pName = assoc.getPersistedName();
-                            String sName = assoc.getAssociatedEntity().getSimpleName();
-                            String dName = assoc.getAssociatedEntity().getDecapitalizedName();
-                            if (rawField.contains(".")) {
-                                String assocPart = rawField.substring(0, rawField.indexOf('.'));
-                                if (assocPart.equals(pName) || assocPart.equals(sName) || assocPart.equals(dName)) {
-                                    association = assoc; break;
-                                }
-                            } else if (rawField.startsWith(pName + "_") || rawField.startsWith(sName + "_")
-                                    || rawField.startsWith(dName + "_") || rawField.equals(pName)) {
-                                association = assoc; break;
-                            }
-                        }
-                    }
-                }
-            }
+            } catch (IllegalStateException ignored) {}
         }
 
         final Map<String, Object> operators;
@@ -198,7 +165,7 @@ public final class NitriteFilterBuilder {
             operatorValues.put("$eq", valueResolver.compileValue(rawValue));
         }
 
-        if (association != null || rawField.contains(".")) {
+        if (resolution.isReference() || rawField.contains(".")) {
             return new NitriteFilterAST.AssociationFieldNode(
                 this::buildAssociationOrNestedField, entity, rawField, persistedName, operators);
         }
