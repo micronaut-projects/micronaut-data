@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.runtime.operations.internal.sql
 
 import io.micronaut.core.type.Argument
@@ -17,14 +32,102 @@ class SqlBatchSupportSpec extends Specification {
         !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL)
     }
 
-    void "mariadb can batch generated-id inserts when generated keys are not required"() {
+    @Unroll
+    void "#databaseProductName can batch generated-id inserts when generated keys are not required"() {
         expect:
-        SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, "MariaDB", false)
+        SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, databaseProductName, false)
+
+        where:
+        databaseProductName << ["MariaDB", "MySQL"]
     }
 
-    void "mariadb generated-id inserts stay conservative when generated keys are required"() {
+    @Unroll
+    void "#databaseProductName generated-id inserts stay conservative when generated keys are required without jdbc metadata"() {
         expect:
-        !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, "MariaDB", true)
+        !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, databaseProductName, true)
+
+        where:
+        databaseProductName << ["MariaDB", "MySQL"]
+    }
+
+    @Unroll
+    void "jdbc mysql family can batch generated-id inserts for #scenario"() {
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            databaseProductName,
+            driverName,
+            true,
+            true,
+            true
+        )
+
+        where:
+        scenario                     | databaseProductName | driverName
+        "mariadb product metadata"   | "MariaDB"           | "MariaDB Connector/J"
+        "mysql product metadata"     | "MySQL"             | "MySQL Connector/J"
+        "mariadb driver metadata"    | null                | "MariaDB Connector/J"
+        "mysql driver metadata"      | null                | "MySQL Connector/J"
+    }
+
+    void "jdbc mysql family does not batch generated-id inserts when generated keys are unsupported"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            "MariaDB",
+            "MariaDB Connector/J",
+            true,
+            false,
+            true
+        )
+    }
+
+    void "jdbc mysql family does not batch inserts when batch updates are unsupported"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            "MySQL",
+            "MySQL Connector/J",
+            false,
+            true,
+            false
+        )
+    }
+
+    void "jdbc unknown mysql metadata stays conservative for generated identities"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            null,
+            null,
+            null,
+            null,
+            true
+        )
+    }
+
+    @Unroll
+    void "jdbc mysql metadata does not change #dialect generated-id batch support"() {
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            dialect,
+            "MySQL",
+            "MySQL Connector/J",
+            true,
+            true,
+            true
+        ) == supported
+
+        where:
+        dialect            || supported
+        Dialect.ORACLE     || false
+        Dialect.SQL_SERVER || false
+        Dialect.POSTGRES   || true
     }
 
     @Unroll
@@ -38,6 +141,7 @@ class SqlBatchSupportSpec extends Specification {
         "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(String))     || true
         "void returns"                   | false           | false       | Argument.of(Void)                                          || false
         "numeric returns"                | false           | false       | Argument.of(Long)                                         || false
+        "primitive numeric returns"      | false           | false       | Argument.of(Long.TYPE)                                    || false
         "post persist listeners"         | false           | true        | Argument.of(Long)                                         || true
         "cascade persist associations"   | true            | false       | Argument.of(Void)                                          || true
     }

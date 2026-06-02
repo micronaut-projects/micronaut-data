@@ -39,6 +39,7 @@ dependencies {
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql
+    testImplementation mnLogging.logback.classic
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
     testImplementation mn.micronaut.http.client

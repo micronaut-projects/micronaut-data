@@ -115,6 +115,7 @@ import jakarta.persistence.Tuple;
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -1157,7 +1158,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
-        return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
+        boolean requiresGeneratedKeys = persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
+        return isSupportsBatchInsert(jdbcOperationContext, persistentEntity, requiresGeneratedKeys);
     }
 
     private boolean isSupportsBatchInsert(JdbcOperationContext ctx,
@@ -1167,20 +1169,33 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING) {
             return false;
         }
-        return SqlBatchSupport.isSupportsBatchInsert(
-            persistentEntity,
-            storedQuery.getDialect(),
-            databaseProductName(ctx.connection),
-            requiresGeneratedKeys
-        );
+        return isSupportsBatchInsert(ctx, persistentEntity, requiresGeneratedKeys);
     }
 
-    @Nullable
-    private String databaseProductName(Connection connection) {
+    private boolean isSupportsBatchInsert(JdbcOperationContext ctx,
+                                          RuntimePersistentEntity<?> persistentEntity,
+                                          boolean requiresGeneratedKeys) {
         try {
-            return connection.getMetaData().getDatabaseProductName();
+            DatabaseMetaData metaData = ctx.connection.getMetaData();
+            return SqlBatchSupport.isSupportsJdbcBatchInsert(
+                persistentEntity,
+                ctx.dialect,
+                metaData.getDatabaseProductName(),
+                metaData.getDriverName(),
+                metaData.supportsBatchUpdates(),
+                metaData.supportsGetGeneratedKeys(),
+                requiresGeneratedKeys
+            );
         } catch (SQLException ignored) {
-            return null;
+            return SqlBatchSupport.isSupportsJdbcBatchInsert(
+                persistentEntity,
+                ctx.dialect,
+                null,
+                null,
+                null,
+                null,
+                requiresGeneratedKeys
+            );
         }
     }
 
