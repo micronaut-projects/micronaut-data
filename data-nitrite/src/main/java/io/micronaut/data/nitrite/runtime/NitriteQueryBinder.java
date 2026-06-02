@@ -91,6 +91,7 @@ final class NitriteQueryBinder {
                         resolved = jsonParams[idx];
                     }
                 } catch (Exception ignored) {
+                    // Ignore parsing errors for malformed placeholders
                 }
             } else if (s.startsWith(":")) {
                 isPlaceholder = true;
@@ -345,6 +346,7 @@ final class NitriteQueryBinder {
             Object v = doc.get(segment);
             return v != null || segment.equals(alt) ? v : doc.get(alt);
         } catch (Exception ignored) {
+            // If conversion or field access fails, return null as fallback
             return null;
         }
     }

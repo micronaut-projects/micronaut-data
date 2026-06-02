@@ -51,7 +51,9 @@ final class ValueResolver {
                 try {
                     int idx = Integer.parseInt(s.substring(7));
                     if (params != null && idx >= 0 && idx < params.length) return params[idx];
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    // Fall through if placeholder is not a valid integer
+                }
             }
             if (s.contains("$mn_qp:")) {
                 StringBuilder result = new StringBuilder();
@@ -69,6 +71,7 @@ final class ValueResolver {
                             result.append(paramValue != null ? paramValue.toString() : "");
                         }
                     } catch (Exception ignored) {
+                        // If resolution fails for a specific placeholder, keep it as-is in the string
                         result.append(s, idx, paramEnd);
                     }
                     pos = paramEnd;
@@ -100,7 +103,11 @@ final class ValueResolver {
     CompiledValue compileValue(Object value) {
         if (value instanceof String s) {
             if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
-                try { return new CompiledValue.Parameter(Integer.parseInt(s.substring(7))); } catch (Exception ignored) {}
+                try {
+                    return new CompiledValue.Parameter(Integer.parseInt(s.substring(7)));
+                } catch (Exception ignored) {
+                    // Fall through if placeholder is not a valid integer
+                }
             }
             if (s.startsWith(":")) return new CompiledValue.NamedParameter(s.substring(1));
             if (s.contains("$mn_qp:")) return (params, named) -> resolveValueInternal(s, params, named);

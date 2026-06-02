@@ -109,7 +109,11 @@ final class NitriteFieldNameResolver {
                     boolean isLast = association == assocs.get(assocs.size() - 1);
                     boolean isIdentityAccess = false;
                     if (isLast) {
-                        try { isIdentityAccess = association.getAssociatedEntity().getIdentity().equals(property); } catch (Exception ignored) {}
+                        try {
+                            isIdentityAccess = association.getAssociatedEntity().getIdentity().equals(property);
+                        } catch (Exception ignored) {
+                            // Best-effort identity access check
+                        }
                     }
                     if (isLast && isIdentityAccess) {
                         return association.getPersistedName();

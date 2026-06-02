@@ -149,6 +149,7 @@ public final class NitriteEntityMapper {
             }
         }
     } catch (Exception ignored) {
+        // Best-effort ID extraction; if it fails (e.g. no identity), return the entity itself
     }
 
     return value;
@@ -399,6 +400,7 @@ public final class NitriteEntityMapper {
           doc.put(NameUtils.camelToSnake(field), fieldValue);
         }
       } catch (Exception ignored) {
+        // If embedded ID processing fails, fall through to default normalization
       }
     } else if (normalizedId instanceof Document idDoc) {
       for (String field : idDoc.getFields()) {
@@ -494,6 +496,7 @@ public final class NitriteEntityMapper {
                 associatedIdProp = refEntity.getIdentity().getProperty();
             }
           } catch (Exception ignored) {
+              // Best-effort identity lookup for ID-ref strategy
           }
         }
       }

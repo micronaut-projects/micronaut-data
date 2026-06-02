@@ -90,7 +90,9 @@ public final class NitriteQueryParser {
                 Object val = map.get("$project");
                 if (val instanceof String s) return s;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Best-effort JSON parsing; if it fails, assume no projection
+        }
         return null;
     }
 
@@ -127,6 +129,7 @@ public final class NitriteQueryParser {
                     updateMap = setMap != null ? new LinkedHashMap<>(setMap) : parseUpdateAnnotation(storedQuery);
                 }
             } catch (Exception ignored) {
+                // Best-effort JSON parsing for stored queries
             }
         }
         return new ParsedJsonQuery(filterMap, updateMap);
@@ -145,6 +148,7 @@ public final class NitriteQueryParser {
                 return new LinkedHashMap<>(setMap);
             }
         } catch (Exception ignored) {
+            // Best-effort parsing of @Query(update=...) annotation
         }
         return null;
     }

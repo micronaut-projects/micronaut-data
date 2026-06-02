@@ -599,6 +599,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 return orders.isEmpty() ? null : Sort.of(orders);
             }
         } catch (Exception ignored) {
+            // Best-effort JSON sort parsing; if it fails, assume no sort
         }
         return null;
     }
