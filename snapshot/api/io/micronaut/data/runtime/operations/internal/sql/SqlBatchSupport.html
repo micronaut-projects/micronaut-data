@@ -60,6 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">isSupportsBatchInsert(PersistentEntity, SqlStoredQuery)</a></li>
 <li><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">isSupportsBatchInsert(PersistentEntity, Dialect)</a></li>
 <li><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String,boolean)" tabindex="0">isSupportsBatchInsert(PersistentEntity, Dialect, String, boolean)</a></li>
+<li><a href="#isSupportsJdbcBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,boolean)" tabindex="0">isSupportsJdbcBatchInsert(PersistentEntity, Dialect, String, String, Boolean, Boolean, boolean)</a></li>
 <li><a href="#requiresBatchGeneratedKeys(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.InsertBatchOperation)" tabindex="0">requiresBatchGeneratedKeys(RuntimePersistentEntity, InsertBatchOperation)</a></li>
 </ol>
 </li>
@@ -86,9 +87,7 @@ driver behavior can still diverge, so runtime capability checks stay internal an
 the public dialect enum.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
-<dd>5.0.3</dd>
-<dt>Author:</dt>
-<dd>Denis Stepanov</dd>
+<dd>5.1.0</dd>
 </dl>
 </div>
 </section>
@@ -117,7 +116,7 @@ the public dialect enum.</p></div>
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;databaseProductName,
  boolean&nbsp;requiresGeneratedKeys)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Resolves whether MariaDB can use batch inserts without generated-key retrieval.</div>
+<div class="block">Resolves whether a runtime with database product metadata can use batch inserts.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
@@ -126,9 +125,20 @@ the public dialect enum.</p></div>
 <div class="block">Resolves whether insert batching is supported for a stored query.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requiresBatchGeneratedKeys(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">requiresBatchGeneratedKeys</a><wbr>(<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
- <a href="../../../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;?&gt;&nbsp;operation)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isSupportsJdbcBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,boolean)" class="member-name-link">isSupportsJdbcBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+ <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;databaseProductName,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;driverName,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;supportsBatchUpdates,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;supportsGetGeneratedKeys,
+ boolean&nbsp;requiresGeneratedKeys)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Resolves whether a JDBC connection can use batch inserts.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requiresBatchGeneratedKeys(io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">requiresBatchGeneratedKeys</a><wbr>(<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity,
+ <a href="../../../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;?&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Resolves whether a batch insert operation needs generated keys to be returned.</div>
 </div>
 </div>
@@ -190,7 +200,7 @@ the public dialect enum.</p></div>
  <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;databaseProductName,
  boolean&nbsp;requiresGeneratedKeys)</span></div>
-<div class="block">Resolves whether MariaDB can use batch inserts without generated-key retrieval.</div>
+<div class="block">Resolves whether a runtime with database product metadata can use batch inserts.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>persistentEntity</code> - The persistent entity</dd>
@@ -198,7 +208,34 @@ the public dialect enum.</p></div>
 <dd><code>databaseProductName</code> - The concrete database product name if available</dd>
 <dd><code>requiresGeneratedKeys</code> - Whether generated keys are needed back from the batch</dd>
 <dt>Returns:</dt>
-<dd><code>true</code> if MariaDB can use the batch path</dd>
+<dd><code>true</code> if the batch path can be used</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isSupportsJdbcBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,boolean)">
+<h3>isSupportsJdbcBatchInsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSupportsJdbcBatchInsert</span><wbr><span class="parameters">(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+ <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;databaseProductName,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;driverName,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;supportsBatchUpdates,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;supportsGetGeneratedKeys,
+ boolean&nbsp;requiresGeneratedKeys)</span></div>
+<div class="block">Resolves whether a JDBC connection can use batch inserts.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>persistentEntity</code> - The persistent entity</dd>
+<dd><code>dialect</code> - The SQL dialect</dd>
+<dd><code>databaseProductName</code> - The concrete database product name if available</dd>
+<dd><code>driverName</code> - The JDBC driver name if available</dd>
+<dd><code>supportsBatchUpdates</code> - Whether the driver reports batch-update support</dd>
+<dd><code>supportsGetGeneratedKeys</code> - Whether the driver reports generated-key support</dd>
+<dd><code>requiresGeneratedKeys</code> - Whether generated keys are needed back from the batch</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> if JDBC can use the batch path</dd>
 </dl>
 </div>
 </section>
