@@ -51,7 +51,7 @@ class SqlBatchSupportSpec extends Specification {
     }
 
     @Unroll
-    void "jdbc mysql family can batch generated-id inserts for #scenario"() {
+    void "jdbc mysql can batch generated-id inserts for #scenario"() {
         expect:
         SqlBatchSupport.isSupportsJdbcBatchInsert(
             entityWithGeneratedId(),
@@ -64,11 +64,47 @@ class SqlBatchSupportSpec extends Specification {
         )
 
         where:
-        scenario                     | databaseProductName | driverName
-        "mariadb product metadata"   | "MariaDB"           | "MariaDB Connector/J"
-        "mysql product metadata"     | "MySQL"             | "MySQL Connector/J"
-        "mariadb driver metadata"    | null                | "MariaDB Connector/J"
-        "mysql driver metadata"      | null                | "MySQL Connector/J"
+        scenario                 | databaseProductName | driverName
+        "product metadata"       | "MySQL"             | "MySQL Connector/J"
+        "driver metadata"        | null                | "MySQL Connector/J"
+    }
+
+    @Unroll
+    void "jdbc mariadb stays conservative for generated-id inserts for #scenario"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            databaseProductName,
+            driverName,
+            true,
+            true,
+            true
+        )
+
+        where:
+        scenario                 | databaseProductName | driverName
+        "product metadata"       | "MariaDB"           | "MariaDB Connector/J"
+        "driver metadata"        | null                | "MariaDB Connector/J"
+    }
+
+    @Unroll
+    void "jdbc mysql family can batch generated-id inserts without generated keys for #scenario"() {
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            databaseProductName,
+            driverName,
+            true,
+            false,
+            false
+        )
+
+        where:
+        scenario                 | databaseProductName | driverName
+        "mariadb metadata"       | "MariaDB"           | "MariaDB Connector/J"
+        "mysql metadata"         | "MySQL"             | "MySQL Connector/J"
     }
 
     void "jdbc mysql family does not batch generated-id inserts when generated keys are unsupported"() {
@@ -76,8 +112,8 @@ class SqlBatchSupportSpec extends Specification {
         !SqlBatchSupport.isSupportsJdbcBatchInsert(
             entityWithGeneratedId(),
             Dialect.MYSQL,
-            "MariaDB",
-            "MariaDB Connector/J",
+            "MySQL",
+            "MySQL Connector/J",
             true,
             false,
             true
@@ -94,6 +130,19 @@ class SqlBatchSupportSpec extends Specification {
             false,
             true,
             false
+        )
+    }
+
+    void "jdbc mysql family requires explicit batch update support"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            "MySQL",
+            "MySQL Connector/J",
+            null,
+            true,
+            true
         )
     }
 
