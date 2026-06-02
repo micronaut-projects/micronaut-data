@@ -73,6 +73,13 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
         return false
     }
 
+    @Override
+    protected boolean supportsGeometryTypeWithGeographicCrs() {
+        // Geography type should be used instead of geometry type
+        // when using geographic coordinate reference system
+        return false
+    }
+
     void "test crud when wkt conversion used on geography type"() {
         given:
         GeographyEntityWkt entity = new GeographyEntityWkt()

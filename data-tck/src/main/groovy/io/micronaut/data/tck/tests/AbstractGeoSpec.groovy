@@ -445,6 +445,7 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationNear when geographic coordinate reference system and json conversion used"() {
+        assumeTrue(supportsGeometryTypeWithGeographicCrs())
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -462,9 +463,7 @@ abstract class AbstractGeoSpec extends Specification {
                 orderLocation,
                 5_000d
         )
-        List<String> names = candidates.stream()
-                .map(DeliveryDriverJson::name)
-                .toList()
+        List<String> names = candidates.collect { it.name() }
 
         then:
         names.size() == 2
@@ -473,6 +472,8 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationNear when geographic coordinate reference system and wkt conversion used"() {
+        assumeTrue(supportsGeometryTypeWithGeographicCrs())
+
         given:
         DeliveryDriverWkt nearby = new DeliveryDriverWkt("Nearby Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
         DeliveryDriverWkt closest = new DeliveryDriverWkt("Closest Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
@@ -488,9 +489,7 @@ abstract class AbstractGeoSpec extends Specification {
                 orderLocation,
                 5_000d
         )
-        List<String> names = candidates.stream()
-                .map(DeliveryDriverWkt::name)
-                .toList()
+        List<String> names = candidates.collect { it.name() }
 
         then:
         names.size() == 2
@@ -503,6 +502,10 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     protected boolean supportsDeletingGeometryTypes() {
+        return true
+    }
+
+    protected boolean supportsGeometryTypeWithGeographicCrs() {
         return true
     }
 

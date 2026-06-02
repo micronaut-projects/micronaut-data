@@ -39,7 +39,7 @@ public record DeliveryDriverWkt(
     Status status,
 
     @NotNull
-    @Srid(4326)
+    @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
     @Index(columns = "location")
     @MappedProperty(converter = GeometryWktConverter.class)
     Point location

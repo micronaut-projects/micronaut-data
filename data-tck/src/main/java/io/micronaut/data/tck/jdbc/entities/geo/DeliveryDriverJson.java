@@ -37,7 +37,7 @@ public record DeliveryDriverJson(
     Status status,
 
     @NotNull
-    @Srid(4326)
+    @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
     @Index(columns = "location")
     Point location
 ) {
