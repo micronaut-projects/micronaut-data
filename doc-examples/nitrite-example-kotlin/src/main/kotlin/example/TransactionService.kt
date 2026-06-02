@@ -14,14 +14,14 @@ open class TransactionService(
   // tag::transaction-managed[]
   @Transactional
   open fun saveBook(title: String) {
-    bookRepository.save(Book(title = title))
+    bookRepository.save(Book(title))
   }
   // end::transaction-managed[]
 
   // tag::transaction-manual-rollback[]
   @Transactional
   open fun saveAndRollback(title: String) {
-    bookRepository.save(Book(title = title))
+    bookRepository.save(Book(title))
     transactionOperations.executeWrite { status ->
       status.setRollbackOnly()
       null
@@ -31,6 +31,6 @@ open class TransactionService(
 
   @Transactional(propagation = TransactionDefinition.Propagation.NOT_SUPPORTED)
   open fun logWithoutTransaction(title: String) {
-    bookRepository.save(Book(title = title))
+    bookRepository.save(Book(title))
   }
 }

@@ -20,8 +20,10 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @param text the search text
      * @return matching books
      */
+    // tag::text-query[]
     @Query("{\"description\": {\"$text\": :text}}")
     List<IndexedBook> searchByDescription(String text);
+    // end::text-query[]
 
     /**
      * Find books near a location using spatial $near filter.
@@ -36,7 +38,7 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
 
     /**
      * Find books within a geometry using spatial $within filter.
-     * @param area the search area (polygon or circle)
+     * @param area the search area
      * @return books within the area
      */
     // tag::within-query[]

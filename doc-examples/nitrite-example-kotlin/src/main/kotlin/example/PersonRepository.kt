@@ -52,20 +52,28 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
     override fun deleteAll(spec: DeleteSpecification<Person>?): Long
     // end::delete[]
 
+    // tag::sorting-pagination[]
+    // Sorting with Sort
+    fun findAll(sort: Sort): List<Person>
+
+    // Pagination with Pageable
+    fun findAll(pageable: Pageable): Page<Person>
+    // end::sorting-pagination[]
+
     // tag::specifications[]
     // tag::allSpecifications[]
     class Specifications {
         companion object {
             fun nameEquals(name: String): PredicateSpecification<Person> =
-                PredicateSpecification { root, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), name) }
+                PredicateSpecification { root, criteriaBuilder -> criteriaBuilder.equal(root.get<Any>("name"), name) }
 
             fun ageIsLessThan(age: Int): PredicateSpecification<Person> =
-                PredicateSpecification { root, criteriaBuilder -> criteriaBuilder.lessThan(root.get<Int>("age"), age) }
+                PredicateSpecification { root, criteriaBuilder -> criteriaBuilder.lessThan(root.get("age"), age) }
 
             fun setNewName(newName: String): UpdateSpecification<Person> =
                 UpdateSpecification { root, query, _ ->
                     // tag::setUpdate[]
-                    query.set(root.get<String>("name"), newName)
+                    query.set(root.get<Any>("name"), newName)
                     // end::setUpdate[]
                     null
                 }
@@ -73,8 +81,9 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
             fun interestsContains(interest: String): PredicateSpecification<Person> =
                 PredicateSpecification { root, criteriaBuilder ->
                     (criteriaBuilder as PersistentEntityCriteriaBuilder)
-                        .arrayContains(root.get<List<String>>("interests"), criteriaBuilder.literal(interest))
+                        .arrayContains(root.get<Any>("interests"), criteriaBuilder.literal(interest))
                 }
+
         }
     }
     // end::allSpecifications[]

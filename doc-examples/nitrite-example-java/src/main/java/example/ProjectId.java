@@ -1,12 +1,15 @@
 package example;
 
 import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.core.annotation.Introspected;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 // tag::projectId[]
 @Embeddable
-public class ProjectId {
+@Introspected
+public class ProjectId implements Serializable {
     private final int departmentId;
     private final int projectNumber;
 
@@ -41,4 +44,3 @@ public class ProjectId {
     }
 }
 // end::projectId[]
-

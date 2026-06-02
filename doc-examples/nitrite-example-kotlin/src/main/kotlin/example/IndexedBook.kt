@@ -8,26 +8,34 @@ import io.micronaut.data.nitrite.annotation.FullTextIndex
 import io.micronaut.data.nitrite.annotation.SpatialIndex
 import org.locationtech.jts.geom.Geometry
 
-@MappedEntity
 // tag::compound-index[]
+@MappedEntity
 @Index(name = "book_title_pages", columns = ["title", "pages"])
+class IndexedBook {
 // end::compound-index[]
-class IndexedBook(
-    // tag::property-index[]
-    @Index(columns = ["title"])
-    // end::property-index[]
-    var title: String,
-    var pages: Int
-) {
     @Id
     @GeneratedValue
     var id: String? = null
+
+    // tag::property-index[]
+    @Index(columns = ["title"])
+    var title: String? = null
+    // end::property-index[]
+
+    var pages: Int = 0
 
     @FullTextIndex
     var description: String? = null
 
     // tag::spatial-index[]
     @SpatialIndex
-    // end::spatial-index[]
     var location: Geometry? = null
+    // end::spatial-index[]
+
+    constructor()
+
+    constructor(title: String?, pages: Int) {
+        this.title = title
+        this.pages = pages
+    }
 }

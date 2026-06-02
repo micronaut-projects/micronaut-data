@@ -9,11 +9,13 @@ final class ProjectRepositoryExample {
 
     @Inject ProjectRepository repository;
 
+    // tag::useEmbeddedId[]
     void useEmbeddedId() {
         ProjectId id = new ProjectId(10, 20);
         repository.save(new Project(id, "Alpha"));
         repository.findById(id);
         repository.deleteById(id);
     }
+    // end::useEmbeddedId[]
 }
 

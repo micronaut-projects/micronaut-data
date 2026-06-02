@@ -1,13 +1,13 @@
 package example;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
 
 /**
  * The book entity.
  */
-@Entity
+@MappedEntity
 public final class Book {
     @Id
     @GeneratedValue

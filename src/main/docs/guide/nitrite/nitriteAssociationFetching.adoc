@@ -1,0 +1,99 @@
+[[nitriteAssociationFetching]]
+Micronaut Data Nitrite supports fetching of associations using the `@Join` annotation. This allows you to eagerly load related entities when querying.
+
+== Supported Association Types
+
+Nitrite supports the following association types with `@Join`:
+
+* `Kind.ONE_TO_ONE` - Single-valued association
+* `Kind.MANY_TO_ONE` - Single-valued association
+* `Kind.ONE_TO_MANY` - Collection-valued association
+* `Kind.MANY_TO_MANY` - Collection-valued association (owning side only)
+
+== Using @Join
+
+To fetch associations eagerly, use the `@Join` annotation on repository methods:
+
+snippet::example.AuthorRepository[project-base="doc-examples/nitrite-example", source="main", tags="join-example"]
+
+== Lazy by Default
+
+Associations are **lazy-loaded by default** in Nitrite. This means:
+
+* Without `@Join`: associations are not loaded (collections are empty)
+* With `@Join`: associations are fetched in the same query operation
+
+snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-usage"]
+
+== Fetching ONE_TO_MANY Associations
+
+For `ONE_TO_MANY` associations, use `@Join` with the property name of the collection:
+
+snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-fetch"]
+
+The `@Join` annotation triggers a batch fetch that:
+
+1. Queries all `Author` entities
+2. Collects all author IDs
+3. Queries all `Book` entities where `author_id` IN (author IDs)
+4. Groups books by author ID
+5. Populates each author's `books` collection
+
+== Fetching MANY_TO_MANY Associations
+
+For `MANY_TO_MANY` associations, `@Join` works the same way as `ONE_TO_MANY` - it must be used on the **owning side** of the relationship (the side without `mappedBy`).
+
+In the Student/Book example, `Book` is the owning side (it has `@Relation(value = Relation.Kind.MANY_TO_MANY)` without `mappedBy`), while `Student` is the inverse side (it has `mappedBy = "students"`).
+
+To eagerly fetch students when querying books, add `@Join("students")` to a `findAll` method on `BookRepository`:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="join-students"]
+
+The `@Join` annotation triggers a batch fetch that:
+
+. Queries all `Book` entities
+. For each book, reads the stored student ID references from the owning side's field
+. Queries all `Student` entities whose IDs are in the collected set
+. Groups students by book ID
+. Populates each book's `students` collection
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="many-to-many-fetch"]
+
+<1> `@Join("students")` on `findAll()` triggers batch fetching
+<2> Students collection is already populated, no additional queries
+
+NOTE: `@Join` on the inverse side (`mappedBy`) of a MANY_TO_MANY relationship is not supported because the inverse side does not own the foreign key relationship. Use the owning side's repository for eager fetching.
+
+See the <<nitriteAssociationMapping, Association Mapping>> section for a complete Student/Book MANY_TO_MANY example.
+
+== Batch Fetching
+
+When multiple entities are loaded with `@Join`, Nitrite uses batch fetching to efficiently load associations:
+
+1. Load all parent entities
+2. Collect parent IDs
+3. Query associated entities with `IN` clause
+4. Group results by parent ID
+5. Populate associations on parent entities
+
+This approach minimizes database queries and is efficient for loading collections.
+
+== Limitations
+
+Current limitations of `@Join` support in Nitrite:
+
+* Only single-level joins are fully supported (e.g., `@Join("books")`)
+* Nested joins (e.g., `@Join("books.pages")`) require multiple `@Join` annotations
+* Complex nested paths may require explicit handling in future versions
+* Only default join type is supported (no `LEFT_FETCH`, `INNER_FETCH`, etc.)
+
+== Association Name Matching
+
+Nitrite uses the associated entity's class name for matching association paths in queries. This handles both regular and irregular plural forms correctly:
+
+* Regular plurals: `books` → `book` (e.g., `findByBooksTitle`)
+* Irregular plurals: `cities` → `city` (e.g., `findByCitiesName`)
+
+This ensures that queries on `ONE_TO_MANY` associations work correctly regardless of the naming convention used.
+
+For more complex association fetching patterns, consider using the Criteria API (see <<nitriteCriteriaSpecifications>>).

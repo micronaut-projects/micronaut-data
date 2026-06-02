@@ -48,6 +48,8 @@ public class SimpleQuery {
         tempDir = Files.createTempDirectory("nitrite-benchmark").toFile();
         Map<String, Object> props = new HashMap<>();
         props.put("nitrite.storage-mode", storageMode);
+        // Disable query logging to avoid overhead during benchmarks
+        props.put("logger.levels.io.micronaut.data.query", "INFO");
         if (!"IN_MEMORY".equals(storageMode)) {
             props.put("nitrite.db-path", new File(tempDir, "test.db").getAbsolutePath());
         }
@@ -92,6 +94,16 @@ public class SimpleQuery {
     @Benchmark
     public void measureFinder() {
         bookRepository.findByTitle("The Border");
+    }
+
+    @Benchmark
+    public void measureMetadataAwareCoercion() {
+        bookRepository.findByPages(700);
+    }
+
+    @Benchmark
+    public void measureDynamicQuery() {
+        bookRepository.findByPagesQuery(700);
     }
 
     public static void main(String[] args) throws RunnerException {

@@ -15,6 +15,7 @@ micronaut {
 
 dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor projects.micronautDataNitrite
 
     implementation projects.micronautDataNitrite
     implementation libs.nitrite.spatial

@@ -8,19 +8,19 @@ import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import org.locationtech.jts.geom.Geometry;
 
-@MappedEntity
 // tag::compound-index[]
+@MappedEntity
 @Index(name = "book_title_pages", columns = {"title", "pages"})
-// end::compound-index[]
 public class IndexedBook {
+// end::compound-index[]
     @Id
     @GeneratedValue
     private String id;
 
     // tag::property-index[]
     @Index(columns = "title")
-    // end::property-index[]
     private String title;
+    // end::property-index[]
 
     private int pages;
 
@@ -29,8 +29,8 @@ public class IndexedBook {
 
     // tag::spatial-index[]
     @SpatialIndex
-    // end::spatial-index[]
     private Geometry location;
+    // end::spatial-index[]
 
     public IndexedBook() {
     }

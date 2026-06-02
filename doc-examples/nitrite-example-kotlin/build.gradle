@@ -17,12 +17,13 @@ micronaut {
 
 dependencies {
     kapt projects.micronautDataDocumentProcessor
+    kapt projects.micronautDataNitrite
 
     implementation projects.micronautDataNitrite
+    implementation mnKotlin.micronaut.kotlin.runtime
     implementation libs.nitrite.spatial
     implementation libs.jackson.datatype.jts
     implementation mnSql.jakarta.persistence.api
-    implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly mnLogging.logback.classic
 }

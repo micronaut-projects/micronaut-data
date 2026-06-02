@@ -15,8 +15,60 @@ And execute the specifications from application code:
 
 snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="find", indent="0"]
 
+== Sorting and Pagination
+
+Nitrite supports sorting and pagination with Criteria API queries:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="sorting-pagination"]
+
+The `findAll(Specification, Pageable)` method returns a `Page<T>` with pagination metadata. You can create a `Pageable` with sorting:
+
+snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="sorting-pagination-usage"]
+
+== Association Queries
+
+Nitrite supports Criteria queries on associations:
+
+* **MANY_TO_ONE**: Filter by association properties using `PredicateSpecification`
+* **ONE_TO_MANY**: Reverse lookups through method names or specifications
+
+=== Filtering by MANY_TO_ONE Associations
+
+You can use the Criteria API to navigate associations in `PredicateSpecification`:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="association-navigation", indent="0"]
+
+This example filters books by their author's name using `root.get("author").get("name")`. Nitrite automatically:
+
+. Builds a sub-query on the `author` collection
+. Finds matching author IDs
+. Filters books by the `author_id` foreign key
+
+NOTE: The `author` field in `Book` must be annotated with `@Relation(Relation.Kind.MANY_TO_ONE)` for this to work.
+
+=== Reverse Lookups on ONE_TO_MANY Associations
+
+For reverse lookups on ONE_TO_MANY associations, the query builder preserves the property path and Nitrite executes a sub-query to find matching parent entities.
+
+Example of a reverse lookup method:
+
+snippet::example.AuthorRepository[project-base="doc-examples/nitrite-example", source="main", tags="reverse-lookup"]
+
+The above method finds authors who have written a book with the specified title. Internally, Nitrite:
+
+. Queries the `book` collection for documents where `title` matches the parameter
+. Collects the `author_id` foreign keys from matching books
+. Queries the `author` collection for documents with matching IDs
+
+This approach allows natural property-path queries while efficiently handling the reverse lookup through the foreign key relationship.
+
+NOTE: Reverse lookups on ONE_TO_MANY associations require that the child entity (e.g., `Book`) has a foreign key reference to the parent entity (e.g., `Author`). The `@Relation` annotation with `Kind.MANY_TO_ONE` on the child entity establishes this relationship.
+
+== Query Format
+
 Nitrite-specific notes:
 
 - Parameters are bound positionally using placeholders of the form `"$mn_qp:<index>"`.
-- `Instant` values are stored and queried as numeric timestamps; query parameters are normalized to match the stored representation.
+- `Instant` values are stored and queried as ISO-8601 string representations; query parameters are normalized to match the stored representation.
 - Numeric equality comparisons are tolerant to representation differences introduced by the mapping layer (for example `Long` vs `BigDecimal`).
+- Date/time field names use snake_case format in aggregation queries (e.g., `last_updated`).

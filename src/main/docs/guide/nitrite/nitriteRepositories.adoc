@@ -10,10 +10,39 @@ You can use standard repository method patterns:
 - CRUD methods from `CrudRepository`
 - Derived finders (for example `findByTitle`, `findByAgeGreaterThan`, `existsBySku`)
 - Paging and sorting via `Pageable` and `Sort`
+- Case-insensitive queries (for example `findByTitleIgnoreCase`)
+- IN queries with collections and arrays (for example `findByTitleIn`)
+
+== Save Method Upsert Semantics
+
+The `save()` and `saveAll()` methods from `CrudRepository` use **upsert semantics**:
+
+- If the entity's ID is `null`, a new document is inserted and the ID is generated
+- If the entity has an existing ID, the document is updated (replaced) if found, or inserted if not found
+
+This allows `save()` to be used for both creating new entities and updating existing ones. For explicit update operations, use the `update()` method or derived update methods (see <<nitriteQuickStart>>).
+
+== Case-Insensitive Queries
+
+Nitrite supports case-insensitive queries using the `IgnoreCase` suffix in method names:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="case-insensitive"]
+
+== IN Queries
+
+Nitrite supports IN queries with both collections and arrays:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="in-queries"]
+
+== Field Projections
+
+Nitrite supports single-field projections and aggregate functions:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="projections"]
 
 For complex query logic, Micronaut Data provides:
 
 - Criteria API repositories (see <<criteriaSpecifications>>)
 - `@Query` for explicit queries (see <<explicitQueries>>)
 
-NOTE: Nitrite’s runtime query execution supports the query strings encoded by Micronaut Data’s document processor and the Nitrite query builder. If you use `@Query` with JSON, use named placeholders like `:name` and keep update documents separate from filter documents.
+NOTE: Nitrite's runtime query execution supports the query strings encoded by Micronaut Data's document processor and the Nitrite query builder. If you use `@Query` with JSON, use named placeholders like `:name` and keep update documents separate from filter documents.
