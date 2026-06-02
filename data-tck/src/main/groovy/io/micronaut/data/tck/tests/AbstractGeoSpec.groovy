@@ -63,6 +63,7 @@ abstract class AbstractGeoSpec extends Specification {
         getHotelWktRepository()?.deleteAll()
         getDeliveryDriverJsonRepository()?.deleteAll()
         getDeliveryDriverWktRepository()?.deleteAll()
+        getDeliveryDriverWktGeographyRepository()?.deleteAll()
     }
 
     void "test creating, reading and updating when json conversion used on embedded geometry type"() {

@@ -2454,9 +2454,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(distanceExpression);
                     query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
-                case POSTGRES -> {
-                    appendDistanceFunctionComparison("ST_DWithin", leftExpression, geometryExpression, distanceExpression, true);
-                }
+                case POSTGRES -> appendDistanceFunctionComparison("ST_DWithin", leftExpression, geometryExpression, distanceExpression, true);
                 case H2 -> {
                     if (isGeographicCrs(leftExpression)) {
                         appendDistanceFunctionComparison("ST_DistanceSphere", leftExpression, geometryExpression, distanceExpression);
