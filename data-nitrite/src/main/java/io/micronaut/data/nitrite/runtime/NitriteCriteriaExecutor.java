@@ -253,7 +253,7 @@ public final class NitriteCriteriaExecutor {
         } else if (query instanceof jakarta.persistence.criteria.CriteriaDelete<?> delete) {
             return ((RuntimePersistentEntity) ((PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
         } else {
-            return ((RuntimePersistentEntity) ((PersistentEntityQuery) query).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity) ((PersistentEntityQuery<?>) query).getPersistentEntity()).getIntrospection().getBeanType();
         }
     }
 

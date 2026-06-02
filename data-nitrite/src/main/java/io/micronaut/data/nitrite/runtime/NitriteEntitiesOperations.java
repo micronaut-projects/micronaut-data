@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -71,7 +72,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
     private final EntityEventListener<Object> entityEventListener;
-    private List<Object> preVersionValues;
+    /** Prior version per entity, keyed by identity. Populated by triggerPre for !insert paths. */
+    private IdentityHashMap<T, Object> priorVersions;
 
     /**
      * Creates a new NitriteEntitiesOperations.
@@ -131,91 +133,60 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         try {
             collectAutoPopulatedPreviousValues();
 
-            // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
-            Class<T> type = persistentEntity.getIntrospection().getBeanType();
-            NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
+            NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
 
+            // Partition once: new entities have no ID, existing entities have one.
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
             for (T entity : entities) {
-                // Use cached idAccessor from meta - eliminates chained lookups
-                boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
-                if (hasExistingId) {
+                if (meta.idAccessor() != null && meta.idAccessor().get(entity) != null) {
                     existingEntities.add(entity);
                 } else {
                     newEntities.add(entity);
                 }
             }
 
-            // Handle new entities (persist lifecycle)
+            // Pre-phase: new entities (persist lifecycle).
             if (!newEntities.isEmpty()) {
-                List<T> originalEntities = this.entities;
                 this.entities = newEntities;
-                boolean vetoed = triggerPrePersist();
-                if (!vetoed) {
-                    if (persistentEntity.cascadesPersist()) {
-                        cascadePre(Relation.Cascade.PERSIST);
-                    }
-                    // execute() handles both new and existing via its own internal branching,
-                    // but we call it here for the new ones.
-                    // Actually, we can just let execute() run once for all if we handle events correctly.
+                if (!triggerPrePersist() && persistentEntity.cascadesPersist()) {
+                    cascadePre(Relation.Cascade.PERSIST);
                 }
-                this.entities = originalEntities;
             }
 
-            // Handle existing entities (update lifecycle)
+            // Pre-phase: existing entities (update lifecycle).
             if (!existingEntities.isEmpty()) {
-                List<T> originalEntities = this.entities;
                 this.entities = existingEntities;
-                boolean vetoed = triggerPreUpdate();
-                if (!vetoed) {
-                    if (persistentEntity.cascadesUpdate()) {
-                        cascadePre(Relation.Cascade.UPDATE);
-                    }
+                if (!triggerPreUpdate() && persistentEntity.cascadesUpdate()) {
+                    cascadePre(Relation.Cascade.UPDATE);
                 }
-                this.entities = originalEntities;
             }
 
+            // Execute over the combined list. newEntities first so execute()'s index loop
+            // stays stable; subList views below reflect any entity replacements made by execute().
+            List<T> combined = new ArrayList<>(newEntities.size() + existingEntities.size());
+            combined.addAll(newEntities);
+            combined.addAll(existingEntities);
+            this.entities = combined;
             execute();
 
-            // Handle post-events (simplified for batch)
-            // Trigger postPersist for new, postUpdate for existing
-            List<T> finalNewEntities = new ArrayList<>();
-            List<T> finalExistingEntities = new ArrayList<>();
-            for (T entity : entities) {
-                // Use cached idAccessor from meta - eliminates chained lookups
-                if (meta.idAccessor() != null) {
-                    meta.idAccessor().get(entity);
-                }
-                // Note: new entities now HAVE IDs if they were generated
-                // So we should have tracked them before.
-                // For simplicity, fire appropriate events based on initial state
-                if (newEntities.contains(entity)) {
-                    finalNewEntities.add(entity);
-                } else {
-                    finalExistingEntities.add(entity);
-                }
-            }
-
-            if (!finalNewEntities.isEmpty()) {
-                List<T> originalEntities = this.entities;
-                this.entities = finalNewEntities;
+            // Post-phase using subList views — mutations from execute() are visible here.
+            int newCount = newEntities.size();
+            if (newCount > 0) {
+                this.entities = combined.subList(0, newCount);
                 triggerPostPersist();
                 if (persistentEntity.cascadesPersist()) {
                     cascadePost(Relation.Cascade.PERSIST);
                 }
-                this.entities = originalEntities;
             }
-
-            if (!finalExistingEntities.isEmpty()) {
-                List<T> originalEntities = this.entities;
-                this.entities = finalExistingEntities;
+            if (newCount < combined.size()) {
+                this.entities = combined.subList(newCount, combined.size());
                 triggerPostUpdate();
                 if (persistentEntity.cascadesUpdate()) {
                     cascadePost(Relation.Cascade.UPDATE);
                 }
-                this.entities = originalEntities;
             }
+            this.entities = combined;
 
         } catch (OptimisticLockException e) {
             throw e;
@@ -227,6 +198,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     /**
      * Delete all entities with optimistic locking support.
      */
+    @SuppressWarnings("unchecked")
     public void delete() {
         if (entities.isEmpty()) {
             return;
@@ -235,10 +207,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
-        // First pass: capture pre-version values and trigger pre-remove events
         List<Filter> filters = new ArrayList<>();
         List<T> entitiesToDelete = new ArrayList<>();
-        preVersionValues = new ArrayList<>();
 
         for (T entity : entities) {
             Object idValue = entityMapper.getEntityIdValue(entity, persistentEntity.getIntrospection().getBeanType());
@@ -248,14 +218,10 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
             Filter filter = entityMapper.idEqualsFilter(persistentEntity.getIntrospection().getBeanType(), idValue);
 
-            // Add version filter for optimistic locking
             if (meta.versionProp() != null) {
                 BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                 Object versionValue = versionProperty.get(entity);
-                preVersionValues.add(versionValue);
                 filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
-            } else {
-                preVersionValues.add(null);
             }
 
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
@@ -270,7 +236,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             return;
         }
 
-        // Execute all deletes
         int count = 0;
         for (Filter filter : filters) {
             if (collection.remove(filter, false).getAffectedCount() > 0) {
@@ -278,12 +243,10 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
         }
 
-        // Check optimistic locking - process all before throwing
         if (meta.versionProp() != null && count != entitiesToDelete.size()) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + entitiesToDelete.size() + " got: " + count);
         }
 
-        // Post-remove events
         for (T entity : entitiesToDelete) {
             entityEventListener.postRemove((EntityEventContext<Object>) new DefaultEntityEventContext<>(persistentEntity, entity));
         }
@@ -295,7 +258,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     protected void execute() throws RuntimeException {
         LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
 
-        // Cache NitriteEntityMeta at batch start - avoids repeated registry lookups
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
@@ -303,24 +265,18 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             // saveAll() operation uses upsert semantics for each entity:
             // - If entity has no ID: generate ID and insert as new document
             // - If entity has ID: update (replace) existing document, or insert if not found
-            // This allows saveAll() to work for mixed batches of new and existing entities
             List<Document> docsToInsert = new ArrayList<>();
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
 
-                // If it's already in the context, skip
                 if (ctx.persisted.contains(entity)) {
                     continue;
                 }
 
-                // If the entity already has an ID, use upsert
-                // Use cached idAccessor from meta - eliminates chained lookups
                 Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
                 if (id != null) {
-                    // Entity has ID - use upsert (update with insert-if-absent)
-                    // Initialize version to 0 if not set (for optimistic locking)
-                    if (repositoryWriter.needsVersionInit(entity)) {
+                    if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
                         BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
@@ -336,10 +292,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     }
                     ctx.persisted.add(entity);
                 } else {
-                    // No ID - generate and collect for batch insert
                     helper.generateIdIfNecessary(entity, type);
-                    // Initialize version to 0 if not set (for optimistic locking)
-                    if (repositoryWriter.needsVersionInit(entity)) {
+                    if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
                         BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
@@ -348,30 +302,26 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
             }
 
-            // Insert all new entities without IDs in batch
             if (!docsToInsert.isEmpty()) {
                 helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
                 collection.insert(docsToInsert.toArray(new Document[0]));
                 ctx.persisted.addAll(entities);
             }
         } else {
-            // updateAll() operation: replace existing documents by ID
-            // Requires all entities to have IDs; throws OptimisticLockException if version mismatch
+            // updateAll() operation: replace existing documents by ID.
             int expectedCount = entities.size();
             long affectedCount = 0;
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
-                // Use cached idAccessor from meta - eliminates chained lookups
                 Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
                 Filter filter = entityMapper.idEqualsFilter(meta, id);
                 if (meta.versionProp() != null) {
-                    Object versionValue = (preVersionValues != null && i < preVersionValues.size()) ? preVersionValues.get(i) : null;
+                    Object versionValue = priorVersions != null ? priorVersions.get(entity) : null;
                     if (versionValue == null) {
                         versionValue = meta.versionProp().getProperty().get(entity);
                     }
                     filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
-                    // Increment version (preVersionValue has the OLD version, add 1)
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
                     entity = helper.updateEntityId(meta.versionProp().getProperty(), entity, nextVersion);
                     entities.set(i, entity);
@@ -383,29 +333,24 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 affectedCount += rows;
             }
 
-            // Check optimistic locking after processing all entities
             if (meta.versionProp() != null && affectedCount != expectedCount) {
                 throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expectedCount + " got: " + affectedCount);
             }
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        boolean vetoed = false;
-        preVersionValues = new ArrayList<>();
+        priorVersions = new IdentityHashMap<>();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
-        // First pass: capture pre-version values BEFORE event listeners are triggered
-        for (T entity : entities) {
-            if (!insert && meta.versionProp() != null) {
-                preVersionValues.add(meta.versionProp().getProperty().get(entity));
-            } else {
-                preVersionValues.add(null);
-            }
-        }
-        // Second pass: trigger event listeners
+        boolean vetoed = false;
         for (int i = 0; i < entities.size(); i++) {
             T entity = entities.get(i);
+            // Capture pre-version before the event listener can modify the field.
+            if (!insert && meta.versionProp() != null) {
+                priorVersions.put(entity, meta.versionProp().getProperty().get(entity));
+            }
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             if (!fn.apply((EntityEventContext<Object>) event)) {
                 vetoed = true;
@@ -414,11 +359,17 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             T newEntity = event.getEntity();
             if (entity != newEntity) {
                 entities.set(i, newEntity);
+                // Carry the captured version to the replacement instance.
+                Object v = priorVersions.remove(entity);
+                if (v != null) {
+                    priorVersions.put(newEntity, v);
+                }
             }
         }
         return vetoed;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
         IntStream.range(0, entities.size()).forEach(i -> {
