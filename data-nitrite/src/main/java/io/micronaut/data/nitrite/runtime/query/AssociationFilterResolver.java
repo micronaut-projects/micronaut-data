@@ -92,9 +92,9 @@ final class AssociationFilterResolver {
         if (!useSubQuery || subQueryExecutor == null) return null;
 
         if (match.isReverseLookup()) {
-            return buildReverseLookupFilter(entity, field, match.association(), match.targetField(), value, params, namedParameters);
+            return buildReverseLookupFilter(entity, match.association(), match.targetField(), value, params, namedParameters);
         } else {
-            return buildForwardLookupFilter(entity, field, match.association(), value, params, namedParameters);
+            return buildForwardLookupFilter(field, match.association(), value, params, namedParameters);
         }
     }
 
@@ -132,7 +132,7 @@ final class AssociationFilterResolver {
     }
 
     private Filter buildReverseLookupFilter(
-            RuntimePersistentEntity<?> entity, String field,
+            RuntimePersistentEntity<?> entity,
             RuntimeAssociation<?> association, String targetPropertyName,
             Object value, Object[] params, Map<String, Object> namedParameters) {
 
@@ -170,7 +170,7 @@ final class AssociationFilterResolver {
     }
 
     private Filter buildForwardLookupFilter(
-            RuntimePersistentEntity<?> entity, String field,
+            String field,
             RuntimeAssociation<?> association, Object value,
             Object[] params, Map<String, Object> namedParameters) {
 

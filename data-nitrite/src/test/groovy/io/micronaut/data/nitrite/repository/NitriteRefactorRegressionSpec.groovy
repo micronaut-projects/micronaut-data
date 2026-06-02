@@ -35,6 +35,33 @@ class NitriteRefactorRegressionSpec extends Specification {
         repository.findByName("John").get().age == 40
     }
 
+    void "derived update with @Id must update only the matching entity"() {
+        given:
+        def saved = repository.save(new Person("Alice", 30))
+
+        when:
+        repository.update(saved.id, "Alicia")
+
+        then:
+        repository.findByName("Alicia").present
+        !repository.findByName("Alice").present
+    }
+
+    void "@Query with top-level \$and must filter by both conditions"() {
+        given:
+        repository.save(new Person("Alice", 30))
+        repository.save(new Person("Alice", 20))
+        repository.save(new Person("Bob", 35))
+
+        when:
+        def results = repository.findByNameAndAgeGreaterThanJson("Alice", 25)
+
+        then:
+        results.size() == 1
+        results[0].name == "Alice"
+        results[0].age == 30
+    }
+
     void "Criteria update must not persist ParameterExpressionImpl"() {
         given:
         criteriaRepository.save(new CriteriaPerson("Denis", 13))

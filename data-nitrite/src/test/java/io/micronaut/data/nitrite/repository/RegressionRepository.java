@@ -12,4 +12,9 @@ public interface RegressionRepository extends CrudRepository<Person, String> {
     int updateAgeJson(String name, int age);
 
     Optional<Person> findByName(String name);
+
+    void update(@io.micronaut.data.annotation.Id String id, String name);
+
+    @Query("{\"$and\": [{\"name\": {\"$eq\": \":name\"}}, {\"age\": {\"$gt\": \":minAge\"}}]}")
+    java.util.List<Person> findByNameAndAgeGreaterThanJson(String name, int minAge);
 }

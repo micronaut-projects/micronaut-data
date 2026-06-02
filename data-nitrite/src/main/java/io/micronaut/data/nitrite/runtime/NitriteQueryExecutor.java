@@ -17,7 +17,6 @@ package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.Limit;
@@ -36,7 +35,6 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
-import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
@@ -71,7 +69,6 @@ public final class NitriteQueryExecutor {
     // Centralized strategy classes for result handling
     private final ObjectRepositoryMapper entityMapperHandler;
     private final ValueConverter valueConverter;
-    private final CollectionProjectionMapper projectionMapper;
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
     private final JoinFetcher joinFetcher;
@@ -109,7 +106,6 @@ public final class NitriteQueryExecutor {
         // Initialize centralized strategy classes
         this.valueConverter = new ValueConverter(conversionService);
         this.entityMapperHandler = new ObjectRepositoryMapper(entityMapper);
-        this.projectionMapper = new CollectionProjectionMapper(valueConverter, entityMapper);
         this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter, entityMapper);
         this.aggregationHandler = new CollectionAggregator();
         this.joinFetcher = new JoinFetcher(entityMapper, collectionFactory, entityFactory, conversionService);
@@ -286,41 +282,29 @@ public final class NitriteQueryExecutor {
         // Handle native single-field projection
         if (!nq.getResultType().equals(nq.getRootEntity()) && !nq.isDtoProjection()) {
             List<String> projectedFields = null;
-            if (projectedFields == null || projectedFields.isEmpty()) {
-                String projectField = queryParser.extractProjectionField(query);
-                if (projectField != null) {
-                    projectedFields = Collections.singletonList(projectField);
-                }
+            String projectField = queryParser.extractProjectionField(query);
+            if (projectField != null) {
+                projectedFields = Collections.singletonList(projectField);
             }
-            if (projectedFields == null || projectedFields.isEmpty()) {
+            if (projectedFields == null) {
                 String fieldName = nativeProjectionHandler.extractFieldName(query, methodName);
                 if (fieldName != null) {
                     projectedFields = Collections.singletonList(fieldName);
                 }
             }
 
-            if (projectedFields != null && !projectedFields.isEmpty()) {
+            if (projectedFields != null) {
                 var cursor = coll.find(filter, findOptions);
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
-                if (projectedFields.size() == 1) {
-                    List<R> results = new ArrayList<>();
-                    String field = projectedFields.getFirst();
-                    for (Document doc : cursor) {
-                        R result = nativeProjectionHandler.project(doc, field, entity, nq.getResultType());
-                        if (result != null) {
-                            results.add(result);
-                        }
+                List<R> results = new ArrayList<>();
+                String field = projectedFields.getFirst();
+                for (Document doc : cursor) {
+                    R result = nativeProjectionHandler.project(doc, field, entity, nq.getResultType());
+                    if (result != null) {
+                        results.add(result);
                     }
-                    return results;
-                } else {
-                    // Multi-field projection - use centralized projection mapper
-                    Document projection = Document.createDocument();
-                    for (String field : projectedFields) {
-                        projection.put(field, null);
-                    }
-                    RecordStream<Document> projectedCursor = cursor.project(projection);
-                    return projectionMapper.mapResults(projectedCursor, projectedFields, entity, nq.getResultType(), nq.isDtoProjection());
                 }
+                return results;
             }
         }
 
@@ -416,68 +400,10 @@ public final class NitriteQueryExecutor {
     /**
      * Builds a filter from a prepared query.
      *
-     * @param q the prepared query
-     * @param stored the stored query
      * @return the built filter
      */
     private Object resolveParameterValue(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
         return NitriteQueryBinder.resolveParameterValue(value, jsonParams, namedParameters, this::toFilterValue);
-    }
-
-    private Object[] ensureJsonParamsForFilter(final Map<String, Object> filterMap, final Object[] methodParams, final Object[] jsonParams) {
-        int max = findMaxPlaceholderIndex(filterMap);
-        if (max < 0) {
-            return jsonParams;
-        }
-        Object[] out = new Object[Math.max(max + 1, jsonParams.length)];
-        System.arraycopy(jsonParams, 0, out, 0, jsonParams.length);
-        fillMissingParamsFromFilter(filterMap, methodParams, out);
-        return out;
-    }
-
-    private int findMaxPlaceholderIndex(final Map<String, Object> filterMap) {
-        int max = -1;
-        for (Object v : filterMap.values()) {
-            if (v instanceof Map m) {
-                max = Math.max(max, findMaxPlaceholderIndex(m));
-            } else {
-                Integer idx = extractPlaceholderIndex(v);
-                if (idx != null) {
-                    max = Math.max(max, idx);
-                }
-            }
-        }
-        return max;
-    }
-
-    private Integer extractPlaceholderIndex(final Object value) {
-        return NitriteQueryBinder.extractPlaceholderIndex(value);
-    }
-
-    private void fillMissingParamsFromFilter(final Map<String, Object> filterMap, final Object[] methodParams, final Object[] out) {
-        for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
-            if (entry.getValue() instanceof Map m) {
-                fillMissingParamsFromFilter(m, methodParams, out);
-            } else {
-                Integer idx = extractPlaceholderIndex(entry.getValue());
-                if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
-                    out[idx] = toFilterValue(extractPropertyFromSingleArg(methodParams, entry.getKey()));
-                }
-            }
-        }
-    }
-
-    private Object extractPropertyFromSingleArg(final Object[] methodParams, final String property) {
-        if (methodParams == null || methodParams.length != 1 || methodParams[0] == null) {
-            return null;
-        }
-        Object arg = methodParams[0];
-        try {
-            return io.micronaut.core.beans.BeanIntrospection.getIntrospection(arg.getClass())
-                .getProperty(property).map(p -> ((BeanProperty) p).get(arg)).orElse(null);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
 }

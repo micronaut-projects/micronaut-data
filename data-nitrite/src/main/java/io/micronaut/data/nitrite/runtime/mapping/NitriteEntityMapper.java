@@ -211,17 +211,7 @@ public final class NitriteEntityMapper {
     }
   }
 
-  /**
-   * Normalize a field name.
-   *
-   * @param field the field name
-   * @return the normalized field name
-   */
-  public String normalizeFieldName(final String field) {
-      return normalizeFieldName(field, null);
-  }
-
-  /**
+    /**
    * Normalize a field name.
    *
    * @param field the field name
@@ -338,10 +328,8 @@ public final class NitriteEntityMapper {
     }
 
     return switch (n) {
-      case Integer i -> base;
-      case Double d  -> base;
-      case Float f   -> base;
-      default        -> Filter.or(base,
+      case Integer _, Double _, Float _ -> base;
+        default        -> Filter.or(base,
           FluentFilter.where(dottedPath).eq(n.longValue()),
           FluentFilter.where(dottedPath).eq(n.intValue()),
           FluentFilter.where(dottedPath).eq(n.doubleValue()));

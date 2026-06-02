@@ -257,7 +257,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     private void addLookups(Collection<JoinPath> joins, PersistentEntity rootEntity, List<Map<String, Object>> pipeline) {
         if (joins == null || joins.isEmpty()) return;
         List<String> sorted = joins.stream().map(JoinPath::getPath)
-            .sorted((a, b) -> Integer.compare(a.length(), b.length()) != 0 ? Integer.compare(a.length(), b.length()) : a.compareTo(b))
+            .sorted((a, b) -> a.length() != b.length() ? Integer.compare(a.length(), b.length()) : a.compareTo(b))
             .toList();
         Map<String, LookupsStage> subLookupMap = new HashMap<>();
         for (String join : sorted) {
@@ -299,7 +299,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                     String localField = association.getPersistedName();
                     currentPipeline.add(lookup(joinedCollection, localField, "_id", stage.pipeline, segment));
                     if (association.getKind().isSingleEnded()) {
-                        currentPipeline.add(unwind("$" + segment, true));
+                        currentPipeline.add(unwind("$" + segment));
                     }
                 }
                 currentSubLookups.put(pathKey, stage);
@@ -313,7 +313,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     private static Map<String, Object> lookup(String from, List<String> localFields, List<String> foreignFields,
                                                List<Map<String, Object>> pipeline, String as) {
         if (localFields.size() == 1) {
-            return lookup(from, localFields.get(0), foreignFields.get(0), pipeline, as);
+            return lookup(from, localFields.getFirst(), foreignFields.getFirst(), pipeline, as);
         }
         Map<String, Object> let = new LinkedHashMap<>();
         List<Map<String, Object>> matches = new ArrayList<>();
@@ -323,8 +323,8 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             let.put(var, "$" + localFields.get(j));
             matches.add(Map.of("$eq", List.of("$$" + var, "$" + foreignFields.get(j))));
         }
-        Map<String, Object> matchExpr = matches.size() == 1 ? matches.get(0) : Map.of("$and", matches);
-        pipeline.add(0, Map.of("$match", Map.of("$expr", matchExpr)));
+        Map<String, Object> matchExpr = matches.size() == 1 ? matches.getFirst() : Map.of("$and", matches);
+        pipeline.addFirst(Map.of("$match", Map.of("$expr", matchExpr)));
         Map<String, Object> lookupDoc = new LinkedHashMap<>();
         lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
         return Map.of("$lookup", lookupDoc);
@@ -340,9 +340,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         return Map.of("$lookup", lookupDoc);
     }
 
-    private static Map<String, Object> unwind(String path, boolean preserveNull) {
+    private static Map<String, Object> unwind(String path) {
         Map<String, Object> u = new LinkedHashMap<>();
-        u.put("path", path); u.put("preserveNullAndEmptyArrays", preserveNull);
+        u.put("path", path); u.put("preserveNullAndEmptyArrays", true);
         return Map.of("$unwind", u);
     }
 

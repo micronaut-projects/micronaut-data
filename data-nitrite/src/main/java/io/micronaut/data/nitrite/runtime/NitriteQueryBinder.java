@@ -20,10 +20,12 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -57,7 +59,7 @@ final class NitriteQueryBinder {
      * {@code ":"}-prefixed named parameters with their actual values, converting through
      * {@code toFilterValue}. Returns the value unchanged if it is not a placeholder.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"rawtypes"})
     static Object resolveParameterValue(Object value, Object[] jsonParams,
                                         Map<String, Object> namedParameters,
                                         Function<Object, Object> toFilterValue) {
@@ -89,6 +91,45 @@ final class NitriteQueryBinder {
             return toFilterValue.apply(jsonParams[idx]);
         }
         return value;
+    }
+
+    /**
+     * Ensures the JSON params array is large enough to hold all {@code $mn_qp:N} placeholder
+     * indices found in the filter map, then calls {@code fillMissing} to populate any null slots.
+     */
+    static Object[] ensureJsonParamsForFilter(Map<String, Object> filterMap, Object[] jsonParams,
+                                              Consumer<Object[]> fillMissing) {
+        int maxIdx = findMaxPlaceholderIndex(filterMap);
+        if (maxIdx < 0) {
+            return jsonParams;
+        }
+        Object[] out = jsonParams == null ? new Object[0] : jsonParams;
+        if (out.length <= maxIdx) {
+            out = Arrays.copyOf(out, maxIdx + 1);
+        }
+        fillMissing.accept(out);
+        return out;
+    }
+
+    /**
+     * Returns the highest {@code $mn_qp:N} index in a filter map, or -1.
+     * Scans one level deep into operator maps ({@code {"$eq": "$mn_qp:0"}}),
+     * which matches the structure produced by the Nitrite query builder.
+     */
+    private static int findMaxPlaceholderIndex(Map<String, Object> filterMap) {
+        int max = -1;
+        for (Object value : filterMap.values()) {
+            if (value instanceof Map<?, ?> m) {
+                for (Object opVal : m.values()) {
+                    Integer idx = extractPlaceholderIndex(opVal);
+                    if (idx != null) max = Math.max(max, idx);
+                }
+            } else {
+                Integer idx = extractPlaceholderIndex(value);
+                if (idx != null) max = Math.max(max, idx);
+            }
+        }
+        return max;
     }
 
     /**

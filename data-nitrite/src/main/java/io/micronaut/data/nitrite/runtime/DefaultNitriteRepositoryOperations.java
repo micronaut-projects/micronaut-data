@@ -45,6 +45,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
@@ -57,6 +58,7 @@ import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -72,10 +74,13 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.temporal.Temporal;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -143,10 +148,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
   private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
 
   private final Nitrite database;
-  private final NitriteConfiguration configuration;
-  private final NitriteEntityMapper entityMapper;
-  private final NitriteTransactionHolder transactionHolder;
-  private final NitriteQueryParser queryParser;
+    private final NitriteEntityMapper entityMapper;
+    private final NitriteQueryParser queryParser;
   private final NitriteFilterBuilder filterBuilder;
   private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
   private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
@@ -178,8 +181,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       final ObjectMapper serdeObjectMapper) {
     super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
     this.database = database;
-    this.configuration = configuration;
-    this.transactionHolder = transactionHolder;
     this.collectionRegistry = new NitriteCollectionRegistry(database, transactionHolder, configuration, this::getEntity);
     this.entityMapper =
         new NitriteEntityMapper(
@@ -190,8 +191,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     this.filterBuilder = createFilterBuilderWithSubQueryExecutor();
     this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
     this.valueConverter = new ValueConverter(conversionService);
-    QueryBuilder queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder();
-    this.criteriaBuilder = new io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder(runtimeEntityRegistry);
+    QueryBuilder queryBuilder = new NitriteQueryBuilder();
+    this.criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
     this.criteriaExecutor = new NitriteCriteriaExecutor(
         queryBuilder,
         entityMapper,
@@ -719,50 +720,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         || value instanceof Date;
   }
 
-  /** Ensure JSON params array is large enough for all placeholders in filter. */
   private Object[] ensureJsonParamsForFilter(@NonNull final Map<String, Object> filterMap, @NonNull final Object[] methodParams, final Object[] jsonParams) {
-    int maxIdx = findMaxPlaceholderIndex(filterMap);
-    if (maxIdx < 0) {
-      return jsonParams;
-    }
-    Object[] out = (jsonParams == null) ? new Object[0] : jsonParams;
-    if (out.length <= maxIdx) {
-      out = Arrays.copyOf(out, maxIdx + 1);
-    }
-    fillMissingParamsFromFilter(filterMap, methodParams, out);
-    return out;
-  }
-
-  /** Find the highest placeholder index in a filter map. */
-  private int findMaxPlaceholderIndex(final Map<String, Object> filterMap) {
-    int max = -1;
-    for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
-      Object value = entry.getValue();
-      if (value instanceof Map<?, ?> m) {
-        if ("$and".equals(entry.getKey()) || "$or".equals(entry.getKey())) {
-          if (value instanceof List<?> list) {
-            for (Object item : list) {
-              if (item instanceof Map<?, ?> im) {
-                max = Math.max(max, findMaxPlaceholderIndex((Map<String, Object>) im));
-              }
-            }
-          }
-          continue;
-        }
-        for (Object opVal : m.values()) {
-          Integer idx = extractPlaceholderIndex(opVal);
-          if (idx != null) {
-            max = Math.max(max, idx);
-          }
-        }
-      } else {
-        Integer idx = extractPlaceholderIndex(value);
-        if (idx != null) {
-          max = Math.max(max, idx);
-        }
-      }
-    }
-    return max;
+    return NitriteQueryBinder.ensureJsonParamsForFilter(filterMap, jsonParams, out -> fillMissingParamsFromFilter(filterMap, methodParams, out));
   }
 
   /**
@@ -785,22 +744,18 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
       }
       if (value instanceof Map<?, ?> ops) {
         for (Object opVal : ops.values()) {
-          Integer idx = extractPlaceholderIndex(opVal);
+          Integer idx = NitriteQueryBinder.extractPlaceholderIndex(opVal);
           if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
             out[idx] = extractPropertyFromSingleArg(methodParams, entry.getKey());
           }
         }
       } else {
-        Integer idx = extractPlaceholderIndex(value);
+        Integer idx = NitriteQueryBinder.extractPlaceholderIndex(value);
         if (idx != null && idx >= 0 && idx < out.length && out[idx] == null) {
           out[idx] = extractPropertyFromSingleArg(methodParams, entry.getKey());
         }
       }
     }
-  }
-
-  private Integer extractPlaceholderIndex(final Object value) {
-    return NitriteQueryBinder.extractPlaceholderIndex(value);
   }
 
   /**
