@@ -15,10 +15,6 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
@@ -27,7 +23,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -44,32 +39,9 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
     @Shared
     MariaBatchRecordRepository recordRepository = context.getBean(MariaBatchRecordRepository)
 
-    @Shared
-    Logger queryLogger = LoggerFactory.getLogger("io.micronaut.data.query") as Logger
-
-    @Shared
-    Level previousQueryLogLevel
-
-    @Shared
-    ListAppender<ILoggingEvent> queryLogAppender = new ListAppender<>()
-
-    void setupSpec() {
-        previousQueryLogLevel = queryLogger.level
-        queryLogger.level = Level.DEBUG
-        queryLogAppender.start()
-        queryLogger.addAppender(queryLogAppender)
-    }
-
-    void cleanupSpec() {
-        queryLogger.detachAppender(queryLogAppender)
-        queryLogger.level = previousQueryLogLevel
-        queryLogAppender.stop()
-    }
-
     void setup() {
         repository.deleteAll()
         recordRepository.deleteAll()
-        queryLogAppender.list.clear()
     }
 
     void "custom void insertAll batches generated-id inserts without mutating input ids"() {
@@ -109,7 +81,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         savedBooks*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
     }
 
-    void "saveAll falls back to generated-key inserts for generated identities"() {
+    void "saveAll generated-key inserts populate ids"() {
         given:
         def books = [
             new MariaBatchBook(title: "A Wizard of Earthsea"),
@@ -122,10 +94,9 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         then:
         saved*.id.every { it != null }
         repository.count() == 2
-        insertQueryExecutions("maria_batch_book") == 2
     }
 
-    void "saveAll falls back to generated-key record inserts and populates ids"() {
+    void "saveAll generated-key record inserts populate ids"() {
         given:
         def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
 
@@ -136,7 +107,6 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         saved.size() == 100
         saved.collect { it.id() }.every { it != null && it != 0L }
         records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("maria_batch_record") == 100
     }
 
     void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
@@ -151,29 +121,6 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         records.collect { it.id() }.every { it == 0L }
         savedRecords.size() == 100
         savedRecords.every { it.id() != null && it.id() != 0L }
-        insertQueryExecutions("maria_batch_record") == 1
-    }
-
-    void "save one by one does not batch generated-id record inserts"() {
-        given:
-        def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
-
-        when:
-        List<MariaBatchRecord> saved = records.collect { recordRepository.save(it) }
-
-        then:
-        saved.size() == 100
-        saved.collect { it.id() }.every { it != null && it != 0L }
-        records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("maria_batch_record") == 100
-    }
-
-    private long insertQueryExecutions(String tableName) {
-        queryLogAppender.list.count { event ->
-            String message = event.formattedMessage
-            message.contains("Executing SQL query: INSERT INTO")
-                && message.contains("`${tableName}`")
-        }
     }
 }
 

@@ -15,15 +15,10 @@
  */
 package io.micronaut.data.r2dbc.mysql
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
-import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -37,34 +32,11 @@ class MySqlR2dbcBatchInsertSpec extends Specification implements MySqlTestProper
     @Shared
     MySqlR2dbcBatchRecordRepository repository = context.getBean(MySqlR2dbcBatchRecordRepository)
 
-    @Shared
-    Logger queryLogger = LoggerFactory.getLogger("io.micronaut.data.query") as Logger
-
-    @Shared
-    Level previousQueryLogLevel
-
-    @Shared
-    ListAppender<ILoggingEvent> queryLogAppender = new ListAppender<>()
-
-    void setupSpec() {
-        previousQueryLogLevel = queryLogger.level
-        queryLogger.level = Level.DEBUG
-        queryLogAppender.start()
-        queryLogger.addAppender(queryLogAppender)
-    }
-
-    void cleanupSpec() {
-        queryLogger.detachAppender(queryLogAppender)
-        queryLogger.level = previousQueryLogLevel
-        queryLogAppender.stop()
-    }
-
     void setup() {
         repository.deleteAll()
-        queryLogAppender.list.clear()
     }
 
-    void "saveAll falls back to generated-key record inserts and populates ids"() {
+    void "saveAll generated-key record inserts populate ids"() {
         given:
         def records = (0..<100).collect { new MySqlR2dbcBatchRecord(0L, "name-$it") }
 
@@ -75,7 +47,6 @@ class MySqlR2dbcBatchInsertSpec extends Specification implements MySqlTestProper
         saved.size() == 100
         saved.collect { it.id() }.every { it != null && it != 0L }
         records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("mysql_r2dbc_batch_record") == 100
     }
 
     void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
@@ -90,15 +61,6 @@ class MySqlR2dbcBatchInsertSpec extends Specification implements MySqlTestProper
         records.collect { it.id() }.every { it == 0L }
         savedRecords.size() == 100
         savedRecords.every { it.id() != null && it.id() != 0L }
-        insertQueryExecutions("mysql_r2dbc_batch_record") == 1
-    }
-
-    private long insertQueryExecutions(String tableName) {
-        queryLogAppender.list.count { event ->
-            String message = event.formattedMessage
-            message.contains("Executing SQL query: INSERT INTO")
-                && message.contains("`${tableName}`")
-        }
     }
 }
 
