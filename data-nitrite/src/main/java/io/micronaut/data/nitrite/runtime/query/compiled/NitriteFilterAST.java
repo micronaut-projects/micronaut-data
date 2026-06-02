@@ -17,7 +17,6 @@ package io.micronaut.data.nitrite.runtime.query.compiled;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
@@ -88,14 +87,16 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      * A highly optimized node for standard property equality.
      * Bypasses all metadata lookups and dynamic strategy detection.
      *
-     * @param builder the Nitrite filter builder
+     * @param preparer prepares the resolved value for filtering
+     * @param evaluator builds the operator filter
      * @param entity the runtime persistent entity
      * @param persistedName the persisted field name
      * @param rawField the raw field name
      * @param valueExpression the compiled value expression
      */
     record SimpleEqualityNode(
-        NitriteFilterBuilder builder,
+        FieldValuePreparer preparer,
+        OperatorFilterEvaluator evaluator,
         RuntimePersistentEntity<?> entity,
         String persistedName,
         String rawField,
@@ -104,22 +105,24 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
-            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue);
-            return builder.buildOperatorFilter(entity, persistedName, "$eq", finalValue, params, namedParameters);
+            Object finalValue = preparer.prepare(persistedName, resolvedValue);
+            return evaluator.evaluate(entity, persistedName, "$eq", finalValue, params, namedParameters);
         }
     }
 
     /**
      * A specialized node for range and other standard operators on simple fields.
      *
-     * @param builder the Nitrite filter builder
+     * @param preparer prepares the resolved value for filtering
+     * @param evaluator builds the operator filter
      * @param entity the runtime persistent entity
      * @param persistedName the persisted field name
      * @param rawField the raw field name
      * @param operators the list of operator bindings
      */
     record SimpleOperatorNode(
-        NitriteFilterBuilder builder,
+        FieldValuePreparer preparer,
+        OperatorFilterEvaluator evaluator,
         RuntimePersistentEntity<?> entity,
         String persistedName,
         String rawField,
@@ -128,11 +131,11 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             if (operators.size() == 1) {
-                return operators.getFirst().toFilter(builder, entity, persistedName, rawField, params, namedParameters);
+                return operators.getFirst().toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters);
             }
             List<Filter> results = new ArrayList<>(operators.size());
             for (OperatorBinding op : operators) {
-                Filter f = op.toFilter(builder, entity, persistedName, rawField, params, namedParameters);
+                Filter f = op.toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters);
                 if (f != null && f != Filter.ALL) {
                     results.add(f);
                 }
@@ -148,16 +151,32 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      * @param valueExpression the compiled value expression
      */
     record OperatorBinding(String op, CompiledValue valueExpression) {
-        public Filter toFilter(NitriteFilterBuilder builder, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
+        public Filter toFilter(FieldValuePreparer preparer, OperatorFilterEvaluator evaluator, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
-            Object finalValue = builder.prepareFilterValue(persistedName, resolvedValue);
-            return builder.buildOperatorFilter(entity, persistedName, op, finalValue, params, namedParameters);
+            Object finalValue = preparer.prepare(persistedName, resolvedValue);
+            return evaluator.evaluate(entity, persistedName, op, finalValue, params, namedParameters);
         }
     }
 
     /**
+     * Prepares a raw value for use in a filter (coercion, UUID handling, type conversion).
+     */
+    @FunctionalInterface
+    interface FieldValuePreparer {
+        Object prepare(String field, Object value);
+    }
+
+    /**
+     * Builds a Nitrite Filter for a single operator on a resolved field value.
+     */
+    @FunctionalInterface
+    interface OperatorFilterEvaluator {
+        Filter evaluate(RuntimePersistentEntity<?> entity, String field, String op, Object value,
+                        Object[] params, Map<String, Object> namedParameters);
+    }
+
+    /**
      * Evaluates association and nested-path fields at bind time.
-     * Implemented by {@link NitriteFilterBuilder} to avoid a direct dependency on it from AST nodes.
      */
     @FunctionalInterface
     interface AssociationFieldEvaluator {

@@ -203,13 +203,13 @@ public final class NitriteFilterBuilder {
                 this::buildAssociationOrNestedField, entity, rawField, persistedName, operators);
         }
         if (!isOperatorMap) {
-            return new NitriteFilterAST.SimpleEqualityNode(this, entity, persistedName, rawField, operatorValues.get("$eq"));
+            return new NitriteFilterAST.SimpleEqualityNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, operatorValues.get("$eq"));
         }
         List<NitriteFilterAST.OperatorBinding> bindings = new ArrayList<>(operatorValues.size());
         for (Map.Entry<String, CompiledValue> entry : operatorValues.entrySet()) {
             bindings.add(new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()));
         }
-        return new NitriteFilterAST.SimpleOperatorNode(this, entity, persistedName, rawField, bindings);
+        return new NitriteFilterAST.SimpleOperatorNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, bindings);
     }
 
     /**

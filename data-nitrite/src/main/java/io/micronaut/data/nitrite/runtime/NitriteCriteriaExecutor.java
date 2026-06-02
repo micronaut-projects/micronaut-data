@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.runtime;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
@@ -221,15 +222,8 @@ public final class NitriteCriteriaExecutor {
             Map<String, Object> resolvedValues = new java.util.LinkedHashMap<>();
             for (Map.Entry<String, Object> entry : rawValues.entrySet()) {
                 Object value = entry.getValue();
-                // Resolve ParameterExpression to actual value
-                if (value instanceof io.micronaut.data.model.jpa.criteria.impl.IParameterExpression<?> paramExpr) {
-                    // Try to get the value via reflection
-                    try {
-                        java.lang.reflect.Field valueField = paramExpr.getClass().getDeclaredField("value");
-                        valueField.setAccessible(true);
-                        value = valueField.get(paramExpr);
-                    } catch (Exception ignored) {
-                    }
+                if (value instanceof BindingParameter bindingParam) {
+                    value = bindingParam.bind(BindingParameter.BindingContext.create().index(0)).getValue();
                 }
                 resolvedValues.put(entry.getKey(), value);
             }
