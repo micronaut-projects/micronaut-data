@@ -117,14 +117,15 @@ public final class SqlBatchSupport {
                                                     @Nullable Boolean supportsBatchUpdates,
                                                     @Nullable Boolean supportsGetGeneratedKeys,
                                                     boolean requiresGeneratedKeys) {
-        if (dialect == Dialect.MYSQL && isMySqlFamily(databaseProductName, driverName)) {
-            if (Boolean.FALSE.equals(supportsBatchUpdates)) {
-                return false;
+        if (dialect == Dialect.MYSQL) {
+            if (isMariaDb(databaseProductName, driverName)) {
+                // MariaDB generated keys for batched inserts are driver-option dependent.
+                return !requiresGeneratedKeys && Boolean.TRUE.equals(supportsBatchUpdates);
             }
-            if (requiresGeneratedKeys && Boolean.FALSE.equals(supportsGetGeneratedKeys)) {
-                return false;
+            if (isMySql(databaseProductName, driverName)) {
+                return Boolean.TRUE.equals(supportsBatchUpdates)
+                    && (!requiresGeneratedKeys || Boolean.TRUE.equals(supportsGetGeneratedKeys));
             }
-            return true;
         }
         return isSupportsBatchInsert(persistentEntity, dialect);
     }
@@ -159,9 +160,13 @@ public final class SqlBatchSupport {
             || containsIgnoreCase(databaseProductName, MYSQL_PRODUCT_NAME);
     }
 
-    private static boolean isMySqlFamily(@Nullable String databaseProductName, @Nullable String driverName) {
-        return isMySqlFamily(databaseProductName)
-            || containsIgnoreCase(driverName, MARIADB_PRODUCT_NAME)
+    private static boolean isMariaDb(@Nullable String databaseProductName, @Nullable String driverName) {
+        return containsIgnoreCase(databaseProductName, MARIADB_PRODUCT_NAME)
+            || containsIgnoreCase(driverName, MARIADB_PRODUCT_NAME);
+    }
+
+    private static boolean isMySql(@Nullable String databaseProductName, @Nullable String driverName) {
+        return containsIgnoreCase(databaseProductName, MYSQL_PRODUCT_NAME)
             || containsIgnoreCase(driverName, MYSQL_PRODUCT_NAME);
     }
 

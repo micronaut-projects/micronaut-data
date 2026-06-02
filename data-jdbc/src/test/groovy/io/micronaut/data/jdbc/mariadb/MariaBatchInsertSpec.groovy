@@ -107,7 +107,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         repository.findAll()*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
     }
 
-    void "saveAll stays on the generated-key path for generated identities"() {
+    void "saveAll falls back to generated-key inserts for generated identities"() {
         given:
         def books = [
             new MariaBatchBook(title: "A Wizard of Earthsea"),
@@ -120,9 +120,10 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         then:
         saved*.id.every { it != null }
         repository.count() == 2
+        insertQueryExecutions("maria_batch_book") == 2
     }
 
-    void "saveAll batches generated-id record inserts and populates ids"() {
+    void "saveAll falls back to generated-key record inserts and populates ids"() {
         given:
         def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
 
@@ -133,7 +134,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         saved.size() == 100
         saved.collect { it.id() }.every { it != null && it != 0L }
         records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("maria_batch_record") == 1
+        insertQueryExecutions("maria_batch_record") == 100
     }
 
     void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
