@@ -110,6 +110,11 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
     }
 
     @Override
+    protected boolean supportsGeographyDatabaseType() {
+        return false
+    }
+
+    @Override
     protected void assertGeometryCollection(GeometryCollection geometryCollection, int n) {
         def geometries = geometryCollection.geometries()
         assertPoint((Point) geometries.get(0), n)

@@ -73,4 +73,9 @@ class MariaDbGeoSpec extends AbstractGeoSpec implements MariaDbTestPropertyProvi
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
     }
+
+    @Override
+    protected boolean supportsGeographyDatabaseType() {
+        return false
+    }
 }

@@ -89,6 +89,11 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
     }
 
     @Override
+    protected boolean supportsGeographyDatabaseType() {
+        return false
+    }
+
+    @Override
     protected GeometryCollection createGeometryCollection(int n) {
         return new GeometryCollection([
                 createPoint(n),

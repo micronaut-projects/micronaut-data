@@ -109,6 +109,13 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         ] as Map<String, String>
     }
 
+    @Override
+    protected boolean supportsGeometryTypeWithGeographicCrs() {
+        // Geography type should be used instead of geometry type
+        // when using geographic coordinate reference system
+        return false
+    }
+
     void "test crud when json conversion used on geography type"() {
         given:
         GeographyEntityJson entity = new GeographyEntityJson()
