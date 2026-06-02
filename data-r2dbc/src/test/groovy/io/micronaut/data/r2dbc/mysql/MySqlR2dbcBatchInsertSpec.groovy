@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.mysql
+package io.micronaut.data.r2dbc.mysql
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyProvider {
+class MySqlR2dbcBatchInsertSpec extends Specification implements MySqlTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
-    MySqlBatchRecordRepository repository = context.getBean(MySqlBatchRecordRepository)
+    MySqlR2dbcBatchRecordRepository repository = context.getBean(MySqlR2dbcBatchRecordRepository)
 
     @Shared
     Logger queryLogger = LoggerFactory.getLogger("io.micronaut.data.query") as Logger
@@ -64,23 +64,23 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
         queryLogAppender.list.clear()
     }
 
-    void "saveAll batches generated-id record inserts and populates ids"() {
+    void "saveAll falls back to generated-key record inserts and populates ids"() {
         given:
-        def records = (0..<100).collect { new MySqlBatchRecord(0L, "name-$it") }
+        def records = (0..<100).collect { new MySqlR2dbcBatchRecord(0L, "name-$it") }
 
         when:
-        List<MySqlBatchRecord> saved = repository.saveAll(records)
+        List<MySqlR2dbcBatchRecord> saved = repository.saveAll(records)
 
         then:
         saved.size() == 100
         saved.collect { it.id() }.every { it != null && it != 0L }
         records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("mysql_batch_record") == 1
+        insertQueryExecutions("mysql_r2dbc_batch_record") == 100
     }
 
     void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
         given:
-        def records = (0..<100).collect { new MySqlBatchRecord(0L, "name-$it") }
+        def records = (0..<100).collect { new MySqlR2dbcBatchRecord(0L, "name-$it") }
 
         when:
         repository.insertAll(records)
@@ -90,21 +90,7 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
         records.collect { it.id() }.every { it == 0L }
         savedRecords.size() == 100
         savedRecords.every { it.id() != null && it.id() != 0L }
-        insertQueryExecutions("mysql_batch_record") == 1
-    }
-
-    void "save one by one does not batch generated-id record inserts"() {
-        given:
-        def records = (0..<100).collect { new MySqlBatchRecord(0L, "name-$it") }
-
-        when:
-        List<MySqlBatchRecord> saved = records.collect { repository.save(it) }
-
-        then:
-        saved.size() == 100
-        saved.collect { it.id() }.every { it != null && it != 0L }
-        records.collect { it.id() }.every { it == 0L }
-        insertQueryExecutions("mysql_batch_record") == 100
+        insertQueryExecutions("mysql_r2dbc_batch_record") == 1
     }
 
     private long insertQueryExecutions(String tableName) {
@@ -116,8 +102,8 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
     }
 }
 
-@JdbcRepository(dialect = Dialect.MYSQL)
-interface MySqlBatchRecordRepository extends CrudRepository<MySqlBatchRecord, Long> {
+@R2dbcRepository(dialect = Dialect.MYSQL)
+interface MySqlR2dbcBatchRecordRepository extends CrudRepository<MySqlR2dbcBatchRecord, Long> {
 
-    void insertAll(List<MySqlBatchRecord> entities)
+    void insertAll(List<MySqlR2dbcBatchRecord> entities)
 }

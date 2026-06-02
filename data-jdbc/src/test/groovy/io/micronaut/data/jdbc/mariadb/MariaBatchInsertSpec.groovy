@@ -84,7 +84,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         def savedBooks = repository.findAll()
 
         then:
-        repository.count() == 2
+        savedBooks.size() == 2
         books*.id == [null, null]
         savedBooks*.id.every { it != null }
         savedBooks*.title as Set == ["The Left Hand", "The Dispossessed"] as Set
@@ -103,7 +103,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
         then:
         inserted == 2
-        repository.count() == 2
+        savedBooks.size() == 2
         books*.id == [null, null]
         savedBooks*.id.every { it != null }
         savedBooks*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
@@ -149,7 +149,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
         then:
         records.collect { it.id() }.every { it == 0L }
-        recordRepository.count() == 100
+        savedRecords.size() == 100
         savedRecords.every { it.id() != null && it.id() != 0L }
         insertQueryExecutions("maria_batch_record") == 1
     }
