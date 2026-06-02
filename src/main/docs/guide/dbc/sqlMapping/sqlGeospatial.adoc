@@ -39,12 +39,26 @@ predicate argument conversion.
 Micronaut Data uses `Srid.CrsType` to choose the distance function for dialects that have different functions
 for planar and spherical distance checks:
 
-* MySQL and MariaDB:
-** `Srid.CrsType.PROJECTED`: `ST_Distance(column, convertedValue) <= distanceValue`
-** `Srid.CrsType.GEOGRAPHIC`: `ST_Distance_Sphere(column, convertedValue) <= distanceValue`
-* H2 / H2GIS:
-** `Srid.CrsType.PROJECTED`: `ST_DWithin(column, convertedValue, distanceValue)`
-** `Srid.CrsType.GEOGRAPHIC`: `ST_DistanceSphere(column, convertedValue) <= distanceValue`
+[cols="1,1,2"]
+|===
+| Dialect | `Srid.CrsType` | Distance predicate
+
+| MySQL and MariaDB
+| `Srid.CrsType.PROJECTED`
+| `ST_Distance(column, convertedValue) <= distanceValue`
+
+| MySQL and MariaDB
+| `Srid.CrsType.GEOGRAPHIC`
+| `ST_Distance_Sphere(column, convertedValue) <= distanceValue`
+
+| H2 / H2GIS
+| `Srid.CrsType.PROJECTED`
+| `ST_DWithin(column, convertedValue, distanceValue)`
+
+| H2 / H2GIS
+| `Srid.CrsType.GEOGRAPHIC`
+| `ST_DistanceSphere(column, convertedValue) <= distanceValue`
+|===
 
 For the other supported SQL dialects, `Srid.CrsType` does not currently change the generated `Near` predicate function.
 It also does not change the database column type. Use `@MappedProperty(definition = "geography")` when a dialect such as
