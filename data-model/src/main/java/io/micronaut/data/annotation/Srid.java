@@ -35,4 +35,26 @@ public @interface Srid {
      * @return The spatial reference system identifier.
      */
     int value();
+
+    /**
+     * @return The coordinate reference system type.
+     * @since 5.0.4
+     */
+    CrsType type() default CrsType.PROJECTED;
+
+    /**
+     * The coordinate reference system type.
+     *
+     * @since 5.0.4
+     */
+    enum CrsType {
+        /**
+         * Geographic coordinate reference system.
+         */
+        GEOGRAPHIC,
+        /**
+         * Projected coordinate reference system.
+         */
+        PROJECTED
+    }
 }
