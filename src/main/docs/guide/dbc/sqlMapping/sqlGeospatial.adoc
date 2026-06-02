@@ -30,6 +30,26 @@ snippet::example.GeometryEntityWkt[project="doc-examples/jdbc-geospatial", sourc
 NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
 and native spatial column definitions when the dialect supports them.
 
+=== SRID and coordinate reference system type
+
+Use api:data.annotation.Srid[] to declare the spatial reference system identifier used for a persistent geospatial
+property. Micronaut Data uses the SRID value when it generates read and write conversion SQL, schema metadata, and
+predicate argument conversion.
+
+Micronaut Data uses `Srid.CrsType` to choose the distance function for dialects that have different functions
+for planar and spherical distance checks:
+
+* MySQL and MariaDB:
+** `Srid.CrsType.PROJECTED`: `ST_Distance(column, convertedValue) <= distanceValue`
+** `Srid.CrsType.GEOGRAPHIC`: `ST_Distance_Sphere(column, convertedValue) <= distanceValue`
+* H2 / H2GIS:
+** `Srid.CrsType.PROJECTED`: `ST_DWithin(column, convertedValue, distanceValue)`
+** `Srid.CrsType.GEOGRAPHIC`: `ST_DistanceSphere(column, convertedValue) <= distanceValue`
+
+For the other supported SQL dialects, `Srid.CrsType` does not currently change the generated `Near` predicate function.
+It also does not change the database column type. Use `@MappedProperty(definition = "geography")` when a dialect such as
+PostgreSQL / PostGIS or SQL Server should use a native `GEOGRAPHY` column.
+
 === Query predicates
 
 Micronaut Data also translates repository finder methods and criteria predicates for geospatial comparisons into
@@ -233,8 +253,11 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `Near`
+| `Near` with `Srid.CrsType.PROJECTED`
 | `ST_Distance(column, convertedValue) <= distanceValue`
+
+| `Near` with `Srid.CrsType.GEOGRAPHIC`
+| `ST_Distance_Sphere(column, convertedValue) <= distanceValue`
 |===
 
 `convertedValue` is the MySQL spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
@@ -278,8 +301,11 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `Near`
+| `Near` with `Srid.CrsType.PROJECTED`
 | `ST_Distance(column, convertedValue) <= distanceValue`
+
+| `Near` with `Srid.CrsType.GEOGRAPHIC`
+| `ST_Distance_Sphere(column, convertedValue) <= distanceValue`
 |===
 
 `convertedValue` is the MariaDB spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
@@ -332,8 +358,11 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
 
-| `Near`
+| `Near` with `Srid.CrsType.PROJECTED`
 | `ST_DWithin(column, convertedValue, distanceValue)`
+
+| `Near` with `Srid.CrsType.GEOGRAPHIC`
+| `ST_DistanceSphere(column, convertedValue) <= distanceValue`
 |===
 
 `convertedValue` is the H2GIS conversion call such as `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)` or
