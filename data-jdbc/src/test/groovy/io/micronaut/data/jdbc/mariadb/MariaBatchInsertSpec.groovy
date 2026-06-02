@@ -81,12 +81,13 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
         when:
         repository.customInsertAll(books)
+        def savedBooks = repository.findAll()
 
         then:
         repository.count() == 2
         books*.id == [null, null]
-        repository.findAll()*.id.every { it != null }
-        repository.findAll()*.title as Set == ["The Left Hand", "The Dispossessed"] as Set
+        savedBooks*.id.every { it != null }
+        savedBooks*.title as Set == ["The Left Hand", "The Dispossessed"] as Set
     }
 
     void "custom count insertAll batches generated-id inserts without mutating input ids"() {
@@ -98,13 +99,14 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
         when:
         long inserted = repository.customInsertAllCount(books)
+        def savedBooks = repository.findAll()
 
         then:
         inserted == 2
         repository.count() == 2
         books*.id == [null, null]
-        repository.findAll()*.id.every { it != null }
-        repository.findAll()*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
+        savedBooks*.id.every { it != null }
+        savedBooks*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
     }
 
     void "saveAll falls back to generated-key inserts for generated identities"() {
@@ -143,11 +145,12 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
         when:
         recordRepository.insertAll(records)
+        def savedRecords = recordRepository.findAll()
 
         then:
         records.collect { it.id() }.every { it == 0L }
         recordRepository.count() == 100
-        recordRepository.findAll().every { it.id() != null && it.id() != 0L }
+        savedRecords.every { it.id() != null && it.id() != 0L }
         insertQueryExecutions("maria_batch_record") == 1
     }
 

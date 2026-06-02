@@ -36,8 +36,7 @@ import java.util.concurrent.CompletionStage;
  * driver behavior can still diverge, so runtime capability checks stay internal and separate from
  * the public dialect enum.</p>
  *
- * @author Denis Stepanov
- * @since 5.0.3
+ * @since 5.1.0
  */
 @Internal
 public final class SqlBatchSupport {
@@ -74,7 +73,9 @@ public final class SqlBatchSupport {
                                                 Dialect dialect) {
         return switch (dialect) {
             case SQL_SERVER -> false;
-            case MYSQL, ORACLE -> supportsBatchWithGeneratedIds(persistentEntity);
+            // Preserve the generic SQL/R2DBC rule for dialects where generated IDs cannot be
+            // assumed to come back reliably from a batch insert.
+            case MYSQL, ORACLE -> hasNonGeneratedIdentity(persistentEntity);
             default -> true;
         };
     }
@@ -119,10 +120,14 @@ public final class SqlBatchSupport {
                                                     boolean requiresGeneratedKeys) {
         if (dialect == Dialect.MYSQL) {
             if (isMariaDb(databaseProductName, driverName)) {
-                // MariaDB generated keys for batched inserts are driver-option dependent.
+                // MariaDB reports generated-key support generally, but complete generated keys for
+                // batched multi-value inserts depend on driver options. Only batch when the caller
+                // does not need generated keys back.
                 return !requiresGeneratedKeys && Boolean.TRUE.equals(supportsBatchUpdates);
             }
             if (isMySql(databaseProductName, driverName)) {
+                // MySQL Connector/J can return generated keys for JDBC batches when both metadata
+                // capabilities are reported, so generated-key batches can be enabled there.
                 return Boolean.TRUE.equals(supportsBatchUpdates)
                     && (!requiresGeneratedKeys || Boolean.TRUE.equals(supportsGetGeneratedKeys));
             }
@@ -148,11 +153,8 @@ public final class SqlBatchSupport {
         return returnsEntities(operation.getResultArgument());
     }
 
-    private static boolean supportsBatchWithGeneratedIds(PersistentEntity persistentEntity) {
-        if (persistentEntity.hasIdentity()) {
-            return !persistentEntity.getIdentity().isGenerated();
-        }
-        return false;
+    private static boolean hasNonGeneratedIdentity(PersistentEntity persistentEntity) {
+        return persistentEntity.hasIdentity() && !persistentEntity.getIdentity().isGenerated();
     }
 
     private static boolean isMySqlFamily(@Nullable String databaseProductName) {

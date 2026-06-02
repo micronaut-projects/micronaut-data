@@ -84,11 +84,12 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
 
         when:
         repository.insertAll(records)
+        def savedRecords = repository.findAll()
 
         then:
         records.collect { it.id() }.every { it == 0L }
         repository.count() == 100
-        repository.findAll().every { it.id() != null && it.id() != 0L }
+        savedRecords.every { it.id() != null && it.id() != 0L }
         insertQueryExecutions("mysql_batch_record") == 1
     }
 
