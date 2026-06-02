@@ -43,6 +43,7 @@ import java.util.concurrent.CompletionStage;
 public final class SqlBatchSupport {
 
     private static final String MARIADB_PRODUCT_NAME = "MARIADB";
+    private static final String MYSQL_PRODUCT_NAME = "MYSQL";
 
     private SqlBatchSupport() {
     }
@@ -79,19 +80,50 @@ public final class SqlBatchSupport {
     }
 
     /**
-     * Resolves whether MariaDB can use batch inserts without generated-key retrieval.
+     * Resolves whether a runtime with database product metadata can use batch inserts.
      *
      * @param persistentEntity The persistent entity
      * @param dialect The SQL dialect
      * @param databaseProductName The concrete database product name if available
      * @param requiresGeneratedKeys Whether generated keys are needed back from the batch
-     * @return {@code true} if MariaDB can use the batch path
+     * @return {@code true} if the batch path can be used
      */
     public static boolean isSupportsBatchInsert(PersistentEntity persistentEntity,
                                                 Dialect dialect,
                                                 @Nullable String databaseProductName,
                                                 boolean requiresGeneratedKeys) {
-        if (!requiresGeneratedKeys && dialect == Dialect.MYSQL && isMariaDb(databaseProductName)) {
+        if (!requiresGeneratedKeys && dialect == Dialect.MYSQL && isMySqlFamily(databaseProductName)) {
+            return true;
+        }
+        return isSupportsBatchInsert(persistentEntity, dialect);
+    }
+
+    /**
+     * Resolves whether a JDBC connection can use batch inserts.
+     *
+     * @param persistentEntity The persistent entity
+     * @param dialect The SQL dialect
+     * @param databaseProductName The concrete database product name if available
+     * @param driverName The JDBC driver name if available
+     * @param supportsBatchUpdates Whether the driver reports batch-update support
+     * @param supportsGetGeneratedKeys Whether the driver reports generated-key support
+     * @param requiresGeneratedKeys Whether generated keys are needed back from the batch
+     * @return {@code true} if JDBC can use the batch path
+     */
+    public static boolean isSupportsJdbcBatchInsert(PersistentEntity persistentEntity,
+                                                    Dialect dialect,
+                                                    @Nullable String databaseProductName,
+                                                    @Nullable String driverName,
+                                                    @Nullable Boolean supportsBatchUpdates,
+                                                    @Nullable Boolean supportsGetGeneratedKeys,
+                                                    boolean requiresGeneratedKeys) {
+        if (dialect == Dialect.MYSQL && isMySqlFamily(databaseProductName, driverName)) {
+            if (Boolean.FALSE.equals(supportsBatchUpdates)) {
+                return false;
+            }
+            if (requiresGeneratedKeys && Boolean.FALSE.equals(supportsGetGeneratedKeys)) {
+                return false;
+            }
             return true;
         }
         return isSupportsBatchInsert(persistentEntity, dialect);
@@ -122,11 +154,22 @@ public final class SqlBatchSupport {
         return false;
     }
 
-    private static boolean isMariaDb(@Nullable String databaseProductName) {
-        if (databaseProductName == null) {
+    private static boolean isMySqlFamily(@Nullable String databaseProductName) {
+        return containsIgnoreCase(databaseProductName, MARIADB_PRODUCT_NAME)
+            || containsIgnoreCase(databaseProductName, MYSQL_PRODUCT_NAME);
+    }
+
+    private static boolean isMySqlFamily(@Nullable String databaseProductName, @Nullable String driverName) {
+        return isMySqlFamily(databaseProductName)
+            || containsIgnoreCase(driverName, MARIADB_PRODUCT_NAME)
+            || containsIgnoreCase(driverName, MYSQL_PRODUCT_NAME);
+    }
+
+    private static boolean containsIgnoreCase(@Nullable String value, String expected) {
+        if (value == null) {
             return false;
         }
-        return databaseProductName.toUpperCase(Locale.ENGLISH).contains(MARIADB_PRODUCT_NAME);
+        return value.toUpperCase(Locale.ENGLISH).contains(expected);
     }
 
     private static boolean returnsEntities(Argument<?> resultArgument) {
