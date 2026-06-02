@@ -1,6 +1,9 @@
 package io.micronaut.data.r2dbc.sqlserver
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -40,6 +43,24 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements SqlServerTestPropertyP
     @Override
     HotelWktRepository getHotelWktRepository() {
         return context.getBean(MSHotelWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverJsonRepository getDeliveryDriverJsonRepository() {
+        return context.getBean(MSDeliveryDriverJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
+        return context.getBean(MSDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(MSDeliveryDriverWktGeographyRepository)
     }
 
     @Memoized
