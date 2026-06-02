@@ -9,12 +9,16 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.MultiPolygon
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
+import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverJson
+import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWkt
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
 import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -24,8 +28,8 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue
 import static org.junit.jupiter.api.Assertions.assertNull
+import static org.junit.jupiter.api.Assumptions.assumeTrue
 
 abstract class AbstractGeoSpec extends Specification {
 
@@ -39,6 +43,10 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract HotelWktRepository getHotelWktRepository()
 
+    abstract DeliveryDriverJsonRepository getDeliveryDriverJsonRepository()
+
+    abstract DeliveryDriverWktRepository getDeliveryDriverWktRepository()
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
@@ -49,6 +57,8 @@ abstract class AbstractGeoSpec extends Specification {
         getSchoolRepository()?.deleteAll()
         getHotelJsonRepository()?.deleteAll()
         getHotelWktRepository()?.deleteAll()
+        getDeliveryDriverJsonRepository()?.deleteAll()
+        getDeliveryDriverWktRepository()?.deleteAll()
     }
 
     void "test creating, reading and updating when json conversion used on embedded geometry type"() {
@@ -432,6 +442,54 @@ abstract class AbstractGeoSpec extends Specification {
         names.size() == 2
         names.contains("Grand Plaza Hotel")
         names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationNear when geographic coordinate reference system and json conversion used"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        DeliveryDriverJson nearby = new DeliveryDriverJson("Nearby Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverJson closest = new DeliveryDriverJson("Closest Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverJson busy = new DeliveryDriverJson("Busy Driver", DeliveryDriverJson.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverJson far = new DeliveryDriverJson("Far Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverJsonRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverJson> candidates = getDeliveryDriverJsonRepository().findByStatusAndLocationNear(
+                DeliveryDriverJson.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+
+        then:
+        candidates.size() == 2
+        candidates.contains(nearby)
+        candidates.contains(closest)
+    }
+
+    void "test findByLocationNear when geographic coordinate reference system and wkt conversion used"() {
+        given:
+        DeliveryDriverWkt nearby = new DeliveryDriverWkt("Nearby Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverWkt closest = new DeliveryDriverWkt("Closest Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverWkt busy = new DeliveryDriverWkt("Busy Driver", DeliveryDriverWkt.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverWkt far = new DeliveryDriverWkt("Far Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverWktRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverWkt> candidates = getDeliveryDriverWktRepository().findByStatusAndLocationNear(
+                DeliveryDriverWkt.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+
+        then:
+        candidates.size() == 2
+        candidates.contains(nearby)
+        candidates.contains(closest)
     }
 
     protected boolean supportsGeometryJsonConversion() {
