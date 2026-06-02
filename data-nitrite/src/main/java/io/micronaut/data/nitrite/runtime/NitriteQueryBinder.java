@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -191,16 +192,26 @@ final class NitriteQueryBinder {
     // ─── Instance methods: PreparedQuery parameter resolution ─────────────────────
 
     Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q) {
+        return buildJsonParameterValues(q, this::toFilterValue, this::readSegmentValue);
+    }
+
+    /**
+     * Builds an array of JSON parameter values from a prepared query.
+     *
+     * @param q the prepared query
+     * @param toFilterValue the value mapper function
+     * @param readSegmentValue the segment reader function (optional)
+     * @return the array of JSON parameter values
+     */
+    static Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q,
+                                              @NonNull Function<Object, Object> toFilterValue,
+                                              @Nullable BiFunction<Object, String, Object> readSegmentValue) {
         Object[] methodParams = q.getParameterArray();
         List<QueryParameterBinding> bindings = q.getQueryBindings();
         if (bindings == null || bindings.isEmpty()) {
             return methodParams;
         }
-        Object[] values = new Object[bindings.size()];
-        for (int i = 0; i < bindings.size(); i++) {
-            values[i] = resolveJsonBindingValue(bindings.get(i), methodParams);
-        }
-        return values;
+        return bindings.stream().map(binding -> resolveJsonBindingValue(binding, methodParams, toFilterValue, readSegmentValue)).toArray();
     }
 
     Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
@@ -210,10 +221,13 @@ final class NitriteQueryBinder {
             filterMap, jsonParams, out -> fillMissingParamsFromFilter(filterMap, methodParams, out));
     }
 
-    private Object resolveJsonBindingValue(@NonNull QueryParameterBinding binding, @Nullable Object[] methodParams) {
+    private static Object resolveJsonBindingValue(@NonNull QueryParameterBinding binding,
+                                                  @Nullable Object[] methodParams,
+                                                  @NonNull Function<Object, Object> toFilterValue,
+                                                  @Nullable BiFunction<Object, String, Object> readSegmentValue) {
         Object bindingValue = binding.getValue();
         if (bindingValue != null && !(bindingValue instanceof BindingParameter)) {
-            return toFilterValue(bindingValue);
+            return toFilterValue.apply(bindingValue);
         }
         int idx = binding.getParameterIndex();
         Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
@@ -221,14 +235,17 @@ final class NitriteQueryBinder {
         String[] path = parameterBindingPath != null ? parameterBindingPath : binding.getPropertyPath();
         if (path == null || path.length == 0 || isDirectBindableScalar(base)
                 || base instanceof Collection || (base != null && base.getClass().isArray())) {
-            return toFilterValue(base);
+            return toFilterValue.apply(base);
+        }
+        if (readSegmentValue == null) {
+            return toFilterValue.apply(base);
         }
         Object current = base;
         for (String segment : path) {
             if (current == null) break;
-            current = readSegmentValue(current, segment);
+            current = readSegmentValue.apply(current, segment);
         }
-        return toFilterValue(current);
+        return toFilterValue.apply(current);
     }
 
     private static boolean isDirectBindableScalar(@Nullable Object value) {

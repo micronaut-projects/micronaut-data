@@ -26,7 +26,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -432,22 +431,7 @@ public final class NitriteQueryExecutor {
      * @return the array of JSON parameter values
      */
     public Object[] buildJsonParameterValues(@NonNull final PreparedQuery<?, ?> q) {
-        Object[] params = q.getParameterArray();
-        if (params == null || params.length == 0) {
-            return new Object[0];
-        }
-        List<QueryParameterBinding> bindings = q.getQueryBindings();
-        if (bindings == null || bindings.isEmpty()) {
-            return params;
-        }
-        Object[] values = new Object[bindings.size()];
-        for (int i = 0; i < bindings.size(); i++) {
-            QueryParameterBinding b = bindings.get(i);
-            if (b.getParameterIndex() >= 0 && b.getParameterIndex() < params.length) {
-                values[i] = toFilterValue(params[b.getParameterIndex()]);
-            }
-        }
-        return values;
+        return NitriteQueryBinder.buildJsonParameterValues(q, this::toFilterValue, null);
     }
 
     /**

@@ -20,7 +20,6 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
 import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
 import org.dizitart.no2.filters.Filter;
