@@ -27,6 +27,7 @@ import io.micronaut.data.model.entities.GeogEntityWkt
 import io.micronaut.data.model.entities.GeomEntityCompositeIndex
 import io.micronaut.data.model.entities.GeomEntityJson
 import io.micronaut.data.model.entities.GeomEntityWGS84
+import io.micronaut.data.model.entities.GeomEntityWGS84Wkt
 import io.micronaut.data.model.entities.GeomEntityWkt
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
@@ -640,6 +641,24 @@ interface MyRepository {
         Dialect.POSTGRES   | GeomEntityWkt  || 'SELECT geom_entity_wkt_."id",ST_AsText(geom_entity_wkt_."location") AS "location",ST_AsText(geom_entity_wkt_."multi_point") AS "multi_point",ST_AsText(geom_entity_wkt_."line_string") AS "line_string",ST_AsText(geom_entity_wkt_."multi_line_string") AS "multi_line_string" FROM "geom_entity_wkt" geom_entity_wkt_ WHERE (ST_DWithin(geom_entity_wkt_."location",ST_GeomFromText(?, 3857),?))'
         Dialect.SQL_SERVER | GeomEntityJson || 'SELECT geom_entity_json_.[id],geom_entity_json_.[location].STAsText() AS [location],geom_entity_json_.[multi_point].STAsText() AS [multi_point],geom_entity_json_.[line_string].STAsText() AS [line_string],geom_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_json] geom_entity_json_ WHERE (geom_entity_json_.[location].STDistance(geometry::STGeomFromText(?, 3857)) <= ?)'
         Dialect.SQL_SERVER | GeomEntityWkt  || 'SELECT geom_entity_wkt_.[id],geom_entity_wkt_.[location].STAsText() AS [location],geom_entity_wkt_.[multi_point].STAsText() AS [multi_point],geom_entity_wkt_.[line_string].STAsText() AS [line_string],geom_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_wkt] geom_entity_wkt_ WHERE (geom_entity_wkt_.[location].STDistance(geometry::STGeomFromText(?, 3857)) <= ?)'
+    }
+
+    @Unroll
+    void "test encode #dialect near predicate with geographic crs for #entityClass.simpleName"() {
+        given:
+        def query = builder.createQuery(entityClass)
+        def root = query.from(entityClass)
+        query.where(builder.near(root.get('point'), builder.parameter(Object), builder.parameter(Double)))
+
+        expect:
+        query.build(new SqlQueryBuilder(dialect)).query == expectedQuery
+
+        where:
+        dialect       | entityClass        || expectedQuery
+        Dialect.MYSQL | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_.`id`,ST_AsGeoJSON(geom_entity_wgs84_.`location`) AS `location` FROM `geom_entity_wgs84` geom_entity_wgs84_ WHERE (ST_Distance_Sphere(geom_entity_wgs84_.`location`,ST_GeomFromGeoJSON(?, 1, 4326)) <= ?)'
+        Dialect.MYSQL | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_.`id`,ST_AsText(geom_entity_wgs84_wkt_.`location`) AS `location` FROM `geom_entity_wgs84_wkt` geom_entity_wgs84_wkt_ WHERE (ST_Distance_Sphere(geom_entity_wgs84_wkt_.`location`,ST_GeomFromText(?, 4326)) <= ?)'
+        Dialect.H2    | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_.`id`,ST_AsGeoJSON(geom_entity_wgs84_.`location`) AS `location` FROM `geom_entity_wgs84` geom_entity_wgs84_ WHERE (ST_DistanceSphere(geom_entity_wgs84_.`location`,ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)) <= ?)'
+        Dialect.H2    | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_.`id`,ST_AsText(geom_entity_wgs84_wkt_.`location`) AS `location` FROM `geom_entity_wgs84_wkt` geom_entity_wgs84_wkt_ WHERE (ST_DistanceSphere(geom_entity_wgs84_wkt_.`location`,ST_GeomFromText(?, 4326)) <= ?)'
     }
 
     void "test encode create statement for embedded"() {
