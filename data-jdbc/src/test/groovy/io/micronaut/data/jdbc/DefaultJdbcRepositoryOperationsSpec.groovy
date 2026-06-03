@@ -15,13 +15,17 @@
  */
 package io.micronaut.data.jdbc
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
@@ -32,6 +36,8 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.DatabaseMetaData
+import java.sql.SQLException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -69,6 +75,46 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             fallbackExecutor.isShutdown()
+    }
+
+    void "batch capability metadata failures are not cached"() {
+        given:
+            DefaultJdbcRepositoryOperations operations = newOperations(null)
+            DatabaseMetaData metaData = Mock {
+                getDatabaseProductName() >> "MySQL"
+                getDriverName() >> "MySQL Connector/J"
+                supportsBatchUpdates() >> true
+                supportsGetGeneratedKeys() >> true
+            }
+            Connection connection = Mock()
+            RuntimePersistentProperty<?> identity = Mock {
+                isGenerated() >> true
+            }
+            RuntimePersistentEntity<?> persistentEntity = Mock {
+                hasIdentity() >> true
+                getIdentity() >> identity
+            }
+            def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                    AnnotationMetadata.EMPTY_METADATA,
+                    null,
+                    Object,
+                    Dialect.MYSQL,
+                    connection
+            )
+
+        when:
+            boolean firstAttempt = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+            1 * connection.getMetaData() >> { throw new SQLException("temporary metadata failure") }
+            !firstAttempt
+
+        when:
+            boolean secondAttempt = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+            1 * connection.getMetaData() >> metaData
+            secondAttempt
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {

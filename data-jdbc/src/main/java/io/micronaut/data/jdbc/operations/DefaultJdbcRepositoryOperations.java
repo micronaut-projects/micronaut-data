@@ -1201,13 +1201,18 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 capabilities = jdbcBatchCapabilities;
                 if (capabilities == null) {
                     capabilities = resolveJdbcBatchCapabilities(ctx);
-                    jdbcBatchCapabilities = capabilities;
+                    if (capabilities != null) {
+                        jdbcBatchCapabilities = capabilities;
+                    } else {
+                        capabilities = JdbcBatchCapabilities.UNKNOWN;
+                    }
                 }
             }
         }
         return capabilities;
     }
 
+    @Nullable
     private JdbcBatchCapabilities resolveJdbcBatchCapabilities(JdbcOperationContext ctx) {
         try {
             DatabaseMetaData metaData = ctx.connection.getMetaData();
@@ -1218,7 +1223,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 metaData.supportsGetGeneratedKeys()
             );
         } catch (SQLException ignored) {
-            return new JdbcBatchCapabilities(null, null, null, null);
+            return null;
         }
     }
 
@@ -1261,6 +1266,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                          @Nullable String driverName,
                                          @Nullable Boolean supportsBatchUpdates,
                                          @Nullable Boolean supportsGetGeneratedKeys) {
+
+        private static final JdbcBatchCapabilities UNKNOWN = new JdbcBatchCapabilities(null, null, null, null);
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
