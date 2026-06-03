@@ -355,7 +355,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 5.0.3 </p>
+        <p><strong>Version:</strong> 5.0.4 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -12789,6 +12789,59 @@ and native spatial column definitions when the dialect supports them.
 </div>
 </div>
 <div class="sect2">
+<h3 id="_srid_and_coordinate_reference_system_type">SRID and coordinate reference system type</h3>
+<div class="paragraph">
+<p>Use <a href="../api/io/micronaut/data/annotation/Srid.html">Srid</a> to declare the spatial reference system identifier used for a persistent geospatial
+property. Micronaut Data uses the SRID value when it generates read and write conversion SQL, schema metadata, and
+predicate argument conversion.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data uses <code>Srid.CrsType</code> to choose the distance function for dialects that have different functions
+for planar and spherical distance checks:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Dialect</th>
+<th class="tableblock halign-left valign-top"><code>Srid.CrsType</code></th>
+<th class="tableblock halign-left valign-top">Distance predicate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MySQL and MariaDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Srid.CrsType.PROJECTED</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MySQL and MariaDB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Srid.CrsType.GEOGRAPHIC</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance_Sphere(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">H2 / H2GIS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Srid.CrsType.PROJECTED</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DWithin(column, convertedValue, distanceValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">H2 / H2GIS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Srid.CrsType.GEOGRAPHIC</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DistanceSphere(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>For the other supported SQL dialects, <code>Srid.CrsType</code> does not currently change the generated <code>Near</code> predicate function.
+It also does not change the database column type. Use <code>@MappedProperty(definition = "geography")</code> when a dialect such as
+PostgreSQL / PostGIS or SQL Server should use a native <code>GEOGRAPHY</code> column.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_query_predicates">Query predicates</h3>
 <div class="paragraph">
 <p>Micronaut Data also translates repository finder methods and criteria predicates for geospatial comparisons into
@@ -13164,8 +13217,12 @@ annotated with <code>@Index</code>:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.PROJECTED</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.GEOGRAPHIC</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance_Sphere(column, convertedValue) &#8656; distanceValue</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -13242,8 +13299,12 @@ spatial-function behavior.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.PROJECTED</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance(column, convertedValue) &#8656; distanceValue</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.GEOGRAPHIC</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Distance_Sphere(column, convertedValue) &#8656; distanceValue</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -13333,8 +13394,12 @@ annotated with <code>@Index</code>:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_Intersects(column, convertedValue)</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.PROJECTED</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DWithin(column, convertedValue, distanceValue)</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Near</code> with <code>Srid.CrsType.GEOGRAPHIC</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_DistanceSphere(column, convertedValue) &#8656; distanceValue</code></p></td>
 </tr>
 </tbody>
 </table>
