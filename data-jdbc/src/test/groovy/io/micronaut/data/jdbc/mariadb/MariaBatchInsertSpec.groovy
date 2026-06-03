@@ -44,7 +44,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         recordRepository.deleteAll()
     }
 
-    void "custom void insertAll batches generated-id inserts without mutating input ids"() {
+    void "custom void insertAll stores generated-id inserts without mutating input ids"() {
         given:
         def books = [
             new MariaBatchBook(title: "The Left Hand"),
@@ -62,7 +62,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         savedBooks*.title as Set == ["The Left Hand", "The Dispossessed"] as Set
     }
 
-    void "custom count insertAll batches generated-id inserts without mutating input ids"() {
+    void "custom count insertAll stores generated-id inserts without mutating input ids"() {
         given:
         def books = [
             new MariaBatchBook(title: "The Lathe of Heaven"),
@@ -81,7 +81,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         savedBooks*.title as Set == ["The Lathe of Heaven", "City of Illusions"] as Set
     }
 
-    void "saveAll generated-key inserts populate ids"() {
+    void "saveAll generated-key inserts populate ids through fallback path"() {
         given:
         def books = [
             new MariaBatchBook(title: "A Wizard of Earthsea"),
@@ -96,7 +96,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         repository.count() == 2
     }
 
-    void "saveAll generated-key record inserts populate ids"() {
+    void "saveAll generated-key record inserts populate ids through fallback path"() {
         given:
         def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
 
@@ -109,7 +109,7 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
         records.collect { it.id() }.every { it == 0L }
     }
 
-    void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
+    void "custom void insertAll stores generated-id record inserts without mutating input ids"() {
         given:
         def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
 

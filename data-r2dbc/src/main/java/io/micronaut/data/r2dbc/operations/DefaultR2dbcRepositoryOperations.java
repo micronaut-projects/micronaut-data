@@ -105,7 +105,6 @@ import io.micronaut.data.runtime.operations.internal.query.BindableParametersSto
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata;
-import io.micronaut.data.runtime.operations.internal.sql.SqlBatchSupport;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -979,8 +978,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                boolean requiresGeneratedKeys = SqlBatchSupport.requiresBatchGeneratedKeys(persistentEntity, operation);
-                if (!isSupportsBatchInsert(ctx, persistentEntity, storedQuery, requiresGeneratedKeys)) {
+                if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(persistOp -> {
@@ -990,7 +988,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             })
                     );
                 } else {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, true, requiresGeneratedKeys);
+                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, true);
                     op.persist();
                     return op.getEntities();
                 }
@@ -1145,22 +1143,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private <T> R2dbcOperationContext createContext(EntityOperation<T> operation, Connection connection, SqlStoredQuery<T, ?> storedQuery) {
             return new R2dbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
-        }
-
-        private boolean isSupportsBatchInsert(R2dbcOperationContext ctx,
-                                              RuntimePersistentEntity<?> persistentEntity,
-                                              SqlStoredQuery<?, ?> storedQuery,
-                                              boolean requiresGeneratedKeys) {
-            if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
-                return false;
-            }
-            if (ctx.dialect != Dialect.MYSQL) {
-                return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, ctx.dialect);
-            }
-            // R2DBC metadata does not expose JDBC-style generated-key capability flags.
-            // For MySQL-family drivers, only use the batch path when generated keys are not needed.
-            String databaseProductName = ctx.connection.getMetadata().getDatabaseProductName();
-            return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, ctx.dialect, databaseProductName, requiresGeneratedKeys);
         }
 
         @NonNull
@@ -1445,29 +1427,18 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final class R2dbcEntitiesOperations<T> extends AbstractReactiveEntitiesOperations<R2dbcOperationContext, T, RuntimeException> {
 
         private final SqlStoredQuery<T, ?> storedQuery;
-        private final boolean requiresGeneratedKeys;
 
         private R2dbcEntitiesOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery storedQuery) {
             this(ctx, storedQuery, persistentEntity, entities, false);
         }
 
         private R2dbcEntitiesOperations(R2dbcOperationContext ctx, SqlStoredQuery storedQuery, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, boolean insert) {
-            this(ctx, storedQuery, persistentEntity, entities, insert, insert && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated());
-        }
-
-        private R2dbcEntitiesOperations(R2dbcOperationContext ctx,
-                                        SqlStoredQuery storedQuery,
-                                        RuntimePersistentEntity<T> persistentEntity,
-                                        Iterable<T> entities,
-                                        boolean insert,
-                                        boolean requiresGeneratedKeys) {
             super(ctx,
                 DefaultR2dbcRepositoryOperations.this.cascadeOperations,
                 DefaultR2dbcRepositoryOperations.this.conversionService,
                 entityEventRegistry,
                 persistentEntity, entities, insert);
             this.storedQuery = storedQuery;
-            this.requiresGeneratedKeys = requiresGeneratedKeys;
         }
 
         @Override
@@ -1553,7 +1524,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 return;
             }
             Statement statement;
-            if (requiresGeneratedKeys) {
+            if (hasGeneratedId) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     statement.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
@@ -1564,7 +1535,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
             setParameters(statement, storedQuery);
-            if (requiresGeneratedKeys) {
+            if (hasGeneratedId) {
                 entities = entities
                     .flatMap(list -> {
                         List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
