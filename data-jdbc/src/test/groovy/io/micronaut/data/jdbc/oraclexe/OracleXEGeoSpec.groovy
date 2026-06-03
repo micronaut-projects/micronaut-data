@@ -7,7 +7,6 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
-import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -63,12 +62,6 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
         return context.getBean(OracleXEDeliveryDriverWktRepository)
     }
 
-    @Memoized
-    @Override
-    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
-        return context.getBean(OracleXEDeliveryDriverWktGeographyRepository)
-    }
-
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
@@ -102,11 +95,6 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
     protected boolean supportsDeletingGeometryTypes() {
         // SDO_UTIL.FROM_GEOJSON fails when NULL is passed to it.
         // The issue has been reported and until it gets fixed, this method should return false.
-        return false
-    }
-
-    @Override
-    protected boolean supportsGeographyDatabaseType() {
         return false
     }
 

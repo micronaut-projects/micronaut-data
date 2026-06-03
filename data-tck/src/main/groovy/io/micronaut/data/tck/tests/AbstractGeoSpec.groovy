@@ -11,7 +11,6 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverJson
 import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWkt
-import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWktGeography
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
@@ -19,7 +18,6 @@ import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
-import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -49,8 +47,6 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract DeliveryDriverWktRepository getDeliveryDriverWktRepository()
 
-    abstract DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository()
-
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
@@ -63,7 +59,6 @@ abstract class AbstractGeoSpec extends Specification {
         getHotelWktRepository()?.deleteAll()
         getDeliveryDriverJsonRepository()?.deleteAll()
         getDeliveryDriverWktRepository()?.deleteAll()
-        getDeliveryDriverWktGeographyRepository()?.deleteAll()
     }
 
     void "test creating, reading and updating when json conversion used on embedded geometry type"() {
@@ -502,32 +497,6 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Closest Driver")
     }
 
-    void "test findByLocationNear on geography database type when geographic crs is used and wkt conversion applied"() {
-        assumeTrue(supportsGeographyDatabaseType())
-
-        given:
-        DeliveryDriverWktGeography nearby = new DeliveryDriverWktGeography("Nearby Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
-        DeliveryDriverWktGeography closest = new DeliveryDriverWktGeography("Closest Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
-        DeliveryDriverWktGeography busy = new DeliveryDriverWktGeography("Busy Driver", DeliveryDriverWktGeography.Status.BUSY, new Point(-73.9850d, 40.7488d))
-        DeliveryDriverWktGeography far = new DeliveryDriverWktGeography("Far Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
-
-        Point orderLocation = new Point(-73.9857, 40.7484)
-
-        when:
-        getDeliveryDriverWktGeographyRepository().saveAll(List.of(nearby, closest, busy, far))
-        List<DeliveryDriverWktGeography> candidates = getDeliveryDriverWktGeographyRepository().findByStatusAndLocationNear(
-                DeliveryDriverWktGeography.Status.AVAILABLE,
-                orderLocation,
-                5_000d
-        )
-        List<String> names = candidates.collect { it.name() }
-
-        then:
-        names.size() == 2
-        names.contains("Nearby Driver")
-        names.contains("Closest Driver")
-    }
-
     protected boolean supportsGeometryJsonConversion() {
         return true
     }
@@ -537,10 +506,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     protected boolean supportsGeometryTypeWithGeographicCrs() {
-        return true
-    }
-
-    protected boolean supportsGeographyDatabaseType() {
         return true
     }
 

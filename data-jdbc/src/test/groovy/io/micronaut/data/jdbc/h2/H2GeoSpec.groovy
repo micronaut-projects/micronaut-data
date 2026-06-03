@@ -7,7 +7,6 @@ import io.micronaut.data.model.geo.LineString
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
-import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
@@ -63,12 +62,6 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
         return context.getBean(H2DeliveryDriverWktRepository)
     }
 
-    @Memoized
-    @Override
-    DeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
-        return context.getBean(H2DeliveryDriverWktGeographyRepository)
-    }
-
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
@@ -86,11 +79,6 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
                 (prefix + '.packages')       : packages(),
                 (prefix + '.driverClassName'): "org.h2.Driver"
         ] as Map<String, String>
-    }
-
-    @Override
-    protected boolean supportsGeographyDatabaseType() {
-        return false
     }
 
     @Override

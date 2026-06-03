@@ -1,9 +1,14 @@
 package io.micronaut.data.r2dbc.postgres;
 
+import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.repositories.DeliveryDriverWktGeographyRepository;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresDeliveryDriverWktGeographyRepository extends DeliveryDriverWktGeographyRepository {
+public interface PostgresDeliveryDriverWktGeographyRepository extends CrudRepository<DeliveryDriverWktGeography, Long> {
+
+    List<DeliveryDriverWktGeography> findByStatusAndLocationNear(DeliveryDriverWktGeography.Status status, Point orderLocation, double maxDistanceMeters);
 }
