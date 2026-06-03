@@ -1222,12 +1222,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private record JdbcBatchCapabilities(@Nullable String databaseProductName,
-                                         @Nullable String driverName,
-                                         @Nullable Boolean supportsBatchUpdates,
-                                         @Nullable Boolean supportsGetGeneratedKeys) {
-    }
-
     @SuppressWarnings({"rawtypes", "unchecked"})
     private RuntimePersistentEntity<?> resolveOracleReturningEntity(Class<?> type) {
         return getEntity((Class) type);
@@ -1261,6 +1255,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @SuppressWarnings("unchecked")
     private DataConversionService jdbcDataConversionService() {
         return conversionService;
+    }
+
+    private record JdbcBatchCapabilities(@Nullable String databaseProductName,
+                                         @Nullable String driverName,
+                                         @Nullable Boolean supportsBatchUpdates,
+                                         @Nullable Boolean supportsGetGeneratedKeys) {
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
