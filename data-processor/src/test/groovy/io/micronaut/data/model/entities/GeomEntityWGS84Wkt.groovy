@@ -7,9 +7,10 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Srid
 import io.micronaut.data.model.geo.Point
+import io.micronaut.data.model.runtime.convert.GeometryWktConverter
 
 @MappedEntity
-class GeomEntityWGS84 {
+class GeomEntityWGS84Wkt {
 
     @Id
     @GeneratedValue
@@ -17,7 +18,7 @@ class GeomEntityWGS84 {
 
     @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
     @Index(columns = "location")
-    @MappedProperty("location")
+    @MappedProperty(value = "location", converter = GeometryWktConverter.class)
     private Point point
 
     Long getId() {
