@@ -160,6 +160,71 @@ class NitriteSpatialSpec extends Specification {
         results.any { it.title == "NYC Guide" }
     }
 
+    def "\$near filter with LineString geometry as center hits Geometry branch in SpatialFilterFactory"() {
+        given:
+        def nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128))
+        def boston = factory.createPoint(new Coordinate(-71.0589, 42.3601))
+        repository.saveAll([
+            new IndexedBook("NYC Guide", 100, "New York City guide", nyc),
+            new IndexedBook("Boston Guide", 80, "Boston travel guide", boston)
+        ])
+        // LineString is a Geometry but not a Point — exercises the Geometry→getCoordinate branch
+        def queryLine = factory.createLineString([
+            new Coordinate(-74.0060, 40.7128),
+            new Coordinate(-74.0100, 40.7200)
+        ] as Coordinate[])
+
+        when:
+        def results = repository.findByLocationNear(queryLine, 0.5)
+
+        then:
+        !results.isEmpty()
+        results.any { it.title == "NYC Guide" }
+    }
+
+    def "\$within @Query and derived \$geoWithin return consistent results"() {
+        given:
+        def nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128))
+        def boston = factory.createPoint(new Coordinate(-71.0589, 42.3601))
+        repository.saveAll([
+            new IndexedBook("NYC Guide", 100, "NYC", nyc),
+            new IndexedBook("Boston Guide", 80, "Boston", boston)
+        ])
+        def nycBox = factory.createPolygon([
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 40.5),
+            new Coordinate(-73.5, 41.0),
+            new Coordinate(-74.5, 41.0),
+            new Coordinate(-74.5, 40.5)
+        ] as Coordinate[])
+
+        when:
+        def viaQuery   = repository.findByLocationWithin(nycBox)
+        def viaDerived = repository.findByLocationGeoWithin(nycBox)
+
+        then:
+        viaQuery*.title as Set == viaDerived*.title as Set
+        viaQuery.size() == 1
+        viaQuery[0].title == "NYC Guide"
+    }
+
+    def "\$intersects @Query and derived \$geoIntersects return consistent results"() {
+        given:
+        def nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128))
+        repository.save(new IndexedBook("NYC Guide", 100, "NYC", nyc))
+        def line = factory.createLineString([
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 41.0)
+        ] as Coordinate[])
+
+        when:
+        def viaQuery   = repository.findByLocationIntersects(line)
+        def viaDerived = repository.findByLocationGeoIntersects(line)
+
+        then:
+        viaQuery*.title as Set == viaDerived*.title as Set
+    }
+
     def "full-text search by description"() {
         given:
         repository.saveAll([

@@ -1143,6 +1143,103 @@ class PersonRepositorySpec extends Specification {
         "Charlie" in names
     }
 
+    // ========== Section 17: runtime-criteria coverage for NitritePredicateVisitor ==========
+    // These use the Micronaut extended criteria builder so the predicate lowers to
+    // STARTS_WITH/ENDS_WITH/CONTAINS/REGEX/IN at runtime (DefaultNitriteRepositoryOperations
+    // wires a runtime NitriteQueryBuilder into NitriteCriteriaExecutor). Derived methods are
+    // compiled at annotation-processing time and never reach the visitor under JaCoCo.
+
+    void "test criteria startsWith hits visitStartsWith"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Albert", 30), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).startsWithString(root.get("name"), cb.literal("Al")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Albert"])
+    }
+
+    void "test criteria startsWith ignore case hits visitStartsWith ignoreCase branch"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).startsWithStringIgnoreCase(root.get("name"), cb.literal("al")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Alice"
+    }
+
+    void "test criteria endsWith hits visitEndsWith"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Charlie", 30), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).endingWithString(root.get("name"), cb.literal("ice")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Alice"
+    }
+
+    void "test criteria contains hits visitContains"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Charlie", 30), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).containsString(root.get("name"), cb.literal("li")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Charlie"])
+    }
+
+    void "test criteria contains ignore case hits visitContains ignoreCase branch"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).containsStringIgnoreCase(root.get("name"), cb.literal("LIC")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Alice"
+    }
+
+    void "test criteria regex hits visitRegexp"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Albert", 30), new Person("Bob", 40)])
+
+        when:
+        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).regex(root.get("name"), cb.literal("^Al.*")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Albert"])
+    }
+
+    void "test criteria IN hits visitIn binding branch"() {
+        given:
+        personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 30), new Person("Charlie", 40)])
+
+        when:
+        def spec = { root, cb -> root.get("name").in(["Alice", "Charlie"]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def results = personRepository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Alice", "Charlie"])
+    }
+
     void "test JSON query projection with explicit \$project field"() {
         given:
         personRepository.save(new Person("Alice", 25, true))
