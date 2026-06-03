@@ -135,6 +135,45 @@ class NitriteCriteriaSpec extends Specification {
     }
 
     @Unroll
+    void "test extended string predicate #desc produces #expected"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(build.call(entityRoot, builder))
+            String predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == expected
+
+        where:
+            desc                       | build                                                                          | expected
+            "startsWith"               | { r, cb -> cb.startsWithString(r.get("name"), cb.literal("Al")) }              | regex("^", ".*", false)
+            "startsWithIgnoreCase"     | { r, cb -> cb.startsWithStringIgnoreCase(r.get("name"), cb.literal("Al")) }    | regex("^", ".*", true)
+            "endsWith"                 | { r, cb -> cb.endingWithString(r.get("name"), cb.literal("Al")) }              | regex(".*", "\$", false)
+            "endsWithIgnoreCase"       | { r, cb -> cb.endingWithStringIgnoreCase(r.get("name"), cb.literal("Al")) }    | regex(".*", "\$", true)
+            "contains"                 | { r, cb -> cb.containsString(r.get("name"), cb.literal("Al")) }                | regex(".*", ".*", false)
+            "containsIgnoreCase"       | { r, cb -> cb.containsStringIgnoreCase(r.get("name"), cb.literal("Al")) }      | regex(".*", ".*", true)
+            "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | regex(".*", ".*", true)
+            "regex"                    | { r, cb -> cb.regex(r.get("name"), cb.literal("^Al.*")) }                      | '''{name:{$regex:{$mn_qp:0}}}'''
+    }
+
+    void "test equality on the id field"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(entityRoot.id(), criteriaBuilder.literal("X")))
+
+        expect:
+            getQuery(criteriaQuery) == '''{id:{$eq:{$mn_qp:0}}}'''
+    }
+
+    // cb.literal(...) is bound as a parameter ($mn_qp:N) by RuntimeCriteriaBuilder, so these
+    // exercise handleRegexExpression's parameter branch (the literal branch is compile-time only).
+    private static String regex(String prefix, String suffix, boolean ignoreCase) {
+        String ci = ignoreCase ? "(?i)" : ""
+        return "{name:{\$regex:'" + ci + prefix + "\$mn_qp:0" + suffix + "'}}"
+    }
+
+    @Unroll
     void "test joins"(QuerySpecification specification) {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
