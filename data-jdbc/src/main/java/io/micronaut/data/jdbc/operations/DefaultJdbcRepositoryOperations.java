@@ -171,6 +171,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    @Nullable
+    private volatile JdbcBatchCapabilities jdbcBatchCapabilities;
 
     private final Integer defaultFetchSize;
 
@@ -1180,28 +1182,50 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (ctx.dialect != Dialect.MYSQL) {
             return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, ctx.dialect);
         }
+        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities(ctx);
+        return SqlBatchSupport.isSupportsJdbcBatchInsert(
+            persistentEntity,
+            ctx.dialect,
+            capabilities.databaseProductName(),
+            capabilities.driverName(),
+            capabilities.supportsBatchUpdates(),
+            capabilities.supportsGetGeneratedKeys(),
+            requiresGeneratedKeys
+        );
+    }
+
+    private JdbcBatchCapabilities jdbcBatchCapabilities(JdbcOperationContext ctx) {
+        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities;
+        if (capabilities == null) {
+            synchronized (this) {
+                capabilities = jdbcBatchCapabilities;
+                if (capabilities == null) {
+                    capabilities = resolveJdbcBatchCapabilities(ctx);
+                    jdbcBatchCapabilities = capabilities;
+                }
+            }
+        }
+        return capabilities;
+    }
+
+    private JdbcBatchCapabilities resolveJdbcBatchCapabilities(JdbcOperationContext ctx) {
         try {
             DatabaseMetaData metaData = ctx.connection.getMetaData();
-            return SqlBatchSupport.isSupportsJdbcBatchInsert(
-                persistentEntity,
-                ctx.dialect,
+            return new JdbcBatchCapabilities(
                 metaData.getDatabaseProductName(),
                 metaData.getDriverName(),
                 metaData.supportsBatchUpdates(),
-                metaData.supportsGetGeneratedKeys(),
-                requiresGeneratedKeys
+                metaData.supportsGetGeneratedKeys()
             );
         } catch (SQLException ignored) {
-            return SqlBatchSupport.isSupportsJdbcBatchInsert(
-                persistentEntity,
-                ctx.dialect,
-                null,
-                null,
-                null,
-                null,
-                requiresGeneratedKeys
-            );
+            return new JdbcBatchCapabilities(null, null, null, null);
         }
+    }
+
+    private record JdbcBatchCapabilities(@Nullable String databaseProductName,
+                                         @Nullable String driverName,
+                                         @Nullable Boolean supportsBatchUpdates,
+                                         @Nullable Boolean supportsGetGeneratedKeys) {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
