@@ -136,6 +136,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -171,8 +172,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
-    @Nullable
-    private volatile JdbcBatchCapabilities jdbcBatchCapabilities;
+    private final AtomicReference<JdbcBatchCapabilities> jdbcBatchCapabilities = new AtomicReference<>();
 
     private final Integer defaultFetchSize;
 
@@ -1195,18 +1195,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private JdbcBatchCapabilities jdbcBatchCapabilities(JdbcOperationContext ctx) {
-        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities;
+        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities.get();
         if (capabilities == null) {
-            synchronized (this) {
-                capabilities = jdbcBatchCapabilities;
-                if (capabilities == null) {
-                    capabilities = resolveJdbcBatchCapabilities(ctx);
-                    if (capabilities != null) {
-                        jdbcBatchCapabilities = capabilities;
-                    } else {
-                        capabilities = JdbcBatchCapabilities.UNKNOWN;
-                    }
-                }
+            capabilities = resolveJdbcBatchCapabilities(ctx);
+            if (capabilities == null) {
+                return JdbcBatchCapabilities.UNKNOWN;
+            }
+            if (!jdbcBatchCapabilities.compareAndSet(null, capabilities)) {
+                capabilities = Objects.requireNonNull(jdbcBatchCapabilities.get());
             }
         }
         return capabilities;
