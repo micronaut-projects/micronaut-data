@@ -49,7 +49,7 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
         records.collect { it.id() }.every { it == 0L }
     }
 
-    void "custom void insertAll batches generated-id record inserts without mutating input ids"() {
+    void "custom void insertAll stores generated-id record inserts without mutating input ids"() {
         given:
         def records = (0..<100).collect { new MySqlBatchRecord(0L, "name-$it") }
 

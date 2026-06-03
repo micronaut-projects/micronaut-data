@@ -33,24 +33,6 @@ class SqlBatchSupportSpec extends Specification {
     }
 
     @Unroll
-    void "#databaseProductName can batch generated-id inserts when generated keys are not required"() {
-        expect:
-        SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, databaseProductName, false)
-
-        where:
-        databaseProductName << ["MariaDB", "MySQL"]
-    }
-
-    @Unroll
-    void "#databaseProductName generated-id inserts stay conservative when generated keys are required without jdbc metadata"() {
-        expect:
-        !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL, databaseProductName, true)
-
-        where:
-        databaseProductName << ["MariaDB", "MySQL"]
-    }
-
-    @Unroll
     void "jdbc mysql can batch generated-id inserts for #scenario"() {
         expect:
         SqlBatchSupport.isSupportsJdbcBatchInsert(
@@ -105,6 +87,52 @@ class SqlBatchSupportSpec extends Specification {
         scenario                 | databaseProductName | driverName
         "mariadb metadata"       | "MariaDB"           | "MariaDB Connector/J"
         "mysql metadata"         | "MySQL"             | "MySQL Connector/J"
+    }
+
+    @Unroll
+    void "jdbc mariadb #scenario"() {
+        given:
+        boolean requiresGeneratedKeys = SqlBatchSupport.requiresBatchGeneratedKeys(entityWithGeneratedId(), operation(resultArgument))
+
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            "MariaDB",
+            "MariaDB Connector/J",
+            true,
+            true,
+            requiresGeneratedKeys
+        ) == supported
+
+        where:
+        scenario                                      | resultArgument          || supported
+        "falls back for entity-returning saveAll"      | Argument.listOf(String) || false
+        "can batch for void insertAll"                 | Argument.of(Void)       || true
+        "can batch for count-returning insertAll"      | Argument.of(Long)       || true
+    }
+
+    @Unroll
+    void "jdbc mysql #scenario"() {
+        given:
+        boolean requiresGeneratedKeys = SqlBatchSupport.requiresBatchGeneratedKeys(entityWithGeneratedId(), operation(resultArgument))
+
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithGeneratedId(),
+            Dialect.MYSQL,
+            "MySQL",
+            "MySQL Connector/J",
+            true,
+            true,
+            requiresGeneratedKeys
+        ) == supported
+
+        where:
+        scenario                                      | resultArgument          || supported
+        "can batch for entity-returning saveAll"       | Argument.listOf(String) || true
+        "can batch for void insertAll"                 | Argument.of(Void)       || true
+        "can batch for count-returning insertAll"      | Argument.of(Long)       || true
     }
 
     void "jdbc mysql family does not batch generated-id inserts when generated keys are unsupported"() {

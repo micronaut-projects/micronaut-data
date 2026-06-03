@@ -81,25 +81,6 @@ public final class SqlBatchSupport {
     }
 
     /**
-     * Resolves whether a runtime with database product metadata can use batch inserts.
-     *
-     * @param persistentEntity The persistent entity
-     * @param dialect The SQL dialect
-     * @param databaseProductName The concrete database product name if available
-     * @param requiresGeneratedKeys Whether generated keys are needed back from the batch
-     * @return {@code true} if the batch path can be used
-     */
-    public static boolean isSupportsBatchInsert(PersistentEntity persistentEntity,
-                                                Dialect dialect,
-                                                @Nullable String databaseProductName,
-                                                boolean requiresGeneratedKeys) {
-        if (!requiresGeneratedKeys && dialect == Dialect.MYSQL && isMySqlFamily(databaseProductName)) {
-            return true;
-        }
-        return isSupportsBatchInsert(persistentEntity, dialect);
-    }
-
-    /**
      * Resolves whether a JDBC connection can use batch inserts.
      *
      * @param persistentEntity The persistent entity
@@ -155,11 +136,6 @@ public final class SqlBatchSupport {
 
     private static boolean hasNonGeneratedIdentity(PersistentEntity persistentEntity) {
         return persistentEntity.hasIdentity() && !persistentEntity.getIdentity().isGenerated();
-    }
-
-    private static boolean isMySqlFamily(@Nullable String databaseProductName) {
-        return containsIgnoreCase(databaseProductName, MARIADB_PRODUCT_NAME)
-            || containsIgnoreCase(databaseProductName, MYSQL_PRODUCT_NAME);
     }
 
     private static boolean isMariaDb(@Nullable String databaseProductName, @Nullable String driverName) {
