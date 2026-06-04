@@ -17,4 +17,8 @@ public interface ProjectionPersonRepository extends CrudRepository<CriteriaPerso
     
     // Explicit projection using conventions
     List<Integer> listAgeByNameLike(String name);
+
+    // Aggregation projections
+    long countByNameLike(String name);
+    long countDistinctName();
 }

@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -117,6 +118,18 @@ public final class NitriteCriteriaExecutor {
 
         // Handle count queries specially
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
+            String queryStr = queryResult.getQuery();
+            if (queryStr != null && queryStr.contains("$group")) {
+                String fieldPath = queryParser.extractGroupFieldPath(queryStr);
+                if (fieldPath != null) {
+                    long count = collectionFactory.apply(entityType).find(filter).toList().stream()
+                        .map(doc -> doc.get(fieldPath))
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .count();
+                    return (R) Long.valueOf(count);
+                }
+            }
             return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter, options).size());
         }
 

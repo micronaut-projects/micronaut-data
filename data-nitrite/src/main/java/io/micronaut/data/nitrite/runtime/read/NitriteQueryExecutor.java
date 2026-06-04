@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -139,6 +140,20 @@ public final class NitriteQueryExecutor {
         return entityMapper.toFilterValue(value);
     }
 
+    @SuppressWarnings("unchecked")
+    private <R> R handleDistinctCount(NitriteCollection coll, Filter filter, String queryStr) {
+        String fieldPath = queryParser.extractGroupFieldPath(queryStr);
+        if (fieldPath == null) {
+            return (R) Long.valueOf(coll.find(filter).size());
+        }
+        long count = coll.find(filter).toList().stream()
+            .map(doc -> doc.get(fieldPath))
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+        return (R) Long.valueOf(count);
+    }
+
     /**
      * Finds a single result matching the prepared query.
      *
@@ -166,6 +181,9 @@ public final class NitriteQueryExecutor {
                 (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
                 (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
+                if (queryStr != null && queryStr.contains("$group")) {
+                    return handleDistinctCount(coll, filter, queryStr);
+                }
                 return (R) Long.valueOf(coll.find(filter).size());
             }
         }
@@ -238,6 +256,9 @@ public final class NitriteQueryExecutor {
                 (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
                 (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
+                if (queryStr != null && queryStr.contains("$group")) {
+                    return Collections.singletonList(handleDistinctCount(coll, filter, queryStr));
+                }
                 return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
             }
         }

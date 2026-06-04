@@ -400,4 +400,54 @@ class NitriteQueryBuilderSpec extends Specification {
         results.size() == 1
         results[0].payload == "test.*value"
     }
+
+    void "test nested AND OR criteria"() {
+        given:
+        eventRepository.saveAll([
+            new Event("A", "p1"), new Event("B", "p1"), new Event("A", "p2")
+        ])
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            cb.and(
+                cb.equal(root.get("type"), cb.literal("A")),
+                cb.or(
+                    cb.equal(root.get("payload"), cb.literal("p1")),
+                    cb.equal(root.get("payload"), cb.literal("p2"))
+                )
+            )
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results.size() == 2
+    }
+
+    void "test unsupported operation throws exception"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.trim(root.get("type")), cb.literal("A"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        thrown(IllegalStateException)
+    }
+
+    void "test count distinct via criteria query builder"() {
+        given:
+        eventRepository.saveAll([
+            new Event("A", "p1"),
+            new Event("B", "p1"),
+            new Event("C", "p2"),
+        ])
+
+        when:
+        long distinctPayloadCount = eventRepository.findOne({ cb ->
+            def q = cb.createQuery(Long)
+            def root = q.from(Event)
+            q.select(cb.countDistinct(root.get("payload")))
+            q
+        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+
+        then:
+        distinctPayloadCount == 2
+    }
 }

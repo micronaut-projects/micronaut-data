@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -155,7 +156,16 @@ public final class NitriteQueryBuilderHelper {
                         };
                         group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + propertyPath.getPath()));
                     }
-                    case COUNT, COUNT_DISTINCT -> countObj.put("$count", "result");
+                    case COUNT -> countObj.put("$count", "result");
+                    case COUNT_DISTINCT -> {
+                        if (unary.getExpression() instanceof PersistentEntityRoot) {
+                            countObj.put("$count", "result");
+                        } else {
+                            PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
+                            group.put("_id", "$" + propertyPath.getPath());
+                            countObj.put("$count", "result");
+                        }
+                    }
                     default -> { /* ignore */ }
                 }
             }

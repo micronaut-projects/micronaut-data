@@ -71,6 +71,33 @@ public final class NitriteQueryParser {
     }
 
     /**
+     * Extract the distinct-count group field path from a pipeline query.
+     * <p>A {@code COUNT_DISTINCT} over a property is encoded as a {@code $group}
+     * stage whose {@code _id} is the {@code $}-prefixed field path. Returns that
+     * path (without the {@code $} prefix), or {@code null} when the query is not
+     * a property-scoped distinct count (e.g. count over the root, or no pipeline).
+     *
+     * @param jsonQuery the JSON query string
+     * @return the field path to count distinct values of, or null
+     */
+    public String extractGroupFieldPath(String jsonQuery) {
+        try {
+            Object parsed = parseJson(jsonQuery);
+            if (parsed instanceof List<?> pipeline) {
+                for (Object stage : pipeline) {
+                    if (stage instanceof Map<?, ?> m && m.get("$group") instanceof Map<?, ?> groupMap
+                        && groupMap.get("_id") instanceof String s && s.startsWith("$")) {
+                        return s.substring(1);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Best-effort JSON parsing; if it fails, treat as non-distinct count
+        }
+        return null;
+    }
+
+    /**
      * Extract the projection field from a JSON query that uses {@code $project} syntax.
      * <p>
      * Example usage in repository method:

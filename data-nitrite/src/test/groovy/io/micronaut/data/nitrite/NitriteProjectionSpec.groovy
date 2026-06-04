@@ -46,4 +46,16 @@ class NitriteProjectionSpec extends Specification {
         ages.size() == 1
         ages[0] == 25
     }
+
+    void "test count projection"() {
+        expect:
+        repository.countByNameLike("A%") == 1
+    }
+
+    void "test count distinct projection"() {
+        given:
+        repository.save(new CriteriaPerson("Alice", 25))
+        expect:
+        repository.countDistinctName() == 3
+    }
 }

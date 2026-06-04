@@ -118,7 +118,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 pipeline.add(Map.of("$match", predicateObj));
             }
             if (!group.isEmpty()) {
-                group.put("_id", null);
+                group.putIfAbsent("_id", null);
                 pipeline.add(Map.of("$group", group));
             }
             if (!countObj.isEmpty()) {
