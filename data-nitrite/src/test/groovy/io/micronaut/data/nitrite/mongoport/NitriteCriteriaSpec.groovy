@@ -6,6 +6,7 @@ import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.nitrite.model.CompositeFkChild
+import io.micronaut.data.nitrite.model.CompositeIdEntity
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
 import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -591,6 +592,220 @@ class NitriteCriteriaSpec extends Specification {
             "amount"  | BigDecimal.valueOf(100) | "lt"                   | '{amount:{$not:{$lt:{$mn_qp:0}}}}'
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '{amount:{$not:{$lte:{$mn_qp:0}}}}'
     }
+
+    // -----------------------------------------------------------------------
+    // Phase 2: Error-path and edge-case coverage (NitritePredicateVisitor)
+    // -----------------------------------------------------------------------
+
+    void "test id equal on composite identity entity throws"() {
+        given:
+            criteriaQuery = criteriaBuilder.createQuery()
+            def root = criteriaQuery.from(CompositeIdEntity)
+            criteriaQuery.where(criteriaBuilder.equal(root.id(), criteriaBuilder.literal("someId")))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalStateException)
+            e.message == "Composite ID not supported!"
+    }
+
+    void "test prod in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.prod(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
+                criteriaBuilder.literal(BigDecimal.ONE)
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(UnsupportedOperationException)
+            e.message.contains("multiply")
+    }
+
+    void "test sum in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.sum(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
+                criteriaBuilder.literal(BigDecimal.ONE)
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalStateException)
+            e.message.contains("SUM")
+    }
+
+    void "test diff in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.diff(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
+                criteriaBuilder.literal(BigDecimal.ONE)
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalStateException)
+            e.message.contains("DIFF")
+    }
+
+    void "test lower in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.lower(root.get("name")),
+                criteriaBuilder.literal("test")
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalStateException)
+            e.message.contains("LOWER")
+    }
+
+    void "test upper in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.upper(root.get("name")),
+                criteriaBuilder.literal("test")
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalStateException)
+            e.message.contains("UPPER")
+    }
+
+    void "test length in equality throws"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.equal(
+                criteriaBuilder.length(root.get("name")),
+                criteriaBuilder.literal(5)
+            ))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(UnsupportedOperationException)
+            e.message.contains("length")
+    }
+
+    void "test and with single isTrue covers conjunction single-predicate path"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.and(criteriaBuilder.isTrue(root.get("enabled"))))
+
+        expect:
+            getQuery(criteriaQuery) == '{enabled:{$eq:true}}'
+    }
+
+    void "test isNull on EmbeddedId covers getFieldNameForNullCheck embedded branch"() {
+        given:
+            PersistentEntityCriteriaQuery query = criteriaBuilder.createQuery()
+            PersistentEntityRoot root = query.from(Settlement)
+            query.where(criteriaBuilder.isNull(root.get("id")))
+            String result = getQuery(query)
+
+        expect:
+            result.contains("'id.code'")
+            result.contains('{$eq:null}')
+    }
+
+    void "test isNotNull on EmbeddedId covers getFieldNameForNullCheck embedded branch"() {
+        given:
+            PersistentEntityCriteriaQuery query = criteriaBuilder.createQuery()
+            PersistentEntityRoot root = query.from(Settlement)
+            query.where(criteriaBuilder.isNotNull(root.get("id")))
+            String result = getQuery(query)
+
+        expect:
+            result.contains("'id.code'")
+            result.contains('{$ne:null}')
+    }
+
+    void "test negated between covers lambda visitInBetween negated branch"() {
+        given:
+            def root = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.between(root.get("enabled"), true, false).not())
+
+        expect:
+            getQuery(criteriaQuery) == '{enabled:{$not:{$between:[{$mn_qp:0},{$mn_qp:1}]}}}'
+    }
+
+    void "test containsString with non-property-path left covers handleRegexExpression early return"() {
+        given:
+            createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(builder.containsString(criteriaBuilder.literal("someField"), criteriaBuilder.literal("Al")))
+
+        expect:
+            getQuery(criteriaQuery) == '{}'
+    }
+
+    void "test exists subquery throws UnsupportedOperationException"() {
+        given:
+            createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            criteriaQuery.where(criteriaBuilder.exists(subquery))
+
+        when:
+            getQuery(criteriaQuery)
+
+        then:
+            def e = thrown(UnsupportedOperationException)
+            e.message == 'NitriteDB does not support subqueries.'
+    }
+
+    void "test single-element in covers visitIn size-one literal branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(entityRoot.get("name").in("only"))
+
+        expect:
+            getQuery(criteriaQuery) == '{name:{$in:[\'$mn_qp:0\']}}'
+    }
+
+    void "test disjunction covers visitLogical or branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.or(
+                criteriaBuilder.equal(entityRoot.get("name"), criteriaBuilder.literal("A")),
+                criteriaBuilder.equal(entityRoot.get("name"), criteriaBuilder.literal("B"))
+            ))
+
+        expect:
+            getQuery(criteriaQuery) == '{$or:[{name:{$eq:{$mn_qp:0}}},{name:{$eq:{$mn_qp:1}}}]}'
+    }
+
+    void "test negated conjunction of in covers NegatedPredicate nin optimization"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.and(entityRoot.get("name").in("A", "B")).not())
+
+        expect:
+            getQuery(criteriaQuery) == '{name:{$nin:[{$mn_qp:0},{$mn_qp:1}]}}'
+    }
+
+    // -----------------------------------------------------------------------
+    // Helper methods
+    // -----------------------------------------------------------------------
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
         return query.build(AnnotationMetadata.EMPTY_METADATA, new NitriteQueryBuilder()).getQuery()

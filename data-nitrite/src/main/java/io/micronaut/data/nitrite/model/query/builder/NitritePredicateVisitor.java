@@ -46,7 +46,6 @@ import java.util.Map;
 /** Translates JPA Criteria predicates into a NitriteDB JSON filter map. */
 public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
-    static final String ID_FIELD = "id";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
 
@@ -74,16 +73,12 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     @Override
     public void visitIdEquals(final Expression<?> expression) {
-        if (persistentEntity.hasCompositeIdentity()) {
-            throw new IllegalStateException("Composite ID not supported!");
-        } else if (persistentEntity.hasIdentity()) {
-            query.put(
-                ID_FIELD,
-                valueRepresentation(
-                    queryState, new PersistentPropertyPath(persistentEntity.getIdentity()), expression));
-        } else {
-            throw new IllegalStateException("No ID found for entity: " + persistentEntity.getName());
-        }
+        // Only reachable with a composite-id entity: PersistentEntityRoot.id() yields an
+        // IdExpression (which routes here) solely for composite identities — a single id
+        // collapses to a property path handled by visitEquals. Whole-identity equality via
+        // id() is unsupported for composite ids; query the individual id properties instead
+        // (composite/embedded-id entities are otherwise queryable by their sub-fields).
+        throw new IllegalStateException("Composite ID not supported!");
     }
 
     @Override
@@ -263,7 +258,9 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             CriteriaUtils.requireProperty(expression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
 
-        // Handle null or empty collection - IN with no values matches nothing, NOT IN matches all
+        // Handle null or empty collection - IN with no values matches nothing, NOT IN matches all.
+        // (values == null is defensive: the criteria API always supplies a non-null collection;
+        // the empty path is reachable and covered.)
         if (values == null || values.isEmpty()) {
             if (!negated) {
                 // IN with empty set matches nothing - add impossible condition
@@ -280,17 +277,6 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                 // Bind the collection parameter and use its elements
                 int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
                 resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
-            } else if (singleValue instanceof Collection<?> nestedColl) {
-                // Handle nested collection from Criteria API
-                if (nestedColl.isEmpty()) {
-                    if (!negated) {
-                        query.put("_id", Map.of("$eq", null));
-                    }
-                    return;
-                }
-                resolvedValues = nestedColl.stream()
-                    .map(val -> valueRepresentation(queryState, propertyPath, val))
-                    .toList();
             } else {
                 resolvedValues = List.of(valueRepresentation(queryState, propertyPath, singleValue));
             }
@@ -298,14 +284,6 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             resolvedValues = values.stream()
                 .map(val -> valueRepresentation(queryState, propertyPath, val))
                 .toList();
-        }
-
-        // After resolving, check if we ended up with no values (defensive check)
-        if (resolvedValues.isEmpty()) {
-            if (!negated) {
-                query.put("_id", Collections.singletonMap("$eq", null));  // IN with empty set matches nothing
-            }
-            return;  // NOT IN with empty set matches all
         }
 
         query.put(
@@ -328,11 +306,13 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             valueRepresentation(queryState, propertyPath, propertyPath, to)
         );
         Map<String, Object> betweenOp = Map.of("$between", betweenValues);
+        // negated is always false: visit(BetweenPredicate) hardcodes it, and a negated
+        // between is wrapped externally in a NegatedPredicate ($not) rather than flipped here.
         PersistentEntityUtils.traversePersistentProperties(
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                query.put(path, negated ? Map.of(NOT, betweenOp) : betweenOp);
+                query.put(path, betweenOp);
             });
     }
 
@@ -436,6 +416,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     private void visitLogical(
         final Collection<? extends IExpression<Boolean>> predicates, final String op) {
+        // Defensive: a Conjunction/Disjunction from the criteria API always has >= 1 predicate.
         if (predicates.isEmpty()) {
             return;
         }
@@ -462,6 +443,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         Map<String, Object> preQuery = query;
         query = new LinkedHashMap<>();
         ((IPredicate) negated).visitPredicate(this);
+        // Defensive: a single negated predicate emits exactly one top-level entry; a multi-entry
+        // result would mean an unsupported negation shape.
         if (query.size() != 1) {
             throw new IllegalStateException("Expected size of 1: Got: " + query);
         }
@@ -576,15 +559,12 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpr) {
             final PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
             final String fieldName = getFieldName(propertyPath);
+            // Both handler impls (Runtime + Compile) always return a String regex value.
             Object regexValue = expressionHandler.handleRegex(
                 fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, queryState, propertyPath);
-            if (regexValue instanceof Map<?, ?> filterMap) {
-                query.put(fieldName, negated ? Map.of(NOT, filterMap) : filterMap);
-            } else {
-                Map<String, Object> fieldFilter = new LinkedHashMap<>();
-                fieldFilter.put(REGEX, regexValue);
-                query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
-            }
+            Map<String, Object> fieldFilter = new LinkedHashMap<>();
+            fieldFilter.put(REGEX, regexValue);
+            query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
         }
     }
 
