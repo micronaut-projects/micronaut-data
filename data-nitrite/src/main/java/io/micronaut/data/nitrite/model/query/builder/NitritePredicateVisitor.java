@@ -54,7 +54,6 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     static final String ID_FIELD = "id";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
-    private static final Logger LOG = LoggerFactory.getLogger(NitritePredicateVisitor.class);
 
     private final PersistentEntity persistentEntity;
     private final NitriteQueryState queryState;
@@ -317,11 +316,6 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             Map.of(
                 negated ? "$nin" : "$in",
                 resolvedValues));
-    }
-
-    public void visitInBetween(
-        final Expression<?> value, final Expression<?> from, final Expression<?> to) {
-        visitInBetween(value, from, to, false);
     }
 
     @Override
@@ -714,10 +708,6 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         return BindingParameter.BindingContext.create()
             .incomingMethodParameterProperty(in)
             .outgoingQueryParameterProperty(out);
-    }
-
-    static String toJsonString(final Object obj) {
-        return NitriteQuerySerializer.toJsonString(obj);
     }
 
     static String asPath(

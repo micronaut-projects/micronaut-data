@@ -233,6 +233,53 @@ class NitriteCriteriaSpec extends Specification {
             thrown(UnsupportedOperationException)
     }
 
+    void "test equalStringIgnoreCase covers visitEquals ignoreCase branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(builder.equalStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
+
+        expect:
+            getQuery(criteriaQuery) == '''{name:{$regex:'(?i).*$mn_qp:0.*'}}'''
+    }
+
+    void "test notEqualStringIgnoreCase covers visitNotEquals ignoreCase branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(builder.notEqualStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
+
+        expect:
+            getQuery(criteriaQuery) == '''{name:{$not:{$regex:'(?i).*$mn_qp:0.*'}}}'''
+    }
+
+    void "test in with collection parameter covers visitIn BindingParameter branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(entityRoot.get("name").in(criteriaBuilder.parameter(Collection)))
+
+        expect:
+            getQuery(criteriaQuery) == '''{name:{$in:['$mn_qp:0']}}'''
+    }
+
+    void "test isNull on association covers getFieldNameForNullCheck non-embedded branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.isNull(entityRoot.get("manyToOneOther")))
+
+        expect:
+            getQuery(criteriaQuery) == '''{many_to_one_other_id:{$eq:null}}'''
+    }
+
+    void "test isNotNull on association covers getFieldNameForNullCheck non-embedded branch"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(criteriaBuilder.isNotNull(entityRoot.get("manyToOneOther")))
+
+        expect:
+            getQuery(criteriaQuery) == '''{many_to_one_other_id:{$ne:null}}'''
+    }
+
     // cb.literal(...) is bound as a parameter ($mn_qp:N) by RuntimeCriteriaBuilder, so these
     // exercise handleRegexExpression's parameter branch (the literal branch is compile-time only).
     private static String regex(String prefix, String suffix, boolean ignoreCase) {
