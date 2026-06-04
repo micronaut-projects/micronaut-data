@@ -282,6 +282,34 @@ class NitriteUpsertSpec extends Specification {
         mode << ["IN_MEMORY", "MVSTORE"]
     }
 
+    @Unroll
+    def "test updateAll increments version for all records in #mode mode"() {
+        given:
+            def ctx = createContext(mode, "versioned-updateall-${mode.toLowerCase()}")
+            def repo = ctx.getBean(VersionedRecordRepository)
+            repo.deleteAll()
+
+            def r1 = repo.save(new VersionedRecord("first"))
+            def r2 = repo.save(new VersionedRecord("second"))
+
+        when:
+            r1.name = "first-updated"
+            r2.name = "second-updated"
+            def updated = repo.updateAll([r1, r2]).toList()
+
+        then:
+            updated.size() == 2
+            updated*.version.every { it == 1L }
+            repo.findById(r1.id).get().name == "first-updated"
+            repo.findById(r2.id).get().name == "second-updated"
+
+        cleanup:
+            ctx.close()
+
+        where:
+        mode << ["IN_MEMORY", "MVSTORE"]
+    }
+
     // ========== Helper Methods ==========
 
     private ApplicationContext createContext(String mode, String testName) {

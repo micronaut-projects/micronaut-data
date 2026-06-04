@@ -279,6 +279,113 @@ class NitriteQueryBuilderSpec extends Specification {
         results[0].type == "E2"
     }
 
+    void "test criteria with PROD expression throws UnsupportedOperationException"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.prod(root.get("priority"), root.get("priority")), cb.literal(25))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    void "test criteria with LENGTH expression throws UnsupportedOperationException"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.length(root.get("type")), cb.literal(5))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    void "test findOne via criteria id equals covers visitIdEquals"() {
+        given:
+        def saved = eventRepository.save(new Event("ID_EQUALS_TEST", "payload"))
+
+        when:
+        def result = eventRepository.findOne({ root, cb ->
+            def persistentRoot = (io.micronaut.data.model.jpa.criteria.PersistentEntityRoot) root
+            cb.equal(persistentRoot.id(), cb.literal(saved.id))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        result.isPresent()
+        result.get().id == saved.id
+    }
+
+    void "test arrayContains via criteria returns events with matching tag"() {
+        given:
+        def e1 = new Event("E1", "p1"); e1.setTags(["sports", "news"])
+        def e2 = new Event("E2", "p2"); e2.setTags(["tech"])
+        def e3 = new Event("E3", "p3"); e3.setTags(["sports"])
+        eventRepository.saveAll([e1, e2, e3])
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            def pcb = (io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb
+            pcb.arrayContains(root.get("tags"), cb.literal("sports"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results.size() == 2
+        results*.type.sort() == ["E1", "E3"]
+    }
+
+    void "test findByTypeIn returns matching events"() {
+        given:
+        eventRepository.save(new Event("A", "p1"))
+        eventRepository.save(new Event("B", "p2"))
+        eventRepository.save(new Event("C", "p3"))
+
+        when:
+        def results = eventRepository.findByTypeIn(["A", "C"])
+
+        then:
+        results.size() == 2
+        results*.type.sort() == ["A", "C"]
+    }
+
+    void "test findByTypeNotIn excludes matching events"() {
+        given:
+        eventRepository.save(new Event("A", "p1"))
+        eventRepository.save(new Event("B", "p2"))
+        eventRepository.save(new Event("C", "p3"))
+
+        when:
+        def results = eventRepository.findByTypeNotIn(["A", "C"])
+
+        then:
+        results.size() == 1
+        results[0].type == "B"
+    }
+
+    void "test findByTypeIn with empty list returns no results"() {
+        given:
+        eventRepository.save(new Event("A", "p1"))
+
+        when:
+        def results = eventRepository.findByTypeIn([])
+
+        then:
+        results.isEmpty()
+    }
+
+    void "test regex via criteria returns matching events"() {
+        given:
+        eventRepository.save(new Event("ORDER_CREATED", "p1"))
+        eventRepository.save(new Event("ORDER_CANCELLED", "p2"))
+        eventRepository.save(new Event("USER_REGISTERED", "p3"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            def pcb = (io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb
+            pcb.regex(root.get("type"), cb.literal("^ORDER.*"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results.size() == 2
+        results*.type.every { it.startsWith("ORDER") }
+    }
+
     void "test query with special regex characters"() {
         given: "Events with regex special characters"
         eventRepository.save(new Event("E1", "test.*value"))

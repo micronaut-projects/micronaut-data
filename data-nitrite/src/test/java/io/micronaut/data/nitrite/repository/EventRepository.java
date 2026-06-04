@@ -22,6 +22,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,6 +125,10 @@ public interface EventRepository
    * @return matching events
    */
   List<Event> findByOccurredAtAfter(Instant cutoff);
+
+  List<Event> findByTypeIn(Collection<String> types);
+
+  List<Event> findByTypeNotIn(Collection<String> types);
 
   /**
    * KNOWN BUG: Uses @Query with field filter which silently returns empty in Nitrite.

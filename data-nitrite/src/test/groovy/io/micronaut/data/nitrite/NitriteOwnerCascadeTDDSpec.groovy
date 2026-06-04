@@ -88,4 +88,32 @@ class NitriteOwnerCascadeTDDSpec extends Specification {
             savedState.name == "California"
             savedCity.state.id == savedState.id
     }
+
+    void "test findByStateIsNull returns cities without a state"() {
+        given:
+            cityRepository.save(new City(name: "Stateless City", state: null))
+            def state = stateRepository.save(new State(name: "Texas"))
+            cityRepository.save(new City(name: "Austin", state: state))
+
+        when:
+            def results = cityRepository.findByStateIsNull()
+
+        then:
+            results.size() == 1
+            results[0].name == "Stateless City"
+    }
+
+    void "test findByStateIsNotNull returns cities with a state"() {
+        given:
+            cityRepository.save(new City(name: "Stateless City", state: null))
+            def state = stateRepository.save(new State(name: "Nevada"))
+            cityRepository.save(new City(name: "Las Vegas", state: state))
+
+        when:
+            def results = cityRepository.findByStateIsNotNull()
+
+        then:
+            results.size() == 1
+            results[0].name == "Las Vegas"
+    }
 }

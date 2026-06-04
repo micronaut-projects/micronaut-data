@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import java.time.Instant;
+import java.util.List;
 
 /** Entity for testing event patterns with simple fields. */
 @MappedEntity("events")
@@ -30,6 +31,7 @@ public class Event {
   private Integer priority;
   private Boolean processed;
   private Instant occurredAt;
+  private List<String> tags;
 
   public Event() {}
 
@@ -86,5 +88,13 @@ public class Event {
 
   public void setOccurredAt(Instant occurredAt) {
     this.occurredAt = occurredAt;
+  }
+
+  public List<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(List<String> tags) {
+    this.tags = tags;
   }
 }

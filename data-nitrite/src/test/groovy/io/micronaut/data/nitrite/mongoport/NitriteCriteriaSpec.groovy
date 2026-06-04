@@ -166,6 +166,73 @@ class NitriteCriteriaSpec extends Specification {
             getQuery(criteriaQuery) == '''{id:{$eq:{$mn_qp:0}}}'''
     }
 
+    void "test id equals via IdExpression covers visitIdEquals"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            // entityRoot.id() returns an IdExpression; BinaryPredicate(EQUALS) routes to visitIdEquals
+            def idExpr = entityRoot.id()
+            criteriaQuery.where(criteriaBuilder.equal(idExpr, criteriaBuilder.parameter(String)))
+
+        expect:
+            getQuery(criteriaQuery) == '''{id:{$eq:{$mn_qp:0}}}'''
+    }
+
+    void "test in with empty collection produces impossible condition"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(entityRoot.get("name").in(Collections.emptyList()))
+        expect:
+            getQuery(criteriaQuery) == '''{_id:{$eq:null}}'''
+    }
+
+    void "test not-in with empty collection negates the impossible condition"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.where(entityRoot.get("name").in(Collections.emptyList()).not())
+        expect:
+            getQuery(criteriaQuery) == '''{_id:{$not:{$eq:null}}}'''
+    }
+
+    void "test regexp with parameter expression"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(builder.regex(entityRoot.get("name"), criteriaBuilder.parameter(String)))
+        expect:
+            getQuery(criteriaQuery) == '''{name:{$regex:{$mn_qp:0}}}'''
+    }
+
+    void "test arrayContains with single non-iterable value"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            criteriaQuery.where(builder.arrayContains(entityRoot.get("colors"), criteriaBuilder.literal("red")))
+        expect:
+            getQuery(criteriaQuery) == '''{colors:{$all:[{$mn_qp:0}]}}'''
+    }
+
+    void "test appendOperatorExpression with PROD expression throws"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def prod = criteriaBuilder.prod(entityRoot.get("amount"), entityRoot.get("budget"))
+            criteriaQuery.where(criteriaBuilder.equal(prod, criteriaBuilder.literal(100)))
+        when:
+            getQuery(criteriaQuery)
+        then:
+            thrown(UnsupportedOperationException)
+    }
+
+    void "test appendOperatorExpression with LENGTH expression throws"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def length = criteriaBuilder.length(entityRoot.get("name"))
+            criteriaQuery.where(criteriaBuilder.equal(length, criteriaBuilder.literal(5)))
+        when:
+            getQuery(criteriaQuery)
+        then:
+            thrown(UnsupportedOperationException)
+    }
+
     // cb.literal(...) is bound as a parameter ($mn_qp:N) by RuntimeCriteriaBuilder, so these
     // exercise handleRegexExpression's parameter branch (the literal branch is compile-time only).
     private static String regex(String prefix, String suffix, boolean ignoreCase) {
