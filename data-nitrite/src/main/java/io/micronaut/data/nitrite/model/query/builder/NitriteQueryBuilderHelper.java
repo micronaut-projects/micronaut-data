@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.nitrite.model.query.builder;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -72,6 +74,29 @@ public final class NitriteQueryBuilderHelper {
                 if (propPath == null || !(propPath.getProperty() instanceof Association association)) continue;
                 if (association.isEmbedded()) continue;
 
+                // Composite foreign key via @JoinColumn (multiple = composite FK).
+                // The annotation processor maps each jakarta @JoinColumn to a separate
+                // sql.JoinColumn value (no JoinColumns container is synthesised), so read
+                // the repeated values by type rather than via the container.
+                List<AnnotationValue<JoinColumn>> joinColumnValues =
+                    association.getAnnotationMetadata().getAnnotationValuesByType(JoinColumn.class);
+                if (joinColumnValues.size() > 1) {
+                    LookupsStage stage = new LookupsStage(association.getAssociatedEntity());
+                    String joinedCollection = association.getAssociatedEntity().getPersistedName();
+                    List<String> localFields = new ArrayList<>();
+                    List<String> foreignFields = new ArrayList<>();
+                    for (var jc : joinColumnValues) {
+                        localFields.add(jc.stringValue("name").orElse(segment));
+                        foreignFields.add(jc.stringValue("referencedColumnName").orElse("_id"));
+                    }
+                    currentPipeline.add(lookup(joinedCollection, localFields, foreignFields, stage.pipeline, segment));
+                    currentSubLookups.put(pathKey, stage);
+                    currentPipeline = stage.pipeline;
+                    currentSubLookups = stage.subLookups;
+                    currentEntity = stage.entity;
+                    continue;
+                }
+
                 LookupsStage stage = new LookupsStage(association.getAssociatedEntity());
                 String joinedCollection = association.getAssociatedEntity().getPersistedName();
                 boolean isForeignKey = association.isForeignKey();
@@ -116,8 +141,9 @@ public final class NitriteQueryBuilderHelper {
             let.put(var, "$" + localFields.get(j));
             matches.add(Map.of("$eq", List.of("$$" + var, "$" + foreignFields.get(j))));
         }
-        Map<String, Object> matchExpr = matches.size() == 1 ? matches.getFirst() : Map.of("$and", matches);
-        pipeline.addFirst(Map.of("$match", Map.of("$expr", matchExpr)));
+        // size() is always > 1 here: the single-field case returns above via the
+        // localFields.size() == 1 guard, so matches always holds at least two predicates.
+        pipeline.addFirst(Map.of("$match", Map.of("$expr", Map.of("$and", matches))));
         Map<String, Object> lookupDoc = new LinkedHashMap<>();
         lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
         return Map.of("$lookup", lookupDoc);

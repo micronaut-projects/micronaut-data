@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.document.tck.entities.Settlement
 import io.micronaut.data.document.tck.entities.SettlementPk
 import io.micronaut.data.model.jpa.criteria.*
+import io.micronaut.data.nitrite.model.CompositeFkChild
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
 import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -209,6 +210,25 @@ class NitriteCriteriaSpec extends Specification {
             criteriaQuery.where(builder.arrayContains(entityRoot.get("colors"), criteriaBuilder.literal("red")))
         expect:
             getQuery(criteriaQuery) == '''{colors:{$all:[{$mn_qp:0}]}}'''
+    }
+
+    void "test composite foreign key join builds composite \$lookup"() {
+        given:
+            PersistentEntityCriteriaQuery query = criteriaBuilder.createQuery()
+            PersistentEntityRoot root = query.from(CompositeFkChild)
+            // Referencing the join registers a JoinPath, so buildSelect -> addLookups walks the
+            // association, finds >1 @JoinColumn and emits a composite $lookup via the list-based
+            // lookup overload (localField/foreignField arrays from the @JoinColumn name/ref names).
+            def join = root.join("parent")
+            query.where(criteriaBuilder.equal(join.get("tenantId"), criteriaBuilder.literal("t1")))
+            String pipeline = getQuery(query)
+
+        expect:
+            pipeline.contains('$lookup')
+            pipeline.contains('fk_tenant_id')
+            pipeline.contains('fk_ref_id')
+            pipeline.contains('tenantId')
+            pipeline.contains('refId')
     }
 
     void "test appendOperatorExpression with PROD expression throws"() {

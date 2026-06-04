@@ -1,6 +1,10 @@
 package io.micronaut.data.nitrite
 
+import io.micronaut.data.nitrite.model.CriteriaAuthor
+import io.micronaut.data.nitrite.model.CriteriaBook
 import io.micronaut.data.nitrite.model.Event
+import io.micronaut.data.nitrite.repository.CriteriaAuthorRepository
+import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -27,8 +31,16 @@ class NitriteQueryBuilderSpec extends Specification {
     @Inject
     EventRepository eventRepository
 
+    @Inject
+    CriteriaBookRepository criteriaBookRepository
+
+    @Inject
+    CriteriaAuthorRepository criteriaAuthorRepository
+
     def setup() {
         eventRepository.deleteAll()
+        criteriaBookRepository.deleteAll()
+        criteriaAuthorRepository.deleteAll()
     }
 
     // ========== Bug #1: buildInsert returns null ==========
@@ -449,5 +461,42 @@ class NitriteQueryBuilderSpec extends Specification {
 
         then:
         distinctPayloadCount == 2
+    }
+
+    void "test compound selection via criteria query builder"() {
+        given:
+        eventRepository.saveAll([
+            new Event("A", "p1"),
+            new Event("B", "p2")
+        ])
+
+        when:
+        def result = eventRepository.findOne({ cb ->
+            def q = cb.createQuery(Event)
+            def root = q.from(Event)
+            q.multiselect(root.get("type"), root.get("payload"))
+            q.where(cb.equal(root.get("type"), cb.literal("A")))
+            q
+        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+
+        then:
+        result != null
+        result.type == "A"
+    }
+
+    void "test join via criteria predicate"() {
+        given:
+        def author = criteriaAuthorRepository.save(new CriteriaAuthor("Test Author"))
+        criteriaBookRepository.save(new CriteriaBook("Test Book", author))
+
+        when:
+        def result = criteriaBookRepository.findOne({ root, cb ->
+            def join = root.join("author")
+            cb.equal(join.get("name"), cb.literal("Test Author"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        result.isPresent()
+        result.get().title == "Test Book"
     }
 }
