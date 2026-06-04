@@ -18,7 +18,7 @@ package io.micronaut.data.nitrite.runtime.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteTypeRegistry;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledValue;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

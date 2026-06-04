@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 
 import java.util.Map;

@@ -18,7 +18,7 @@ package io.micronaut.data.nitrite.runtime.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 
 import java.util.Map;
 

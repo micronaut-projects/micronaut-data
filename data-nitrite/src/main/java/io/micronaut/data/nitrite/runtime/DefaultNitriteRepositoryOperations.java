@@ -54,7 +54,7 @@ import io.micronaut.data.nitrite.runtime.query.NitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryBinder;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.read.NitriteQueryExecutor;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntitiesOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntityOperations;

@@ -20,33 +20,24 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
-import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.BindingParameter;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.nitrite.model.query.builder.compile.CompileExpressionHandler;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 /**
  * Builds Nitrite JSON filter queries from Micronaut Data criteria expressions.
@@ -62,11 +53,13 @@ public final class NitriteQueryBuilder implements QueryBuilder {
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
     private static final Logger LOG = LoggerFactory.getLogger(NitriteQueryBuilder.class);
+    private final AnnotationMetadata queryBuilderMetadata;
 
     /**
      * Creates a new NitriteQueryBuilder.
      */
     public NitriteQueryBuilder() {
+        this(AnnotationMetadata.EMPTY_METADATA);
     }
 
     /**
@@ -75,6 +68,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
      * @param annotationMetadata the annotation metadata
      */
     public NitriteQueryBuilder(AnnotationMetadata annotationMetadata) {
+        this.queryBuilderMetadata = annotationMetadata;
     }
 
     @Override
@@ -90,7 +84,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         LOG.debug("buildSelect: entity={}, predicate={}", query.persistentEntity().getName(), query.predicate());
         NitriteQueryState queryState = new NitriteQueryState(query.persistentEntity());
         List<Map<String, Object>> lookupPipeline = new ArrayList<>();
-        addLookups(query.getJoinPaths(), query.persistentEntity(), lookupPipeline);
+        NitriteQueryBuilderHelper.addLookups(query.getJoinPaths(), query.persistentEntity(), lookupPipeline);
 
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
@@ -102,7 +96,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClauseFromCriteria(predicate, queryState);
         }
 
-        buildProjection(query.selection(), group, countObj);
+        NitriteQueryBuilderHelper.buildProjection(query.selection(), group, countObj);
 
         List<Order> orders = query.order();
         if (!orders.isEmpty()) {
@@ -246,140 +240,14 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         }
         Map<String, Object> queryMap = new LinkedHashMap<>();
         if (predicate instanceof IPredicate predicateVisitable) {
-            predicateVisitable.visitPredicate(new NitritePredicateVisitor(queryState, queryMap));
+            NitriteExpressionHandler handler = queryBuilderMetadata != AnnotationMetadata.EMPTY_METADATA
+                ? new CompileExpressionHandler()
+                : new RuntimeExpressionHandler();
+            predicateVisitable.visitPredicate(new NitritePredicateVisitor(queryState, queryMap, handler));
         } else {
             throw new IllegalStateException(
                 "Unsupported predicate type: " + predicate.getClass().getName());
         }
         return queryMap;
-    }
-
-    private void addLookups(Collection<JoinPath> joins, PersistentEntity rootEntity, List<Map<String, Object>> pipeline) {
-        if (joins == null || joins.isEmpty()) return;
-        List<String> sorted = joins.stream().map(JoinPath::getPath)
-            .sorted((a, b) -> a.length() != b.length() ? Integer.compare(a.length(), b.length()) : a.compareTo(b))
-            .toList();
-        Map<String, LookupsStage> subLookupMap = new HashMap<>();
-        for (String join : sorted) {
-            PersistentEntity currentEntity = rootEntity;
-            List<Map<String, Object>> currentPipeline = pipeline;
-            Map<String, LookupsStage> currentSubLookups = subLookupMap;
-            StringJoiner processedPath = new StringJoiner(".");
-            for (String segment : join.split("\\.")) {
-                processedPath.add(segment);
-                String pathKey = processedPath.toString();
-                if (currentSubLookups.containsKey(pathKey)) {
-                    LookupsStage existing = currentSubLookups.get(pathKey);
-                    currentPipeline = existing.pipeline;
-                    currentSubLookups = existing.subLookups;
-                    currentEntity = existing.entity;
-                    continue;
-                }
-                PersistentPropertyPath propPath = currentEntity.getPropertyPath(segment);
-                if (propPath == null || !(propPath.getProperty() instanceof Association association)) continue;
-                if (association.isEmbedded()) continue;
-
-                LookupsStage stage = new LookupsStage(association.getAssociatedEntity());
-                String joinedCollection = association.getAssociatedEntity().getPersistedName();
-                boolean isForeignKey = association.isForeignKey();
-                boolean hasMappedBy = association.getAnnotationMetadata()
-                    .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").isPresent();
-
-                if (isForeignKey || hasMappedBy) {
-                    // ONE_TO_MANY: localField=_id, foreignField=FK persisted name in other entity
-                    String mappedBy = association.getAnnotationMetadata()
-                        .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
-                    if (mappedBy == null) continue;
-                    PersistentPropertyPath backPropPath = association.getAssociatedEntity().getPropertyPath(mappedBy);
-                    if (backPropPath == null) continue;
-                    String foreignField = backPropPath.getProperty().getPersistedName();
-                    currentPipeline.add(lookup(joinedCollection, "_id", foreignField, stage.pipeline, segment));
-                } else {
-                    // MANY_TO_ONE / ONE_TO_ONE: localField=FK persisted name, foreignField=_id
-                    String localField = association.getPersistedName();
-                    currentPipeline.add(lookup(joinedCollection, localField, "_id", stage.pipeline, segment));
-                    if (association.getKind().isSingleEnded()) {
-                        currentPipeline.add(unwind("$" + segment));
-                    }
-                }
-                currentSubLookups.put(pathKey, stage);
-                currentPipeline = stage.pipeline;
-                currentSubLookups = stage.subLookups;
-                currentEntity = stage.entity;
-            }
-        }
-    }
-
-    private static Map<String, Object> lookup(String from, List<String> localFields, List<String> foreignFields,
-                                               List<Map<String, Object>> pipeline, String as) {
-        if (localFields.size() == 1) {
-            return lookup(from, localFields.getFirst(), foreignFields.getFirst(), pipeline, as);
-        }
-        Map<String, Object> let = new LinkedHashMap<>();
-        List<Map<String, Object>> matches = new ArrayList<>();
-        int i = 1;
-        for (int j = 0; j < localFields.size(); j++) {
-            String var = "v" + i++;
-            let.put(var, "$" + localFields.get(j));
-            matches.add(Map.of("$eq", List.of("$$" + var, "$" + foreignFields.get(j))));
-        }
-        Map<String, Object> matchExpr = matches.size() == 1 ? matches.getFirst() : Map.of("$and", matches);
-        pipeline.addFirst(Map.of("$match", Map.of("$expr", matchExpr)));
-        Map<String, Object> lookupDoc = new LinkedHashMap<>();
-        lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
-        return Map.of("$lookup", lookupDoc);
-    }
-
-    private static Map<String, Object> lookup(String from, String localField, String foreignField,
-                                               List<Map<String, Object>> pipeline, String as) {
-        Map<String, Object> lookupDoc = new LinkedHashMap<>();
-        lookupDoc.put("from", from); lookupDoc.put("localField", localField);
-        lookupDoc.put("foreignField", foreignField);
-        lookupDoc.put("pipeline", pipeline);  // always include so nested lookups added later are reflected
-        lookupDoc.put("as", as);
-        return Map.of("$lookup", lookupDoc);
-    }
-
-    private static Map<String, Object> unwind(String path) {
-        Map<String, Object> u = new LinkedHashMap<>();
-        u.put("path", path); u.put("preserveNullAndEmptyArrays", true);
-        return Map.of("$unwind", u);
-    }
-
-    private static final class LookupsStage {
-        final PersistentEntity entity;
-        final List<Map<String, Object>> pipeline = new ArrayList<>();
-        final Map<String, LookupsStage> subLookups = new HashMap<>();
-        LookupsStage(PersistentEntity entity) { this.entity = entity; }
-    }
-
-    private void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {
-        switch (selection) {
-            case UnaryExpression<?> unary -> {
-                switch (unary.getType()) {
-                    case SUM, AVG, MAX, MIN -> {
-                        PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
-                        String op = switch (unary.getType()) {
-                            case SUM -> "$sum";
-                            case AVG -> "$avg";
-                            case MAX -> "$max";
-                            case MIN -> "$min";
-                            default ->
-                                throw new IllegalStateException("Unexpected: " + unary.getType());
-                        };
-                        group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + propertyPath.getPath()));
-                    }
-                    case COUNT, COUNT_DISTINCT -> countObj.put("$count", "result");
-                    default -> { /* ignore */ }
-                }
-            }
-            case CompoundSelection<?> compound -> {
-                for (Selection<?> item : compound.getCompoundSelectionItems()) {
-                    buildProjection(item, group, countObj);
-                }
-            }
-            case null, default -> {
-            }
-        }
     }
 }

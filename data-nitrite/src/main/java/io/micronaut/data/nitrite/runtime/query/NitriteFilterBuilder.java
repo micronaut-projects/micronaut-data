@@ -19,9 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledValue;
-import io.micronaut.data.nitrite.runtime.query.compiled.NitriteFilterAST;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
+import io.micronaut.data.nitrite.runtime.query.ast.NitriteFilterAST;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 

@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Holder for state during query translation. */
-@Internal
-final class NitriteQueryState {
+public final class NitriteQueryState {
 
   private final PersistentEntity persistentEntity;
     private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();

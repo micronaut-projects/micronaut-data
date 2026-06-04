@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.model.query.builder;
+package io.micronaut.data.nitrite.model.query.builder.compile;
 
 /**
  * Tagged wrapper around a regex string used during JSON query serialization.
  *
  * @param value the regex value
  */
-record RegexPattern(String value) { }
+public record RegexPattern(String value) { }

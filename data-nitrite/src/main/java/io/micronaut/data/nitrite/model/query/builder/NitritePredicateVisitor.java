@@ -25,7 +25,6 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
-import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
@@ -34,10 +33,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
-import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.criteria.Expression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,10 +42,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /** Translates JPA Criteria predicates into a NitriteDB JSON filter map. */
-final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
+public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
     static final String ID_FIELD = "id";
     private static final String REGEX = "$regex";
@@ -57,12 +52,14 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
     private final PersistentEntity persistentEntity;
     private final NitriteQueryState queryState;
+    private final NitriteExpressionHandler expressionHandler;
     private Map<String, Object> query;
 
-    NitritePredicateVisitor(final NitriteQueryState queryState, final Map<String, Object> query) {
+    NitritePredicateVisitor(final NitriteQueryState queryState, final Map<String, Object> query, final NitriteExpressionHandler expressionHandler) {
         this.queryState = queryState;
         this.query = query;
-        persistentEntity = queryState.getEntity();
+        this.persistentEntity = queryState.getEntity();
+        this.expressionHandler = expressionHandler;
     }
 
     // -------------------------------------------------------------------------
@@ -365,12 +362,13 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
 
     @Override
     public void visitRegexp(final Expression<?> leftExpression, final Expression<?> rightExpression) {
-        Expression<?> value = rightExpression;
-        if (rightExpression instanceof LiteralExpression<?> literalExpression
-            && literalExpression.getValue() instanceof String pattern) {
-            value = new LiteralExpression<>(new RegexPattern(pattern));
-        }
-        appendOperatorExpression(leftExpression, REGEX, value);
+        PersistentPropertyPath propertyPath =
+            CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+        String fieldName = getFieldName(propertyPath);
+        Object regexValue = expressionHandler.resolveRegexValue(queryState, propertyPath, rightExpression);
+        Map<String, Object> fieldFilter = new LinkedHashMap<>();
+        fieldFilter.put(REGEX, regexValue);
+        query.put(fieldName, fieldFilter);
     }
 
     @Override
@@ -413,17 +411,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         PersistentPropertyPath propertyPath =
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
-        Object rawValue = expression instanceof LiteralExpression<?> lit ? lit.getValue() : expression;
-        List<Object> criteriaValues;
-        if (rawValue instanceof Iterable<?> iterable) {
-            criteriaValues = new ArrayList<>();
-            for (Object item : iterable) {
-                Object itemVal = item instanceof Expression<?> ? item : new LiteralExpression<>(item);
-                criteriaValues.add(valueRepresentation(queryState, propertyPath, itemVal));
-            }
-        } else {
-            criteriaValues = List.of(valueRepresentation(queryState, propertyPath, expression));
-        }
+        List<Object> criteriaValues = expressionHandler.resolveCollectionValue(queryState, propertyPath, expression);
         query.put(fieldName, Collections.singletonMap("$all", criteriaValues));
     }
 
@@ -588,75 +576,23 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpr) {
             final PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
             final String fieldName = getFieldName(propertyPath);
-            String regexValue;
-            String ciPrefix = ignoreCase ? "(?i)" : "";
-            if (rightExpression instanceof LiteralExpression<?> literal) {
-                String pattern = literal.getValue().toString();
-                if (isLike) {
-                    pattern = convertLikeToRegex(pattern);
-                } else if (startsWith) {
-                    pattern = "^" + Pattern.quote(pattern) + ".*";
-                } else if (endsWith) {
-                    pattern = ".*" + Pattern.quote(pattern) + "$";
-                } else {
-                    pattern = ".*" + Pattern.quote(pattern) + ".*";
-                }
-                regexValue = ciPrefix + pattern;
+            Object regexValue = expressionHandler.handleRegex(
+                fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, queryState, propertyPath);
+            if (regexValue instanceof Map<?, ?> filterMap) {
+                query.put(fieldName, negated ? Map.of(NOT, filterMap) : filterMap);
             } else {
-                // For parameter expressions, build a regex pattern with placeholder
-                // The pattern structure is built now, parameter value is substituted at runtime
-                String prefix = startsWith ? "^" : ".*";
-                String suffix = endsWith ? "$" : ".*";
-                // Get the parameter placeholder — always use string format in regex patterns
-                // because the runtime resolves "$mn_qp:N" inline within strings
-                Object paramPlaceholder = valueRepresentation(
-                    queryState, propertyPath, propertyPath, rightExpression);
-                String paramStr;
-                if (paramPlaceholder instanceof Map<?, ?> m
-                        && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
-                    Object idx = m.get(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
-                    paramStr = NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + idx;
-                } else {
-                    paramStr = paramPlaceholder.toString();
-                }
-                regexValue = ciPrefix + prefix + paramStr + suffix;
+                Map<String, Object> fieldFilter = new LinkedHashMap<>();
+                fieldFilter.put(REGEX, regexValue);
+                query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
             }
-            Map<String, Object> fieldFilter = new LinkedHashMap<>();
-            fieldFilter.put(REGEX, regexValue);
-            query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
         }
-    }
-
-    private Object valueRepresentation(
-        final Expression<?> expression) {
-        if (expression instanceof LiteralExpression<?> literal) {
-            Object value = literal.getValue();
-            if (value instanceof RegexPattern regex) {
-                return regex.value();
-            }
-            return convertValue(value);
-        }
-        return expression;
     }
 
     private Object valueRepresentation(
         final NitriteQueryState queryState,
         final PersistentPropertyPath propertyPath,
         final Object value) {
-        if (value instanceof LiteralExpression<?> literal) {
-            Object val = literal.getValue();
-            if (val instanceof RegexPattern regex) {
-                return regex.value();
-            }
-            return convertValue(val);
-        }
-        if (value instanceof BindingParameter bindingParameter) {
-            return bindParameter(queryState, bindingParameter, propertyPath);
-        }
-        if (value instanceof Expression<?> expr) {
-            return valueRepresentation(expr);
-        }
-        return convertValue(value);
+        return expressionHandler.resolveValue(queryState, propertyPath, value);
     }
 
     private Object valueRepresentation(
@@ -664,30 +600,7 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
         final PersistentPropertyPath propertyPath,
         final PersistentPropertyPath persistentPropertyPath,
         final Expression<?> expression) {
-        if (expression instanceof LiteralExpression<?> literal) {
-            Object value = literal.getValue();
-            if (value instanceof RegexPattern regex) {
-                return regex.value();
-            }
-            return convertValue(value);
-        }
-        if (expression instanceof BindingParameter bindingParameter) {
-            return bindParameter(queryState, bindingParameter, persistentPropertyPath);
-        }
-        return expression;
-    }
-
-    private Object bindParameter(
-        final NitriteQueryState queryState,
-        final BindingParameter bindingParameter,
-        final PersistentPropertyPath propertyPath) {
-        BindingParameter.BindingContext context = newBindingContext(propertyPath, propertyPath);
-        int index = queryState.pushParameter(bindingParameter, context);
-        return Map.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, index);
-    }
-
-    private static Object convertValue(final Object value) {
-        return ValueConverter.toFilterValueStatic(value);
+        return expressionHandler.resolveValue(queryState, propertyPath, expression);
     }
 
     // -------------------------------------------------------------------------
@@ -713,12 +626,5 @@ final class NitritePredicateVisitor implements AdvancedPredicateVisitor<Persiste
     static String asPath(
         final Collection<Association> associations, final PersistentProperty property) {
         return NitriteFieldNameResolver.asPath(associations, property);
-    }
-
-    static String convertLikeToRegex(final String likePattern) {
-        // We do NOT escape standard regex characters because legacy tests (and likely users)
-        // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
-        // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
-        return NitriteQuerySerializer.convertLikeToRegex(likePattern);
     }
 }

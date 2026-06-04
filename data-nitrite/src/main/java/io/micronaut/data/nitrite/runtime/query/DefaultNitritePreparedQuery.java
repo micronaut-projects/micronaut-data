@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.nitrite.runtime.query.compiled.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import org.dizitart.no2.filters.Filter;
 
