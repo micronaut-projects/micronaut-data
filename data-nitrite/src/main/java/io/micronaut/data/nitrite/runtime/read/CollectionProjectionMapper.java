@@ -54,20 +54,6 @@ public final class CollectionProjectionMapper {
      *
      * @param cursor the projected cursor
      * @param fields the projected field names
-     * @param resultType the expected result type
-     * @param isDto whether this is a DTO projection
-     * @param <R> the result type
-     * @return list of projected values
-     */
-    public <R> List<R> mapResults(RecordStream<Document> cursor, List<String> fields, Class<R> resultType, boolean isDto) {
-        return mapResults(cursor, fields, null, resultType, isDto);
-    }
-
-    /**
-     * Extract projected results from a cursor.
-     *
-     * @param cursor the projected cursor
-     * @param fields the projected field names
      * @param entity the entity metadata
      * @param resultType the expected result type
      * @param isDto whether this is a DTO projection
@@ -83,20 +69,6 @@ public final class CollectionProjectionMapper {
             }
         }
         return results;
-    }
-
-    /**
-     * Map a single document to a projected result.
-     *
-     * @param doc the document
-     * @param fields the projected field names
-     * @param resultType the expected result type
-     * @param isDto whether this is a DTO projection
-     * @param <R> the result type
-     * @return the mapped result, or null if not applicable
-     */
-    public <R> R mapDocument(Document doc, List<String> fields, Class<R> resultType, boolean isDto) {
-        return mapDocument(doc, fields, null, resultType, isDto);
     }
 
     /**
@@ -127,37 +99,6 @@ public final class CollectionProjectionMapper {
             // Multi-field native projection - return Document (rare case, for backwards compatibility)
             return (R) doc;
         }
-    }
-
-    /**
-     * Map a single document to a single projected value.
-     *
-     * @param doc the document
-     * @param fieldName the projected field name
-     * @param resultType the expected result type
-     * @param <R> the result type
-     * @return the mapped value, or null if document or field is null
-     */
-    public <R> R mapSingleField(Document doc, String fieldName, Class<R> resultType) {
-        return mapSingleField(doc, fieldName, null, resultType);
-    }
-
-    /**
-     * Map a single document to a single projected value.
-     *
-     * @param doc the document
-     * @param fieldName the projected field name
-     * @param entity the entity metadata
-     * @param resultType the expected result type
-     * @param <R> the result type
-     * @return the mapped value, or null if document or field is null
-     */
-    public <R> R mapSingleField(Document doc, String fieldName, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType) {
-        if (doc == null) {
-            return null;
-        }
-        Object value = getProjectedValue(doc, fieldName, entity);
-        return valueConverter.convert(value, resultType);
     }
 
     private Object getProjectedValue(Document doc, String fieldName, @Nullable RuntimePersistentEntity<?> entity) {

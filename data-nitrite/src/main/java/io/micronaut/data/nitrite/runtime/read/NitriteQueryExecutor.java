@@ -75,6 +75,7 @@ public final class NitriteQueryExecutor {
     // Centralized strategy classes for result handling
     private final ObjectRepositoryMapper entityMapperHandler;
     private final ValueConverter valueConverter;
+    private final CollectionProjectionMapper projectionMapper;
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
     private final JoinFetcher joinFetcher;
@@ -112,7 +113,8 @@ public final class NitriteQueryExecutor {
         // Initialize centralized strategy classes
         this.valueConverter = new ValueConverter(conversionService);
         this.entityMapperHandler = new ObjectRepositoryMapper(entityMapper);
-        this.nativeProjectionHandler = new CollectionFieldMapper(queryParser, valueConverter, entityMapper);
+        this.projectionMapper = new CollectionProjectionMapper(valueConverter, entityMapper);
+        this.nativeProjectionHandler = new CollectionFieldMapper(queryParser);
         this.aggregationHandler = new CollectionAggregator();
         this.joinFetcher = new JoinFetcher(entityMapper, collectionFactory, entityFactory, conversionService);
     }
@@ -186,14 +188,19 @@ public final class NitriteQueryExecutor {
 
         // Handle DTO projection
         if (nq.isDtoProjection()) {
-            return entityMapperHandler.projectDto(doc, nq.getResultType());
+            RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+            return projectionMapper.mapDocument(doc, Collections.emptyList(), entity, nq.getResultType(), true);
         }
 
         // Handle native single-field projection (result type differs from root entity)
         if (!nq.getResultType().equals(nq.getRootEntity())) {
-            R result = nativeProjectionHandler.project(doc, nq.getQuery(), methodName, entityFactory.apply(nq.getRootEntity()), nq.getResultType());
-            if (result != null) {
-                return result;
+            String fieldName = nativeProjectionHandler.extractFieldName(nq.getQuery(), methodName);
+            if (fieldName != null) {
+                RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+                R result = projectionMapper.mapDocument(doc, List.of(fieldName), entity, nq.getResultType(), false);
+                if (result != null) {
+                    return result;
+                }
             }
         }
 
@@ -278,11 +285,8 @@ public final class NitriteQueryExecutor {
         // Handle DTO projection
         if (nq.isDtoProjection()) {
             var cursor = coll.find(filter, findOptions);
-            List<R> results = new ArrayList<>();
-            for (Document doc : cursor) {
-                results.add(entityMapperHandler.projectDto(doc, nq.getResultType()));
-            }
-            return results;
+            RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+            return projectionMapper.mapResults(cursor, Collections.emptyList(), entity, nq.getResultType(), true);
         }
 
         // Handle native single-field projection
@@ -302,15 +306,7 @@ public final class NitriteQueryExecutor {
             if (projectedFields != null) {
                 var cursor = coll.find(filter, findOptions);
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
-                List<R> results = new ArrayList<>();
-                String field = projectedFields.getFirst();
-                for (Document doc : cursor) {
-                    R result = nativeProjectionHandler.project(doc, field, entity, nq.getResultType());
-                    if (result != null) {
-                        results.add(result);
-                    }
-                }
-                return results;
+                return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
             }
         }
 

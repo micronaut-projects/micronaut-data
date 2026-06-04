@@ -55,20 +55,4 @@ public final class ObjectRepositoryMapper {
         }
         return entityMapper.fromDocument(doc, entityType);
     }
-
-    /**
-     * Project a document to a DTO.
-     * Used when the result type is a DTO (Data Transfer Object) different from the root entity.
-     *
-     * @param doc the document
-     * @param dtoType the DTO type
-     * @param <R> the DTO type
-     * @return the projected DTO, or null if document is null
-     */
-    public <R> R projectDto(Document doc, Class<R> dtoType) {
-        if (doc == null) {
-            return null;
-        }
-        return entityMapper.fromDocument(doc, dtoType);
-    }
 }
