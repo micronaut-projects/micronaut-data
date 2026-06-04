@@ -345,7 +345,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
         priorVersions = new IdentityHashMap<>();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
-        boolean vetoed = false;
+        IdentityHashMap<T, Boolean> vetoedSet = null;
         for (int i = 0; i < entities.size(); i++) {
             T entity = entities.get(i);
             // Capture pre-version before the event listener can modify the field.
@@ -354,7 +354,11 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             if (!fn.apply((EntityEventContext<Object>) event)) {
-                vetoed = true;
+                priorVersions.remove(entity);
+                if (vetoedSet == null) {
+                    vetoedSet = new IdentityHashMap<>();
+                }
+                vetoedSet.put(entity, Boolean.TRUE);
                 continue;
             }
             T newEntity = event.getEntity();
@@ -367,7 +371,11 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
             }
         }
-        return vetoed;
+        if (vetoedSet != null) {
+            veto(vetoedSet::containsKey);
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")

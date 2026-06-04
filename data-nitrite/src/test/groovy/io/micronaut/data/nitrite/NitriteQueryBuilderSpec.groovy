@@ -238,6 +238,47 @@ class NitriteQueryBuilderSpec extends Specification {
         results[0].payload == "Hello 世界"
     }
 
+    void "test equals ignoreCase matches regardless of case"() {
+        given:
+        eventRepository.save(new Event("HELLO", "p1"))
+        eventRepository.save(new Event("world", "p2"))
+
+        when:
+        def results = eventRepository.findByTypeIgnoreCase("hello")
+
+        then:
+        results.size() == 1
+        results[0].type == "HELLO"
+    }
+
+    void "test notEquals ignoreCase excludes matching case"() {
+        given:
+        eventRepository.save(new Event("HELLO", "p1"))
+        eventRepository.save(new Event("world", "p2"))
+
+        when:
+        def results = eventRepository.findByTypeNotIgnoreCase("hello")
+
+        then:
+        results.size() == 1
+        results[0].type == "world"
+    }
+
+    void "test between query returns entities in range"() {
+        given:
+        def e1 = new Event("E1", "p1"); e1.setPriority(1)
+        def e2 = new Event("E2", "p2"); e2.setPriority(5)
+        def e3 = new Event("E3", "p3"); e3.setPriority(10)
+        eventRepository.saveAll([e1, e2, e3])
+
+        when:
+        def results = eventRepository.findByPriorityBetween(2, 7)
+
+        then:
+        results.size() == 1
+        results[0].type == "E2"
+    }
+
     void "test query with special regex characters"() {
         given: "Events with regex special characters"
         eventRepository.save(new Event("E1", "test.*value"))

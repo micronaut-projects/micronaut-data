@@ -129,6 +129,12 @@ public interface EventRepository
    * KNOWN BUG: Uses @Query with field filter which silently returns empty in Nitrite.
    * The field filter does not work.
    */
+  List<Event> findByTypeIgnoreCase(String type);
+
+  List<Event> findByTypeNotIgnoreCase(String type);
+
+  List<Event> findByPriorityBetween(int from, int to);
+
   @Query("{\"type\": {\"$eq\": :type}}")
   Optional<Event> findByTypeWithQuery(String type);
 }
