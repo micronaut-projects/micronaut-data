@@ -21,7 +21,9 @@ import io.micronaut.data.nitrite.model.Event;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -142,4 +144,15 @@ public interface EventRepository
 
   @Query("{\"type\": {\"$eq\": :type}}")
   Optional<Event> findByTypeWithQuery(String type);
+
+  // Aggregation methods for Phase 5 coverage
+  Optional<Double> findMaxAmountByStatus(Event.Status status);
+  Optional<Double> findMinAmountByStatus(Event.Status status);
+  Optional<Double> findSumAmount();
+  Optional<Double> findAvgAmount();
+
+  Optional<LocalDate> findMaxDateCreatedByStatus(Event.Status status);
+  Optional<LocalDate> findMinDateCreatedByStatus(Event.Status status);
+
+  long countByStatus(Event.Status status);
 }
