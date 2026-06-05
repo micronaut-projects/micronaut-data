@@ -154,5 +154,7 @@ public interface EventRepository
   Optional<LocalDate> findMaxDateCreatedByStatus(Event.Status status);
   Optional<LocalDate> findMinDateCreatedByStatus(Event.Status status);
 
+  // Status filter methods
+  List<Event> findByStatus(Event.Status status);
   long countByStatus(Event.Status status);
 }
