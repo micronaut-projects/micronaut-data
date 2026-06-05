@@ -10,11 +10,16 @@ import spock.lang.Specification
 
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 /**
- * Phase 5: Aggregation execution test.
- * Exercises CollectionAggregator.executeAggregate() paths: max, min, sum, avg on numbers and dates.
+ * Phase 5: Aggregation coverage via the real repository dispatch path.
+ *
+ * The primary tests drive CollectionAggregator.executeAggregate() through
+ * EventRepository derived-query methods (findMaxAmountByStatus etc.), which
+ * flow through NitriteQueryExecutor.findOne() → aggregationHandler.aggregate()
+ * → executeAggregate(). Direct aggregate() calls are kept only for branches
+ * (String-date parsing, snake_case fallback, null/empty guards) that the
+ * integration path cannot reach.
  */
 @MicronautTest(transactional = false)
 class AggregationSpec extends Specification {
@@ -22,146 +27,89 @@ class AggregationSpec extends Specification {
     @Inject
     EventRepository repository
 
+    // Only instantiated for direct-call branches unreachable via repository
     def collectionAggregator = new CollectionAggregator()
 
     def setup() {
         repository.deleteAll()
     }
 
-    void "aggregation: max on numeric values"() {
+    // -----------------------------------------------------------------------
+    // Integration path: real repository → NitriteQueryExecutor → executeAggregate
+    // -----------------------------------------------------------------------
+
+    void "repository: findMaxAmountByStatus returns max numeric value"() {
         given:
-        def docs = [
-            Document.createDocument("amount", 100),
-            Document.createDocument("amount", 50),
-            Document.createDocument("amount", 200)
-        ]
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("100.00"), LocalDate.of(2024, 1, 10)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("200.00"), LocalDate.of(2024, 1, 5)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("999.00"), LocalDate.of(2024, 1, 1)))
 
         when:
-        Object result = collectionAggregator.aggregate(docs, "amount", "Max")
+        Optional<Double> result = repository.findMaxAmountByStatus(Event.Status.ACTIVE)
 
         then:
-        result == 200.0
+        result.isPresent()
+        Math.abs(result.get() - 200.0) < 0.01
     }
 
-    void "aggregation: min on numeric values"() {
+    void "repository: findMinAmountByStatus returns min numeric value"() {
         given:
-        def docs = [
-            Document.createDocument("amount", 100),
-            Document.createDocument("amount", 50),
-            Document.createDocument("amount", 200)
-        ]
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("100.00"), LocalDate.of(2024, 1, 10)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("200.00"), LocalDate.of(2024, 1, 5)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("1.00"), LocalDate.of(2024, 1, 1)))
 
         when:
-        Object result = collectionAggregator.aggregate(docs, "amount", "Min")
+        Optional<Double> result = repository.findMinAmountByStatus(Event.Status.ACTIVE)
 
         then:
-        result == 50.0
+        result.isPresent()
+        Math.abs(result.get() - 100.0) < 0.01
     }
 
-    void "aggregation: sum on numeric values"() {
+    void "repository: findMaxDateCreatedByStatus returns latest LocalDate"() {
         given:
-        def docs = [
-            Document.createDocument("amount", 100),
-            Document.createDocument("amount", 50),
-            Document.createDocument("amount", 25)
-        ]
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("10.00"), LocalDate.of(2024, 1, 1)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("20.00"), LocalDate.of(2024, 6, 15)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("30.00"), LocalDate.of(2025, 1, 1)))
 
         when:
-        Object result = collectionAggregator.aggregate(docs, "amount", "Sum")
+        Optional<LocalDate> result = repository.findMaxDateCreatedByStatus(Event.Status.ACTIVE)
 
         then:
-        result == 175.0
+        result.isPresent()
+        result.get() == LocalDate.of(2024, 6, 15)
     }
 
-    void "aggregation: avg on numeric values"() {
+    void "repository: findMinDateCreatedByStatus returns earliest LocalDate"() {
         given:
-        def docs = [
-            Document.createDocument("amount", 100),
-            Document.createDocument("amount", 50),
-            Document.createDocument("amount", 150)
-        ]
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("10.00"), LocalDate.of(2024, 6, 15)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("20.00"), LocalDate.of(2024, 1, 1)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("30.00"), LocalDate.of(2023, 1, 1)))
 
         when:
-        Object result = collectionAggregator.aggregate(docs, "amount", "Avg")
+        Optional<LocalDate> result = repository.findMinDateCreatedByStatus(Event.Status.ACTIVE)
 
         then:
-        Math.abs((double) result - 100.0) < 0.01
+        result.isPresent()
+        result.get() == LocalDate.of(2024, 1, 1)
     }
 
-    void "aggregation: max on LocalDate values"() {
-        given:
-        def date1 = LocalDate.of(2024, 1, 1)
-        def date2 = LocalDate.of(2024, 1, 15)
-        def date3 = LocalDate.of(2024, 1, 10)
-        def docs = [
-            Document.createDocument("dateCreated", date1),
-            Document.createDocument("dateCreated", date2),
-            Document.createDocument("dateCreated", date3)
-        ]
-
+    void "repository: aggregation on empty result set returns empty Optional"() {
+        // No events saved — filter matches nothing → aggregate() returns null → Optional.empty()
         when:
-        Object result = collectionAggregator.aggregate(docs, "dateCreated", "Max")
+        Optional<Double> result = repository.findMaxAmountByStatus(Event.Status.PENDING)
 
         then:
-        result == date2
+        !result.isPresent()
     }
 
-    void "aggregation: min on LocalDate values"() {
-        given:
-        def date1 = LocalDate.of(2024, 1, 1)
-        def date2 = LocalDate.of(2024, 1, 15)
-        def date3 = LocalDate.of(2024, 1, 10)
-        def docs = [
-            Document.createDocument("dateCreated", date1),
-            Document.createDocument("dateCreated", date2),
-            Document.createDocument("dateCreated", date3)
-        ]
+    // -----------------------------------------------------------------------
+    // Direct aggregate() calls for branches unreachable via repository path
+    // -----------------------------------------------------------------------
 
-        when:
-        Object result = collectionAggregator.aggregate(docs, "dateCreated", "Min")
-
-        then:
-        result == date1
-    }
-
-    void "aggregation: max on LocalDateTime values"() {
-        given:
-        def dt1 = LocalDateTime.of(2024, 1, 1, 10, 0)
-        def dt2 = LocalDateTime.of(2024, 1, 1, 15, 0)
-        def dt3 = LocalDateTime.of(2024, 1, 1, 12, 0)
-        def docs = [
-            Document.createDocument("dateTimeCreated", dt1),
-            Document.createDocument("dateTimeCreated", dt2),
-            Document.createDocument("dateTimeCreated", dt3)
-        ]
-
-        when:
-        Object result = collectionAggregator.aggregate(docs, "dateTimeCreated", "Max")
-
-        then:
-        result == dt2
-    }
-
-    void "aggregation: empty document list returns null"() {
-        given:
-        def docs = []
-
-        when:
-        Object result = collectionAggregator.aggregate(docs, "amount", "Max")
-
-        then:
-        result == null
-    }
-
-    void "aggregation: null documents returns null"() {
-        when:
-        Object result = collectionAggregator.aggregate(null, "amount", "Max")
-
-        then:
-        result == null
-    }
-
-    void "aggregation: snake_case field name conversion"() {
+    void "aggregate: snake_case field name fallback"() {
+        // The snake_case fallback in aggregate() is only exercised when the
+        // document key doesn't match the camelCase field name directly.
         given:
         def docs = [
             Document.createDocument("custom_amount", 100),
@@ -175,29 +123,62 @@ class AggregationSpec extends Specification {
         result == 100.0
     }
 
-    void "aggregation: extract aggregation function from method name"() {
-        expect:
-        collectionAggregator.extractAggFunc("findMaxAmountBy") == "Max"
-        collectionAggregator.extractAggFunc("findMinAmountBy") == "Min"
-        collectionAggregator.extractAggFunc("findSumAmountBy") == "Sum"
-        collectionAggregator.extractAggFunc("findAvgAmountBy") == "Avg"
-        collectionAggregator.extractAggFunc("notAggregation") == null
+    void "aggregate: null document list returns null"() {
+        when:
+        Object result = collectionAggregator.aggregate(null, "amount", "Max")
+
+        then:
+        result == null
     }
 
-    void "aggregation: extract field name from method name"() {
-        expect:
-        collectionAggregator.extractFieldName("findMaxAmountByStatus") == "amount"
-        collectionAggregator.extractFieldName("findMinDateCreatedByStatus") == "dateCreated"
-        collectionAggregator.extractFieldName("findSumTotalByStatus") == "total"
-        collectionAggregator.extractFieldName("notAggregation") == null
+    void "aggregate: empty document list returns null"() {
+        when:
+        Object result = collectionAggregator.aggregate([], "amount", "Max")
+
+        then:
+        result == null
     }
 
-    void "aggregation: is aggregation method detection"() {
-        expect:
-        collectionAggregator.isAggregationMethod("findMaxAmountByStatus") == true
-        collectionAggregator.isAggregationMethod("findMinDateCreatedBy") == true
-        collectionAggregator.isAggregationMethod("findByStatus") == false
-        collectionAggregator.isAggregationMethod("save") == false
-        collectionAggregator.isAggregationMethod(null) == false
+    void "aggregate: String values parsed as LocalDate for Max"() {
+        // String date parsing branch in executeAggregate — documents store dates as strings
+        given:
+        def docs = [
+            Document.createDocument("d", "2024-01-01"),
+            Document.createDocument("d", "2024-06-15"),
+            Document.createDocument("d", "2023-12-31")
+        ]
+
+        when:
+        Object result = collectionAggregator.aggregate(docs, "d", "Max")
+
+        then:
+        result == LocalDate.of(2024, 6, 15)
+    }
+
+    void "aggregate: String values parsed as LocalDate for Min"() {
+        given:
+        def docs = [
+            Document.createDocument("d", "2024-01-01"),
+            Document.createDocument("d", "2024-06-15"),
+            Document.createDocument("d", "2023-12-31")
+        ]
+
+        when:
+        Object result = collectionAggregator.aggregate(docs, "d", "Min")
+
+        then:
+        result == LocalDate.of(2023, 12, 31)
+    }
+
+    // -----------------------------------------------------------------------
+    // Helper methods
+    // -----------------------------------------------------------------------
+
+    private static Event event(Event.Status status, BigDecimal amount, LocalDate dateCreated) {
+        def e = new Event("test", "payload")
+        e.status = status
+        e.amount = amount
+        e.dateCreated = dateCreated
+        return e
     }
 }

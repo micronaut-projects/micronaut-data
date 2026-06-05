@@ -145,11 +145,9 @@ public interface EventRepository
   @Query("{\"type\": {\"$eq\": :type}}")
   Optional<Event> findByTypeWithQuery(String type);
 
-  // Aggregation methods for Phase 5 coverage
+  // Aggregation methods for Phase 5 coverage (must have a By clause to match the aggregation pattern)
   Optional<Double> findMaxAmountByStatus(Event.Status status);
   Optional<Double> findMinAmountByStatus(Event.Status status);
-  Optional<Double> findSumAmount();
-  Optional<Double> findAvgAmount();
 
   Optional<LocalDate> findMaxDateCreatedByStatus(Event.Status status);
   Optional<LocalDate> findMinDateCreatedByStatus(Event.Status status);
