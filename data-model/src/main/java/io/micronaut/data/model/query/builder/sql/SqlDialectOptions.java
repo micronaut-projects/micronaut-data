@@ -41,6 +41,11 @@ public record SqlDialectOptions(
     public static final String ORACLE_23_COMPATIBILITY = "ORACLE_23";
 
     /**
+     * Annotation processor option for SQL dialect compatibility.
+     */
+    public static final String DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION = "micronaut.data.sql.dialect-options.compatibility";
+
+    /**
      * Annotation/configuration member for compatibility.
      */
     public static final String MEMBER_COMPATIBILITY = "dialectOptionsCompatibility";

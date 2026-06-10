@@ -66,6 +66,8 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -263,6 +265,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 throw new ElementPostponedToNextRoundException(element);
             }
             visitedRepositories.add(interfaceName);
+            configureSqlDialectOptions(element, context);
             QueryBuilder queryEncoder = newQueryBuilder(element.getAnnotationMetadata());
             this.dataTypes = Utils.getConfiguredDataTypes(element);
             AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
@@ -317,6 +320,37 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         } catch (Exception e) {
             visitedRepositories.remove(element.getName());
             throw e;
+        }
+    }
+
+    private static void configureSqlDialectOptions(ClassElement element, VisitorContext context) {
+        AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
+        boolean usesSqlQueryBuilder = annotationMetadata.stringValue(
+                RepositoryConfiguration.class,
+                DataMethod.META_MEMBER_QUERY_BUILDER
+            )
+            .filter(SqlQueryBuilder.class.getName()::equals)
+            .isPresent();
+        if (!usesSqlQueryBuilder) {
+            return;
+        }
+        boolean hasExplicitCompatibility = annotationMetadata
+            .stringValue(SqlQueryConfiguration.class, SqlDialectOptions.MEMBER_COMPATIBILITY)
+            .filter(StringUtils::isNotEmpty)
+            .isPresent();
+        if (hasExplicitCompatibility) {
+            return;
+        }
+        String compatibility = context.getOptions().get(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION);
+        if (StringUtils.isEmpty(compatibility)) {
+            compatibility = System.getProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION);
+        }
+        if (StringUtils.isNotEmpty(compatibility)) {
+            String configuredCompatibility = compatibility;
+            element.annotate(
+                SqlQueryConfiguration.class,
+                builder -> builder.member(SqlDialectOptions.MEMBER_COMPATIBILITY, configuredCompatibility)
+            );
         }
     }
 

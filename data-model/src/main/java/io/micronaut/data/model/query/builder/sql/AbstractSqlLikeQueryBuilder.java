@@ -2560,8 +2560,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsFalse(Expression<?> expression) {
-            if (getDialect() == Dialect.ORACLE && getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
-                appendUnaryCondition(" IS FALSE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                if (getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+                    appendUnaryCondition(" IS FALSE", expression);
+                } else {
+                    appendUnaryCondition(" = " + asLiteral(false), expression);
+                }
             } else {
                 appendUnaryCondition(" = FALSE", expression);
             }
@@ -2579,8 +2583,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsTrue(Expression<?> expression) {
-            if (getDialect() == Dialect.ORACLE && getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
-                appendUnaryCondition(" IS TRUE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                if (getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+                    appendUnaryCondition(" IS TRUE", expression);
+                } else {
+                    appendUnaryCondition(" = " + asLiteral(true), expression);
+                }
             } else {
                 appendUnaryCondition(" = TRUE", expression);
             }

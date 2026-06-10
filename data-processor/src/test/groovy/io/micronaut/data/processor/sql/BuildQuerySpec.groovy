@@ -26,6 +26,8 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.entity.SomeEntity
@@ -57,6 +59,8 @@ import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
+
+    private static final Object DIALECT_OPTIONS_COMPATIBILITY_LOCK = new Object()
 
     void "test to-many join on repository type that inherits from CrudRepository"() {
         given:
@@ -1107,6 +1111,76 @@ class OracleBooleanEntity {
         expect:
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS TRUE)'
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
+    }
+
+    void "test oracle boolean query generation uses global ORACLE_23 compatibility"() {
+        given:
+        def repository = withDialectOptionsCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
+            buildRepository('test.OracleBooleanRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
+    List<OracleBooleanEntity> findByActiveTrue();
+    List<OracleBooleanEntity> findByActiveFalse();
+}
+
+@MappedEntity("oracle_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class OracleBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean active;
+}
+""")
+        }
+
+        expect:
+        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23'
+        getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS TRUE)'
+        getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
+    }
+
+    void "test global dialect compatibility is recorded for SQL repositories"() {
+        given:
+        def repository = withDialectOptionsCompatibility("MYSQL_9") {
+            buildRepository('test.MySqlBooleanRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface MySqlBooleanRepository extends CrudRepository<MySqlBooleanEntity, Long> {
+    List<MySqlBooleanEntity> findByActiveTrue();
+}
+
+@MappedEntity("mysql_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class MySqlBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean active;
+}
+""")
+        }
+
+        expect:
+        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'MYSQL_9'
+        getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
     void "test query using InRange"() {
@@ -3135,5 +3209,21 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
         findByIdQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_ WHERE (legacy_some_entity_.`primary_key_some_column` = ? AND legacy_some_entity_.`primary_key_other_entity_id` = ?)'
         saveQuery == 'INSERT INTO `some_table` (`col`,`primary_key_some_column`,`primary_key_other_entity_id`) VALUES (?,?,?)'
         findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
+    }
+
+    private <T> T withDialectOptionsCompatibility(String compatibility, Closure<T> closure) {
+        synchronized (DIALECT_OPTIONS_COMPATIBILITY_LOCK) {
+            def previous = System.getProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION)
+            System.setProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION, compatibility)
+            try {
+                return closure.call()
+            } finally {
+                if (previous == null) {
+                    System.clearProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION)
+                } else {
+                    System.setProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION, previous)
+                }
+            }
+        }
     }
 }

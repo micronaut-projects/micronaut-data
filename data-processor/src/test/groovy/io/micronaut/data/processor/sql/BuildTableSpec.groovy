@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
@@ -100,6 +101,52 @@ class Test {
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
         Dialect.ORACLE   | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" JSON NOT NULL)' + System.lineSeparator() +
                            'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+    }
+
+    @Unroll
+    void "test build create table for Oracle boolean type with #compatibility compatibility"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+
+    private Boolean active;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, compatibility))
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
+
+        expect:
+        sql == statement
+
+        where:
+        compatibility                              | statement
+        null                                       | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" NUMBER(1) NOT NULL)' + System.lineSeparator() +
+                                                     'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        SqlDialectOptions.ORACLE_23_COMPATIBILITY | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+                                                     'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 
     void "test custom column definition"() {
