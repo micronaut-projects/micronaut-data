@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql.validation;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -46,6 +47,13 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
 
     @Override
     public final void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
+        validateTable(tableMapping, tableMetadata, SqlDialectOptions.defaults(getSupportedDialect()));
+    }
+
+    @Override
+    public final void validateTable(SqlTableMapping tableMapping,
+                                    SqlTableMetadata tableMetadata,
+                                    SqlDialectOptions dialectOptions) {
         List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
         List<SqlColumnMapping> columns = tableMapping.columns();
         List<SqlColumnMapping> allColumns = new ArrayList<>(columns.size() + (primaryKeyColumns != null ? primaryKeyColumns.size() : 0));
@@ -59,7 +67,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             if (columnMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             }
-            validateColumn(columnMapping, columnMetadata, getSupportedDialect(), tableMetadata.getName());
+            validateColumn(columnMapping, columnMetadata, getSupportedDialect(), dialectOptions, tableMetadata.getName());
         }
     }
 
@@ -83,14 +91,31 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      */
     protected final boolean matchingColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata,
                                                Dialect dialect) {
+        return matchingColumnType(columnMapping, columnMetadata, dialect, SqlDialectOptions.defaults(dialect));
+    }
+
+    /**
+     * Checks if the column type defined in the {@link SqlColumnMapping} matches the actual column type
+     * retrieved from the database metadata ({@link SqlColumnMetadata}) for the given SQL dialect.
+     *
+     * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
+     * @param columnMetadata the SQL column metadata from the database
+     * @param dialect        the SQL dialect to consider during type comparison
+     * @param dialectOptions the dialect options
+     * @return true if the column type matches, false otherwise
+     */
+    protected final boolean matchingColumnType(SqlColumnMapping columnMapping,
+                                               SqlColumnMetadata columnMetadata,
+                                               Dialect dialect,
+                                               SqlDialectOptions dialectOptions) {
         if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return true;
         }
-        String sqlType = columnMapping.getSqlType(dialect);
+        String sqlType = columnMapping.getSqlType(dialect, dialectOptions);
         if (sqlType.equalsIgnoreCase(columnMetadata.typeName())) {
             return true;
         }
-        return matchingDialectColumnType(columnMapping, columnMetadata);
+        return matchingDialectColumnType(columnMapping, columnMetadata, dialectOptions);
     }
 
     /**
@@ -110,6 +135,21 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      */
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         return false;
+    }
+
+    /**
+     * Provides dialect-specific logic for matching the column type defined in the {@link SqlColumnMapping}
+     * with the actual column type retrieved from the database metadata ({@link SqlColumnMetadata}).
+     *
+     * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
+     * @param columnMetadata the SQL column metadata from the database
+     * @param dialectOptions the dialect options
+     * @return true if the column type matches according to the dialect-specific logic, false otherwise
+     */
+    protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
+                                                SqlColumnMetadata columnMetadata,
+                                                SqlDialectOptions dialectOptions) {
+        return matchingDialectColumnType(columnMapping, columnMetadata);
     }
 
     /**
@@ -145,14 +185,17 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      * @param tableName         the name of the table where column is stored
      * @throws SchemaValidationException when the expected column does not match the actual column metadata
      */
-    private void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata,
-                                       Dialect dialect, String tableName) {
+    private void validateColumn(SqlColumnMapping columnMapping,
+                                SqlColumnMetadata columnMetadata,
+                                Dialect dialect,
+                                SqlDialectOptions dialectOptions,
+                                String tableName) {
         if (StringUtils.isNotEmpty(columnMapping.getDefinition())) {
             // Don't compare columns with custom SQL definition
             // and let user be responsible for mapping of that field
             return;
         }
-        if (matchingColumnType(columnMapping, columnMetadata, dialect)) {
+        if (matchingColumnType(columnMapping, columnMetadata, dialect, dialectOptions)) {
             return;
         }
         throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",

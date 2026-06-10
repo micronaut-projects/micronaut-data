@@ -1,0 +1,52 @@
+Oracle Database 23 and later support native SQL `BOOLEAN` columns and boolean predicates.
+
+By default, Micronaut Data keeps the legacy Oracle mapping so applications targeting Oracle 19c or Oracle 21c continue to work:
+
+* `Boolean` properties are mapped to `NUMBER(1)` for schema generation.
+* Boolean literals and predicates are generated using numeric values such as `1` and `0`.
+* JDBC binding uses the legacy Oracle boolean type mapping.
+
+To generate Oracle 23-compatible SQL for a repository, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the SQL dialect compatibility option on the repository:
+
+[source,java]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23")
+interface ProductRepository {
+}
+----
+
+With this compatibility option, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
+
+If Micronaut Data schema generation is enabled, configure the same compatibility option on the datasource as well:
+
+.JDBC Oracle 23-compatible schema generation
+[configuration]
+----
+datasources:
+  default:
+    dialect: ORACLE
+    dialect-options:
+      compatibility: ORACLE_23
+----
+
+.R2DBC Oracle 23-compatible schema generation
+[configuration]
+----
+r2dbc:
+  datasources:
+    default:
+      dialect: ORACLE
+      dialect-options:
+        compatibility: ORACLE_23
+----
+
+IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep repository compatibility options and datasource `dialect-options` aligned when using Micronaut Data schema generation.
+
+Applications that package repositories in a separate jar are responsible for running those repositories against a compatible Oracle database. A repository compiled with Oracle 23 compatibility may contain SQL that is not valid on Oracle 19c or Oracle 21c.
+
+NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global compatibility option. Keep the repository in legacy mode until the schema is migrated, or use explicit queries/converters for the legacy columns.

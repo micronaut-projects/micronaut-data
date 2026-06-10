@@ -30,6 +30,13 @@ public @interface SqlQueryConfiguration {
     DialectConfiguration[] value() default {};
 
     /**
+     * A named compatibility level for the configured dialect.
+     *
+     * @return The compatibility level.
+     */
+    String dialectOptionsCompatibility() default "";
+
+    /**
      * Configuration specific to a dialect.
      */
     @interface DialectConfiguration {

@@ -1041,6 +1041,74 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
 
     }
 
+    void "test oracle boolean query generation defaults to legacy boolean literals"() {
+        given:
+        def repository = buildRepository('test.OracleBooleanRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
+    List<OracleBooleanEntity> findByActiveTrue();
+    List<OracleBooleanEntity> findByActiveFalse();
+}
+
+@MappedEntity("oracle_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class OracleBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean active;
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" = 1)'
+        getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" = 0)'
+    }
+
+    void "test oracle boolean query generation uses native literals with ORACLE_23 compatibility"() {
+        given:
+        def repository = buildRepository('test.OracleBooleanRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23")
+interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
+    List<OracleBooleanEntity> findByActiveTrue();
+    List<OracleBooleanEntity> findByActiveFalse();
+}
+
+@MappedEntity("oracle_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class OracleBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean active;
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS TRUE)'
+        getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
+    }
+
     void "test query using InRange"() {
         given:
         def repository = buildRepository('test.MealRepository', """

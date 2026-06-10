@@ -20,6 +20,8 @@ import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
@@ -69,6 +71,22 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             fallbackExecutor.isShutdown()
+    }
+
+    void "binds datasource dialect options"() {
+        given:
+            context = ApplicationContext.run([
+                "datasources.default.dialect": "ORACLE",
+                "datasources.default.dialect-options.compatibility": "ORACLE_23",
+                "datasources.default.enabled": false
+            ])
+
+        when:
+            def configuration = context.getBean(DataJdbcConfiguration)
+
+        then:
+            configuration.dialect == Dialect.ORACLE
+            configuration.resolveDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {

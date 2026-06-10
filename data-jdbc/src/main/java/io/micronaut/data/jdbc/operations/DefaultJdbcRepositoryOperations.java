@@ -657,7 +657,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
                 DataType resultDataType = preparedQuery.getResultDataType();
-                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, jdbcConfiguration.getDialect());
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, preparedQuery.getDialect(), preparedQuery.getDialectOptions());
                 int outIndex = preparedQuery.getQueryBindings().size() + 1;
                 callableStatement.registerOutParameter(outIndex, sqlType);
             }

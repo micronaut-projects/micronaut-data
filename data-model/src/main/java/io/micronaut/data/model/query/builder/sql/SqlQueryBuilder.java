@@ -141,6 +141,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     };
 
     private final Dialect dialect;
+    private final SqlDialectOptions dialectOptions;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
     /**
@@ -157,6 +158,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     annotationMetadata
                         .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                         .orElse(Dialect.ANSI));
+            this.dialectOptions = SqlDialectOptions.of(annotationMetadata, dialect);
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -177,6 +179,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         } else {
             this.dialect = Dialect.ANSI;
+            this.dialectOptions = SqlDialectOptions.defaults(dialect);
         }
     }
 
@@ -185,14 +188,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
+        this.dialectOptions = SqlDialectOptions.defaults(dialect);
     }
 
     /**
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
+        this(dialect, SqlDialectOptions.defaults(dialect));
+    }
+
+    /**
+     * @param dialect The dialect
+     * @param dialectOptions The dialect options
+     */
+    public SqlQueryBuilder(Dialect dialect, SqlDialectOptions dialectOptions) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
+        ArgumentUtils.requireNonNull("dialectOptions", dialectOptions);
         this.dialect = dialect;
+        this.dialectOptions = dialectOptions;
     }
 
     /**
@@ -201,6 +215,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     public Dialect getDialect() {
         return dialect;
+    }
+
+    /**
+     * @return The resolved dialect options.
+     */
+    @Override
+    public SqlDialectOptions getDialectOptions() {
+        return dialectOptions;
     }
 
     @Override
@@ -219,7 +241,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String asLiteral(@Nullable Object value) {
-        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean vBoolean) {
+        if (dialect == Dialect.SQL_SERVER && value instanceof Boolean vBoolean) {
+            return vBoolean ? "1" : "0";
+        }
+        if (dialect == Dialect.ORACLE
+            && value instanceof Boolean vBoolean
+            && !dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
             return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);
@@ -818,7 +845,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
                     column += " " + tableIdentity.getDefinition();
                 } else {
-                    column += " " + tableIdentity.getSqlType(dialect);
+                    column += " " + tableIdentity.getSqlType(dialect, dialectOptions);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -838,7 +865,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
             } else {
-                column += " " + tableColumn.getSqlType(dialect);
+                column += " " + tableColumn.getSqlType(dialect, dialectOptions);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }

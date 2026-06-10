@@ -197,6 +197,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * Get dialect options.
+     *
+     * @return dialect options
+     */
+    protected SqlDialectOptions getDialectOptions() {
+        return SqlDialectOptions.defaults(getDialect());
+    }
+
+    /**
      * @return True if embedded properties should be traversed
      */
     protected boolean traverseEmbedded() {
@@ -2551,7 +2560,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsFalse(Expression<?> expression) {
-            appendUnaryCondition(" = FALSE", expression);
+            if (getDialect() == Dialect.ORACLE && getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+                appendUnaryCondition(" IS FALSE", expression);
+            } else {
+                appendUnaryCondition(" = FALSE", expression);
+            }
         }
 
         @Override
@@ -2566,7 +2579,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsTrue(Expression<?> expression) {
-            appendUnaryCondition(" = TRUE", expression);
+            if (getDialect() == Dialect.ORACLE && getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+                appendUnaryCondition(" IS TRUE", expression);
+            } else {
+                appendUnaryCondition(" = TRUE", expression);
+            }
         }
 
         @Override
@@ -3432,6 +3449,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
+            return getCastDbType(type, dialect, SqlDialectOptions.defaults(dialect));
+        }
+
+        static String getCastDbType(@Nullable ExpressionType<?> type,
+                                    Dialect dialect,
+                                    SqlDialectOptions dialectOptions) {
             if (type == null) {
                 throw new IllegalStateException("CAST type is expected");
             }
@@ -3443,14 +3466,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dataType == DataType.OBJECT) {
                 throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
             }
-            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect);
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect, dialectOptions);
         }
 
         private void appendCast(ExpressionType<?> type, Expression<?> expression) {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect()));
+            query.append(getCastDbType(type, getDialect(), getDialectOptions()));
             query.append(CLOSE_BRACKET);
         }
 

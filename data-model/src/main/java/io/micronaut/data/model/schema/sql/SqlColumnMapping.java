@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 
 /**
  * Represents a SQL database column mapped from persistent entity field.
@@ -409,6 +410,22 @@ public final class SqlColumnMapping {
             }
         };
         return this.sqlType;
+    }
+
+    /**
+     * Returns the SQL type representation of this column for the given dialect and dialect options.
+     *
+     * @param dialect the SQL dialect to generate the type for
+     * @param dialectOptions the dialect options
+     * @return the SQL type representation of this column
+     */
+    public String getSqlType(Dialect dialect, SqlDialectOptions dialectOptions) {
+        if (dataType == DataType.BOOLEAN
+            && dialect == Dialect.ORACLE
+            && dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+            return "BOOLEAN";
+        }
+        return getSqlType(dialect);
     }
 
     /**

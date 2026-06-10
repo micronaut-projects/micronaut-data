@@ -44,6 +44,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -307,6 +308,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         dataType = dialect.getDataType(dataType);
+
+        if (value == null
+            && dataType == DataType.BOOLEAN
+            && dialect == Dialect.ORACLE
+            && storedQuery.getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+            preparedStatementWriter.setBoolean(preparedStatement, index, null);
+            return;
+        }
 
         VectorParameterBinder.PreparedParameter preparedParameter = vectorParameterBinder.bind(dialect, dataType, value);
         dataType = preparedParameter.dataType();
