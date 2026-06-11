@@ -1217,6 +1217,55 @@ class MySqlBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
+    void "test global dialect compatibility is visible to criteria methods"() {
+        given:
+        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
+            buildRepository('test.OracleBooleanRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.tck.entities.Contact;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface OracleBooleanRepository extends GenericRepository<Contact, Long> {
+    List<Contact> findAll(CriteriaQueryBuilder<Contact> builder);
+    List<Contact> findAll(PredicateSpecification<Contact> spec);
+}
+""")
+        }
+
+        when:
+        def criteriaQueryBuilderMethod = repository.findPossibleMethods("findAll")
+            .filter(method -> method.getArguments()[0].getType().getName() == "io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder")
+            .findFirst()
+            .get()
+        def predicateSpecificationMethod = repository.findPossibleMethods("findAll")
+            .filter(method -> method.getArguments()[0].getType().getName() == "io.micronaut.data.repository.jpa.criteria.PredicateSpecification")
+            .findFirst()
+            .get()
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaDelete = criteriaBuilder.createCriteriaDelete(io.micronaut.data.tck.entities.Contact)
+        def root = criteriaDelete.from(io.micronaut.data.tck.entities.Contact)
+        def queryResult = criteriaDelete
+            .where(criteriaBuilder.isTrue(root.get("active")))
+            .build(new SqlQueryBuilder(criteriaQueryBuilderMethod.getAnnotationMetadata()))
+
+        then:
+        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
+        criteriaQueryBuilderMethod.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
+        predicateSpecificationMethod.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
+        new SqlQueryBuilder(criteriaQueryBuilderMethod.getAnnotationMetadata())
+            .getDialectOptions()
+            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+        new SqlQueryBuilder(predicateSpecificationMethod.getAnnotationMetadata())
+            .getDialectOptions()
+            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+        queryResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
+    }
+
     void "test query using InRange"() {
         given:
         def repository = buildRepository('test.MealRepository', """
