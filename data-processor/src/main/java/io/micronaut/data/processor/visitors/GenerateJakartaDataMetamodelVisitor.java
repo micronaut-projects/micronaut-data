@@ -20,24 +20,50 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GenerateJakartaDataMetamodel;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PackageElement;
-import io.micronaut.inject.ast.PrimitiveElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.PackageElementVisitor;
 import io.micronaut.inject.visitor.TypeElementQuery;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import io.micronaut.inject.writer.GeneratedFile;
+import io.micronaut.sourcegen.generator.SourceGenerator;
+import io.micronaut.sourcegen.generator.SourceGenerators;
+import io.micronaut.sourcegen.model.AnnotationDef;
+import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.FieldDef;
+import io.micronaut.sourcegen.model.TypeDef;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Objects;
-import java.util.Optional;
+import javax.lang.model.element.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_ANNOTATION_GENERATED;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_BASIC_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_BOOLEAN_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_COMPARABLE_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_NAVIGABLE_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_NUMERIC_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_SORTABLE_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_STATIC_METAMODEL;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_TEMPORAL_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.JAKARTA_DATA_TEXT_ATTRIBUTE;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.isBoolean;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.isNumeric;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.isTemporal;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.isText;
+import static io.micronaut.data.processor.visitors.MetamodelTypes.isUuid;
 
 /**
  * The Jakarta Data static metamodel generator.
@@ -47,6 +73,26 @@ import java.util.function.Function;
  */
 @Internal
 public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<GenerateJakartaDataMetamodel, Object>, PackageElementVisitor<GenerateJakartaDataMetamodel> {
+
+    /**
+     * Map of already processed entities.
+     */
+    private final Set<String> processed = new HashSet<>();
+
+    /**
+     * Source Persistent entity registry.
+     */
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
+
+    /**
+     * Persistent Entity resolver.
+     */
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
+        @Override
+        public SourcePersistentEntity apply(ClassElement classElement) {
+            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
+        }
+    };
 
     @Override
     public void visitPackage(PackageElement element, VisitorContext context) throws ProcessingException {
@@ -62,185 +108,26 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
-        if (!element.hasAnnotation(MappedEntity.class) && !element.hasAnnotation(Embeddable.class)) {
+        if (!element.hasAnnotation(MappedEntity.class) && !element.hasAnnotation(Embeddable.class) && !processed.contains(element.getName())) {
             return;
         }
 
-        SourcePersistentEntity sourcePersistentEntity = new SourcePersistentEntity(element, new Function<>() {
-            @Override
-            public SourcePersistentEntity apply(ClassElement classElement) {
-                return new SourcePersistentEntity(classElement, this);
+        SourcePersistentEntity persistentEntity = entityResolver.apply(element);
+        try {
+            ClassDef.ClassDefBuilder builder = createJDMetaModelClassDefBuilder(element.getPackageName(), persistentEntity);
+            ClassDef builderDef = builder.build();
+            SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
+            if (sourceGenerator == null) {
+                return;
             }
-        });
-
-        String metamodelClassName = "_" + element.getSimpleName();
-        String packageName = element.getPackageName();
-
-        Optional<GeneratedFile> generatedFileOpt = context.visitGeneratedSourceFile(packageName, metamodelClassName, element);
-        if (generatedFileOpt.isEmpty()) {
-            return;
-        }
-        GeneratedFile generatedFile = generatedFileOpt.get();
-        try (Writer writer = generatedFile.openWriter()) {
-
-            writer.write("package " + packageName + ";\n\n");
-            writer.write("import jakarta.data.metamodel.*;\n");
-            writer.write("import jakarta.annotation.Generated;\n\n");
-            writer.write("@Generated(\"Generated by Micronaut Data\")\n");
-            writer.write("@StaticMetamodel(" + element.getSimpleName() + ".class)\n");
-            writer.write("public class " + metamodelClassName + " {\n\n");
-
-            // Add string constants for field names
-            for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
-                SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
-                Objects.requireNonNull(persistentProperty);
-                String fieldName = persistentProperty.getName().toUpperCase();
-                writer.write("    public static final String " + fieldName + " = \"" + persistentProperty.getName() + "\";\n");
-            }
-            writer.write("\n");
-
-            // Add attribute fields
-            for (String name : sourcePersistentEntity.getPersistentPropertyNames()) {
-                SourcePersistentProperty persistentProperty = sourcePersistentEntity.getPropertyByName(name);
-                Objects.requireNonNull(persistentProperty);
-                String fieldName = persistentProperty.getName();
-                ClassElement propertyType = persistentProperty.getType();
-
-                if (persistentProperty instanceof Association) {
-                    writer.write("    public static final NavigableAttribute<" + element.getSimpleName() + ", " + propertyType.getName() + "> " + fieldName + " = NavigableAttribute.of(" + element.getSimpleName() + ".class, " + fieldName.toUpperCase() + ", " + propertyType.getName() + ".class);\n");
-                    continue;
-                }
-
-                String attributeDeclaration = getAttributeDeclaration(element, propertyType);
-                String initializer = getAttributeInitializer(element, propertyType, fieldName.toUpperCase());
-
-                writer.write("    public static final " + attributeDeclaration + " " + fieldName + " = " + initializer + ";\n");
-            }
-
-            writer.write("\n}\n");
-        } catch (IOException e) {
-            context.fail("Failed to generate metamodel class: " + e.getMessage(), element);
+            processed.add(element.getName());
+            sourceGenerator.write(builderDef, context, element);
+        } catch (ProcessingException e) {
+            throw e;
         } catch (Exception e) {
-            context.fail("Failed to access generated file writer: " + e.getMessage(), element);
+            String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            throw new ProcessingException(element, "Failed to generate a @" + JAKARTA_DATA_STATIC_METAMODEL + ": " + message, e);
         }
-    }
-
-    private String getAttributeDeclaration(ClassElement entityElement, ClassElement propertyType) {
-        String entityName = entityElement.getSimpleName();
-        if (propertyType.isArray()) {
-            return  "BasicAttribute<" + entityName + ", " + toTypeString(propertyType) + ">";
-        }
-        String type = getBoxedType(propertyType);
-        // Handle wrapper types and other basic types
-        return switch (type) {
-            case "java.lang.Byte", "java.lang.Short", "java.lang.Integer",
-                 "java.lang.Long", "java.lang.Float", "java.lang.Double", "java.math.BigInteger",
-                 "java.math.BigDecimal" -> "NumericAttribute<" + entityName + ", " + type + ">";
-            case "java.time.LocalDate", "java.time.LocalDateTime",
-                 "java.time.LocalTime", "java.time.Year", "java.time.Instant" -> "TemporalAttribute<" + entityName + ", " + type + ">";
-            case "java.lang.String" -> "TextAttribute<" + entityName + ">";
-            case "java.lang.Boolean", "java.util.UUID" -> "ComparableAttribute<" + entityName + ", " + type + ">";
-            default -> {
-                // For enum types
-                if (propertyType.isEnum()) {
-                    yield "ComparableAttribute<" + entityName + ", " + type + ">";
-                }
-                // For other types, use BasicAttribute
-                yield "BasicAttribute<" + entityName + ", " + type + ">";
-            }
-        };
-    }
-
-    private String getBoxedType(ClassElement propertyType) {
-        String type = propertyType.getName();
-        if (propertyType.isPrimitive()) {
-            if (propertyType.equals(PrimitiveElement.BOOLEAN)) {
-                return Boolean.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.INT)) {
-                return Integer.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.CHAR)) {
-                return Character.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.LONG)) {
-                return Long.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.FLOAT)) {
-                return Float.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.DOUBLE)) {
-                return Double.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.BYTE)) {
-                return Byte.class.getName();
-            }
-            if (propertyType.equals(PrimitiveElement.SHORT)) {
-                return Short.class.getName();
-            }
-        }
-        return type;
-    }
-
-    private String toTypeString(ClassElement classElement) {
-        if (classElement.isArray()) {
-            return toTypeString(classElement.fromArray()) + "[]";
-        }
-        return classElement.getName();
-    }
-
-    private String getAttributeInitializer(ClassElement entityElement, ClassElement propertyType, String fieldNameConstant) {
-        String entityName = entityElement.getSimpleName();
-        String type = getBoxedType(propertyType);
-
-        // Handle primitive types - all map to SortableAttribute with NumericAttribute.of
-        if (propertyType.isArray()) {
-            return "BasicAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", " + toTypeString(propertyType) + ".class)";
-        }
-
-        // Handle wrapper types and other basic types
-        return switch (type) {
-            case "java.lang.Boolean" ->
-                "ComparableAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Boolean.class)";
-            case "java.lang.Byte" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Byte.class)";
-            case "java.lang.Short" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Short.class)";
-            case "java.lang.Integer" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Integer.class)";
-            case "java.lang.Long" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Long.class)";
-            case "java.lang.Float" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Float.class)";
-            case "java.lang.Double" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", Double.class)";
-            case "java.lang.String" ->
-                "TextAttribute.of(" + entityName + ".class, " + fieldNameConstant + ")";
-            case "java.math.BigInteger" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.math.BigInteger.class)";
-            case "java.math.BigDecimal" ->
-                "NumericAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.math.BigDecimal.class)";
-            case "java.time.LocalDate" ->
-                "TemporalAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.time.LocalDate.class)";
-            case "java.time.LocalDateTime" ->
-                "TemporalAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.time.LocalDateTime.class)";
-            case "java.time.LocalTime" ->
-                "TemporalAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.time.LocalTime.class)";
-            case "java.time.Year" ->
-                "TemporalAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.time.Year.class)";
-            case "java.time.Instant" ->
-                "TemporalAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.time.Instant.class)";
-            case "java.util.UUID" ->
-                "ComparableAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", java.util.UUID.class)";
-            default -> {
-                // For enum types
-                if (propertyType.isEnum()) {
-                    yield "ComparableAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", " + type + ".class)";
-                }
-                // For other types, use BasicAttribute
-                yield "BasicAttribute.of(" + entityName + ".class, " + fieldNameConstant + ", " + type + ".class)";
-            }
-        };
     }
 
     @Override
@@ -254,7 +141,131 @@ public class GenerateJakartaDataMetamodelVisitor implements TypeElementVisitor<G
     }
 
     @Override
+    public void start(VisitorContext visitorContext) {
+        this.processed.clear();
+    }
+
+    @Override
     public VisitorKind getVisitorKind() {
         return VisitorKind.ISOLATING;
+    }
+
+    private static ClassDef.ClassDefBuilder createJDMetaModelClassDefBuilder(String packageName, SourcePersistentEntity persistentEntity) {
+        ClassElement classElement = persistentEntity.getClassElement();
+        String metaModelClassName = resolveModelClassName(packageName, classElement);
+
+        ClassDef.ClassDefBuilder classDefBuilder = ClassDef.builder(metaModelClassName)
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_DATA_STATIC_METAMODEL)).addMember("value", ClassTypeDef.of(classElement)).build())
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of(JAKARTA_ANNOTATION_GENERATED)).addMember("value", GenerateJakartaDataMetamodelVisitor.class.getName()).build());
+
+        PersistentEntity parentEntity = persistentEntity.getParentEntity();
+
+        if (parentEntity instanceof SourcePersistentEntity parentSourcePersistentEntity) {
+            ClassElement parentSourcePersistentEntityClassElement = parentSourcePersistentEntity.getClassElement();
+            String superElementModelClassName = resolveModelClassName(parentSourcePersistentEntityClassElement.getPackageName(), parentSourcePersistentEntityClassElement);
+            ClassTypeDef superClassModelTypeDef = ClassTypeDef.of(superElementModelClassName);
+
+            classDefBuilder.superclass(superClassModelTypeDef);
+        }
+
+        List<FieldDef> constantPropertyNames = new ArrayList<>();
+        List<FieldDef> attributeFields = new ArrayList<>();
+
+        for (String persistentPropertyName : persistentEntity.getPersistentPropertyNames()) {
+            SourcePersistentProperty persistentProperty = persistentEntity.getPropertyByName(persistentPropertyName);
+            if (persistentProperty == null) {
+                throw new ProcessingException(persistentEntity, "Persistent property " + persistentPropertyName + " not found.");
+            }
+            if (!persistentProperty.getPropertyElement().getDeclaringType().getName().equals(classElement.getName())) {
+                continue;
+            }
+            constantPropertyNames.add(createConstantPropertyName(persistentPropertyName));
+            attributeFields.add(createAttributeField(persistentProperty, classElement));
+        }
+
+        classDefBuilder.addFields(constantPropertyNames);
+        classDefBuilder.addFields(attributeFields);
+        return classDefBuilder;
+    }
+
+    private static FieldDef createAttributeField(SourcePersistentProperty persistentProperty, ClassElement classElement) {
+        String attributeType = resolveAttributeType(persistentProperty);
+        TypeDef propertyTypeDef = boxPrimitive(TypeDef.of(persistentProperty.getType().getCanonicalName()));
+        ClassTypeDef attributeClassTypeDef = ClassTypeDef.of(attributeType);
+
+        List<TypeDef> generics = new ArrayList<>();
+        generics.add(TypeDef.of(classElement));
+
+        List<ExpressionDef> initializerParams = new ArrayList<>();
+        initializerParams.add(ExpressionDef.constant(TypeDef.of(classElement)));
+        initializerParams.add(ExpressionDef.constant(persistentProperty.getName()));
+
+        if (attributeType.equals(JAKARTA_DATA_BOOLEAN_ATTRIBUTE)) {
+            initializerParams.add(ExpressionDef.constant(propertyTypeDef));
+        } else if (!attributeType.equals(JAKARTA_DATA_TEXT_ATTRIBUTE) &&
+            !attributeType.equals(JAKARTA_DATA_SORTABLE_ATTRIBUTE)) {
+            generics.add(propertyTypeDef);
+            initializerParams.add(ExpressionDef.constant(propertyTypeDef));
+        }
+
+        TypeDef attributeTypeDef = TypeDef.parameterized(attributeClassTypeDef, generics);
+
+        return FieldDef.builder(persistentProperty.getName())
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+            .ofType(attributeTypeDef)
+            .initializer(attributeClassTypeDef.invokeStatic("of",
+                attributeTypeDef,
+                initializerParams))
+            .build();
+
+    }
+
+    private static String resolveAttributeType(SourcePersistentProperty persistentProperty) {
+        String typeName = persistentProperty.getTypeName();
+        boolean isArray = persistentProperty.getType().isArray();
+        if (persistentProperty instanceof Association) {
+            return JAKARTA_DATA_NAVIGABLE_ATTRIBUTE;
+        }
+        if (isArray) {
+            return JAKARTA_DATA_BASIC_ATTRIBUTE;
+        }
+        if (persistentProperty.isEnum() || isUuid(typeName)) {
+            return JAKARTA_DATA_COMPARABLE_ATTRIBUTE;
+        }
+        if (isBoolean(typeName)) {
+            return JAKARTA_DATA_BOOLEAN_ATTRIBUTE;
+        }
+        if (isText(typeName)) {
+            return JAKARTA_DATA_TEXT_ATTRIBUTE;
+        }
+        if (isNumeric(typeName)) {
+            return JAKARTA_DATA_NUMERIC_ATTRIBUTE;
+        }
+        if (isTemporal(typeName)) {
+            return JAKARTA_DATA_TEMPORAL_ATTRIBUTE;
+        }
+        return JAKARTA_DATA_BASIC_ATTRIBUTE;
+    }
+
+    private static FieldDef createConstantPropertyName(String persistentPropertyName) {
+        return FieldDef.builder(persistentPropertyName.toUpperCase(Locale.getDefault()))
+            .ofType(TypeDef.STRING)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL, Modifier.STATIC)
+            .initializer(ExpressionDef.constant(persistentPropertyName)).build();
+    }
+
+    private static String resolveModelClassName(String packageName, ClassElement elementType) {
+        String localBinaryName = elementType.getName().startsWith(packageName + ".") ? elementType.getName().substring(packageName.isEmpty() ? 0 : packageName.length() + 1) : elementType.getName();
+        String baseName = elementType.isInner() ? localBinaryName.replace("$", "") : elementType.getSimpleName();
+        String metaModelClassSimpleName = "_" + baseName;
+        return packageName + "." + metaModelClassSimpleName;
+    }
+
+    private static TypeDef boxPrimitive(TypeDef type) {
+        if (type.isPrimitive() && type instanceof TypeDef.Primitive primitive && !type.isArray()) {
+            return TypeDef.of(primitive.wrapperType().getName());
+        }
+        return type;
     }
 }
