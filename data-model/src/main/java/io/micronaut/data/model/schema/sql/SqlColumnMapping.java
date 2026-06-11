@@ -422,7 +422,7 @@ public final class SqlColumnMapping {
     public String getSqlType(Dialect dialect, SqlDialectOptions dialectOptions) {
         if (dataType == DataType.BOOLEAN
             && dialect == Dialect.ORACLE
-            && dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+            && dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) {
             return "BOOLEAN";
         }
         return getSqlType(dialect);

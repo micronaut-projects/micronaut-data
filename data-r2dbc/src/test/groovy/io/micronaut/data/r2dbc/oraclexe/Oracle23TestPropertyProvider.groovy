@@ -15,7 +15,7 @@ trait Oracle23TestPropertyProvider extends OracleXETestPropertyProvider {
     @Override
     Map<String, String> getProperties() {
         return super.getProperties() + [
-            "r2dbc.datasources.default.dialect-options.compatibility": "ORACLE_23"
+            "r2dbc.datasources.default.dialect-options.compatibility": "ORACLE_23_1"
         ]
     }
 }

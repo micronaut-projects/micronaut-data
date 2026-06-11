@@ -312,7 +312,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (value == null
             && dataType == DataType.BOOLEAN
             && dialect == Dialect.ORACLE
-            && storedQuery.getDialectOptions().hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+            && storedQuery.getDialectOptions().isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) {
             preparedStatementWriter.setBoolean(preparedStatement, index, null);
             return;
         }

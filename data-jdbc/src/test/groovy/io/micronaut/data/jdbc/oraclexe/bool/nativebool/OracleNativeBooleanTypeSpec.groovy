@@ -21,7 +21,7 @@ class OracleNativeBooleanTypeSpec extends Specification implements Oracle23TestP
         given:
         assert applicationContext.getBean(DataJdbcConfiguration)
             .resolveDialectOptions()
-            .hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)
+            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
         def repository = applicationContext.getBean(NativeOracleBooleanRepository)
 
         when:

@@ -226,7 +226,7 @@ interface MyRepository {
 @RepositoryConfiguration(
         queryBuilder = SqlQueryBuilder.class
 )
-@SqlQueryConfiguration(dialectOptionsCompatibility = "oracle-23")
+@SqlQueryConfiguration(dialectOptionsCompatibility = "oracle-23.1")
 @Retention(RetentionPolicy.RUNTIME)
 @Repository
 @interface MyAnnotation {
@@ -240,7 +240,7 @@ interface MyRepository {
 
         then:
         sqlQueryBuilder.dialect == Dialect.ORACLE
-        sqlQueryBuilder.dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)
+        sqlQueryBuilder.dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
     }
 
     void "test encode update with JSON and MySQL"() {
@@ -273,7 +273,7 @@ interface MyRepository {
         def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
         def nativeBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY)
+            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
         )
 
         when:
@@ -283,6 +283,22 @@ interface MyRepository {
 
         then:
         nativeResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
+
+        and:
+        def laterBaselineDeleteQuery = builder.createCriteriaDelete(Contact)
+        def laterBaselineDeleteRoot = laterBaselineDeleteQuery.from(Contact)
+        def laterBaselineBuilder = new SqlQueryBuilder(
+            Dialect.ORACLE,
+            SqlDialectOptions.of(Dialect.ORACLE, "ORACLE_23_4")
+        )
+
+        when:
+        def laterBaselineResult = laterBaselineDeleteQuery
+            .where(builder.isTrue(laterBaselineDeleteRoot.get("active")))
+            .build(laterBaselineBuilder)
+
+        then:
+        laterBaselineResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
     }
 
     void "test build queries with schema"() {

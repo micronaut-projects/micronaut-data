@@ -246,7 +246,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         if (dialect == Dialect.ORACLE
             && value instanceof Boolean vBoolean
-            && !dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+            && !dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) {
             return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);

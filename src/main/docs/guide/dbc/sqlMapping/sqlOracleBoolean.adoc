@@ -1,4 +1,4 @@
-Oracle Database 23 and later support native SQL `BOOLEAN` columns and boolean predicates.
+Oracle Database 23.1 and later support native SQL `BOOLEAN` columns and boolean predicates.
 
 By default, Micronaut Data keeps the legacy Oracle mapping so applications targeting Oracle 19c or Oracle 21c continue to work:
 
@@ -6,16 +6,17 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * Boolean literals and predicates are generated using numeric values such as `1` and `0`.
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
-To generate Oracle 23-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23`.
+To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1`.
 If both are present, the annotation processor option takes precedence.
+Compatibility values are SQL generation baselines, not runtime database version detection. Micronaut Data compares numeric baseline values, so a later configured baseline such as `ORACLE_23_4` also satisfies SQL features that require `ORACLE_23_1`.
 
 For Gradle Java projects:
 
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23")
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1")
 }
 ----
 
@@ -24,7 +25,7 @@ For Maven projects:
 [source,xml]
 ----
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23</arg>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1</arg>
 </compilerArgs>
 ----
 
@@ -37,7 +38,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23")
+@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
 interface ProductRepository {
 }
 ----
@@ -46,17 +47,17 @@ With this compatibility option, Micronaut Data can generate native Oracle boolea
 
 If Micronaut Data schema generation is enabled, configure the same compatibility option on the datasource as well:
 
-.JDBC Oracle 23-compatible schema generation
+.JDBC Oracle 23.1-compatible schema generation
 [configuration]
 ----
 datasources:
   default:
     dialect: ORACLE
     dialect-options:
-      compatibility: ORACLE_23
+      compatibility: ORACLE_23_1
 ----
 
-.R2DBC Oracle 23-compatible schema generation
+.R2DBC Oracle 23.1-compatible schema generation
 [configuration]
 ----
 r2dbc:
@@ -64,11 +65,11 @@ r2dbc:
     default:
       dialect: ORACLE
       dialect-options:
-        compatibility: ORACLE_23
+        compatibility: ORACLE_23_1
 ----
 
 IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository compatibility option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
-Applications that package repositories in a separate jar are responsible for running those repositories against a compatible Oracle database. A repository compiled with Oracle 23 compatibility may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
+Applications that package repositories in a separate jar are responsible for running those repositories against a compatible Oracle database. A repository compiled with Oracle 23.1 compatibility may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
 
-NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global compatibility option. Keep the repository in legacy mode until the schema is migrated, configure compatibility on individual repositories, or use explicit queries/converters for the legacy columns.
+NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global compatibility option. Keep the repository in legacy mode until the schema is migrated, configure compatibility on individual repositories, or use explicit queries for columns that do not match the selected repository compatibility mode.

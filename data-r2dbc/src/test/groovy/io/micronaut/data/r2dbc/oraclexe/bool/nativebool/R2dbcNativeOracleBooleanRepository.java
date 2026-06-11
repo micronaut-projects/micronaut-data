@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 
 @R2dbcRepository(dialect = Dialect.ORACLE)
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23")
+@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
 public interface R2dbcNativeOracleBooleanRepository extends CrudRepository<R2dbcNativeOracleBooleanEntity, Long> {
 
     List<R2dbcNativeOracleBooleanEntity> findByActiveTrue();

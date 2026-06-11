@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,9 +38,9 @@ public record SqlDialectOptions(
 ) {
 
     /**
-     * Compatibility level that enables Oracle 23 compatible SQL generation.
+     * Compatibility baseline that enables Oracle 23.1 compatible SQL generation.
      */
-    public static final String ORACLE_23_COMPATIBILITY = "ORACLE_23";
+    public static final String ORACLE_23_1_COMPATIBILITY = "ORACLE_23_1";
 
     /**
      * Annotation processor option prefix for SQL dialect compatibility.
@@ -118,11 +120,91 @@ public record SqlDialectOptions(
         return this.compatibility.filter(normalize(compatibility)::equals).isPresent();
     }
 
+    /**
+     * @param requiredCompatibility The required compatibility baseline
+     * @return true if the configured compatibility is at least the required compatibility baseline
+     */
+    public boolean isAtLeast(@Nullable String requiredCompatibility) {
+        if (requiredCompatibility == null || requiredCompatibility.isBlank()) {
+            return false;
+        }
+        Optional<CompatibilityBaseline> requiredBaseline = parseCompatibility(requiredCompatibility);
+        if (requiredBaseline.isEmpty() || requiredBaseline.get().dialect() != dialect) {
+            return false;
+        }
+        return compatibility
+            .flatMap(SqlDialectOptions::parseCompatibility)
+            .filter(configuredBaseline -> configuredBaseline.isAtLeast(requiredBaseline.get()))
+            .isPresent();
+    }
+
     private static String normalize(String value) {
-        return value.trim().replace('-', '_').toUpperCase(Locale.ENGLISH);
+        return value.trim().replace('-', '_').replace('.', '_').toUpperCase(Locale.ENGLISH);
     }
 
     private static String normalizeDialectName(Dialect dialect) {
         return dialect.name().toLowerCase(Locale.ENGLISH).replace('_', '-');
+    }
+
+    private static Optional<CompatibilityBaseline> parseCompatibility(String value) {
+        String normalized = normalize(value);
+        for (Dialect dialect : Dialect.values()) {
+            String prefix = normalize(dialect.name());
+            if (normalized.startsWith(prefix + "_")) {
+                return parseVersion(normalized.substring(prefix.length() + 1))
+                    .map(version -> new CompatibilityBaseline(dialect, version));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<List<Integer>> parseVersion(String version) {
+        List<Integer> parsed = new ArrayList<>();
+        int currentPart = 0;
+        boolean hasDigit = false;
+        for (int i = 0; i < version.length(); i++) {
+            char ch = version.charAt(i);
+            if (ch == '_') {
+                if (!hasDigit) {
+                    return Optional.empty();
+                }
+                parsed.add(currentPart);
+                currentPart = 0;
+                hasDigit = false;
+                continue;
+            }
+            if (!Character.isDigit(ch)) {
+                return Optional.empty();
+            }
+            int digit = ch - '0';
+            if (currentPart > (Integer.MAX_VALUE - digit) / 10) {
+                return Optional.empty();
+            }
+            currentPart = currentPart * 10 + digit;
+            hasDigit = true;
+        }
+        if (!hasDigit) {
+            return Optional.empty();
+        }
+        parsed.add(currentPart);
+        return Optional.of(parsed);
+    }
+
+    private record CompatibilityBaseline(Dialect dialect, List<Integer> version) {
+
+        boolean isAtLeast(CompatibilityBaseline required) {
+            if (dialect != required.dialect) {
+                return false;
+            }
+            int length = Math.max(version.size(), required.version.size());
+            for (int i = 0; i < length; i++) {
+                int configuredPart = i < version.size() ? version.get(i) : 0;
+                int requiredPart = i < required.version.size() ? required.version.get(i) : 0;
+                if (configuredPart != requiredPart) {
+                    return configuredPart > requiredPart;
+                }
+            }
+            return true;
+        }
     }
 }

@@ -99,7 +99,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
             case DATE -> Types.DATE;
             case BOOLEAN -> {
                 if (dialect == Dialect.ORACLE) {
-                    if (dialectOptions.hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)) {
+                    if (dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) {
                         yield Types.BOOLEAN;
                     }
                     // oracle driver treats Boolean types as bits

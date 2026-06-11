@@ -1078,7 +1078,7 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" = 0)'
     }
 
-    void "test oracle boolean query generation uses native literals with ORACLE_23 compatibility"() {
+    void "test oracle boolean query generation uses native literals with ORACLE_23_1 compatibility"() {
         given:
         def repository = buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
@@ -1092,7 +1092,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23")
+@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
 interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
     List<OracleBooleanEntity> findByActiveTrue();
     List<OracleBooleanEntity> findByActiveFalse();
@@ -1113,9 +1113,9 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
 
-    void "test oracle boolean query generation uses global ORACLE_23 compatibility"() {
+    void "test oracle boolean query generation uses global ORACLE_23_1 compatibility"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
+        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
             buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1144,7 +1144,7 @@ class OracleBooleanEntity {
         }
 
         expect:
-        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23'
+        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS TRUE)'
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
@@ -1185,7 +1185,7 @@ class MySqlBooleanEntity {
 
     void "test global dialect compatibility is not recorded for other SQL dialect repositories"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
+        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
             buildRepository('test.MySqlBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;

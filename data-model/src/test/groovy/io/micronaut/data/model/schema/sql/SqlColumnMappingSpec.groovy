@@ -27,12 +27,31 @@ class SqlColumnMappingSpec extends Specification {
 
         expect:
         column.getSqlType(Dialect.ORACLE) == "NUMBER(1)"
-        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY)) == "BOOLEAN"
+        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) == "BOOLEAN"
     }
 
-    void "dialect options normalize compatibility"() {
+    void "dialect options compare parsed compatibility baselines"() {
         expect:
-        SqlDialectOptions.of(Dialect.ORACLE, "oracle-23").hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)
-        !SqlDialectOptions.defaults(Dialect.ORACLE).hasCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY)
+        SqlDialectOptions.of(Dialect.ORACLE, compatibility).isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) == compatible
+
+        where:
+        compatibility  | compatible
+        "ORACLE_23_1"  | true
+        "oracle-23.1"  | true
+        "ORACLE_23_1_0" | true
+        "ORACLE_23_4"  | true
+        "ORACLE_24_0"  | true
+        "ORACLE_23"    | false
+        "ORACLE_23_0"  | false
+        "MYSQL_99_0"   | false
+        "ORACLE_FOO"   | false
+        null           | false
+    }
+
+    void "dialect options exact compatibility remains available"() {
+        expect:
+        SqlDialectOptions.of(Dialect.ORACLE, "oracle-23.1").hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+        !SqlDialectOptions.of(Dialect.ORACLE, "ORACLE_23_1_0").hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+        !SqlDialectOptions.defaults(Dialect.ORACLE).hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
     }
 }
