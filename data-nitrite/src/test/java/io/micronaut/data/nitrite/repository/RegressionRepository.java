@@ -17,4 +17,7 @@ public interface RegressionRepository extends CrudRepository<Person, String> {
 
     @Query("{\"$and\": [{\"name\": {\"$eq\": \":name\"}}, {\"age\": {\"$gt\": \":minAge\"}}]}")
     java.util.List<Person> findByNameAndAgeGreaterThanJson(String name, int minAge);
+
+    @Query("{\"age\": {\"$gte\": \":from\", \"$lte\": \":to\"}}")
+    java.util.List<Person> findByAgeRangeJson(int from, int to);
 }

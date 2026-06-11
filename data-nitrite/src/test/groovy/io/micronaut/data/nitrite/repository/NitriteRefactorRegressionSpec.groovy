@@ -62,6 +62,21 @@ class NitriteRefactorRegressionSpec extends Specification {
         results[0].age == 30
     }
 
+    void "@Query single field with two operators must AND them (range)"() {
+        given:
+        repository.save(new Person("A", 10))
+        repository.save(new Person("B", 20))
+        repository.save(new Person("C", 30))
+
+        when:
+        def results = repository.findByAgeRangeJson(15, 25)
+
+        then:
+        results.size() == 1
+        results[0].name == "B"
+        results[0].age == 20
+    }
+
     void "Criteria update must not persist ParameterExpressionImpl"() {
         given:
         criteriaRepository.save(new CriteriaPerson("Denis", 13))
