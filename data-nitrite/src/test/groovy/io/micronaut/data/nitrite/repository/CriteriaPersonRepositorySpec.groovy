@@ -16,6 +16,9 @@ class CriteriaPersonRepositorySpec extends Specification {
     @Inject
     CriteriaPersonRepository repository
 
+    @Inject
+    io.micronaut.data.nitrite.operations.NitriteRepositoryOperations operations
+
     def setup() {
         repository.deleteAll()
         repository.saveAll([
@@ -211,6 +214,61 @@ class CriteriaPersonRepositorySpec extends Specification {
 
         then: "only the third matching row remains after skipping the first two"
         page.content.size() == 1
+    }
+
+    void "test operations.findAll with CriteriaQuery offset and limit directly"() {
+        given:
+        repository.save(new CriteriaPerson("Amy", 40))
+        repository.save(new CriteriaPerson("Ben", 41))
+        repository.save(new CriteriaPerson("Cara", 42))
+
+        when:
+        def cb = operations.getCriteriaBuilder()
+        def query = cb.createQuery(CriteriaPerson)
+        def root = query.from(CriteriaPerson)
+        query.select(root).where(cb.greaterThanOrEqualTo(root.get("age"), 40))
+        def results = operations.findAll(query, 2, 2)
+
+        then:
+        results.size() == 1
+        results[0].name == "Cara"
+    }
+
+    void "test missing operations methods for coverage"() {
+        given:
+        repository.save(new CriteriaPerson("Amy", 40))
+        repository.save(new CriteriaPerson("Ben", 41))
+
+        when: "testing findStream(PagedQuery)"
+        def pagedQuery = Mock(io.micronaut.data.model.runtime.PagedQuery)
+        pagedQuery.getRootEntity() >> CriteriaPerson
+        pagedQuery.getPageable() >> Pageable.from(0, 1)
+        pagedQuery.getQueryLimit() >> io.micronaut.data.model.Limit.of(100, 0)
+        def stream = operations.findStream(pagedQuery)
+        def streamResults = stream.toList()
+
+        then:
+        streamResults.size() == 1
+
+        when: "testing execute(PreparedQuery)"
+        def pq = Mock(io.micronaut.data.model.runtime.PreparedQuery)
+        pq.getRootEntity() >> CriteriaPerson
+        pq.getResultType() >> CriteriaPerson
+        pq.getQuery() >> "{}"
+        pq.getIndexedParameterBinding() >> []
+        pq.getParameterArray() >> new Object[0]
+        pq.getPageable() >> Pageable.UNPAGED
+        def execResults = operations.execute(pq)
+
+        then:
+        execResults != null
+        execResults.size() == 2 // Amy, Ben
+
+        when: "testing persistManyAssociation"
+        operations.persistManyAssociation(null, null, null, null, null, null)
+
+        then: "it is a no-op so no exception is thrown"
+        noExceptionThrown()
     }
 
     void "test criteria LIKE contains"() {
