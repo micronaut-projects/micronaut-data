@@ -356,8 +356,8 @@ public final class NitriteEntityMapper {
         return null;
     }
     if (visited.contains(entity)) {
-      // If circular or null, return just the ID if possible
-      return getEntityIdAsDocument(entity);
+        // If circular or null, return just the ID if possible
+        return getEntityIdAsDocument(entity);
     }
     visited.add(entity);
 

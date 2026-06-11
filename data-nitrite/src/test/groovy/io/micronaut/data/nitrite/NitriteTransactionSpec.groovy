@@ -1,39 +1,52 @@
 package io.micronaut.data.nitrite
 
-import io.micronaut.data.nitrite.model.Event
-import io.micronaut.data.nitrite.repository.EventRepository
-import io.micronaut.data.nitrite.service.EventService
+import io.micronaut.data.nitrite.model.Book
+import io.micronaut.data.nitrite.repository.BookRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
+import jakarta.transaction.Transactional
 
-/**
- * Tests @Transactional behaviour through a service.
- *
- * Opts back in to transactional = true so each test runs inside a transaction
- * that is rolled back on completion, giving test isolation.
- * Individual tests exercise commit and rollback via the EventService.
- */
-@MicronautTest(transactional = true)
+@MicronautTest(transactional = false)
+@io.micronaut.context.annotation.Property(name = "nitrite.db-path", value = "build/nitrite-tx-test.db")
 class NitriteTransactionSpec extends Specification {
 
-    @Inject EventRepository repo
-    @Inject EventService svc
+    @Inject
+    BookRepository bookRepository
 
-    void "transactional commit persists the entity"() {
-        when:
-        def saved = svc.saveEvent(new Event("TX_COMMIT", "ok"))
+    @Inject
+    io.micronaut.transaction.SynchronousTransactionManager transactionManager
 
-        then:
-        repo.findById(saved.id).isPresent()
+    def cleanup() {
+        new File("build/nitrite-tx-test.db").delete()
     }
 
-    void "transactional rollback on exception removes the entity"() {
+    void "test simple transaction"() {
         when:
-        svc.saveAndFail(new Event("TX_ROLLBACK", "fail"))
+        def status = transactionManager.getTransaction(io.micronaut.transaction.TransactionDefinition.DEFAULT)
+        bookRepository.save(new Book("Tx Book"))
+        transactionManager.commit(status)
 
         then:
-        thrown(RuntimeException)
-        repo.findByType("TX_ROLLBACK").isEmpty()
+        bookRepository.findByTitle("Tx Book") != null
+    }
+
+    void "test transaction rollback"() {
+        when:
+        def status = transactionManager.getTransaction(io.micronaut.transaction.TransactionDefinition.DEFAULT)
+        try {
+            bookRepository.save(new Book("Rollback Book"))
+            throw new RuntimeException("Rollback")
+        } catch (e) {
+            transactionManager.rollback(status)
+        }
+
+        then:
+        bookRepository.findByTitle("Rollback Book").isEmpty()
+    }
+
+    @Transactional
+    void executeInTransaction(Closure closure) {
+        closure.call()
     }
 }

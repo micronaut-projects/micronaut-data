@@ -86,23 +86,4 @@ public final class ObjectRepositoryWriter<T> {
         return currentVersion == null;
     }
 
-    /**
-     * Get the next version value for an update.
-     *
-     * @param entity the entity
-     * @return the next version value, or null if no version property
-     */
-    public Object getNextVersionValue(T entity) {
-        if (entity == null || versionProperty == null) {
-            return null;
-        }
-        Object currentVersion = versionProperty.getProperty().get(entity);
-        if (currentVersion instanceof Number number) {
-            return number.longValue() + 1;
-        } else if (currentVersion instanceof Instant instant) {
-            return Instant.now();
-        }
-        return currentVersion;
-    }
-
 }

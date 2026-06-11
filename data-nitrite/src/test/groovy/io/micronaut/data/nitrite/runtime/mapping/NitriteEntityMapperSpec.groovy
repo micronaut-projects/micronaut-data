@@ -107,6 +107,22 @@ class NitriteEntityMapperSpec extends Specification {
         (infoDoc.get("foo") as Map).get("val") == "custom-val"
     }
 
+    def "test getEntityIdAsDocument directly"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def entity = new CyclicEntity(name: "Test")
+        entity.id = 123L
+
+        when: "calling private method via reflection"
+        def method = NitriteEntityMapper.getDeclaredMethod("getEntityIdAsDocument", Object)
+        method.setAccessible(true)
+        def doc = method.invoke(mapper, entity) as Document
+
+        then:
+        doc != null
+        doc.get("id") == 123L
+    }
+
     def "test NitriteTypeRegistry get missing entry"() {
         expect:
         NitriteTypeRegistry.get(Object) == null
