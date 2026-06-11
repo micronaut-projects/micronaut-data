@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -355,10 +356,6 @@ public final class NitriteEntityMapper {
     if (entity == null) {
         return null;
     }
-    if (visited.contains(entity)) {
-        // If circular or null, return just the ID if possible
-        return getEntityIdAsDocument(entity);
-    }
     visited.add(entity);
 
     Document doc = convertToDocumentInternal(entity, visited);
@@ -408,23 +405,6 @@ public final class NitriteEntityMapper {
       }
     }
     return doc;
-  }
-
-  private Document getEntityIdAsDocument(Object entity) {
-      if (entity == null) {
-          return null;
-      }
-      RuntimePersistentEntity<Object> persistentEntity = runtimeEntityRegistry.getEntity(castClass(entity.getClass()));
-      RuntimePersistentProperty<Object> idProp = safeGetIdentity(persistentEntity);
-      if (idProp != null) {
-          Object idValue = idProp.getProperty().get(entity);
-          if (idValue != null) {
-              Document idDoc = Document.createDocument();
-              idDoc.put(ID_FIELD, normalizeIdentityValue(idProp, idValue));
-              return idDoc;
-          }
-      }
-      return null;
   }
 
     /**
@@ -589,6 +569,7 @@ public final class NitriteEntityMapper {
         case ENUM                                -> ((Enum<?>) value).name();
         case OPTIONAL                            -> ((Optional<?>) value).map(this::toFilterValue).orElse(null);
         case ENTITY_ID_REF, ASSOCIATION_ID_REF   -> wpm.associatedIdProp() != null ? toFilterValue(wpm.associatedIdProp().get(value)) : null;
+        case MAP                                 -> toDocumentValue(value);
         case INTROSPECTED_POJO                   -> pojoToMap(value);
         case SERDE                               -> {
           try {
@@ -725,37 +706,22 @@ public final class NitriteEntityMapper {
         String argName = arg.getName();
         ctorArgNames.add(argName);
         Object raw = getMapValueByName(map, argName);
-        args[i] = raw == null ? null : convertMapValue(raw, arg);
+        args[i] = raw == null ? null : convertFromDocumentValue(raw, arg);
       }
       pojo = intro.instantiate(args);
     } else {
       pojo = intro.instantiate();
     }
     for (BeanProperty<P, Object> p : intro.getBeanProperties()) {
-      if (p.isReadOnly()) {
-        continue;
-      }
-      if (ctorArgNames.contains(p.getName())) {
+      if (p.isReadOnly() || ctorArgNames.contains(p.getName())) {
         continue;
       }
       Object v = getMapValueByName(map, p.getName());
-      if (v == null) {
-        continue;
+      if (v != null) {
+        p.set(pojo, convertFromDocumentValue(v, p.asArgument()));
       }
-      p.set(pojo, convertMapValue(v, p.asArgument()));
     }
     return pojo;
-  }
-
-  private <T> Object convertMapValue(Object value, Argument<T> target) {
-    if (value instanceof Map<?, ?> nested) {
-      Optional<BeanIntrospection<T>> nestedIntro =
-          BeanIntrospector.SHARED.findIntrospection(target.getType());
-      if (nestedIntro.isPresent()) {
-        return mapToPojo(nested, nestedIntro.get());
-      }
-    }
-    return conversionService.convert(value, target).orElse(null);
   }
 
   private Object getMapValueByName(Map<?, ?> map, String name) {
@@ -773,7 +739,7 @@ public final class NitriteEntityMapper {
     String camel = NameUtils.snakeToCamel(name);
     if (!Objects.equals(name, camel)) {
       value = map.get(camel);
-        return value;
+      return value;
     }
     return null;
   }
@@ -809,28 +775,58 @@ public final class NitriteEntityMapper {
     if (value == null) {
       return null;
     }
-    if (target.getType().isInstance(value)) {
-      return value;
-    }
     Class<?> t = target.getType();
     if ((value instanceof Number || value instanceof String) && NitriteTypeRegistry.hasEntry(t)) {
       return valueConverter.convertWithTemporalHandling(value, t);
     }
-    // Map → POJO: prefer BeanIntrospection (no Serde codec required) when available,
-    // fall back to Serde for types with custom codecs but no @Introspected metadata.
-    if (value instanceof Map<?, ?> mapValue && !Map.class.isAssignableFrom(target.getType())) {
-      Optional<BeanIntrospection<Object>> maybeIntro =
-          BeanIntrospector.SHARED.findIntrospection(castClass(target.getType()));
-      if (maybeIntro.isPresent()) {
-        return mapToPojo(mapValue, maybeIntro.get());
-      }
-      try {
-        String json = serdeObjectMapper.writeValueAsString(value);
-        return serdeObjectMapper.readValue(json, target);
-      } catch (Exception e) {
-        return conversionService.convert(value, target).orElse(null);
+
+    if (value instanceof Map<?, ?> mapValue) {
+      if (Map.class.isAssignableFrom(t)) {
+        Argument<?>[] typeParameters = target.getTypeParameters();
+        if (typeParameters.length == 2) {
+          Argument<?> valueArg = typeParameters[1];
+          Map<Object, Object> result = new LinkedHashMap<>();
+          for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
+            result.put(entry.getKey(), convertFromDocumentValue(entry.getValue(), valueArg));
+          }
+          return result;
+        }
+      } else if (!t.isInstance(value)) {
+        // Map → POJO: prefer BeanIntrospection (no Serde codec required) when available,
+        // fall back to Serde for types with custom codecs but no @Introspected metadata.
+        Optional<BeanIntrospection<Object>> maybeIntro =
+            BeanIntrospector.SHARED.findIntrospection(castClass(t));
+        if (maybeIntro.isPresent()) {
+          return mapToPojo(mapValue, maybeIntro.get());
+        }
+        try {
+          String json = serdeObjectMapper.writeValueAsString(value);
+          return serdeObjectMapper.readValue(json, target);
+        } catch (Exception e) {
+          return conversionService.convert(value, target).orElse(null);
+        }
       }
     }
+
+    if (value instanceof Iterable<?> iterable && Iterable.class.isAssignableFrom(t)) {
+      Argument<?>[] typeParameters = target.getTypeParameters();
+      if (typeParameters.length == 1) {
+        Argument<?> itemArg = typeParameters[0];
+        List<Object> result = new ArrayList<>();
+        for (Object item : iterable) {
+          result.add(convertFromDocumentValue(item, itemArg));
+        }
+        if (Set.class.isAssignableFrom(t)) {
+          return new LinkedHashSet<>(result);
+        }
+        return result;
+      }
+    }
+
+    if (t.isInstance(value)) {
+      return value;
+    }
+
     return conversionService.convert(value, target).orElse(null);
   }
 
@@ -888,10 +884,11 @@ public final class NitriteEntityMapper {
         Document document = Document.createDocument();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
           Object nested = entry.getValue();
-          if (nested instanceof Map<?, ?> nestedMap) {
+          Object serialized = serializeForDocument(nested);
+          if (serialized instanceof Map<?, ?> nestedMap && !(serialized instanceof Document)) {
             document.put(String.valueOf(entry.getKey()), toDocumentValue(nestedMap));
           } else {
-            document.put(String.valueOf(entry.getKey()), serializeForDocument(nested));
+            document.put(String.valueOf(entry.getKey()), serialized);
           }
         }
         yield document;
@@ -902,10 +899,11 @@ public final class NitriteEntityMapper {
           Document document = Document.createDocument();
           for (Map.Entry<String, Object> entry : pojoToMap(value).entrySet()) {
             Object nested = entry.getValue();
-            if (nested instanceof Map<?, ?> nestedMap) {
+            Object serialized = serializeForDocument(nested);
+            if (serialized instanceof Map<?, ?> nestedMap && !(serialized instanceof Document)) {
               document.put(entry.getKey(), toDocumentValue(nestedMap));
             } else {
-              document.put(entry.getKey(), nested);
+              document.put(entry.getKey(), serialized);
             }
           }
           yield document;

@@ -10,4 +10,8 @@ import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
  */
 @NitriteRepository
 public interface CriteriaPersonRepository
-    extends CrudRepository<CriteriaPerson, String>, JpaSpecificationExecutor<CriteriaPerson> {}
+    extends CrudRepository<CriteriaPerson, String>, JpaSpecificationExecutor<CriteriaPerson> {
+
+    @io.micronaut.data.annotation.Query("{}")
+    java.util.List<CriteriaPerson> findAllViaQuery();
+}

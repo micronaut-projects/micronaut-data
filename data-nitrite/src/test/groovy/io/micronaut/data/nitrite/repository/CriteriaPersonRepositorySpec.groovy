@@ -279,6 +279,19 @@ class CriteriaPersonRepositorySpec extends Specification {
         db != null
     }
 
+    void "test findAllViaQuery"() {
+        given:
+        repository.save(new CriteriaPerson("Amy", 40))
+        repository.save(new CriteriaPerson("Ben", 41))
+
+        when:
+        def results = repository.findAllViaQuery()
+
+        then:
+        results.size() >= 4
+        results*.name.containsAll(["Denis", "Josh", "Amy", "Ben"])
+    }
+
     void "test criteria LIKE contains"() {
         given:
         repository.save(new CriteriaPerson("Alice", 25))

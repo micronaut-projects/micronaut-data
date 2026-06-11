@@ -343,13 +343,18 @@ class NitriteCriteriaSpec extends Specification {
                     { root, query, cb ->
                         def oneOthersJoin = root.join("manyToOneOther")
                         cb.equal(oneOthersJoin.get("name"), "xyz")
+                    } as QuerySpecification,
+                    { root, query, cb ->
+                        def oneOthersJoin = root.join("oneOther")
+                        cb.isTrue(oneOthersJoin.get("enabled"))
                     } as QuerySpecification
             ]
             expectedQuery << [
                     '''[{$lookup:{from:'nitrite_other',localField:'_id',foreignField:'test_id',as:'others'}},{$match:{$expr:{$eq:['$amount','$others.amount']}}}]''',
                     '''[{$lookup:{from:'nitrite_other',localField:'_id',foreignField:'test_id',pipeline:[{$lookup:{from:'nitrite_simple',localField:'simple_id',foreignField:'_id',as:'simple'}},{$unwind:{path:'$simple',preserveNullAndEmptyArrays:true}}],as:'others'}},{$match:{$and:[{$expr:{$eq:['$amount','$others.amount']}},{$expr:{$eq:['$amount','$others.simple.amount']}}]}}]''',
                     '''[{$lookup:{from:'nitrite_other',localField:'one_other_id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'oneOther.name':{$eq:{$mn_qp:0}}}}]''',
-                    '''[{$lookup:{from:'nitrite_other',localField:'many_to_one_other_id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]'''
+                    '''[{$lookup:{from:'nitrite_other',localField:'many_to_one_other_id',foreignField:'_id',as:'manyToOneOther'}},{$unwind:{path:'$manyToOneOther',preserveNullAndEmptyArrays:true}},{$match:{'manyToOneOther.name':{$eq:{$mn_qp:0}}}}]''',
+                    '''[{$lookup:{from:'nitrite_other',localField:'one_other_id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{'one_other_id.enabled':{$eq:true}}}]'''
             ]
     }
 

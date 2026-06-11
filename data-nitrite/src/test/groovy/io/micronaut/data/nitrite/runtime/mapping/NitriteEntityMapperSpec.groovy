@@ -1,7 +1,10 @@
 package io.micronaut.data.nitrite.runtime.mapping
 
+import io.micronaut.data.nitrite.model.MapEntity
+import io.micronaut.data.nitrite.model.NestedPojo
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionService
+import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -21,7 +24,6 @@ class NitriteEntityMapperSpec extends Specification {
     @Inject ObjectMapper objectMapper
     @Inject Nitrite nitrite
     @Inject RuntimeEntityRegistry runtimeEntityRegistry
-    @Inject io.micronaut.context.ApplicationContext beanContext
 
     def "test cyclic association handling in NitriteEntityMapper"() {
         given:
@@ -103,24 +105,81 @@ class NitriteEntityMapperSpec extends Specification {
         def idDoc = doc.get("id") as Document
         idDoc.get("info") instanceof Document
         def infoDoc = idDoc.get("info") as Document
-        infoDoc.get("foo") instanceof Map
-        (infoDoc.get("foo") as Map).get("val") == "custom-val"
+        infoDoc.get("foo") instanceof Document
+        (infoDoc.get("foo") as Document).get("val") == "custom-val"
     }
 
-    def "test getEntityIdAsDocument directly"() {
+    def "test Map conversion with nested POJOs"() {
         given:
         def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
-        def entity = new CyclicEntity(name: "Test")
-        entity.id = 123L
 
-        when: "calling private method via reflection"
-        def method = NitriteEntityMapper.getDeclaredMethod("getEntityIdAsDocument", Object)
-        method.setAccessible(true)
-        def doc = method.invoke(mapper, entity) as Document
+        def map = [
+            "key1": new NestedPojo(camelCaseField: "v1", snake_case_field: "s1"),
+            "key2": new NestedPojo(camelCaseField: "v2", snake_case_field: "s2")
+        ]
+        def entity = new MapEntity(data: map)
+
+        when: "converting to document"
+        def doc = mapper.toDocument(entity)
+
+        then: "Map is converted to Document, and nested POJOs are recursively converted to Documents"
+        doc.get("data") instanceof Document
+        def dataDoc = doc.get("data") as Document
+        dataDoc.get("key1") instanceof Document
+        (dataDoc.get("key1") as Document).get("camelCaseField") == "v1"
+
+        when: "converting back from document"
+        def result = mapper.fromDocument(doc, MapEntity)
 
         then:
-        doc != null
-        doc.get("id") == 123L
+        result.data != null
+        result.data["key1"] instanceof NestedPojo
+        result.data["key1"].camelCaseField == "v1"
+        result.data["key2"].camelCaseField == "v2"
+    }
+
+    def "test toNitriteFilterValue coverage"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+
+        expect:
+        mapper.toNitriteFilterValue(null) == null
+
+        when:
+        def doc = Document.createDocument()
+        then:
+        mapper.toNitriteFilterValue(doc).is(doc)
+
+        when:
+        def res1 = mapper.toNitriteFilterValue("str")
+        then:
+        res1 == "str"
+
+        when:
+        def pojo = new NestedPojo(camelCaseField: "v1")
+        def result = mapper.toNitriteFilterValue(pojo)
+        then:
+        result instanceof Document
+        result.get("camelCaseField") == "v1"
+
+        when: "handling non-serdeable object to trigger exception path in serializeForDocument"
+        def nonSerdeable = new NonSerdeable()
+        def resNonSerde = mapper.toNitriteFilterValue(nonSerdeable)
+        then: "it falls back to returning the object as-is"
+        resNonSerde.is(nonSerdeable)
+
+        when: "POJO with MappedEntity (CyclicEntity)"
+        def entity = new CyclicEntity(name: "Test")
+        entity.id = 123L
+        def res2 = mapper.toNitriteFilterValue(entity)
+        then:
+        res2 == 123L
+
+        when: "POJO with MappedEntity but idValue is null"
+        def entityNoId = new CyclicEntity(name: "NoId")
+        def res3 = mapper.toNitriteFilterValue(entityNoId)
+        then:
+        res3.is(entityNoId)
     }
 
     def "test NitriteTypeRegistry get missing entry"() {
@@ -137,12 +196,6 @@ class CyclicEntity {
     
     @Relation(Relation.Kind.EMBEDDED)
     CyclicEntity parent
-}
-
-@Introspected
-class NestedPojo {
-    String camelCaseField
-    String snake_case_field
 }
 
 @MappedEntity
@@ -166,4 +219,7 @@ class CustomIdEntity {
 class CustomSerializable implements Serializable {
     String val
     @Override String toString() { val }
+}
+
+class NonSerdeable {
 }

@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 
 /**
  * Phase 4: Type-Diverse Mapping round-trip test via Event entity extension.
- * Exercises NitriteEntityMapper gaps: serializeForDocument (0%), getEntityIdAsDocument (0%),
+ * Exercises NitriteEntityMapper gaps: serializeForDocument (0%),
  * toDocumentValue (40%), fromDocumentInternal (78%), convertToDocumentInternal (81%).
  *
  * Covers: enum Status, LocalDate, LocalDateTime, Instant, BigDecimal, byte[], nested @Embeddable,

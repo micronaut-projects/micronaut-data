@@ -42,6 +42,7 @@ public enum PropertyStrategy {
     OPTIONAL,
     ENTITY_ID_REF,
     GEOMETRY,
+    MAP,
     INTROSPECTED_POJO,
     SERDE,
     ASSOCIATION_MAPPED_BY,
@@ -59,6 +60,7 @@ public enum PropertyStrategy {
         case Class<T> _ when type == String.class || type == Boolean.class || type == Character.class -> JAVA_PASSTHROUGH;
         case Class<T> _ when Number.class.isAssignableFrom(type) || type.isPrimitive()    -> JAVA_PASSTHROUGH;
         case Class<T> _ when NitriteTypeRegistry.hasEntry(type)                           -> NitriteTypeRegistry.strategyFor(type);
+        case Class<T> _ when type == java.util.Map.class || java.util.Map.class.isAssignableFrom(type) -> MAP;
         case Class<T> _ when type == Optional.class                                       -> OPTIONAL;
         case Class<T> _ when type.isEnum()                                                -> ENUM;
         case Class<T> _ when type.isArray() || type.getPackageName().startsWith("java.")  -> JAVA_PASSTHROUGH;
