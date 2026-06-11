@@ -1,5 +1,6 @@
 package io.micronaut.data.nitrite.repository
 
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.nitrite.model.CriteriaPerson
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -183,6 +184,33 @@ class CriteriaPersonRepositorySpec extends Specification {
         then:
         results.size() == 1
         results[0].name == "Charlie"
+    }
+
+    // ========== Section 8: exists / paginated findAll ==========
+
+    void "test criteria exists"() {
+        when:
+        PredicateSpecification<CriteriaPerson> match = (root, cb) -> cb.equal(root.get("name"), "Denis")
+        PredicateSpecification<CriteriaPerson> noMatch = (root, cb) -> cb.equal(root.get("name"), "Nobody")
+
+        then:
+        repository.exists(match)
+        !repository.exists(noMatch)
+    }
+
+    void "test criteria findAll with Pageable applies offset and limit"() {
+        given:
+        // setup: Denis(13), Josh(22). Add three more aged >= 40.
+        repository.save(new CriteriaPerson("Amy", 40))
+        repository.save(new CriteriaPerson("Ben", 41))
+        repository.save(new CriteriaPerson("Cara", 42))
+
+        when: "page 1 of size 2 (offset 2) over the 3 matching rows"
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.greaterThanOrEqualTo(root.get("age"), 40)
+        def page = repository.findAll(spec, Pageable.from(1, 2))
+
+        then: "only the third matching row remains after skipping the first two"
+        page.content.size() == 1
     }
 
     void "test criteria LIKE contains"() {
