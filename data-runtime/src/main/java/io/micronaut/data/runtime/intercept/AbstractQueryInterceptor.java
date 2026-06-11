@@ -591,6 +591,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private StoredQuery.OperationType resolveUpdateOperationType(MethodInvocationContext<?, ?> context) {
         return switch (getDataMethodOperationType(context)) {
             case UPDATE_RETURNING, INSERT_RETURNING -> StoredQuery.OperationType.UPDATE_RETURNING;
+            case UPSERT -> StoredQuery.OperationType.UPSERT;
             default -> StoredQuery.OperationType.UPDATE;
         };
     }

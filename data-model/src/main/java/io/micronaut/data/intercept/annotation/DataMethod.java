@@ -323,5 +323,11 @@ public @interface DataMethod {
          * An insert returning operation.
          */
         INSERT_RETURNING,
+        /**
+         * An upsert operation.
+         *
+         * @since 5.1.0
+         */
+        UPSERT,
     }
 }

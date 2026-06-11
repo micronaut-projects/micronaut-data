@@ -58,6 +58,18 @@ public interface QueryBuilder {
     QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition);
 
     /**
+     * Builds an upsert statement for the given entity.
+     *
+     * @param repositoryMetadata The repository annotation metadata
+     * @param definition         The definition
+     * @return The upsert statement
+     * @since 5.1.0
+     */
+    default QueryResult buildUpsert(AnnotationMetadata repositoryMetadata, UpsertQueryDefinition definition) {
+        throw new UnsupportedOperationException("Upsert is not supported by " + getClass().getName());
+    }
+
+    /**
      * Encode the given query for the passed annotation metadata and query.
      *
      * @param annotationMetadata The annotation metadata
@@ -190,6 +202,21 @@ public interface QueryBuilder {
          * @return Is returning selection
          */
         boolean returning();
+
+    }
+
+    /**
+     * The upsert query definition.
+     *
+     * @since 5.1.0
+     */
+    interface UpsertQueryDefinition {
+
+        /**
+         * @return The persistent entity
+         */
+
+        PersistentEntity persistentEntity();
 
     }
 
