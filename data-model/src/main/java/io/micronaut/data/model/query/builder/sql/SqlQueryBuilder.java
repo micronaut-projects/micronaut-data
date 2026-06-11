@@ -1452,7 +1452,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             case ORACLE -> buildOracleUpsert(tableName, data);
             case ANSI -> buildAnsiUpsert(tableName, data);
         };
-        return QueryResult.of(query, Collections.emptyList(), data.parameterBindings(), Collections.emptyMap());
+        return QueryResult.of(query, Collections.emptyList(), buildUpsertParameterBindings(data), Collections.emptyMap());
     }
 
     private UpsertData buildUpsertData(PersistentEntity entity) {
@@ -1500,13 +1500,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         addWriteExpression(values, property);
         String key = String.valueOf(values.size());
         String[] path = asStringPath(associations, property);
-        parameterBindings.add(createParameterBinding(key, property, path));
+        QueryParameterBinding parameterBinding = createParameterBinding(key, property, path);
+        parameterBindings.add(parameterBinding);
 
         String columnName = getMappedName(namingStrategy, associations, property);
         if (escape) {
             columnName = quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), identity));
+        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), parameterBinding, identity));
     }
 
     private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
@@ -1547,8 +1548,102 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return buildInsertStatement(tableName, data)
             + " ON DUPLICATE KEY UPDATE "
             + updateColumns.stream()
-                .map(column -> column.column() + "=VALUES(" + column.column() + CLOSE_BRACKET)
+                .map(column -> column.column() + "=" + column.value())
                 .collect(Collectors.joining(String.valueOf(COMMA)));
+    }
+
+    private List<QueryParameterBinding> buildUpsertParameterBindings(UpsertData data) {
+        if (dialect != Dialect.MYSQL) {
+            return data.parameterBindings();
+        }
+        List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
+        for (UpsertColumn updateColumn : data.updateColumnsOrIdentity()) {
+            parameterBindings.add(copyParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.parameterBinding()));
+        }
+        return parameterBindings;
+    }
+
+    private QueryParameterBinding copyParameterBinding(String key, QueryParameterBinding parameterBinding) {
+        return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return key;
+            }
+
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return parameterBinding.getDataType();
+            }
+
+            @Override
+            public JsonDataType getJsonDataType() {
+                return parameterBinding.getJsonDataType();
+            }
+
+            @Override
+            @Nullable
+            public String getConverterClassName() {
+                return parameterBinding.getConverterClassName();
+            }
+
+            @Override
+            public int getParameterIndex() {
+                return parameterBinding.getParameterIndex();
+            }
+
+            @Override
+            public String @Nullable [] getParameterBindingPath() {
+                return parameterBinding.getParameterBindingPath();
+            }
+
+            @Override
+            public String @Nullable [] getPropertyPath() {
+                return parameterBinding.getPropertyPath();
+            }
+
+            @Override
+            public boolean isAutoPopulated() {
+                return parameterBinding.isAutoPopulated();
+            }
+
+            @Override
+            public boolean isRequiresPreviousPopulatedValue() {
+                return parameterBinding.isRequiresPreviousPopulatedValue();
+            }
+
+            @Override
+            public boolean isExpandable() {
+                return parameterBinding.isExpandable();
+            }
+
+            @Override
+            @Nullable
+            public Object getValue() {
+                return parameterBinding.getValue();
+            }
+
+            @Override
+            public boolean isExpression() {
+                return parameterBinding.isExpression();
+            }
+
+            @Override
+            @Nullable
+            public String getRole() {
+                return parameterBinding.getRole();
+            }
+
+            @Override
+            @Nullable
+            public String getTableAlias() {
+                return parameterBinding.getTableAlias();
+            }
+        };
     }
 
     private String buildPostgresUpsert(String tableName, UpsertData data) {
@@ -1668,6 +1763,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private record UpsertColumn(String column,
                                 String value,
                                 String source,
+                                QueryParameterBinding parameterBinding,
                                 boolean identity) {
     }
 

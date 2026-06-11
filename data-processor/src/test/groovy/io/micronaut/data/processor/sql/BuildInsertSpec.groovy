@@ -487,24 +487,24 @@ class Test {
             getOperationType(upsertMethod) == DataMethod.OperationType.UPSERT
             getDataInterceptor(upsertMethod) == UpdateEntityInterceptor.name
             getQuery(upsertMethod) == query
-            getParameterPropertyPaths(upsertMethod) == ["name", "pages", "id"] as String[]
+            getParameterPropertyPaths(upsertMethod) == parameterPropertyPaths as String[]
             getOperationType(putMethod) == DataMethod.OperationType.UPSERT
             getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
             getQuery(putMethod) == query
-            getParameterPropertyPaths(putMethod) == ["name", "pages", "id"] as String[]
+            getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
             getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
             getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
             getQuery(putAllMethod) == query
-            getParameterPropertyPaths(putAllMethod) == ["name", "pages", "id"] as String[]
+            getParameterPropertyPaths(putAllMethod) == parameterPropertyPaths as String[]
 
         where:
-            dialect            | query
-            Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."id"=source.c2) WHEN MATCHED THEN UPDATE SET target."name"=source.c0,target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'
-            Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`id`) VALUES (?,?,?)'
-            Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`),`pages`=VALUES(`pages`)'
-            Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."ID"=source.c2) WHEN MATCHED THEN UPDATE SET target."NAME"=source.c0,target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'
-            Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("id") DO UPDATE SET "name"=EXCLUDED."name","pages"=EXCLUDED."pages"'
-            Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[id]=source.c2 WHEN MATCHED THEN UPDATE SET target.[name]=source.c0,target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'
+            dialect            | query                                                                                                                                                                                                                                                                                                                                                           | parameterPropertyPaths
+            Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."id"=source.c2) WHEN MATCHED THEN UPDATE SET target."name"=source.c0,target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                                  | ["name", "pages", "id"]
+            Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`id`) VALUES (?,?,?)'                                                                                                                                                                                                                                                        | ["name", "pages", "id"]
+            Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=?,`pages`=?'                                                                                                                                                                                                                       | ["name", "pages", "id", "name", "pages"]
+            Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."ID"=source.c2) WHEN MATCHED THEN UPDATE SET target."NAME"=source.c0,target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                              | ["name", "pages", "id"]
+            Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("id") DO UPDATE SET "name"=EXCLUDED."name","pages"=EXCLUDED."pages"'                                                                                                                                                                                 | ["name", "pages", "id"]
+            Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[id]=source.c2 WHEN MATCHED THEN UPDATE SET target.[name]=source.c0,target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'                 | ["name", "pages", "id"]
     }
 
     void "test annotated upsert on repository without base interface"() {
