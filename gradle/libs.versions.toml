@@ -28,7 +28,7 @@ managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M3"
 managed-pg-vector = "0.1.6"
 
-spring-data = "4.0.5"
+spring-data = "4.1.0"
 
 # Lombok
 
@@ -36,7 +36,7 @@ lombok = "1.18.46"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2025.1.5"
+benchmark-spring-data = "2025.1.6"
 jmh = "1.37"
 h2gis = "2.2.5"
 
