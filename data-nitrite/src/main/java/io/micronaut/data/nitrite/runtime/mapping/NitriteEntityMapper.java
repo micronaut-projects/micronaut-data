@@ -779,13 +779,6 @@ public final class NitriteEntityMapper {
   }
 
   /**
-   * Check if an object is a JTS Geometry. Uses the class reference cached at construction time.
-   */
-  private boolean isGeometry(Object value) {
-    return geometryClass != null && geometryClass.isInstance(value);
-  }
-
-  /**
    * Check if a type is a simple type that should not be converted to a Document.
    *
    * @param type the type to check

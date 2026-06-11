@@ -499,4 +499,22 @@ class NitriteQueryBuilderSpec extends Specification {
         result.isPresent()
         result.get().title == "Test Book"
     }
+
+    void "test buildInsert and buildLimitAndOffset"() {
+        given:
+        def builder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder()
+
+        when:
+        def insertResult = builder.buildInsert(null, null)
+
+        then:
+        insertResult != null
+        insertResult.getQuery() == ""
+
+        when:
+        def limitOffset = builder.buildLimitAndOffset(10, 20)
+
+        then:
+        limitOffset == '{$skip:20,$limit:10}'
+    }
 }

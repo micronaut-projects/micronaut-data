@@ -21,6 +21,7 @@ class NitriteEntityMapperSpec extends Specification {
     @Inject ObjectMapper objectMapper
     @Inject Nitrite nitrite
     @Inject RuntimeEntityRegistry runtimeEntityRegistry
+    @Inject io.micronaut.context.ApplicationContext beanContext
 
     def "test cyclic association handling in NitriteEntityMapper"() {
         given:
@@ -82,6 +83,35 @@ class NitriteEntityMapperSpec extends Specification {
         altered.nested.snake_case_field == "snakeConverted"
     }
 
+    def "test NitriteEntityMapper misc gaps"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+
+        expect:
+        mapper.isSimpleType(String)
+        !mapper.isSimpleType(NestedPojo)
+        mapper.toDocument(null) == null
+
+        when: "using a custom ID with a map to trigger toDocumentValue and serializeForDocument"
+        def custom = new CustomSerializable(val: "custom-val")
+        def id = new CustomId(info: [foo: custom])
+        def doc = mapper.toDocument(new CustomIdEntity(id: id))
+
+        then: "the nested map should have been converted to a Document and its entry serialized"
+        doc != null
+        doc.get("id") instanceof Document
+        def idDoc = doc.get("id") as Document
+        idDoc.get("info") instanceof Document
+        def infoDoc = idDoc.get("info") as Document
+        infoDoc.get("foo") instanceof Map
+        (infoDoc.get("foo") as Map).get("val") == "custom-val"
+    }
+
+    def "test NitriteTypeRegistry get missing entry"() {
+        expect:
+        NitriteTypeRegistry.get(Object) == null
+    }
+
 }
 
 @MappedEntity
@@ -103,4 +133,21 @@ class NestedPojo {
 class PojoHolder {
     @Id @GeneratedValue Long id
     NestedPojo nested
+}
+
+@Introspected
+@io.micronaut.serde.annotation.Serdeable
+class CustomId {
+    Map<String, Object> info
+}
+
+@MappedEntity
+class CustomIdEntity {
+    @Id CustomId id
+}
+
+@io.micronaut.serde.annotation.Serdeable
+class CustomSerializable implements Serializable {
+    String val
+    @Override String toString() { val }
 }
