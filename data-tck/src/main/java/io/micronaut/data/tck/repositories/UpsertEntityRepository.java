@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.UpsertEntity;
 
@@ -25,4 +26,10 @@ public interface UpsertEntityRepository extends CrudRepository<UpsertEntity, Lon
     UpsertEntity upsert(UpsertEntity entity);
 
     List<UpsertEntity> upsertAll(Iterable<UpsertEntity> entities);
+
+    @Upsert
+    UpsertEntity put(UpsertEntity entity);
+
+    @Upsert
+    List<UpsertEntity> putAll(Iterable<UpsertEntity> entities);
 }
