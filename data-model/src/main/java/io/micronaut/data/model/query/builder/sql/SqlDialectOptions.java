@@ -41,9 +41,9 @@ public record SqlDialectOptions(
     public static final String ORACLE_23_COMPATIBILITY = "ORACLE_23";
 
     /**
-     * Annotation processor option for SQL dialect compatibility.
+     * Annotation processor option prefix for SQL dialect compatibility.
      */
-    public static final String DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION = "micronaut.data.sql.dialect-options.compatibility";
+    public static final String DIALECT_OPTIONS_CONFIGURATION_PREFIX = "micronaut.data.sql.dialect-options";
 
     /**
      * Annotation/configuration member for compatibility.
@@ -79,7 +79,7 @@ public record SqlDialectOptions(
      */
     public static SqlDialectOptions of(Dialect dialect, @Nullable String compatibility) {
         Optional<String> compatibilityValue = Optional.ofNullable(compatibility)
-            .filter(value -> !value.isBlank())
+            .filter(val -> !val.isBlank())
             .map(SqlDialectOptions::normalize);
         return new SqlDialectOptions(dialect, compatibilityValue);
     }
@@ -97,6 +97,17 @@ public record SqlDialectOptions(
     }
 
     /**
+     * Resolve the annotation processor option key for a dialect compatibility value.
+     *
+     * @param dialect The dialect
+     * @return The annotation processor option key
+     */
+    public static String compatibilityConfiguration(Dialect dialect) {
+        Objects.requireNonNull(dialect, "Dialect cannot be null");
+        return DIALECT_OPTIONS_CONFIGURATION_PREFIX + "." + normalizeDialectName(dialect) + ".compatibility";
+    }
+
+    /**
      * @param compatibility The compatibility level
      * @return true if the configured compatibility matches
      */
@@ -109,5 +120,9 @@ public record SqlDialectOptions(
 
     private static String normalize(String value) {
         return value.trim().replace('-', '_').toUpperCase(Locale.ENGLISH);
+    }
+
+    private static String normalizeDialectName(Dialect dialect) {
+        return dialect.name().toLowerCase(Locale.ENGLISH).replace('_', '-');
     }
 }

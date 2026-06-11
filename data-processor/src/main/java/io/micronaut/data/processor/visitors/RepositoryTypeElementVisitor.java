@@ -66,6 +66,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -133,6 +134,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final String ASYNC_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor";
     private static final String REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor";
     private static final String REACTOR_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor";
+    private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String DIALECT_ATTR = "dialect";
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -341,9 +344,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (hasExplicitCompatibility) {
             return;
         }
-        String compatibility = context.getOptions().get(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION);
+        Dialect dialect = annotationMetadata
+            .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
+            .orElseGet(() ->
+                annotationMetadata
+                    .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
+                    .orElse(Dialect.ANSI));
+        String compatibilityConfiguration = SqlDialectOptions.compatibilityConfiguration(dialect);
+        String compatibility = context.getOptions().get(compatibilityConfiguration);
         if (StringUtils.isEmpty(compatibility)) {
-            compatibility = System.getProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION);
+            compatibility = System.getProperty(compatibilityConfiguration);
         }
         if (StringUtils.isNotEmpty(compatibility)) {
             String configuredCompatibility = compatibility;

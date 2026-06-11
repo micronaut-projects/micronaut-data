@@ -6,8 +6,8 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * Boolean literals and predicates are generated using numeric values such as `1` and `0`.
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
-To generate Oracle 23-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.compatibility=ORACLE_23`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.compatibility=ORACLE_23`.
+To generate Oracle 23-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23`.
 If both are present, the annotation processor option takes precedence.
 
 For Gradle Java projects:
@@ -15,7 +15,7 @@ For Gradle Java projects:
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.compatibility=ORACLE_23")
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23")
 }
 ----
 
@@ -24,7 +24,7 @@ For Maven projects:
 [source,xml]
 ----
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.compatibility=ORACLE_23</arg>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23</arg>
 </compilerArgs>
 ----
 

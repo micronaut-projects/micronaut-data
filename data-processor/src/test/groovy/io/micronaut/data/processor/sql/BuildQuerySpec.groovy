@@ -1115,7 +1115,7 @@ class OracleBooleanEntity {
 
     void "test oracle boolean query generation uses global ORACLE_23 compatibility"() {
         given:
-        def repository = withDialectOptionsCompatibility(SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
+        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
             buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1151,7 +1151,7 @@ class OracleBooleanEntity {
 
     void "test global dialect compatibility is recorded for SQL repositories"() {
         given:
-        def repository = withDialectOptionsCompatibility("MYSQL_9") {
+        def repository = withDialectOptionsCompatibility(Dialect.MYSQL, "MYSQL_9") {
             buildRepository('test.MySqlBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1180,6 +1180,40 @@ class MySqlBooleanEntity {
 
         expect:
         repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'MYSQL_9'
+        getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
+    }
+
+    void "test global dialect compatibility is not recorded for other SQL dialect repositories"() {
+        given:
+        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_COMPATIBILITY) {
+            buildRepository('test.MySqlBooleanRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface MySqlBooleanRepository extends CrudRepository<MySqlBooleanEntity, Long> {
+    List<MySqlBooleanEntity> findByActiveTrue();
+}
+
+@MappedEntity("mysql_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class MySqlBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean active;
+}
+""")
+        }
+
+        expect:
+        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).isEmpty()
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
@@ -3211,17 +3245,18 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
         findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 
-    private <T> T withDialectOptionsCompatibility(String compatibility, Closure<T> closure) {
+    private <T> T withDialectOptionsCompatibility(Dialect dialect, String compatibility, Closure<T> closure) {
         synchronized (DIALECT_OPTIONS_COMPATIBILITY_LOCK) {
-            def previous = System.getProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION)
-            System.setProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION, compatibility)
+            def configuration = SqlDialectOptions.compatibilityConfiguration(dialect)
+            def previous = System.getProperty(configuration)
+            System.setProperty(configuration, compatibility)
             try {
                 return closure.call()
             } finally {
                 if (previous == null) {
-                    System.clearProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION)
+                    System.clearProperty(configuration)
                 } else {
-                    System.setProperty(SqlDialectOptions.DIALECT_OPTIONS_COMPATIBILITY_CONFIGURATION, previous)
+                    System.setProperty(configuration, previous)
                 }
             }
         }
