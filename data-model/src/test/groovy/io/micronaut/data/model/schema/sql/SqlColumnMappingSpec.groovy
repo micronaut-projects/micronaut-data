@@ -47,11 +47,4 @@ class SqlColumnMappingSpec extends Specification {
         "ORACLE_FOO"   | false
         null           | false
     }
-
-    void "dialect options exact compatibility remains available"() {
-        expect:
-        SqlDialectOptions.of(Dialect.ORACLE, "oracle-23.1").hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
-        !SqlDialectOptions.of(Dialect.ORACLE, "ORACLE_23_1_0").hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
-        !SqlDialectOptions.defaults(Dialect.ORACLE).hasCompatibility(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
-    }
 }

@@ -110,17 +110,6 @@ public record SqlDialectOptions(
     }
 
     /**
-     * @param compatibility The compatibility level
-     * @return true if the configured compatibility matches
-     */
-    public boolean hasCompatibility(@Nullable String compatibility) {
-        if (compatibility == null || compatibility.isBlank()) {
-            return false;
-        }
-        return this.compatibility.filter(normalize(compatibility)::equals).isPresent();
-    }
-
-    /**
      * @param requiredCompatibility The required compatibility baseline
      * @return true if the configured compatibility is at least the required compatibility baseline
      */
