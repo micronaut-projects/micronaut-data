@@ -1500,14 +1500,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         addWriteExpression(values, property);
         String key = String.valueOf(values.size());
         String[] path = asStringPath(associations, property);
-        QueryParameterBinding parameterBinding = createParameterBinding(key, property, path);
-        parameterBindings.add(parameterBinding);
+        parameterBindings.add(createParameterBinding(key, property, path));
 
         String columnName = getMappedName(namingStrategy, associations, property);
         if (escape) {
             columnName = quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), parameterBinding, identity));
+        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), property, List.of(path), identity));
     }
 
     private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
@@ -1558,92 +1557,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
         for (UpsertColumn updateColumn : data.updateColumnsOrIdentity()) {
-            parameterBindings.add(copyParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.parameterBinding()));
+            parameterBindings.add(createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
         }
         return parameterBindings;
-    }
-
-    private QueryParameterBinding copyParameterBinding(String key, QueryParameterBinding parameterBinding) {
-        return new QueryParameterBinding() {
-            @Override
-            public String getName() {
-                return key;
-            }
-
-            @Override
-            public String getKey() {
-                return key;
-            }
-
-            @Override
-            public DataType getDataType() {
-                return parameterBinding.getDataType();
-            }
-
-            @Override
-            public JsonDataType getJsonDataType() {
-                return parameterBinding.getJsonDataType();
-            }
-
-            @Override
-            @Nullable
-            public String getConverterClassName() {
-                return parameterBinding.getConverterClassName();
-            }
-
-            @Override
-            public int getParameterIndex() {
-                return parameterBinding.getParameterIndex();
-            }
-
-            @Override
-            public String @Nullable [] getParameterBindingPath() {
-                return parameterBinding.getParameterBindingPath();
-            }
-
-            @Override
-            public String @Nullable [] getPropertyPath() {
-                return parameterBinding.getPropertyPath();
-            }
-
-            @Override
-            public boolean isAutoPopulated() {
-                return parameterBinding.isAutoPopulated();
-            }
-
-            @Override
-            public boolean isRequiresPreviousPopulatedValue() {
-                return parameterBinding.isRequiresPreviousPopulatedValue();
-            }
-
-            @Override
-            public boolean isExpandable() {
-                return parameterBinding.isExpandable();
-            }
-
-            @Override
-            @Nullable
-            public Object getValue() {
-                return parameterBinding.getValue();
-            }
-
-            @Override
-            public boolean isExpression() {
-                return parameterBinding.isExpression();
-            }
-
-            @Override
-            @Nullable
-            public String getRole() {
-                return parameterBinding.getRole();
-            }
-
-            @Override
-            @Nullable
-            public String getTableAlias() {
-                return parameterBinding.getTableAlias();
-            }
-        };
     }
 
     private String buildPostgresUpsert(String tableName, UpsertData data) {
@@ -1763,7 +1679,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private record UpsertColumn(String column,
                                 String value,
                                 String source,
-                                QueryParameterBinding parameterBinding,
+                                PersistentProperty property,
+                                List<String> path,
                                 boolean identity) {
     }
 
