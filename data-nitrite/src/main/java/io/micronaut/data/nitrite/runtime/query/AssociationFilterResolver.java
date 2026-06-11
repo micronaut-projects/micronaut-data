@@ -95,7 +95,9 @@ final class AssociationFilterResolver {
             // Dotted MANY_TO_ONE paths (e.g. "author.name") go through buildNestedFilter.
             if (field.contains(".")) return null;
             if (!useSubQuery || subQueryExecutor == null) return null;
-            return buildForwardLookupFilter(field, headAssoc, value, params, namedParameters);
+            // Use the association's persisted FK name (e.g. "widget_id"), not the raw property
+            // name ("widget"), so the final where(...).in(ids) targets the stored column.
+            return buildForwardLookupFilter(resolution.persistedField(), headAssoc, value, params, namedParameters);
         }
 
         if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
