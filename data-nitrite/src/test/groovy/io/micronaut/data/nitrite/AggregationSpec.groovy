@@ -66,6 +66,34 @@ class AggregationSpec extends Specification {
         Math.abs(result.get() - 100.0) < 0.01
     }
 
+    void "repository: findSumAmountByStatus returns sum of numeric values"() {
+        given:
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("100.00"), LocalDate.of(2024, 1, 10)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("200.00"), LocalDate.of(2024, 1, 5)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("1.00"), LocalDate.of(2024, 1, 1)))
+
+        when:
+        Optional<Double> result = repository.findSumAmountByStatus(Event.Status.ACTIVE)
+
+        then:
+        result.isPresent()
+        Math.abs(result.get() - 300.0) < 0.01
+    }
+
+    void "repository: findAvgAmountByStatus returns avg of numeric values"() {
+        given:
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("100.00"), LocalDate.of(2024, 1, 10)))
+        repository.save(event(Event.Status.ACTIVE, new BigDecimal("200.00"), LocalDate.of(2024, 1, 5)))
+        repository.save(event(Event.Status.INACTIVE, new BigDecimal("1.00"), LocalDate.of(2024, 1, 1)))
+
+        when:
+        Optional<Double> result = repository.findAvgAmountByStatus(Event.Status.ACTIVE)
+
+        then:
+        result.isPresent()
+        Math.abs(result.get() - 150.0) < 0.01
+    }
+
     void "repository: findMaxDateCreatedByStatus returns latest LocalDate"() {
         given:
         repository.save(event(Event.Status.ACTIVE, new BigDecimal("10.00"), LocalDate.of(2024, 1, 1)))

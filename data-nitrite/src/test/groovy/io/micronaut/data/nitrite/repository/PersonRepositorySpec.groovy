@@ -513,7 +513,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.findById(person.id).get().age == 30
     }
 
-    void "test is null query"() {
+    void "test is null query extended"() {
         given:
         def p1 = new Person("Alice", 25, true)
         def p2 = new Person("Bob", 30, null)
@@ -531,7 +531,7 @@ class PersonRepositorySpec extends Specification {
         results[0].name == null
     }
 
-    void "test is not null query"() {
+    void "test is not null query extended"() {
         given:
         def p1 = new Person("Alice", 25, true)
         def p2 = new Person("Bob", 30, null)

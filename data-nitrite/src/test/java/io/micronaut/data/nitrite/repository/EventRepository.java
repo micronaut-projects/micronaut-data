@@ -145,9 +145,42 @@ public interface EventRepository
   @Query("{\"type\": {\"$eq\": :type}}")
   Optional<Event> findByTypeWithQuery(String type);
 
+  @Query("{\"type\": {\"$ne\": :type}}")
+  List<Event> findByTypeNotEqualWithQuery(String type);
+
+  @Query("{\"payload\": {\"$regex\": :pattern}}")
+  List<Event> findByPayloadRegexWithQuery(String pattern);
+
+  @Query("{\"priority\": {\"$exists\": :exists}}")
+  List<Event> findByPriorityExistsWithQuery(Boolean exists);
+
+  @Query("{\"priority\": {\"$in\": :priorities}}")
+  List<Event> findByPriorityInWithQuery(List<Integer> priorities);
+
+  @Query("{\"priority\": {\"$nin\": :priorities}}")
+  List<Event> findByPriorityNotInWithQuery(List<Integer> priorities);
+
+  @Query("{\"payload\": {\"$like\": :pattern}}")
+  List<Event> findByPayloadLikeWithQuery(String pattern);
+
+  @Query("{\"priority\": {\"$not\": {\"$eq\": :priority}}}")
+  List<Event> findByPriorityNotWithQuery(Integer priority);
+
+  @Query("{\"payload\": {\"$empty\": :isEmpty}}")
+  List<Event> findByPayloadEmptyWithQuery(Boolean isEmpty);
+
+
+  @Query("{\"tags\": {\"$all\": :tags}}")
+  List<Event> findByTagsAllWithQuery(List<String> tags);
+
+  @Query("{\"type\": {\"$unknown\": :value}}")
+  List<Event> findByTypeUnknownWithQuery(String value);
+
   // Aggregation methods for Phase 5 coverage (must have a By clause to match the aggregation pattern)
   Optional<Double> findMaxAmountByStatus(Event.Status status);
   Optional<Double> findMinAmountByStatus(Event.Status status);
+  Optional<Double> findSumAmountByStatus(Event.Status status);
+  Optional<Double> findAvgAmountByStatus(Event.Status status);
 
   Optional<LocalDate> findMaxDateCreatedByStatus(Event.Status status);
   Optional<LocalDate> findMinDateCreatedByStatus(Event.Status status);

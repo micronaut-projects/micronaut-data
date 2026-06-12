@@ -89,4 +89,35 @@ class NitriteSaveAllCascadeSpec extends Specification {
             allAuthors.size() == 2
             allAuthors*.name.sort() == ["James Patterson", "Stephen King"].sort()
     }
+
+    void "test saveAll with duplicate existing entities (deduplication)"() {
+        given:
+            def author1 = new Author(name: "Author 1")
+            authorRepository.save(author1)
+
+        when: "saving a list that contains the same instance multiple times"
+            author1.name = "Updated Name"
+            authorRepository.saveAll([author1, author1, author1])
+
+        then: "deduplicates and upserts exactly once"
+            authorRepository.count() == 1
+            authorRepository.findById(author1.id).get().name == "Updated Name"
+    }
+
+    void "test saveAll with existing IDs (upsert)"() {
+        given:
+            def author1 = new Author(name: "Author 1")
+            def author2 = new Author(name: "Author 2")
+            authorRepository.saveAll([author1, author2])
+
+        when: "modifying entities that already have IDs and saving them again via saveAll"
+            author1.name = "Author 1 Updated"
+            author2.name = "Author 2 Updated"
+            authorRepository.saveAll([author1, author2])
+
+        then: "upserts (updates) the existing rows instead of creating new ones"
+            authorRepository.count() == 2
+            def names = authorRepository.findAll().toList()*.name.sort()
+            names == ["Author 1 Updated", "Author 2 Updated"]
+    }
 }
