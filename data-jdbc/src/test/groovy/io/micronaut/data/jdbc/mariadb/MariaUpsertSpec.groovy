@@ -15,14 +15,14 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-import io.micronaut.data.jdbc.mysql.MySqlUpsertEntityRepository
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.jdbc.mysql.upsert.MySqlProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(MySqlUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(MySqlProductReviewRepository)
     }
 }

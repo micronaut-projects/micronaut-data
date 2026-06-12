@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.oraclexe;
+package io.micronaut.data.jdbc.mysql.upsert;
 
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.repositories.UpsertEntityRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
-@R2dbcRepository(dialect = Dialect.ORACLE)
-public interface OracleXEUpsertEntityRepository extends UpsertEntityRepository {
+@JdbcRepository(dialect = Dialect.MYSQL)
+public interface MySqlProductReviewRepository extends ProductReviewRepository {
 }

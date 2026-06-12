@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(OracleXEUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(OracleXEProductReviewRepository)
     }
 }

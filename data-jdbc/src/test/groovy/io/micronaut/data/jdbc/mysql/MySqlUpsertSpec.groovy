@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.jdbc.mysql.upsert.MySqlProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class MySqlUpsertSpec extends AbstractUpsertSpec implements MySQLTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(MySqlUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(MySqlProductReviewRepository)
     }
 }

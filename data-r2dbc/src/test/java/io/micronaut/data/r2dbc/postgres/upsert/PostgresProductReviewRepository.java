@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.postgres;
+package io.micronaut.data.r2dbc.postgres.upsert;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.repositories.UpsertEntityRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresUpsertEntityRepository extends UpsertEntityRepository {
+public interface PostgresProductReviewRepository extends ProductReviewRepository {
 }

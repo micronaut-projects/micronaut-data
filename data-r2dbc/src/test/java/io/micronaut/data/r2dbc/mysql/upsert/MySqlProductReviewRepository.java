@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.repositories;
+package io.micronaut.data.r2dbc.mysql.upsert;
 
-import io.micronaut.data.annotation.Upsert;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.entities.UpsertEntity;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
-import java.util.List;
-
-public interface UpsertEntityRepository extends CrudRepository<UpsertEntity, Long> {
-
-    UpsertEntity upsert(UpsertEntity entity);
-
-    List<UpsertEntity> upsertAll(Iterable<UpsertEntity> entities);
-
-    @Upsert
-    UpsertEntity put(UpsertEntity entity);
-
-    @Upsert
-    List<UpsertEntity> putAll(Iterable<UpsertEntity> entities);
+@R2dbcRepository(dialect = Dialect.MYSQL)
+public interface MySqlProductReviewRepository extends ProductReviewRepository {
 }

@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.entities;
+package io.micronaut.data.r2dbc.oraclexe.upsert;
 
-import io.micronaut.data.annotation.MappedEntity;
-import jakarta.persistence.Id;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
-@MappedEntity("upsert_entity")
-public record UpsertEntity(
-    @Id Long id,
-    String name,
-    String description) {
+@R2dbcRepository(dialect = Dialect.ORACLE)
+public interface OracleXEProductReviewRepository extends ProductReviewRepository {
 }

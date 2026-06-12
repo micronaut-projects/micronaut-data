@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2;
+package io.micronaut.data.tck.jdbc.entities.upsert;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.UpsertEntityRepository;
+import io.micronaut.data.annotation.MappedEntity;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface H2UpsertEntityRepository extends UpsertEntityRepository {
+@MappedEntity
+public record ProductReview(
+    @Id
+    Long id,
+
+    @NotBlank
+    String title,
+
+    @NotBlank
+    String content) {
 }

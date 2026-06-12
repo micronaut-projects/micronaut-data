@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.oraclexe;
+package io.micronaut.data.jdbc.postgres.upsert;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.UpsertEntityRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
-public interface OracleXEUpsertEntityRepository extends UpsertEntityRepository {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface PostgresProductReviewRepository extends ProductReviewRepository {
 }

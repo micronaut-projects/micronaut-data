@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.jdbc.sqlserver.upsert.MSProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class SqlServerUpsertSpec extends AbstractUpsertSpec implements MSSQLTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(MSUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(MSProductReviewRepository)
     }
 }

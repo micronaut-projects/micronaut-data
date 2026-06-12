@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.jdbc.postgres.upsert.PostgresProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(PostgresUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(PostgresProductReviewRepository)
     }
 }

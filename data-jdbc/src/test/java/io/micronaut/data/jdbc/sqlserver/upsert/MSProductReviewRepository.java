@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.h2;
+package io.micronaut.data.jdbc.sqlserver.upsert;
 
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.tck.repositories.UpsertEntityRepository;
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository;
 
-@R2dbcRepository(dialect = Dialect.H2)
-public interface H2UpsertEntityRepository extends UpsertEntityRepository {
+@JdbcRepository(dialect = Dialect.SQL_SERVER)
+public interface MSProductReviewRepository extends ProductReviewRepository {
 }

@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.r2dbc.sqlserver
 
-import io.micronaut.data.tck.repositories.UpsertEntityRepository
+import io.micronaut.data.r2dbc.sqlserver.upsert.MSProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class SqlServerUpsertSpec extends AbstractUpsertSpec implements SqlServerTestPropertyProvider {
 
     @Override
-    UpsertEntityRepository getUpsertEntityRepository() {
-        return context.getBean(MSUpsertEntityRepository)
+    ProductReviewRepository getProductReviewRepository() {
+        return context.getBean(MSProductReviewRepository)
     }
 }
