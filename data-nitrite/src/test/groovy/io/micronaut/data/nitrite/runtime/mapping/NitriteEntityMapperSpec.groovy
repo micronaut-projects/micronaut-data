@@ -109,6 +109,24 @@ class NitriteEntityMapperSpec extends Specification {
         (infoDoc.get("foo") as Document).get("val") == "custom-val"
     }
 
+    def "test serializeForDocument fallback paths for store values"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+
+        when: "an id map holds a Serde-incompatible (but Serializable) POJO and a raw array"
+        def id = new CustomId(info: [bad: new PlainSerializable(), arr: [1, 2, 3] as int[]])
+        def doc = mapper.toDocument(new CustomIdEntity(id: id))
+
+        then:
+        def infoDoc = (doc.get("id") as Document).get("info") as Document
+
+        and: "the Serde-incompatible value is stored as-is (writeValueAsString throws, caught)"
+        infoDoc.get("bad") instanceof PlainSerializable
+
+        and: "a raw array (java type) is stored as-is, Serde skipped"
+        infoDoc.get("arr") as int[] == [1, 2, 3] as int[]
+    }
+
     def "test Map conversion with nested POJOs"() {
         given:
         def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
@@ -222,4 +240,10 @@ class CustomSerializable implements Serializable {
 }
 
 class NonSerdeable {
+}
+
+// Serializable so Nitrite can store it, but no @Serdeable/@Introspected so Serde
+// serialization throws -> serializeForDocument falls into its catch and returns it as-is.
+class PlainSerializable implements Serializable {
+    String data = "x"
 }
