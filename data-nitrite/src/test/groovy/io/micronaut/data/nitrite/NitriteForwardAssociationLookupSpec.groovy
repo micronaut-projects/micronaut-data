@@ -39,4 +39,38 @@ class NitriteForwardAssociationLookupSpec extends Specification {
         then:
         orders*.orderNumber as Set == ["A-1", "A-2"] as Set
     }
+
+    void "MANY_TO_ONE query with a valid UUID String matches by FK directly"() {
+        given:
+        def anvil = widgetRepository.save(new Widget("Anvil Pro"))
+        def lathe = widgetRepository.save(new Widget("Lathe"))
+        orderRepository.saveAll([
+                new WidgetOrder("A-1", anvil),
+                new WidgetOrder("L-1", lathe)
+        ])
+
+        when: "a real 36-char UUID is recognised as the FK id (looksLikeId true), not a sub-query value"
+        def orders = orderRepository.findByWidgetStringValue(anvil.id.toString())
+
+        then:
+        orders*.orderNumber as Set == ["A-1"] as Set
+    }
+
+    void "MANY_TO_ONE query with a non-id UUID-shaped String falls back to a sub-query"() {
+        given:
+        def anvil = widgetRepository.save(new Widget("Anvil Pro"))
+        orderRepository.save(new WidgetOrder("A-1", anvil))
+
+        when: "36 chars in UUID dash layout but invalid hex is not an id (looksLikeId false) -> sub-query, no match"
+        def malformed = orderRepository.findByWidgetStringValue("gggggggg-gggg-gggg-gggg-gggggggggggg")
+
+        then:
+        malformed.isEmpty()
+
+        when: "an empty String is not an id -> sub-query, no match"
+        def empty = orderRepository.findByWidgetStringValue("")
+
+        then:
+        empty.isEmpty()
+    }
 }
