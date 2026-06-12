@@ -66,7 +66,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -1235,32 +1234,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);
-                    parameterBindings.add(new QueryParameterBinding() {
-                        @Override
-                        public String getName() {
-                            return key;
-                        }
-
-                        @Override
-                        public String getKey() {
-                            return key;
-                        }
-
-                        @Override
-                        public DataType getDataType() {
-                            return property.getDataType();
-                        }
-
-                        @Override
-                        public JsonDataType getJsonDataType() {
-                            return property.getJsonDataType();
-                        }
-
-                        @Override
-                        public String[] getPropertyPath() {
-                            return path;
-                        }
-                    });
+                    parameterBindings.add(createParameterBinding(key, property, path));
 
                     String columnName = getMappedName(namingStrategy, associations, property);
                     unescapedColumns.add(columnName);
@@ -1349,34 +1323,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                         String key = String.valueOf(values.size());
                         String[] path = asStringPath(associations, property);
-                        parameterBindings.add(new QueryParameterBinding() {
-
-                            @Override
-                            public String getName() {
-                                return key;
-                            }
-
-                            @Override
-                            public String getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return property.getDataType();
-                            }
-
-                            @Override
-                            public JsonDataType getJsonDataType() {
-                                return property.getJsonDataType();
-                            }
-
-                            @Override
-                            public String[] getPropertyPath() {
-                                return path;
-                            }
-                        });
-
+                        parameterBindings.add(createParameterBinding(key, property, path));
                     }
 
                     columns.add(columnName);
@@ -1507,35 +1454,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             columnName = quote(columnName);
         }
         columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), property, List.of(path), identity));
-    }
-
-    private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
-        return new QueryParameterBinding() {
-            @Override
-            public String getName() {
-                return key;
-            }
-
-            @Override
-            public String getKey() {
-                return key;
-            }
-
-            @Override
-            public DataType getDataType() {
-                return property.getDataType();
-            }
-
-            @Override
-            public JsonDataType getJsonDataType() {
-                return property.getJsonDataType();
-            }
-
-            @Override
-            public String[] getPropertyPath() {
-                return path;
-            }
-        };
     }
 
     private String buildH2Upsert(String tableName, UpsertData data) {
@@ -1682,6 +1600,35 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 PersistentProperty property,
                                 List<String> path,
                                 boolean identity) {
+    }
+
+    private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
+        return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return key;
+            }
+
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return property.getDataType();
+            }
+
+            @Override
+            public JsonDataType getJsonDataType() {
+                return property.getJsonDataType();
+            }
+
+            @Override
+            public String[] getPropertyPath() {
+                return path;
+            }
+        };
     }
 
     private String[] asStringPath(List<Association> associations, PersistentProperty property) {
