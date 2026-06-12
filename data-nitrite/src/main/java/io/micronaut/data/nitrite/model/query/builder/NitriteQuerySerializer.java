@@ -69,10 +69,6 @@ final class NitriteQuerySerializer {
         return "'" + obj.toString().replace("'", "\\'") + "'";
     }
 
-    static String convertLikeToRegex(String likePattern) {
-        return likePattern.replace("%", ".*").replace("_", ".");
-    }
-
     private static boolean needsQuoting(String key) {
         for (char c : key.toCharArray()) {
             if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {

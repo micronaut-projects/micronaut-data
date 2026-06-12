@@ -37,10 +37,39 @@ class NitriteQueryBuilderSpec extends Specification {
     @Inject
     CriteriaAuthorRepository criteriaAuthorRepository
 
+    @Inject
+    io.micronaut.data.model.runtime.RuntimeEntityRegistry runtimeEntityRegistry
+
     def setup() {
         eventRepository.deleteAll()
         criteriaBookRepository.deleteAll()
         criteriaAuthorRepository.deleteAll()
+    }
+
+    void "test NitriteQueryBuilder buildUpdate getQueryParts"() {
+        given: "A query builder and an update definition"
+        def builder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def definition = new io.micronaut.data.model.query.builder.QueryBuilder.UpdateQueryDefinition() {
+            @Override
+            io.micronaut.data.model.PersistentEntity persistentEntity() { return entity }
+            @Override
+            java.util.Map<String, Object> propertiesToUpdate() { return ["type": "NEW"] }
+            @Override
+            jakarta.persistence.criteria.Predicate predicate() { return null }
+            @Override
+            java.util.Collection getJoinPaths() { return [] }
+            @Override
+            java.util.Optional getJoinPath(String s) { return java.util.Optional.empty() }
+            @Override
+            jakarta.persistence.criteria.Selection returningSelection() { return null }
+        }
+
+        when: "Building an update"
+        def result = builder.buildUpdate(io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then: "getQueryParts returns empty list"
+        result.getQueryParts() == Collections.emptyList()
     }
 
     // ========== Bug #1: buildInsert returns null ==========
