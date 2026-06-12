@@ -427,7 +427,7 @@ interface MyInterface extends GenericRepository<Food, UUID> {
     @Unroll
     void "test build upsert for dialect - #dialect"() {
         given:
-            BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -479,38 +479,38 @@ class Test {
 """)
 
         when:
-            def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
-            def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
-            def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
+        def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+        def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
 
         then:
-            getOperationType(upsertMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(upsertMethod) == UpdateEntityInterceptor.name
-            getQuery(upsertMethod) == query
-            getParameterPropertyPaths(upsertMethod) == parameterPropertyPaths as String[]
-            getOperationType(putMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
-            getQuery(putMethod) == query
-            getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
-            getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
-            getQuery(putAllMethod) == query
-            getParameterPropertyPaths(putAllMethod) == parameterPropertyPaths as String[]
+        getOperationType(upsertMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(upsertMethod) == UpdateEntityInterceptor.name
+        getQuery(upsertMethod) == query
+        getParameterPropertyPaths(upsertMethod) == parameterPropertyPaths as String[]
+        getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+        getQuery(putMethod) == query
+        getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
+        getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
+        getQuery(putAllMethod) == query
+        getParameterPropertyPaths(putAllMethod) == parameterPropertyPaths as String[]
 
         where:
-            dialect            | query                                                                                                                                                                                                                                                                                                                                                           | parameterPropertyPaths
-            Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."id"=source.c2) WHEN MATCHED THEN UPDATE SET target."name"=source.c0,target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                                  | ["name", "pages", "id"]
-            Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`id`) VALUES (?,?,?)'                                                                                                                                                                                                                                                        | ["name", "pages", "id"]
-            Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=?,`pages`=?'                                                                                                                                                                                                                       | ["name", "pages", "id", "name", "pages"]
-            Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."ID"=source.c2) WHEN MATCHED THEN UPDATE SET target."NAME"=source.c0,target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                              | ["name", "pages", "id"]
-            Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("id") DO UPDATE SET "name"=EXCLUDED."name","pages"=EXCLUDED."pages"'                                                                                                                                                                                 | ["name", "pages", "id"]
-            Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[id]=source.c2 WHEN MATCHED THEN UPDATE SET target.[name]=source.c0,target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'                 | ["name", "pages", "id"]
+        dialect            | query                                                                                                                                                                                                                                                                                              | parameterPropertyPaths
+        Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."id"=source.c2) WHEN MATCHED THEN UPDATE SET target."name"=source.c0,target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                      | ["name", "pages", "id"]
+        Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`id`) VALUES (?,?,?)'                                                                                                                                                                                                                          | ["name", "pages", "id"]
+        Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name`=?,`pages`=?'                                                                                                                                                                                        | ["name", "pages", "id", "name", "pages"]
+        Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."ID"=source.c2) WHEN MATCHED THEN UPDATE SET target."NAME"=source.c0,target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                | ["name", "pages", "id"]
+        Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("id") DO UPDATE SET "name"=EXCLUDED."name","pages"=EXCLUDED."pages"'                                                                                                                                                  | ["name", "pages", "id"]
+        Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[id]=source.c2 WHEN MATCHED THEN UPDATE SET target.[name]=source.c0,target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);' | ["name", "pages", "id"]
     }
 
     @Unroll
     void "test build upsert with conflict properties for dialect - #dialect"() {
         given:
-            BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -557,27 +557,104 @@ class Test {
 """)
 
         when:
-            def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
 
         then:
-            getOperationType(putMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
-            getQuery(putMethod) == query
-            getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
+        getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+        getQuery(putMethod) == query
+        getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
 
         where:
-            dialect            | query                                                                                                                                                                                                                                                                                                                        | parameterPropertyPaths
-            Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."name"=source.c0) WHEN MATCHED THEN UPDATE SET target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                                  | ["name", "pages", "id"]
-            Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`name`) VALUES (?,?,?)'                                                                                                                                                                                                                         | ["name", "pages", "id"]
-            Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `pages`=?'                                                                                                                                                                                                  | ["name", "pages", "id", "pages"]
-            Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                              | ["name", "pages", "id"]
-            Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("name") DO UPDATE SET "pages"=EXCLUDED."pages"'                                                                                                                                                                         | ["name", "pages", "id"]
-            Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[name]=source.c0 WHEN MATCHED THEN UPDATE SET target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'                 | ["name", "pages", "id"]
+        dialect            | query                                                                                                                                                                                                                                                                        | parameterPropertyPaths
+        Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."name"=source.c0) WHEN MATCHED THEN UPDATE SET target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                      | ["name", "pages", "id"]
+        Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`name`) VALUES (?,?,?)'                                                                                                                                                                                                  | ["name", "pages", "id"]
+        Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `pages`=?'                                                                                                                                                                           | ["name", "pages", "id", "pages"]
+        Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                | ["name", "pages", "id"]
+        Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("name") DO UPDATE SET "pages"=EXCLUDED."pages"'                                                                                                                                                 | ["name", "pages", "id"]
+        Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[name]=source.c0 WHEN MATCHED THEN UPDATE SET target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);' | ["name", "pages", "id"]
+    }
+
+    @Unroll
+    void "test build upsert with multiple conflict properties for dialect - #dialect"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect=Dialect.${dialect.name()})
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictProperties = {"name", "pages"})
+    Test put(Test test);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    private String name;
+    private Integer pages;
+    private String description;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+}
+""")
+
+        when:
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+
+        then:
+        getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+        getQuery(putMethod) == query
+        getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
+
+        where:
+        dialect            | query                                                                                                                                                                                                                                                                                                                                        | parameterPropertyPaths
+        Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?,?)) source (c0,c1,c2,c3) ON (target."name"=source.c0 AND target."pages"=source.c1) WHEN MATCHED THEN UPDATE SET target."description"=source.c2 WHEN NOT MATCHED THEN INSERT ("name","pages","description","id") VALUES (source.c0,source.c1,source.c2,source.c3)'                      | ["name", "pages", "description", "id"]
+        Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`description`,`id`) KEY(`name`,`pages`) VALUES (?,?,?,?)'                                                                                                                                                                                                                                          | ["name", "pages", "description", "id"]
+        Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`description`,`id`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `description`=?'                                                                                                                                                                                                                     | ["name", "pages", "description", "id", "description"]
+        Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2,? c3 FROM DUAL) source ON (target."NAME"=source.c0 AND target."PAGES"=source.c1) WHEN MATCHED THEN UPDATE SET target."DESCRIPTION"=source.c2 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","DESCRIPTION","ID") VALUES (source.c0,source.c1,source.c2,source.c3)'                | ["name", "pages", "description", "id"]
+        Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","description","id") VALUES (?,?,?,?) ON CONFLICT ("name","pages") DO UPDATE SET "description"=EXCLUDED."description"'                                                                                                                                                                             | ["name", "pages", "description", "id"]
+        Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?,?)) AS source (c0,c1,c2,c3) ON target.[name]=source.c0 AND target.[pages]=source.c1 WHEN MATCHED THEN UPDATE SET target.[description]=source.c2 WHEN NOT MATCHED THEN INSERT ([name],[pages],[description],[id]) VALUES (source.c0,source.c1,source.c2,source.c3);' | ["name", "pages", "description", "id"]
     }
 
     void "test annotated upsert on repository without base interface"() {
         given:
-            BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -618,24 +695,24 @@ class Test {
 """)
 
         when:
-            def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
-            def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+        def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
 
         then:
-            getOperationType(putMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
-            getQuery(putMethod) == 'MERGE INTO `upsert_test` (`name`,`id`) KEY(`id`) VALUES (?,?)'
-            getParameterPropertyPaths(putMethod) == ["name", "id"] as String[]
-            getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
-            getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
-            getQuery(putAllMethod) == 'MERGE INTO `upsert_test` (`name`,`id`) KEY(`id`) VALUES (?,?)'
-            getParameterPropertyPaths(putAllMethod) == ["name", "id"] as String[]
+        getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+        getQuery(putMethod) == 'MERGE INTO `upsert_test` (`name`,`id`) KEY(`id`) VALUES (?,?)'
+        getParameterPropertyPaths(putMethod) == ["name", "id"] as String[]
+        getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
+        getQuery(putAllMethod) == 'MERGE INTO `upsert_test` (`name`,`id`) KEY(`id`) VALUES (?,?)'
+        getParameterPropertyPaths(putAllMethod) == ["name", "id"] as String[]
     }
 
     @Unroll
     void "test build upsert fails for unsupported explicit upsert - #description"() {
         when:
-            buildRepository('test.MyInterface', """
+        buildRepository('test.MyInterface', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
@@ -683,18 +760,18 @@ class Test {
 """)
 
         then:
-            def ex = thrown(RuntimeException)
-            ex.message.contains("Cannot implement explicit upsert query: ${message}")
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Cannot implement explicit upsert query: ${message}")
 
         where:
-            description                         | methodRepresentation                                                                                   | entityRepresentation                                                                                   | idAnnotation               | versionAnnotation | message
-            "method JSON representation"        | "@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)" | ""                                                                                                     | "@Id"                      | ""                | "JSON entity representation is not supported"
-            "entity JSON representation"        | ""                                                                                                     | "@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)" | "@Id"                      | ""                | "JSON entity representation is not supported"
-            "missing identity"                  | ""                                                                                                     | ""                                                                                                     | ""                         | ""                | "entity does not define an identity"
-            "versioned entity"                  | ""                                                                                                     | ""                                                                                                     | "@Id"                      | "@Version"        | "versioned entities are not supported"
-            "generated identity"                | ""                                                                                                     | ""                                                                                                     | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
-            "blank conflict property"           | "@Upsert(conflictProperties = \"\")"                                                                   | ""                                                                                                     | "@Id"                      | ""                | "conflict property cannot be blank"
-            "unknown conflict property"         | "@Upsert(conflictProperties = \"missing\")"                                                            | ""                                                                                                     | "@Id"                      | ""                | "conflict property does not exist: missing"
+        description                  | methodRepresentation                                                                                                | entityRepresentation                                                                                                | idAnnotation               | versionAnnotation | message
+        "method JSON representation" | "@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)" | ""                                                                                                                  | "@Id"                      | ""                | "JSON entity representation is not supported"
+        "entity JSON representation" | ""                                                                                                                  | "@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)" | "@Id"                      | ""                | "JSON entity representation is not supported"
+        "missing identity"           | ""                                                                                                                  | ""                                                                                                                  | ""                         | ""                | "entity does not define an identity"
+        "versioned entity"           | ""                                                                                                                  | ""                                                                                                                  | "@Id"                      | "@Version"        | "versioned entities are not supported"
+        "generated identity"         | ""                                                                                                                  | ""                                                                                                                  | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
+        "blank conflict property"    | "@Upsert(conflictProperties = \"\")"                                                                                | ""                                                                                                                  | "@Id"                      | ""                | "conflict property cannot be blank"
+        "unknown conflict property"  | "@Upsert(conflictProperties = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
     }
 
     void "POSTGRES test build save returning "() {
