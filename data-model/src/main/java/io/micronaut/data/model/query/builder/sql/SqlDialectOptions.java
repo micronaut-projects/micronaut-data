@@ -16,10 +16,11 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.version.SemanticVersion;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -29,39 +30,41 @@ import java.util.Optional;
  * Resolved SQL dialect options used during SQL generation and runtime binding.
  *
  * @param dialect The dialect these options apply to.
- * @param compatibility A named compatibility level.
+ * @param version The target dialect version.
  */
 @Internal
 public record SqlDialectOptions(
     Dialect dialect,
-    Optional<String> compatibility
+    Optional<String> version
 ) {
 
     /**
-     * Compatibility baseline that enables Oracle 23.1 compatible SQL generation.
+     * Oracle version that enables native SQL boolean generation.
      */
-    public static final String ORACLE_23_1_COMPATIBILITY = "ORACLE_23_1";
+    public static final String ORACLE_23_1_VERSION = "23.1.0";
 
     /**
-     * Annotation processor option prefix for SQL dialect compatibility.
+     * Annotation processor option prefix for SQL dialect options.
      */
     public static final String DIALECT_OPTIONS_CONFIGURATION_PREFIX = "micronaut.data.sql.dialect-options";
 
     /**
-     * Annotation/configuration member for compatibility.
+     * Annotation/configuration member for target dialect version.
      */
-    public static final String MEMBER_COMPATIBILITY = "dialectOptionsCompatibility";
+    public static final String MEMBER_VERSION = "version";
+
+    private static final String DIALECT_MEMBER = "dialect";
 
     /**
      * Creates dialect options.
      *
      * @param dialect The dialect
-     * @param compatibility The compatibility value
+     * @param version The target dialect version
      */
     public SqlDialectOptions {
         Objects.requireNonNull(dialect, "Dialect cannot be null");
-        Objects.requireNonNull(compatibility, "Compatibility cannot be null");
-        compatibility = compatibility.map(SqlDialectOptions::normalize);
+        Objects.requireNonNull(version, "Version cannot be null");
+        version = version.flatMap(SqlDialectOptions::normalizeVersionOptional);
     }
 
     /**
@@ -76,14 +79,14 @@ public record SqlDialectOptions(
      * Create options from explicit values.
      *
      * @param dialect The dialect
-     * @param compatibility The compatibility
+     * @param version The target dialect version
      * @return resolved dialect options
      */
-    public static SqlDialectOptions of(Dialect dialect, @Nullable String compatibility) {
-        Optional<String> compatibilityValue = Optional.ofNullable(compatibility)
+    public static SqlDialectOptions of(Dialect dialect, @Nullable String version) {
+        Optional<String> versionValue = Optional.ofNullable(version)
             .filter(val -> !val.isBlank())
-            .map(SqlDialectOptions::normalize);
-        return new SqlDialectOptions(dialect, compatibilityValue);
+            .flatMap(SqlDialectOptions::normalizeVersionOptional);
+        return new SqlDialectOptions(dialect, versionValue);
     }
 
     /**
@@ -94,106 +97,87 @@ public record SqlDialectOptions(
      * @return resolved dialect options
      */
     public static SqlDialectOptions of(AnnotationMetadata annotationMetadata, Dialect dialect) {
-        String compatibility = annotationMetadata.stringValue(SqlQueryConfiguration.class, MEMBER_COMPATIBILITY).orElse(null);
-        return of(dialect, compatibility);
+        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+        if (annotation != null) {
+            List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(
+                AnnotationMetadata.VALUE_MEMBER,
+                SqlQueryConfiguration.DialectConfiguration.class
+            );
+            for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
+                Optional<Dialect> configuredDialect = dialectConfig.enumValue(DIALECT_MEMBER, Dialect.class);
+                if (configuredDialect.isPresent() && configuredDialect.get() == dialect) {
+                    return of(dialect, dialectConfig.stringValue(MEMBER_VERSION).orElse(null));
+                }
+            }
+        }
+        return defaults(dialect);
     }
 
     /**
-     * Resolve the annotation processor option key for a dialect compatibility value.
+     * Resolve the annotation processor option key for a dialect target version.
      *
      * @param dialect The dialect
      * @return The annotation processor option key
      */
-    public static String compatibilityConfiguration(Dialect dialect) {
+    public static String versionConfiguration(Dialect dialect) {
         Objects.requireNonNull(dialect, "Dialect cannot be null");
-        return DIALECT_OPTIONS_CONFIGURATION_PREFIX + "." + normalizeDialectName(dialect) + ".compatibility";
+        return DIALECT_OPTIONS_CONFIGURATION_PREFIX + "." + normalizeDialectName(dialect) + ".version";
     }
 
     /**
-     * @param requiredCompatibility The required compatibility baseline
-     * @return true if the configured compatibility is at least the required compatibility baseline
+     * @param requiredVersion The required target dialect version
+     * @return true if the configured target dialect version is at least the required version
      */
-    public boolean isAtLeast(@Nullable String requiredCompatibility) {
-        if (requiredCompatibility == null || requiredCompatibility.isBlank()) {
+    public boolean isVersionAtLeast(@Nullable String requiredVersion) {
+        if (requiredVersion == null || requiredVersion.isBlank()) {
             return false;
         }
-        Optional<CompatibilityBaseline> requiredBaseline = parseCompatibility(requiredCompatibility);
-        if (requiredBaseline.isEmpty() || requiredBaseline.get().dialect() != dialect) {
+        try {
+            String normalizedRequiredVersion = normalizeVersion(requiredVersion);
+            return version
+                .filter(configuredVersion -> SemanticVersion.isAtLeast(configuredVersion, normalizedRequiredVersion))
+                .isPresent();
+        } catch (IllegalArgumentException e) {
             return false;
         }
-        return compatibility
-            .flatMap(SqlDialectOptions::parseCompatibility)
-            .filter(configuredBaseline -> configuredBaseline.isAtLeast(requiredBaseline.get()))
-            .isPresent();
     }
 
-    private static String normalize(String value) {
-        return value.trim().replace('-', '_').replace('.', '_').toUpperCase(Locale.ENGLISH);
+    private static String normalizeVersion(String value) {
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("Version cannot be blank");
+        }
+        String[] parts = normalized.split("\\.", -1);
+        if (parts.length > 3) {
+            throw new IllegalArgumentException("Version must use at most major.minor.patch");
+        }
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                throw new IllegalArgumentException("Version parts cannot be blank");
+            }
+            for (int i = 0; i < part.length(); i++) {
+                if (!Character.isDigit(part.charAt(i))) {
+                    throw new IllegalArgumentException("Version must use dot-separated numeric notation");
+                }
+            }
+        }
+        return switch (parts.length) {
+            case 1 -> normalized + ".0.0";
+            case 2 -> normalized + ".0";
+            case 3 -> normalized;
+            default -> throw new IllegalArgumentException("Version cannot be empty");
+        };
+    }
+
+    private static Optional<String> normalizeVersionOptional(String value) {
+        try {
+            return Optional.of(normalizeVersion(value));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
     private static String normalizeDialectName(Dialect dialect) {
         return dialect.name().toLowerCase(Locale.ENGLISH).replace('_', '-');
-    }
-
-    private static Optional<CompatibilityBaseline> parseCompatibility(String value) {
-        String normalized = normalize(value);
-        for (Dialect dialect : Dialect.values()) {
-            String prefix = normalize(dialect.name());
-            if (normalized.startsWith(prefix + "_")) {
-                return parseVersion(normalized.substring(prefix.length() + 1))
-                    .map(version -> new CompatibilityBaseline(dialect, version));
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<List<Integer>> parseVersion(String version) {
-        List<Integer> parsed = new ArrayList<>();
-        int currentPart = 0;
-        boolean hasDigit = false;
-        for (int i = 0; i < version.length(); i++) {
-            char ch = version.charAt(i);
-            if (ch == '_') {
-                if (!hasDigit) {
-                    return Optional.empty();
-                }
-                parsed.add(currentPart);
-                currentPart = 0;
-                hasDigit = false;
-                continue;
-            }
-            if (!Character.isDigit(ch)) {
-                return Optional.empty();
-            }
-            int digit = ch - '0';
-            if (currentPart > (Integer.MAX_VALUE - digit) / 10) {
-                return Optional.empty();
-            }
-            currentPart = currentPart * 10 + digit;
-            hasDigit = true;
-        }
-        if (!hasDigit) {
-            return Optional.empty();
-        }
-        parsed.add(currentPart);
-        return Optional.of(parsed);
-    }
-
-    private record CompatibilityBaseline(Dialect dialect, List<Integer> version) {
-
-        boolean isAtLeast(CompatibilityBaseline required) {
-            if (dialect != required.dialect) {
-                return false;
-            }
-            int length = Math.max(version.size(), required.version.size());
-            for (int i = 0; i < length; i++) {
-                int configuredPart = i < version.size() ? version.get(i) : 0;
-                int requiredPart = i < required.version.size() ? required.version.get(i) : 0;
-                if (configuredPart != requiredPart) {
-                    return configuredPart > requiredPart;
-                }
-            }
-            return true;
-        }
     }
 }

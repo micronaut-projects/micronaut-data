@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.oraclexe
 import io.micronaut.data.runtime.config.SchemaGenerate
 
 /**
- * Used for tests that need Oracle 23+ compatibility options.
+ * Used for tests that need Oracle 23+ target version options.
  */
 trait Oracle23TestPropertyProvider extends OracleTestPropertyProvider {
 
@@ -15,7 +15,7 @@ trait Oracle23TestPropertyProvider extends OracleTestPropertyProvider {
     @Override
     Map<String, String> getProperties() {
         return super.getProperties() + [
-            "datasources.default.dialect-options.compatibility": "ORACLE_23_1"
+            "datasources.default.dialect-options.version": "23.1"
         ]
     }
 }

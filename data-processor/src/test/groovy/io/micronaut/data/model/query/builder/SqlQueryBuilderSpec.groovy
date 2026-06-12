@@ -210,7 +210,7 @@ interface MyRepository {
         insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
-    void 'test configure dialect options compatibility'() {
+    void 'test configure dialect options version'() {
         given:
         def annotationMetadata = buildTypeAnnotationMetadata('''
 package test;
@@ -226,7 +226,7 @@ interface MyRepository {
 @RepositoryConfiguration(
         queryBuilder = SqlQueryBuilder.class
 )
-@SqlQueryConfiguration(dialectOptionsCompatibility = "oracle-23.1")
+@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = Dialect.ORACLE, version = "23.1"))
 @Retention(RetentionPolicy.RUNTIME)
 @Repository
 @interface MyAnnotation {
@@ -240,7 +240,7 @@ interface MyRepository {
 
         then:
         sqlQueryBuilder.dialect == Dialect.ORACLE
-        sqlQueryBuilder.dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+        sqlQueryBuilder.dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
     }
 
     void "test encode update with JSON and MySQL"() {
@@ -273,7 +273,7 @@ interface MyRepository {
         def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
         def nativeBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION)
         )
 
         when:
@@ -289,7 +289,7 @@ interface MyRepository {
         def laterBaselineDeleteRoot = laterBaselineDeleteQuery.from(Contact)
         def laterBaselineBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.of(Dialect.ORACLE, "ORACLE_23_4")
+            SqlDialectOptions.of(Dialect.ORACLE, "23.4")
         )
 
         when:

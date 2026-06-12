@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
@@ -60,7 +61,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
 
-    private static final Object DIALECT_OPTIONS_COMPATIBILITY_LOCK = new Object()
+    private static final Object DIALECT_OPTIONS_VERSION_LOCK = new Object()
 
     void "test to-many join on repository type that inherits from CrudRepository"() {
         given:
@@ -1078,7 +1079,7 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" = 0)'
     }
 
-    void "test oracle boolean query generation uses native literals with ORACLE_23_1 compatibility"() {
+    void "test oracle boolean query generation uses native literals with 23.1 version"() {
         given:
         def repository = buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
@@ -1087,12 +1088,10 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
 interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
     List<OracleBooleanEntity> findByActiveTrue();
     List<OracleBooleanEntity> findByActiveFalse();
@@ -1113,9 +1112,9 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
 
-    void "test oracle boolean query generation uses global ORACLE_23_1 compatibility"() {
+    void "test oracle boolean query generation uses global 23.1 version"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
+        def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
             buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1144,14 +1143,14 @@ class OracleBooleanEntity {
         }
 
         expect:
-        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
+        sqlDialectVersion(repository, Dialect.ORACLE) == '23.1'
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS TRUE)'
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
 
-    void "test global dialect compatibility is recorded for SQL repositories"() {
+    void "test global dialect version is recorded for SQL repositories"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.MYSQL, "MYSQL_9") {
+        def repository = withDialectOptionsVersion(Dialect.MYSQL, "9") {
             buildRepository('test.MySqlBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1179,13 +1178,13 @@ class MySqlBooleanEntity {
         }
 
         expect:
-        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'MYSQL_9'
+        sqlDialectVersion(repository, Dialect.MYSQL) == '9'
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
-    void "test global dialect compatibility is not recorded for other SQL dialect repositories"() {
+    void "test global dialect version is not recorded for other SQL dialect repositories"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
+        def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
             buildRepository('test.MySqlBooleanRepository', """
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
@@ -1213,13 +1212,13 @@ class MySqlBooleanEntity {
         }
 
         expect:
-        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).isEmpty()
+        sqlDialectVersion(repository, Dialect.MYSQL) == null
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
-    void "test global dialect compatibility is visible to criteria methods"() {
+    void "test global dialect version is visible to criteria methods"() {
         given:
-        def repository = withDialectOptionsCompatibility(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) {
+        def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
             buildRepository('test.OracleBooleanRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -1254,15 +1253,15 @@ interface OracleBooleanRepository extends GenericRepository<Contact, Long> {
             .build(new SqlQueryBuilder(criteriaQueryBuilderMethod.getAnnotationMetadata()))
 
         then:
-        repository.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
-        criteriaQueryBuilderMethod.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
-        predicateSpecificationMethod.stringValue(SqlQueryConfiguration, SqlDialectOptions.MEMBER_COMPATIBILITY).get() == 'ORACLE_23_1'
+        sqlDialectVersion(repository, Dialect.ORACLE) == '23.1'
+        sqlDialectVersion(criteriaQueryBuilderMethod, Dialect.ORACLE) == '23.1'
+        sqlDialectVersion(predicateSpecificationMethod, Dialect.ORACLE) == '23.1'
         new SqlQueryBuilder(criteriaQueryBuilderMethod.getAnnotationMetadata())
             .getDialectOptions()
-            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         new SqlQueryBuilder(predicateSpecificationMethod.getAnnotationMetadata())
             .getDialectOptions()
-            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         queryResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
     }
 
@@ -3294,11 +3293,11 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
         findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 
-    private <T> T withDialectOptionsCompatibility(Dialect dialect, String compatibility, Closure<T> closure) {
-        synchronized (DIALECT_OPTIONS_COMPATIBILITY_LOCK) {
-            def configuration = SqlDialectOptions.compatibilityConfiguration(dialect)
+    private <T> T withDialectOptionsVersion(Dialect dialect, String version, Closure<T> closure) {
+        synchronized (DIALECT_OPTIONS_VERSION_LOCK) {
+            def configuration = SqlDialectOptions.versionConfiguration(dialect)
             def previous = System.getProperty(configuration)
-            System.setProperty(configuration, compatibility)
+            System.setProperty(configuration, version)
             try {
                 return closure.call()
             } finally {
@@ -3309,5 +3308,16 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
                 }
             }
         }
+    }
+
+    private static String sqlDialectVersion(AnnotationMetadata annotationMetadata, Dialect dialect) {
+        def annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration)
+        if (annotation == null) {
+            return null
+        }
+        def dialectConfiguration = annotation
+            .getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration)
+            .find { it.enumValue("dialect", Dialect).orElse(null) == dialect }
+        return dialectConfiguration?.stringValue(SqlDialectOptions.MEMBER_VERSION)?.orElse(null)
     }
 }

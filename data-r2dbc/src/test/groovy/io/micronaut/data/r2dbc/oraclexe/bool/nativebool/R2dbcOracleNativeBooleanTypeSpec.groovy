@@ -24,7 +24,7 @@ class R2dbcOracleNativeBooleanTypeSpec extends Specification implements Oracle23
         given:
         assert applicationContext.getBean(DataR2dbcConfiguration)
             .resolveDialectOptions()
-            .isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         def repository = applicationContext.getBean(R2dbcNativeOracleBooleanRepository)
 
         when:

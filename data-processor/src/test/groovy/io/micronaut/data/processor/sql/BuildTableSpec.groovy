@@ -104,7 +104,7 @@ class Test {
     }
 
     @Unroll
-    void "test build create table for Oracle boolean type with #compatibility compatibility"() {
+    void "test build create table for Oracle boolean type with #version version"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
 import io.micronaut.data.annotation.GeneratedValue;
@@ -135,19 +135,19 @@ class Test {
     }
 }
 ''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, compatibility))
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, version))
         def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
 
         where:
-        compatibility                                 | statement
+        version                                 | statement
         null                                          | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" NUMBER(1) NOT NULL)' + System.lineSeparator() +
                                                         'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        SqlDialectOptions.ORACLE_23_1_COMPATIBILITY | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+        SqlDialectOptions.ORACLE_23_1_VERSION | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
                                                         'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        "ORACLE_23_4"                                | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+        "23.4"                                | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
                                                         'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 

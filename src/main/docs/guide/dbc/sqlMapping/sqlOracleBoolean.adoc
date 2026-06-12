@@ -6,17 +6,22 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * Boolean literals and predicates are generated using numeric values such as `1` and `0`.
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
-To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1`.
+To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=23.1`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=23.1`.
 If both are present, the annotation processor option takes precedence.
-Compatibility values are SQL generation baselines, not runtime database version detection. Micronaut Data compares numeric baseline values, so a later configured baseline such as `ORACLE_23_4` also satisfies SQL features that require `ORACLE_23_1`.
+
+The configured dialect `version` is a SQL generation target.
+It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
+It is not runtime database version detection, it does not inspect JDBC or R2DBC connection metadata, and it is not a general datasource capability check.
+Use dot-separated numeric notation only, such as `23.1` or `23.1.0`.
+Micronaut Data compares semantic version values, so a later configured version such as `23.4` also satisfies SQL features that require `23.1`.
 
 For Gradle Java projects:
 
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1")
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
 }
 ----
 
@@ -25,27 +30,25 @@ For Maven projects:
 [source,xml]
 ----
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1</arg>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
 </compilerArgs>
 ----
 
-The compatibility can also be set on an individual repository:
+The target version can also be set on an individual repository:
 
 [source,java]
 ----
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
 interface ProductRepository {
 }
 ----
 
-With this compatibility option, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
+With this target version, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
 
-If Micronaut Data schema generation is enabled, configure the same compatibility option on the datasource as well:
+If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:
 
 .JDBC Oracle 23.1-compatible schema generation
 [configuration]
@@ -54,7 +57,7 @@ datasources:
   default:
     dialect: ORACLE
     dialect-options:
-      compatibility: ORACLE_23_1
+      version: 23.1
 ----
 
 .R2DBC Oracle 23.1-compatible schema generation
@@ -65,11 +68,11 @@ r2dbc:
     default:
       dialect: ORACLE
       dialect-options:
-        compatibility: ORACLE_23_1
+        version: 23.1
 ----
 
-IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository compatibility option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
+IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
-Applications that package repositories in a separate jar are responsible for running those repositories against a compatible Oracle database. A repository compiled with Oracle 23.1 compatibility may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
+Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
 
-NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global compatibility option. Keep the repository in legacy mode until the schema is migrated, configure compatibility on individual repositories, or use explicit queries for columns that do not match the selected repository compatibility mode.
+NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global version option. Keep the repository in legacy mode until the schema is migrated, configure the target version on individual repositories, or use explicit queries for columns that do not match the selected repository version.

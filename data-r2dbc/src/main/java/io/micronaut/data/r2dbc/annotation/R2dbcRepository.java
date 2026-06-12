@@ -85,4 +85,10 @@ public @interface R2dbcRepository {
      */
     @AliasFor(annotation = Repository.class, member = "dialect")
     Dialect dialect();
+
+    /**
+     * @return The target dialect version to use for SQL generation.
+     * @since 5.1.0
+     */
+    String version() default "";
 }

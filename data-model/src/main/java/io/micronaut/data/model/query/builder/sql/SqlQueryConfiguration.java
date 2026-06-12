@@ -30,13 +30,6 @@ public @interface SqlQueryConfiguration {
     DialectConfiguration[] value() default {};
 
     /**
-     * A named compatibility level for the configured dialect.
-     *
-     * @return The compatibility level.
-     */
-    String dialectOptionsCompatibility() default "";
-
-    /**
      * Configuration specific to a dialect.
      */
     @interface DialectConfiguration {
@@ -68,5 +61,11 @@ public @interface SqlQueryConfiguration {
          * @return Whether automatically escape queries.
          */
         boolean escapeQueries() default true;
+
+        /**
+         * @return The target dialect version to use for SQL generation.
+         * @since 5.1.0
+         */
+        String version() default "";
     }
 }

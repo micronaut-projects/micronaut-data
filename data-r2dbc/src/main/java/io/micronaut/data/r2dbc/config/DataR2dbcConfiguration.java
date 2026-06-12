@@ -242,21 +242,23 @@ public class DataR2dbcConfiguration implements Named {
     public static final class DialectOptionsConfiguration {
 
         @Nullable
-        private String compatibility;
+        private String version;
 
         /**
-         * @return The compatibility level.
+         * @return The target dialect version.
+         * @since 5.1.0
          */
         @Nullable
-        public String getCompatibility() {
-            return compatibility;
+        public String getVersion() {
+            return version;
         }
 
         /**
-         * @param compatibility The compatibility level.
+         * @param version The target dialect version.
+         * @since 5.1.0
          */
-        public void setCompatibility(@Nullable String compatibility) {
-            this.compatibility = compatibility;
+        public void setVersion(@Nullable String version) {
+            this.version = version;
         }
 
         /**
@@ -266,7 +268,7 @@ public class DataR2dbcConfiguration implements Named {
          * @return The resolved options
          */
         public SqlDialectOptions toDialectOptions(Dialect dialect) {
-            return SqlDialectOptions.of(dialect, compatibility);
+            return SqlDialectOptions.of(dialect, version);
         }
     }
 }

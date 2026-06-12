@@ -77,7 +77,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         given:
             context = ApplicationContext.run([
                 "datasources.default.dialect": "ORACLE",
-                "datasources.default.dialect-options.compatibility": "ORACLE_23_1",
+                "datasources.default.dialect-options.version": "23.1",
                 "datasources.default.enabled": false
             ])
 
@@ -86,7 +86,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             configuration.dialect == Dialect.ORACLE
-            configuration.resolveDialectOptions().isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+            configuration.resolveDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {

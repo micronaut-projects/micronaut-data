@@ -31,35 +31,45 @@ This avoids growing `Dialect` for every version-gated feature.
 
 Use `Dialect.ORACLE` plus generic dialect options.
 
-User-facing configuration shape:
+Datasource schema-generation configuration shape:
 
 ```properties
-datasources.default.dialect-options.compatibility=ORACLE_23_1
+datasources.default.dialect-options.version=23.1
 ```
 
 Reasoning:
 
-- Future Oracle version-gated features can reuse the same numeric baseline model.
-- Users can express intent as a SQL compatibility baseline, not isolated feature toggles.
-- Avoid exposing or persisting individual feature toggles because unsafe combinations such as Oracle legacy compatibility plus native boolean would be possible.
-- Oracle native boolean starts at the official 23.1.0 baseline, so the first Oracle native boolean baseline is `ORACLE_23_1`.
+- Future Oracle version-gated features can reuse the same dot-separated version model.
+- Users can express intent as a SQL target version, not isolated feature toggles.
+- Avoid exposing or persisting individual feature toggles because unsafe combinations such as Oracle legacy target version plus native boolean would be possible.
+- Oracle native boolean starts at the official 23.1.0 version, so the first Oracle native boolean target is `23.1`.
 
 For R2DBC schema generation the same shape should apply under the R2DBC datasource prefix:
 
 ```properties
-r2dbc.datasources.default.dialect-options.compatibility=ORACLE_23_1
+r2dbc.datasources.default.dialect-options.version=23.1
 ```
 
-For repository query generation, annotation-facing configuration also resolves to the same internal `dialectOptions` model. The annotation member is generic and not Oracle-specific:
+For repository query generation, the user-facing repository annotation can set the target version for one repository:
 
 ```java
-@SqlQueryConfiguration(dialectOptionsCompatibility = "ORACLE_23_1")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
+interface ProductRepository {
+}
 ```
+
+The same member should exist on `@R2dbcRepository`. The annotation processor materializes this value into the internal SQL query configuration metadata:
+
+```java
+@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = Dialect.ORACLE, version = "23.1"))
+```
+
+`SqlQueryConfiguration` remains an internal/generated metadata path for SQL query builders, not the primary user-facing configuration.
 
 Build-wide repository SQL generation uses dialect-scoped annotation processor options:
 
 ```properties
-micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1
+micronaut.data.sql.dialect-options.oracle.version=23.1
 ```
 
 This follows the same option shape as datasource schema generation, but it is a build-time annotation processor option and includes the repository dialect in the property path. It can also be supplied as a JVM system property for test/build environments.
@@ -67,19 +77,31 @@ This follows the same option shape as datasource schema generation, but it is a 
 Future dialect-specific options can use the same namespace:
 
 ```properties
-micronaut.data.sql.dialect-options.mysql.compatibility=MYSQL_9
-micronaut.data.sql.dialect-options.sql-server.compatibility=SQL_SERVER_2022
+micronaut.data.sql.dialect-options.mysql.version=9.0
+micronaut.data.sql.dialect-options.sql-server.version=16.0
 ```
 
 Datasource schema configuration remains:
 
 ```properties
-datasources.default.dialect-options.compatibility=ORACLE_23_1
+datasources.default.dialect-options.version=23.1
 ```
 
 because the datasource already has a configured dialect. Repository compiler options need the extra dialect segment because one compilation unit can contain repositories for more than one SQL dialect.
 
 Repository-level configuration takes precedence over the dialect-scoped compiler option.
+
+The configured version is a SQL generation target. It tells Micronaut Data which SQL feature set it may use when it builds repository SQL, criteria SQL, bind mappings, and schema-generation SQL. It is not runtime database version detection, and Micronaut Data should not inspect JDBC or R2DBC connection metadata for the first implementation.
+
+Accepted user input should be dot-separated numeric notation only:
+
+```text
+23
+23.1
+23.1.0
+```
+
+Underscore and dialect-prefixed forms such as `23_1`, `ORACLE_23_1`, or `ORACLE_23_1_0` should not be supported. Internally, `23.1` can be normalized to `23.1.0` before comparison with `SemanticVersion`.
 
 ## Resolved Options
 
@@ -90,10 +112,10 @@ Example shape:
 ```java
 record SqlDialectOptions(
     Dialect dialect,
-    Optional<String> compatibility
+    Optional<String> version
 ) {
-    boolean isAtLeast(String requiredCompatibility) {
-        // parse dialect and numeric baseline, then compare
+    boolean isVersionAtLeast(String requiredVersion) {
+        // normalize dot-separated versions, then compare with SemanticVersion
     }
 }
 ```
@@ -102,24 +124,24 @@ For default Oracle behavior:
 
 ```text
 dialect = ORACLE
-compatibility = empty or legacy baseline
-isAtLeast("ORACLE_23_1") = false
+version = empty
+isVersionAtLeast("23.1") = false
 ```
 
 For Oracle 23.1+ behavior:
 
 ```text
 dialect = ORACLE
-compatibility = ORACLE_23_1
-isAtLeast("ORACLE_23_1") = true
+version = 23.1
+isVersionAtLeast("23.1") = true
 ```
 
-For a later configured Oracle baseline:
+For a later configured Oracle version:
 
 ```text
 dialect = ORACLE
-compatibility = ORACLE_23_4
-isAtLeast("ORACLE_23_1") = true
+version = 23.4
+isVersionAtLeast("23.1") = true
 ```
 
 The options should be immutable after resolution.
@@ -128,7 +150,7 @@ Oracle boolean decisions should remain explicit at the call site:
 
 ```java
 dialect == Dialect.ORACLE
-    && dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+    && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
 ```
 
 ## Build-Time Flow
@@ -136,23 +158,23 @@ dialect == Dialect.ORACLE
 At annotation-processing/query-generation time:
 
 1. Check whether the repository uses `SqlQueryBuilder`.
-2. If the repository already has a non-empty `@SqlQueryConfiguration(dialectOptionsCompatibility = ...)`, keep it.
-3. Resolve the repository dialect and derive the dialect-scoped build-time option, for example `micronaut.data.sql.dialect-options.oracle.compatibility`.
-4. If present, materialize it into repository annotation metadata as `@SqlQueryConfiguration(dialectOptionsCompatibility = "...")`.
+2. If the repository already has a non-empty `@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = ..., version = ...))`, keep it.
+3. Resolve the repository dialect and derive the dialect-scoped build-time option, for example `micronaut.data.sql.dialect-options.oracle.version`.
+4. If present, materialize it into repository annotation metadata as `@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = ..., version = "..."))`.
 5. Let `SqlQueryBuilder(AnnotationMetadata)` resolve `SqlDialectOptions` from the repository metadata as today.
 6. Generate SQL according to resolved options.
 7. Store generated SQL as today.
 
-The processor step is intentionally dialect-scoped but not Oracle-hardcoded. It can record a compatibility option for any SQL repository when that repository's dialect has a matching compiler option. Dialect-specific behavior remains explicit at the SQL rendering/binding call sites, for example:
+The processor step is intentionally dialect-scoped but not Oracle-hardcoded. It can record a target version option for any SQL repository when that repository's dialect has a matching compiler option. Dialect-specific behavior remains explicit at the SQL rendering/binding call sites, for example:
 
 ```java
 dialect == Dialect.ORACLE
-    && dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)
+    && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
 ```
 
-This keeps the option model extensible and avoids giving unsupported compatibility names cross-dialect behavior by accident. For example, `micronaut.data.sql.dialect-options.oracle.compatibility=ORACLE_23_1` should not annotate MySQL repositories.
+This keeps the option model extensible and avoids giving unsupported version strings cross-dialect behavior by accident. For example, `micronaut.data.sql.dialect-options.oracle.version=23.1` should not annotate MySQL repositories.
 
-This avoids adding Oracle boolean state to `DefaultStoredQuery` and avoids adding a separate `DataMethodQuery` metadata member. The repository metadata already carries the generic SQL compatibility option, so runtime `SqlQueryBuilder` reconstruction sees the same setting used during query generation.
+This avoids adding Oracle boolean state to `DefaultStoredQuery` and avoids adding a separate `DataMethodQuery` metadata member. The repository metadata already carries the generic SQL target version option, so runtime `SqlQueryBuilder` reconstruction sees the same setting used during query generation.
 
 ## Schema Generation Flow
 
@@ -166,10 +188,10 @@ Therefore schema generation must read the same option shape from datasource conf
 
 ```text
 datasources.<name>.dialect
-datasources.<name>.dialect-options.compatibility
+datasources.<name>.dialect-options.version
 
 r2dbc.datasources.<name>.dialect
-r2dbc.datasources.<name>.dialect-options.compatibility
+r2dbc.datasources.<name>.dialect-options.version
 ```
 
 The implementation binds this nested datasource property through `@ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")` on the JDBC and R2DBC datasource configuration classes.
@@ -179,7 +201,7 @@ The datasource builder targets should remain small module-local holders. They do
 Repository query generation and schema generation can have different configuration sources, but they must resolve to the same internal model:
 
 ```text
-Dialect.ORACLE + SqlDialectOptions{compatibility=ORACLE_23_1}
+Dialect.ORACLE + SqlDialectOptions{version=23.1}
 ```
 
 Users who enable Micronaut Data schema generation should keep datasource `dialect-options` aligned with repository query-generation options. This mirrors the existing dialect split: repository methods use repository dialect metadata, while schema generation uses datasource dialect configuration.
@@ -213,7 +235,7 @@ The SQL-specific option is cleaner because these options only matter to SQL repo
 
 Existing generated metadata defaults to legacy behavior when the member is absent.
 
-For builds configured with dialect-scoped compiler options, the annotation processor materializes the compatibility value into repository annotation metadata. This is important because runtime binding reconstructs the SQL query builder from repository metadata, not from the annotation processor environment.
+For builds configured with dialect-scoped compiler options, the annotation processor materializes the version value into repository annotation metadata. This is important because runtime binding reconstructs the SQL query builder from repository metadata, not from the annotation processor environment.
 
 ## Query Generation Changes
 
@@ -227,7 +249,7 @@ Current Oracle behavior:
 NUMBER(1)
 ```
 
-Oracle with `ORACLE_23_1` compatibility:
+Oracle with `23.1` target version:
 
 ```sql
 BOOLEAN
@@ -248,7 +270,7 @@ Current Oracle behavior:
 0
 ```
 
-Oracle with `ORACLE_23_1` compatibility:
+Oracle with `23.1` target version:
 
 ```sql
 TRUE
@@ -263,7 +285,7 @@ Affected area:
 
 Current legacy Oracle behavior must remain compatible with numeric boolean storage.
 
-Oracle with `ORACLE_23_1` compatibility may use native boolean predicates:
+Oracle with `23.1` target version may use native boolean predicates:
 
 ```sql
 active IS TRUE
@@ -272,7 +294,7 @@ WHERE active
 WHERE NOT active
 ```
 
-Use the native syntax only when the query is generated with Oracle 23.1 compatibility.
+Use the native syntax only when the query is generated with Oracle 23.1 target version.
 
 Affected area:
 
@@ -287,7 +309,7 @@ active = 1
 active = 0
 ```
 
-Native predicates are used only with Oracle 23.1 compatibility:
+Native predicates are used only with Oracle 23.1 target version:
 
 ```sql
 active IS TRUE
@@ -319,7 +341,7 @@ Oracle behavior:
 ```java
 if (dialect == Dialect.ORACLE
     && dataType == DataType.BOOLEAN
-    && dialectOptions.isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) {
+    && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
     return Types.BOOLEAN;
 }
 
@@ -344,22 +366,22 @@ findR2dbcType(DataType dataType, Dialect dialect, SqlDialectOptions dialectOptio
 
 Do not require runtime database-version validation for the first implementation.
 
-The selected Oracle compatibility level is a build-time query-generation input. It is the user's responsibility to target a database version compatible with the generated SQL.
+The selected Oracle target version is a build-time query-generation input. It is the user's responsibility to target a database version compatible with the generated SQL.
 
 Reasons to avoid mandatory runtime validation:
 
-- A repository may be built with Oracle 23 compatibility but contain no generated SQL that uses Oracle 23-only features. Rejecting that repository on Oracle 19c/21c would be stricter than the actual SQL requires.
+- A repository may be built with Oracle 23 target version but contain no generated SQL that uses Oracle 23-only features. Rejecting that repository on Oracle 19c/21c would be stricter than the actual SQL requires.
 - JDBC and R2DBC expose database version metadata differently. JDBC has structured major/minor access, but R2DBC SPI only exposes a vendor-formatted version string.
 - R2DBC version strings are not reliably parseable across drivers and database branding.
 - Mandatory validation adds lifecycle and multi-datasource complexity without being necessary for query execution.
-- The generated SQL already acts as the real compatibility contract.
+- The generated SQL already acts as the real target version contract.
 
 Optional diagnostics can be considered later, but should not be part of the core behavior.
 
 Possible optional future property:
 
 ```properties
-datasources.default.dialect-options.validate-compatibility=true
+datasources.default.dialect-options.validate-version=true
 ```
 
 If such diagnostics are added, JDBC can validate more reliably than R2DBC. R2DBC should remain best-effort only.
@@ -368,7 +390,7 @@ If such diagnostics are added, JDBC can validate more reliably than R2DBC. R2DBC
 
 The resolved dialect options are part of the generated query artifact.
 
-If a library jar is built with Oracle 23.1 compatibility options, it may contain SQL such as:
+If a library jar is built with Oracle 23.1 target version options, it may contain SQL such as:
 
 ```sql
 BOOLEAN
@@ -379,7 +401,7 @@ WHERE active
 TO_BOOLEAN(...)
 ```
 
-That jar is not compatible with Oracle 19c/21c for those repositories. This is expected and should be documented.
+That jar is not valid on Oracle 19c/21c for those repositories. This is expected and should be documented.
 
 The portable default remains legacy Oracle behavior.
 
@@ -390,7 +412,7 @@ This Micronaut Data design controls which Oracle SQL feature set generated queri
 For the common cases:
 
 - All legacy Oracle boolean columns use `NUMBER(1)`: use default legacy options.
-- All native Oracle boolean columns use `BOOLEAN`: target Oracle 23.1 compatibility.
+- All native Oracle boolean columns use `BOOLEAN`: target Oracle 23.1.
 
 Mixed schemas are harder:
 
@@ -405,21 +427,21 @@ A repository-level or dialect-scoped compiler option cannot fully model that. Na
 Implementation should not attempt to solve mixed schemas unless there is a concrete requirement. Document that mixed schemas require either:
 
 - keeping the repository in legacy mode until migration is complete; or
-- separating repositories by compatibility mode where possible; or
-- explicit queries for columns that do not match the selected repository compatibility mode.
+- separating repositories by version where possible; or
+- explicit queries for columns that do not match the selected repository version.
 
-## Compatibility
+## Target Version
 
 Default behavior remains unchanged:
 
 - `Dialect.ORACLE`
-- no Oracle 23.1 compatibility option
+- no Oracle 23.1 target version option
 - `NUMBER(1)` DDL
 - legacy boolean literals/binding
 
 This is backward-compatible for Oracle 19c/21c users.
 
-Enabling Oracle 23.1 compatibility options is opt-in and should be treated as a minor feature addition.
+Enabling Oracle 23.1 target version options is opt-in and should be treated as a minor feature addition.
 
 ## Implementation Areas
 
@@ -433,7 +455,7 @@ Affected areas:
   - `SqlStoredQuery` option accessor through the query builder
 - `data-processor`
   - repository configuration resolution
-  - materialize dialect-scoped SQL compatibility into repository metadata for matching SQL repositories
+  - materialize dialect-scoped SQL target version into repository metadata for matching SQL repositories
 - `data-runtime`
   - `DefaultSqlPreparedQuery`
   - SQL runtime option access
@@ -452,11 +474,11 @@ Affected areas:
 Compile-time/unit tests:
 
 - Oracle default options generate `NUMBER(1)`.
-- Oracle 23.1 compatibility options generate `BOOLEAN`.
+- Oracle 23.1 target version options generate `BOOLEAN`.
 - Oracle default options render boolean literals as `1` / `0`.
-- Oracle 23.1 compatibility options render boolean literals as `TRUE` / `FALSE`.
+- Oracle 23.1 target version options render boolean literals as `TRUE` / `FALSE`.
 - Oracle default options avoid native-only boolean predicates.
-- Oracle 23.1 compatibility options allow native boolean predicates.
+- Oracle 23.1 target version options allow native boolean predicates.
 - Generated metadata contains resolved dialect options.
 - Missing generated options defaults to legacy behavior.
 - A build-wide dialect-scoped compiler option is recorded only for matching SQL repositories.
@@ -475,7 +497,7 @@ R2DBC integration tests:
 
 ## Open Questions
 
-- Whether optional diagnostics should ever validate database compatibility at startup, and if so whether JDBC-only reliable validation is enough.
+- Whether optional diagnostics should ever validate database target version at startup, and if so whether JDBC-only reliable validation is enough.
 
 ## Final Recommendation
 
@@ -483,6 +505,6 @@ Keep `Dialect.ORACLE` and introduce generic SQL dialect options.
 
 Resolve those options at build time, materialize dialect-scoped compiler configuration into repository `@SqlQueryConfiguration` metadata, expose resolved options through `SqlStoredQuery` / `SqlPreparedQuery`, and use them for both SQL generation and binding.
 
-Do not require runtime database version validation. The generated SQL and stored dialect options are the compatibility contract; optional diagnostics can be considered separately.
+Do not require runtime database version validation. The generated SQL and stored dialect options are the target version contract; optional diagnostics can be considered separately.
 
 Do not attempt to solve mixed native and legacy boolean storage in this implementation.

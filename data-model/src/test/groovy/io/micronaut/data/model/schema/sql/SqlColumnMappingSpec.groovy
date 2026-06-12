@@ -27,24 +27,25 @@ class SqlColumnMappingSpec extends Specification {
 
         expect:
         column.getSqlType(Dialect.ORACLE) == "NUMBER(1)"
-        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_COMPATIBILITY)) == "BOOLEAN"
+        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION)) == "BOOLEAN"
     }
 
-    void "dialect options compare parsed compatibility baselines"() {
+    void "dialect options compare parsed target versions"() {
         expect:
-        SqlDialectOptions.of(Dialect.ORACLE, compatibility).isAtLeast(SqlDialectOptions.ORACLE_23_1_COMPATIBILITY) == compatible
+        SqlDialectOptions.of(Dialect.ORACLE, version).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION) == compatible
 
         where:
-        compatibility  | compatible
-        "ORACLE_23_1"  | true
-        "oracle-23.1"  | true
-        "ORACLE_23_1_0" | true
-        "ORACLE_23_4"  | true
-        "ORACLE_24_0"  | true
-        "ORACLE_23"    | false
-        "ORACLE_23_0"  | false
-        "MYSQL_99_0"   | false
-        "ORACLE_FOO"   | false
-        null           | false
+        version      | compatible
+        "23.1"      | true
+        "23.1.0"    | true
+        "23.4"      | true
+        "24.0"      | true
+        "23"        | false
+        "23.0"      | false
+        "23.1.0.1" | false
+        "23_1"      | false
+        "23.foo"    | false
+        "ORACLE_FOO" | false
+        null         | false
     }
 }

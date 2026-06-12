@@ -135,6 +135,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final String REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor";
     private static final String REACTOR_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
@@ -337,31 +338,74 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (!usesSqlQueryBuilder) {
             return;
         }
-        boolean hasExplicitCompatibility = annotationMetadata
-            .stringValue(SqlQueryConfiguration.class, SqlDialectOptions.MEMBER_COMPATIBILITY)
-            .filter(StringUtils::isNotEmpty)
-            .isPresent();
-        if (hasExplicitCompatibility) {
-            return;
-        }
         Dialect dialect = annotationMetadata
             .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
             .orElseGet(() ->
                 annotationMetadata
                     .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                     .orElse(Dialect.ANSI));
-        String compatibilityConfiguration = SqlDialectOptions.compatibilityConfiguration(dialect);
-        String compatibility = context.getOptions().get(compatibilityConfiguration);
-        if (StringUtils.isEmpty(compatibility)) {
-            compatibility = System.getProperty(compatibilityConfiguration);
+        if (hasExplicitSqlDialectVersion(annotationMetadata, dialect)) {
+            return;
         }
-        if (StringUtils.isNotEmpty(compatibility)) {
-            String configuredCompatibility = compatibility;
-            element.annotate(
-                SqlQueryConfiguration.class,
-                builder -> builder.member(SqlDialectOptions.MEMBER_COMPATIBILITY, configuredCompatibility)
-            );
+        String versionConfiguration = SqlDialectOptions.versionConfiguration(dialect);
+        String version = annotationMetadata
+            .stringValue(JDBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION)
+            .or(() -> annotationMetadata.stringValue(R2DBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION))
+            .orElseGet(() -> context.getOptions().get(versionConfiguration));
+        if (StringUtils.isEmpty(version)) {
+            version = System.getProperty(versionConfiguration);
         }
+        if (StringUtils.isNotEmpty(version)) {
+            annotateSqlDialectVersion(element, annotationMetadata, dialect, version);
+        }
+    }
+
+    private static boolean hasExplicitSqlDialectVersion(AnnotationMetadata annotationMetadata, Dialect dialect) {
+        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+        if (annotation == null) {
+            return false;
+        }
+        return annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class)
+            .stream()
+            .filter(dialectConfig -> dialectConfig.enumValue(DIALECT_ATTR, Dialect.class)
+                .filter(dialect::equals)
+                .isPresent())
+            .anyMatch(dialectConfig -> dialectConfig.stringValue(SqlDialectOptions.MEMBER_VERSION)
+                .filter(StringUtils::isNotEmpty)
+                .isPresent());
+    }
+
+    private static void annotateSqlDialectVersion(ClassElement element,
+                                                  AnnotationMetadata annotationMetadata,
+                                                  Dialect dialect,
+                                                  String version) {
+        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+        List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation == null
+            ? Collections.emptyList()
+            : annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
+        List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> updatedConfigs = new ArrayList<>(dialectConfigs.size() + 1);
+        boolean updated = false;
+        for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
+            if (dialectConfig.enumValue(DIALECT_ATTR, Dialect.class).filter(dialect::equals).isPresent()) {
+                updatedConfigs.add(AnnotationValue.builder(SqlQueryConfiguration.DialectConfiguration.class)
+                    .members(dialectConfig.getValues())
+                    .member(SqlDialectOptions.MEMBER_VERSION, version)
+                    .build());
+                updated = true;
+            } else {
+                updatedConfigs.add(dialectConfig);
+            }
+        }
+        if (!updated) {
+            updatedConfigs.add(AnnotationValue.builder(SqlQueryConfiguration.DialectConfiguration.class)
+                .member(DIALECT_ATTR, dialect)
+                .member(SqlDialectOptions.MEMBER_VERSION, version)
+                .build());
+        }
+        element.annotate(
+            SqlQueryConfiguration.class,
+            builder -> builder.values(updatedConfigs.toArray(AnnotationValue[]::new))
+        );
     }
 
     /**
