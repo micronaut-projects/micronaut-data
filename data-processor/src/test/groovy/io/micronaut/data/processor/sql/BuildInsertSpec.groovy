@@ -507,6 +507,74 @@ class Test {
             Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[id]=source.c2 WHEN MATCHED THEN UPDATE SET target.[name]=source.c0,target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'                 | ["name", "pages", "id"]
     }
 
+    @Unroll
+    void "test build upsert with conflict properties for dialect - #dialect"() {
+        given:
+            BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect=Dialect.${dialect.name()})
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictProperties = "name")
+    Test put(Test test);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    private String name;
+    private Integer pages;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+}
+""")
+
+        when:
+            def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+
+        then:
+            getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+            getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+            getQuery(putMethod) == query
+            getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
+
+        where:
+            dialect            | query                                                                                                                                                                                                                                                                                                                        | parameterPropertyPaths
+            Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?,?)) source (c0,c1,c2) ON (target."name"=source.c0) WHEN MATCHED THEN UPDATE SET target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages","id") VALUES (source.c0,source.c1,source.c2)'                                  | ["name", "pages", "id"]
+            Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`,`id`) KEY(`name`) VALUES (?,?,?)'                                                                                                                                                                                                                         | ["name", "pages", "id"]
+            Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`,`id`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `pages`=?'                                                                                                                                                                                                  | ["name", "pages", "id", "pages"]
+            Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                              | ["name", "pages", "id"]
+            Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("name") DO UPDATE SET "pages"=EXCLUDED."pages"'                                                                                                                                                                         | ["name", "pages", "id"]
+            Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[name]=source.c0 WHEN MATCHED THEN UPDATE SET target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);'                 | ["name", "pages", "id"]
+    }
+
     void "test annotated upsert on repository without base interface"() {
         given:
             BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
@@ -625,6 +693,8 @@ class Test {
             "missing identity"                  | ""                                                                                                     | ""                                                                                                     | ""                         | ""                | "entity does not define an identity"
             "versioned entity"                  | ""                                                                                                     | ""                                                                                                     | "@Id"                      | "@Version"        | "versioned entities are not supported"
             "generated identity"                | ""                                                                                                     | ""                                                                                                     | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
+            "blank conflict property"           | "@Upsert(conflictProperties = \"\")"                                                                   | ""                                                                                                     | "@Id"                      | ""                | "conflict property cannot be blank"
+            "unknown conflict property"         | "@Upsert(conflictProperties = \"missing\")"                                                            | ""                                                                                                     | "@Id"                      | ""                | "conflict property does not exist: missing"
     }
 
     void "POSTGRES test build save returning "() {

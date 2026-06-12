@@ -37,6 +37,10 @@ import java.lang.annotation.Target;
  * <p>The annotated method must either be declared {@code void}, or have a return type that is the same as the type of
  * its parameter.
  * </p>
+ * <p>By default, the entity identity is used to determine whether an existing row should be updated. The
+ * {@link #conflictProperties()} member can be used to select a different property or set of properties as the conflict
+ * target.
+ * </p>
  *
  * @since 5.1.0
  */
@@ -44,4 +48,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Upsert {
+
+    /**
+     * The persistent entity properties to use as the conflict target.
+     *
+     * @return The conflict properties
+     */
+    String[] conflictProperties() default {};
 }

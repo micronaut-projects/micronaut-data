@@ -16,11 +16,15 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -33,6 +37,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -112,14 +117,43 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(rootEntity.getAnnotationMetadata())) {
             return "JSON entity representation is not supported";
         }
-        if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
-            return "entity does not define an identity";
+        List<String> conflictProperties = conflictProperties(matchContext);
+        if (conflictProperties.isEmpty() && !rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
+            return "entity does not define an identity and no conflict properties were specified";
         }
         if (rootEntity.hasVersion()) {
             return "versioned entities are not supported";
         }
         if (rootEntity.getIdentityProperties().stream().anyMatch(PersistentProperty::isGenerated)) {
             return "generated identity properties are not supported";
+        }
+        return validateConflictProperties(rootEntity, conflictProperties);
+    }
+
+    @Nullable
+    private String validateConflictProperties(SourcePersistentEntity rootEntity, List<String> conflictProperties) {
+        for (String conflictProperty : conflictProperties) {
+            if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
+                return "conflict property cannot be blank";
+            }
+            PersistentPropertyPath propertyPath;
+            try {
+                propertyPath = rootEntity.getPropertyPath(conflictProperty);
+            } catch (IllegalArgumentException e) {
+                return "invalid conflict property path: " + conflictProperty;
+            }
+            if (propertyPath == null) {
+                return "conflict property does not exist: " + conflictProperty;
+            }
+            List<PersistentProperty> generatedProperties = new ArrayList<>();
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+                if (property.isGenerated()) {
+                    generatedProperties.add(property);
+                }
+            });
+            if (!generatedProperties.isEmpty()) {
+                return "generated conflict properties are not supported";
+            }
         }
         return null;
     }
@@ -149,7 +183,18 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 mc.getRepositoryClass().getAnnotationMetadata(),
                 mc.getAnnotationMetadata()
             );
-            QueryResult queryResult = mc.getQueryBuilder().buildUpsert(annotationMetadataHierarchy, mc::getRootEntity);
+            List<String> conflictProperties = conflictProperties(mc);
+            QueryResult queryResult = mc.getQueryBuilder().buildUpsert(annotationMetadataHierarchy, new QueryBuilder.UpsertQueryDefinition() {
+                @Override
+                public SourcePersistentEntity persistentEntity() {
+                    return mc.getRootEntity();
+                }
+
+                @Override
+                public List<String> conflictProperties() {
+                    return conflictProperties;
+                }
+            });
 
             methodMatchInfo
                 .encodeEntityParameters(true)
@@ -162,6 +207,10 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             }
             return methodMatchInfo;
         };
+    }
+
+    private List<String> conflictProperties(MethodMatchContext matchContext) {
+        return Arrays.asList(matchContext.getAnnotationMetadata().stringValues(Upsert.class, "conflictProperties"));
     }
 
 }

@@ -1383,13 +1383,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (isJsonEntity(repositoryMetadata, entity)) {
             throw new IllegalStateException("Upsert is not supported for JSON entity representation: " + entity.getName());
         }
-        if (!entity.hasIdentity() && !entity.hasCompositeIdentity()) {
+        if (definition.conflictProperties().isEmpty() && !entity.hasIdentity() && !entity.hasCompositeIdentity()) {
             throw new IllegalStateException("Upsert requires an identity for entity: " + entity.getName());
         }
         if (entity.hasVersion()) {
             throw new IllegalStateException("Upsert is not supported for versioned entity: " + entity.getName());
         }
-        UpsertData data = buildUpsertData(entity);
+        UpsertData data = buildUpsertData(entity, definition.conflictProperties());
         String tableName = getTableName(entity);
         String query = switch (dialect) {
             case H2 -> buildH2Upsert(tableName, data);
@@ -1402,19 +1402,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return QueryResult.of(query, Collections.emptyList(), buildUpsertParameterBindings(data), Collections.emptyMap());
     }
 
-    private UpsertData buildUpsertData(PersistentEntity entity) {
+    private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         List<UpsertColumn> columns = new ArrayList<>();
         List<String> values = new ArrayList<>();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
+        List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                     return;
                 }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, false);
+                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, false, conflictPropertyPaths);
             });
         }
 
@@ -1423,15 +1424,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                     throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
                 }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, true);
+                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, true, conflictPropertyPaths);
             });
         }
 
         if (columns.isEmpty()) {
             throw new IllegalStateException("Upsert requires at least one bindable column for entity: " + entity.getName());
         }
-        if (columns.stream().noneMatch(UpsertColumn::identity)) {
-            throw new IllegalStateException("Upsert requires at least one bindable identity column for entity: " + entity.getName());
+        if (columns.stream().noneMatch(UpsertColumn::conflict)) {
+            throw new IllegalStateException("Upsert requires at least one bindable conflict column for entity: " + entity.getName());
         }
         return new UpsertData(columns, values, parameterBindings);
     }
@@ -1443,7 +1444,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                  List<Association> associations,
                                  PersistentProperty property,
                                  boolean escape,
-                                 boolean identity) {
+                                 boolean identity,
+                                 List<String> conflictPropertyPaths) {
         addWriteExpression(values, property);
         String key = String.valueOf(values.size());
         String[] path = asStringPath(associations, property);
@@ -1453,15 +1455,60 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (escape) {
             columnName = quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), property, List.of(path), identity));
+        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+    }
+
+    private List<String> resolveUpsertConflictPropertyPaths(PersistentEntity entity, List<String> conflictProperties) {
+        List<String> conflictPropertyPaths = new ArrayList<>();
+        if (conflictProperties.isEmpty()) {
+            for (PersistentProperty identity : entity.getIdentityProperties()) {
+                PersistentEntityUtils.traversePersistentProperties(
+                    Collections.emptyList(),
+                    identity,
+                    (associations, property) -> conflictPropertyPaths.add(toPathString(associations, property)));
+            }
+            return conflictPropertyPaths;
+        }
+        for (String conflictProperty : conflictProperties) {
+            if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
+                throw new IllegalStateException("Upsert conflict property cannot be blank");
+            }
+            PersistentPropertyPath propertyPath;
+            try {
+                propertyPath = entity.getPropertyPath(conflictProperty);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException("Invalid upsert conflict property path: " + conflictProperty, e);
+            }
+            if (propertyPath == null) {
+                throw new IllegalStateException("Upsert conflict property does not exist: " + conflictProperty);
+            }
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                    throw new IllegalStateException("Upsert requires a non-generated conflict property: " + conflictProperty);
+                }
+                String path = toPathString(associations, property);
+                if (!conflictPropertyPaths.contains(path)) {
+                    conflictPropertyPaths.add(path);
+                }
+            });
+        }
+        return conflictPropertyPaths;
+    }
+
+    private String toPathString(List<Association> associations, PersistentProperty property) {
+        return toPathString(asStringPath(associations, property));
+    }
+
+    private String toPathString(String[] path) {
+        return String.join(".", path);
     }
 
     private String buildH2Upsert(String tableName, UpsertData data) {
-        return "MERGE INTO " + tableName + " (" + data.columnNames() + ") KEY(" + data.identityColumnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
+        return "MERGE INTO " + tableName + " (" + data.columnNames() + ") KEY(" + data.conflictColumnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
     }
 
     private String buildMySqlUpsert(String tableName, UpsertData data) {
-        List<UpsertColumn> updateColumns = data.updateColumnsOrIdentity();
+        List<UpsertColumn> updateColumns = data.updateColumnsOrConflict();
         return buildInsertStatement(tableName, data)
             + " ON DUPLICATE KEY UPDATE "
             + updateColumns.stream()
@@ -1474,7 +1521,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return data.parameterBindings();
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
-        for (UpsertColumn updateColumn : data.updateColumnsOrIdentity()) {
+        for (UpsertColumn updateColumn : data.updateColumnsOrConflict()) {
             parameterBindings.add(createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
         }
         return parameterBindings;
@@ -1482,7 +1529,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String buildPostgresUpsert(String tableName, UpsertData data) {
         List<UpsertColumn> updateColumns = data.updateColumns();
-        String conflict = buildInsertStatement(tableName, data) + " ON CONFLICT (" + data.identityColumnNames() + CLOSE_BRACKET;
+        String conflict = buildInsertStatement(tableName, data) + " ON CONFLICT (" + data.conflictColumnNames() + CLOSE_BRACKET;
         if (updateColumns.isEmpty()) {
             return conflict + " DO NOTHING";
         }
@@ -1496,7 +1543,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String buildSqlServerUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " WITH (HOLDLOCK) AS target "
             + "USING (VALUES (" + data.valueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
-            + "ON " + upsertIdentityPredicate(data)
+            + "ON " + upsertConflictPredicate(data)
             + upsertMatchedClause(data)
             + upsertInsertClause(data)
             + ";";
@@ -1508,7 +1555,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .collect(Collectors.joining(String.valueOf(COMMA)));
         return "MERGE INTO " + tableName + " target "
             + "USING (SELECT " + sourceSelect + " FROM DUAL) source "
-            + "ON (" + upsertIdentityPredicate(data) + CLOSE_BRACKET
+            + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
             + upsertMatchedClause(data)
             + upsertInsertClause(data);
     }
@@ -1516,7 +1563,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String buildAnsiUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " target "
             + "USING (VALUES (" + data.valueExpressions() + ")) source (" + data.sourceColumns() + ") "
-            + "ON (" + upsertIdentityPredicate(data) + CLOSE_BRACKET
+            + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
             + upsertMatchedClause(data)
             + upsertInsertClause(data);
     }
@@ -1525,8 +1572,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return INSERT_INTO + tableName + " (" + data.columnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
     }
 
-    private String upsertIdentityPredicate(UpsertData data) {
-        return data.identityColumns().stream()
+    private String upsertConflictPredicate(UpsertData data) {
+        return data.conflictColumns().stream()
             .map(column -> "target." + column.column() + "=source." + column.source())
             .collect(Collectors.joining(" AND "));
     }
@@ -1570,27 +1617,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .collect(Collectors.joining(String.valueOf(COMMA)));
         }
 
-        private List<UpsertColumn> identityColumns() {
+        private List<UpsertColumn> conflictColumns() {
             return columns.stream()
-                .filter(UpsertColumn::identity)
+                .filter(UpsertColumn::conflict)
                 .toList();
         }
 
-        private String identityColumnNames() {
-            return identityColumns().stream()
+        private String conflictColumnNames() {
+            return conflictColumns().stream()
                 .map(UpsertColumn::column)
                 .collect(Collectors.joining(String.valueOf(COMMA)));
         }
 
         private List<UpsertColumn> updateColumns() {
             return columns.stream()
-                .filter(column -> !column.identity())
+                .filter(column -> !column.identity() && !column.conflict())
                 .toList();
         }
 
-        private List<UpsertColumn> updateColumnsOrIdentity() {
+        private List<UpsertColumn> updateColumnsOrConflict() {
             List<UpsertColumn> updateColumns = updateColumns();
-            return updateColumns.isEmpty() ? List.of(identityColumns().get(0)) : updateColumns;
+            return updateColumns.isEmpty() ? List.of(conflictColumns().get(0)) : updateColumns;
         }
     }
 
@@ -1599,7 +1646,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                                 String source,
                                 PersistentProperty property,
                                 List<String> path,
-                                boolean identity) {
+                                boolean identity,
+                                boolean conflict) {
     }
 
     private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {

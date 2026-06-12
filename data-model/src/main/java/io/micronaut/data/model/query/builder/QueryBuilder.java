@@ -218,6 +218,13 @@ public interface QueryBuilder {
 
         PersistentEntity persistentEntity();
 
+        /**
+         * @return The persistent entity properties to use as the conflict target
+         */
+        default List<String> conflictProperties() {
+            return List.of();
+        }
+
     }
 
     /**
