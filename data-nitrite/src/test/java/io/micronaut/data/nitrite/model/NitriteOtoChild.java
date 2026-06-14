@@ -1,24 +1,21 @@
-package io.micronaut.data.nitrite.mongoport.entities;
+package io.micronaut.data.nitrite.model;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@MappedEntity("nitrite_oto_parent")
-public class NitriteOtoParent {
+@MappedEntity("nitrite_oto_child")
+public class NitriteOtoChild {
     @Id
     @GeneratedValue
     private String id;
     private String name;
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.ALL)
-    private List<NitriteOtoChild> children = new ArrayList<>();
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private NitriteOtoParent parent;
 
-    public NitriteOtoParent() {
+    public NitriteOtoChild() {
     }
 
     public String getId() {
@@ -37,11 +34,11 @@ public class NitriteOtoParent {
         this.name = name;
     }
 
-    public List<NitriteOtoChild> getChildren() {
-        return children;
+    public NitriteOtoParent getParent() {
+        return parent;
     }
 
-    public void setChildren(List<NitriteOtoChild> children) {
-        this.children = children;
+    public void setParent(NitriteOtoParent parent) {
+        this.parent = parent;
     }
 }
