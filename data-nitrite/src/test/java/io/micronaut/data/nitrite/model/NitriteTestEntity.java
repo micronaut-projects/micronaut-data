@@ -1,13 +1,15 @@
-package io.micronaut.data.nitrite.mongoport.entities;
+package io.micronaut.data.nitrite.model;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-@MappedEntity("nitrite_simple")
-public class NitriteSimpleEntity {
+@MappedEntity("nitrite_test")
+public class NitriteTestEntity {
     @Id
     @GeneratedValue
     private String id;
@@ -18,10 +20,21 @@ public class NitriteSimpleEntity {
     private BigDecimal amount;
     private BigDecimal budget;
 
-    public NitriteSimpleEntity() {
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")
+    private List<NitriteOtherEntity> others;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE)
+    private NitriteOtherEntity oneOther;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private NitriteOtherEntity manyToOneOther;
+
+    private List<String> colors;
+
+    public NitriteTestEntity() {
     }
 
-    public NitriteSimpleEntity(String name) {
+    public NitriteTestEntity(String name) {
         this.name = name;
     }
 
@@ -79,5 +92,37 @@ public class NitriteSimpleEntity {
 
     public void setBudget(BigDecimal budget) {
         this.budget = budget;
+    }
+
+    public List<NitriteOtherEntity> getOthers() {
+        return others;
+    }
+
+    public void setOthers(List<NitriteOtherEntity> others) {
+        this.others = others;
+    }
+
+    public NitriteOtherEntity getOneOther() {
+        return oneOther;
+    }
+
+    public void setOneOther(NitriteOtherEntity oneOther) {
+        this.oneOther = oneOther;
+    }
+
+    public NitriteOtherEntity getManyToOneOther() {
+        return manyToOneOther;
+    }
+
+    public void setManyToOneOther(NitriteOtherEntity manyToOneOther) {
+        this.manyToOneOther = manyToOneOther;
+    }
+
+    public List<String> getColors() {
+        return colors;
+    }
+
+    public void setColors(List<String> colors) {
+        this.colors = colors;
     }
 }

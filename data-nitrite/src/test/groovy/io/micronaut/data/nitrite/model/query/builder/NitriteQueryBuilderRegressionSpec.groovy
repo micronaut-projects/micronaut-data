@@ -1,4 +1,4 @@
-package io.micronaut.data.nitrite
+package io.micronaut.data.nitrite.model.query.builder
 
 import io.micronaut.data.nitrite.model.Event
 import io.micronaut.data.nitrite.repository.EventRepository

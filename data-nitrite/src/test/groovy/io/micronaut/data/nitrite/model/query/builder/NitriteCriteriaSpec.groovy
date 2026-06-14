@@ -1,4 +1,4 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.model.query.builder
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
@@ -8,7 +8,7 @@ import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.nitrite.model.CompositeFkChild
 import io.micronaut.data.nitrite.model.CompositeIdEntity
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
-import io.micronaut.data.nitrite.mongoport.entities.NitriteTestEntity
+import io.micronaut.data.nitrite.model.NitriteTestEntity
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.*

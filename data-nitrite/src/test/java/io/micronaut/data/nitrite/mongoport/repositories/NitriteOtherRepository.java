@@ -1,7 +1,7 @@
 package io.micronaut.data.nitrite.mongoport.repositories;
 
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.mongoport.entities.NitriteOtherEntity;
+import io.micronaut.data.nitrite.model.NitriteOtherEntity;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
