@@ -1,10 +1,11 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.runtime
 
-import io.micronaut.data.nitrite.mongoport.entities.NitriteItemGroup
-import io.micronaut.data.nitrite.mongoport.entities.NitriteShipment
-import io.micronaut.data.nitrite.mongoport.entities.NitriteShipmentId
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteItemGroupRepository
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteShipmentRepository
+import io.micronaut.data.nitrite.model.NitriteItemGroup
+import io.micronaut.data.nitrite.model.NitriteShipment
+import io.micronaut.data.nitrite.model.NitriteShipmentId
+import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
+import io.micronaut.data.nitrite.repository.NitriteItemGroupRepository
+import io.micronaut.data.nitrite.repository.NitriteShipmentRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
