@@ -3,7 +3,7 @@ package io.micronaut.data.nitrite.runtime.query
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class PatternConverterSpec extends Specification {
+class PatternConverterUnitSpec extends Specification {
 
     @Unroll
     def "looksLikeWildcardPattern: #desc"() {

@@ -4,7 +4,7 @@ import io.micronaut.core.convert.ConversionService
 import spock.lang.Specification
 import java.time.Instant
 
-class ValueConverterSpec extends Specification {
+class ValueConverterUnitSpec extends Specification {
 
     void "test epoch nanos"() {
         given:

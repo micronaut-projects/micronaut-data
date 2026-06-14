@@ -3,7 +3,7 @@ package io.micronaut.data.nitrite.runtime.query
 import io.micronaut.data.exceptions.DataAccessException
 import spock.lang.Specification
 
-class SpatialFilterAbsentSpec extends Specification {
+class SpatialFilterAbsentUnitSpec extends Specification {
 
     // SpatialFilterFactory is package-private; accessible from same package.
     // nitrite-spatial / JTS are compileOnly and absent at test runtime,

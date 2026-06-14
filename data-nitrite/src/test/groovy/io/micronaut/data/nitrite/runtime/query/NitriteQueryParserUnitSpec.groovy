@@ -3,7 +3,7 @@ package io.micronaut.data.nitrite.runtime.query
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class NitriteQueryParserSpec extends Specification {
+class NitriteQueryParserUnitSpec extends Specification {
 
     def parser = new NitriteQueryParser()
 

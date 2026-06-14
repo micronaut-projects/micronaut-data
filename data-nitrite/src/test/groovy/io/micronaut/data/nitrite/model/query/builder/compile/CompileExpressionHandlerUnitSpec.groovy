@@ -4,7 +4,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryState
 import spock.lang.Specification
 
-class CompileExpressionHandlerSpec extends Specification {
+class CompileExpressionHandlerUnitSpec extends Specification {
 
     void "test resolveValue with literal"() {
         given:

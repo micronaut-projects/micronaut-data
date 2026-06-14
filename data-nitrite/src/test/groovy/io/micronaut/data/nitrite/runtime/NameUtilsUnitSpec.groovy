@@ -2,7 +2,7 @@ package io.micronaut.data.nitrite.runtime
 
 import spock.lang.Specification
 
-class NameUtilsSpec extends Specification {
+class NameUtilsUnitSpec extends Specification {
 
     void "test camelToSnake"() {
         expect:

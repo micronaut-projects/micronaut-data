@@ -6,7 +6,7 @@ import spock.lang.Specification
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class CollectionAggregatorSpec extends Specification {
+class CollectionAggregatorUnitSpec extends Specification {
 
     def "test empty collection and empty values"() {
         given:

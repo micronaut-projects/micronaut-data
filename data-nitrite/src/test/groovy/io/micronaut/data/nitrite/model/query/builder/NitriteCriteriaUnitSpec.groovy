@@ -16,7 +16,7 @@ import org.jspecify.annotations.NonNull
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class NitriteCriteriaSpec extends Specification {
+class NitriteCriteriaUnitSpec extends Specification {
 
     PersistentEntityCriteriaBuilder criteriaBuilder
 

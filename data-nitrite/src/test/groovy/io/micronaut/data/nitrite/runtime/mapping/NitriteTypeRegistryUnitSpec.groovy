@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-class NitriteTypeRegistrySpec extends Specification {
+class NitriteTypeRegistryUnitSpec extends Specification {
 
     // Fixed values used across write/read round-trips
     static final Instant        INSTANT  = Instant.ofEpochSecond(1609459200L, 123456789)

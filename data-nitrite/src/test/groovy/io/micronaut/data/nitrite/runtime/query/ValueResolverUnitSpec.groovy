@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-class ValueResolverSpec extends Specification {
+class ValueResolverUnitSpec extends Specification {
 
     // null entityMapper is safe for all methods except resolveCollection
     ValueResolver resolver = new ValueResolver(null)
