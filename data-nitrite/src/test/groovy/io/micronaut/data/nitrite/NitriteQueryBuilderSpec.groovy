@@ -309,6 +309,48 @@ class NitriteQueryBuilderSpec extends Specification {
         thrown(UnsupportedOperationException)
     }
 
+    // Operator-expression rejection folded from mongoport/NitriteCriteriaSpec: each unsupported
+    // criteria operator must be rejected with its own exception + message (PROD/LENGTH above).
+    void "test criteria with SUM expression throws"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.sum(root.get("priority"), cb.literal(2)), cb.literal(4))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("SUM")
+    }
+
+    void "test criteria with DIFF expression throws"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.diff(root.get("priority"), cb.literal(2)), cb.literal(0))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("DIFF")
+    }
+
+    void "test criteria with LOWER expression throws"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.lower(root.get("type")), cb.literal("abc"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("LOWER")
+    }
+
+    void "test criteria with UPPER expression throws"() {
+        when:
+        eventRepository.findAll({ root, cb ->
+            cb.equal(cb.upper(root.get("type")), cb.literal("ABC"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("UPPER")
+    }
+
     void "test findOne via criteria id equals covers visitIdEquals"() {
         given:
         def saved = eventRepository.save(new Event("ID_EQUALS_TEST", "payload"))

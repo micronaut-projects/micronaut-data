@@ -232,28 +232,6 @@ class NitriteCriteriaSpec extends Specification {
             pipeline.contains('refId')
     }
 
-    void "test appendOperatorExpression with PROD expression throws"() {
-        given:
-            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def prod = criteriaBuilder.prod(entityRoot.get("amount"), entityRoot.get("budget"))
-            criteriaQuery.where(criteriaBuilder.equal(prod, criteriaBuilder.literal(100)))
-        when:
-            getQuery(criteriaQuery)
-        then:
-            thrown(UnsupportedOperationException)
-    }
-
-    void "test appendOperatorExpression with LENGTH expression throws"() {
-        given:
-            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def length = criteriaBuilder.length(entityRoot.get("name"))
-            criteriaQuery.where(criteriaBuilder.equal(length, criteriaBuilder.literal(5)))
-        when:
-            getQuery(criteriaQuery)
-        then:
-            thrown(UnsupportedOperationException)
-    }
-
     void "test equalStringIgnoreCase covers visitEquals ignoreCase branch"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
@@ -614,102 +592,6 @@ class NitriteCriteriaSpec extends Specification {
         then:
             def e = thrown(IllegalStateException)
             e.message == "Composite ID not supported!"
-    }
-
-    void "test prod in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.prod(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
-                criteriaBuilder.literal(BigDecimal.ONE)
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(UnsupportedOperationException)
-            e.message.contains("multiply")
-    }
-
-    void "test sum in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.sum(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
-                criteriaBuilder.literal(BigDecimal.ONE)
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(IllegalStateException)
-            e.message.contains("SUM")
-    }
-
-    void "test diff in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.diff(root.get("amount"), criteriaBuilder.literal(BigDecimal.TEN)),
-                criteriaBuilder.literal(BigDecimal.ONE)
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(IllegalStateException)
-            e.message.contains("DIFF")
-    }
-
-    void "test lower in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.lower(root.get("name")),
-                criteriaBuilder.literal("test")
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(IllegalStateException)
-            e.message.contains("LOWER")
-    }
-
-    void "test upper in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.upper(root.get("name")),
-                criteriaBuilder.literal("test")
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(IllegalStateException)
-            e.message.contains("UPPER")
-    }
-
-    void "test length in equality throws"() {
-        given:
-            def root = createRoot(criteriaQuery)
-            criteriaQuery.where(criteriaBuilder.equal(
-                criteriaBuilder.length(root.get("name")),
-                criteriaBuilder.literal(5)
-            ))
-
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(UnsupportedOperationException)
-            e.message.contains("length")
     }
 
     void "test and with single isTrue covers conjunction single-predicate path"() {

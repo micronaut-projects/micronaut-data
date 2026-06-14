@@ -31,7 +31,7 @@ import java.time.Instant
  * 7. Hand-rolled JSON serializer edge cases
  */
 @MicronautTest(transactional = false)
-class QueryBuilder2BugSpec extends Specification {
+class NitriteQueryBuilderRegressionSpec extends Specification {
 
     @Inject
     EventRepository eventRepository
