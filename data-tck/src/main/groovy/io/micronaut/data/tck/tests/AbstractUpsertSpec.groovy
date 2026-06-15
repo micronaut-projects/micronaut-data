@@ -56,37 +56,38 @@ abstract class AbstractUpsertSpec extends Specification {
         productReviewRepository.deleteAll()
     }
 
-    void "upsert inserts and updates product review by assigned ID"() {
+    void "upsert method inserts and updates product review by assigned ID"() {
         given:
-        ProductReview pr1 = new ProductReview(1L, "title new", "content new")
-        ProductReview pr2 = new ProductReview(1L, "title modified", "content modified")
+        ProductReview pr = new ProductReview(1L, "title new", "content new")
 
         when:
-        ProductReview inserted = productReviewRepository.upsert(pr1)
+        ProductReview inserted = productReviewRepository.upsert(pr)
 
         then:
-        assertProductReview(pr1, inserted)
+        inserted == pr
 
         when:
-        ProductReview found = productReviewRepository.findById(1L).get()
+        ProductReview found = productReviewRepository.findById(pr.id).get()
 
         then:
-        assertProductReview(pr1, found)
+        assertProductReview(pr, found)
 
         when:
-        ProductReview updated = productReviewRepository.upsert(pr2)
+        pr.setTitle("title modified")
+        pr.setContent("content modified")
+        ProductReview updated = productReviewRepository.upsert(pr)
 
         then:
-        assertProductReview(pr2, updated)
+        updated == pr
 
         when:
-        found = productReviewRepository.findById(1L).get()
+        found = productReviewRepository.findById(pr.id).get()
 
         then:
-        assertProductReview(pr2, found)
+        assertProductReview(pr, found)
     }
 
-    void "upsertAll inserts and updates product reviews by assigned ID"() {
+    void "upsertAll method inserts and updates product reviews by assigned ID"() {
         given:
         ProductReview pr1 = new ProductReview(2L, "title 1", "content 1")
         ProductReview pr2 = new ProductReview(3L, "title 2", "content 2")
@@ -201,6 +202,7 @@ abstract class AbstractUpsertSpec extends Specification {
         CustomerProfile inserted = customerProfileRepository.upsert(cp1)
 
         then:
+        inserted.id != null
         assertCustomerProfile(inserted, cp1)
 
         when:
@@ -208,15 +210,15 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         found.size() == 1
-        found[0].id() != null
+        found[0].id != null
         assertCustomerProfile(found[0], cp1)
 
         when:
-        Long profileId = found[0].id()
+        Long profileId = inserted.id
         CustomerProfile updated = customerProfileRepository.upsert(cp2)
 
         then:
-        updated.id() == profileId
+        updated.id == profileId
         assertCustomerProfile(updated, cp2)
 
         when:
@@ -224,7 +226,7 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         found.size() == 1
-        found[0].id() == profileId
+        found[0].id == profileId
         assertCustomerProfile(found[0], cp2)
     }
 
@@ -240,6 +242,8 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         inserted.size() == 2
+        inserted.get(0).id != null
+        inserted.get(1).id != null
         assertCustomerProfile(inserted.get(0), cp1)
         assertCustomerProfile(inserted.get(1), cp2)
 
@@ -248,20 +252,20 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         found.size() == 2
-        found.get(0).id() != null
-        found.get(1).id() != null
+        found.get(0).id != null
+        found.get(1).id != null
         assertCustomerProfile(found.get(0), cp1)
         assertCustomerProfile(found.get(1), cp2)
 
         when:
-        Long id1 = found.get(0).id()
-        Long id2 = found.get(1).id()
+        Long id1 = found.get(0).id
+        Long id2 = found.get(1).id
         List<CustomerProfile> updated = customerProfileRepository.upsertAll([cp3, cp4]).toList()
 
         then:
         updated.size() == 2
-        updated.get(0).id() == id1
-        updated.get(1).id() == id2
+        updated.get(0).id == id1
+        updated.get(1).id == id2
         assertCustomerProfile(updated.get(0), cp3)
         assertCustomerProfile(updated.get(1), cp4)
 
@@ -270,8 +274,8 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         found.size() == 2
-        found.get(0).id() == id1
-        found.get(1).id() == id2
+        found.get(0).id == id1
+        found.get(1).id == id2
         assertCustomerProfile(found.get(0), cp3)
         assertCustomerProfile(found.get(1), cp4)
     }
@@ -279,38 +283,37 @@ abstract class AbstractUpsertSpec extends Specification {
     void "upsert annotation inserts and updates warehouse inventory by sku and warehouse conflict properties"() {
         given:
         WarehouseInventory wh1 = new WarehouseInventory("SKU-100", "Berlin", 12)
-        
+
         when:
         WarehouseInventory inserted = warehouseInventoryRepository.upsert(wh1)
-
-
-
         List<WarehouseInventory> inventories = warehouseInventoryRepository.findAll().toList()
 
         then:
-        inserted.sku() == "SKU-100"
-        inserted.warehouse() == "Berlin"
-        inserted.quantity() == 12
+        inserted.id != null
+        inserted.sku == "SKU-100"
+        inserted.warehouse == "Berlin"
+        inserted.quantity == 12
         inventories.size() == 1
-        inventories[0].id() != null
-        inventories[0].sku() == "SKU-100"
-        inventories[0].warehouse() == "Berlin"
-        inventories[0].quantity() == 12
+        inventories[0].id != null
+        inventories[0].sku == "SKU-100"
+        inventories[0].warehouse == "Berlin"
+        inventories[0].quantity == 12
 
         when:
-        Long inventoryId = inventories[0].id()
+        Long inventoryId = inventories[0].id
         WarehouseInventory updated = warehouseInventoryRepository.upsert(new WarehouseInventory("SKU-100", "Berlin", 18))
         inventories = warehouseInventoryRepository.findAll().toList()
 
         then:
-        updated.sku() == "SKU-100"
-        updated.warehouse() == "Berlin"
-        updated.quantity() == 18
+        updated.id == inventoryId
+        updated.sku == "SKU-100"
+        updated.warehouse == "Berlin"
+        updated.quantity == 18
         inventories.size() == 1
-        inventories[0].id() == inventoryId
-        inventories[0].sku() == "SKU-100"
-        inventories[0].warehouse() == "Berlin"
-        inventories[0].quantity() == 18
+        inventories[0].id == inventoryId
+        inventories[0].sku == "SKU-100"
+        inventories[0].warehouse == "Berlin"
+        inventories[0].quantity == 18
     }
 
     void "upsertAll annotation inserts and updates warehouse inventory by sku and warehouse conflict properties"() {
@@ -322,16 +325,17 @@ abstract class AbstractUpsertSpec extends Specification {
         List<WarehouseInventory> inventories = warehouseInventoryRepository.findAll().toList()
 
         then:
-        inserted.collect { it.sku() } as Set == ["SKU-200"] as Set
-        inserted.collect { it.warehouse() } as Set == ["Berlin", "Paris"] as Set
-        inserted.collect { it.quantity() } as Set == [5, 8] as Set
+        inserted.every { it.id != null }
+        inserted.collect { it.sku } as Set == ["SKU-200"] as Set
+        inserted.collect { it.warehouse } as Set == ["Berlin", "Paris"] as Set
+        inserted.collect { it.quantity } as Set == [5, 8] as Set
         inventories.size() == 2
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Berlin" }.quantity() == 5
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Paris" }.quantity() == 8
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.quantity == 5
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.quantity == 8
 
         when:
-        Long berlinId = inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Berlin" }.id()
-        Long parisId = inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Paris" }.id()
+        Long berlinId = inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id
+        Long parisId = inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id
         List<WarehouseInventory> updated = warehouseInventoryRepository.upsertAll([
                 new WarehouseInventory("SKU-200", "Berlin", 7),
                 new WarehouseInventory("SKU-200", "Paris", 11)
@@ -339,24 +343,26 @@ abstract class AbstractUpsertSpec extends Specification {
         inventories = warehouseInventoryRepository.findAll().toList()
 
         then:
-        updated.collect { it.sku() } as Set == ["SKU-200"] as Set
-        updated.collect { it.warehouse() } as Set == ["Berlin", "Paris"] as Set
-        updated.collect { it.quantity() } as Set == [7, 11] as Set
+        updated.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id == berlinId
+        updated.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id == parisId
+        updated.collect { it.sku } as Set == ["SKU-200"] as Set
+        updated.collect { it.warehouse } as Set == ["Berlin", "Paris"] as Set
+        updated.collect { it.quantity } as Set == [7, 11] as Set
         inventories.size() == 2
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Berlin" }.id() == berlinId
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Berlin" }.quantity() == 7
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Paris" }.id() == parisId
-        inventories.find { it.sku() == "SKU-200" && it.warehouse() == "Paris" }.quantity() == 11
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id == berlinId
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.quantity == 7
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id == parisId
+        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.quantity == 11
     }
 
     private static void assertProductReview(ProductReview productReview1, ProductReview productReview2) {
-        assert productReview1.id() == productReview2.id()
-        assert productReview1.title() == productReview2.title()
-        assert productReview1.content() == productReview2.content()
+        assert productReview1.id == productReview2.id
+        assert productReview1.title == productReview2.title
+        assert productReview1.content == productReview2.content
     }
 
     private static void assertCustomerProfile(CustomerProfile customerProfile1, CustomerProfile customerProfile2) {
-        assert customerProfile1.email() == customerProfile2.email()
-        assert customerProfile1.displayName() == customerProfile2.displayName()
+        assert customerProfile1.email == customerProfile2.email
+        assert customerProfile1.displayName == customerProfile2.displayName
     }
 }
