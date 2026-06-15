@@ -212,8 +212,14 @@ public final class SqlSchemaUtils {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 String columnName = namingStrategy.mappedName(associations, property);
                 String[] path = SqlQueryBuilderUtils.asPath(associations, property);
-                identityColumnPaths.putIfAbsent(columnName, path);
-                columnPaths.putIfAbsent(columnName, new TableColumnPath(path, false));
+                String @Nullable [] existingIdentityPath = identityColumnPaths.putIfAbsent(columnName, path);
+                if (existingIdentityPath != null && !Arrays.equals(existingIdentityPath, path)) {
+                    failOnConflictingIdentityColumn(entity, columnName, existingIdentityPath, path);
+                }
+                TableColumnPath existingColumnPath = columnPaths.putIfAbsent(columnName, new TableColumnPath(path, false));
+                if (existingColumnPath != null && !Arrays.equals(existingColumnPath.path(), path)) {
+                    failOnConflictingIdentityColumn(entity, columnName, existingColumnPath.path(), path);
+                }
             });
         }
 
@@ -246,6 +252,11 @@ public final class SqlSchemaUtils {
             indexes, auxiliaryStatements);
         tables.add(table);
         return tables;
+    }
+
+    private static void failOnConflictingIdentityColumn(PersistentEntity entity, String columnName, String[] existingPath, String[] path) {
+        throw new MappingException("Conflicting identity mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
+            + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
     }
 
     /**

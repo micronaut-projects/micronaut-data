@@ -1061,6 +1061,64 @@ class ConflictingInsertEntity {
         ex.message.contains("Conflicting insert mapping for column [shared_value]")
     }
 
+    void "property mapped to version column fails insert mapping"() {
+        when:
+        buildRepository('test.ConflictingVersionInsertEntityRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ConflictingVersionInsertEntityRepository extends CrudRepository<ConflictingVersionInsertEntity, Long> {
+}
+
+@MappedEntity("conflicting_version_insert_entity")
+class ConflictingVersionInsertEntity {
+    @Id
+    private Long id;
+
+    @MappedProperty("lock_value")
+    private String name;
+
+    @Version
+    @MappedProperty("lock_value")
+    private Long version;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getName() {
+        return name;
+    }
+
+    void setName(String name) {
+        this.name = name;
+    }
+
+    Long getVersion() {
+        return version;
+    }
+
+    void setVersion(Long version) {
+        this.version = version;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Conflicting insert mapping for column [lock_value]")
+    }
+
     void "plain embedded property mapped to identity column fails insert mapping"() {
         when:
         buildRepository('test.ConflictingEmbeddedInsertEntityRepository', """

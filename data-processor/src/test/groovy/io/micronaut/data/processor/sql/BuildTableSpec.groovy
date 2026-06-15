@@ -141,6 +141,58 @@ class AssetMetadata {
         sql.count("`asset_id`") == 2
     }
 
+    void "duplicate physical identity columns fail ddl mapping"() {
+        given:
+        def entity = buildEntity('test.ConflictingIdentityEntity', '''
+@MappedEntity("conflicting_identity_entity")
+class ConflictingIdentityEntity {
+    @EmbeddedId
+    private ConflictingIdentity id;
+
+    ConflictingIdentity getId() {
+        return id;
+    }
+
+    void setId(ConflictingIdentity id) {
+        this.id = id;
+    }
+}
+
+@Embeddable
+class ConflictingIdentity {
+    @MappedProperty("shared_id")
+    private Long firstId;
+
+    @MappedProperty("shared_id")
+    private Long secondId;
+
+    Long getFirstId() {
+        return firstId;
+    }
+
+    void setFirstId(Long firstId) {
+        this.firstId = firstId;
+    }
+
+    Long getSecondId() {
+        return secondId;
+    }
+
+    void setSecondId(Long secondId) {
+        this.secondId = secondId;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        builder.buildBatchCreateTableStatement(List.of(), entity)
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Conflicting identity mapping for column [shared_id]")
+    }
+
     void "plain embedded property mapped to identity column fails ddl mapping"() {
         given:
         def entity = buildEntity('test.ConflictingEmbeddedEntity', '''

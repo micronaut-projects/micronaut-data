@@ -1252,7 +1252,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 PersistentProperty version = entity.getVersion();
                 if (!version.isGenerated()) {
                     String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
-                    valueSlotsByColumn.put(columnName, InsertValueSlot.binding(version, new String[]{version.getName()}));
+                    String[] path = new String[]{version.getName()};
+                    InsertValueSlot existingValueSlot = valueSlotsByColumn.get(columnName);
+                    if (existingValueSlot != null) {
+                        failOnConflictingInsertColumn(entity, columnName, existingValueSlot.getPropertyPath(), path);
+                    }
+                    valueSlotsByColumn.put(columnName, InsertValueSlot.binding(version, path));
                     unescapedColumns.add(columnName);
                     if (escape) {
                         columnName = quote(columnName);
