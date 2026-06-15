@@ -2451,23 +2451,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private static final class InsertValueSlot {
-        @Nullable
-        private final PersistentProperty property;
-        private final String @Nullable [] propertyPath;
-        private final boolean sharedIdentityJoinColumn;
-        @Nullable
-        private final String fixedExpression;
-
-        private InsertValueSlot(@Nullable PersistentProperty property,
-                                String @Nullable [] propertyPath,
-                                boolean sharedIdentityJoinColumn,
-                                @Nullable String fixedExpression) {
-            this.property = property;
-            this.propertyPath = propertyPath;
-            this.sharedIdentityJoinColumn = sharedIdentityJoinColumn;
-            this.fixedExpression = fixedExpression;
-        }
+    @SuppressWarnings("ArrayRecordComponent")
+    private record InsertValueSlot(@Nullable PersistentProperty property,
+                                   String @Nullable [] propertyPath,
+                                   boolean sharedIdentityJoinColumn,
+                                   @Nullable String fixedExpression) {
 
         private static InsertValueSlot binding(PersistentProperty property, String[] propertyPath) {
             return binding(property, propertyPath, false);
