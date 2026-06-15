@@ -27,9 +27,36 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 
 import java.util.List;
 
+/**
+ * Utility methods for deciding whether a persistent property can be included in
+ * implicit generated ETag input selection.
+ *
+ * <p>The rules here intentionally mirror the metadata synthesized by
+ * {@link GeneratedETagUtils}: implicit ETag inputs must be deterministic scalar
+ * values from the owning entity or embedded object graph, with special handling
+ * for identity properties and opt-in owning foreign keys.</p>
+ */
 @Internal
 final class ImplicitEtagUtils {
 
+    /**
+     * Determines whether a traversed property is eligible for implicit ETag
+     * input selection.
+     *
+     * <p>Generated or read-transformed properties are excluded because their
+     * persisted value is not a stable direct input, except when the property is
+     * part of the entity identity. The generated ETag property itself, existing
+     * version properties, JSON/object/array values, and non-embedded association
+     * paths are also excluded. Owning foreign-key associations are considered
+     * only when the entity-level configuration explicitly includes them.</p>
+     *
+     * @param entity The entity that owns the generated ETag declaration
+     * @param associations The association path used to reach the property
+     * @param property The property being considered as an ETag input
+     * @param etagProp The property that stores the generated ETag value
+     * @param includeForeignKeys Whether owning foreign-key associations should be eligible
+     * @return {@code true} if the property can be selected implicitly
+     */
     static boolean isImplicitEtagEligible(SourcePersistentEntity entity,
                                           List<Association> associations,
                                           PersistentProperty property,
@@ -66,6 +93,19 @@ final class ImplicitEtagUtils {
         return true;
     }
 
+    /**
+     * Checks whether a traversed property represents the entity identity.
+     *
+     * <p>Embedded identity members are treated as identity properties when the
+     * first association in the traversal path is one of the entity identities.
+     * This allows generated/read-transformed embedded-id members to participate
+     * when they are the physical key columns required for ETag computation.</p>
+     *
+     * @param entity The entity that owns the identity metadata
+     * @param associations The association path used to reach the property
+     * @param property The property being considered
+     * @return {@code true} if the property is the identity or part of an embedded identity
+     */
     private static boolean isIdentityProperty(SourcePersistentEntity entity,
                                               List<Association> associations,
                                               PersistentProperty property) {
@@ -75,6 +115,16 @@ final class ImplicitEtagUtils {
         return !associations.isEmpty() && entity.getIdentityProperties().contains(associations.get(0));
     }
 
+    /**
+     * Checks whether a property declares a non-empty read transformer.
+     *
+     * <p>Read transformers are excluded from implicit ETag inputs because the
+     * transformed projection may not match the stored value used by the database
+     * to compute an ETag.</p>
+     *
+     * @param property The property to inspect
+     * @return {@code true} if a read transformer is configured
+     */
     private static boolean hasReadTransformer(PersistentProperty property) {
         return property.getAnnotationMetadata()
             .stringValue(DataTransformer.class, "read")
