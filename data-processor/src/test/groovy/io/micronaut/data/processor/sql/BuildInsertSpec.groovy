@@ -1131,11 +1131,13 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
 import jakarta.persistence.JoinColumn;
 
 @JdbcRepository(dialect = Dialect.H2)
 @io.micronaut.context.annotation.Executable
-interface GeneratedSharedIdentityAssetRepository extends CrudRepository<GeneratedSharedIdentityAsset, Long> {
+interface GeneratedSharedIdentityAssetRepository extends GenericRepository<GeneratedSharedIdentityAsset, Long> {
+    GeneratedSharedIdentityAsset insert(GeneratedSharedIdentityAsset entity);
 }
 
 @MappedEntity("generated_asset")
@@ -1200,7 +1202,7 @@ class GeneratedSharedIdentityAssetMetadata {
 }
 """)
 
-        def method = beanDefinition.findPossibleMethods("save")
+        def method = beanDefinition.findPossibleMethods("insert")
             .toList()
             .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.GeneratedSharedIdentityAsset' }
 
@@ -1214,6 +1216,7 @@ class GeneratedSharedIdentityAssetMetadata {
     void "shared identity sequence insert keeps contiguous postgres placeholders"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -1231,7 +1234,8 @@ import jakarta.persistence.JoinColumn;
     )
 )
 @io.micronaut.context.annotation.Executable
-interface SharedSequenceAssetRepository extends CrudRepository<SharedSequenceAsset, Long> {
+interface SharedSequenceAssetRepository extends GenericRepository<SharedSequenceAsset, Long> {
+    SharedSequenceAsset insert(SharedSequenceAsset entity);
 }
 
 @MappedEntity("sequence_asset")
@@ -1307,7 +1311,7 @@ class SharedSequenceAssetMetadata {
 }
 """)
 
-        def method = beanDefinition.findPossibleMethods("save")
+        def method = beanDefinition.findPossibleMethods("insert")
             .toList()
             .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.SharedSequenceAsset' }
 

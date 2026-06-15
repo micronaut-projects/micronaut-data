@@ -314,12 +314,14 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
 import jakarta.persistence.JoinColumn;
 import java.util.UUID;
 
 @JdbcRepository(dialect = Dialect.H2)
 @io.micronaut.context.annotation.Executable
-interface AssetRepository extends CrudRepository<Asset, AssetId> {
+interface AssetRepository extends GenericRepository<Asset, AssetId> {
+    Asset update(Asset entity);
 }
 
 @Embeddable

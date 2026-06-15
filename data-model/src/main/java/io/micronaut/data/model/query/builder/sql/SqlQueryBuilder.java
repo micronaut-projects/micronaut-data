@@ -83,6 +83,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1214,8 +1215,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(entity);
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
-            List<String> columns = new ArrayList<>();
-            List<InsertValueSlot> valueSlots = new ArrayList<>();
+            Map<String, InsertValueSlot> valueSlotsByColumn = new LinkedHashMap<>();
 
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
@@ -1233,39 +1233,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
 
                     String[] path = SqlQueryBuilderUtils.asPath(associations, property);
-                    int existingIndex = columns.indexOf(columnName);
-                    if (existingIndex != -1) {
-                        InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
+                    InsertValueSlot existingValueSlot = valueSlotsByColumn.get(unescapedColumnName);
+                    if (existingValueSlot != null) {
                         failOnConflictingInsertColumn(entity, unescapedColumnName, existingValueSlot.getPropertyPath(), path);
                     }
-                    if (existingIndex == -1) {
-                        boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
-                        // Relation properties are visited before the entity identity, so an explicit shared
-                        // PK/FK one-to-one can legitimately claim the physical column first. We record that
-                        // fact on the slot so the identity pass below can decide whether the duplicate is
-                        // valid shared-identity reuse or a real conflicting mapping.
-                        valueSlots.add(InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
-                        unescapedColumns.add(unescapedColumnName);
-                        columns.add(columnName);
-                        resultColumns.add(columnName);
-                        resultColumnTypes.add(property.getDataType());
-                    } else {
-                        boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
-                        valueSlots.set(existingIndex, InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
-                    }
+                    boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
+                    // Relation properties are visited before the entity identity, so an explicit shared
+                    // PK/FK one-to-one can legitimately claim the physical column first. We record that
+                    // fact on the slot so the identity pass below can decide whether the duplicate is
+                    // valid shared-identity reuse or a real conflicting mapping.
+                    valueSlotsByColumn.put(unescapedColumnName, InsertValueSlot.binding(property, path, sharedIdentityJoinColumn));
+                    unescapedColumns.add(unescapedColumnName);
+                    resultColumns.add(columnName);
+                    resultColumnTypes.add(property.getDataType());
                 });
             }
             if (entity.hasVersion()) {
                 PersistentProperty version = entity.getVersion();
                 if (!version.isGenerated()) {
-                    valueSlots.add(InsertValueSlot.binding(version, new String[]{version.getName()}));
-
                     String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
+                    valueSlotsByColumn.put(columnName, InsertValueSlot.binding(version, new String[]{version.getName()}));
                     unescapedColumns.add(columnName);
                     if (escape) {
                         columnName = quote(columnName);
                     }
-                    columns.add(columnName);
                     resultColumns.add(columnName);
                     resultColumnTypes.add(version.getDataType());
                 }
@@ -1280,9 +1271,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         columnName = quote(columnName);
                     }
                     String[] path = SqlQueryBuilderUtils.asPath(associations, property);
-                    int existingIndex = columns.indexOf(columnName);
-                    if (existingIndex != -1) {
-                        InsertValueSlot existingValueSlot = valueSlots.get(existingIndex);
+                    InsertValueSlot existingValueSlot = valueSlotsByColumn.get(unescapedColumnName);
+                    if (existingValueSlot != null) {
                         String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
                         // At this point the real entity identity is being processed. Reusing an existing
                         // column slot is allowed only when the earlier relation path was already proven to
@@ -1291,10 +1281,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                         }
                     }
+                    boolean columnExists = existingValueSlot != null;
 
                     boolean isSequence = false;
                     if (SqlQueryBuilderUtils.isNotForeign(associations)) {
-                        if (existingIndex == -1) {
+                        if (!columnExists) {
                             unescapedColumns.add(unescapedColumnName);
                             resultColumns.add(columnName);
                             resultColumnTypes.add(property.getDataType());
@@ -1308,12 +1299,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
                             } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
-                                if (existingIndex != -1) {
+                                if (columnExists) {
                                     // The earlier relation slot was only a placeholder for a shared identity
                                     // column. If the real identity is database-generated, that physical column
                                     // must disappear from the INSERT instead of being bound from the relation.
-                                    columns.remove(existingIndex);
-                                    valueSlots.remove(existingIndex);
+                                    valueSlotsByColumn.remove(unescapedColumnName);
                                 }
                                 // Property skipped
                                 return;
@@ -1323,31 +1313,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                     if (isSequence) {
                         String sequenceStatement = getSequenceStatement(unescapedSchema, unescapedTableName, property);
-                        if (existingIndex == -1) {
-                            valueSlots.add(InsertValueSlot.literal(sequenceStatement));
-                        } else {
-                            // Shared sequence identities keep the relation-discovered column but replace its
-                            // bound value with the sequence expression so placeholder numbering stays contiguous.
-                            valueSlots.set(existingIndex, InsertValueSlot.literal(sequenceStatement));
-                        }
+                        // Shared sequence identities keep the relation-discovered column but replace its
+                        // bound value with the sequence expression so placeholder numbering stays contiguous.
+                        valueSlotsByColumn.put(unescapedColumnName, InsertValueSlot.literal(sequenceStatement));
                     } else {
-                        if (existingIndex == -1) {
-                            valueSlots.add(InsertValueSlot.binding(property, path));
-                        } else {
-                            valueSlots.set(existingIndex, InsertValueSlot.binding(property, path));
-                        }
-                    }
-
-                    if (existingIndex == -1) {
-                        columns.add(columnName);
+                        valueSlotsByColumn.put(unescapedColumnName, InsertValueSlot.binding(property, path));
                     }
                 });
             }
 
-            List<String> values = new ArrayList<>(valueSlots.size());
-            parameterBindings = new ArrayList<>(valueSlots.size());
+            List<String> columns = valueSlotsByColumn.keySet()
+                .stream()
+                .map(columnName -> escape ? quote(columnName) : columnName)
+                .toList();
+            List<String> values = new ArrayList<>(valueSlotsByColumn.size());
+            parameterBindings = new ArrayList<>(valueSlotsByColumn.size());
             int bindingIndex = 1;
-            for (InsertValueSlot valueSlot : valueSlots) {
+            for (InsertValueSlot valueSlot : valueSlotsByColumn.values()) {
                 if (valueSlot.isLiteral()) {
                     values.add(valueSlot.getFixedExpression());
                     continue;
@@ -2467,6 +2449,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         private static InsertValueSlot literal(String fixedExpression) {
             return new InsertValueSlot(null, null, false, fixedExpression);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof InsertValueSlot(var otherProperty, var otherPropertyPath, var otherSharedIdentityJoinColumn, var otherFixedExpression)
+                && Objects.equals(property, otherProperty)
+                && Arrays.equals(propertyPath, otherPropertyPath)
+                && sharedIdentityJoinColumn == otherSharedIdentityJoinColumn
+                && Objects.equals(fixedExpression, otherFixedExpression);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(property, sharedIdentityJoinColumn, fixedExpression);
+            result = 31 * result + Arrays.hashCode(propertyPath);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "InsertValueSlot[property=" + property + ", propertyPath=" + Arrays.toString(propertyPath)
+                + ", sharedIdentityJoinColumn=" + sharedIdentityJoinColumn + ", fixedExpression=" + fixedExpression + ']';
         }
 
         private boolean isLiteral() {

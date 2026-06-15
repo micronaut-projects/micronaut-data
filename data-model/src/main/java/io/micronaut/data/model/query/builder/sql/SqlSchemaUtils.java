@@ -719,9 +719,9 @@ public final class SqlSchemaUtils {
 
         @Override
         public boolean equals(Object obj) {
-            return obj instanceof TableColumnPath other
-                && Arrays.equals(path, other.path)
-                && sharedIdentityJoinColumn == other.sharedIdentityJoinColumn;
+            return obj instanceof TableColumnPath(String[] otherPath, boolean otherSharedIdentityJoinColumn)
+                && Arrays.equals(path, otherPath)
+                && sharedIdentityJoinColumn == otherSharedIdentityJoinColumn;
         }
 
         @Override
