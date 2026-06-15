@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors
 
-class ImplicitEtagUtilsSpec extends AbstractDataSpec {
+class ImplicitETagUtilsSpec extends AbstractDataSpec {
 
     void "implicit ETag eligibility includes regular scalar and generated identity"() {
         given:
@@ -30,8 +30,8 @@ record Book(@Id @GeneratedValue Long id,
         def etag = property(entity, "etag")
 
         expect:
-        ImplicitEtagUtils.isImplicitEtagEligible(entity, [], title, etag, false)
-        ImplicitEtagUtils.isImplicitEtagEligible(entity, [], id, etag, false)
+        ImplicitETagUtils.isImplicitEtagEligible(entity, [], title, etag, false)
+        ImplicitETagUtils.isImplicitEtagEligible(entity, [], id, etag, false)
     }
 
     void "implicit ETag eligibility excludes version and ETag properties"() {
@@ -47,8 +47,8 @@ record Book(@Id Long id,
         def etag = property(entity, "etag")
 
         expect:
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], version, etag, false)
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], etag, etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], version, etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], etag, etag, false)
     }
 
     void "implicit ETag eligibility excludes generated and read transformed non identity properties"() {
@@ -67,8 +67,8 @@ record Book(@Id Long id,
         def etag = property(entity, "etag")
 
         expect:
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], generatedCode, etag, false)
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], normalizedTitle, etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], generatedCode, etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], normalizedTitle, etag, false)
     }
 
     void "implicit ETag eligibility excludes structured values"() {
@@ -89,10 +89,10 @@ record Book(@Id Long id,
         def etag = property(entity, "etag")
 
         expect:
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], property(entity, "attributes"), etag, false)
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], property(entity, "payload"), etag, false)
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], property(entity, "tags"), etag, false)
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], property(entity, "bytes"), etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], property(entity, "attributes"), etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], property(entity, "payload"), etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], property(entity, "tags"), etag, false)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], property(entity, "bytes"), etag, false)
     }
 
     void "implicit ETag eligibility includes owning foreign key only when requested"() {
@@ -112,8 +112,8 @@ record Author(@Id Long id) {}
         def etag = property(entity, "etag")
 
         expect:
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [], author, etag, false)
-        ImplicitEtagUtils.isImplicitEtagEligible(entity, [], author, etag, true)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [], author, etag, false)
+        ImplicitETagUtils.isImplicitEtagEligible(entity, [], author, etag, true)
     }
 
     void "implicit ETag eligibility excludes non embedded association path"() {
@@ -135,7 +135,7 @@ record Author(@Id Long id) {}
         def etag = property(entity, "etag")
 
         expect:
-        !ImplicitEtagUtils.isImplicitEtagEligible(entity, [author], title, etag, true)
+        !ImplicitETagUtils.isImplicitEtagEligible(entity, [author], title, etag, true)
     }
 
     private static def property(def entity, String name) {

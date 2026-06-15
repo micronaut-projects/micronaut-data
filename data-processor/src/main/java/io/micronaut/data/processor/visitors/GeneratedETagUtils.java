@@ -140,7 +140,7 @@ final class GeneratedETagUtils {
                                                     boolean includeForeignKeys,
                                                     Set<String> parts) {
         PersistentEntityUtils.traversePersistentProperties(entity, true, false, (associations, property) -> {
-            boolean eligible = ImplicitEtagUtils.isImplicitEtagEligible(entity, associations, property, etagProp, includeForeignKeys);
+            boolean eligible = ImplicitETagUtils.isImplicitEtagEligible(entity, associations, property, etagProp, includeForeignKeys);
             if (shouldAddTraversedColumn(entityETaggable, associations, property, eligible)) {
                 String column = entity.getNamingStrategy().mappedName(associations, property);
                 parts.add(column);

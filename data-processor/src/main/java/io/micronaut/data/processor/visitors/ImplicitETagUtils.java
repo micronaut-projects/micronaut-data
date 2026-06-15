@@ -37,7 +37,10 @@ import java.util.List;
  * for identity properties and opt-in owning foreign keys.</p>
  */
 @Internal
-final class ImplicitEtagUtils {
+final class ImplicitETagUtils {
+
+    private ImplicitETagUtils() {
+    }
 
     /**
      * Determines whether a traversed property is eligible for implicit ETag
@@ -86,11 +89,8 @@ final class ImplicitEtagUtils {
         }
         // Exclude JSON/OBJECT and all arrays (including BYTE_ARRAY)
         DataType dt = property.getDataType();
-        if (dt == DataType.OBJECT || dt == DataType.JSON || dt.isArray()) {
-            return false;
-        }
+        return dt != DataType.OBJECT && dt != DataType.JSON && !dt.isArray();
         // Otherwise include
-        return true;
     }
 
     /**
@@ -112,7 +112,7 @@ final class ImplicitEtagUtils {
         if (entity.getIdentityProperties().contains(property)) {
             return true;
         }
-        return !associations.isEmpty() && entity.getIdentityProperties().contains(associations.get(0));
+        return !associations.isEmpty() && entity.getIdentityProperties().contains(associations.getFirst());
     }
 
     /**
@@ -128,7 +128,7 @@ final class ImplicitEtagUtils {
     private static boolean hasReadTransformer(PersistentProperty property) {
         return property.getAnnotationMetadata()
             .stringValue(DataTransformer.class, "read")
-            .map(value -> !value.isEmpty())
+            .map(val -> !val.isEmpty())
             .orElse(false);
     }
 }
