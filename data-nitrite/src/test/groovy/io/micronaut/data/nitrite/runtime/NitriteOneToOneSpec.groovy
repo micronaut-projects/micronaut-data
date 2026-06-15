@@ -1,11 +1,12 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefA
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefB
-import io.micronaut.data.nitrite.mongoport.entities.NitriteRefC
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteRefARepository
+import io.micronaut.data.nitrite.model.NitriteRefA
+import io.micronaut.data.nitrite.model.NitriteRefB
+import io.micronaut.data.nitrite.model.NitriteRefC
+import io.micronaut.data.nitrite.repository.NitriteRefARepository
+import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
