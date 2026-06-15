@@ -1,9 +1,9 @@
-Jakarta Persistence Criteria API supports type-safe queries by using static metamodel that are generated at compilation time.
 
-The metamodel generator will generate a corresponding metamodel class with an underscore suffix letter e.g. an entity `MyEntity` will have a corresponding metamodel entity generated with a name `MyEntity_` and it will be in the same package as the original entity. Every field in the newly generated entity will correspond to the entity's property and can be used as a property reference.
+Jakarta Persistence Criteria API supports type-safe queries by using static metamodel classes that are generated at compilation time.
+A metamodel generator produces a corresponding metamodel class with an underscore suffix, e.g. an entity `MyEntity` will have a generated metamodel `MyEntity_` in the same package.
+Each generated metamodel field corresponds to a persistent property and can be used as a type-safe reference in Criteria queries.
 
 Example from the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a10643[official API specification]:
-
 [source,java]
 ----
 CriteriaBuilder cb = ...
@@ -15,19 +15,54 @@ q.select(customer.get(Customer_.name))
 .where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));
 ----
 
-To configure the metamodel generator simply add the following dependency to the annotation processor classpath:
+=== Configuring metamodel generation
+
+Micronaut supports generating Jakarta Persistence static metamodel classes using one of the following annotation processors:
+
+* *Micronaut static metamodel generator (recommended)* : a Micronaut-native annotation processor that generates `class_` metamodel sources using the Micronaut SourceGen project.
+* *Hibernate static metamodel generator* : Hibernate's `hibernate-jpamodelgen` annotation processor.
+
+[NOTE]
+====
+Enable *only one* metamodel generator at a time to avoid duplicate/conflicting generated sources.
+====
+
+==== Option 1: Micronaut static metamodel generator (recommended)
+
+To configure the Micronaut metamodel generator, add the following dependency to the annotation processor classpath:
+
+dependency:micronaut-data-jpa-metamodel-processor[groupId="io.micronaut.data",scope="annotationProcessor"]
+
+==== Option 2: Hibernate static metamodel generator
+
+To configure Hibernate's metamodel generator, add the following dependency to the annotation processor classpath:
 
 dependency:hibernate-jpamodelgen[groupId="org.hibernate.orm", scope="annotationProcessor"]
 
-NOTE: The Hibernate 6 version of `hibernate-jpamodelgen-jakarta` is required because prior versions of Hibernate are still using the `javax.persistence` package.
-For Kotlin, add the dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add it in compileOnly scope.
+NOTE: Hibernate 6 is required for Jakarta (`jakarta.persistence`).
+Prior versions are based on `javax.persistence`.
 
-NOTE: The generator supports only Jakarta Persistence annotation (located in the `jakarta.persistence` package), it's not possible to use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata.
+[NOTE]
+====
+For Kotlin, add the dependency in https://docs.micronaut.io/4.10.18/guide/#kaptOrKsp[kapt or ksp scope].
+For Groovy, add it in `compileOnly` scope.
+====
 
-And we need to include the generated classes on the Java classpath to have them accessible:
+=== Supported annotations
+
+The Micronaut static metamodel generator supports:
+
+* Jakarta Persistence annotations from the `jakarta.persistence` package (for example `@Entity`, `@Embeddable`, `@MappedSuperclass`, and relationship/embedded mappings), and
+* Micronaut Data mapping annotations from the `io.micronaut.data.annotation` package (for example `@MappedEntity`, `@Relation`, `@EmbeddedId`, and related mapping annotations).
+
+NOTE: Jakarta Persistence (`jakarta.persistence`) must be present on the *compilation classpath* for static metamodel generation to run.
+If the Jakarta Persistence API is not available at compile time, metamodel generation is skipped.
+=== Using generated sources
+
+The generated metamodel classes must be available on the compilation classpath for the module using them.
+Depending on the build tool and configuration, you may need to add the generated sources directory as an additional source set.
 
 Example for Gradle builds:
-
 [source,groovy]
 ----
 sourceSets {
@@ -39,12 +74,42 @@ sourceSets {
 }
 ----
 
-If everything is correctly set up you should be able to see the generated metamodel classes in the IDE code completion and be able to use them:
+If everything is correctly set up you should be able to see the generated metamodel classes in IDE code completion and be able to use them:
 
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
 
----
+NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification].
 
-snippet::example.ProductRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
+=== Disabling Micronaut static metamodel generation
 
-NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification]
+If you are using another JPA static metamodel generator (for example Hibernate `hibernate-jpamodelgen`), you can disable Micronaut's static metamodel generation by setting the following build-time flag:
+
+`micronaut.data.jpa.metamodel.enabled=false`
+
+NOTE: This is a *compile-time* (annotation processor) option.
+It must be configured in your build tool (as a compiler argument), not in `application.properties`.
+
+==== Gradle (Java)
+
+[source,groovy]
+----
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Amicronaut.data.jpa.metamodel.enabled=false"
+    ]
+}
+----
+
+==== Maven
+
+[source,xml]
+----
+<plugin>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <configuration>
+    <compilerArgs>
+      <arg>-Amicronaut.data.jpa.metamodel.enabled=false</arg>
+    </compilerArgs>
+  </configuration>
+</plugin>
+----

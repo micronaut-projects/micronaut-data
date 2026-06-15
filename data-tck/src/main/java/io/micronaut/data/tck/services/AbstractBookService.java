@@ -1,7 +1,6 @@
 package io.micronaut.data.tck.services;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
