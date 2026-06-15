@@ -1,21 +1,23 @@
-package io.micronaut.data.nitrite.mongoport.entities;
+package io.micronaut.data.nitrite.model;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
-@MappedEntity("nitrite_option")
-public class NitriteOption {
+import java.util.List;
+
+@MappedEntity("nitrite_category")
+public class NitriteCategory {
     @Id
     @GeneratedValue
     private String id;
     private String name;
 
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private NitriteProductOption productOption;
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "category", cascade = Relation.Cascade.ALL)
+    private List<NitriteProduct> productList;
 
-    public NitriteOption() {
+    public NitriteCategory() {
     }
 
     public String getId() {
@@ -34,11 +36,11 @@ public class NitriteOption {
         this.name = name;
     }
 
-    public NitriteProductOption getProductOption() {
-        return productOption;
+    public List<NitriteProduct> getProductList() {
+        return productList;
     }
 
-    public void setProductOption(NitriteProductOption productOption) {
-        this.productOption = productOption;
+    public void setProductList(List<NitriteProduct> productList) {
+        this.productList = productList;
     }
 }
