@@ -1,4 +1,4 @@
-package io.micronaut.data.nitrite.mongoport.entities;
+package io.micronaut.data.nitrite.model;
 
 import io.micronaut.data.annotation.MappedEntity;
 
