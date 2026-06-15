@@ -38,6 +38,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -70,16 +71,37 @@ final class GeneratedETagUtils {
                                             List<SourcePersistentProperty> properties) {
         validateGeneratedETagDeclarations(entity);
         List<SourcePersistentProperty> allProperties = allProperties(entity, properties);
-        List<SourcePersistentProperty> etagPropList = allProperties.stream()
+        SourcePersistentProperty etagProp = findGeneratedETagProperty(allProperties);
+        if (etagProp == null) {
+            return;
+        }
+        validateGeneratedETagProperty(entity, etagProp);
+        validateNoTransientETagValues(entity);
+
+        Set<String> parts = collectETagParts(entity, allProperties, etagProp);
+        if (parts.isEmpty()) {
+            throw new ProcessingException(etagProp, "@GeneratedETag requires at least one @ETagValue annotated field or @ETaggable on the entity");
+        }
+
+        String expr = buildEtagReadExpression(generatedETagFunction(etagProp), parts);
+        applyGeneratedETagTransformer(entity, etagProp, expr);
+    }
+
+    private static @Nullable SourcePersistentProperty findGeneratedETagProperty(List<SourcePersistentProperty> properties) {
+        List<SourcePersistentProperty> etagPropList = properties.stream()
             .filter(p -> p.getAnnotationMetadata().hasAnnotation(GeneratedETag.class))
             .toList();
         if (CollectionUtils.isEmpty(etagPropList)) {
-            return;
+            return null;
         }
         if (etagPropList.size() > 1) {
             throw new ProcessingException(etagPropList.get(1), "Only one field can be marked as @GeneratedETag");
         }
-        SourcePersistentProperty etagProp = etagPropList.get(0);
+        return etagPropList.get(0);
+    }
+
+    private static void validateGeneratedETagProperty(SourcePersistentEntity entity,
+                                                      SourcePersistentProperty etagProp) {
         if (entity.getIdentityProperties().contains(etagProp)) {
             throw new ProcessingException(etagProp, "@GeneratedETag cannot be applied to an @Id property");
         }
@@ -89,91 +111,113 @@ final class GeneratedETagUtils {
         if (!String.class.getName().equals(etagProp.getTypeName())) {
             throw new ProcessingException(etagProp, "@GeneratedETag property must be a String");
         }
-        validateNoTransientETagValues(entity);
+    }
 
+    private static String generatedETagFunction(SourcePersistentProperty etagProp) {
         AnnotationMetadata etagMetadata = etagProp.getAnnotationMetadata();
         String function = etagMetadata.stringValue(GeneratedETag.class, "function").orElse("");
         if (function.isEmpty()) {
-            function = GeneratedETag.DIALECT_DEFAULT_FUNCTION_MARKER;
+            return GeneratedETag.DIALECT_DEFAULT_FUNCTION_MARKER;
         }
+        return function;
+    }
 
+    private static Set<String> collectETagParts(SourcePersistentEntity entity,
+                                                List<SourcePersistentProperty> allProperties,
+                                                SourcePersistentProperty etagProp) {
         boolean entityETaggable = entity.getType().hasStereotype(ETaggable.class);
         boolean includeForeignKeys = entity.getType().booleanValue(ETaggable.class, "includeForeignKeys").orElse(false);
         Set<String> parts = new LinkedHashSet<>();
+        collectTraversedETagColumns(entity, etagProp, entityETaggable, includeForeignKeys, parts);
+        collectImplicitForeignKeyColumns(entity, allProperties, entityETaggable, includeForeignKeys, parts);
+        collectExplicitAssociationColumns(entity, allProperties, parts);
+        return parts;
+    }
 
+    private static void collectTraversedETagColumns(SourcePersistentEntity entity,
+                                                    SourcePersistentProperty etagProp,
+                                                    boolean entityETaggable,
+                                                    boolean includeForeignKeys,
+                                                    Set<String> parts) {
         PersistentEntityUtils.traversePersistentProperties(entity, true, false, (associations, property) -> {
-            if (hasNonEmbeddedAssociationPath(associations)) {
-                return;
-            }
-            boolean excludedByAssociationPath = associations.stream()
-                .anyMatch(association -> association.getAnnotationMetadata().booleanValue(ETagValue.class, EXCLUDE).orElse(false));
-            if (excludedByAssociationPath) {
-                return;
-            }
-            AnnotationMetadata metadata = property.getAnnotationMetadata();
-            boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
-            if (excluded) {
-                return;
-            }
-            boolean explicit = metadata.hasAnnotation(ETagValue.class);
-            boolean explicitByEmbedded = isIncludedByEmbeddedAssociationPath(associations);
             boolean eligible = ImplicitEtagUtils.isImplicitEtagEligible(entity, associations, property, etagProp, includeForeignKeys);
-            if (explicit && !eligible) {
-                throw new ProcessingException(((SourcePersistentProperty) property).getPropertyElement(),
-                    "Explicit @ETagValue cannot be applied to ineligible property: " + property.getName());
-            }
-            boolean implicit = entityETaggable && eligible;
-            if (eligible && (explicit || explicitByEmbedded || implicit)) {
+            if (shouldAddTraversedColumn(entityETaggable, associations, property, eligible)) {
                 String column = entity.getNamingStrategy().mappedName(associations, property);
                 parts.add(column);
             }
         });
+    }
 
-        if (entityETaggable && includeForeignKeys) {
-            for (SourcePersistentProperty p : allProperties) {
-                AnnotationMetadata metadata = p.getAnnotationMetadata();
-                boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
-                if (excluded) {
-                    continue;
-                }
-                if (p instanceof Association assoc && !(assoc instanceof Embedded) && isOwningForeignKeyAssociation(assoc)) {
-                    addOwningForeignKeyColumns(entity, assoc, parts);
-                }
-            }
+    private static boolean shouldAddTraversedColumn(boolean entityETaggable,
+                                                    List<Association> associations,
+                                                    PersistentProperty property,
+                                                    boolean eligible) {
+        if (hasNonEmbeddedAssociationPath(associations) || isExcludedByETagValue(associations) || isExcludedByETagValue(property)) {
+            return false;
         }
+        boolean explicit = property.getAnnotationMetadata().hasAnnotation(ETagValue.class);
+        if (explicit && !eligible) {
+            throw new ProcessingException(((SourcePersistentProperty) property).getPropertyElement(),
+                "Explicit @ETagValue cannot be applied to ineligible property: " + property.getName());
+        }
+        return eligible && (explicit || isIncludedByEmbeddedAssociationPath(associations) || entityETaggable);
+    }
 
-        for (SourcePersistentProperty p : allProperties) {
-            AnnotationMetadata metadata = p.getAnnotationMetadata();
-            boolean excluded = metadata.booleanValue(ETagValue.class, EXCLUDE).orElse(false);
-            if (excluded) {
+    private static void collectImplicitForeignKeyColumns(SourcePersistentEntity entity,
+                                                         List<SourcePersistentProperty> allProperties,
+                                                         boolean entityETaggable,
+                                                         boolean includeForeignKeys,
+                                                         Set<String> parts) {
+        if (!entityETaggable || !includeForeignKeys) {
+            return;
+        }
+        for (SourcePersistentProperty property : allProperties) {
+            if (isExcludedByETagValue(property)) {
                 continue;
             }
-            if (metadata.hasAnnotation(ETagValue.class)) {
-                if (metadata.hasAnnotation(Relation.class)) {
-                    var kind = p.enumValue(Relation.class, "value", Relation.Kind.class).orElse(null);
-                    if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
-                        throw new ProcessingException(p, "Explicit @ETagValue on non-embedded, non-foreign-key association is not supported");
-                    }
-                }
-                if (p instanceof Association assoc) {
-                    if (assoc instanceof Embedded) {
-                        continue;
-                    }
-                    if (isOwningForeignKeyAssociation(assoc)) {
-                        addOwningForeignKeyColumns(entity, assoc, parts);
-                    } else {
-                        throw new ProcessingException(p, "Explicit @ETagValue on non-embedded, non-foreign-key association is not supported");
-                    }
-                }
+            if (property instanceof Association association
+                && !(association instanceof Embedded)
+                && isOwningForeignKeyAssociation(association)) {
+                addOwningForeignKeyColumns(entity, association, parts);
             }
         }
+    }
 
-        if (parts.isEmpty()) {
-            throw new ProcessingException(etagProp, "@GeneratedETag requires at least one @ETagValue annotated field or @ETaggable on the entity");
+    private static void collectExplicitAssociationColumns(SourcePersistentEntity entity,
+                                                          List<SourcePersistentProperty> allProperties,
+                                                          Set<String> parts) {
+        for (SourcePersistentProperty property : allProperties) {
+            AnnotationMetadata metadata = property.getAnnotationMetadata();
+            if (isExcludedByETagValue(property) || !metadata.hasAnnotation(ETagValue.class)) {
+                continue;
+            }
+            if (metadata.hasAnnotation(Relation.class)) {
+                var kind = property.enumValue(Relation.class, "value", Relation.Kind.class).orElse(null);
+                if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
+                    throw new ProcessingException(property, "Explicit @ETagValue on non-embedded, non-foreign-key association is not supported");
+                }
+            }
+            collectExplicitAssociationColumn(entity, property, parts);
         }
+    }
 
+    private static void collectExplicitAssociationColumn(SourcePersistentEntity entity,
+                                                         SourcePersistentProperty property,
+                                                         Set<String> parts) {
+        if (!(property instanceof Association association) || association instanceof Embedded) {
+            return;
+        }
+        if (isOwningForeignKeyAssociation(association)) {
+            addOwningForeignKeyColumns(entity, association, parts);
+            return;
+        }
+        throw new ProcessingException(property, "Explicit @ETagValue on non-embedded, non-foreign-key association is not supported");
+    }
+
+    private static void applyGeneratedETagTransformer(SourcePersistentEntity entity,
+                                                      SourcePersistentProperty etagProp,
+                                                      String expr) {
         PropertyElement etagPropertyElement = etagProp.getPropertyElement();
-        String expr = buildEtagReadExpression(function, parts);
         validateNoConflictingTransformer(entity, etagProp, expr);
         etagPropertyElement.annotate(Version.class, b -> { });
         etagPropertyElement.annotate(GeneratedValue.class, b -> { });
@@ -266,9 +310,17 @@ final class GeneratedETagUtils {
         return associations.stream().anyMatch(association -> !(association instanceof Embedded));
     }
 
+    private static boolean isExcludedByETagValue(List<Association> associations) {
+        return associations.stream().anyMatch(GeneratedETagUtils::isExcludedByETagValue);
+    }
+
+    private static boolean isExcludedByETagValue(PersistentProperty property) {
+        return property.getAnnotationMetadata().booleanValue(ETagValue.class, EXCLUDE).orElse(false);
+    }
+
     private static boolean isIncludedByEmbeddedAssociationPath(List<Association> associations) {
         return associations.stream()
-            .filter(association -> association instanceof Embedded)
+            .filter(Embedded.class::isInstance)
             .anyMatch(association -> association.getAnnotationMetadata().hasAnnotation(ETagValue.class)
                 && !association.getAnnotationMetadata().booleanValue(ETagValue.class, EXCLUDE).orElse(false));
     }
@@ -279,9 +331,16 @@ final class GeneratedETagUtils {
             && association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isEmpty();
     }
 
-    private static void addOwningForeignKeyColumns(SourcePersistentEntity entity,
-                                                   Association association,
-                                                   Set<String> parts) {
+    /**
+     * Adds the physical column names for an owning foreign-key association.
+     *
+     * @param entity The entity that owns the generated ETag
+     * @param association The owning association to inspect
+     * @param parts The ordered ETag column names being accumulated
+     */
+    static void addOwningForeignKeyColumns(SourcePersistentEntity entity,
+                                           Association association,
+                                           Set<String> parts) {
         List<String> explicitJoinColumnNames = explicitJoinColumnNames(association);
         if (!explicitJoinColumnNames.isEmpty()) {
             parts.addAll(explicitJoinColumnNames);
@@ -295,7 +354,13 @@ final class GeneratedETagUtils {
         }
     }
 
-    private static List<String> explicitJoinColumnNames(Association association) {
+    /**
+     * Resolves explicitly declared join-column names for an association.
+     *
+     * @param association The association to inspect
+     * @return The explicit join-column names, or an empty list when any name is missing
+     */
+    static List<String> explicitJoinColumnNames(Association association) {
         AnnotationValue<JoinColumns> joinColumnsAnnotationValue = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
         if (joinColumnsAnnotationValue == null) {
             return List.of();
