@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
+import io.micronaut.data.jdbc.mysql.upsert.MySqlCustomerProfileRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlProductReviewRepository
+import io.micronaut.data.jdbc.mysql.upsert.MySqlWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyProvider {
@@ -24,5 +28,15 @@ class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyPro
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(MySqlProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(MySqlCustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(MySqlWarehouseInventoryRepository)
     }
 }

@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.jdbc.entities.upsert;
+package io.micronaut.data.jdbc.oraclexe.upsert;
 
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Index;
-import io.micronaut.data.annotation.MappedEntity;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository;
 
-@MappedEntity
-@Index(columns = "email", unique = true)
-public record CustomerProfile(
-    @Id
-    @GeneratedValue
-    Long id,
-
-    @NotBlank
-    String email,
-
-    @NotBlank
-    String displayName) {
-
-    public CustomerProfile(String email, String displayName) {
-        this(null, email, displayName);
-    }
+@JdbcRepository(dialect = Dialect.ORACLE)
+public interface OracleXEWarehouseInventoryRepository extends WarehouseInventoryRepository {
 }

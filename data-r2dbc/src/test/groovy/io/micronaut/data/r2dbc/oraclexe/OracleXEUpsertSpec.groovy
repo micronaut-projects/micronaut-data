@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.r2dbc.oraclexe
 
+import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXECustomerProfileRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXEProductReviewRepository
+import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXEWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleXETestPropertyProvider {
@@ -24,5 +28,15 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleXETestPrope
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(OracleXEProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(OracleXECustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(OracleXEWarehouseInventoryRepository)
     }
 }

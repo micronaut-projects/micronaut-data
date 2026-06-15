@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import io.micronaut.data.jdbc.h2.upsert.H2CustomerProfileRepository
 import io.micronaut.data.jdbc.h2.upsert.H2ProductReviewRepository
+import io.micronaut.data.jdbc.h2.upsert.H2WarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class H2UpsertSpec extends AbstractUpsertSpec implements H2TestPropertyProvider {
@@ -24,5 +28,15 @@ class H2UpsertSpec extends AbstractUpsertSpec implements H2TestPropertyProvider 
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(H2ProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(H2CustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(H2WarehouseInventoryRepository)
     }
 }

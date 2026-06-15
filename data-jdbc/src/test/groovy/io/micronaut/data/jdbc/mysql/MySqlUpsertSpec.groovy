@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.jdbc.mysql
 
+import io.micronaut.data.jdbc.mysql.upsert.MySqlCustomerProfileRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlProductReviewRepository
+import io.micronaut.data.jdbc.mysql.upsert.MySqlWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class MySqlUpsertSpec extends AbstractUpsertSpec implements MySQLTestPropertyProvider {
@@ -24,5 +28,15 @@ class MySqlUpsertSpec extends AbstractUpsertSpec implements MySQLTestPropertyPro
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(MySqlProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(MySqlCustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(MySqlWarehouseInventoryRepository)
     }
 }

@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.jdbc.entities.upsert;
+package io.micronaut.data.tck.repositories.upsert;
 
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Index;
-import io.micronaut.data.annotation.MappedEntity;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
+import io.micronaut.data.annotation.Upsert;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
 
-@MappedEntity
-@Index(columns = "email", unique = true)
-public record CustomerProfile(
-    @Id
-    @GeneratedValue
-    Long id,
+import java.util.List;
 
-    @NotBlank
-    String email,
+public interface CustomerProfileRepository extends CrudRepository<CustomerProfile, Long> {
 
-    @NotBlank
-    String displayName) {
+    @Upsert(conflictProperties = "email")
+    CustomerProfile upsert(CustomerProfile customerProfile);
 
-    public CustomerProfile(String email, String displayName) {
-        this(null, email, displayName);
-    }
+    @Upsert(conflictProperties = "email")
+    List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
 }
