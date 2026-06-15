@@ -21,14 +21,12 @@ import io.micronaut.data.annotation.MappedEntity;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 @Index(columns = {"sku", "warehouse"}, unique = true)
 public record WarehouseInventory(
     @Id
     @GeneratedValue
-    @Nullable
     Long id,
 
     @NotBlank

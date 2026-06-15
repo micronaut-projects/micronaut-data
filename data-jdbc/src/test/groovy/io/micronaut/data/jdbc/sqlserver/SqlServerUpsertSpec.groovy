@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
+import io.micronaut.data.jdbc.sqlserver.upsert.MSCustomerProfileRepository
 import io.micronaut.data.jdbc.sqlserver.upsert.MSProductReviewRepository
+import io.micronaut.data.jdbc.sqlserver.upsert.MSWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class SqlServerUpsertSpec extends AbstractUpsertSpec implements MSSQLTestPropertyProvider {
@@ -24,5 +28,15 @@ class SqlServerUpsertSpec extends AbstractUpsertSpec implements MSSQLTestPropert
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(MSProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(MSCustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(MSWarehouseInventoryRepository)
     }
 }

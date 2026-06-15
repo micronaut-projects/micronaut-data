@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.r2dbc.postgres
 
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresCustomerProfileRepository
 import io.micronaut.data.r2dbc.postgres.upsert.PostgresProductReviewRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
 class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPropertyProvider {
@@ -24,5 +28,15 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(PostgresProductReviewRepository)
+    }
+
+    @Override
+    CustomerProfileRepository getCustomerProfileRepository() {
+        return context.getBean(PostgresCustomerProfileRepository)
+    }
+
+    @Override
+    WarehouseInventoryRepository getWarehouseInventoryRepository() {
+        return context.getBean(PostgresWarehouseInventoryRepository)
     }
 }
