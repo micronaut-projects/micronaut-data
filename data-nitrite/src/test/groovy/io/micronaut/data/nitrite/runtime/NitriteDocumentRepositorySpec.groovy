@@ -1,14 +1,15 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.nitrite.mongoport.entities.NitriteDocument
-import io.micronaut.data.nitrite.mongoport.entities.NitriteDocumentOwner
+import io.micronaut.data.nitrite.model.NitriteDocument
+import io.micronaut.data.nitrite.model.NitriteDocumentOwner
 import io.micronaut.data.nitrite.model.NitriteMpPerson
 import io.micronaut.data.nitrite.repository.NitriteCriteriaPersonRepository
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteDocumentEntityRepository
+import io.micronaut.data.nitrite.repository.NitriteDocumentEntityRepository
 import io.micronaut.data.nitrite.repository.NitriteMpPersonRepository
+import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -20,7 +21,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static io.micronaut.data.nitrite.mongoport.repositories.NitriteDocumentEntityRepository.Specifications.tagsArrayContains
+import static io.micronaut.data.nitrite.repository.NitriteDocumentEntityRepository.Specifications.tagsArrayContains
 
 @MicronautTest
 class NitriteDocumentRepositorySpec extends Specification implements NitriteTestPropertyProvider {

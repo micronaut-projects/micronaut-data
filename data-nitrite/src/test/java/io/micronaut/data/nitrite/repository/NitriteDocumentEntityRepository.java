@@ -1,8 +1,8 @@
-package io.micronaut.data.nitrite.mongoport.repositories;
+package io.micronaut.data.nitrite.repository;
 
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.mongoport.entities.NitriteDocument;
+import io.micronaut.data.nitrite.model.NitriteDocument;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
