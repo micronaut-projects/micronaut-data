@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
+@SuppressWarnings("java:S3577")
 class ETagBookRepositorySpec {
 
     @Inject
@@ -25,7 +26,7 @@ class ETagBookRepositorySpec {
 
         bookRepository.update(new ETagBook(fresh.id(), "Updated", fresh.bookDetails(), etag));
 
-        assertThrows(OptimisticLockException.class, () ->
-                bookRepository.update(new ETagBook(fresh.id(), "Stale", fresh.bookDetails(), etag)));
+        ETagBook stale = new ETagBook(fresh.id(), "Stale", fresh.bookDetails(), etag);
+        assertThrows(OptimisticLockException.class, () -> bookRepository.update(stale));
     }
 }
