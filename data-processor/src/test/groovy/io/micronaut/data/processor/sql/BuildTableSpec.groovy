@@ -31,7 +31,7 @@ class BuildTableSpec extends AbstractDataSpec {
         given:
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def entity = PersistentEntity.of(Restaurant)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
@@ -88,7 +88,7 @@ class Test {
 }
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -137,11 +137,11 @@ class Test {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
+        sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`date_created` TIMESTAMP WITH TIME ZONE);'
     }
 
     void "test custom parent entity with generics"() {
@@ -155,11 +155,11 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"created_date" TIMESTAMP,"updated_date" TIMESTAMP);'
+        sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`created_date` TIMESTAMP(6) DEFAULT NOW(6),`updated_date` TIMESTAMP(6) DEFAULT NOW(6));'
     }
 
     @Unroll
@@ -289,7 +289,7 @@ class Test {
 ''')
 
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -324,7 +324,7 @@ class Test {
     }}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
         sql == statement
@@ -404,7 +404,7 @@ class Emb {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildBatchCreateTableStatement(entity)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         then:
         sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
@@ -502,15 +502,15 @@ class Teacher {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.MYSQL)
         def sql = builder.buildCreateTableStatements(entity)
 
         then:
         sql.length == 4
-        sql[0] == 'CREATE SCHEMA "students";'
-        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL, PRIMARY KEY("st_id","cs_id"));'
-        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL, PRIMARY KEY("st_id","te_id"));'
-        sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+        sql[0] == 'CREATE SCHEMA `students`;'
+        sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
+        sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
+        sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
     }
 
     @Unroll

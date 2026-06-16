@@ -17,7 +17,7 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
-        additionalModules.add(KnownModules.R2DBC_MARIADB)
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -27,23 +27,23 @@ dependencies {
     kapt projects.micronautDataProcessor
     implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
-    implementation libs.kotlin.coroutines
-    implementation libs.kotlin.coroutines.reactive
-    implementation libs.kotlin.coroutines.reactor
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
+    implementation(mn.kotlinx.coroutines.reactor)
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation(mnSql.jakarta.persistence.api)
 
-    runtimeOnly mnR2dbc.r2dbc.mariadb
-    runtimeOnly mnSql.mariadb.java.client
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnSql.postgresql
     runtimeOnly (mnFlyway.micronaut.flyway) {
         // It is imported already and flyway might bring different version
         exclude group: 'io.micronaut.sql', module: 'micronaut-jdbc'
     }
-    runtimeOnly mnFlyway.flyway.mysql
+    runtimeOnly mnFlyway.flyway.postgresql
 
     testImplementation mn.micronaut.http.client
     compileOnly mnSerde.micronaut.serde.api
 
-    testResourcesService mnSql.mariadb.java.client
+    testResourcesService mnSql.postgresql
 }

@@ -15,8 +15,9 @@
  */
 package io.micronaut.data.r2dbc.convert;
 
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.r2dbc.spi.Connection;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Conversion context for R2DBC implementation.
@@ -24,13 +25,13 @@ import io.r2dbc.spi.Connection;
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface R2dbcConversionContext extends ConversionContext {
+public interface R2dbcConversionContext extends DatabaseTypeConversionContext {
 
     /**
      * Provides access to R2DBC connection.
      *
-     * @return the connection
+     * @return the current connection
      */
-    Connection getConnection();
+    @NonNull Connection getConnection();
 
 }

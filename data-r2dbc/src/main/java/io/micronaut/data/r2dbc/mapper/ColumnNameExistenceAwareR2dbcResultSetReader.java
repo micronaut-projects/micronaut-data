@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.AbstractDelegatingResultReader;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -40,8 +41,8 @@ public class ColumnNameExistenceAwareR2dbcResultSetReader extends AbstractDelega
     @Nullable
     private Set<String> knownColumns;
 
-    public ColumnNameExistenceAwareR2dbcResultSetReader() {
-        super(new ColumnNameR2dbcResultReader());
+    public ColumnNameExistenceAwareR2dbcResultSetReader(ResultReader<Row, String> delegate) {
+        super(delegate);
     }
 
     @Nullable

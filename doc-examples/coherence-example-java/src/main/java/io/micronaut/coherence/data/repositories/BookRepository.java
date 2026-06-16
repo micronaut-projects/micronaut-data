@@ -17,6 +17,7 @@ package io.micronaut.coherence.data.repositories;
 
 import com.tangosol.util.UUID;
 import io.micronaut.coherence.data.annotation.CoherenceRepository;
+import io.micronaut.coherence.data.annotation.PersistEventSource;
 import io.micronaut.coherence.data.model.Author;
 import io.micronaut.coherence.data.model.Book;
 import io.micronaut.data.annotation.Id;
@@ -30,6 +31,10 @@ import java.util.List;
  */
 @CoherenceRepository("book")
 public interface BookRepository extends CrudRepository<Book, UUID> {
+
+    @Override
+    @PersistEventSource
+    <S extends Book> S insert(S entity);
 
     boolean existsByAuthor(Author author);
 
@@ -86,5 +91,5 @@ public interface BookRepository extends CrudRepository<Book, UUID> {
     // deletes
     int deleteByTitleStartingWith(String title);
 
-    Collection<Book> saveBooks(Collection<Book> books);
+    Collection<Book> insertBooks(Collection<Book> books);
 }

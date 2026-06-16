@@ -5,7 +5,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.bson.types.ObjectId
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -55,11 +54,11 @@ class BookRepositorySpec : AbstractMongoSpec() {
 
         // Create: Save a new book
         // tag::save[]
-        var book = Book(ObjectId(),"The Stand", 1000)
-        bookRepository.save(book)
+        var book = Book(null, "The Stand", 1000)
+        book = bookRepository.save(book)
         // end::save[]
 
-        val id = book.id
+        val id = book.id!!
         assertNotNull(id)
 
         // Read: Read a book from the database
@@ -75,7 +74,7 @@ class BookRepositorySpec : AbstractMongoSpec() {
 
         // Update: Update the book and save it again
         // tag::update[]
-        bookRepository.update(book.id, "Changed")
+        bookRepository.update(id, "Changed")
         // end::update[]
         book = bookRepository.findById(id).orElse(null)
         assertEquals("Changed", book.title)
@@ -91,14 +90,14 @@ class BookRepositorySpec : AbstractMongoSpec() {
     fun testPageable() {
         // tag::saveall[]
         bookRepository.saveAll(listOf(
-                Book(ObjectId(),"The Stand", 1000),
-                Book(ObjectId(),"The Shining", 600),
-                Book(ObjectId(),"The Power of the Dog", 500),
-                Book(ObjectId(),"The Border", 700),
-                Book(ObjectId(),"Along Came a Spider", 300),
-                Book(ObjectId(),"Pet Cemetery", 400),
-                Book(ObjectId(),"A Game of Thrones", 900),
-                Book(ObjectId(),"A Clash of Kings", 1100)
+                Book(null, "The Stand", 1000),
+                Book(null, "The Shining", 600),
+                Book(null, "The Power of the Dog", 500),
+                Book(null, "The Border", 700),
+                Book(null, "Along Came a Spider", 300),
+                Book(null, "Pet Cemetery", 400),
+                Book(null, "A Game of Thrones", 900),
+                Book(null, "A Clash of Kings", 1100)
         ))
         // end::saveall[]
 
@@ -132,7 +131,7 @@ class BookRepositorySpec : AbstractMongoSpec() {
 
     @Test
     fun testDto() {
-        bookRepository.save(Book(ObjectId(), "The Shining", 400))
+        bookRepository.save(Book(null, "The Shining", 400))
         val bookDTO = bookRepository.findOne("The Shining")
 
         assertEquals("The Shining", bookDTO.title)

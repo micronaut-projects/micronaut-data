@@ -46,7 +46,7 @@ public class DefaultSaveOneAsyncInterceptor extends AbstractCountConvertCompleti
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = getParameterValueMap(context);
         Object o = instantiateEntity(rootEntity, parameterValueMap);
-        return asyncDatastoreOperations.persist(getInsertOperation(context, o));
+        return persistOrUpdateAsync(context, o);
     }
 
 }

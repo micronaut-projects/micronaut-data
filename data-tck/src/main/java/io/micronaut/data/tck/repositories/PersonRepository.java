@@ -35,9 +35,11 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Book_;
 import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.entities.Person_;
 import io.micronaut.data.tck.entities.TotalDto;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.persistence.Basic;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -288,6 +290,107 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
                         bookRoot.<Long>get("id").in(subquery)
                     );
                     criteriaQuery.orderBy(criteriaBuilder.asc(bookRoot.get("title")));
+                    return criteriaQuery;
+                }
+            };
+        }
+    }
+
+    final class SpecificationsWithMetamodel {
+        public static PredicateSpecification<Person> nameEquals(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(Person_.name), name);
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get(Person_.name), name);
+        }
+
+        public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get(Person_.name)), name.toLowerCase());
+        }
+
+        public static PredicateSpecification<Person> idsIn(Long... ids) {
+            return (root, criteriaBuilder) -> root.get(Person_.id).in(Arrays.asList(ids));
+        }
+
+        public static QuerySpecification<Person> distinct() {
+            return (root, query, criteriaBuilder) -> {
+                query.multiselect(root.get(Person_.id), root.get(Person_.name), root.get(Person_.age), root.get(Person_.enabled), root.get(Person_.income)).distinct(true);
+                return null;
+            };
+        }
+
+        public static UpdateSpecification<Person> setIncome(Double income) {
+            return (root, query, criteriaBuilder) -> {
+                query.set(Person_.INCOME, income == null ? criteriaBuilder.nullLiteral(Double.class) : income);
+                return null;
+            };
+        }
+
+        public static UpdateSpecification<Person> setName(String name) {
+            return (root, query, criteriaBuilder) -> {
+                query.set(Person_.NAME, name == null ? criteriaBuilder.nullLiteral(String.class) : name);
+                return null;
+            };
+        }
+
+        public static QuerySpecification<Person> personWithOnlyNameAndAgeByName(String name) {
+            return (root, query, criteriaBuilder) -> {
+                query.multiselect(root.get(Person_.name).alias(Person_.NAME), root.get(Person_.age).alias(Person_.AGE));
+                return criteriaBuilder.equal(root.get(Person_.NAME), name);
+            };
+        }
+
+        public static CriteriaQueryBuilder<Person> findNameSubqueryIn(String name) {
+            return new CriteriaQueryBuilder<Person>() {
+                @Override
+                public CriteriaQuery<Person> build(CriteriaBuilder criteriaBuilder) {
+                    var criteriaQuery = criteriaBuilder.createQuery(Person.class);
+                    var bookRoot = criteriaQuery.from(Person.class);
+                    var subquery = criteriaQuery.subquery(Long.class);
+                    var subqueryBookRoot = subquery.from(Person.class);
+                    subquery.select(subqueryBookRoot.get(Person_.id));
+                    subquery.where(criteriaBuilder.equal(subqueryBookRoot.get(Person_.name), name));
+                    criteriaQuery.where(
+                        criteriaBuilder.in(bookRoot.get(Person_.id)).value(subquery)
+                    );
+                    return criteriaQuery;
+                }
+            };
+        }
+
+        public static CriteriaQueryBuilder<Person> findNameSubqueryEq(String name) {
+            return new CriteriaQueryBuilder<Person>() {
+                @Override
+                public CriteriaQuery<Person> build(CriteriaBuilder criteriaBuilder) {
+                    var criteriaQuery = criteriaBuilder.createQuery(Person.class);
+                    var bookRoot = criteriaQuery.from(Person.class);
+                    var subquery = criteriaQuery.subquery(Long.class);
+                    var subqueryBookRoot = subquery.from(Person.class);
+                    subquery.select(subqueryBookRoot.get(Person_.id));
+                    subquery.where(criteriaBuilder.equal(subqueryBookRoot.get(Person_.name), name));
+                    criteriaQuery.where(
+                        criteriaBuilder.equal(bookRoot.get(Person_.id), subquery)
+                    );
+                    return criteriaQuery;
+                }
+            };
+        }
+
+        public static CriteriaQueryBuilder<Book> subqueriesWithJoinReferencingOuter() {
+            return new CriteriaQueryBuilder<Book>() {
+                @Override
+                public CriteriaQuery<Book> build(CriteriaBuilder criteriaBuilder) {
+                    var criteriaQuery = criteriaBuilder.createQuery(Book.class);
+                    var bookRoot = criteriaQuery.from(Book.class);
+                    var subquery = criteriaQuery.subquery(Long.class);
+                    var subqueryBookRoot = subquery.from(Book.class);
+                    subquery.select(subqueryBookRoot.get(Book_.id));
+                    subquery.where(criteriaBuilder.equal(subqueryBookRoot.join(Book_.author).get(Book_.ID), bookRoot.join(Book_.author).get(Book_.ID)));
+                    criteriaQuery.where(
+                        bookRoot.get(Book_.id).in(subquery)
+                    );
+                    criteriaQuery.orderBy(criteriaBuilder.asc(bookRoot.get(Book_.title)));
                     return criteriaQuery;
                 }
             };

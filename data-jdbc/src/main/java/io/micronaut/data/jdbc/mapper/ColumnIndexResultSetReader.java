@@ -212,7 +212,7 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
             } else if (Clob.class.isAssignableFrom(type)) {
                 o = resultSet.getClob(index);
             } else {
-                o = resultSet.getObject(index);
+                o = getObject(resultSet, index, type);
             }
             if (o == null) {
                 return null;
@@ -240,5 +240,13 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
 
     private DataAccessException exceptionForColumn(Integer index, Exception e) {
         return new DataAccessException("Error reading object for index [" + index + "] from result set: " + e.getMessage(), e);
+    }
+
+    private static <T> Object getObject(ResultSet resultSet, Integer index, Class<T> type) throws SQLException {
+        try {
+            return resultSet.getObject(index, type);
+        } catch (SQLException | ClassCastException e) {
+            return resultSet.getObject(index);
+        }
     }
 }

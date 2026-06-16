@@ -21,9 +21,9 @@ import io.micronaut.data.tck.entities.PersonDto;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 @Repository
 public interface RxJavaPersonRepo extends RxJavaCrudRepository<Person, Long> {

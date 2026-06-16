@@ -15,7 +15,11 @@ micronaut {
     testResources {
         enabled = true
         inferClasspath = false
-        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        if (providers.environmentVariable('TESTPILOT_USERNAME').isPresent()) {
+            additionalModules.add(KnownModules.JDBC_ORACLE_TEST_PILOT)
+        } else {
+            additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        }
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }

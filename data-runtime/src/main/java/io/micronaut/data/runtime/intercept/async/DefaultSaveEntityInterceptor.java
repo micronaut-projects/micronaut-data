@@ -44,7 +44,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractCountConvertComplet
     @Override
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Object entity = getEntityParameter(context, Object.class);
-        return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
+        return persistOrUpdateAsync(context, entity);
     }
 
 }

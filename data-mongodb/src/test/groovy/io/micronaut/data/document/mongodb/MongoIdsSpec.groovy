@@ -68,6 +68,32 @@ class MongoIdsSpec extends Specification implements MongoTestPropertyProvider {
         found.size() == 2
     }
 
+    void "test generated String id stored as ObjectId or String"() {
+        given:
+        def database = mongoClient.getDatabase("test")
+        def collection = database.getCollection("entities_generated_string_ids", BsonDocument)
+        collection.drop()
+        when:
+        def persisted = dbRepositoryOperations.persist(insertOperation(new EntityGeneratedStringId(value: "Xyz")))
+        then:
+        persisted.myId
+        when:
+        def one = dbRepositoryOperations.findOne(EntityGeneratedStringId, persisted.myId)
+        then:
+        one.myId == persisted.myId
+        when:
+        def found = collection.find(new BsonDocument("_id", new BsonObjectId(new ObjectId(persisted.myId)))).first()
+        then:
+        found._id instanceof BsonObjectId
+        found.value instanceof BsonString
+        when:
+        collection.insertOne(new BsonDocument("_id", new BsonString("generated-string-id")).append("value", new BsonString("String id")))
+        one = dbRepositoryOperations.findOne(EntityGeneratedStringId, "generated-string-id")
+        then:
+        one.myId == "generated-string-id"
+        one.value == "String id"
+    }
+
     void "test simple UUID id"() {
         given:
         def database = mongoClient.getDatabase("test")
@@ -130,6 +156,17 @@ class MongoIdsSpec extends Specification implements MongoTestPropertyProvider {
         @GeneratedValue
         @Id
         ObjectId myId
+
+        String value
+
+    }
+
+    @MappedEntity(value = "entities_generated_string_ids")
+    static class EntityGeneratedStringId {
+
+        @GeneratedValue
+        @Id
+        String myId
 
         String value
 

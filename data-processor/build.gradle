@@ -13,7 +13,10 @@ dependencies {
     compileOnly libs.managed.jakarta.data.stateful
     compileOnly mn.micronaut.inject.java
 
-	testAnnotationProcessor mn.micronaut.inject.java
+    implementation mn.micronaut.sourcegen.generator
+    implementation mn.micronaut.sourcegen.generator.java
+
+    testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
 
 	testImplementation mnReactor.micronaut.reactor
@@ -27,11 +30,12 @@ dependencies {
 	testImplementation projects.micronautDataTx
 	testImplementation projects.micronautDataJdbc
     testImplementation libs.managed.jakarta.data.api
+    testImplementation mn.micronaut.sourcegen.annotations
 
     antlr libs.antlr
 }
 
 tasks.named("generateGrammarSource") {
-    outputDirectory = file("$outputDirectory/io/micronaut/data/jdql")
-    arguments += ["-package", "io.micronaut.data.jdql"]
+    outputDirectory = file("$outputDirectory/io/micronaut/data/jq")
+    arguments += ["-package", "io.micronaut.data.jq"]
 }

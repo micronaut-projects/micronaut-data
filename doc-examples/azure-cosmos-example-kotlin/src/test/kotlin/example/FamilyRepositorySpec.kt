@@ -85,8 +85,8 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
 
     @Test
     fun testCrud() {
-        familyRepository.save(createAndersenFamily())
-        familyRepository.save(createWakefieldFamily())
+        familyRepository.insert(createAndersenFamily())
+        familyRepository.insert(createWakefieldFamily())
 
         var families = familyRepository.childrenArrayContainsGender(SimpleImmutableEntry("gender", "male"))
         assertEquals(1, families.size)
@@ -216,7 +216,7 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         assertFalse(optFamily1.isPresent)
 
-        familyRepository.saveAll(listOf(createAndersenFamily(), createWakefieldFamily()))
+        familyRepository.insertAll(listOf(createAndersenFamily(), createWakefieldFamily()))
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         optFamily2 = familyRepository.findById(WAKEFIELD_FAMILY.id)
         assertTrue(optFamily1.isPresent)
@@ -240,7 +240,7 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
         assertFalse(optFamily1.isPresent)
         assertFalse(optFamily2.isPresent)
 
-        familyRepository.save(createAndersenFamily())
+        familyRepository.insert(createAndersenFamily())
         optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
         assertTrue(optFamily1.isPresent)
         val lastName = optFamily1.get().lastName
@@ -290,8 +290,8 @@ class FamilyRepositorySpec : AbstractAzureCosmosTest() {
     }
 
     private fun saveSampleFamilies() {
-        familyRepository.save(createAndersenFamily())
-        familyRepository.save(createWakefieldFamily())
+        familyRepository.insert(createAndersenFamily())
+        familyRepository.insert(createWakefieldFamily())
     }
 
     companion object {

@@ -10,6 +10,7 @@ import java.util.Map;
 @Singleton
 @Replaces(bean = ManufacturerRepository.class)
 @Requires(property = "spec.name", value = "ManufacturerRepositorySpec")
+@Requires(notEnv="oracle")
 public class MockManufacturerRepository implements ManufacturerRepository {
 
     Map<String, Manufacturer> map = new HashMap<>();

@@ -26,7 +26,7 @@ class SimpleSongSpec extends Specification implements MongoTestPropertyProvider 
             SongEntity songEntity = new SongEntity()
             songEntity.setSongHash("song_1")
             songEntity.setName("Don't Worry, be happy")
-            songRepository.save(songEntity)
+            songRepository.insert(songEntity)
             LocalDateTime created = songEntity.getCreated().truncatedTo(ChronoUnit.MILLIS)
             LocalDateTime updated = songEntity.getUpdated().truncatedTo(ChronoUnit.MILLIS)
         then:

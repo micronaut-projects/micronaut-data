@@ -1,0 +1,42 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "io.micronaut.build.internal.data-kotlin-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        additionalModules.add("jdbc-oracle-free")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    kapt projects.micronautDataProcessor
+
+    implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
+    implementation mn.micronaut.http.client
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation mnSerde.micronaut.serde.support
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.ojdbc11
+
+    testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
+    testImplementation(libs.jupiter.api)
+    testRuntimeOnly(libs.jupiter.engine)
+}

@@ -13,6 +13,7 @@ dependencies {
     implementation mn.micronaut.aop
 
     compileOnly mnSql.micronaut.jdbc
+    compileOnly mnSql.ojdbc11
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor

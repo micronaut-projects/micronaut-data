@@ -1,6 +1,5 @@
 package example;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -8,9 +7,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProductManagerSpec {
+public abstract class ProductManagerSpec {
 
     @Inject
     ProductManager productManager;
@@ -23,8 +21,13 @@ class ProductManagerSpec {
 
     @BeforeAll
     void setupTest() {
-        productRepository.deleteAll();
-        manufacturerRepository.deleteAll();
+        if(productRepository != null) {
+            productRepository.deleteAll();
+        }
+
+        if(manufacturerRepository != null) {
+            manufacturerRepository.deleteAll();
+        }
     }
 
     @Test

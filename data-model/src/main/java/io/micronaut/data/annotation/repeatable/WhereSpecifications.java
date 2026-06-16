@@ -17,7 +17,12 @@ package io.micronaut.data.annotation.repeatable;
 
 import io.micronaut.data.annotation.Where;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Repeatable annotation container for {@link Where}.

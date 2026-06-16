@@ -167,6 +167,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         throw notSupportedOperation();
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(EntityType<U> type) {
+        throw notSupportedOperation();
+    }
+
     public final boolean hasVersionRestriction() {
         if (predicate == null) {
             return false;

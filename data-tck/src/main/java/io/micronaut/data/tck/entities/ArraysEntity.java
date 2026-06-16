@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.UUID;
 
 @MappedEntity
 public class ArraysEntity {
@@ -68,6 +69,9 @@ public class ArraysEntity {
     private boolean[] booleanPrimitiveArray;
     @TypeDef(type = DataType.BOOLEAN_ARRAY)
     private Collection<Boolean> booleanArrayCollection;
+    private UUID[] uuidArray;
+    @TypeDef(type = DataType.UUID_ARRAY)
+    private Collection<UUID> uuidArrayCollection;
 
     public Long getSomeId() {
         return someId;
@@ -264,6 +268,22 @@ public class ArraysEntity {
         this.booleanArrayCollection = booleanArrayCollection;
     }
 
+    public UUID[] getUuidArray() {
+        return uuidArray;
+    }
+
+    public void setUuidArray(UUID[] uuidArray) {
+        this.uuidArray = uuidArray;
+    }
+
+    public Collection<UUID> getUuidArrayCollection() {
+        return uuidArrayCollection;
+    }
+
+    public void setUuidArrayCollection(Collection<UUID> uuidArrayCollection) {
+        this.uuidArrayCollection = uuidArrayCollection;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -292,12 +312,14 @@ public class ArraysEntity {
                 Objects.equals(characterArrayCollection, that.characterArrayCollection) &&
                 Arrays.equals(booleanArray, that.booleanArray) &&
                 Arrays.equals(booleanPrimitiveArray, that.booleanPrimitiveArray) &&
-                Objects.equals(booleanArrayCollection, that.booleanArrayCollection);
+                Objects.equals(booleanArrayCollection, that.booleanArrayCollection) &&
+                Arrays.equals(uuidArray, that.uuidArray) &&
+                Objects.equals(uuidArrayCollection, that.uuidArrayCollection);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(someId, stringArrayCollection, shortArrayCollection, integerArrayCollection, longArrayCollection, floatArrayCollection, doubleArrayCollection, characterArrayCollection, booleanArrayCollection);
+        int result = Objects.hash(someId, stringArrayCollection, shortArrayCollection, integerArrayCollection, longArrayCollection, floatArrayCollection, doubleArrayCollection, characterArrayCollection, booleanArrayCollection, uuidArrayCollection);
         result = 31 * result + Arrays.hashCode(stringArray);
         result = 31 * result + Arrays.hashCode(shortArray);
         result = 31 * result + Arrays.hashCode(shortPrimitiveArray);
@@ -313,6 +335,7 @@ public class ArraysEntity {
         result = 31 * result + Arrays.hashCode(characterPrimitiveArray);
         result = 31 * result + Arrays.hashCode(booleanArray);
         result = 31 * result + Arrays.hashCode(booleanPrimitiveArray);
+        result = 31 * result + Arrays.hashCode(uuidArray);
         return result;
     }
 }

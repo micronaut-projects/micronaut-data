@@ -11,9 +11,9 @@ data class Student(
         val version: Long?,
         val name: String,
         @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = [Relation.Cascade.PERSIST])
-        val courses: List<Course>,
+        val courses: List<Course>?,
         @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "student")
-        val ratings: List<CourseRating>
+        val ratings: List<CourseRating>? = emptyList()
 ) {
     constructor(name: String, items: List<Course>) : this(null, null, name, items, emptyList())
 }

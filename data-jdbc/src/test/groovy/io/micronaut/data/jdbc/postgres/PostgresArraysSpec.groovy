@@ -19,9 +19,12 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.data.tck.entities.MultiArrayEntity
 import io.micronaut.data.tck.repositories.ArraysEntityRepository
@@ -76,6 +79,36 @@ class PostgresArraysSpec extends AbstractArraysSpec implements PostgresTestPrope
             e.strings.length == 0
     }
 
+    def "custom query binds UUID array as postgres array parameter"() {
+        given:
+            def repo = context.getBean(UuidArrayItemRepository)
+            UUID[] ids = [UUID.randomUUID(), UUID.randomUUID()] as UUID[]
+
+        when:
+            repo.batchInsertByIds(ids)
+
+        then:
+            ids.every { repo.findById(it).present }
+
+        cleanup:
+            repo.deleteAll()
+    }
+
+    def "custom query binds typed UUID list as postgres array parameter"() {
+        given:
+            def repo = context.getBean(UuidArrayItemRepository)
+            List<UUID> ids = [UUID.randomUUID(), UUID.randomUUID()]
+
+        when:
+            repo.batchInsertByIds(ids)
+
+        then:
+            ids.every { repo.findById(it).present }
+
+        cleanup:
+            repo.deleteAll()
+    }
+
 }
 
 @MappedEntity("pg_arrayz")
@@ -94,4 +127,29 @@ class Ent {
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 interface Repo extends PageableRepository<Ent, Long> {
+}
+
+@MappedEntity("pg_uuid_array_item")
+class UuidArrayItem {
+    @Id
+    UUID id
+    String name
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface UuidArrayItemRepository extends CrudRepository<UuidArrayItem, UUID> {
+
+    @Query("""
+        INSERT INTO pg_uuid_array_item (id, name)
+        SELECT ids.id, 'batch' FROM unnest(cast(:ids AS uuid[])) AS ids(id)
+        ON CONFLICT (id) DO NOTHING
+    """)
+    void batchInsertByIds(UUID[] ids)
+
+    @Query("""
+        INSERT INTO pg_uuid_array_item (id, name)
+        SELECT ids.id, 'batch' FROM unnest(cast(:ids AS uuid[])) AS ids(id)
+        ON CONFLICT (id) DO NOTHING
+    """)
+    void batchInsertByIds(@TypeDef(type = DataType.UUID_ARRAY) List<UUID> ids)
 }

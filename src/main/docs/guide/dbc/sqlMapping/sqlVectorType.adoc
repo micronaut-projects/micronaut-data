@@ -1,0 +1,235 @@
+This section explains how to map vector embeddings with Micronaut Data JDBC and R2DBC.
+
+Micronaut Data provides vector value types in `io.micronaut.data.model.vector`:
+
+- `FloatVector`: `float[]` backed values.
+- `DoubleVector`: `double[]` backed values.
+- `ByteVector`: `byte[]` backed values.
+
+Sparse vectors are represented by:
+
+- `SparseFloatVector`: `length`, `indices`, and `float[] values`.
+- `SparseDoubleVector`: `length`, `indices`, and `double[] values`.
+- `SparseByteVector`: `length`, `indices`, and `byte[] values`.
+
+For portable sparse mappings, prefer `SparseFloatVector`.
+
+You can also use the sealed interface `Vector` if you need a type-agnostic parameter. For derived vector search methods, Micronaut Data also accepts concrete subtypes (`FloatVector`, `DoubleVector`, `ByteVector`) as parameters.
+When you use `Vector`, Micronaut Data selects the configured dialect-specific vector binding and conversion path for the active driver.
+
+=== Conversion helpers
+
+All vectors expose dense/sparse conversion helpers through the `Vector` API (`toSparseFloatVector()`, `toSparseDoubleVector()`, `toSparseByteVector()`).
+
+=== Binding policy (recommended path)
+
+Use Micronaut vector types (`Vector`, concrete vector subtypes, or sparse vector subtypes) as the application-level input/output model for vector columns and vector query parameters.
+
+Micronaut Data does not rely on string vector literals as the primary path for vector operations:
+
+- Oracle R2DBC binds vectors using Oracle native typed `VECTOR` values.
+- JDBC vector binding is driven by Micronaut vector types across supported dialects.
+- If your code passes raw primitive arrays or string literals for vector queries, migrate to `Vector` or `SparseVector` values.
+
+=== Example entity
+
+snippet::example.DocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+To create a vector index, annotate the vector property with `@VectorIndex`.
+
+Dialect notes:
+
+- PostgreSQL (pgvector): creates `ivfflat` or `hnsw` indexes. The operator class is derived from distance (`COSINE` -> `vector_cosine_ops`, `DOT` -> `vector_ip_ops`, `L1`/`L2` -> `vector_l1_ops`/`vector_l2_ops`).
+  For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse operator classes (`sparsevec_*_ops`) and requires `HNSW`.
+- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `GRAPH` (`HNSW`), plus distance and target accuracy settings.
+- MySQL: `@VectorIndex` is not supported and schema generation fails fast instead of creating a plain non-vector index.
+
+=== Repository usage
+
+Use vector fields as you would any other property. You can also pass `Vector` into query parameters when you don’t want to commit to a specific subtype at the call site.
+
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+=== Score vs Similarity (normalization)
+
+`Score` is the raw database vector score/distance value used by SQL predicates and ordering.
+
+`Similarity` can be normalized to/from raw score values by Micronaut Data for supported scoring functions:
+
+- `COSINE`
+- `L2_EUCLIDEAN`
+- `L2_EUCLIDEAN_SQUARED`
+- `DOT`
+
+When a repository method includes both `Similarity` arguments and an explicit `ScoringFunction` parameter,
+Micronaut Data converts `Similarity` values to raw SQL score values before binding.
+
+If no scoring function is provided, Micronaut Data uses dialect defaults for SQL vector search:
+
+- PostgreSQL: `COSINE`
+- Oracle: `COSINE`
+- MySQL: `L2_EUCLIDEAN`
+
+If no dialect default is available, Micronaut Data uses identity conversion.
+`L1_MANHATTAN` uses identity normalization.
+
+For `SearchResults<T>` return types, Micronaut Data always returns raw `Score` and additionally populates `SearchResult.similarity()` when scoring function context is available.
+If no rows match, Micronaut Data returns an empty `SearchResults` (not `null`).
+
+=== Derived vector search methods
+
+Micronaut Data supports derived vector finder methods with the `searchBy...` prefix:
+
+- `searchBy<Embedding>Near(Vector vector, Double maxDistance)`
+- `searchBy<Embedding>Near(Vector vector, Score maxDistance)`
+- `searchBy<Embedding>Within(Vector vector, Double minDistance, Double maxDistance)`
+- `searchBy<Embedding>Within(Vector vector, Similarity minDistance, Similarity maxDistance)`
+- `searchBy<Embedding>Between(Vector vector, Double minDistance, Double maxDistance)`
+- `searchBy<Embedding>Between(Vector vector, Score minDistance, Score maxDistance)`
+
+For these signatures, the vector argument can be either `Vector` or a concrete vector subtype.
+
+For vector properties, `Between` is treated as vector range semantics (`Within`).
+
+Top/order variants are also supported, for example:
+
+- `searchTop2ByEmbeddingNearOrderByIdDesc(...)`
+- `searchTop2ByEmbeddingWithinOrderByIdAsc(...)`
+
+=== Scoring function selection in derived search
+
+You can provide an explicit scoring function argument in derived vector methods:
+
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+Only one `ScoringFunction` parameter is allowed for vector derived search methods.
+
+Current derived-search scoring function support by dialect:
+
+- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
+- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`
+- MySQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
+
+If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an `IllegalArgumentException`.
+
+=== Oracle sparse vector columns
+
+For Oracle, declare sparse vector storage with `@VectorStorage(shape = VectorShape.SPARSE)` on the vector property.
+You can also set dimensions with `@VectorStorage(length = N)` (equivalent to `@Column(length = N)` for vectors).
+
+When the property type is generic `Vector` (not `FloatVector`/`DoubleVector`/`ByteVector`) and sparse storage is enabled,
+Micronaut Data defaults Oracle sparse DDL to `FLOAT32` and coerces sparse values through a float-compatible conversion path.
+This gives a consistent default for sparse `Vector` usage across Oracle and PostgreSQL JDBC.
+
+For sparse vector subtypes, Oracle infers the element type from the Java subtype in the same way as dense vectors:
+
+- `SparseDoubleVector` -> `VECTOR(N, FLOAT64, SPARSE)`
+- `SparseFloatVector`  -> `VECTOR(N, FLOAT32, SPARSE)`
+- `SparseByteVector`   -> `VECTOR(N, INT8, SPARSE)`
+
+For sparse columns declared as generic `Vector`, Oracle defaults to `VECTOR(N, FLOAT32, SPARSE)`.
+
+Example:
+
+snippet::example.SparseDocumentEmbedding[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+This generates Oracle DDL like `VECTOR(5, FLOAT32, SPARSE)` when the field type is generic `Vector`.
+
+Oracle R2DBC supports sparse derived search/query binding using native typed Oracle VECTOR binding for sparse paths.
+
+Sparse storage describes the database representation, while the Java response type is driven by your mapped property / repository method signature:
+
+- If your property/return type is `Vector` or a dense subtype (`FloatVector`, `DoubleVector`, `ByteVector`), sparse database values are materialized to dense arrays.
+- If your property/return type is a sparse subtype (`SparseFloatVector`, `SparseDoubleVector`, `SparseByteVector`), Micronaut Data returns sparse vector objects.
+
+=== Example usage
+
+snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector-example", source="main", tags="create_vector"]
+
+=== DDL generation and dimensions
+
+Micronaut Data determines vector dimensions from `@VectorStorage(length = N)`, or from `@jakarta.persistence.Column(length = N)` when `@VectorStorage` does not define a length:
+
+- PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set
+- Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
+- MySQL HeatWave: `VECTOR(N)` or `VECTOR`
+
+The Oracle `<TYPE>` is inferred from the vector subtype:
+- `DoubleVector` -> `FLOAT64`
+- `FloatVector`  -> `FLOAT32`
+- `ByteVector`   -> `INT8`
+
+For sparse columns declared as generic `Vector` (`@VectorStorage(shape = VectorShape.SPARSE)`), Oracle defaults to `FLOAT32`.
+
+If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for vector column definitions and logs a warning.
+
+
+=== PostgreSQL (pgvector)
+
+- Column type: `vector` / `vector(N)` (dense) or `sparsevec` / `sparsevec(N)` when `@VectorStorage(shape = VectorShape.SPARSE)` is used
+- PostgreSQL vector storage is float32-based. Dense mappings use `FloatVector` semantics, and sparse mappings use `SparseFloatVector` semantics; generic `Vector` values are coerced through those float-based paths.
+- Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
+- Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
+- PostgreSQL JDBC supports dense and sparse conversion paths.
+- Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.
+
+NOTE: PostgreSQL JDBC vector support is backed by the pgvector Java library. Include it at runtime when using JDBC pgvector driver-native types. R2DBC dense `vector` support uses the PostgreSQL R2DBC driver codec; `PGsparsevec` sparse mapping is currently JDBC-only.
+
+dependency:com.pgvector:pgvector[scope="runtimeOnly"]
+
+DDL example:
+[source,sql]
+----
+CREATE TABLE document_embedding (
+  id BIGINT PRIMARY KEY,
+  embedding vector(384)
+);
+----
+
+=== Oracle (VECTOR)
+
+- Column type: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)`
+- `<TYPE>` derives from the Java vector subtype:
+  - `DoubleVector` -> `FLOAT64`
+  - `FloatVector`  -> `FLOAT32`
+  - `ByteVector`   -> `INT8`
+- Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to set the dimension; when omitted, `*` is used.
+- JDBC and R2DBC derived `SearchResults` mappings both return empty `SearchResults` when no rows match.
+- Oracle JDBC and Oracle R2DBC both support sparse vector columns (`VECTOR(..., SPARSE)`) for derived search scenarios.
+- Oracle R2DBC sparse and dense query parameters are bound using Oracle native typed VECTOR values.
+- For Oracle R2DBC sparse vectors, include a recent `ojdbc11` dependency in your application so sparse VECTOR JDBC APIs are available to the Oracle driver stack.
+
+DDL example:
+[source,sql]
+----
+CREATE TABLE document_embedding (
+  id NUMBER(19) PRIMARY KEY,
+  embedding VECTOR(384, FLOAT64)
+);
+----
+
+Oracle approximate row-limiting syntax for vector search can use `FETCH FIRST APPROX` / `APPROXIMATE` when supported by the database version and query shape:
+
+[source,sql]
+----
+SELECT *
+FROM document_embedding d
+ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
+FETCH FIRST APPROX 2 ROWS ONLY;
+----
+
+=== MySQL HeatWave (VECTOR)
+
+- Column type: `VECTOR(N)` or `VECTOR`
+- Only `FloatVector` is supported.
+- Works with JDBC only; R2DBC is currently not supported.
+- Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension
+
+DDL example:
+[source,sql]
+----
+CREATE TABLE document_embedding (
+  id BIGINT PRIMARY KEY,
+  embedding VECTOR(1536)
+);
+----

@@ -24,6 +24,7 @@ import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.AbstractPropertyReferenceManager;
 import io.micronaut.serde.reference.PropertyReference;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
 
@@ -61,7 +62,7 @@ class DefaultDecoderContext extends AbstractPropertyReferenceManager implements 
     }
 
     @Override
-    public <B, P> PropertyReference<B, P> resolveReference(PropertyReference<B, P> reference) {
+    public <B, P> PropertyReference<@NonNull B, @NonNull P> resolveReference(PropertyReference<B, P> reference) {
         if (refs != null) {
             final PropertyReference<?, ?> first = refs.peekFirst();
             if (first != null) {

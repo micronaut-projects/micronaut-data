@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '8.0.0-M17'
+    id 'io.micronaut.build.shared.settings' version '8.0.0'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -23,7 +23,7 @@ micronautBuild {
     useStandardizedProjectNames = true
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
-    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-rxjava3")
     importMicronautCatalog("micronaut-r2dbc")
     importMicronautCatalog("micronaut-spring")
     importMicronautCatalog("micronaut-serde")
@@ -91,9 +91,16 @@ include 'doc-examples:hibernate-multitenancy-discriminator-example-java'
 include 'doc-examples:example-hibernate-and-jdbc'
 
 include 'doc-examples:jdbc-example-java'
+include 'doc-examples:jdbc-vector-example-java'
+include 'doc-examples:jdbc-vector-example-kotlin'
+include 'doc-examples:jdbc-vector-example-groovy'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
+
+include 'doc-examples:jdbc-sqlite'
+
+include 'doc-examples:jdbc-geospatial'
 
 include 'doc-examples:jdbc-jakarta-data-example-java'
 
@@ -137,6 +144,8 @@ include 'doc-examples:jdbc-spring-template-example-java'
 include 'doc-examples:jdbc-spring-template-example-groovy'
 include 'doc-examples:jdbc-spring-template-example-kotlin'
 
+include 'doc-examples:data-jpa-metamodel-entities-example-groovy'
+
 include 'doc-examples:jooq-r2dbc-postgres'
 
 include 'test-annotation-processor-java'
@@ -153,3 +162,4 @@ include 'jakarta-data-tck:support'
 include 'jakarta-data-tck:hibernate'
 include 'jakarta-data-tck:jdbc'
 include 'jakarta-data-tck:mongodb'
+include 'data-jpa-metamodel-processor'

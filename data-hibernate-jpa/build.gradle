@@ -28,12 +28,13 @@ dependencies {
     testAnnotationProcessor projects.micronautDataProcessor
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
+    testAnnotationProcessor projects.micronautDataJpaMetamodelProcessor
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation (projects.micronautDataProcessor) {
         exclude group: 'org.antlr'
     }
-    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql

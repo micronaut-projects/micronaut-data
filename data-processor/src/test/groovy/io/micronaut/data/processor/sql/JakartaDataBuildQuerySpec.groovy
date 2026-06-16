@@ -16,6 +16,12 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.intercept.InsertAllInterceptor
+import io.micronaut.data.intercept.InsertEntityInterceptor
+import io.micronaut.data.intercept.SaveAllInterceptor
+import io.micronaut.data.intercept.SaveEntityInterceptor
+import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.tck.entities.Restaurant
 
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
@@ -56,6 +62,26 @@ interface RestaurantRepoSave {
         getQuery(saveOne) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         getQuery(saveAllList) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         getQuery(saveAllArray) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        saveOne.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == SaveEntityInterceptor.name
+        saveAllList.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == SaveAllInterceptor.name
+        saveAllArray.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == SaveAllInterceptor.name
+
+        and:
+        def saveOneQueries = saveOne.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+        def saveAllListQueries = saveAllList.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+        def saveAllArrayQueries = saveAllArray.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+        saveOneQueries.size() == 1
+        saveAllListQueries.size() == 1
+        saveAllArrayQueries.size() == 1
+        saveOneQueries[0].stringValue().get() == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        saveAllListQueries[0].stringValue().get() == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        saveAllArrayQueries[0].stringValue().get() == 'UPDATE `restaurant` SET `name`=?,`street`=?,`zip_code`=?,`hqaddress_street`=?,`hqaddress_zip_code`=? WHERE (`id` = ?)'
+        saveOneQueries[0].booleanValue(DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false)
+        saveAllListQueries[0].booleanValue(DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false)
+        saveAllArrayQueries[0].booleanValue(DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false)
+        saveOneQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
+        saveAllListQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
+        saveAllArrayQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
     }
 
     void "test Jakarta Data @Insert on repository without base interface (single, list, array)"() {
@@ -92,6 +118,12 @@ interface RestaurantRepoInsert {
         getQuery(insertOne) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         getQuery(insertAllList) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         getQuery(insertAllArray) == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        insertOne.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == InsertEntityInterceptor.name
+        insertAllList.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == InsertAllInterceptor.name
+        insertAllArray.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == InsertAllInterceptor.name
+        insertOne.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery).isEmpty()
+        insertAllList.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery).isEmpty()
+        insertAllArray.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery).isEmpty()
     }
 
     void "test Jakarta Data @Update on repository without base interface (single, list, array)"() {

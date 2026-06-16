@@ -195,9 +195,9 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
      */
     @NonNull
     public static <RT1> List<RT1> getParametersInRole(@NonNull String role,
-                                                      @NonNull Argument<RT1> type,
-                                                      @NonNull MethodInvocationContext<?, ?> methodContext,
-                                                      @NonNull ConversionService conversionService) {
+                                                       @NonNull Argument<RT1> type,
+                                                       @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                       @NonNull ConversionService conversionService) {
         AnnotationValue<Annotation> annotation = methodContext.getAnnotation(DataMethod.NAME);
         if (annotation == null) {
             return List.of();
@@ -216,6 +216,34 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                 }
                 return conversionService.convert(value, type).stream();
             }).toList();
+    }
+
+    @NonNull
+    public static <T> List<T> getParametersOfType(@NonNull Argument<T> type,
+                                                  @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                  @NonNull ConversionService conversionService) {
+        Argument<?>[] arguments = methodContext.getArguments();
+        Object[] values = methodContext.getParameterValues();
+        if (arguments.length == 0 || values.length == 0) {
+            return List.of();
+        }
+        return java.util.stream.IntStream.range(0, Math.min(arguments.length, values.length))
+            .mapToObj(i -> {
+                Object value = values[i];
+                if (value == null) {
+                    return Stream.<T>empty();
+                }
+                if (type.isInstance(value)) {
+                    //noinspection unchecked
+                    return Stream.of((T) value);
+                }
+                if (type.getType().isAssignableFrom(arguments[i].getType())) {
+                    return conversionService.convert(value, type).stream();
+                }
+                return Stream.<T>empty();
+            })
+            .flatMap(s -> s)
+            .toList();
     }
 
     @Override

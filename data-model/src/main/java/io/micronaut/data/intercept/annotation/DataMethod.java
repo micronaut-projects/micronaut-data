@@ -64,6 +64,11 @@ public @interface DataMethod {
     String META_MEMBER_COUNT_QUERY = "countQuery";
 
     /**
+     * The member that holds alternative query definitions.
+     */
+    String META_MEMBER_QUERIES = "queries";
+
+    /**
      * The member name that holds the result type.
      */
     String META_MEMBER_RESULT_TYPE = "resultType";
@@ -276,6 +281,11 @@ public @interface DataMethod {
      * @return The query parameters
      */
     DataMethodQueryParameter[] parameters() default {};
+
+    /**
+     * @return Alternative query definitions for this method.
+     */
+    DataMethodQuery[] queries() default {};
 
     /**
      * @return True if the method represents the procedure invocation.
