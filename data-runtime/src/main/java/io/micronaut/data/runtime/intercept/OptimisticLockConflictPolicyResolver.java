@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Resolves optimistic lock conflict policy for repository method invocations.
  *
- * @since 4.14
+ * @since 5.1
  */
 @Internal
 final class OptimisticLockConflictPolicyResolver {

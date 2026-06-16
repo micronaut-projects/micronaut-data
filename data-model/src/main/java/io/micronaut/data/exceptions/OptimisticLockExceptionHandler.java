@@ -22,8 +22,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Handles optimistic lock conflicts for repository method invocations.
  *
- * @author Denis Stepanov
- * @since 4.14
+ * @author radovanradic
+ * @since 5.1
  */
 @Experimental
 public interface OptimisticLockExceptionHandler {

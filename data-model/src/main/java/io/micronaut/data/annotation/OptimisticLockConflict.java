@@ -24,8 +24,8 @@ import java.lang.annotation.Target;
 /**
  * Defines the optimistic lock conflict handling policy for a repository method.
  *
- * @author Denis Stepanov
- * @since 4.14
+ * @author radovanradic
+ * @since 5.1
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
