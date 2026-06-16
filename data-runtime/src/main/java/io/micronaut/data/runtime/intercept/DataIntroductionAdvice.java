@@ -19,14 +19,13 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Prototype;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.MutableArgumentValue;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.OptimisticLockConflict;
 import io.micronaut.data.annotation.Repository;
@@ -40,11 +39,14 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.support.NullValue;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Inject;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,6 +70,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     @Nullable
     private final InjectionPoint<?> injectionPoint;
 
+    private final BeanContext beanContext;
     private final DataConversionService conversionService;
     private final OptimisticLockConflictPolicyResolver optimisticLockConflictPolicyResolver;
 
@@ -76,16 +79,19 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
      *
      * @param dataInterceptorResolver The data interceptor resolver
      * @param injectionPoint          The injection point
+     * @param beanContext             The bean context
      * @param conversionService       The conversion service
      * @param optimisticLockExceptionHandler The optimistic lock exception handler
      */
     @Inject
     public DataIntroductionAdvice(@NonNull DataInterceptorResolver dataInterceptorResolver,
                                   @Nullable InjectionPoint<?> injectionPoint,
+                                  BeanContext beanContext,
                                   DataConversionService conversionService,
                                   @Nullable OptimisticLockExceptionHandler optimisticLockExceptionHandler) {
         this.dataInterceptorResolver = dataInterceptorResolver;
         this.injectionPoint = injectionPoint;
+        this.beanContext = beanContext;
         this.conversionService = conversionService;
         this.optimisticLockConflictPolicyResolver = new OptimisticLockConflictPolicyResolver(optimisticLockExceptionHandler);
     }
@@ -121,10 +127,10 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletionStage<Object> completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
-        Objects.requireNonNull(completionStage).whenComplete((value, throwable) -> {
+        Objects.requireNonNull(completionStage).whenComplete((val, throwable) -> {
             propagatedContext.propagate(() -> {
                 if (throwable == null) {
-                    completeResult(context, completableFuture, value);
+                    completeResult(context, completableFuture, val);
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
@@ -260,27 +266,21 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     private Object findCurrentEntity(MethodInvocationContext<Object, Object> context,
                                      Object idValue,
                                      OptimisticLockException exception) {
-        Method findByIdMethod = findByIdMethod(context.getTarget().getClass())
+        BeanDefinition<Object> beanDefinition = beanContext.findBeanDefinition(context.getDeclaringType())
+            .orElseThrow(() -> new IllegalStateException("Cannot locate repository bean definition for RELOAD_AND_RETRY policy.", exception));
+        ExecutableMethod<Object, Object> findByIdMethod = findByIdMethod(beanDefinition)
             .orElseThrow(() -> new IllegalStateException("RELOAD_AND_RETRY policy requires findById(ID) method on repository.", exception));
-        try {
-            findByIdMethod.setAccessible(true);
-            Object result = findByIdMethod.invoke(context.getTarget(), idValue);
-            if (result instanceof Optional<?> optionalEntity) {
-                return optionalEntity.orElseThrow(() -> exception);
-            }
-            throw new IllegalStateException("findById(ID) must return Optional for RELOAD_AND_RETRY policy.", exception);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Failed to execute findById(ID) for RELOAD_AND_RETRY policy.", e);
+        Object result = findByIdMethod.invoke(context.getTarget(), idValue);
+        if (result instanceof Optional<?> optionalEntity) {
+            return optionalEntity.orElseThrow(() -> exception);
         }
+        throw new IllegalStateException("findById(ID) must return Optional for RELOAD_AND_RETRY policy.", exception);
     }
 
-    private Optional<Method> findByIdMethod(Class<?> targetType) {
-        for (Method method : targetType.getMethods()) {
-            if (method.getName().equals("findById") && method.getParameterCount() == 1) {
-                return Optional.of(method);
-            }
-        }
-        return Optional.empty();
+    private Optional<ExecutableMethod<Object, Object>> findByIdMethod(BeanDefinition<Object> beanDefinition) {
+        return beanDefinition.findPossibleMethods("findById")
+            .filter(method -> method.getArguments().length == 1)
+            .findFirst();
     }
 
     private Object resolveVersionValue(Object entity, OptimisticLockException exception) {
