@@ -20,7 +20,7 @@ micronaut-validation = "5.0.0"
 micronaut-logging = "2.0.0"
 micronaut-flyway = "8.0.0"
 micronaut-coherence = "6.0.0"
-#micronaut-sourcegen = "2.0.0-RC3"
+micronaut-sourcegen = "2.0.0-RC3"
 
 groovy = "5.0.6"
 
@@ -49,7 +49,7 @@ spring-boot-gradle-plugin = "4.0.6"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.4.1"
 errorprone-gradle-plugin = "5.1.0"
-nullaway = "0.13.4"
+nullaway = "0.13.6"
 error_prone_core = "2.49.0"
 groovy_yaml = "5.0.6"
 
@@ -77,7 +77,7 @@ micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.r
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
-#micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
+micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
