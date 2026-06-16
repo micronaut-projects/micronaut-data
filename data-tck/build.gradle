@@ -30,11 +30,6 @@ dependencies {
     compileOnly mn.micronaut.inject.groovy
 }
 
-tasks.withType(Javadoc).configureEach {
-    exclude("io/micronaut/data/tck/tests/AbstractJakartaDataTest.java")
-}
-
-
 tasks.named("prepareJavadocAggregation").configure {
     dependsOn(tasks.named("compileJava"))
     getSources().from(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main"))
