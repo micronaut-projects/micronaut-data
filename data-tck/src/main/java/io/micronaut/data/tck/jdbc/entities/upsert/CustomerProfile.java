@@ -20,21 +20,58 @@ import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 @Index(columns = "email", unique = true)
-public record CustomerProfile(
+public class CustomerProfile {
+
     @Id
-    @GeneratedValue
-    Long id,
+    @GeneratedValue(value = GeneratedValue.Type.IDENTITY)
+    @Nullable
+    private Long id;
 
     @NotBlank
-    String email,
+    private String email;
 
     @NotBlank
-    String displayName) {
+    private String displayName;
+
+    public CustomerProfile() {
+    }
 
     public CustomerProfile(String email, String displayName) {
         this(null, email, displayName);
+    }
+
+    public CustomerProfile(@Nullable Long id, String email, String displayName) {
+        this.id = id;
+        this.email = email;
+        this.displayName = displayName;
+    }
+
+    @Nullable
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(@Nullable Long id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 }

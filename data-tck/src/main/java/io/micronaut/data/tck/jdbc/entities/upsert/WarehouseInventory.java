@@ -21,24 +21,70 @@ import io.micronaut.data.annotation.MappedEntity;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.Nullable;
 
 @MappedEntity
 @Index(columns = {"sku", "warehouse"}, unique = true)
-public record WarehouseInventory(
+public class WarehouseInventory {
+
     @Id
     @GeneratedValue
-    Long id,
+    @Nullable
+    private Long id;
 
     @NotBlank
-    String sku,
+    private String sku;
 
     @NotBlank
-    String warehouse,
+    private String warehouse;
 
     @NotNull
-    Integer quantity) {
+    private Integer quantity;
+
+    public WarehouseInventory() {
+    }
 
     public WarehouseInventory(String sku, String warehouse, Integer quantity) {
         this(null, sku, warehouse, quantity);
+    }
+
+    public WarehouseInventory(@Nullable Long id, String sku, String warehouse, Integer quantity) {
+        this.id = id;
+        this.sku = sku;
+        this.warehouse = warehouse;
+        this.quantity = quantity;
+    }
+
+    @Nullable
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(@Nullable Long id) {
+        this.id = id;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(String warehouse) {
+        this.warehouse = warehouse;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }
