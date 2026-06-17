@@ -43,12 +43,12 @@ import kotlin.coroutines.CoroutineContext
 @EachBean(ReactorReactiveTransactionOperations::class)
 @Singleton
 @Internal
-class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
+class DefaultCoroutineTransactionOperations<C : Any>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
 
     override suspend fun <R> execute(definition: TransactionDefinition,
                                      handler: suspend (CoroutineTransactionStatus<C>) -> R): R {
-        return reactiveTransactionOperations.withTransaction(definition) {
-            mono<R> {
+        return reactiveTransactionOperations.withTransactionMono(definition) {
+            mono<ResultBox<R>> {
                 val reactorContext = coroutineContext[ReactorContext.Key]
                 if (reactorContext != null) {
                     val micronautPropagatedContext =
@@ -59,13 +59,13 @@ class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOp
                             micronautPropagatedContext
                         )
                         return@mono withContext(newCoroutineContext) {
-                            handler(DefaultCoroutineTransactionStatus(it))
+                            ResultBox(handler(DefaultCoroutineTransactionStatus(it)))
                         }
                     }
                 }
-                handler(DefaultCoroutineTransactionStatus(it))
+                ResultBox(handler(DefaultCoroutineTransactionStatus(it)))
             }
-        }.awaitSingle()
+        }.awaitSingle().value
     }
 
     override fun findTransactionStatus(coroutineContext: CoroutineContext): CoroutineTransactionStatus<C>? {
@@ -78,4 +78,6 @@ class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOp
         }
         return null
     }
+
+    private data class ResultBox<R>(val value: R)
 }

@@ -27,7 +27,7 @@ import io.micronaut.transaction.TransactionExecution
  * @since 4.2.0
  */
 @Experimental
-interface CoroutineTransactionStatus<T> : TransactionExecution {
+interface CoroutineTransactionStatus<T : Any> : TransactionExecution {
 
     /**
      * @return The connection.

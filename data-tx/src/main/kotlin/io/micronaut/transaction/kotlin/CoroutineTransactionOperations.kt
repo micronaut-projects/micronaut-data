@@ -28,7 +28,7 @@ import kotlin.coroutines.CoroutineContext
  * @since 4.2.0
  */
 @Experimental
-interface CoroutineTransactionOperations<C> {
+interface CoroutineTransactionOperations<C : Any> {
 
     /**
      * Find optional propagated transaction status.
