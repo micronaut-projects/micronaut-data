@@ -50,7 +50,7 @@ spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.4.1"
 errorprone-gradle-plugin = "5.1.0"
 nullaway = "0.13.6"
-error_prone_core = "2.49.0"
+error_prone_core = "2.50.0"
 groovy_yaml = "5.0.6"
 
 antlr = "4.13.2"
