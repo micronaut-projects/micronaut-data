@@ -43,7 +43,7 @@ h2gis = "2.2.5"
 # Gradle plugins
 
 ksp-gradle-plugin = "2.3.9"
-kotlin-gradle-plugin = "2.3.21"
+kotlin-gradle-plugin = "2.4.0"
 jmh-gradle-plugin = "0.7.3"
 spring-boot-gradle-plugin = "4.1.0"
 spring-dependency-management-gradle-plugin = "1.1.7"
