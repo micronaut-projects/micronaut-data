@@ -81,7 +81,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             return null;
         }
         MethodElement methodElement = matchContext.getMethodElement();
-        boolean producesAnEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(methodElement);
+        boolean producesAnEntity = doesMethodProduceEntityOrIterableOfEntity(methodElement);
         if (!TypeUtils.doesReturnVoid(methodElement)
             && !TypeUtils.doesMethodProducesANumber(methodElement)
             && !producesAnEntity) {
@@ -229,7 +229,15 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         }
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         return returnType != null
-            && (entityUpsert ? TypeUtils.isEntity(returnType) : TypeUtils.isIterableOfEntity(returnType));
+            && (entityUpsert ? TypeUtils.isEntity(returnType) : producesEntityOrIterableOfEntity(returnType));
+    }
+
+    private boolean doesMethodProduceEntityOrIterableOfEntity(MethodElement methodElement) {
+        return producesEntityOrIterableOfEntity(TypeUtils.getMethodProducingItemType(methodElement));
+    }
+
+    private boolean producesEntityOrIterableOfEntity(@Nullable ClassElement type) {
+        return TypeUtils.isEntity(type) || TypeUtils.isIterableOfEntity(type);
     }
 
     private List<String> conflictProperties(MethodMatchContext matchContext) {

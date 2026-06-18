@@ -18,8 +18,10 @@ package io.micronaut.data.tck.repositories.upsert;
 import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface CustomerProfileRepository extends CrudRepository<CustomerProfile, Long> {
 
@@ -27,11 +29,35 @@ public interface CustomerProfileRepository extends CrudRepository<CustomerProfil
     CustomerProfile upsert(CustomerProfile customerProfile);
 
     @Upsert(conflictProperties = "email")
-    List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
+    Mono<CustomerProfile> upsertMono(CustomerProfile profile);
+
+    @Upsert(conflictProperties = "email")
+    CompletableFuture<CustomerProfile> upsertFuture(CustomerProfile profile);
 
     @Upsert(conflictProperties = "email")
     void upsertNoResult(CustomerProfile customerProfile);
 
     @Upsert(conflictProperties = "email")
+    Mono<Void> upsertMonoNoResult(CustomerProfile customerProfile);
+
+    @Upsert(conflictProperties = "email")
+    CompletableFuture<Void> upsertFutureNoResult(CustomerProfile profile);
+
+    @Upsert(conflictProperties = "email")
+    List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
+
+    @Upsert(conflictProperties = "email")
+    Mono<List<CustomerProfile>> upsertAllMono(Iterable<CustomerProfile> profiles);
+
+    @Upsert(conflictProperties = "email")
+    CompletableFuture<List<CustomerProfile>> upsertAllFuture(Iterable<CustomerProfile> profiles);
+
+
+
+    @Upsert(conflictProperties = "email")
     void upsertAllNoResult(Iterable<CustomerProfile> customerProfiles);
+
+
+
+
 }

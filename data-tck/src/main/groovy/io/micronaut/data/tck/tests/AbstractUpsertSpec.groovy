@@ -200,12 +200,12 @@ abstract class AbstractUpsertSpec extends Specification {
         assertProductReview(found2, pr2)
     }
 
-    void "upsert by email conflict returns entity"() {
+    void "#methodName by email conflict returns entity"() {
         given:
         CustomerProfile cp = new CustomerProfile("test@example.com", "test")
 
         when:
-        CustomerProfile inserted = customerProfileRepository.upsert(cp)
+        CustomerProfile inserted = upsertMethod(cp)
 
         then:
         inserted.id != null
@@ -219,7 +219,7 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         cp.setDisplayName("test modified")
-        CustomerProfile updated = customerProfileRepository.upsert(cp)
+        CustomerProfile updated = upsertMethod(cp)
 
         then:
         updated == cp
@@ -229,15 +229,50 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         assertCustomerProfile(cp, found)
+
+        where:
+        methodName     | upsertMethod
+        "upsert"       | { CustomerProfile profile -> customerProfileRepository.upsert(profile) }
+        "upsertMono"   | { CustomerProfile profile -> customerProfileRepository.upsertMono(profile).block() }
+        "upsertFuture" | { CustomerProfile profile -> customerProfileRepository.upsertFuture(profile).get() }
     }
 
-    void "upsertAll by email conflict returns entities"() {
+    void "#methodName by email conflict does not return entity"() {
+        given:
+        CustomerProfile cp = new CustomerProfile("test@example.com", "test")
+
+        when:
+        upsertMethod(cp)
+        List<CustomerProfile> found = customerProfileRepository.findAll()
+
+        then:
+        found.size() == 1
+        found.get(0).id != null
+        assertCustomerProfile(found.get(0), cp)
+
+        when:
+        cp.setDisplayName("test modified")
+        upsertMethod(cp)
+        found = customerProfileRepository.findAll()
+
+        then:
+        found.get(0).id != null
+        assertCustomerProfile(found.get(0), cp)
+
+        where:
+        methodName             | upsertMethod
+        "upsertNoResult"       | { CustomerProfile profile -> customerProfileRepository.upsertNoResult(profile) }
+        "upsertMonoNoResult"   | { CustomerProfile profile -> customerProfileRepository.upsertMonoNoResult(profile).block() }
+        "upsertFutureNoResult" | { CustomerProfile profile -> customerProfileRepository.upsertFutureNoResult(profile).get() }
+    }
+
+    void "#methodName by email conflict returns entities"() {
         given:
         CustomerProfile cp1 = new CustomerProfile("test1@example.com", "test 1")
         CustomerProfile cp2 = new CustomerProfile("test2@example.com", "test 2")
 
         when:
-        List<CustomerProfile> inserted = customerProfileRepository.upsertAll([cp1, cp2]).toList()
+        List<CustomerProfile> inserted = upsertMethod([cp1, cp2])
 
         then:
         inserted.size() == 2
@@ -257,7 +292,7 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         cp1.setDisplayName("test 1 modified")
         cp2.setDisplayName("test 2 modified")
-        List<CustomerProfile> updated = customerProfileRepository.upsertAll([cp1, cp2]).toList()
+        List<CustomerProfile> updated = upsertMethod([cp1, cp2])
 
         then:
         updated.size() == 2
@@ -271,30 +306,24 @@ abstract class AbstractUpsertSpec extends Specification {
         then:
         assertCustomerProfile(found1, cp1)
         assertCustomerProfile(found2, cp2)
+
+        where:
+        methodName        | upsertMethod
+        "upsertAll"       | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAll(profiles) }
+        "upsertAllMono"   | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllMono(profiles).block() }
+        "upsertAllFuture" | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFuture(profiles).get() }
     }
 
-    void "upsert by email conflict does not return entity"() {
-        given:
-        CustomerProfile cp = new CustomerProfile("test@example.com", "test")
 
-        when:
-        customerProfileRepository.upsertNoResult(cp)
-        List<CustomerProfile> found = customerProfileRepository.findAll()
 
-        then:
-        found.size() == 1
-        found.get(0).id != null
-        assertCustomerProfile(found.get(0), cp)
 
-        when:
-        cp.setDisplayName("test modified")
-        customerProfileRepository.upsertNoResult(cp)
-        found = customerProfileRepository.findAll()
 
-        then:
-        found.get(0).id != null
-        assertCustomerProfile(found.get(0), cp)
-    }
+
+
+
+
+
+
 
     void "upsertAll by email conflict does not return entities"() {
         given:
