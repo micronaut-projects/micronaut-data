@@ -19,6 +19,7 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
@@ -148,8 +149,9 @@ import java.util.stream.StreamSupport;
  * @since 1.0.0
  */
 @EachBean(DataSource.class)
+@Requires(condition = DefaultJdbcRepositoryOperationsCondition.class)
 @Internal
-public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement, SQLException> implements
+public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement, SQLException> implements
     JdbcRepositoryOperations,
     DeleteReturningRepositoryOperations,
     AsyncCapableRepository,
@@ -270,7 +272,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T> T persistOne(JdbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
         SqlStoredQuery<T, ?> storedQuery = resolveEntityInsert(ctx.annotationMetadata, ctx.repositoryType, (Class<T>) value.getClass(), persistentEntity);
-        JdbcEntityOperations<T> persistOneOp = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, value, true);
+        JdbcEntityOperations<T> persistOneOp = getJdbcEntityOperations(ctx, persistentEntity, value, storedQuery, true);
         persistOneOp.persist();
         return persistOneOp.getEntity();
     }
@@ -285,7 +287,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             childPersistentEntity.getIntrospection().getBeanType(),
             childPersistentEntity
         );
-        JdbcEntitiesOperations<T> persistBatchOp = new JdbcEntitiesOperations<>(ctx, childPersistentEntity, values, storedQuery, true);
+        JdbcEntitiesOperations<T> persistBatchOp = getJdbcEntitiesOperations(ctx, childPersistentEntity, values, storedQuery, true);
         persistBatchOp.veto(predicate);
         persistBatchOp.persist();
         return persistBatchOp.getEntities();
@@ -294,7 +296,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <T> T updateOne(JdbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
         SqlStoredQuery<T, T> storedQuery = resolveEntityUpdate(ctx.annotationMetadata, ctx.repositoryType, (Class<T>) value.getClass(), persistentEntity);
-        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, value, storedQuery);
+        JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, persistentEntity, value, storedQuery);
         op.update();
         return op.getEntity();
     }
@@ -306,7 +308,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                        Object child, RuntimePersistentEntity<Object> childPersistentEntity) {
         SqlStoredQuery<Object, ?> storedQuery = resolveSqlInsertAssociation(ctx.repositoryType, runtimeAssociation, persistentEntity, value);
         try {
-            new JdbcEntityOperations<>(ctx, childPersistentEntity, child, storedQuery).execute();
+            getJdbcEntityOperations(ctx, childPersistentEntity, child, storedQuery).execute();
         } catch (Exception e) {
             throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
         }
@@ -319,7 +321,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                             Iterable<Object> child, RuntimePersistentEntity<Object> childPersistentEntity) {
         SqlStoredQuery<Object, ?> storedQuery = resolveSqlInsertAssociation(ctx.repositoryType, runtimeAssociation, persistentEntity, value);
         try {
-            JdbcEntitiesOperations<Object> assocOp = new JdbcEntitiesOperations<>(ctx, childPersistentEntity, child, storedQuery);
+            JdbcEntitiesOperations<Object> assocOp = getJdbcEntitiesOperations(ctx, childPersistentEntity, child, storedQuery);
             assocOp.veto(ctx.persisted::contains);
             assocOp.execute();
         } catch (Exception e) {
@@ -689,14 +691,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
             RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                JdbcEntitiesOperations<T> op = getJdbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery);
                 op.delete();
                 return op.rowsUpdated;
             }
             return sum(
                 operation.split().stream()
                     .map(deleteOp -> {
-                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                        JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
                         op.delete();
                         return op.rowsUpdated;
                     })
@@ -709,7 +711,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeWrite(connection -> {
             SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+            JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.delete();
             return op;
         }, operation.getAnnotationMetadata()).rowsUpdated;
@@ -720,7 +722,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeWrite(connection -> {
             SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+            JdbcEntityOperations<E> op = getJdbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.delete();
             return (R) op.getEntity();
         }, operation.getAnnotationMetadata());
@@ -733,13 +735,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
             RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
             if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                JdbcEntitiesOperations<E> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                JdbcEntitiesOperations<E> op = getJdbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery);
                 op.delete();
                 return (List<R>) op.getEntities();
             }
             return (List<R>) operation.split().stream()
                     .map(deleteOp -> {
-                        JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                        JdbcEntityOperations<E> op = getJdbcEntityOperations(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
                         op.delete();
                         return op.getEntity();
                     }).toList();
@@ -752,7 +754,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeWrite(connection -> {
             SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+            JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery, isUpsertOperation(storedQuery));
             op.update();
             return op.getEntity();
         }, operation.getAnnotationMetadata());
@@ -769,13 +771,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 return operation.split()
                     .stream()
                     .map(updateOp -> {
-                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), storedQuery);
+                        JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, persistentEntity, updateOp.getEntity(), storedQuery, isUpsertOperation(storedQuery));
                         op.update();
                         return op.getEntity();
                     })
                     .toList();
             }
-            JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+            JdbcEntitiesOperations<T> op = getJdbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery, isUpsertOperation(storedQuery));
             op.update();
             return op.getEntities();
         }, operation.getAnnotationMetadata());
@@ -787,7 +789,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeWrite(connection -> {
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(), operation.getEntity(), true);
+            JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery, true);
             op.persist();
             return op;
         }, operation.getAnnotationMetadata()).getEntity();
@@ -853,13 +855,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                 return operation.split().stream()
                     .map(persistOp -> {
-                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
+                        JdbcEntityOperations<T> op = getJdbcEntityOperations(ctx, persistentEntity, persistOp.getEntity(), storedQuery, true);
                         op.persist();
                         return op.getEntity();
                     })
                     .toList();
             } else {
-                JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, true);
+                JdbcEntitiesOperations<T> op = getJdbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery, true);
                 op.persist();
                 return op.getEntities();
             }
@@ -1062,7 +1064,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * if exception is not mappable to {@link DataAccessException} in given dialect {@link SqlExceptionMapper}
      */
     @Nullable
-    private DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
+    protected DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
         List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.getOrDefault(dialect, List.of());
         for (SqlExceptionMapper dialectSqlExceptionMapper : dialectSqlExceptionMapperList) {
             DataAccessException dataAccessException = dialectSqlExceptionMapper.mapSqlException(sqlException);
@@ -1128,12 +1130,80 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param dialect                the SQL dialect
      * @return the generated id
      */
-    private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
+    protected Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
         if (dialect == Dialect.POSTGRES) {
             // Postgres returns all fields, not just id, so we need to access generated id by the name
             return Objects.requireNonNull(columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType()));
         }
         return Objects.requireNonNull(columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType()));
+    }
+
+    /**
+     * Checks whether the stored query represents an upsert operation.
+     *
+     * @param storedQuery The stored query
+     * @return true if the stored query is an upsert operation
+     */
+    protected boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
+        return storedQuery.getOperationType() == StoredQuery.OperationType.UPSERT;
+    }
+
+    /**
+     * Creates the entity operation for a single write.
+     *
+     * @param ctx The operation context
+     * @param persistentEntity The persistent entity
+     * @param entity The entity instance
+     * @param storedQuery The stored query
+     * @param <T> The entity type
+     * @return The entity operation
+     */
+    protected <T> JdbcEntityOperations<T> getJdbcEntityOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery) {
+        return getJdbcEntityOperations(ctx, persistentEntity, entity, storedQuery, false);
+    }
+
+    /**
+     * Creates the entity operation for a single write.
+     *
+     * @param ctx The operation context
+     * @param persistentEntity The persistent entity
+     * @param entity The entity instance
+     * @param storedQuery The stored query
+     * @param insert Whether the operation should use insert-generated-id mechanics
+     * @param <T> The entity type
+     * @return The entity operation
+     */
+    protected <T> JdbcEntityOperations<T> getJdbcEntityOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
+        return new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, entity, insert);
+    }
+
+    /**
+     * Creates the entity operation for a batch write.
+     *
+     * @param ctx The operation context
+     * @param persistentEntity The persistent entity
+     * @param entities The entity instances
+     * @param storedQuery The stored query
+     * @param <T> The entity type
+     * @return The entity operation
+     */
+    protected <T> JdbcEntitiesOperations<T> getJdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery) {
+        return getJdbcEntitiesOperations(ctx, persistentEntity, entities, storedQuery, false);
+    }
+
+    /**
+     * Creates the entity operation for a batch write.
+     *
+     * @param ctx The operation context
+     * @param persistentEntity The persistent entity
+     * @param entities The entity instances
+     * @param storedQuery The stored query
+     * @param insert Whether the operation should use insert-generated-id mechanics
+     * @param <T> The entity type
+     * @return The entity operation
+     */
+    protected <T> JdbcEntitiesOperations<T> getJdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
+        return new JdbcEntitiesOperations<>(ctx, persistentEntity, entities, storedQuery, insert);
     }
 
     /**
@@ -1193,14 +1263,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return conversionService;
     }
 
-    private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
+    protected class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final SqlStoredQuery<?, ?> sqlStoredQuery;
         private final Connection connection;
         private final PreparedStatement ps;
         private int index = 1;
 
-        private JdbcParameterBinder(Connection connection, PreparedStatement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        protected JdbcParameterBinder(Connection connection, PreparedStatement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this.connection = connection;
             this.ps = ps;
             this.sqlStoredQuery = sqlStoredQuery;
@@ -1271,18 +1341,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     }
 
-    private final class JdbcEntityOperations<T> extends AbstractSyncEntityOperations<JdbcOperationContext, T, SQLException> {
+    protected class JdbcEntityOperations<T> extends AbstractSyncEntityOperations<JdbcOperationContext, T, SQLException> {
 
-        private final SqlStoredQuery<T, ?> storedQuery;
-        private int rowsUpdated;
+        protected final SqlStoredQuery<T, ?> storedQuery;
+        protected int rowsUpdated;
         @Nullable
-        private Map<QueryParameterBinding, Object> previousValues;
+        protected Map<QueryParameterBinding, Object> previousValues;
 
-        private JdbcEntityOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery) {
-            this(ctx, storedQuery, persistentEntity, entity, false);
-        }
-
-        private JdbcEntityOperations(JdbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
+        protected JdbcEntityOperations(JdbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
             super(ctx,
                 DefaultJdbcRepositoryOperations.this.cascadeOperations,
                 entityEventRegistry, persistentEntity,
@@ -1407,7 +1473,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
                                 BeanProperty<T, Object> property = identity.getProperty();
                                 entity = updateEntityId(property, entity, id);
-                            } else {
+                            } else if (!isUpsertOperation(storedQuery)) {
                                 throw new DataAccessException("Failed to generate ID for entity: " + entity);
                             }
                         }
@@ -1417,16 +1483,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private final class JdbcEntitiesOperations<T> extends AbstractSyncEntitiesOperations<JdbcOperationContext, T, SQLException> {
+    protected class JdbcEntitiesOperations<T> extends AbstractSyncEntitiesOperations<JdbcOperationContext, T, SQLException> {
 
-        private final SqlStoredQuery<T, ?> storedQuery;
-        private int rowsUpdated;
+        protected final SqlStoredQuery<T, ?> storedQuery;
+        protected int rowsUpdated;
 
-        private JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery) {
-            this(ctx, persistentEntity, entities, storedQuery, false);
-        }
-
-        private JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
+        protected JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
             super(ctx,
                 DefaultJdbcRepositoryOperations.this.cascadeOperations,
                 DefaultJdbcRepositoryOperations.this.conversionService,
@@ -1444,7 +1506,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
         }
 
-        private PreparedStatement prepare(Connection connection) throws SQLException {
+        /**
+         * Prepares the batch statement for this operation.
+         *
+         * @param connection The JDBC connection
+         * @return The prepared statement
+         * @throws SQLException If statement preparation fails
+         */
+        protected PreparedStatement prepare(Connection connection) throws SQLException {
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
                 if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
@@ -1502,7 +1571,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             continue;
                         }
                         if (!iterator.hasNext()) {
-                            throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                            if (!isUpsertOperation(storedQuery)) {
+                                throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                            }
                         } else {
                             Object id = iterator.next();
                             d.entity = updateEntityId(identity.getProperty(), d.entity, id);
@@ -1526,7 +1597,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         public final Connection connection;
         public final Dialect dialect;
         @Nullable
-        private final InvocationContext<?, ?> invocationContext;
+        protected final InvocationContext<?, ?> invocationContext;
 
         /**
          * The default constructor.

@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
+import io.micronaut.data.jdbc.oraclexe.upsert.CustomerProfileSequence
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECustomerProfileRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECustomerProfileSequenceRepository
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEProductReviewRepository
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
@@ -38,5 +40,97 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
     @Override
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(OracleXEWarehouseInventoryRepository)
+    }
+
+    OracleXECustomerProfileSequenceRepository getCustomerProfileSequenceRepository() {
+        return context.getBean(OracleXECustomerProfileSequenceRepository)
+    }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert", "io.micronaut.data.jdbc.oraclexe.upsert")
+    }
+
+    @Override
+    protected void cleanupAdditionalRepositories() {
+        customerProfileSequenceRepository.deleteAll()
+    }
+
+    void "upsert by email conflict returns entity when sequence id is used"() {
+        given:
+        CustomerProfileSequence cp = new CustomerProfileSequence("test@example.com", "test")
+
+        when:
+        CustomerProfileSequence inserted = customerProfileSequenceRepository.upsert(cp)
+
+        then:
+        inserted.id != null
+        inserted == cp
+
+        when:
+        CustomerProfileSequence found = customerProfileSequenceRepository.findById(cp.id).get()
+
+        then:
+        assertCustomerProfileSequence(cp, found)
+
+        when:
+        cp.setDisplayName("test modified")
+        CustomerProfileSequence updated = customerProfileSequenceRepository.upsert(cp)
+
+        then:
+        updated == cp
+
+        when:
+        found = customerProfileSequenceRepository.findById(cp.id).get()
+
+        then:
+        assertCustomerProfileSequence(cp, found)
+    }
+
+    void "upsertAll by email conflict returns entities when sequence id is used"() {
+        given:
+        CustomerProfileSequence cp1 = new CustomerProfileSequence("test1@example.com", "test 1")
+        CustomerProfileSequence cp2 = new CustomerProfileSequence("test2@example.com", "test 2")
+
+        when:
+        List<CustomerProfileSequence> inserted = customerProfileSequenceRepository.upsertAll([cp1, cp2]).toList()
+
+        then:
+        inserted.size() == 2
+        inserted.get(0).id != null
+        inserted.get(1).id != null
+        inserted.get(0) == cp1
+        inserted.get(1) == cp2
+
+        when:
+        CustomerProfileSequence found1 = customerProfileSequenceRepository.findById(cp1.id).get()
+        CustomerProfileSequence found2 = customerProfileSequenceRepository.findById(cp2.id).get()
+
+        then:
+        assertCustomerProfileSequence(found1, cp1)
+        assertCustomerProfileSequence(found2, cp2)
+
+        when:
+        cp1.setDisplayName("test 1 modified")
+        cp2.setDisplayName("test 2 modified")
+        List<CustomerProfileSequence> updated = customerProfileSequenceRepository.upsertAll([cp1, cp2]).toList()
+
+        then:
+        updated.size() == 2
+        updated.get(0) == cp1
+        updated.get(1) == cp2
+
+        when:
+        found1 = customerProfileSequenceRepository.findById(cp1.id).get()
+        found2 = customerProfileSequenceRepository.findById(cp2.id).get()
+
+        then:
+        assertCustomerProfileSequence(found1, cp1)
+        assertCustomerProfileSequence(found2, cp2)
+    }
+
+    private static void assertCustomerProfileSequence(CustomerProfileSequence customerProfile1, CustomerProfileSequence customerProfile2) {
+        assert customerProfile1.email == customerProfile2.email
+        assert customerProfile1.displayName == customerProfile2.displayName
     }
 }

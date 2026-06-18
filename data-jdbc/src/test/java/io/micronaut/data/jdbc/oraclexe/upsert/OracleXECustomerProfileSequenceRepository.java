@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.tck.repositories.upsert;
+package io.micronaut.data.jdbc.oraclexe.upsert;
 
 import io.micronaut.data.annotation.Upsert;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
 
 import java.util.List;
 
-public interface CustomerProfileRepository extends CrudRepository<CustomerProfile, Long> {
+@JdbcRepository(dialect = Dialect.ORACLE)
+public interface OracleXECustomerProfileSequenceRepository extends CrudRepository<CustomerProfileSequence, Long> {
 
     @Upsert(conflictProperties = "email")
-    CustomerProfile upsert(CustomerProfile customerProfile);
+    CustomerProfileSequence upsert(CustomerProfileSequence customerProfile);
 
     @Upsert(conflictProperties = "email")
-    List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
-
-    @Upsert(conflictProperties = "email")
-    void upsertNoResult(CustomerProfile customerProfile);
-
-    @Upsert(conflictProperties = "email")
-    void upsertAllNoResult(Iterable<CustomerProfile> customerProfiles);
+    List<CustomerProfileSequence> upsertAll(Iterable<CustomerProfileSequence> customerProfiles);
 }

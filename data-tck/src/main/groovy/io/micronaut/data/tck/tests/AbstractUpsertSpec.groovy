@@ -44,16 +44,14 @@ abstract class AbstractUpsertSpec extends Specification {
         return context
     }
 
-    void setup() {
-        warehouseInventoryRepository.deleteAll()
-        customerProfileRepository.deleteAll()
-        productReviewRepository.deleteAll()
-    }
-
     void cleanup() {
         warehouseInventoryRepository.deleteAll()
         customerProfileRepository.deleteAll()
         productReviewRepository.deleteAll()
+        cleanupAdditionalRepositories()
+    }
+
+    protected void cleanupAdditionalRepositories() {
     }
 
     void "upsert method inserts and updates product review by assigned ID"() {
@@ -90,7 +88,7 @@ abstract class AbstractUpsertSpec extends Specification {
     void "upsertAll method inserts and updates product reviews by assigned ID"() {
         given:
         ProductReview pr1 = new ProductReview(1L, "title 1", "content 1")
-        ProductReview pr2 = new ProductReview(1L, "title 2", "content 2")
+        ProductReview pr2 = new ProductReview(2L, "title 2", "content 2")
 
         when:
         List<ProductReview> insertedList = productReviewRepository.upsertAll([pr1, pr2]).toList()
@@ -163,7 +161,7 @@ abstract class AbstractUpsertSpec extends Specification {
     void "upsert annotation inserts and updates product reviews by assigned ID"() {
         given:
         ProductReview pr1 = new ProductReview(1L, "title 1", "content 1")
-        ProductReview pr2 = new ProductReview(1L, "title 2", "content 2")
+        ProductReview pr2 = new ProductReview(2L, "title 2", "content 2")
 
         when:
         List<ProductReview> insertedList = productReviewRepository.putAll([pr1, pr2]).toList()
@@ -202,7 +200,7 @@ abstract class AbstractUpsertSpec extends Specification {
         assertProductReview(found2, pr2)
     }
 
-    void "upsert annotation inserts and updates customer profile by email conflict property"() {
+    void "upsert by email conflict returns entity"() {
         given:
         CustomerProfile cp = new CustomerProfile("test@example.com", "test")
 
@@ -233,7 +231,7 @@ abstract class AbstractUpsertSpec extends Specification {
         assertCustomerProfile(cp, found)
     }
 
-    void "upsertAll annotation inserts and updates customer profiles by email conflict property"() {
+    void "upsertAll by email conflict returns entities"() {
         given:
         CustomerProfile cp1 = new CustomerProfile("test1@example.com", "test 1")
         CustomerProfile cp2 = new CustomerProfile("test2@example.com", "test 2")
@@ -275,84 +273,128 @@ abstract class AbstractUpsertSpec extends Specification {
         assertCustomerProfile(found2, cp2)
     }
 
-    void "upsert annotation inserts and updates warehouse inventory by sku and warehouse conflict properties"() {
+    void "upsert by email conflict does not return entity"() {
         given:
-        WarehouseInventory wh1 = new WarehouseInventory("SKU-100", "Berlin", 12)
+        CustomerProfile cp = new CustomerProfile("test@example.com", "test")
 
         when:
-        WarehouseInventory inserted = warehouseInventoryRepository.upsert(wh1)
-        List<WarehouseInventory> inventories = warehouseInventoryRepository.findAll().toList()
+        customerProfileRepository.upsertNoResult(cp)
+        List<CustomerProfile> found = customerProfileRepository.findAll()
 
         then:
-        if (inserted.id != null) {
-            assert inserted.id == inventories[0].id
-        }
-        inserted.sku == "SKU-100"
-        inserted.warehouse == "Berlin"
-        inserted.quantity == 12
-        inventories.size() == 1
-        inventories[0].id != null
-        inventories[0].sku == "SKU-100"
-        inventories[0].warehouse == "Berlin"
-        inventories[0].quantity == 12
+        found.size() == 1
+        found.get(0).id != null
+        assertCustomerProfile(found.get(0), cp)
 
         when:
-        Long inventoryId = inventories[0].id
-        WarehouseInventory updated = warehouseInventoryRepository.upsert(new WarehouseInventory("SKU-100", "Berlin", 18))
-        inventories = warehouseInventoryRepository.findAll().toList()
+        cp.setDisplayName("test modified")
+        customerProfileRepository.upsertNoResult(cp)
+        found = customerProfileRepository.findAll()
 
         then:
-        if (updated.id != null) {
-            assert updated.id == inventoryId
-        }
-        updated.sku == "SKU-100"
-        updated.warehouse == "Berlin"
-        updated.quantity == 18
-        inventories.size() == 1
-        inventories[0].id == inventoryId
-        inventories[0].sku == "SKU-100"
-        inventories[0].warehouse == "Berlin"
-        inventories[0].quantity == 18
+        found.get(0).id != null
+        assertCustomerProfile(found.get(0), cp)
     }
 
-    void "upsertAll annotation inserts and updates warehouse inventory by sku and warehouse conflict properties"() {
-        when:
-        List<WarehouseInventory> inserted = warehouseInventoryRepository.upsertAll([
-                new WarehouseInventory("SKU-200", "Berlin", 5),
-                new WarehouseInventory("SKU-200", "Paris", 8)
-        ]).toList()
-        List<WarehouseInventory> inventories = warehouseInventoryRepository.findAll().toList()
-
-        then:
-        inserted.collect { it.sku } as Set == ["SKU-200"] as Set
-        inserted.collect { it.warehouse } as Set == ["Berlin", "Paris"] as Set
-        inserted.collect { it.quantity } as Set == [5, 8] as Set
-        inventories.size() == 2
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id != null
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.quantity == 5
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id != null
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.quantity == 8
-        assertReturnedWarehouseInventoryIdsIfPresent(inserted, inventories)
+    void "upsertAll by email conflict does not return entities"() {
+        given:
+        CustomerProfile cp1 = new CustomerProfile("test1@example.com", "test 1")
+        CustomerProfile cp2 = new CustomerProfile("test2@example.com", "test 2")
 
         when:
-        Long berlinId = inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id
-        Long parisId = inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id
-        List<WarehouseInventory> updated = warehouseInventoryRepository.upsertAll([
-                new WarehouseInventory("SKU-200", "Berlin", 7),
-                new WarehouseInventory("SKU-200", "Paris", 11)
-        ]).toList()
-        inventories = warehouseInventoryRepository.findAll().toList()
+        customerProfileRepository.upsertAllNoResult([cp1, cp2])
+        List<CustomerProfile> found = customerProfileRepository.findAll()
 
         then:
-        assertReturnedWarehouseInventoryIdsIfPresent(updated, inventories)
-        updated.collect { it.sku } as Set == ["SKU-200"] as Set
-        updated.collect { it.warehouse } as Set == ["Berlin", "Paris"] as Set
-        updated.collect { it.quantity } as Set == [7, 11] as Set
-        inventories.size() == 2
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.id == berlinId
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Berlin" }.quantity == 7
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.id == parisId
-        inventories.find { it.sku == "SKU-200" && it.warehouse == "Paris" }.quantity == 11
+        found.size() == 2
+        found.get(0).id != null
+        found.get(1).id != null
+        assertCustomerProfile(found.get(0), cp1)
+        assertCustomerProfile(found.get(1), cp2)
+
+        when:
+        cp1.setDisplayName("test 1 modified")
+        cp2.setDisplayName("test 2 modified")
+        customerProfileRepository.upsertAllNoResult([cp1, cp2])
+        found = customerProfileRepository.findAll()
+
+        then:
+        found.size() == 2
+        assertCustomerProfile(found.get(0), cp1)
+        assertCustomerProfile(found.get(1), cp2)
+    }
+
+    void "upsert by sku and warehouse conflict properties"() {
+        given:
+        WarehouseInventory wh = new WarehouseInventory("SKU-100", "Berlin", 12)
+
+        when:
+        WarehouseInventory inserted = warehouseInventoryRepository.upsert(wh)
+
+        then:
+        inserted.id != null
+        inserted == wh
+
+        when:
+        WarehouseInventory found = warehouseInventoryRepository.findById(wh.id).get()
+
+        then:
+        assertWarehouseInventory(found, wh)
+
+        when:
+        wh.setQuantity(18)
+        WarehouseInventory updated = warehouseInventoryRepository.upsert(wh)
+
+        then:
+        updated == wh
+
+        when:
+        found = warehouseInventoryRepository.findById(wh.id).get()
+
+        then:
+        assertWarehouseInventory(found, wh)
+    }
+
+    void "upsertAll by sku and warehouse conflict properties"() {
+        given:
+        WarehouseInventory wh1 = new WarehouseInventory("SKU-200", "Berlin", 5)
+        WarehouseInventory wh2 = new WarehouseInventory("SKU-200", "Paris", 8)
+
+        when:
+        List<WarehouseInventory> inserted = warehouseInventoryRepository.upsertAll([wh1, wh2]).toList()
+
+        then:
+        inserted.size() == 2
+        inserted.get(0).id != null
+        inserted.get(1).id != null
+        inserted.get(0) == wh1
+        inserted.get(1) == wh2
+
+        when:
+        WarehouseInventory found1 = warehouseInventoryRepository.findById(wh1.id).get()
+        WarehouseInventory found2 = warehouseInventoryRepository.findById(wh2.id).get()
+
+        then:
+        assertWarehouseInventory(found1, wh1)
+        assertWarehouseInventory(found2, wh2)
+
+        when:
+        wh1.setQuantity(7)
+        wh2.setQuantity(11)
+        List<WarehouseInventory> updated = warehouseInventoryRepository.upsertAll([wh1, wh2]).toList()
+
+        then:
+        updated.size() == 2
+        updated.get(0) == wh1
+        updated.get(1) == wh2
+
+        when:
+        found1 = warehouseInventoryRepository.findById(wh1.id).get()
+        found2 = warehouseInventoryRepository.findById(wh2.id).get()
+
+        then:
+        assertWarehouseInventory(found1, wh1)
+        assertWarehouseInventory(found2, wh2)
     }
 
     private static void assertProductReview(ProductReview productReview1, ProductReview productReview2) {
@@ -366,15 +408,9 @@ abstract class AbstractUpsertSpec extends Specification {
         assert customerProfile1.displayName == customerProfile2.displayName
     }
 
-    private static void assertReturnedWarehouseInventoryIdsIfPresent(List<WarehouseInventory> returned, List<WarehouseInventory> persisted) {
-        returned.each { WarehouseInventory warehouseInventory ->
-            if (warehouseInventory.id != null) {
-                WarehouseInventory persistedWarehouseInventory = persisted.find {
-                    it.sku == warehouseInventory.sku && it.warehouse == warehouseInventory.warehouse
-                }
-                assert persistedWarehouseInventory != null
-                assert warehouseInventory.id == persistedWarehouseInventory.id
-            }
-        }
+    private static void assertWarehouseInventory(WarehouseInventory warehouseInventory1, WarehouseInventory warehouseInventory2) {
+        assert warehouseInventory1.sku == warehouseInventory2.sku
+        assert warehouseInventory1.warehouse == warehouseInventory2.warehouse
+        assert warehouseInventory1.quantity == warehouseInventory2.quantity
     }
 }

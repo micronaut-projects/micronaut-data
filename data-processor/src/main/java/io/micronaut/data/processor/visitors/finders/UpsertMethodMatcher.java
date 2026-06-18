@@ -117,15 +117,17 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(rootEntity.getAnnotationMetadata())) {
             return "JSON entity representation is not supported";
         }
-        List<String> conflictProperties = conflictProperties(matchContext);
-        if (conflictProperties.isEmpty() && !rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
-            return "entity does not define an identity and no conflict properties were specified";
-        }
         if (rootEntity.hasVersion()) {
             return "versioned entities are not supported";
         }
-        if (rootEntity.getIdentityProperties().stream().anyMatch(PersistentProperty::isGenerated)) {
-            return "generated identity properties are not supported";
+        List<String> conflictProperties = conflictProperties(matchContext);
+        if (conflictProperties.isEmpty()) {
+            if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
+                return "entity does not define an identity and no conflict properties were specified";
+            }
+            if (rootEntity.getIdentityProperties().stream().anyMatch(PersistentProperty::isGenerated)) {
+                return "generated identity properties are not supported";
+            }
         }
         return validateConflictProperties(rootEntity, conflictProperties);
     }
@@ -166,6 +168,9 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             if (entityParameter == null && entitiesParameter == null) {
                 throw new MatchFailedException("Cannot implement upsert method for specified arguments and return type", mc.getMethodElement());
             }
+            if (entityParameter != null && entitiesParameter != null) {
+                throw new MatchFailedException("Cannot implement upsert method with both entity and iterable entity parameters", mc.getMethodElement());
+            }
 
             FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                 entityParameter != null,
@@ -184,6 +189,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 mc.getAnnotationMetadata()
             );
             List<String> conflictProperties = conflictProperties(mc);
+            boolean returnGeneratedId = shouldReturnGeneratedId(mc, entityParameter);
             QueryResult queryResult = mc.getQueryBuilder().buildUpsert(annotationMetadataHierarchy, new QueryBuilder.UpsertQueryDefinition() {
                 @Override
                 public SourcePersistentEntity persistentEntity() {
@@ -193,6 +199,11 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 @Override
                 public List<String> conflictProperties() {
                     return conflictProperties;
+                }
+
+                @Override
+                public boolean returnGeneratedId() {
+                    return returnGeneratedId;
                 }
             });
 
@@ -207,6 +218,18 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             }
             return methodMatchInfo;
         };
+    }
+
+    private boolean shouldReturnGeneratedId(MethodMatchContext matchContext,
+                                            @Nullable ParameterElement entityParameter) {
+        boolean entityUpsert = entityParameter != null;
+        SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        if (!rootEntity.hasIdentity() || rootEntity.getIdentityProperties().stream().noneMatch(PersistentProperty::isGenerated)) {
+            return false;
+        }
+        ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
+        return returnType != null
+            && (entityUpsert ? TypeUtils.isEntity(returnType) : TypeUtils.isIterableOfEntity(returnType));
     }
 
     private List<String> conflictProperties(MethodMatchContext matchContext) {

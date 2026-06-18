@@ -18,7 +18,11 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.intercept.InsertEntityInterceptor
 import io.micronaut.data.intercept.UpdateAllEntitiesInterceptor
 import io.micronaut.data.intercept.UpdateEntityInterceptor
+import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor
+import io.micronaut.data.intercept.async.UpdateEntityAsyncInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.reactive.UpdateAllEntitiesReactiveInterceptor
+import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -432,6 +436,9 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
+import java.util.concurrent.CompletionStage;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
@@ -443,6 +450,18 @@ interface MyInterface extends GenericRepository<Test, Long> {
 
     @Upsert
     java.util.List<Test> putAll(java.util.List<Test> tests);
+
+    @Upsert
+    CompletionStage<Test> putAsync(Test test);
+
+    @Upsert
+    CompletionStage<java.util.List<Test>> putAllAsync(java.util.List<Test> tests);
+
+    @Upsert
+    Mono<Test> putReactive(Test test);
+
+    @Upsert
+    Flux<Test> putAllReactive(java.util.List<Test> tests);
 }
 
 @MappedEntity("upsert_test")
@@ -482,6 +501,10 @@ class Test {
         def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
         def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
         def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
+        def putAsyncMethod = beanDefinition.findPossibleMethods("putAsync").findFirst().get()
+        def putAllAsyncMethod = beanDefinition.findPossibleMethods("putAllAsync").findFirst().get()
+        def putReactiveMethod = beanDefinition.findPossibleMethods("putReactive").findFirst().get()
+        def putAllReactiveMethod = beanDefinition.findPossibleMethods("putAllReactive").findFirst().get()
 
         then:
         getOperationType(upsertMethod) == DataMethod.OperationType.UPSERT
@@ -496,6 +519,22 @@ class Test {
         getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
         getQuery(putAllMethod) == query
         getParameterPropertyPaths(putAllMethod) == parameterPropertyPaths as String[]
+        getOperationType(putAsyncMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAsyncMethod) == UpdateEntityAsyncInterceptor.name
+        getQuery(putAsyncMethod) == query
+        getParameterPropertyPaths(putAsyncMethod) == parameterPropertyPaths as String[]
+        getOperationType(putAllAsyncMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAllAsyncMethod) == UpdateAllEntriesAsyncInterceptor.name
+        getQuery(putAllAsyncMethod) == query
+        getParameterPropertyPaths(putAllAsyncMethod) == parameterPropertyPaths as String[]
+        getOperationType(putReactiveMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putReactiveMethod) == UpdateEntityReactiveInterceptor.name
+        getQuery(putReactiveMethod) == query
+        getParameterPropertyPaths(putReactiveMethod) == parameterPropertyPaths as String[]
+        getOperationType(putAllReactiveMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAllReactiveMethod) == UpdateAllEntitiesReactiveInterceptor.name
+        getQuery(putAllReactiveMethod) == query
+        getParameterPropertyPaths(putAllReactiveMethod) == parameterPropertyPaths as String[]
 
         where:
         dialect            | query                                                                                                                                                                                                                                                                                              | parameterPropertyPaths
@@ -515,12 +554,16 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
     @Upsert(conflictProperties = "name")
     Test put(Test test);
+
+    @Upsert(conflictProperties = "name")
+    List<Test> putAll(List<Test> tests);
 }
 
 @MappedEntity("upsert_test")
@@ -573,6 +616,154 @@ class Test {
         Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1,? c2 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,source.c2)'                | ["name", "pages", "id"]
         Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages","id") VALUES (?,?,?) ON CONFLICT ("name") DO UPDATE SET "pages"=EXCLUDED."pages"'                                                                                                                                                 | ["name", "pages", "id"]
         Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?,?)) AS source (c0,c1,c2) ON target.[name]=source.c0 WHEN MATCHED THEN UPDATE SET target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages],[id]) VALUES (source.c0,source.c1,source.c2);' | ["name", "pages", "id"]
+    }
+
+    @Unroll
+    void "test build upsert with generated identity and conflict properties for dialect - #dialect"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect=Dialect.${dialect.name()})
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictProperties = "name")
+    Test put(Test test);
+
+    @Upsert(conflictProperties = "name")
+    List<Test> putAll(List<Test> tests);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    private Integer pages;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+}
+""")
+
+        when:
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+        def outBindingParameters = getOutBindingParameters(putMethod)
+        def putAllMethod = beanDefinition.findPossibleMethods("putAll").findFirst().get()
+        def putAllOutBindingParameters = getOutBindingParameters(putAllMethod)
+
+        then:
+        getOperationType(putMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putMethod) == UpdateEntityInterceptor.name
+        getQuery(putMethod) == query
+        getParameterPropertyPaths(putMethod) == parameterPropertyPaths as String[]
+        outBindingParameters.length == outBindingParameterNames.size()
+        outBindingParameters*.name == outBindingParameterNames
+        outBindingParameters*.dataType == outBindingParameterDataTypes
+        getOperationType(putAllMethod) == DataMethod.OperationType.UPSERT
+        getDataInterceptor(putAllMethod) == UpdateAllEntitiesInterceptor.name
+        getQuery(putAllMethod) == query
+        getParameterPropertyPaths(putAllMethod) == parameterPropertyPaths as String[]
+        putAllOutBindingParameters.length == outBindingParameterNames.size()
+        putAllOutBindingParameters*.name == outBindingParameterNames
+        putAllOutBindingParameters*.dataType == outBindingParameterDataTypes
+
+        where:
+        dialect            | query                                                                                                                                                                                                                                                                                                  | parameterPropertyPaths        | outBindingParameterNames | outBindingParameterDataTypes
+        Dialect.ANSI       | 'MERGE INTO "upsert_test" target USING (VALUES (?,?)) source (c0,c1) ON (target."name"=source.c0) WHEN MATCHED THEN UPDATE SET target."pages"=source.c1 WHEN NOT MATCHED THEN INSERT ("name","pages") VALUES (source.c0,source.c1)'                                                                | ["name", "pages"]             | []                       | []
+        Dialect.H2         | 'MERGE INTO `upsert_test` (`name`,`pages`) KEY(`name`) VALUES (?,?)'                                                                                                                                                                                                                                   | ["name", "pages"]             | []                       | []
+        Dialect.MYSQL      | 'INSERT INTO `upsert_test` (`name`,`pages`) VALUES (?,?) ON DUPLICATE KEY UPDATE `pages`=?'                                                                                                                                                                                                            | ["name", "pages", "pages"]    | []                       | []
+        Dialect.ORACLE     | 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,"UPSERT_TEST_SEQ".nextval) RETURNING "ID" INTO ?'     | ["name", "pages"]             | ["id"]                   | [DataType.LONG]
+        Dialect.POSTGRES   | 'INSERT INTO "upsert_test" ("name","pages") VALUES (?,?) ON CONFLICT ("name") DO UPDATE SET "pages"=EXCLUDED."pages"'                                                                                                                                                                                  | ["name", "pages"]             | []                       | []
+        Dialect.SQL_SERVER | 'MERGE INTO [upsert_test] WITH (HOLDLOCK) AS target USING (VALUES (?,?)) AS source (c0,c1) ON target.[name]=source.c0 WHEN MATCHED THEN UPDATE SET target.[pages]=source.c1 WHEN NOT MATCHED THEN INSERT ([name],[pages]) VALUES (source.c0,source.c1);'                                           | ["name", "pages"]             | []                       | []
+    }
+
+    @Unroll
+    void "test build Oracle upsert with generated #generationType identity and conflict properties"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect=Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictProperties = "name")
+    Test put(Test test);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.${generationType})
+    private Long id;
+    private String name;
+    private Integer pages;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+}
+""")
+
+        when:
+        def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+
+        then:
+        getQuery(putMethod) == 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,"UPSERT_TEST_SEQ".nextval) RETURNING "ID" INTO ?'
+        getParameterPropertyPaths(putMethod) == ["name", "pages"] as String[]
+        getOutBindingParameters(putMethod)*.name == ["id"]
+
+        where:
+        generationType << ["AUTO", "SEQUENCE"]
     }
 
     @Unroll
@@ -772,6 +963,51 @@ class Test {
         "generated identity"         | ""                                                                                                                  | ""                                                                                                                  | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
         "blank conflict property"    | "@Upsert(conflictProperties = \"\")"                                                                                | ""                                                                                                                  | "@Id"                      | ""                | "conflict property cannot be blank"
         "unknown conflict property"  | "@Upsert(conflictProperties = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
+    }
+
+    void "test build upsert fails with both entity and iterable entity parameters"() {
+        when:
+        buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect=Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert
+    List<Test> put(Test test, List<Test> tests);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Cannot implement upsert method with both entity and iterable entity parameters")
     }
 
     void "POSTGRES test build save returning "() {

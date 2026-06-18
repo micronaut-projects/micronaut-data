@@ -225,6 +225,13 @@ public interface QueryBuilder {
             return List.of();
         }
 
+        /**
+         * @return Should upsert return generated id
+         */
+        default boolean returnGeneratedId() {
+            return false;
+        }
+
     }
 
     /**

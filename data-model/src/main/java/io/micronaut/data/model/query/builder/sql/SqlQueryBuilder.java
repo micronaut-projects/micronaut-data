@@ -1399,7 +1399,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             case ORACLE -> buildOracleUpsert(tableName, data);
             case ANSI -> buildAnsiUpsert(tableName, data);
         };
-        return QueryResult.of(query, Collections.emptyList(), buildUpsertParameterBindings(data), Collections.emptyMap());
+
+        List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
+        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
+            List<UpsertReturningColumn> returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
+            if (!returningColumns.isEmpty()) {
+                if (returningColumns.size() > 1) {
+                    throw new IllegalStateException("Oracle MERGE ... RETURNING supports a single generated identity for entity: " + entity.getName());
+                }
+                UpsertReturningColumn returningColumn = returningColumns.get(0);
+                String outPlaceholder = formatParameter(parameterBindings.size() + 1).name();
+                query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
+                return QueryResult.of(
+                    query,
+                    Collections.emptyList(),
+                    parameterBindings,
+                    buildUpsertOutParameterBindings(returningColumns),
+                    Collections.emptyMap()
+                );
+            }
+        }
+
+        return QueryResult.of(query, Collections.emptyList(), parameterBindings, Collections.emptyMap());
     }
 
     private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
@@ -1409,6 +1430,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         List<String> values = new ArrayList<>();
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
         List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
+        final String unescapedTableName = getUnescapedTableName(entity);
+        final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
@@ -1419,10 +1442,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             });
         }
 
+        boolean identityConflict = conflictProperties.isEmpty();
         for (PersistentProperty identity : entity.getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
+                    if (identityConflict) {
+                        throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
+                    }
+                    if (SqlQueryBuilderUtils.isNotForeign(associations) && isSequenceGeneratedProperty(property)) {
+                        addGeneratedUpsertColumn(columns, namingStrategy, associations, property, escape, true, conflictPropertyPaths, getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                    }
+                    return;
                 }
                 addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, true, conflictPropertyPaths);
             });
@@ -1434,7 +1464,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (columns.stream().noneMatch(UpsertColumn::conflict)) {
             throw new IllegalStateException("Upsert requires at least one bindable conflict column for entity: " + entity.getName());
         }
-        return new UpsertData(columns, values, parameterBindings);
+        return new UpsertData(columns, parameterBindings);
     }
 
     private void addUpsertColumn(List<UpsertColumn> columns,
@@ -1455,7 +1485,40 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (escape) {
             columnName = quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + columns.size(), property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + sourceColumnCount(columns), true, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+    }
+
+    private void addGeneratedUpsertColumn(List<UpsertColumn> columns,
+                                          NamingStrategy namingStrategy,
+                                          List<Association> associations,
+                                          PersistentProperty property,
+                                          boolean escape,
+                                          boolean identity,
+                                          List<String> conflictPropertyPaths,
+                                          String value) {
+        String[] path = asStringPath(associations, property);
+        String columnName = getMappedName(namingStrategy, associations, property);
+        if (escape) {
+            columnName = quote(columnName);
+        }
+        columns.add(new UpsertColumn(columnName, value, "", false, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+    }
+
+    private int sourceColumnCount(List<UpsertColumn> columns) {
+        return (int) columns.stream()
+            .filter(UpsertColumn::sourceColumn)
+            .count();
+    }
+
+    private boolean isSequenceGeneratedProperty(PersistentProperty property) {
+        Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
+        if (generated.isEmpty()) {
+            return false;
+        }
+        GeneratedValue.Type idGeneratorType = generated
+            .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
+            .orElseGet(() -> selectAutoStrategy(property));
+        return idGeneratorType == SEQUENCE || (idGeneratorType == AUTO && selectAutoStrategy(property) == SEQUENCE);
     }
 
     private List<String> resolveUpsertConflictPropertyPaths(PersistentEntity entity, List<String> conflictProperties) {
@@ -1542,7 +1605,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String buildSqlServerUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " WITH (HOLDLOCK) AS target "
-            + "USING (VALUES (" + data.valueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
+            + "USING (VALUES (" + data.sourceValueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
             + "ON " + upsertConflictPredicate(data)
             + upsertMatchedClause(data)
             + upsertInsertClause(data)
@@ -1551,6 +1614,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String buildOracleUpsert(String tableName, UpsertData data) {
         String sourceSelect = data.columns().stream()
+            .filter(UpsertColumn::sourceColumn)
             .map(column -> column.value() + BLANK_SPACE + column.source())
             .collect(Collectors.joining(String.valueOf(COMMA)));
         return "MERGE INTO " + tableName + " target "
@@ -1560,9 +1624,43 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             + upsertInsertClause(data);
     }
 
+    private List<UpsertReturningColumn> resolveGeneratedIdentityUpsertReturningColumns(PersistentEntity entity) {
+        boolean escape = shouldEscape(entity);
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        List<UpsertReturningColumn> columns = new ArrayList<>();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                    return;
+                }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                columns.add(new UpsertReturningColumn(escape ? quote(columnName) : columnName, columnName, property.getDataType()));
+            });
+        }
+        return columns;
+    }
+
+    private List<QueryOutParameterBinding> buildUpsertOutParameterBindings(List<UpsertReturningColumn> returningColumns) {
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>(returningColumns.size());
+        for (UpsertReturningColumn returningColumn : returningColumns) {
+            outBindings.add(new QueryOutParameterBinding() {
+                @Override
+                public String getName() {
+                    return returningColumn.name();
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return returningColumn.dataType();
+                }
+            });
+        }
+        return outBindings;
+    }
+
     private String buildAnsiUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " target "
-            + "USING (VALUES (" + data.valueExpressions() + ")) source (" + data.sourceColumns() + ") "
+            + "USING (VALUES (" + data.sourceValueExpressions() + ")) source (" + data.sourceColumns() + ") "
             + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
             + upsertMatchedClause(data)
             + upsertInsertClause(data);
@@ -1592,13 +1690,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String upsertInsertClause(UpsertData data) {
         return " WHEN NOT MATCHED THEN INSERT (" + data.columnNames() + ") VALUES ("
             + data.columns().stream()
-                .map(column -> "source." + column.source())
+                .map(column -> column.sourceColumn() ? "source." + column.source() : column.value())
                 .collect(Collectors.joining(String.valueOf(COMMA)))
             + CLOSE_BRACKET;
     }
 
     private record UpsertData(List<UpsertColumn> columns,
-                              List<String> values,
                               List<QueryParameterBinding> parameterBindings) {
 
         private String columnNames() {
@@ -1608,11 +1705,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         private String valueExpressions() {
-            return String.join(String.valueOf(COMMA), values);
+            return columns.stream()
+                .map(UpsertColumn::value)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private String sourceValueExpressions() {
+            return columns.stream()
+                .filter(UpsertColumn::sourceColumn)
+                .map(UpsertColumn::value)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
         }
 
         private String sourceColumns() {
             return columns.stream()
+                .filter(UpsertColumn::sourceColumn)
                 .map(UpsertColumn::source)
                 .collect(Collectors.joining(String.valueOf(COMMA)));
         }
@@ -1644,10 +1751,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private record UpsertColumn(String column,
                                 String value,
                                 String source,
+                                boolean sourceColumn,
                                 PersistentProperty property,
                                 List<String> path,
                                 boolean identity,
                                 boolean conflict) {
+    }
+
+    private record UpsertReturningColumn(String column,
+                                         String name,
+                                         DataType dataType) {
     }
 
     private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
