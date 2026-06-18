@@ -54,12 +54,12 @@ abstract class AbstractUpsertSpec extends Specification {
     protected void cleanupAdditionalRepositories() {
     }
 
-    void "upsert method inserts and updates product review by assigned ID"() {
+    void "#methodName inserts and updates product review by assigned ID"() {
         given:
         ProductReview pr = new ProductReview(1L, "title new", "content new")
 
         when:
-        ProductReview inserted = productReviewRepository.upsert(pr)
+        ProductReview inserted = upsertMethod(pr)
 
         then:
         inserted == pr
@@ -73,7 +73,7 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         pr.setTitle("title modified")
         pr.setContent("content modified")
-        ProductReview updated = productReviewRepository.upsert(pr)
+        ProductReview updated = upsertMethod(pr)
 
         then:
         updated == pr
@@ -83,15 +83,20 @@ abstract class AbstractUpsertSpec extends Specification {
 
         then:
         assertProductReview(found, pr)
+
+        where:
+        methodName | upsertMethod
+        "upsert"   | { ProductReview review -> productReviewRepository.upsert(review) }
+        "put"      | { ProductReview review -> productReviewRepository.put(review) }
     }
 
-    void "upsertAll method inserts and updates product reviews by assigned ID"() {
+    void "#methodName inserts and updates product reviews by assigned ID"() {
         given:
         ProductReview pr1 = new ProductReview(1L, "title 1", "content 1")
         ProductReview pr2 = new ProductReview(2L, "title 2", "content 2")
 
         when:
-        List<ProductReview> insertedList = productReviewRepository.upsertAll([pr1, pr2]).toList()
+        List<ProductReview> insertedList = upsertMethod([pr1, pr2])
 
         then:
         insertedList.size() == 2
@@ -111,7 +116,7 @@ abstract class AbstractUpsertSpec extends Specification {
         pr1.setContent("content 1 modified")
         pr2.setTitle("title 2 modified")
         pr2.setContent("content 2 modified")
-        List<ProductReview> updatedList = productReviewRepository.upsertAll([pr1, pr2]).toList()
+        List<ProductReview> updatedList = upsertMethod([pr1, pr2])
 
         then:
         updatedList.size() == 2
@@ -125,79 +130,11 @@ abstract class AbstractUpsertSpec extends Specification {
         then:
         assertProductReview(found1, pr1)
         assertProductReview(found2, pr2)
-    }
 
-    void "upsert annotation inserts and updates product review by assigned ID"() {
-        given:
-        ProductReview pr = new ProductReview(1L, "title new", "content new")
-
-        when:
-        ProductReview inserted = productReviewRepository.put(pr)
-
-        then:
-        inserted == pr
-
-        when:
-        ProductReview found = productReviewRepository.findById(pr.id).get()
-
-        then:
-        assertProductReview(found, pr)
-
-        when:
-        pr.setTitle("title modified")
-        pr.setContent("content modified")
-        ProductReview updated = productReviewRepository.put(pr)
-
-        then:
-        updated == pr
-
-        when:
-        found = productReviewRepository.findById(pr.id).get()
-
-        then:
-        assertProductReview(found, pr)
-    }
-
-    void "upsert annotation inserts and updates product reviews by assigned ID"() {
-        given:
-        ProductReview pr1 = new ProductReview(1L, "title 1", "content 1")
-        ProductReview pr2 = new ProductReview(2L, "title 2", "content 2")
-
-        when:
-        List<ProductReview> insertedList = productReviewRepository.putAll([pr1, pr2]).toList()
-
-        then:
-        insertedList.size() == 2
-        insertedList.get(0) == pr1
-        insertedList.get(1) == pr2
-
-        when:
-        ProductReview found1 = productReviewRepository.findById(1L).get()
-        ProductReview found2 = productReviewRepository.findById(2L).get()
-
-        then:
-        assertProductReview(found1, pr1)
-        assertProductReview(found2, pr2)
-
-        when:
-        pr1.setTitle("title 1 modified")
-        pr1.setContent("content 1 modified")
-        pr2.setTitle("title 2 modified")
-        pr2.setContent("content 2 modified")
-        List<ProductReview> updatedList = productReviewRepository.putAll([pr1, pr2]).toList()
-
-        then:
-        updatedList.size() == 2
-        updatedList.get(0) == pr1
-        updatedList.get(1) == pr2
-
-        when:
-        found1 = productReviewRepository.findById(1L).get()
-        found2 = productReviewRepository.findById(2L).get()
-
-        then:
-        assertProductReview(found1, pr1)
-        assertProductReview(found2, pr2)
+        where:
+        methodName  | upsertMethod
+        "upsertAll" | { Iterable<ProductReview> reviews -> productReviewRepository.upsertAll(reviews) }
+        "putAll"    | { Iterable<ProductReview> reviews -> productReviewRepository.putAll(reviews) }
     }
 
     void "#methodName by email conflict returns entity"() {
@@ -310,28 +247,17 @@ abstract class AbstractUpsertSpec extends Specification {
         where:
         methodName        | upsertMethod
         "upsertAll"       | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAll(profiles) }
-        "upsertAllMono"   | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllMono(profiles).block() }
+        "upsertAllFlux"   | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFlux(profiles).collectList().block() }
         "upsertAllFuture" | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFuture(profiles).get() }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-    void "upsertAll by email conflict does not return entities"() {
+    void "#methodName by email conflict does not return entities"() {
         given:
         CustomerProfile cp1 = new CustomerProfile("test1@example.com", "test 1")
         CustomerProfile cp2 = new CustomerProfile("test2@example.com", "test 2")
 
         when:
-        customerProfileRepository.upsertAllNoResult([cp1, cp2])
+        upsertMethod([cp1, cp2])
         List<CustomerProfile> found = customerProfileRepository.findAll()
 
         then:
@@ -344,13 +270,19 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         cp1.setDisplayName("test 1 modified")
         cp2.setDisplayName("test 2 modified")
-        customerProfileRepository.upsertAllNoResult([cp1, cp2])
+        upsertMethod([cp1, cp2])
         found = customerProfileRepository.findAll()
 
         then:
         found.size() == 2
         assertCustomerProfile(found.get(0), cp1)
         assertCustomerProfile(found.get(1), cp2)
+
+        where:
+        methodName                | upsertMethod
+        "upsertAllNoResult"       | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllNoResult(profiles) }
+        "upsertAllFluxNoResult"   | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFluxNoResult(profiles).collectList().block() }
+        "upsertAllFutureNoResult" | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFutureNoResult(profiles).get() }
     }
 
     void "upsert by sku and warehouse conflict properties"() {

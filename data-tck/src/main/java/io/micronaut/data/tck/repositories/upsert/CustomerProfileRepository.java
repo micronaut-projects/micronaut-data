@@ -18,6 +18,7 @@ package io.micronaut.data.tck.repositories.upsert;
 import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -47,17 +48,17 @@ public interface CustomerProfileRepository extends CrudRepository<CustomerProfil
     List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
 
     @Upsert(conflictProperties = "email")
-    Mono<List<CustomerProfile>> upsertAllMono(Iterable<CustomerProfile> profiles);
+    Flux<CustomerProfile> upsertAllFlux(Iterable<CustomerProfile> profiles);
 
     @Upsert(conflictProperties = "email")
     CompletableFuture<List<CustomerProfile>> upsertAllFuture(Iterable<CustomerProfile> profiles);
 
-
-
     @Upsert(conflictProperties = "email")
     void upsertAllNoResult(Iterable<CustomerProfile> customerProfiles);
 
+    @Upsert(conflictProperties = "email")
+    Flux<Void> upsertAllFluxNoResult(Iterable<CustomerProfile> profiles);
 
-
-
+    @Upsert(conflictProperties = "email")
+    CompletableFuture<Void> upsertAllFutureNoResult(Iterable<CustomerProfile> profiles);
 }
