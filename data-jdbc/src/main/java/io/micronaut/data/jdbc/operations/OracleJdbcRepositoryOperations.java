@@ -26,8 +26,9 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -164,6 +166,36 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
         }
     }
 
+    private boolean shouldUseOracleUpsertReturning(SqlStoredQuery<?, ?> storedQuery) {
+        return isUpsertOperation(storedQuery) && !CollectionUtils.isEmpty(storedQuery.getOutParameterBindings());
+    }
+
+    private OraclePreparedStatement unwrapOraclePreparedStatement(PreparedStatement ps) throws SQLException {
+        return ps.unwrap(OraclePreparedStatement.class);
+    }
+
+    private <T> int bindParameters(PreparedStatement ps,
+                                   JdbcOperationContext ctx,
+                                   SqlStoredQuery<T, ?> storedQuery,
+                                   T entity,
+                                   @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, ps, storedQuery);
+        storedQuery.bindParameters(parameterBinder, ctx.invocationContext, entity, previousValues);
+        return parameterBinder.currentIndex() - 1;
+    }
+
+    private <T> List<Object> readReturnedIds(OraclePreparedStatement oraclePreparedStatement,
+                                             RuntimePersistentProperty<T> identity,
+                                             SqlStoredQuery<T, ?> storedQuery) throws SQLException {
+        List<Object> ids = new ArrayList<>();
+        try (ResultSet returnedIds = oraclePreparedStatement.getReturnResultSet()) {
+            while (returnedIds.next()) {
+                ids.add(getGeneratedIdentity(returnedIds, identity, storedQuery.getDialect()));
+            }
+        }
+        return ids;
+    }
+
     protected class OracleJdbcEntityOperations<T> extends JdbcEntityOperations<T> {
         protected OracleJdbcEntityOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
             super(ctx, storedQuery, persistentEntity, entity, insert);
@@ -171,26 +203,22 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
 
         @Override
         protected void execute() throws SQLException {
-            if (!isUpsertOperation(storedQuery) || CollectionUtils.isEmpty(storedQuery.getOutParameterBindings())) {
+            if (!shouldUseOracleUpsertReturning(storedQuery)) {
                 super.execute();
                 return;
             }
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
-                OraclePreparedStatement oraclePreparedStatement = ps.unwrap(OraclePreparedStatement.class);
-                JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, ps, storedQuery);
-                storedQuery.bindParameters(parameterBinder, ctx.invocationContext, entity, previousValues);
-                registerReturnParameters(oraclePreparedStatement, storedQuery, parameterBinder.currentIndex() - 1);
+                OraclePreparedStatement oraclePreparedStatement = unwrapOraclePreparedStatement(ps);
+                int inCount = bindParameters(ps, ctx, storedQuery, entity, previousValues);
+                registerReturnParameters(oraclePreparedStatement, storedQuery, inCount);
                 rowsUpdated = oraclePreparedStatement.executeUpdate();
-                try (ResultSet returnedIds = oraclePreparedStatement.getReturnResultSet()) {
-                    if (returnedIds.next()) {
-                        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                        Object id = getGeneratedIdentity(returnedIds, identity, storedQuery.getDialect());
-                        entity = updateEntityId(identity.getProperty(), entity, id);
-                    } else {
-                        throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity);
-                    }
+                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                List<Object> ids = readReturnedIds(oraclePreparedStatement, identity, storedQuery);
+                if (ids.isEmpty()) {
+                    throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity);
                 }
+                entity = updateEntityId(identity.getProperty(), entity, ids.get(0));
             } catch (SQLException e) {
                 DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
                 if (dataAccessException != null) {
@@ -208,54 +236,43 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
 
         @Override
         protected void execute() {
-            if (!isUpsertOperation(storedQuery) || CollectionUtils.isEmpty(storedQuery.getOutParameterBindings())) {
+            if (!shouldUseOracleUpsertReturning(storedQuery)) {
                 super.execute();
                 return;
             }
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
-            long notVetoedCount = countNotVetoedEntities();
-            if (notVetoedCount == 0) {
+            List<Data> notVetoedEntities = notVetoedEntities();
+            if (notVetoedEntities.isEmpty()) {
                 rowsUpdated = 0;
                 return;
             }
             try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
-                OraclePreparedStatement oraclePreparedStatement = ps.unwrap(OraclePreparedStatement.class);
+                OraclePreparedStatement oraclePreparedStatement = unwrapOraclePreparedStatement(ps);
                 boolean returnParametersRegistered = false;
-                for (Data d : entities) {
-                    if (d.vetoed) {
-                        continue;
-                    }
-                    JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, ps, storedQuery);
-                    storedQuery.bindParameters(parameterBinder, ctx.invocationContext, d.entity, d.previousValues);
+                for (Data d : notVetoedEntities) {
+                    int inCount = bindParameters(ps, ctx, storedQuery, d.entity, d.previousValues);
                     if (!returnParametersRegistered) {
-                        registerReturnParameters(oraclePreparedStatement, storedQuery, parameterBinder.currentIndex() - 1);
+                        registerReturnParameters(oraclePreparedStatement, storedQuery, inCount);
                         returnParametersRegistered = true;
                     }
                     ps.addBatch();
                 }
                 rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
-                updateEntityIdsFromReturnedIds(oraclePreparedStatement);
+                updateEntityIdsFromReturnedIds(oraclePreparedStatement, notVetoedEntities);
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing batch Oracle SQL RETURNING: " + e.getMessage(), e);
             }
         }
 
-        private void updateEntityIdsFromReturnedIds(OraclePreparedStatement oraclePreparedStatement) throws SQLException {
+        private void updateEntityIdsFromReturnedIds(OraclePreparedStatement oraclePreparedStatement,
+                                                    List<Data> notVetoedEntities) throws SQLException {
             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-            List<Object> ids = new ArrayList<>();
-            try (ResultSet returnedIds = oraclePreparedStatement.getReturnResultSet()) {
-                while (returnedIds.next()) {
-                    ids.add(getGeneratedIdentity(returnedIds, identity, storedQuery.getDialect()));
-                }
-            }
+            List<Object> ids = readReturnedIds(oraclePreparedStatement, identity, storedQuery);
             Iterator<Object> iterator = ids.iterator();
             int updated = 0;
-            for (Data d : entities) {
-                if (d.vetoed) {
-                    continue;
-                }
+            for (Data d : notVetoedEntities) {
                 if (!iterator.hasNext()) {
-                    throw new DataAccessException("Oracle upsert RETURNING clause produced " + updated + " generated IDs for " + countNotVetoedEntities() + " entities");
+                    throw new DataAccessException("Oracle upsert RETURNING clause produced " + updated + " generated IDs for " + notVetoedEntities.size() + " entities");
                 }
                 Object id = iterator.next();
                 d.entity = updateEntityId(identity.getProperty(), d.entity, id);
@@ -266,8 +283,8 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
             }
         }
 
-        private long countNotVetoedEntities() {
-            return entities.stream().filter(d -> !d.vetoed).count();
+        private List<Data> notVetoedEntities() {
+            return entities.stream().filter(d -> !d.vetoed).toList();
         }
     }
 }
