@@ -39,4 +39,9 @@ class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyPro
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(MySqlWarehouseInventoryRepository)
     }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
 }

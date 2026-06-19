@@ -39,4 +39,9 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleXETestPrope
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(OracleXEWarehouseInventoryRepository)
     }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
 }

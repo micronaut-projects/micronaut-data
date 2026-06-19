@@ -39,4 +39,9 @@ class H2UpsertSpec extends AbstractUpsertSpec implements H2TestPropertyProvider 
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(H2WarehouseInventoryRepository)
     }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
 }

@@ -39,4 +39,9 @@ class SqlServerUpsertSpec extends AbstractUpsertSpec implements MSSQLTestPropert
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(MSWarehouseInventoryRepository)
     }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
 }

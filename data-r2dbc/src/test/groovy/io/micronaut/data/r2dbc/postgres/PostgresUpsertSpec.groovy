@@ -39,4 +39,9 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(PostgresWarehouseInventoryRepository)
     }
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
 }
