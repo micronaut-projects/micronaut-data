@@ -712,12 +712,24 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @JdbcRepository(dialect=Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
     @Upsert(conflictProperties = "name")
     Test put(Test test);
+
+    @Upsert(conflictProperties = "name")
+    Mono<Test> putMono(Test test);
+
+    @Upsert(conflictProperties = "name")
+    Flux<Test> putFlux(List<Test> tests);
+
+    @Upsert(conflictProperties = "name")
+    void putNoResult(Test test);
 }
 
 @MappedEntity("upsert_test")
@@ -756,11 +768,16 @@ class Test {
 
         when:
         def putMethod = beanDefinition.findPossibleMethods("put").findFirst().get()
+        def putMonoMethod = beanDefinition.findPossibleMethods("putMono").findFirst().get()
+        def putFluxMethod = beanDefinition.findPossibleMethods("putFlux").findFirst().get()
+        def putNoResultMethod = beanDefinition.findPossibleMethods("putNoResult").findFirst().get()
 
         then:
-        getQuery(putMethod) == 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,"UPSERT_TEST_SEQ".nextval) RETURNING "ID" INTO ?'
-        getParameterPropertyPaths(putMethod) == ["name", "pages"] as String[]
-        getOutBindingParameters(putMethod)*.name == ["id"]
+        [putMethod, putMonoMethod, putFluxMethod, putNoResultMethod].each { method ->
+            assert getQuery(method) == 'MERGE INTO "UPSERT_TEST" target USING (SELECT ? c0,? c1 FROM DUAL) source ON (target."NAME"=source.c0) WHEN MATCHED THEN UPDATE SET target."PAGES"=source.c1 WHEN NOT MATCHED THEN INSERT ("NAME","PAGES","ID") VALUES (source.c0,source.c1,"UPSERT_TEST_SEQ".nextval) RETURNING "ID" INTO ?'
+            assert getParameterPropertyPaths(method) == ["name", "pages"] as String[]
+            assert getOutBindingParameters(method)*.name == ["id"]
+        }
 
         where:
         generationType << ["AUTO", "SEQUENCE"]

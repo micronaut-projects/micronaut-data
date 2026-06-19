@@ -26,6 +26,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -189,7 +190,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 mc.getAnnotationMetadata()
             );
             List<String> conflictProperties = conflictProperties(mc);
-            boolean returnGeneratedId = shouldReturnGeneratedId(mc, entityParameter);
+            boolean returnGeneratedId = shouldUseOracleGeneratedIdReturning(mc, entityParameter);
             QueryResult queryResult = mc.getQueryBuilder().buildUpsert(annotationMetadataHierarchy, new QueryBuilder.UpsertQueryDefinition() {
                 @Override
                 public SourcePersistentEntity persistentEntity() {
@@ -220,12 +221,18 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private boolean shouldReturnGeneratedId(MethodMatchContext matchContext,
-                                            @Nullable ParameterElement entityParameter) {
+    private boolean shouldUseOracleGeneratedIdReturning(MethodMatchContext matchContext,
+                                                       @Nullable ParameterElement entityParameter) {
         boolean entityUpsert = entityParameter != null;
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (!rootEntity.hasIdentity() || rootEntity.getIdentityProperties().stream().noneMatch(PersistentProperty::isGenerated)) {
             return false;
+        }
+        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder sqlQueryBuilder) || sqlQueryBuilder.getDialect() != Dialect.ORACLE) {
+            return false;
+        }
+        if (TypeUtils.doesReturnVoid(matchContext.getMethodElement())) {
+            return true;
         }
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         return returnType != null

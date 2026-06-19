@@ -152,7 +152,7 @@ abstract class AbstractUpsertSpec extends Specification {
         CustomerProfile found = customerProfileRepository.findById(cp.id).get()
 
         then:
-        assertCustomerProfile(cp, found)
+        assertCustomerProfile(found, cp)
 
         when:
         cp.setDisplayName("test modified")
@@ -165,7 +165,7 @@ abstract class AbstractUpsertSpec extends Specification {
         found = customerProfileRepository.findById(cp.id).get()
 
         then:
-        assertCustomerProfile(cp, found)
+        assertCustomerProfile(found, cp)
 
         where:
         methodName     | upsertMethod
@@ -180,21 +180,23 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         upsertMethod(cp)
-        List<CustomerProfile> found = customerProfileRepository.findAll()
 
         then:
-        found.size() == 1
-        found.get(0).id != null
-        assertCustomerProfile(found.get(0), cp)
+        cp.id != null
+
+        when:
+        CustomerProfile found = customerProfileRepository.findById(cp.id).get()
+
+        then:
+        assertCustomerProfile(found, cp)
 
         when:
         cp.setDisplayName("test modified")
         upsertMethod(cp)
-        found = customerProfileRepository.findAll()
+        found = customerProfileRepository.findById(cp.id).get()
 
         then:
-        found.get(0).id != null
-        assertCustomerProfile(found.get(0), cp)
+        assertCustomerProfile(found, cp)
 
         where:
         methodName             | upsertMethod
@@ -229,20 +231,30 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         cp1.setDisplayName("test 1 modified")
         cp2.setDisplayName("test 2 modified")
-        List<CustomerProfile> updated = upsertMethod([cp1, cp2])
+        CustomerProfile cp3 = new CustomerProfile("test3@example.com", "test 3")
+        CustomerProfile cp4 = new CustomerProfile("test4@example.com", "test 4")
+        List<CustomerProfile> updated = upsertMethod([cp1, cp2, cp3, cp4])
 
         then:
-        updated.size() == 2
+        updated.size() == 4
         updated.get(0) == cp1
         updated.get(1) == cp2
+        updated.get(2).id != null
+        updated.get(3).id != null
+        updated.get(2) == cp3
+        updated.get(3) == cp4
 
         when:
         found1 = customerProfileRepository.findById(cp1.id).get()
         found2 = customerProfileRepository.findById(cp2.id).get()
+        CustomerProfile found3 = customerProfileRepository.findById(cp3.id).get()
+        CustomerProfile found4 = customerProfileRepository.findById(cp4.id).get()
 
         then:
         assertCustomerProfile(found1, cp1)
         assertCustomerProfile(found2, cp2)
+        assertCustomerProfile(found3, cp3)
+        assertCustomerProfile(found4, cp4)
 
         where:
         methodName        | upsertMethod
@@ -258,25 +270,41 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         upsertMethod([cp1, cp2])
-        List<CustomerProfile> found = customerProfileRepository.findAll()
 
         then:
-        found.size() == 2
-        found.get(0).id != null
-        found.get(1).id != null
-        assertCustomerProfile(found.get(0), cp1)
-        assertCustomerProfile(found.get(1), cp2)
+        cp1.id != null
+        cp2.id != null
+
+        when:
+        CustomerProfile found1 = customerProfileRepository.findById(cp1.id).get()
+        CustomerProfile found2 = customerProfileRepository.findById(cp2.id).get()
+
+        then:
+        assertCustomerProfile(found1, cp1)
+        assertCustomerProfile(found2, cp2)
 
         when:
         cp1.setDisplayName("test 1 modified")
         cp2.setDisplayName("test 2 modified")
-        upsertMethod([cp1, cp2])
-        found = customerProfileRepository.findAll()
+        CustomerProfile cp3 = new CustomerProfile("test3@example.com", "test 3")
+        CustomerProfile cp4 = new CustomerProfile("test4@example.com", "test 4")
+        upsertMethod([cp1, cp2, cp3, cp4])
 
         then:
-        found.size() == 2
-        assertCustomerProfile(found.get(0), cp1)
-        assertCustomerProfile(found.get(1), cp2)
+        cp3.id != null
+        cp4.id != null
+
+        when:
+        found1 = customerProfileRepository.findById(cp1.id).get()
+        found2 = customerProfileRepository.findById(cp2.id).get()
+        CustomerProfile found3 = customerProfileRepository.findById(cp3.id).get()
+        CustomerProfile found4 = customerProfileRepository.findById(cp4.id).get()
+
+        then:
+        assertCustomerProfile(found1, cp1)
+        assertCustomerProfile(found2, cp2)
+        assertCustomerProfile(found3, cp3)
+        assertCustomerProfile(found4, cp4)
 
         where:
         methodName                | upsertMethod

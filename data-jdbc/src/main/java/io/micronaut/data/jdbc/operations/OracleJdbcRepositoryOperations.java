@@ -60,6 +60,15 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * Oracle-specific JDBC repository operations.
+ *
+ * <p>This implementation extends {@link DefaultJdbcRepositoryOperations} so Oracle can reuse the
+ * standard JDBC repository behavior and only replace the entity operation objects that need Oracle
+ * driver support. In particular, Oracle {@code MERGE} statements with {@code RETURNING ... INTO}
+ * require {@link OraclePreparedStatement#registerReturnParameter(int, int)} and
+ * {@link OraclePreparedStatement#getReturnResultSet()}, which are not available through standard
+ * JDBC. The default implementation continues to handle all non-Oracle-specific paths, while this
+ * class overrides the single-entity and batch entity operations for Oracle upsert generated-id
+ * returning.</p>
  */
 @EachBean(DataSource.class)
 @Requires(classes = OraclePreparedStatement.class)
@@ -203,10 +212,14 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
 
         @Override
         protected void execute() throws SQLException {
-            if (!shouldUseOracleUpsertReturning(storedQuery)) {
+            if (shouldUseOracleUpsertReturning(storedQuery)) {
+                upsert();
+            } else {
                 super.execute();
-                return;
             }
+        }
+
+        private void upsert() throws SQLException {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
                 OraclePreparedStatement oraclePreparedStatement = unwrapOraclePreparedStatement(ps);
@@ -217,8 +230,10 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
                 List<Object> ids = readReturnedIds(oraclePreparedStatement, identity, storedQuery);
                 if (ids.isEmpty()) {
                     throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity);
+                } else if (ids.size() != 1) {
+                    throw new DataAccessException("Oracle upsert RETURNING clause produced " + ids.size() + " generated IDs for a single entity: " + entity);
                 }
-                entity = updateEntityId(identity.getProperty(), entity, ids.get(0));
+                entity = updateEntityId(identity.getProperty(), entity, ids.getFirst());
             } catch (SQLException e) {
                 DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
                 if (dataAccessException != null) {
@@ -236,10 +251,14 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
 
         @Override
         protected void execute() {
-            if (!shouldUseOracleUpsertReturning(storedQuery)) {
+            if (shouldUseOracleUpsertReturning(storedQuery)) {
+                upsert();
+            } else {
                 super.execute();
-                return;
             }
+        }
+
+        private void upsert() {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             List<Data> notVetoedEntities = notVetoedEntities();
             if (notVetoedEntities.isEmpty()) {

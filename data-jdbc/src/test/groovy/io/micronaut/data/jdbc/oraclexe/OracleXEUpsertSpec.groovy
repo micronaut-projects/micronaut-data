@@ -113,20 +113,30 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
         when:
         cp1.setDisplayName("test 1 modified")
         cp2.setDisplayName("test 2 modified")
-        List<CustomerProfileSequence> updated = customerProfileSequenceRepository.upsertAll([cp1, cp2]).toList()
+        CustomerProfileSequence cp3 = new CustomerProfileSequence("test3@example.com", "test 3")
+        CustomerProfileSequence cp4 = new CustomerProfileSequence("test4@example.com", "test 4")
+        List<CustomerProfileSequence> updated = customerProfileSequenceRepository.upsertAll([cp1, cp2, cp3, cp4]).toList()
 
         then:
-        updated.size() == 2
+        updated.size() == 4
         updated.get(0) == cp1
         updated.get(1) == cp2
+        updated.get(2).id != null
+        updated.get(3).id != null
+        updated.get(2) == cp3
+        updated.get(3) == cp4
 
         when:
         found1 = customerProfileSequenceRepository.findById(cp1.id).get()
         found2 = customerProfileSequenceRepository.findById(cp2.id).get()
+        CustomerProfileSequence found3 = customerProfileSequenceRepository.findById(cp3.id).get()
+        CustomerProfileSequence found4 = customerProfileSequenceRepository.findById(cp4.id).get()
 
         then:
         assertCustomerProfileSequence(found1, cp1)
         assertCustomerProfileSequence(found2, cp2)
+        assertCustomerProfileSequence(found3, cp3)
+        assertCustomerProfileSequence(found4, cp4)
     }
 
     private static void assertCustomerProfileSequence(CustomerProfileSequence customerProfile1, CustomerProfileSequence customerProfile2) {
