@@ -1215,7 +1215,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param fallbackMapper    The fallback mapper that returns {@link DataAccessException} if {@link SQLException} was not mapped to {@link DataAccessException}
      * @return DataAccessException
      */
-    private DataAccessException sqlExceptionToDataAccessException(SQLException sqlException, Dialect dialect, Function<SQLException, DataAccessException> fallbackMapper) {
+    protected DataAccessException sqlExceptionToDataAccessException(SQLException sqlException, Dialect dialect, Function<SQLException, DataAccessException> fallbackMapper) {
         DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
         if (dataAccessException != null) {
             return dataAccessException;

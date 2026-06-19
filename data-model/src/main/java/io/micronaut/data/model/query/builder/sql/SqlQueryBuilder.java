@@ -121,6 +121,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String BLANK_SPACE = " ";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
@@ -1391,25 +1392,49 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         UpsertData data = buildUpsertData(entity, definition.conflictProperties());
         String tableName = getTableName(entity);
+        List<UpsertReturningColumn> returningColumns = Collections.emptyList();
+        String sqlServerOutputColumn = null;
+        if (definition.returnGeneratedId() && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+            returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
+            if (!returningColumns.isEmpty()) {
+                if (returningColumns.size() > 1) {
+                    String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
+                    throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
+                }
+                if (dialect == Dialect.SQL_SERVER) {
+                    sqlServerOutputColumn = returningColumns.get(0).column();
+                }
+            }
+        }
         String query = switch (dialect) {
             case H2 -> buildH2Upsert(tableName, data);
             case MYSQL -> buildMySqlUpsert(tableName, data);
             case POSTGRES -> buildPostgresUpsert(tableName, data);
-            case SQL_SERVER -> buildSqlServerUpsert(tableName, data);
+            case SQL_SERVER -> buildSqlServerUpsert(tableName, data, sqlServerOutputColumn);
             case ORACLE -> buildOracleUpsert(tableName, data);
             case ANSI -> buildAnsiUpsert(tableName, data);
         };
 
         List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
-        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
-            List<UpsertReturningColumn> returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
+        if (definition.returnGeneratedId() && dialect == Dialect.SQL_SERVER) {
             if (!returningColumns.isEmpty()) {
-                if (returningColumns.size() > 1) {
-                    throw new IllegalStateException("Oracle MERGE ... RETURNING supports a single generated identity for entity: " + entity.getName());
-                }
+                return QueryResult.of(
+                    query,
+                    Collections.emptyList(),
+                    parameterBindings,
+                    buildUpsertOutParameterBindings(returningColumns),
+                    Collections.emptyMap()
+                );
+            }
+        }
+        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
+            if (!returningColumns.isEmpty()) {
                 UpsertReturningColumn returningColumn = returningColumns.get(0);
                 String outPlaceholder = formatParameter(parameterBindings.size() + 1).name();
                 query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
+                if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
+                    query = "BEGIN " + query + "; END;";
+                }
                 return QueryResult.of(
                     query,
                     Collections.emptyList(),
@@ -1603,12 +1628,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .collect(Collectors.joining(String.valueOf(COMMA)));
     }
 
-    private String buildSqlServerUpsert(String tableName, UpsertData data) {
+    private String buildSqlServerUpsert(String tableName, UpsertData data, @Nullable String outputColumn) {
         return "MERGE INTO " + tableName + " WITH (HOLDLOCK) AS target "
             + "USING (VALUES (" + data.sourceValueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
             + "ON " + upsertConflictPredicate(data)
             + upsertMatchedClause(data)
             + upsertInsertClause(data)
+            + (outputColumn == null ? "" : " OUTPUT inserted." + outputColumn)
             + ";";
     }
 
@@ -1693,74 +1719,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .map(column -> column.sourceColumn() ? "source." + column.source() : column.value())
                 .collect(Collectors.joining(String.valueOf(COMMA)))
             + CLOSE_BRACKET;
-    }
-
-    private record UpsertData(List<UpsertColumn> columns,
-                              List<QueryParameterBinding> parameterBindings) {
-
-        private String columnNames() {
-            return columns.stream()
-                .map(UpsertColumn::column)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String valueExpressions() {
-            return columns.stream()
-                .map(UpsertColumn::value)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String sourceValueExpressions() {
-            return columns.stream()
-                .filter(UpsertColumn::sourceColumn)
-                .map(UpsertColumn::value)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String sourceColumns() {
-            return columns.stream()
-                .filter(UpsertColumn::sourceColumn)
-                .map(UpsertColumn::source)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private List<UpsertColumn> conflictColumns() {
-            return columns.stream()
-                .filter(UpsertColumn::conflict)
-                .toList();
-        }
-
-        private String conflictColumnNames() {
-            return conflictColumns().stream()
-                .map(UpsertColumn::column)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private List<UpsertColumn> updateColumns() {
-            return columns.stream()
-                .filter(column -> !column.identity() && !column.conflict())
-                .toList();
-        }
-
-        private List<UpsertColumn> updateColumnsOrConflict() {
-            List<UpsertColumn> updateColumns = updateColumns();
-            return updateColumns.isEmpty() ? List.of(conflictColumns().get(0)) : updateColumns;
-        }
-    }
-
-    private record UpsertColumn(String column,
-                                String value,
-                                String source,
-                                boolean sourceColumn,
-                                PersistentProperty property,
-                                List<String> path,
-                                boolean identity,
-                                boolean conflict) {
-    }
-
-    private record UpsertReturningColumn(String column,
-                                         String name,
-                                         DataType dataType) {
     }
 
     private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
@@ -2528,6 +2486,74 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return;
         }
         collection.add(item);
+    }
+
+    private record UpsertData(List<UpsertColumn> columns,
+                              List<QueryParameterBinding> parameterBindings) {
+
+        private String columnNames() {
+            return columns.stream()
+                .map(UpsertColumn::column)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private String valueExpressions() {
+            return columns.stream()
+                .map(UpsertColumn::value)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private String sourceValueExpressions() {
+            return columns.stream()
+                .filter(UpsertColumn::sourceColumn)
+                .map(UpsertColumn::value)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private String sourceColumns() {
+            return columns.stream()
+                .filter(UpsertColumn::sourceColumn)
+                .map(UpsertColumn::source)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private List<UpsertColumn> conflictColumns() {
+            return columns.stream()
+                .filter(UpsertColumn::conflict)
+                .toList();
+        }
+
+        private String conflictColumnNames() {
+            return conflictColumns().stream()
+                .map(UpsertColumn::column)
+                .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+
+        private List<UpsertColumn> updateColumns() {
+            return columns.stream()
+                .filter(column -> !column.identity() && !column.conflict())
+                .toList();
+        }
+
+        private List<UpsertColumn> updateColumnsOrConflict() {
+            List<UpsertColumn> updateColumns = updateColumns();
+            return updateColumns.isEmpty() ? List.of(conflictColumns().get(0)) : updateColumns;
+        }
+    }
+
+    private record UpsertColumn(String column,
+                                String value,
+                                String source,
+                                boolean sourceColumn,
+                                PersistentProperty property,
+                                List<String> path,
+                                boolean identity,
+                                boolean conflict) {
+    }
+
+    private record UpsertReturningColumn(String column,
+                                         String name,
+                                         DataType dataType) {
     }
 
     private static final class DialectConfig {

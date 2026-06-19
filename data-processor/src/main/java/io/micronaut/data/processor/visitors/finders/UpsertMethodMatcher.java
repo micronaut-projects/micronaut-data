@@ -190,7 +190,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 mc.getAnnotationMetadata()
             );
             List<String> conflictProperties = conflictProperties(mc);
-            boolean returnGeneratedId = shouldUseOracleGeneratedIdReturning(mc, entityParameter);
+            boolean returnGeneratedId = shouldUseGeneratedIdReturning(mc, entityParameter);
             QueryResult queryResult = mc.getQueryBuilder().buildUpsert(annotationMetadataHierarchy, new QueryBuilder.UpsertQueryDefinition() {
                 @Override
                 public SourcePersistentEntity persistentEntity() {
@@ -221,14 +221,18 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private boolean shouldUseOracleGeneratedIdReturning(MethodMatchContext matchContext,
-                                                       @Nullable ParameterElement entityParameter) {
+    private boolean shouldUseGeneratedIdReturning(MethodMatchContext matchContext,
+                                                  @Nullable ParameterElement entityParameter) {
         boolean entityUpsert = entityParameter != null;
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (!rootEntity.hasIdentity() || rootEntity.getIdentityProperties().stream().noneMatch(PersistentProperty::isGenerated)) {
             return false;
         }
-        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder sqlQueryBuilder) || sqlQueryBuilder.getDialect() != Dialect.ORACLE) {
+        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder sqlQueryBuilder)) {
+            return false;
+        }
+        Dialect dialect = sqlQueryBuilder.getDialect();
+        if (dialect != Dialect.ORACLE && dialect != Dialect.SQL_SERVER) {
             return false;
         }
         if (TypeUtils.doesReturnVoid(matchContext.getMethodElement())) {

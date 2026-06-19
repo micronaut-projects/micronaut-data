@@ -26,6 +26,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -157,6 +158,12 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
         return new OracleJdbcEntitiesOperations<>(ctx, persistentEntity, entities, storedQuery, insert);
     }
 
+    private boolean shouldUseOracleUpsertReturning(SqlStoredQuery<?, ?> storedQuery) {
+        return storedQuery.getDialect() == Dialect.ORACLE
+            && isUpsertOperation(storedQuery)
+            && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
+    }
+
     private void registerReturnParameters(OraclePreparedStatement ps,
                                           SqlStoredQuery<?, ?> query,
                                           int inCount) throws SQLException {
@@ -175,10 +182,6 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
         }
     }
 
-    private boolean shouldUseOracleUpsertReturning(SqlStoredQuery<?, ?> storedQuery) {
-        return isUpsertOperation(storedQuery) && !CollectionUtils.isEmpty(storedQuery.getOutParameterBindings());
-    }
-
     private OraclePreparedStatement unwrapOraclePreparedStatement(PreparedStatement ps) throws SQLException {
         return ps.unwrap(OraclePreparedStatement.class);
     }
@@ -193,13 +196,26 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
         return parameterBinder.currentIndex() - 1;
     }
 
+    private <T> Object readReturnedId(OraclePreparedStatement oraclePreparedStatement,
+                                      RuntimePersistentProperty<T> identity,
+                                      SqlStoredQuery<T, ?> storedQuery,
+                                      Object entity) throws SQLException {
+        List<Object> ids = readReturnedIds(oraclePreparedStatement, identity, storedQuery);
+        if (ids.isEmpty()) {
+            throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity);
+        } else if (ids.size() != 1) {
+            throw new DataAccessException("Oracle upsert RETURNING clause produced " + ids.size() + " generated IDs for a single entity: " + entity);
+        }
+        return ids.getFirst();
+    }
+
     private <T> List<Object> readReturnedIds(OraclePreparedStatement oraclePreparedStatement,
                                              RuntimePersistentProperty<T> identity,
                                              SqlStoredQuery<T, ?> storedQuery) throws SQLException {
         List<Object> ids = new ArrayList<>();
-        try (ResultSet returnedIds = oraclePreparedStatement.getReturnResultSet()) {
-            while (returnedIds.next()) {
-                ids.add(getGeneratedIdentity(returnedIds, identity, storedQuery.getDialect()));
+        try (ResultSet resultSet = oraclePreparedStatement.getReturnResultSet()) {
+            while (resultSet.next()) {
+                ids.add(getGeneratedIdentity(resultSet, identity, storedQuery.getDialect()));
             }
         }
         return ids;
@@ -227,13 +243,8 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
                 registerReturnParameters(oraclePreparedStatement, storedQuery, inCount);
                 rowsUpdated = oraclePreparedStatement.executeUpdate();
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                List<Object> ids = readReturnedIds(oraclePreparedStatement, identity, storedQuery);
-                if (ids.isEmpty()) {
-                    throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity);
-                } else if (ids.size() != 1) {
-                    throw new DataAccessException("Oracle upsert RETURNING clause produced " + ids.size() + " generated IDs for a single entity: " + entity);
-                }
-                entity = updateEntityId(identity.getProperty(), entity, ids.getFirst());
+                Object id = readReturnedId(oraclePreparedStatement, identity, storedQuery, entity);
+                entity = updateEntityId(identity.getProperty(), entity, id);
             } catch (SQLException e) {
                 DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
                 if (dataAccessException != null) {
@@ -279,7 +290,12 @@ public final class OracleJdbcRepositoryOperations extends DefaultJdbcRepositoryO
                 rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
                 updateEntityIdsFromReturnedIds(oraclePreparedStatement, notVetoedEntities);
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing batch Oracle SQL RETURNING: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException(
+                        "Error executing upsert statement: " + sqlException.getMessage(),
+                        sqlException
+                    )
+                );
             }
         }
 
