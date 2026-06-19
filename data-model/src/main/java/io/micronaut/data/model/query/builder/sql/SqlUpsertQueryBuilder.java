@@ -82,13 +82,13 @@ final class SqlUpsertQueryBuilder {
 
         List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
 
-        UpsertGeneratedIdReturning returning = resolveGeneratedIdReturning(entity, definition);
-        if (returning.hasColumns()) {
-            List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returning.columns());
+        List<UpsertReturningColumn> returningColumns = resolveGeneratedIdReturning(entity, definition);
+        if (!returningColumns.isEmpty()) {
+            UpsertReturningColumn returningColumn = returningColumns.getFirst();
+            List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returningColumn);
             if (dialect == Dialect.SQL_SERVER) {
-                query = query + " OUTPUT inserted." + returning.requiredSqlServerOutputColumn() + ";";
+                query = query + " OUTPUT inserted." + returningColumn.column() + ";";
             } else if (dialect == Dialect.ORACLE) {
-                UpsertReturningColumn returningColumn = returning.columns().get(0);
                 String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
                 query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
                 if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
@@ -103,20 +103,19 @@ final class SqlUpsertQueryBuilder {
         return QueryResult.of(query, parameterBindings);
     }
 
-    private UpsertGeneratedIdReturning resolveGeneratedIdReturning(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
+    private List<UpsertReturningColumn> resolveGeneratedIdReturning(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
         if (!definition.returnGeneratedId() || (dialect != Dialect.ORACLE && dialect != Dialect.SQL_SERVER)) {
-            return UpsertGeneratedIdReturning.none();
+            return Collections.emptyList();
         }
         List<UpsertReturningColumn> returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
         if (returningColumns.isEmpty()) {
-            return UpsertGeneratedIdReturning.none();
+            return Collections.emptyList();
         }
         if (returningColumns.size() > 1) {
             String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
             throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
         }
-        String sqlServerOutputColumn = dialect == Dialect.SQL_SERVER ? returningColumns.get(0).column() : null;
-        return new UpsertGeneratedIdReturning(returningColumns, sqlServerOutputColumn);
+        return returningColumns;
     }
 
     private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
@@ -335,21 +334,19 @@ final class SqlUpsertQueryBuilder {
         return columns;
     }
 
-    private List<QueryOutParameterBinding> buildOutParameterBindings(List<UpsertReturningColumn> returningColumns) {
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>(returningColumns.size());
-        for (UpsertReturningColumn returningColumn : returningColumns) {
-            outBindings.add(new QueryOutParameterBinding() {
-                @Override
-                public String getName() {
-                    return returningColumn.name();
-                }
+    private List<QueryOutParameterBinding> buildOutParameterBindings(UpsertReturningColumn returningColumn) {
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>(1);
+        outBindings.add(new QueryOutParameterBinding() {
+            @Override
+            public String getName() {
+                return returningColumn.name();
+            }
 
-                @Override
-                public DataType getDataType() {
-                    return returningColumn.dataType();
-                }
-            });
-        }
+            @Override
+            public DataType getDataType() {
+                return returningColumn.dataType();
+            }
+        });
         return outBindings;
     }
 
@@ -456,24 +453,5 @@ final class SqlUpsertQueryBuilder {
     private record UpsertReturningColumn(String column,
                                          String name,
                                          DataType dataType) {
-    }
-
-    private record UpsertGeneratedIdReturning(List<UpsertReturningColumn> columns,
-                                              @Nullable String sqlServerOutputColumn) {
-
-        private static UpsertGeneratedIdReturning none() {
-            return new UpsertGeneratedIdReturning(Collections.emptyList(), null);
-        }
-
-        private boolean hasColumns() {
-            return !columns.isEmpty();
-        }
-
-        private String requiredSqlServerOutputColumn() {
-            if (sqlServerOutputColumn == null) {
-                throw new IllegalStateException("SQL Server MERGE ... OUTPUT requires a generated identity column");
-            }
-            return sqlServerOutputColumn;
-        }
     }
 }
