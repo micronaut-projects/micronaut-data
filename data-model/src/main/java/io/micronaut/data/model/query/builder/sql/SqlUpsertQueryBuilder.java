@@ -70,44 +70,31 @@ final class SqlUpsertQueryBuilder {
         }
         UpsertData data = buildUpsertData(entity, definition.conflictProperties());
         String tableName = sqlQueryBuilder.getTableName(entity);
-        List<UpsertReturningColumn> returningColumns = Collections.emptyList();
-        String sqlServerOutputColumn = null;
-        if (definition.returnGeneratedId() && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
-            returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
-            if (!returningColumns.isEmpty()) {
-                if (returningColumns.size() > 1) {
-                    String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
-                    throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
-                }
-                if (dialect == Dialect.SQL_SERVER) {
-                    sqlServerOutputColumn = returningColumns.get(0).column();
-                }
-            }
-        }
+        UpsertGeneratedIdReturning returning = resolveGeneratedIdReturning(entity, definition);
         String query = switch (dialect) {
             case H2 -> buildH2Upsert(tableName, data);
             case MYSQL -> buildMySqlUpsert(tableName, data);
             case POSTGRES -> buildPostgresUpsert(tableName, data);
-            case SQL_SERVER -> buildSqlServerUpsert(tableName, data, sqlServerOutputColumn);
+            case SQL_SERVER -> buildSqlServerUpsert(tableName, data, returning.sqlServerOutputColumn());
             case ORACLE -> buildOracleUpsert(tableName, data);
             case ANSI -> buildAnsiUpsert(tableName, data);
         };
 
         List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
         if (definition.returnGeneratedId() && dialect == Dialect.SQL_SERVER) {
-            if (!returningColumns.isEmpty()) {
+            if (returning.hasColumns()) {
                 return QueryResult.of(
                     query,
                     Collections.emptyList(),
                     parameterBindings,
-                    buildUpsertOutParameterBindings(returningColumns),
+                    buildUpsertOutParameterBindings(returning.columns()),
                     Collections.emptyMap()
                 );
             }
         }
         if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
-            if (!returningColumns.isEmpty()) {
-                UpsertReturningColumn returningColumn = returningColumns.get(0);
+            if (returning.hasColumns()) {
+                UpsertReturningColumn returningColumn = returning.columns().get(0);
                 String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
                 query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
                 if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
@@ -117,13 +104,29 @@ final class SqlUpsertQueryBuilder {
                     query,
                     Collections.emptyList(),
                     parameterBindings,
-                    buildUpsertOutParameterBindings(returningColumns),
+                    buildUpsertOutParameterBindings(returning.columns()),
                     Collections.emptyMap()
                 );
             }
         }
 
         return QueryResult.of(query, Collections.emptyList(), parameterBindings, Collections.emptyMap());
+    }
+
+    private UpsertGeneratedIdReturning resolveGeneratedIdReturning(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
+        if (!definition.returnGeneratedId() || (dialect != Dialect.ORACLE && dialect != Dialect.SQL_SERVER)) {
+            return UpsertGeneratedIdReturning.none();
+        }
+        List<UpsertReturningColumn> returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
+        if (returningColumns.isEmpty()) {
+            return UpsertGeneratedIdReturning.none();
+        }
+        if (returningColumns.size() > 1) {
+            String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
+            throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
+        }
+        String sqlServerOutputColumn = dialect == Dialect.SQL_SERVER ? returningColumns.get(0).column() : null;
+        return new UpsertGeneratedIdReturning(returningColumns, sqlServerOutputColumn);
     }
 
     private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
@@ -465,5 +468,17 @@ final class SqlUpsertQueryBuilder {
     private record UpsertReturningColumn(String column,
                                          String name,
                                          DataType dataType) {
+    }
+
+    private record UpsertGeneratedIdReturning(List<UpsertReturningColumn> columns,
+                                              @Nullable String sqlServerOutputColumn) {
+
+        private static UpsertGeneratedIdReturning none() {
+            return new UpsertGeneratedIdReturning(Collections.emptyList(), null);
+        }
+
+        private boolean hasColumns() {
+            return !columns.isEmpty();
+        }
     }
 }
