@@ -121,7 +121,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String BLANK_SPACE = " ";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
-    private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
@@ -1380,348 +1379,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     public QueryResult buildUpsert(AnnotationMetadata repositoryMetadata, UpsertQueryDefinition definition) {
-        PersistentEntity entity = definition.persistentEntity();
-        if (isJsonEntity(repositoryMetadata, entity)) {
-            throw new IllegalStateException("Upsert is not supported for JSON entity representation: " + entity.getName());
-        }
-        if (definition.conflictProperties().isEmpty() && !entity.hasIdentity() && !entity.hasCompositeIdentity()) {
-            throw new IllegalStateException("Upsert requires an identity for entity: " + entity.getName());
-        }
-        if (entity.hasVersion()) {
-            throw new IllegalStateException("Upsert is not supported for versioned entity: " + entity.getName());
-        }
-        UpsertData data = buildUpsertData(entity, definition.conflictProperties());
-        String tableName = getTableName(entity);
-        List<UpsertReturningColumn> returningColumns = Collections.emptyList();
-        String sqlServerOutputColumn = null;
-        if (definition.returnGeneratedId() && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
-            returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
-            if (!returningColumns.isEmpty()) {
-                if (returningColumns.size() > 1) {
-                    String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
-                    throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
-                }
-                if (dialect == Dialect.SQL_SERVER) {
-                    sqlServerOutputColumn = returningColumns.get(0).column();
-                }
-            }
-        }
-        String query = switch (dialect) {
-            case H2 -> buildH2Upsert(tableName, data);
-            case MYSQL -> buildMySqlUpsert(tableName, data);
-            case POSTGRES -> buildPostgresUpsert(tableName, data);
-            case SQL_SERVER -> buildSqlServerUpsert(tableName, data, sqlServerOutputColumn);
-            case ORACLE -> buildOracleUpsert(tableName, data);
-            case ANSI -> buildAnsiUpsert(tableName, data);
-        };
-
-        List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
-        if (definition.returnGeneratedId() && dialect == Dialect.SQL_SERVER) {
-            if (!returningColumns.isEmpty()) {
-                return QueryResult.of(
-                    query,
-                    Collections.emptyList(),
-                    parameterBindings,
-                    buildUpsertOutParameterBindings(returningColumns),
-                    Collections.emptyMap()
-                );
-            }
-        }
-        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
-            if (!returningColumns.isEmpty()) {
-                UpsertReturningColumn returningColumn = returningColumns.get(0);
-                String outPlaceholder = formatParameter(parameterBindings.size() + 1).name();
-                query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
-                if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
-                    query = "BEGIN " + query + "; END;";
-                }
-                return QueryResult.of(
-                    query,
-                    Collections.emptyList(),
-                    parameterBindings,
-                    buildUpsertOutParameterBindings(returningColumns),
-                    Collections.emptyMap()
-                );
-            }
-        }
-
-        return QueryResult.of(query, Collections.emptyList(), parameterBindings, Collections.emptyMap());
+        return new SqlUpsertQueryBuilder(this).build(repositoryMetadata, definition);
     }
 
-    private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
-        boolean escape = shouldEscape(entity);
-        NamingStrategy namingStrategy = getNamingStrategy(entity);
-        List<UpsertColumn> columns = new ArrayList<>();
-        List<String> values = new ArrayList<>();
-        List<QueryParameterBinding> parameterBindings = new ArrayList<>();
-        List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
-        final String unescapedTableName = getUnescapedTableName(entity);
-        final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
-
-        for (PersistentProperty prop : entity.getPersistentProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
-                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    return;
-                }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, false, conflictPropertyPaths);
-            });
-        }
-
-        boolean identityConflict = conflictProperties.isEmpty();
-        for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    if (identityConflict) {
-                        throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
-                    }
-                    if (SqlQueryBuilderUtils.isNotForeign(associations) && isSequenceGeneratedProperty(property)) {
-                        addGeneratedUpsertColumn(columns, namingStrategy, associations, property, escape, true, conflictPropertyPaths, getSequenceStatement(unescapedSchema, unescapedTableName, property));
-                    }
-                    return;
-                }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, true, conflictPropertyPaths);
-            });
-        }
-
-        if (columns.isEmpty()) {
-            throw new IllegalStateException("Upsert requires at least one bindable column for entity: " + entity.getName());
-        }
-        if (columns.stream().noneMatch(UpsertColumn::conflict)) {
-            throw new IllegalStateException("Upsert requires at least one bindable conflict column for entity: " + entity.getName());
-        }
-        return new UpsertData(columns, parameterBindings);
-    }
-
-    private void addUpsertColumn(List<UpsertColumn> columns,
-                                 List<String> values,
-                                 List<QueryParameterBinding> parameterBindings,
-                                 NamingStrategy namingStrategy,
-                                 List<Association> associations,
-                                 PersistentProperty property,
-                                 boolean escape,
-                                 boolean identity,
-                                 List<String> conflictPropertyPaths) {
-        addWriteExpression(values, property);
-        String key = String.valueOf(values.size());
-        String[] path = asStringPath(associations, property);
-        parameterBindings.add(createParameterBinding(key, property, path));
-
-        String columnName = getMappedName(namingStrategy, associations, property);
-        if (escape) {
-            columnName = quote(columnName);
-        }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + sourceColumnCount(columns), true, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
-    }
-
-    private void addGeneratedUpsertColumn(List<UpsertColumn> columns,
-                                          NamingStrategy namingStrategy,
-                                          List<Association> associations,
-                                          PersistentProperty property,
-                                          boolean escape,
-                                          boolean identity,
-                                          List<String> conflictPropertyPaths,
-                                          String value) {
-        String[] path = asStringPath(associations, property);
-        String columnName = getMappedName(namingStrategy, associations, property);
-        if (escape) {
-            columnName = quote(columnName);
-        }
-        columns.add(new UpsertColumn(columnName, value, "", false, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
-    }
-
-    private int sourceColumnCount(List<UpsertColumn> columns) {
-        return (int) columns.stream()
-            .filter(UpsertColumn::sourceColumn)
-            .count();
-    }
-
-    private boolean isSequenceGeneratedProperty(PersistentProperty property) {
-        Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
-        if (generated.isEmpty()) {
-            return false;
-        }
-        GeneratedValue.Type idGeneratorType = generated
-            .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
-            .orElseGet(() -> selectAutoStrategy(property));
-        return idGeneratorType == SEQUENCE || (idGeneratorType == AUTO && selectAutoStrategy(property) == SEQUENCE);
-    }
-
-    private List<String> resolveUpsertConflictPropertyPaths(PersistentEntity entity, List<String> conflictProperties) {
-        List<String> conflictPropertyPaths = new ArrayList<>();
-        if (conflictProperties.isEmpty()) {
-            for (PersistentProperty identity : entity.getIdentityProperties()) {
-                PersistentEntityUtils.traversePersistentProperties(
-                    Collections.emptyList(),
-                    identity,
-                    (associations, property) -> conflictPropertyPaths.add(toPathString(associations, property)));
-            }
-            return conflictPropertyPaths;
-        }
-        for (String conflictProperty : conflictProperties) {
-            if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
-                throw new IllegalStateException("Upsert conflict property cannot be blank");
-            }
-            PersistentPropertyPath propertyPath;
-            try {
-                propertyPath = entity.getPropertyPath(conflictProperty);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalStateException("Invalid upsert conflict property path: " + conflictProperty, e);
-            }
-            if (propertyPath == null) {
-                throw new IllegalStateException("Upsert conflict property does not exist: " + conflictProperty);
-            }
-            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
-                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    throw new IllegalStateException("Upsert requires a non-generated conflict property: " + conflictProperty);
-                }
-                String path = toPathString(associations, property);
-                if (!conflictPropertyPaths.contains(path)) {
-                    conflictPropertyPaths.add(path);
-                }
-            });
-        }
-        return conflictPropertyPaths;
-    }
-
-    private String toPathString(List<Association> associations, PersistentProperty property) {
-        return toPathString(asStringPath(associations, property));
-    }
-
-    private String toPathString(String[] path) {
-        return String.join(".", path);
-    }
-
-    private String buildH2Upsert(String tableName, UpsertData data) {
-        return "MERGE INTO " + tableName + " (" + data.columnNames() + ") KEY(" + data.conflictColumnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
-    }
-
-    private String buildMySqlUpsert(String tableName, UpsertData data) {
-        List<UpsertColumn> updateColumns = data.updateColumnsOrConflict();
-        return buildInsertStatement(tableName, data)
-            + " ON DUPLICATE KEY UPDATE "
-            + updateColumns.stream()
-                .map(column -> column.column() + "=" + column.value())
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-    }
-
-    private List<QueryParameterBinding> buildUpsertParameterBindings(UpsertData data) {
-        if (dialect != Dialect.MYSQL) {
-            return data.parameterBindings();
-        }
-        List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
-        for (UpsertColumn updateColumn : data.updateColumnsOrConflict()) {
-            parameterBindings.add(createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
-        }
-        return parameterBindings;
-    }
-
-    private String buildPostgresUpsert(String tableName, UpsertData data) {
-        List<UpsertColumn> updateColumns = data.updateColumns();
-        String conflict = buildInsertStatement(tableName, data) + " ON CONFLICT (" + data.conflictColumnNames() + CLOSE_BRACKET;
-        if (updateColumns.isEmpty()) {
-            return conflict + " DO NOTHING";
-        }
-        return conflict
-            + " DO UPDATE SET "
-            + updateColumns.stream()
-                .map(column -> column.column() + "=EXCLUDED." + column.column())
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-    }
-
-    private String buildSqlServerUpsert(String tableName, UpsertData data, @Nullable String outputColumn) {
-        return "MERGE INTO " + tableName + " WITH (HOLDLOCK) AS target "
-            + "USING (VALUES (" + data.sourceValueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
-            + "ON " + upsertConflictPredicate(data)
-            + upsertMatchedClause(data)
-            + upsertInsertClause(data)
-            + (outputColumn == null ? "" : " OUTPUT inserted." + outputColumn)
-            + ";";
-    }
-
-    private String buildOracleUpsert(String tableName, UpsertData data) {
-        String sourceSelect = data.columns().stream()
-            .filter(UpsertColumn::sourceColumn)
-            .map(column -> column.value() + BLANK_SPACE + column.source())
-            .collect(Collectors.joining(String.valueOf(COMMA)));
-        return "MERGE INTO " + tableName + " target "
-            + "USING (SELECT " + sourceSelect + " FROM DUAL) source "
-            + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
-            + upsertMatchedClause(data)
-            + upsertInsertClause(data);
-    }
-
-    private List<UpsertReturningColumn> resolveGeneratedIdentityUpsertReturningColumns(PersistentEntity entity) {
-        boolean escape = shouldEscape(entity);
-        NamingStrategy namingStrategy = getNamingStrategy(entity);
-        List<UpsertReturningColumn> columns = new ArrayList<>();
-        for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    return;
-                }
-                String columnName = getMappedName(namingStrategy, associations, property);
-                columns.add(new UpsertReturningColumn(escape ? quote(columnName) : columnName, columnName, property.getDataType()));
-            });
-        }
-        return columns;
-    }
-
-    private List<QueryOutParameterBinding> buildUpsertOutParameterBindings(List<UpsertReturningColumn> returningColumns) {
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>(returningColumns.size());
-        for (UpsertReturningColumn returningColumn : returningColumns) {
-            outBindings.add(new QueryOutParameterBinding() {
-                @Override
-                public String getName() {
-                    return returningColumn.name();
-                }
-
-                @Override
-                public DataType getDataType() {
-                    return returningColumn.dataType();
-                }
-            });
-        }
-        return outBindings;
-    }
-
-    private String buildAnsiUpsert(String tableName, UpsertData data) {
-        return "MERGE INTO " + tableName + " target "
-            + "USING (VALUES (" + data.sourceValueExpressions() + ")) source (" + data.sourceColumns() + ") "
-            + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
-            + upsertMatchedClause(data)
-            + upsertInsertClause(data);
-    }
-
-    private String buildInsertStatement(String tableName, UpsertData data) {
-        return INSERT_INTO + tableName + " (" + data.columnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
-    }
-
-    private String upsertConflictPredicate(UpsertData data) {
-        return data.conflictColumns().stream()
-            .map(column -> "target." + column.column() + "=source." + column.source())
-            .collect(Collectors.joining(" AND "));
-    }
-
-    private String upsertMatchedClause(UpsertData data) {
-        List<UpsertColumn> updateColumns = data.updateColumns();
-        if (updateColumns.isEmpty()) {
-            return "";
-        }
-        return " WHEN MATCHED THEN UPDATE SET "
-            + updateColumns.stream()
-                .map(column -> "target." + column.column() + "=source." + column.source())
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-    }
-
-    private String upsertInsertClause(UpsertData data) {
-        return " WHEN NOT MATCHED THEN INSERT (" + data.columnNames() + ") VALUES ("
-            + data.columns().stream()
-                .map(column -> column.sourceColumn() ? "source." + column.source() : column.value())
-                .collect(Collectors.joining(String.valueOf(COMMA)))
-            + CLOSE_BRACKET;
-    }
-
-    private QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
+    final QueryParameterBinding createParameterBinding(String key, PersistentProperty property, String[] path) {
         return new QueryParameterBinding() {
             @Override
             public String getName() {
@@ -1750,7 +1411,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         };
     }
 
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
+    final String[] asStringPath(List<Association> associations, PersistentProperty property) {
         if (associations.isEmpty()) {
             return new String[]{property.getName()};
         }
@@ -1762,7 +1423,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return path.toArray(new String[0]);
     }
 
-    private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
+    final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
             case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true) + ".nextval";
@@ -1810,7 +1471,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private boolean addWriteExpression(List<String> values, PersistentProperty property) {
+    final boolean addWriteExpression(List<String> values, PersistentProperty property) {
         DataType dt = property.getDataType();
         String transformer = getDataTransformerWriteValue(null, property).orElse(null);
         if (transformer != null) {
@@ -2486,74 +2147,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return;
         }
         collection.add(item);
-    }
-
-    private record UpsertData(List<UpsertColumn> columns,
-                              List<QueryParameterBinding> parameterBindings) {
-
-        private String columnNames() {
-            return columns.stream()
-                .map(UpsertColumn::column)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String valueExpressions() {
-            return columns.stream()
-                .map(UpsertColumn::value)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String sourceValueExpressions() {
-            return columns.stream()
-                .filter(UpsertColumn::sourceColumn)
-                .map(UpsertColumn::value)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private String sourceColumns() {
-            return columns.stream()
-                .filter(UpsertColumn::sourceColumn)
-                .map(UpsertColumn::source)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private List<UpsertColumn> conflictColumns() {
-            return columns.stream()
-                .filter(UpsertColumn::conflict)
-                .toList();
-        }
-
-        private String conflictColumnNames() {
-            return conflictColumns().stream()
-                .map(UpsertColumn::column)
-                .collect(Collectors.joining(String.valueOf(COMMA)));
-        }
-
-        private List<UpsertColumn> updateColumns() {
-            return columns.stream()
-                .filter(column -> !column.identity() && !column.conflict())
-                .toList();
-        }
-
-        private List<UpsertColumn> updateColumnsOrConflict() {
-            List<UpsertColumn> updateColumns = updateColumns();
-            return updateColumns.isEmpty() ? List.of(conflictColumns().get(0)) : updateColumns;
-        }
-    }
-
-    private record UpsertColumn(String column,
-                                String value,
-                                String source,
-                                boolean sourceColumn,
-                                PersistentProperty property,
-                                List<String> path,
-                                boolean identity,
-                                boolean conflict) {
-    }
-
-    private record UpsertReturningColumn(String column,
-                                         String name,
-                                         DataType dataType) {
     }
 
     private static final class DialectConfig {
