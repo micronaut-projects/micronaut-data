@@ -63,7 +63,7 @@ final class SqlUpsertQueryBuilder {
             throw new IllegalStateException("Upsert is not supported for JSON entity representation: " + entity.getName());
         }
         if (definition.conflictProperties().isEmpty() && !entity.hasIdentity() && !entity.hasCompositeIdentity()) {
-            throw new IllegalStateException("Upsert requires an identity for entity: " + entity.getName());
+            throw new IllegalStateException("Upsert requires conflict properties or an identity for entity: " + entity.getName());
         }
         if (entity.hasVersion()) {
             throw new IllegalStateException("Upsert is not supported for versioned entity: " + entity.getName());
@@ -81,33 +81,20 @@ final class SqlUpsertQueryBuilder {
         };
 
         List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
-        if (definition.returnGeneratedId() && dialect == Dialect.SQL_SERVER) {
-            if (returning.hasColumns()) {
-                return QueryResult.of(
-                    query,
-                    Collections.emptyList(),
-                    parameterBindings,
-                    buildUpsertOutParameterBindings(returning.columns()),
-                    Collections.emptyMap()
-                );
-            }
+        if (definition.returnGeneratedId() && dialect == Dialect.SQL_SERVER && returning.hasColumns()) {
+            List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returning.columns());
+            return QueryResult.of(query, Collections.emptyList(), parameterBindings, outParameterBindings, Collections.emptyMap());
         }
-        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE) {
-            if (returning.hasColumns()) {
-                UpsertReturningColumn returningColumn = returning.columns().get(0);
-                String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
-                query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
-                if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
-                    query = "BEGIN " + query + "; END;";
-                }
-                return QueryResult.of(
-                    query,
-                    Collections.emptyList(),
-                    parameterBindings,
-                    buildUpsertOutParameterBindings(returning.columns()),
-                    Collections.emptyMap()
-                );
+
+        if (definition.returnGeneratedId() && dialect == Dialect.ORACLE && returning.hasColumns()) {
+            UpsertReturningColumn returningColumn = returning.columns().get(0);
+            String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
+            query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
+            if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
+                query = "BEGIN " + query + "; END;";
             }
+            List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returning.columns());
+            return QueryResult.of(query, Collections.emptyList(), parameterBindings, outParameterBindings, Collections.emptyMap());
         }
 
         return QueryResult.of(query, Collections.emptyList(), parameterBindings, Collections.emptyMap());
@@ -347,7 +334,7 @@ final class SqlUpsertQueryBuilder {
         return columns;
     }
 
-    private List<QueryOutParameterBinding> buildUpsertOutParameterBindings(List<UpsertReturningColumn> returningColumns) {
+    private List<QueryOutParameterBinding> buildOutParameterBindings(List<UpsertReturningColumn> returningColumns) {
         List<QueryOutParameterBinding> outBindings = new ArrayList<>(returningColumns.size());
         for (UpsertReturningColumn returningColumn : returningColumns) {
             outBindings.add(new QueryOutParameterBinding() {
