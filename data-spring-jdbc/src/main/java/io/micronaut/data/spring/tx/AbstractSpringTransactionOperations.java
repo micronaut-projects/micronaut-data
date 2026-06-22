@@ -112,7 +112,7 @@ public abstract class AbstractSpringTransactionOperations
 
     @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
-        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
+        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());

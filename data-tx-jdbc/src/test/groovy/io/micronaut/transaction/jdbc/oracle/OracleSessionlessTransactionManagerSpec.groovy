@@ -7,9 +7,11 @@ import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
 import io.micronaut.transaction.exceptions.TransactionSystemException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
+import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.micronaut.transaction.support.TransactionExecutionListener
 import oracle.jdbc.OracleConnection
 import spock.lang.Specification
@@ -41,7 +43,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         def manager = newTransactionManager([listener])
         def connection = Mock(Connection)
         def oracle = Mock(OracleConnection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND, Duration.ofSeconds(5))
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND, Duration.ofSeconds(5))
         def connectionStatus = new DefaultConnectionStatus<>(connection, ConnectionDefinition.named("test"), true, null)
         def status = DefaultTransactionStatus.newTx(connectionStatus, definition, manager)
         def gtrid = [1, 2, 3] as byte[]
@@ -66,7 +68,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         def manager = newTransactionManager()
         def connection = Mock(Connection)
         def oracle = Mock(OracleConnection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
 
@@ -85,7 +87,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
 
@@ -102,7 +104,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
 
         when:
@@ -117,7 +119,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
         state.setGtrid([9, 9, 9] as byte[])
@@ -135,7 +137,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         def manager = newTransactionManager()
         def connection = Mock(Connection)
         def oracle = Mock(OracleConnection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
 
         when:
@@ -152,7 +154,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
         state.setGtrid([1, 2, 3] as byte[])
@@ -174,7 +176,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.SUSPEND)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
         state.setGtrid([1, 2, 3] as byte[])
@@ -202,7 +204,7 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         given:
         def manager = newTransactionManager()
         def connection = Mock(Connection)
-        def definition = definition(TransactionDefinition.Propagation.REQUIRES_SUSPENDED)
+        def definition = definition(OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
         def status = txStatus(connection, definition, manager)
         def state = new OracleSessionlessTransactionState()
         state.setGtrid([4, 5, 6] as byte[])
@@ -241,23 +243,14 @@ class OracleSessionlessTransactionManagerSpec extends Specification {
         DefaultTransactionStatus.newTx(connectionStatus, definition, manager)
     }
 
-    private static TransactionDefinition definition(TransactionDefinition.Propagation propagation,
+    private static TransactionDefinition definition(OracleTransactional.Sessionless mode,
                                                     Duration timeout = null) {
-        new TransactionDefinition() {
-            @Override
-            String getName() {
-                "test"
-            }
-
-            @Override
-            TransactionDefinition.Propagation getPropagationBehavior() {
-                propagation
-            }
-
-            @Override
-            Optional<Duration> getTimeout() {
-                Optional.ofNullable(timeout)
-            }
+        def definition = new DefaultTransactionDefinition()
+        definition.setName("test")
+        if (timeout != null) {
+            definition.setTimeout(timeout)
         }
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, mode)
+        definition
     }
 }

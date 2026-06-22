@@ -26,7 +26,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Oracle-specific transactional annotation that applies Oracle transaction priority.
+ * Oracle-specific transactional annotation that applies Oracle transaction options.
  *
  * @author radovanradic
  * @since 5.0
@@ -44,12 +44,43 @@ public @interface OracleTransactional {
     String ORACLE_PRIORITY = "oraclePriority";
 
     /**
+     * Transaction definition property used to store Oracle sessionless transaction mode.
+     *
+     * @since 5.1.0
+     */
+    String ORACLE_SESSIONLESS_MODE = "oracleSessionlessMode";
+
+    /**
      * Priority level for Oracle priority transactions.
      */
     enum Priority {
         LOW,
         MEDIUM,
         HIGH
+    }
+
+    /**
+     * Sessionless transaction mode for Oracle JDBC transactions.
+     *
+     * @since 5.1.0
+     */
+    enum Sessionless {
+        /**
+         * Do not apply Oracle sessionless transaction semantics.
+         */
+        NONE,
+        /**
+         * Start an Oracle sessionless transaction and suspend it instead of committing when the
+         * transactional boundary completes.
+         * <p>The {@link OracleTransactional#timeout()} value is passed to Oracle when the
+         * sessionless transaction is started.
+         */
+        SUSPEND,
+        /**
+         * Resume an Oracle sessionless transaction from the current propagation context and complete
+         * it when the transactional boundary completes.
+         */
+        REQUIRES_SUSPENDED
     }
 
     /**
@@ -88,6 +119,9 @@ public @interface OracleTransactional {
 
     /**
      * The timeout for this transaction.
+     * <p>When {@link #sessionless()} is {@link Sessionless#SUSPEND}, this timeout is passed to
+     * Oracle when the sessionless transaction is started. If no timeout is specified, the Oracle
+     * JDBC driver and database defaults apply.
      *
      * @return The timeout
      */
@@ -132,4 +166,12 @@ public @interface OracleTransactional {
      * @return The priority level
      */
     Priority priority() default Priority.HIGH;
+
+    /**
+     * The desired Oracle sessionless transaction mode.
+     *
+     * @return The sessionless transaction mode
+     * @since 5.1.0
+     */
+    Sessionless sessionless() default Sessionless.NONE;
 }

@@ -22,12 +22,14 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
 import io.micronaut.transaction.jdbc.JdbcTransactionManagerCondition;
 import io.micronaut.transaction.support.TransactionExecutionListener;
+import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Inject;
 import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.NonNull;
@@ -70,8 +72,8 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
     @Override
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
-        TransactionDefinition.Propagation propagation = definition.getPropagationBehavior();
-        if (propagation == TransactionDefinition.Propagation.SUSPEND) {
+        OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
+        if (sessionless == OracleTransactional.Sessionless.SUSPEND) {
             Optional<OracleSessionlessTransactionState> state = findSessionlessTransactionState();
             if (state.isEmpty()) {
                 throw new CannotCreateTransactionException("Oracle sessionless transaction propagation is not active");
@@ -84,7 +86,7 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
             if (!state.get().setGtridIfAbsent(gtrid)) {
                 throw new CannotCreateTransactionException("Oracle sessionless transaction context already contains a transaction id");
             }
-        } else if (propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+        } else if (sessionless == OracleTransactional.Sessionless.REQUIRES_SUSPENDED) {
             byte[] gtrid = findSessionlessTransactionState().flatMap(OracleSessionlessTransactionState::getGtrid)
                 .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
             super.doBegin(status);
@@ -96,10 +98,10 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
 
     @Override
     protected void doCommit(DefaultTransactionStatus<Connection> status) {
-        TransactionDefinition.Propagation propagation = status.getTransactionDefinition().getPropagationBehavior();
-        if (propagation == TransactionDefinition.Propagation.SUSPEND) {
+        OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(status.getTransactionDefinition());
+        if (sessionless == OracleTransactional.Sessionless.SUSPEND) {
             suspend(unwrapRequiredOracleForCompletion(status.getConnection()));
-        } else if (propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+        } else if (sessionless == OracleTransactional.Sessionless.REQUIRES_SUSPENDED) {
             commitResumedSessionlessTransaction(status);
         } else {
             super.doCommit(status);
@@ -108,9 +110,9 @@ final class OracleSessionlessTransactionManager extends DataSourceTransactionMan
 
     @Override
     protected void doRollback(DefaultTransactionStatus<Connection> status) {
-        TransactionDefinition.Propagation propagation = status.getTransactionDefinition().getPropagationBehavior();
-        if (propagation == TransactionDefinition.Propagation.SUSPEND
-            || propagation == TransactionDefinition.Propagation.REQUIRES_SUSPENDED) {
+        OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(status.getTransactionDefinition());
+        if (sessionless == OracleTransactional.Sessionless.SUSPEND
+            || sessionless == OracleTransactional.Sessionless.REQUIRES_SUSPENDED) {
             rollbackSessionlessTransaction(status);
         } else {
             super.doRollback(status);

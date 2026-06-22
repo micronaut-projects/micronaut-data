@@ -16,7 +16,9 @@
 package io.micronaut.transaction;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -246,21 +248,27 @@ public class TxSpec {
         try (ApplicationContext applicationContext = ApplicationContext.run()) {
             ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
 
-            assertUnsupportedReactiveOracleSessionlessPropagation(txManager, TransactionDefinition.Propagation.SUSPEND);
-            assertUnsupportedReactiveOracleSessionlessPropagation(txManager, TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+            assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.SUSPEND);
+            assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
         }
     }
 
-    private static void assertUnsupportedReactiveOracleSessionlessPropagation(ReactiveTxManager txManager,
-                                                                              TransactionDefinition.Propagation propagation) {
+    private static void assertUnsupportedReactiveOracleSessionlessMode(ReactiveTxManager txManager,
+                                                                       OracleTransactional.Sessionless mode) {
         TransactionSuspensionNotSupportedException exception = Assertions.assertThrows(
             TransactionSuspensionNotSupportedException.class,
-            () -> txManager.withTransactionMono(TransactionDefinition.of(propagation), status -> Mono.just("ignored"))
+            () -> txManager.withTransactionMono(oracleSessionlessDefinition(mode), status -> Mono.just("ignored"))
         );
         Assertions.assertEquals(
-            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
             exception.getMessage()
         );
+    }
+
+    private static TransactionDefinition oracleSessionlessDefinition(OracleTransactional.Sessionless mode) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, mode);
+        return definition;
     }
 
     // end::test[]

@@ -16,7 +16,7 @@
 package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
@@ -30,8 +30,8 @@ import java.util.function.Supplier;
  *
  * <p>This implementation creates a lexical {@link PropagatedContext} scope that contains a single
  * {@link OracleSessionlessTransactionState}. The transaction manager uses that state to publish the
- * GTRID produced by {@link TransactionDefinition.Propagation#SUSPEND} and to
- * consume the GTRID required by {@link TransactionDefinition.Propagation#REQUIRES_SUSPENDED}.
+ * GTRID produced by {@link OracleTransactional.Sessionless#SUSPEND} and to
+ * consume the GTRID required by {@link OracleTransactional.Sessionless#REQUIRES_SUSPENDED}.
  * Encoded transaction identifiers are converted through {@link OracleSessionlessTransactionIdCodec}, so
  * applications can replace the codec without changing propagation mechanics.</p>
  */

@@ -108,7 +108,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                                              @NonNull TransactionalCallback<C, T> handler) {
         Objects.requireNonNull(definition, "Transaction definition cannot be null");
         Objects.requireNonNull(handler, "Callback handler cannot be null");
-        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
+        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
 
         return Flux.deferContextual(contextView -> {
             @Nullable ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
@@ -117,7 +117,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     }
 
     /**
-     * @return Whether this transaction manager supports Oracle sessionless transaction propagation modes.
+     * @return Whether this transaction manager supports Oracle sessionless transaction modes.
      */
     protected boolean supportsOracleSessionlessTransactions() {
         return false;
@@ -164,7 +164,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     public <T> Mono<T> withTransactionMono(TransactionDefinition definition, Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
         Objects.requireNonNull(definition, "Transaction definition cannot be null");
         Objects.requireNonNull(handler, "Callback handler cannot be null");
-        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
+        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
 
         return Mono.deferContextual(contextView -> {
             ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);

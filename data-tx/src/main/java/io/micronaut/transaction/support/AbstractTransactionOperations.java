@@ -160,7 +160,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
-        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
+        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);
@@ -463,7 +463,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
     private T createTransaction(@NonNull TransactionDefinition definition, @NonNull ConnectionStatus<C> connectionStatus) {
         return switch (definition.getPropagationBehavior()) {
-            case REQUIRED, REQUIRES_NEW, NESTED, SUSPEND, REQUIRES_SUSPENDED ->
+            case REQUIRED, REQUIRES_NEW, NESTED ->
                 createNewTransactionStatus(connectionStatus, definition); // Nested propagation applies only for the existing TX
             case SUPPORTS, NOT_SUPPORTED, NEVER ->
                 createNoTxTransactionStatus(connectionStatus, definition);
