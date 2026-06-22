@@ -6264,7 +6264,7 @@ It is intended for the case where the database may have committed, but the clien
 </div>
 <div class="paragraph">
 <p><code>@TransactionalRecoverable</code> is a companion to <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a>.
-Use both annotations together on a method that starts a new transaction boundary:</p>
+Use both annotations together on a method whose intercepted invocation owns the transaction commit boundary:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -6290,7 +6290,7 @@ void updateInventory() {
 <p>capture the Oracle logical transaction identifier (LTXID) before commit</p>
 </li>
 <li>
-<p>if a configured recoverable exception is raised during commit handling, open a fresh connection and resolve the outcome with Oracle transaction recovery</p>
+<p>if a configured recoverable exception is raised during commit handling or commit acknowledgement, open a fresh connection and resolve the outcome with Oracle transaction recovery</p>
 </li>
 <li>
 <p>if Oracle reports <code>COMMITTED</code>, return the original result</p>
@@ -6350,7 +6350,7 @@ void updateInventory() {
 <p>use an Oracle Database version that supports Oracle Transaction Guard</p>
 </li>
 <li>
-<p>connect through a user-defined Oracle service, not the default <code>db_name</code> or <code>db_unique_name</code> service</p>
+<p>configure the datasource JDBC URL to connect through the Oracle service that your DBA set up for this application and enabled for Oracle Transaction Guard, rather than the database&#8217;s default service name</p>
 </li>
 <li>
 <p>enable <code>COMMIT_OUTCOME=TRUE</code> on that service</p>
@@ -6364,7 +6364,7 @@ void updateInventory() {
 </ul>
 </div>
 <div class="paragraph">
-<p>Micronaut Data does not automatically detect whether Transparent Application Failover (TAF) or Application Continuity is already handling Oracle transaction recovery for the connection.
+<p>Micronaut Data does not automatically detect whether Transparent Application Failover (TAF) or Application Continuity is already handling Oracle Transaction Guard for the connection.
 If that Oracle failover path is enabled, do not use <a href="../api/io/micronaut/transaction/annotation/TransactionalRecoverable.html">@TransactionalRecoverable</a> on the same execution path.</p>
 </div>
 <div class="paragraph">
@@ -6379,7 +6379,7 @@ If that Oracle failover path is enabled, do not use <a href="../api/io/micronaut
 <p>Recovery applies only to synchronous JDBC transactions</p>
 </li>
 <li>
-<p>Recovery applies only when the intercepted execution starts a new transaction</p>
+<p>Recovery applies only when the intercepted execution owns the transaction commit boundary</p>
 </li>
 <li>
 <p>If a method joins an existing transaction, the outer transaction boundary owns commit and therefore owns recovery</p>
@@ -6414,7 +6414,7 @@ Micronaut Data uses that Oracle-specific <code>USER_CALL_COMPLETED</code> flag i
 <p>If Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE</code>, Micronaut logs a warning and returns the original result without replay</p>
 </li>
 <li>
-<p>If you are already relying on TAF or Application Continuity to own the replay flow, do not add <code>@TransactionalRecoverable</code> on top of that path</p>
+<p>If you are already relying on TAF or Application Continuity to own the replay flow, do not add explicit transaction recovery on top of that path</p>
 </li>
 </ul>
 </div>

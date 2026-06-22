@@ -82,8 +82,8 @@ loadScripts(document, 'script');</script>
 
 <p>The initial implementation is Oracle JDBC only and is applied only to synchronous
 transactional execution. Recovery is attempted only for the intercepted execution that
-starts and owns a new transaction; participating calls still execute normally and leave
-any ambiguous commit outcome to the outer transaction boundary.</p>
+owns the transaction commit boundary; participating calls still execute normally and
+leave any ambiguous commit outcome to the outer transaction boundary.</p>
 
 <p>If Oracle reports that the transaction committed but the user call did not complete,
 Micronaut returns the original result and logs a warning instead of replaying the call.</p>
