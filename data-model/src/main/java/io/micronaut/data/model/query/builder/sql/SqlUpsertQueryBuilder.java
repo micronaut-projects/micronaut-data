@@ -30,7 +30,6 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,24 +82,25 @@ final class SqlUpsertQueryBuilder {
         List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
 
         List<UpsertReturningColumn> returningColumns = resolveGeneratedIdReturning(entity, definition);
-        if (!returningColumns.isEmpty()) {
-            UpsertReturningColumn returningColumn = returningColumns.getFirst();
-            List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returningColumn);
+        if (returningColumns.isEmpty()) {
             if (dialect == Dialect.SQL_SERVER) {
-                query = query + " OUTPUT inserted." + returningColumn.column() + ";";
-            } else if (dialect == Dialect.ORACLE) {
-                String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
-                query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
-                if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
-                    query = "BEGIN " + query + "; END;";
-                }
+                query = query + ";";
             }
-            return QueryResult.of(query, Collections.emptyList(), parameterBindings, outParameterBindings, Collections.emptyMap());
+            return QueryResult.of(query, parameterBindings);
         }
+
+        UpsertReturningColumn returningColumn = returningColumns.getFirst();
         if (dialect == Dialect.SQL_SERVER) {
-            query = query + ";";
+            query = query + " OUTPUT inserted." + returningColumn.column() + ";";
+        } else if (dialect == Dialect.ORACLE) {
+            String outPlaceholder = sqlQueryBuilder.formatParameter(parameterBindings.size() + 1).name();
+            query = query + " RETURNING " + returningColumn.column() + " INTO " + outPlaceholder;
+            if (repositoryMetadata.hasStereotype(R2DBC_REPO_ANNOTATION)) {
+                query = "BEGIN " + query + "; END;";
+            }
         }
-        return QueryResult.of(query, parameterBindings);
+        List<QueryOutParameterBinding> outParameterBindings = buildOutParameterBindings(returningColumn);
+        return QueryResult.of(query, Collections.emptyList(), parameterBindings, outParameterBindings, Collections.emptyMap());
     }
 
     private List<UpsertReturningColumn> resolveGeneratedIdReturning(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
@@ -180,7 +180,17 @@ final class SqlUpsertQueryBuilder {
         if (escape) {
             columnName = sqlQueryBuilder.quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, values.get(values.size() - 1), "c" + sourceColumnCount(columns), true, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+
+        UpsertColumn column = new UpsertColumn(
+            columnName,
+            values.getLast(),
+            "c" + sourceColumnCount(columns),
+            true,
+            property,
+            List.of(path),
+            identity,
+            conflictPropertyPaths.contains(toPathString(path)));
+        columns.add(column);
     }
 
     private void addGeneratedUpsertColumn(List<UpsertColumn> columns,
@@ -196,7 +206,17 @@ final class SqlUpsertQueryBuilder {
         if (escape) {
             columnName = sqlQueryBuilder.quote(columnName);
         }
-        columns.add(new UpsertColumn(columnName, value, "", false, property, List.of(path), identity, conflictPropertyPaths.contains(toPathString(path))));
+
+        UpsertColumn column = new UpsertColumn(
+            columnName,
+            value,
+            "",
+            false,
+            property,
+            List.of(path),
+            identity,
+            conflictPropertyPaths.contains(toPathString(path)));
+        columns.add(column);
     }
 
     private int sourceColumnCount(List<UpsertColumn> columns) {
@@ -436,7 +456,7 @@ final class SqlUpsertQueryBuilder {
 
         private List<UpsertColumn> updateColumnsOrConflict() {
             List<UpsertColumn> updateColumns = updateColumns();
-            return updateColumns.isEmpty() ? List.of(conflictColumns().get(0)) : updateColumns;
+            return updateColumns.isEmpty() ? List.of(conflictColumns().getFirst()) : updateColumns;
         }
     }
 
