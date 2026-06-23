@@ -144,6 +144,44 @@ class Test {
         sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`date_created` TIMESTAMP WITH TIME ZONE);'
     }
 
+    void "test build create table for SQL Server sequence generation"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE)
+    private Long id;
+
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        expect:
+        builder.buildBatchCreateTableStatement(List.of(), entity) == 'CREATE SEQUENCE [test_seq] AS BIGINT MINVALUE 1 START WITH 1 INCREMENT BY 1' + System.lineSeparator() +
+            'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY NOT NULL DEFAULT NEXT VALUE FOR [test_seq],[name] VARCHAR(255) NOT NULL);'
+    }
+
     void "test custom parent entity with generics"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
