@@ -51,4 +51,9 @@ class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyPro
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
     }
+
+    @Override
+    protected boolean supportsGeneratedUuidReturning() {
+        return false
+    }
 }

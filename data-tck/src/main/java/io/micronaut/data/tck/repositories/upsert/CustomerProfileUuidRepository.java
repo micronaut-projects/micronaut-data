@@ -20,9 +20,8 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid;
 
 import java.util.List;
-import java.util.UUID;
 
-public interface CustomerProfileUuidRepository extends CrudRepository<CustomerProfileUuid, UUID> {
+public interface CustomerProfileUuidRepository extends CrudRepository<CustomerProfileUuid, String> {
 
     @Upsert(conflictProperties = "email")
     CustomerProfileUuid upsert(CustomerProfileUuid customerProfile);

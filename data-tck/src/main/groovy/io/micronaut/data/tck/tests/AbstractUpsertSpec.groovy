@@ -28,6 +28,8 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue
+
 abstract class AbstractUpsertSpec extends Specification {
 
     abstract ProductReviewRepository getProductReviewRepository()
@@ -318,6 +320,8 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     void "upsert by email conflict returns entity when uuid is used"() {
+        assumeTrue(supportsGeneratedUuidReturning())
+
         given:
         CustomerProfileUuid cp = new CustomerProfileUuid("test@example.com", "test")
 
@@ -349,6 +353,8 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     void "upsertAll by email conflict returns entities when uuid is used"() {
+        assumeTrue(supportsGeneratedUuidReturning())
+
         given:
         CustomerProfileUuid cp1 = new CustomerProfileUuid("test1@example.com", "test 1")
         CustomerProfileUuid cp2 = new CustomerProfileUuid("test2@example.com", "test 2")
@@ -471,6 +477,10 @@ abstract class AbstractUpsertSpec extends Specification {
         then:
         assertWarehouseInventory(found1, wh1)
         assertWarehouseInventory(found2, wh2)
+    }
+
+    protected boolean supportsGeneratedUuidReturning() {
+        return true
     }
 
     private static void assertProductReview(ProductReview productReview1, ProductReview productReview2) {

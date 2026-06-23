@@ -22,8 +22,6 @@ import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 import org.jspecify.annotations.Nullable;
 
-import java.util.UUID;
-
 @MappedEntity
 @Index(columns = "email", unique = true)
 public class CustomerProfileUuid {
@@ -31,7 +29,7 @@ public class CustomerProfileUuid {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.UUID)
     @Nullable
-    private UUID id;
+    private String id;
 
     @NotBlank
     private String email;
@@ -46,18 +44,18 @@ public class CustomerProfileUuid {
         this(null, email, displayName);
     }
 
-    public CustomerProfileUuid(@Nullable UUID id, String email, String displayName) {
+    public CustomerProfileUuid(@Nullable String id, String email, String displayName) {
         this.id = id;
         this.email = email;
         this.displayName = displayName;
     }
 
     @Nullable
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(@Nullable UUID id) {
+    public void setId(@Nullable String id) {
         this.id = id;
     }
 

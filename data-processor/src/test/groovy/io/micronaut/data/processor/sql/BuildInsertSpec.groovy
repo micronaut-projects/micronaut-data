@@ -201,7 +201,7 @@ class Test {
 
         where:
         dialect            | query
-        Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" VARCHAR(36) NOT NULL DEFAULT SYS_GUID() PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL)'
+        Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL)'
         Dialect.H2         | 'CREATE TABLE `test` (`id` UUID NOT NULL DEFAULT random_uuid() PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
         Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),"name" VARCHAR(255) NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] UNIQUEIDENTIFIER PRIMARY KEY NOT NULL DEFAULT newid(),[name] VARCHAR(255) NOT NULL);'
