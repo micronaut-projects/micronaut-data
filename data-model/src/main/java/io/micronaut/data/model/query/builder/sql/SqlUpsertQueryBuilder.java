@@ -188,7 +188,7 @@ final class SqlUpsertQueryBuilder {
                     if (identityConflict) {
                         throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
                     }
-                    if (SqlQueryBuilderUtils.isNotForeign(associations) && isSequenceGeneratedProperty(property)) {
+                    if (dialect != Dialect.SQL_SERVER && SqlQueryBuilderUtils.isNotForeign(associations) && isSequenceGeneratedProperty(property)) {
                         addGeneratedUpsertColumn(columns, namingStrategy, associations, property, escape, true, conflictPropertyPaths, sqlQueryBuilder.getSequenceStatement(unescapedSchema, unescapedTableName, property));
                     }
                     return;

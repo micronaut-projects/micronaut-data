@@ -93,7 +93,7 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
         CustomerProfileSequence cp2 = new CustomerProfileSequence("test2@example.com", "test 2")
 
         when:
-        List<CustomerProfileSequence> inserted = customerProfileSequenceRepository.upsertAll([cp1, cp2]).toList()
+        List<CustomerProfileSequence> inserted = customerProfileSequenceRepository.upsertAll([cp1, cp2])
 
         then:
         inserted.size() == 2
@@ -115,7 +115,7 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
         cp2.setDisplayName("test 2 modified")
         CustomerProfileSequence cp3 = new CustomerProfileSequence("test3@example.com", "test 3")
         CustomerProfileSequence cp4 = new CustomerProfileSequence("test4@example.com", "test 4")
-        List<CustomerProfileSequence> updated = customerProfileSequenceRepository.upsertAll([cp1, cp2, cp3, cp4]).toList()
+        List<CustomerProfileSequence> updated = customerProfileSequenceRepository.upsertAll([cp1, cp2, cp3, cp4])
 
         then:
         updated.size() == 4
