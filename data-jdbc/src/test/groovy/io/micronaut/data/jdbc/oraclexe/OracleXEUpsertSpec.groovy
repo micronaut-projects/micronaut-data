@@ -18,9 +18,11 @@ package io.micronaut.data.jdbc.oraclexe
 import io.micronaut.data.jdbc.oraclexe.upsert.CustomerProfileSequence
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECustomerProfileRepository
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECustomerProfileSequenceRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECustomerProfileUuidRepository
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEProductReviewRepository
 import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
@@ -35,6 +37,11 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
     @Override
     CustomerProfileRepository getCustomerProfileRepository() {
         return context.getBean(OracleXECustomerProfileRepository)
+    }
+
+    @Override
+    CustomerProfileUuidRepository getCustomerProfileUuidRepository() {
+        return context.getBean(OracleXECustomerProfileUuidRepository)
     }
 
     @Override

@@ -17,9 +17,11 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
+import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import spock.lang.AutoCleanup
@@ -31,6 +33,8 @@ abstract class AbstractUpsertSpec extends Specification {
     abstract ProductReviewRepository getProductReviewRepository()
 
     abstract CustomerProfileRepository getCustomerProfileRepository()
+
+    abstract CustomerProfileUuidRepository getCustomerProfileUuidRepository()
 
     abstract WarehouseInventoryRepository getWarehouseInventoryRepository()
 
@@ -313,6 +317,89 @@ abstract class AbstractUpsertSpec extends Specification {
         "upsertAllFutureNoResult" | { Iterable<CustomerProfile> profiles -> customerProfileRepository.upsertAllFutureNoResult(profiles).get() }
     }
 
+    void "upsert by email conflict returns entity when uuid is used"() {
+        given:
+        CustomerProfileUuid cp = new CustomerProfileUuid("test@example.com", "test")
+
+        when:
+        CustomerProfileUuid inserted = customerProfileUuidRepository.upsert(cp)
+
+        then:
+        inserted.id != null
+        inserted == cp
+
+        when:
+        CustomerProfileUuid found = customerProfileUuidRepository.findById(cp.id).get()
+
+        then:
+        assertCustomerProfileUuid(cp, found)
+
+        when:
+        cp.setDisplayName("test modified")
+        CustomerProfileUuid updated = customerProfileUuidRepository.upsert(cp)
+
+        then:
+        updated == cp
+
+        when:
+        found = customerProfileUuidRepository.findById(cp.id).get()
+
+        then:
+        assertCustomerProfileUuid(cp, found)
+    }
+
+    void "upsertAll by email conflict returns entities when uuid is used"() {
+        given:
+        CustomerProfileUuid cp1 = new CustomerProfileUuid("test1@example.com", "test 1")
+        CustomerProfileUuid cp2 = new CustomerProfileUuid("test2@example.com", "test 2")
+
+        when:
+        List<CustomerProfileUuid> inserted = customerProfileUuidRepository.upsertAll([cp1, cp2])
+
+        then:
+        inserted.size() == 2
+        inserted.get(0).id != null
+        inserted.get(1).id != null
+        inserted.get(0) == cp1
+        inserted.get(1) == cp2
+
+        when:
+        CustomerProfileUuid found1 = customerProfileUuidRepository.findById(cp1.id).get()
+        CustomerProfileUuid found2 = customerProfileUuidRepository.findById(cp2.id).get()
+
+        then:
+        assertCustomerProfileUuid(found1, cp1)
+        assertCustomerProfileUuid(found2, cp2)
+
+        when:
+        cp1.setDisplayName("test 1 modified")
+        cp2.setDisplayName("test 2 modified")
+        CustomerProfileUuid cp3 = new CustomerProfileUuid("test3@example.com", "test 3")
+        CustomerProfileUuid cp4 = new CustomerProfileUuid("test4@example.com", "test 4")
+        List<CustomerProfileUuid> updated = customerProfileUuidRepository.upsertAll([cp1, cp2, cp3, cp4])
+
+        then:
+        updated.size() == 4
+        updated.get(0) == cp1
+        updated.get(1) == cp2
+        updated.get(2).id != null
+        updated.get(3).id != null
+        updated.get(2) == cp3
+        updated.get(3) == cp4
+
+        when:
+        found1 = customerProfileUuidRepository.findById(cp1.id).get()
+        found2 = customerProfileUuidRepository.findById(cp2.id).get()
+        CustomerProfileUuid found3 = customerProfileUuidRepository.findById(cp3.id).get()
+        CustomerProfileUuid found4 = customerProfileUuidRepository.findById(cp4.id).get()
+
+        then:
+        assertCustomerProfileUuid(found1, cp1)
+        assertCustomerProfileUuid(found2, cp2)
+        assertCustomerProfileUuid(found3, cp3)
+        assertCustomerProfileUuid(found4, cp4)
+    }
+
     void "upsert by sku and warehouse conflict properties"() {
         given:
         WarehouseInventory wh = new WarehouseInventory("SKU-100", "Berlin", 12)
@@ -393,6 +480,11 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     private static void assertCustomerProfile(CustomerProfile customerProfile1, CustomerProfile customerProfile2) {
+        assert customerProfile1.email == customerProfile2.email
+        assert customerProfile1.displayName == customerProfile2.displayName
+    }
+
+    private static void assertCustomerProfileUuid(CustomerProfileUuid customerProfile1, CustomerProfileUuid customerProfile2) {
         assert customerProfile1.email == customerProfile2.email
         assert customerProfile1.displayName == customerProfile2.displayName
     }

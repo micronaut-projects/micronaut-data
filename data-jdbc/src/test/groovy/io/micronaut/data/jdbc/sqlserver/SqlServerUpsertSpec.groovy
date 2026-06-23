@@ -18,9 +18,11 @@ package io.micronaut.data.jdbc.sqlserver
 import io.micronaut.data.jdbc.sqlserver.upsert.CustomerProfileSequence
 import io.micronaut.data.jdbc.sqlserver.upsert.MSCustomerProfileRepository
 import io.micronaut.data.jdbc.sqlserver.upsert.MSCustomerProfileSequenceRepository
+import io.micronaut.data.jdbc.sqlserver.upsert.MSCustomerProfileUuidRepository
 import io.micronaut.data.jdbc.sqlserver.upsert.MSProductReviewRepository
 import io.micronaut.data.jdbc.sqlserver.upsert.MSWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
@@ -35,6 +37,11 @@ class SqlServerUpsertSpec extends AbstractUpsertSpec implements MSSQLTestPropert
     @Override
     CustomerProfileRepository getCustomerProfileRepository() {
         return context.getBean(MSCustomerProfileRepository)
+    }
+
+    @Override
+    CustomerProfileUuidRepository getCustomerProfileUuidRepository() {
+        return context.getBean(MSCustomerProfileUuidRepository)
     }
 
     @Override

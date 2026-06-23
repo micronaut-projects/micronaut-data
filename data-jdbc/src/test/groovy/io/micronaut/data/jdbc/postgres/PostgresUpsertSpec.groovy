@@ -18,9 +18,11 @@ package io.micronaut.data.jdbc.postgres
 import io.micronaut.data.jdbc.postgres.upsert.CustomerProfileSequence
 import io.micronaut.data.jdbc.postgres.upsert.PostgresCustomerProfileRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresCustomerProfileSequenceRepository
+import io.micronaut.data.jdbc.postgres.upsert.PostgresCustomerProfileUuidRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresProductReviewRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
@@ -35,6 +37,11 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     CustomerProfileRepository getCustomerProfileRepository() {
         return context.getBean(PostgresCustomerProfileRepository)
+    }
+
+    @Override
+    CustomerProfileUuidRepository getCustomerProfileUuidRepository() {
+        return context.getBean(PostgresCustomerProfileUuidRepository)
     }
 
     @Override
