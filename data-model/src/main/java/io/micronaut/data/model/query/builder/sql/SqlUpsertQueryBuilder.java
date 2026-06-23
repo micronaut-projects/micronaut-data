@@ -30,6 +30,7 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,17 +80,16 @@ final class SqlUpsertQueryBuilder {
             case ANSI -> buildAnsiUpsert(tableName, data);
         };
 
-        List<QueryParameterBinding> parameterBindings = buildUpsertParameterBindings(data);
+        List<QueryParameterBinding> parameterBindings = buildParameterBindings(data);
 
-        List<UpsertReturningColumn> returningColumns = resolveGeneratedIdReturning(entity, definition);
-        if (returningColumns.isEmpty()) {
+        UpsertReturningColumn returningColumn = findGeneratedIdReturningColumn(entity, definition);
+        if (returningColumn == null) {
             if (dialect == Dialect.SQL_SERVER) {
                 query = query + ";";
             }
             return QueryResult.of(query, parameterBindings);
         }
 
-        UpsertReturningColumn returningColumn = returningColumns.getFirst();
         if (dialect == Dialect.SQL_SERVER) {
             query = query + " OUTPUT inserted." + returningColumn.column() + ";";
         } else if (dialect == Dialect.ORACLE) {
@@ -103,19 +103,63 @@ final class SqlUpsertQueryBuilder {
         return QueryResult.of(query, Collections.emptyList(), parameterBindings, outParameterBindings, Collections.emptyMap());
     }
 
-    private List<UpsertReturningColumn> resolveGeneratedIdReturning(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
+    @Nullable
+    private UpsertReturningColumn findGeneratedIdReturningColumn(PersistentEntity entity, QueryBuilder.UpsertQueryDefinition definition) {
         if (!definition.returnGeneratedId() || (dialect != Dialect.ORACLE && dialect != Dialect.SQL_SERVER)) {
-            return Collections.emptyList();
+            return null;
         }
-        List<UpsertReturningColumn> returningColumns = resolveGeneratedIdentityUpsertReturningColumns(entity);
+        List<UpsertReturningColumn> returningColumns = findGeneratedIdentityReturningColumns(entity);
         if (returningColumns.isEmpty()) {
-            return Collections.emptyList();
+            return null;
         }
         if (returningColumns.size() > 1) {
             String operation = dialect == Dialect.SQL_SERVER ? "SQL Server MERGE ... OUTPUT" : "Oracle MERGE ... RETURNING";
             throw new IllegalStateException(operation + " supports a single generated identity for entity: " + entity.getName());
         }
-        return returningColumns;
+        return returningColumns.getFirst();
+    }
+
+    private List<UpsertReturningColumn> findGeneratedIdentityReturningColumns(PersistentEntity entity) {
+        boolean escape = sqlQueryBuilder.shouldEscape(entity);
+        NamingStrategy namingStrategy = sqlQueryBuilder.getNamingStrategy(entity);
+        List<UpsertReturningColumn> columns = new ArrayList<>();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                    return;
+                }
+                String columnName = sqlQueryBuilder.getMappedName(namingStrategy, associations, property);
+                columns.add(new UpsertReturningColumn(escape ? sqlQueryBuilder.quote(columnName) : columnName, columnName, property.getDataType()));
+            });
+        }
+        return columns;
+    }
+
+    private List<QueryParameterBinding> buildParameterBindings(UpsertData data) {
+        if (dialect != Dialect.MYSQL) {
+            return data.parameterBindings();
+        }
+        List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
+        for (UpsertColumn updateColumn : data.updateColumnsOrConflict()) {
+            parameterBindings.add(sqlQueryBuilder.createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
+        }
+        return parameterBindings;
+    }
+
+    private List<QueryOutParameterBinding> buildOutParameterBindings(UpsertReturningColumn returningColumn) {
+        List<QueryOutParameterBinding> outBindings = new ArrayList<>(1);
+        outBindings.add(new QueryOutParameterBinding() {
+            @Override
+            public String getName() {
+                return returningColumn.name();
+            }
+
+            @Override
+            public DataType getDataType() {
+                return returningColumn.dataType();
+            }
+        });
+        return outBindings;
     }
 
     private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
@@ -294,17 +338,6 @@ final class SqlUpsertQueryBuilder {
                 .collect(Collectors.joining(String.valueOf(COMMA)));
     }
 
-    private List<QueryParameterBinding> buildUpsertParameterBindings(UpsertData data) {
-        if (dialect != Dialect.MYSQL) {
-            return data.parameterBindings();
-        }
-        List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
-        for (UpsertColumn updateColumn : data.updateColumnsOrConflict()) {
-            parameterBindings.add(sqlQueryBuilder.createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
-        }
-        return parameterBindings;
-    }
-
     private String buildPostgresUpsert(String tableName, UpsertData data) {
         List<UpsertColumn> updateColumns = data.updateColumns();
         String conflict = buildInsertStatement(tableName, data) + " ON CONFLICT (" + data.conflictColumnNames() + CLOSE_BRACKET;
@@ -336,38 +369,6 @@ final class SqlUpsertQueryBuilder {
             + "ON (" + upsertConflictPredicate(data) + CLOSE_BRACKET
             + upsertMatchedClause(data)
             + upsertInsertClause(data);
-    }
-
-    private List<UpsertReturningColumn> resolveGeneratedIdentityUpsertReturningColumns(PersistentEntity entity) {
-        boolean escape = sqlQueryBuilder.shouldEscape(entity);
-        NamingStrategy namingStrategy = sqlQueryBuilder.getNamingStrategy(entity);
-        List<UpsertReturningColumn> columns = new ArrayList<>();
-        for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    return;
-                }
-                String columnName = sqlQueryBuilder.getMappedName(namingStrategy, associations, property);
-                columns.add(new UpsertReturningColumn(escape ? sqlQueryBuilder.quote(columnName) : columnName, columnName, property.getDataType()));
-            });
-        }
-        return columns;
-    }
-
-    private List<QueryOutParameterBinding> buildOutParameterBindings(UpsertReturningColumn returningColumn) {
-        List<QueryOutParameterBinding> outBindings = new ArrayList<>(1);
-        outBindings.add(new QueryOutParameterBinding() {
-            @Override
-            public String getName() {
-                return returningColumn.name();
-            }
-
-            @Override
-            public DataType getDataType() {
-                return returningColumn.dataType();
-            }
-        });
-        return outBindings;
     }
 
     private String buildAnsiUpsert(String tableName, UpsertData data) {
