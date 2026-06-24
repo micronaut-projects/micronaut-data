@@ -24,6 +24,7 @@ import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import jakarta.inject.Singleton;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -83,7 +84,10 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
         int attempts = 30;
         SQLException last = null;
         while (attempts-- > 0) {
-            try (Connection ignored = DriverManager.getConnection(url, info)) {
+            try (Connection connection = DriverManager.getConnection(url, info)) {
+                try (CallableStatement statement = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")) {
+                    statement.execute();
+                }
                 last = null;
                 break;
             } catch (SQLException e) {
