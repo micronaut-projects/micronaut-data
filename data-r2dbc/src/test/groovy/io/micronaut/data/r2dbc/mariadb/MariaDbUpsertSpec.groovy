@@ -16,9 +16,11 @@
 package io.micronaut.data.r2dbc.mariadb
 
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlCustomerProfileRepository
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlCustomerProfileUuidRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlProductReviewRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
@@ -36,6 +38,11 @@ class MariaDbUpsertSpec extends AbstractUpsertSpec implements MariaDbTestPropert
     }
 
     @Override
+    CustomerProfileUuidRepository getCustomerProfileUuidRepository() {
+        return context.getBean(MySqlCustomerProfileUuidRepository)
+    }
+
+    @Override
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(MySqlWarehouseInventoryRepository)
     }
@@ -43,5 +50,10 @@ class MariaDbUpsertSpec extends AbstractUpsertSpec implements MariaDbTestPropert
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.upsert")
+    }
+
+    @Override
+    protected boolean supportsGeneratedUuidReturning() {
+        return false
     }
 }

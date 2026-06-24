@@ -16,9 +16,11 @@
 package io.micronaut.data.r2dbc.sqlserver
 
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSCustomerProfileRepository
+import io.micronaut.data.r2dbc.sqlserver.upsert.MSCustomerProfileUuidRepository
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSProductReviewRepository
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSWarehouseInventoryRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
+import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
@@ -33,6 +35,11 @@ class SqlServerUpsertSpec extends AbstractUpsertSpec implements SqlServerTestPro
     @Override
     CustomerProfileRepository getCustomerProfileRepository() {
         return context.getBean(MSCustomerProfileRepository)
+    }
+
+    @Override
+    CustomerProfileUuidRepository getCustomerProfileUuidRepository() {
+        return context.getBean(MSCustomerProfileUuidRepository)
     }
 
     @Override
