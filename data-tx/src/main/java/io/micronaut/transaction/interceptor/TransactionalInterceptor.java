@@ -19,20 +19,22 @@ import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.annotation.TransactionalRecoverable;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -57,8 +59,8 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     private final TransactionOperationsRegistry transactionOperationsRegistry;
     @Nullable
     private final TransactionDataSourceTenantResolver tenantResolver;
-
     private final ConversionService conversionService;
+    private final RecoverableTransactionExecutor recoverableTransactionExecutor;
 
     /**
      * Default constructor.
@@ -66,12 +68,16 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      * @param transactionOperationsRegistry The {@link TransactionOperationsRegistry}
      * @param tenantResolver                The {@link TransactionDataSourceTenantResolver}
      * @param conversionService             The conversion service
+     * @param beanLocator                   The bean locator
      */
     public TransactionalInterceptor(@NonNull TransactionOperationsRegistry transactionOperationsRegistry,
-                                    @Nullable TransactionDataSourceTenantResolver tenantResolver, ConversionService conversionService) {
+                                    @Nullable TransactionDataSourceTenantResolver tenantResolver,
+                                    ConversionService conversionService,
+                                    BeanLocator beanLocator) {
         this.transactionOperationsRegistry = transactionOperationsRegistry;
         this.tenantResolver = tenantResolver;
         this.conversionService = conversionService;
+        this.recoverableTransactionExecutor = new RecoverableTransactionExecutor(beanLocator);
     }
 
     @Override
@@ -139,6 +145,14 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                 }
                 case SYNCHRONOUS -> {
                     TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
+                    if (context.getAnnotationMetadata().hasAnnotation(TransactionalRecoverable.class)) {
+                        return recoverableTransactionExecutor.execute(
+                            transactionManager,
+                            definition,
+                            context,
+                            tenantDataSourceName == null ? executableMethod.stringValue(Transactional.class).orElse(null) : tenantDataSourceName
+                        );
+                    }
                     return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
                 }
                 default -> {

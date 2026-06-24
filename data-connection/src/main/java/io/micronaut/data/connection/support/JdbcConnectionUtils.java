@@ -55,7 +55,7 @@ public final class JdbcConnectionUtils {
         // configured the connection pool to set it already).
         if (connectionAutoCommit != autoCommit) {
             setAutoCommit(logger, connection, autoCommit);
-            onCompleteCallbacks.add(() -> setAutoCommit(logger, connection, connectionAutoCommit));
+            onCompleteCallbacks.add(() -> restoreAutoCommit(logger, connection, connectionAutoCommit));
         }
     }
 
@@ -80,7 +80,7 @@ public final class JdbcConnectionUtils {
                 return;
             }
             setConnectionReadOnly(logger, connection, isReadOnly);
-            onCompleteCallbacks.add(() -> setConnectionReadOnly(logger, connection, connectionReadOnly));
+            onCompleteCallbacks.add(() -> restoreReadOnly(logger, connection, connectionReadOnly));
         }
     }
 
@@ -99,7 +99,7 @@ public final class JdbcConnectionUtils {
         int connectionTransactionIsolation = getTransactionIsolation(connection);
         if (connectionTransactionIsolation != txIsolationLevel) {
             setTransactionIsolation(logger, connection, txIsolationLevel);
-            onCompleteCallbacks.add(() -> setTransactionIsolation(logger, connection, connectionTransactionIsolation));
+            onCompleteCallbacks.add(() -> restoreTransactionIsolation(logger, connection, connectionTransactionIsolation));
         }
     }
 
@@ -118,7 +118,7 @@ public final class JdbcConnectionUtils {
         int connectionHoldability = getHoldability(connection);
         if (connectionHoldability != holdability) {
             setHoldability(logger, connection, holdability);
-            onCompleteCallbacks.add(() -> setHoldability(logger, connection, connectionHoldability));
+            onCompleteCallbacks.add(() -> restoreHoldability(logger, connection, connectionHoldability));
         }
     }
 
@@ -199,6 +199,35 @@ public final class JdbcConnectionUtils {
         } catch (SQLException e) {
             logger.debug("Cannot change holdability of JDBC Connection [{}]", connection, e);
             throw new ConnectionException("Cannot change holdability of JDBC Connection: " + e.getMessage(), e);
+        }
+    }
+
+    private static void restoreAutoCommit(Logger logger, @NonNull Connection connection, boolean autoCommit) {
+        restoreConnectionState(logger, connection, () -> setAutoCommit(logger, connection, autoCommit), "auto-commit");
+    }
+
+    private static void restoreReadOnly(Logger logger, @NonNull Connection connection, boolean readOnly) {
+        restoreConnectionState(logger, connection, () -> setConnectionReadOnly(logger, connection, readOnly), "read-only");
+    }
+
+    private static void restoreTransactionIsolation(Logger logger, @NonNull Connection connection, int isolationLevel) {
+        restoreConnectionState(logger, connection, () -> setTransactionIsolation(logger, connection, isolationLevel), "transaction isolation");
+    }
+
+    private static void restoreHoldability(Logger logger, @NonNull Connection connection, int holdability) {
+        restoreConnectionState(logger, connection, () -> setHoldability(logger, connection, holdability), "holdability");
+    }
+
+    // Initial connection state changes must fail fast, but completion-time restoration is
+    // best-effort because the connection may already be broken or closed. In that case,
+    // the restore failure is secondary and must not override the primary transaction error.
+    private static void restoreConnectionState(Logger logger, @NonNull Connection connection, @NonNull Runnable action, @NonNull String stateName) {
+        try {
+            action.run();
+        } catch (ConnectionException e) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Skipping JDBC Connection [{}] {} restore during completion: {}", connection, stateName, e.getMessage());
+            }
         }
     }
 
