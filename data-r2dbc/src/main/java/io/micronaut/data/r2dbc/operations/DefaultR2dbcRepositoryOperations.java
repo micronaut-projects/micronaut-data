@@ -19,6 +19,7 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
@@ -158,8 +159,9 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 @EachBean(ConnectionFactory.class)
+@Requires(condition = DefaultR2dbcRepositoryOperationsCondition.class)
 @Internal
-final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Row, Statement, RuntimeException>
+class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Row, Statement, RuntimeException>
     implements BlockingExecutorReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, DeleteReturningRepositoryOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultR2dbcRepositoryOperations.R2dbcOperationContext> {
 
@@ -308,7 +310,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T> Mono<T> persistOne(R2dbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
         SqlStoredQuery<T, ?> storedQuery = resolveEntityInsert(ctx.annotationMetadata, ctx.repositoryType, (Class<T>) value.getClass(), persistentEntity);
-        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, value, true);
+        R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, persistentEntity, value, storedQuery, true);
         op.persist();
         return op.getEntity();
     }
@@ -321,7 +323,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             persistentEntity.getIntrospection().getBeanType(),
             persistentEntity
         );
-        R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, values, true);
+        R2dbcEntitiesOperations<T> op = getR2dbcEntitiesOperations(ctx, persistentEntity, values, storedQuery, true);
         if (predicate != null) {
             op.veto(predicate);
         }
@@ -332,7 +334,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T> Mono<T> updateOne(R2dbcOperationContext ctx, T value, RuntimePersistentEntity<T> persistentEntity) {
         SqlStoredQuery<T, ?> storedQuery = resolveEntityUpdate(ctx.annotationMetadata, ctx.repositoryType, (Class<T>) value.getClass(), persistentEntity);
-        R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, value, storedQuery);
+        R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, persistentEntity, value, storedQuery);
         op.update();
         return op.getEntity();
     }
@@ -343,7 +345,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                              Object value, RuntimePersistentEntity<Object> persistentEntity,
                                              Object child, RuntimePersistentEntity<Object> childPersistentEntity) {
         SqlStoredQuery<Object, ?> storedQuery = resolveSqlInsertAssociation(ctx.repositoryType, runtimeAssociation, persistentEntity, value);
-        R2dbcEntityOperations<Object> assocEntityOp = new R2dbcEntityOperations<>(ctx, childPersistentEntity, child, storedQuery);
+        R2dbcEntityOperations<Object> assocEntityOp = getR2dbcEntityOperations(ctx, childPersistentEntity, child, storedQuery);
         try {
             assocEntityOp.execute();
         } catch (Exception e1) {
@@ -359,7 +361,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                   Iterable<Object> child, RuntimePersistentEntity<Object> childPersistentEntity,
                                                   Predicate<Object> veto) {
         SqlStoredQuery<Object, ?> storedQuery = resolveSqlInsertAssociation(ctx.repositoryType, runtimeAssociation, persistentEntity, value);
-        R2dbcEntitiesOperations<Object> assocEntitiesOp = new R2dbcEntitiesOperations<>(ctx, childPersistentEntity, child, storedQuery);
+        R2dbcEntitiesOperations<Object> assocEntitiesOp = getR2dbcEntitiesOperations(ctx, childPersistentEntity, child, storedQuery);
         assocEntitiesOp.veto(veto);
         try {
             assocEntitiesOp.execute();
@@ -367,6 +369,36 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             throw new DataAccessException("SQL error executing INSERT: " + e1.getMessage(), e1);
         }
         return assocEntitiesOp.getEntities().then();
+    }
+
+    protected <T> R2dbcEntityOperations<T> getR2dbcEntityOperations(R2dbcOperationContext ctx,
+                                                                    RuntimePersistentEntity<T> persistentEntity,
+                                                                    T entity,
+                                                                    SqlStoredQuery<T, ?> storedQuery) {
+        return getR2dbcEntityOperations(ctx, persistentEntity, entity, storedQuery, false);
+    }
+
+    protected <T> R2dbcEntityOperations<T> getR2dbcEntityOperations(R2dbcOperationContext ctx,
+                                                                    RuntimePersistentEntity<T> persistentEntity,
+                                                                    T entity,
+                                                                    SqlStoredQuery<T, ?> storedQuery,
+                                                                    boolean insert) {
+        return new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, entity, insert);
+    }
+
+    protected <T> R2dbcEntitiesOperations<T> getR2dbcEntitiesOperations(R2dbcOperationContext ctx,
+                                                                        RuntimePersistentEntity<T> persistentEntity,
+                                                                        Iterable<T> entities,
+                                                                        SqlStoredQuery<T, ?> storedQuery) {
+        return getR2dbcEntitiesOperations(ctx, persistentEntity, entities, storedQuery, false);
+    }
+
+    protected <T> R2dbcEntitiesOperations<T> getR2dbcEntitiesOperations(R2dbcOperationContext ctx,
+                                                                        RuntimePersistentEntity<T> persistentEntity,
+                                                                        Iterable<T> entities,
+                                                                        SqlStoredQuery<T, ?> storedQuery,
+                                                                        boolean insert) {
+        return new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, entities, insert);
     }
 
     private Mono<Number> sum(Stream<Mono<Number>> stream) {
@@ -555,7 +587,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private OracleReturningMetadata getOracleReturningMetadata(SqlStoredQuery<?, ?> storedQuery) {
+    protected OracleReturningMetadata getOracleReturningMetadata(SqlStoredQuery<?, ?> storedQuery) {
         List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
         List<String> columnNames = new ArrayList<>(outParameterBindings.size());
         for (QueryOutParameterBinding outParameterBinding : outParameterBindings) {
@@ -573,12 +605,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .onErrorResume(errorHandler(preparedQuery.getDialect()));
     }
 
-    private boolean isOracleReturningQuery(SqlStoredQuery<?, ?> storedQuery) {
+    protected boolean isOracleReturningQuery(SqlStoredQuery<?, ?> storedQuery) {
         OperationType operationType = storedQuery.getOperationType();
         return storedQuery.getDialect() == Dialect.ORACLE
             && (operationType == OperationType.INSERT_RETURNING
             || operationType == OperationType.UPDATE_RETURNING
             || operationType == OperationType.DELETE_RETURNING);
+    }
+
+    protected boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
+        return storedQuery.getOperationType() == OperationType.UPSERT;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -674,7 +710,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
     }
 
-    private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
+    protected Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
         List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
         if (CollectionUtils.isEmpty(outParameterBindings)) {
             throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
@@ -720,14 +756,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
     }
 
-    private <R> Mono<R> executeAndMapOracleReturningSingle(Statement statement, Dialect dialect, Function<Readable, R> mapper) {
+    protected <R> Mono<R> executeAndMapOracleReturningSingle(Statement statement, Dialect dialect, Function<Readable, R> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map(mapper)))
             .onErrorResume(errorHandler(dialect))
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
-    private <R> Mono<R> executeAndMapOracleReturningSingleNullable(Statement statement, Dialect dialect, Function<Readable, @Nullable R> mapper) {
+    protected <R> Mono<R> executeAndMapOracleReturningSingleNullable(Statement statement, Dialect dialect, Function<Readable, @Nullable R> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map(readable -> Mono.justOrEmpty(mapper.apply(readable)))).flatMap(t -> t))
             .onErrorResume(errorHandler(dialect))
@@ -913,7 +949,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+                R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
                 op.delete();
                 return op.getRowsUpdated();
             });
@@ -982,13 +1018,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return concatMono(
                         operation.split().stream()
                             .map(persistOp -> {
-                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
+                                R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, persistentEntity, persistOp.getEntity(), storedQuery, true);
                                 op.persist();
                                 return op.getEntity();
                             })
                     );
                 } else {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, true);
+                    R2dbcEntitiesOperations<T> op = getR2dbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery, true);
                     op.persist();
                     return op.getEntities();
                 }
@@ -1007,7 +1043,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(), operation.getEntity(), true);
+                R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery, true);
                 op.persist();
                 return op.getEntity();
             });
@@ -1019,7 +1055,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+                R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery, isUpsertOperation(storedQuery));
                 op.update();
                 return op.getEntity();
             });
@@ -1103,14 +1139,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                    R2dbcEntitiesOperations<T> op = getR2dbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery);
                     op.delete();
                     return op.getRowsUpdated();
                 }
                 return sum(
                     operation.split().stream()
                         .map(deleteOp -> {
-                            R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                            R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
                             op.delete();
                             return op.getRowsUpdated();
                         })
@@ -1129,13 +1165,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return concatMono(
                         operation.split().stream()
                             .map(updateOp -> {
-                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), storedQuery);
+                                R2dbcEntityOperations<T> op = getR2dbcEntityOperations(ctx, persistentEntity, updateOp.getEntity(), storedQuery, isUpsertOperation(storedQuery));
                                 op.update();
                                 return op.getEntity();
                             })
                     );
                 }
-                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                R2dbcEntitiesOperations<T> op = getR2dbcEntitiesOperations(ctx, persistentEntity, operation, storedQuery, isUpsertOperation(storedQuery));
                 op.update();
                 return op.getEntities();
             });
@@ -1206,7 +1242,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private final class R2dbcParameterBinder implements BindableParametersStoredQuery.Binder {
+    protected final class R2dbcParameterBinder implements BindableParametersStoredQuery.Binder {
 
         private final Connection connection;
         private final Statement ps;
@@ -1214,11 +1250,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private int index = 0;
 
-        private R2dbcParameterBinder(R2dbcOperationContext ctx, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        R2dbcParameterBinder(R2dbcOperationContext ctx, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this(ctx.connection, ps, sqlStoredQuery);
         }
 
-        private R2dbcParameterBinder(Connection connection, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        R2dbcParameterBinder(Connection connection, Statement ps, SqlStoredQuery<?, ?> sqlStoredQuery) {
             this.connection = connection;
             this.ps = ps;
             this.sqlStoredQuery = sqlStoredQuery;
@@ -1288,14 +1324,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private final class R2dbcEntityOperations<T> extends AbstractReactiveEntityOperations<R2dbcOperationContext, T, RuntimeException> {
-        private final SqlStoredQuery<T, ?> storedQuery;
+    protected class R2dbcEntityOperations<T> extends AbstractReactiveEntityOperations<R2dbcOperationContext, T, RuntimeException> {
+        protected final SqlStoredQuery<T, ?> storedQuery;
 
-        private R2dbcEntityOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery) {
+        protected R2dbcEntityOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity, SqlStoredQuery<T, ?> storedQuery) {
             this(ctx, storedQuery, persistentEntity, entity, false);
         }
 
-        private R2dbcEntityOperations(R2dbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
+        protected R2dbcEntityOperations(R2dbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
             super(ctx,
                 DefaultR2dbcRepositoryOperations.this.cascadeOperations,
                 DefaultR2dbcRepositoryOperations.this.conversionService,
@@ -1401,7 +1437,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             .onErrorResume(errorHandler(ctx.dialect)).map(idMapper).last();
                     } else {
                         return executeAndMapEachRowSingle(statement, ctx.dialect, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
-                            .map(idMapper);
+                            .map(idMapper)
+                            .switchIfEmpty(isUpsertOperation(storedQuery) ? Mono.just(d) : Mono.empty());
                     }
                 });
             } else {
@@ -1424,15 +1461,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private final class R2dbcEntitiesOperations<T> extends AbstractReactiveEntitiesOperations<R2dbcOperationContext, T, RuntimeException> {
+    protected class R2dbcEntitiesOperations<T> extends AbstractReactiveEntitiesOperations<R2dbcOperationContext, T, RuntimeException> {
 
-        private final SqlStoredQuery<T, ?> storedQuery;
+        protected final SqlStoredQuery<T, ?> storedQuery;
 
-        private R2dbcEntitiesOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery storedQuery) {
+        protected R2dbcEntitiesOperations(R2dbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery) {
             this(ctx, storedQuery, persistentEntity, entities, false);
         }
 
-        private R2dbcEntitiesOperations(R2dbcOperationContext ctx, SqlStoredQuery storedQuery, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, boolean insert) {
+        protected R2dbcEntitiesOperations(R2dbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, boolean insert) {
             super(ctx,
                 DefaultR2dbcRepositoryOperations.this.cascadeOperations,
                 DefaultR2dbcRepositoryOperations.this.conversionService,
@@ -1557,7 +1594,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             while (resultIterator.hasNext()) {
                                 Data d = resultIterator.next();
                                 if (!iterator.hasNext()) {
-                                    throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                                    if (!isUpsertOperation(storedQuery)) {
+                                        throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                                    }
                                 } else {
                                     Object id = iterator.next();
                                     d.entity = updateEntityId(identity.getProperty(), d.entity, id);
@@ -1611,6 +1650,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             this.dialect = dialect;
             this.connection = connection;
             this.invocationContext = invocationContext;
+        }
+
+        Connection getConnection() {
+            return connection;
+        }
+
+        @Nullable
+        InvocationContext<?, ?> getInvocationContext() {
+            return invocationContext;
         }
     }
 
