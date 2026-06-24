@@ -31,6 +31,7 @@ import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
@@ -891,7 +892,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         // keys need to be sorted before query is built
-        List<Map.Entry<QueryPropertyPath, Object>> update = propertiesToUpdate.entrySet().stream()
+        List<Map.Entry<QueryPropertyPath, Object>> updateProperties = propertiesToUpdate.entrySet().stream()
             .map(e -> {
                 QueryPropertyPath propertyPath = queryState.findProperty(e.getKey());
                 if (propertyPath.getProperty() instanceof Association association && association.isForeignKey()) {
@@ -915,6 +916,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return !generated;
             })
             .collect(Collectors.toList());
+        List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
+            .filter(e -> !e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))
+            .collect(Collectors.toList());
+        if (update.isEmpty() && !updateProperties.isEmpty()) {
+            throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable");
+        }
 
         boolean[] needsTrimming = {false};
         if (!computePropertyPaths() || jsonEntity) {

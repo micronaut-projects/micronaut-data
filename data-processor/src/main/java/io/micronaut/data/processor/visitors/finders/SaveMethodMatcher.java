@@ -181,11 +181,18 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 );
                 if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                     boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
-                    MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
-                        .buildMatchInfo(mc);
-                    QueryResult updateQueryResult = updateInfo.getQueryResult();
-                    if (updateQueryResult != null) {
-                        methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
+                    try {
+                        MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
+                            .buildMatchInfo(mc);
+                        QueryResult updateQueryResult = updateInfo.getQueryResult();
+                        if (updateQueryResult != null) {
+                            methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        String message = e.getMessage();
+                        if (message == null || !message.contains("all update properties are reservable")) {
+                            throw e;
+                        }
                     }
                 }
             }

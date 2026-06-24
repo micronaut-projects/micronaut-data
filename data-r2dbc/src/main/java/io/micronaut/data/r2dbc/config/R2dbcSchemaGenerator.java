@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -115,7 +116,7 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(connection, schemaGenerate, entities, builder, configuration.resolveDialectOptions()));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -124,7 +125,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return result.then(generate(connection, schemaGenerate, entities, builder, configuration.resolveDialectOptions()))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -135,9 +136,10 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> generate(Connection connection,
                                 SchemaGenerate schemaGenerate,
                                 PersistentEntity[] entities,
-                                SqlQueryBuilder builder) {
+                                SqlQueryBuilder builder,
+                                SqlDialectOptions dialectOptions) {
         List<String> createStatements = Arrays.asList(
-            builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
+            builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect(), dialectOptions)
         );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {

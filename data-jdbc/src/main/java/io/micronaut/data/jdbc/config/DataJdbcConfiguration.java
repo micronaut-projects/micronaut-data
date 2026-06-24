@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.data.annotation.Fetch;
 import org.jspecify.annotations.NonNull;
@@ -24,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.Toggleable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 
 import java.util.ArrayList;
@@ -45,6 +47,8 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
+    @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
+    private final DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     @Nullable
@@ -137,6 +141,20 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setDialect(Dialect dialect) {
         this.dialect = dialect;
+    }
+
+    /**
+     * @return resolved SQL dialect options
+     */
+    public SqlDialectOptions resolveDialectOptions() {
+        return dialectOptions.toDialectOptions(dialect);
+    }
+
+    /**
+     * @return The SQL dialect options configuration
+     */
+    public DialectOptionsConfiguration getDialectOptions() {
+        return dialectOptions;
     }
 
     @NonNull
@@ -238,5 +256,32 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
+    }
+
+    /**
+     * SQL dialect options configuration.
+     */
+    public static final class DialectOptionsConfiguration {
+        @Nullable
+        private String version;
+
+        /**
+         * @return The target dialect version.
+         */
+        @Nullable
+        public String getVersion() {
+            return version;
+        }
+
+        /**
+         * @param version The target dialect version.
+         */
+        public void setVersion(@Nullable String version) {
+            this.version = version;
+        }
+
+        SqlDialectOptions toDialectOptions(Dialect dialect) {
+            return SqlDialectOptions.of(dialect, version);
+        }
     }
 }

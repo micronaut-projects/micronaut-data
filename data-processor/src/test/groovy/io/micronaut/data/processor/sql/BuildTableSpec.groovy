@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
@@ -25,6 +26,221 @@ import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Unroll
 
 class BuildTableSpec extends AbstractDataSpec {
+
+    void "test build create table with Oracle reservable column"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@Entity
+class Account {
+    @javax.persistence.Id
+    private Long id;
+    private String name;
+    @Reservable
+    @PositiveOrZero
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+
+        then:
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"BALANCE" NUMBER(19) reservable CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+    }
+
+    void "test build create table with Oracle reservable column without validation constraint"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+class Account {
+    @javax.persistence.Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+
+        then:
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) reservable NOT NULL, PRIMARY KEY("ID"))'
+    }
+
+    void "test build create table rejects reservable column without Oracle 26 target"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+class Account {
+    @javax.persistence.Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("requires Oracle Database 26")
+    }
+
+    void "test build create table rejects reservable column for non Oracle dialect"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+record Account(@javax.persistence.Id Long id, @Reservable Long balance) {
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.POSTGRES)
+
+        when:
+        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.POSTGRES, "26"))
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("is only supported for Oracle")
+    }
+
+    void "test build create table rejects non numeric reservable column"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+record Account(@javax.persistence.Id Long id, @Reservable String balance) {
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("must be numeric")
+    }
+
+    void "test build create table rejects reservable column without primary key"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+record Account(@Reservable Long balance) {
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("must have a primary key")
+    }
+
+    void "test build create table rejects more than 10 reservable columns"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+record Account(
+    @javax.persistence.Id Long id,
+    @Reservable Long b1,
+    @Reservable Long b2,
+    @Reservable Long b3,
+    @Reservable Long b4,
+    @Reservable Long b5,
+    @Reservable Long b6,
+    @Reservable Long b7,
+    @Reservable Long b8,
+    @Reservable Long b9,
+    @Reservable Long b10,
+    @Reservable Long b11
+) {
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("more than 10 @Reservable properties")
+    }
 
 
     void "test build create table table statement for nullable embeddable"() {

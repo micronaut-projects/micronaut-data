@@ -97,6 +97,7 @@ dbc:
     mappedPropertyAlias: Using @MappedProperty alias
     sqlGeospatial: Geospatial Support
     sqlJsonType: JSON Column Support
+    sqlReservable: Oracle Reservable Columns
     sqlJsonView: JSON View
     sqlVectorType: SQL Vector Type Mapping
     javaRecords: Support for Java 16 Records

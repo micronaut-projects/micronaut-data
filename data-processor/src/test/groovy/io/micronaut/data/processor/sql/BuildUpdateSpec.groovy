@@ -32,6 +32,107 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
+    void "test entity update skips reservable properties"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        getParameterBindingIndexes(method) == ['-1', '-1'] as String[]
+        getParameterPropertyPaths(method) == ['name', 'id'] as String[]
+    }
+
+    void "test entity update fails if only update properties are reservable"() {
+        when:
+        buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("all update properties are reservable")
+    }
+
     @Unroll
     void "test build update for type #type"() {
         given:

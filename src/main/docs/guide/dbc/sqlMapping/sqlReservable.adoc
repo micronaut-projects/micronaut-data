@@ -1,0 +1,113 @@
+Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
+
+Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
+Micronaut Data supports schema generation for this feature on Oracle Database 26 and later.
+
+To enable Oracle reservable DDL, configure the Oracle dialect and set the dialect option version used for schema generation:
+
+[source,yaml]
+----
+datasources:
+  default:
+    dialect: ORACLE
+    dialect-options:
+      version: 26
+----
+
+For R2DBC:
+
+[source,yaml]
+----
+r2dbc:
+  datasources:
+    default:
+      dialect: ORACLE
+      dialect-options:
+        version: 26
+----
+
+The ann:data.annotation.Reservable[] annotation can be used on numeric persistent properties.
+It can also be combined with validation annotations to generate Oracle `CHECK` constraints for the reservable column.
+Validation annotations without ann:data.annotation.Reservable[] do not create database constraints.
+
+[source,java]
+----
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@MappedEntity("account")
+public class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Reservable
+    @PositiveOrZero
+    private Long balance;
+
+    // getters and setters
+}
+----
+
+The generated Oracle DDL includes the `reservable` column modifier and, when supported validation annotations are present, a column `CHECK` constraint:
+
+[source,sql]
+----
+CREATE TABLE "ACCOUNT" (
+    "ID" NUMBER(19) NOT NULL,
+    "BALANCE" NUMBER(19) reservable CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL,
+    PRIMARY KEY("ID")
+)
+----
+
+Reservable columns can also be declared without validation annotations.
+In that case Micronaut Data generates a reservable column without a `CHECK` constraint.
+
+== Updates
+
+Oracle reservable column updates must be expressed as delta operations, for example `balance = balance + ?` or `balance = balance - ?`, and must identify the primary key in the `WHERE` clause.
+For the first implementation, Micronaut Data does not generate reservation-delta update methods.
+Use a custom ann:data.annotation.Query[] for reservation updates:
+
+[source,java]
+----
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface AccountRepository extends CrudRepository<Account, Long> {
+
+    @Query("""
+        UPDATE "ACCOUNT"
+        SET "BALANCE" = "BALANCE" + :amount
+        WHERE "ID" = :id
+        """)
+    int reserve(Long id, Long amount);
+}
+----
+
+Generated entity update operations skip reservable properties.
+For example, `repository.update(account)` updates non-reservable properties but does not assign the reservable column directly.
+If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
+
+Custom reservation update queries must not use Oracle DML `RETURNING`.
+Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
+
+== Restrictions
+
+Micronaut Data validates reservable mappings during schema generation:
+
+* ann:data.annotation.Reservable[] is supported only for Oracle schema generation.
+* The configured Oracle dialect option version must be 26 or later.
+* The property type must be numeric.
+* The entity must have a primary key.
+* A reservable property cannot be a primary key, generated value, relationship, foreign key, indexed property, or use a custom column definition.
+* An entity can declare at most 10 reservable properties.
+* Only column-level check constraints derived from supported validation annotations are generated. Table-level check constraints are not generated.
+
+Supported validation annotations include `jakarta.validation` and `javax.validation` variants of `Positive`, `PositiveOrZero`, `Negative`, `NegativeOrZero`, `Min`, `Max`, `DecimalMin`, and `DecimalMax`.

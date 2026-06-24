@@ -33,12 +33,14 @@ import io.micronaut.data.annotation.VectorIndex;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -49,6 +51,8 @@ import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping.ReservableOptions;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping.SqlCheckConstraint;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
@@ -70,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -152,6 +157,25 @@ public final class SqlSchemaUtils {
     public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
                                                             PersistentEntity entity,
                                                             Dialect dialect) {
+        return getSqlTableMappings(definitionProviders, entity, dialect, SqlDialectOptions.defaults(dialect));
+    }
+
+    /**
+     * Returns list of {@link SqlTableMapping} for persistent entity.
+     *
+     * @param definitionProviders the list of DefinitionProvider (column/index DDL providers)
+     * @param entity The entity
+     * @param dialect The SQL dialect used to render vendor-specific definitions.
+     * @param dialectOptions The resolved dialect options
+     * @return The SQL table definitions for the given entity
+     * @since 4.13.0
+     */
+    @Experimental
+    @SuppressWarnings("java:S3776")
+    public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
+                                                            PersistentEntity entity,
+                                                            Dialect dialect,
+                                                            SqlDialectOptions dialectOptions) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = entity.getPersistedName();
@@ -194,15 +218,15 @@ public final class SqlSchemaUtils {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
                 List<SqlColumnMapping> joinColumns = new ArrayList<>();
-                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, joinColumns);
-                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, joinColumns);
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, dialectOptions, joinColumns);
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, dialectOptions, joinColumns);
                 SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
                 tables.add(joinTable);
             }
         }
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
-        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, dialect);
+        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, dialect, dialectOptions);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
 
@@ -210,7 +234,7 @@ public final class SqlSchemaUtils {
             PersistentProperty version = entity.getVersion();
             if (!version.isGenerated()) {
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-                SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect);
+                SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, false, true, false, dialect, dialectOptions);
                 columns.add(column);
             }
         }
@@ -218,7 +242,7 @@ public final class SqlSchemaUtils {
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, false, isRequired(associations, property),
-                !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
+                !SqlQueryBuilderUtils.isNotForeign(associations), dialect, dialectOptions);
             columns.add(column);
         };
 
@@ -228,6 +252,7 @@ public final class SqlSchemaUtils {
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
         List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
+        validateReservableColumns(entity, primaryKeyColumns, columns);
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
@@ -252,17 +277,18 @@ public final class SqlSchemaUtils {
                                             List<PersistentPropertyPath> joinProperties,
                                             List<String> joinColumns,
                                             Dialect dialect,
+                                            SqlDialectOptions dialectOptions,
                                             List<SqlColumnMapping> joinTableColumns) {
         if (joinColumns.size() == joinProperties.size()) {
             for (int i = 0; i < joinColumns.size(); i++) {
                 PersistentPropertyPath pp = joinProperties.get(i);
                 String columnName = joinColumns.get(i);
-                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect));
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect, dialectOptions));
             }
         } else {
             for (PersistentPropertyPath pp : joinProperties) {
                 String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect));
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, true, true, true, dialect, dialectOptions));
             }
         }
     }
@@ -286,12 +312,17 @@ public final class SqlSchemaUtils {
                                                         boolean primaryKey,
                                                         boolean required,
                                                         boolean isForeign,
-                                                        Dialect dialect) {
+                                                        Dialect dialect,
+                                                        SqlDialectOptions dialectOptions) {
         if (prop instanceof Association) {
             throw new IllegalStateException("Association is not supported here");
         }
         AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
         String definition = getDefinition(prop, dialect, required);
+        boolean reservable = annotationMetadata.hasAnnotation(Reservable.class);
+        if (reservable) {
+            validateReservableProperty(prop, primaryKey, isForeign, dialect, dialectOptions, definition);
+        }
 
         // Resolve Argument for the property (prefer runtime implementation to preserve annotation metadata)
         io.micronaut.core.type.Argument<?> argument;
@@ -347,21 +378,20 @@ public final class SqlSchemaUtils {
                     .orElseGet(() -> SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "length"))
                     .orElse(255);
 
-                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, stringLength, required, autoGenerated, generatedValueType, definition);
+                yield columnMapping(column, dataType, dbType, new ColumnOptions(stringLength, null, null, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
             }
             case UUID, BOOLEAN, TIMESTAMP, DATE, TIME, LONG, SHORT, BYTE,
                 BYTE_ARRAY, STRING_ARRAY, CHARACTER_ARRAY, SHORT_ARRAY, INTEGER_ARRAY,
-                LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY, UUID_ARRAY -> new SqlColumnMapping(column, dataType, dbType, primaryKey,
-                null, required, autoGenerated, generatedValueType, definition);
-            case CHARACTER -> new SqlColumnMapping(column, dataType, dbType, primaryKey, 1, required, autoGenerated, generatedValueType, definition);
+                LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY, UUID_ARRAY ->
+                columnMapping(column, dataType, dbType, new ColumnOptions(null, null, null, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
+            case CHARACTER -> columnMapping(column, dataType, dbType, new ColumnOptions(1, null, null, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
             case JSON -> new SqlColumnMapping(column, dataType, dbType, null, null, null, required, autoGenerated, generatedValueType,
                 definition, prop.getJsonDataType());
             case INTEGER -> {
                 if (optPrecision.isPresent()) {
                     precision = optPrecision.getAsInt();
                 }
-                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, required, autoGenerated, generatedValueType,
-                    definition);
+                yield columnMapping(column, dataType, dbType, new ColumnOptions(null, precision, null, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
             }
             case BIGDECIMAL, FLOAT, DOUBLE -> {
                 if (optPrecision.isPresent()) {
@@ -370,14 +400,13 @@ public final class SqlSchemaUtils {
                 if (optScale.isPresent()) {
                     scale = optScale.getAsInt();
                 }
-                yield new SqlColumnMapping(column, dataType, dbType, null, precision, scale, required, autoGenerated, generatedValueType,
-                    definition, null);
+                yield columnMapping(column, dataType, dbType, new ColumnOptions(null, precision, scale, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
             }
             case DURATION, PERIOD -> new SqlColumnMapping(column, dataType, dbType, null, null, null, required, autoGenerated, generatedValueType,
                 definition, null);
             default -> {
                 if (StringUtils.isNotEmpty(definition)) {
-                    yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, required, autoGenerated, generatedValueType, definition);
+                    yield columnMapping(column, dataType, dbType, new ColumnOptions(null, null, null, null, reservable, prop), required, autoGenerated, generatedValueType, definition);
                 }
                 throw new MappingException("Unable to create table column for property [" + prop.getName() + "] of entity [" + prop.getOwner().getName() + "] with unknown data type: " + dataType);
             }
@@ -409,6 +438,191 @@ public final class SqlSchemaUtils {
             }
         }
         return null;
+    }
+
+    private static SqlColumnMapping columnMapping(String column,
+                                                  DataType dataType,
+                                                  SqlDbType dbType,
+                                                  ColumnOptions columnOptions,
+                                                  boolean required,
+                                                  boolean autoGenerated,
+                                                  GeneratedValue.Type generatedValueType,
+                                                  @Nullable String definition) {
+        List<SqlCheckConstraint> checkConstraints = columnOptions.reservable ? deriveNumericChecks(columnOptions.property) : List.of();
+        ReservableOptions reservableOptions = new ReservableOptions(columnOptions.reservable, checkConstraints);
+        return new SqlColumnMapping(column, dataType, dbType, columnOptions.length, columnOptions.precision, columnOptions.scale, required, autoGenerated,
+            generatedValueType, definition, columnOptions.jsonDataType, reservableOptions);
+    }
+
+    private static void validateReservableProperty(PersistentProperty property,
+                                                   boolean primaryKey,
+                                                   boolean foreign,
+                                                   Dialect dialect,
+                                                   SqlDialectOptions dialectOptions,
+                                                   @Nullable String definition) {
+        if (dialect != Dialect.ORACLE) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] is only supported for Oracle");
+        }
+        if (!dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_26_0_VERSION)) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] requires Oracle Database 26 or later");
+        }
+        if (!property.getDataType().isNumeric()) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] must be numeric");
+        }
+        if (primaryKey) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] cannot be a primary key");
+        }
+        if (property.isGenerated()) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] cannot be generated");
+        }
+        if (foreign) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] cannot be a foreign key");
+        }
+        if (StringUtils.isNotEmpty(definition)) {
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] cannot use a custom column definition");
+        }
+    }
+
+    private static void validateReservableColumns(PersistentEntity entity, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+        List<SqlColumnMapping> reservableColumns = columns.stream().filter(SqlColumnMapping::isReservable).toList();
+        if (reservableColumns.isEmpty()) {
+            return;
+        }
+        if (CollectionUtils.isEmpty(primaryKeyColumns)) {
+            throw new MappingException("Entity [" + entity.getName() + "] with @Reservable properties must have a primary key");
+        }
+        if (reservableColumns.size() > 10) {
+            throw new MappingException("Entity [" + entity.getName() + "] cannot declare more than 10 @Reservable properties");
+        }
+        Set<String> reservableNames = reservableColumns.stream().map(SqlColumnMapping::getName).collect(Collectors.toSet());
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasAnnotation(Reservable.class) && property.getAnnotationMetadata().hasAnnotation(Index.class)) {
+                throw new MappingException("@Reservable property [" + entity.getName() + "." + property.getName() + "] cannot be indexed");
+            }
+        }
+        entity.findAnnotation(Indexes.class)
+            .map(indexes -> indexes.getAnnotations(VALUE_MEMBER, Index.class))
+            .stream()
+            .flatMap(Collection::stream)
+            .forEach(index -> {
+                for (String column : index.stringValues("columns")) {
+                    if (reservableNames.contains(column)) {
+                        throw new MappingException("@Reservable column [" + column + "] of entity [" + entity.getName() + "] cannot be indexed");
+                    }
+                }
+            });
+    }
+
+    private static List<SqlCheckConstraint> deriveNumericChecks(PersistentProperty property) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        List<SqlCheckConstraint> constraints = new ArrayList<>();
+        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.Positive", "javax.validation.constraints.Positive")) {
+            addCheck(constraints, property, ">", "0");
+        }
+        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.PositiveOrZero", "javax.validation.constraints.PositiveOrZero")) {
+            addCheck(constraints, property, ">=", "0");
+        }
+        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.Negative", "javax.validation.constraints.Negative")) {
+            addCheck(constraints, property, "<", "0");
+        }
+        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.NegativeOrZero", "javax.validation.constraints.NegativeOrZero")) {
+            addCheck(constraints, property, "<=", "0");
+        }
+        getFirstIntegralString(annotationMetadata, "jakarta.validation.constraints.Min", "javax.validation.constraints.Min")
+            .ifPresent(value -> addCheck(constraints, property, ">=", value));
+        getFirstIntegralString(annotationMetadata, "jakarta.validation.constraints.Max", "javax.validation.constraints.Max")
+            .ifPresent(value -> addCheck(constraints, property, "<=", value));
+        getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMin", "javax.validation.constraints.DecimalMin")
+            .ifPresent(annotation -> addCheck(constraints, property, annotation.booleanValue("inclusive").orElse(true) ? ">=" : ">",
+                extractMemberAsString(annotation, "value").orElse("0")));
+        getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMax", "javax.validation.constraints.DecimalMax")
+            .ifPresent(annotation -> addCheck(constraints, property, annotation.booleanValue("inclusive").orElse(true) ? "<=" : "<",
+                extractMemberAsString(annotation, "value").orElse("0")));
+        return constraints;
+    }
+
+    private static boolean hasConstraint(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
+        return annotationMetadata.hasAnnotation(jakartaName)
+            || annotationMetadata.hasAnnotation(jakartaName + "$List")
+            || annotationMetadata.hasAnnotation(javaxName)
+            || annotationMetadata.hasAnnotation(javaxName + "$List");
+    }
+
+    private static Optional<String> getFirstIntegralString(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
+        return getFirstAnnotation(annotationMetadata, jakartaName, javaxName)
+            .flatMap(annotation -> extractMemberAsString(annotation, VALUE_MEMBER));
+    }
+
+    private static Optional<AnnotationValue<Annotation>> getFirstAnnotation(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
+        Optional<AnnotationValue<Annotation>> annotation = annotationMetadata.findAnnotation(jakartaName);
+        if (annotation.isEmpty()) {
+            annotation = annotationMetadata.findAnnotation(jakartaName + "$List").flatMap(SqlSchemaUtils::firstContained);
+        }
+        if (annotation.isEmpty()) {
+            annotation = annotationMetadata.findAnnotation(javaxName);
+        }
+        if (annotation.isEmpty()) {
+            annotation = annotationMetadata.findAnnotation(javaxName + "$List").flatMap(SqlSchemaUtils::firstContained);
+        }
+        return annotation;
+    }
+
+    private static Optional<AnnotationValue<Annotation>> firstContained(AnnotationValue<Annotation> annotation) {
+        List<AnnotationValue<Annotation>> values = annotation.getAnnotations(VALUE_MEMBER);
+        if (values.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(values.get(0));
+    }
+
+    private static Optional<String> extractMemberAsString(AnnotationValue<?> annotation, String member) {
+        OptionalLong longValue = annotation.longValue(member);
+        if (longValue.isPresent()) {
+            return Optional.of(String.valueOf(longValue.getAsLong()));
+        }
+        OptionalInt intValue = annotation.intValue(member);
+        if (intValue.isPresent()) {
+            return Optional.of(String.valueOf(intValue.getAsInt()));
+        }
+        return annotation.stringValue(member);
+    }
+
+    private static void addCheck(List<SqlCheckConstraint> constraints, PersistentProperty property, String operator, String value) {
+        SqlCheckConstraint constraint = new SqlCheckConstraint(
+            constraintName(property, operator, value),
+            operator,
+            value
+        );
+        if (!constraints.contains(constraint)) {
+            constraints.add(constraint);
+        }
+    }
+
+    private static String constraintName(PersistentProperty property, String operator, String value) {
+        String name = "CK_" + sanitize(property.getOwner().getPersistedName()) + "_" + sanitize(property.getPersistedName()) + "_" + opToken(operator) + "_" + sanitize(value);
+        return name.length() > 128 ? name.substring(0, 128) : name;
+    }
+
+    private static String sanitize(String value) {
+        String sanitized = value.toUpperCase(java.util.Locale.ENGLISH).replaceAll("[^A-Z0-9]", "_");
+        sanitized = sanitized.replaceAll("_+", "_");
+        if (sanitized.startsWith("_")) {
+            sanitized = sanitized.substring(1);
+        }
+        if (sanitized.endsWith("_")) {
+            sanitized = sanitized.substring(0, sanitized.length() - 1);
+        }
+        return sanitized.isEmpty() ? "X" : sanitized;
+    }
+
+    private static String opToken(String operator) {
+        return switch (operator) {
+            case ">" -> "GT";
+            case ">=" -> "GE";
+            case "<" -> "LT";
+            case "<=" -> "LE";
+            default -> "OP";
+        };
     }
 
     /**
@@ -639,7 +853,8 @@ public final class SqlSchemaUtils {
     private static List<SqlColumnMapping> getPrimaryKeyColumns(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
                                                                List<PersistentProperty> identities,
                                                                NamingStrategy namingStrategy,
-                                                               Dialect dialect) {
+                                                               Dialect dialect,
+                                                               SqlDialectOptions dialectOptions) {
         List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>(identities.size());
         for (PersistentProperty identity : identities) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
@@ -648,10 +863,18 @@ public final class SqlSchemaUtils {
             for (PersistentPropertyPath pp : ids) {
                 String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
                 SqlColumnMapping column = getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, true,
-                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()), dialect);
+                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()), dialect, dialectOptions);
                 primaryKeyColumns.add(column);
             }
         }
         return primaryKeyColumns;
+    }
+
+    private record ColumnOptions(@Nullable Integer length,
+                                 @Nullable Integer precision,
+                                 @Nullable Integer scale,
+                                 @Nullable JsonDataType jsonDataType,
+                                 boolean reservable,
+                                 PersistentProperty property) {
     }
 }

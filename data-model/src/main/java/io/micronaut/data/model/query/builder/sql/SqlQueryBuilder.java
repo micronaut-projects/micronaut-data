@@ -66,7 +66,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -377,6 +376,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
+        return buildCreateTableStatements(entity, definitionProviders, SqlDialectOptions.defaults(getDialect()));
+    }
+
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity.
+     *
+     * @param entity The entity
+     * @param definitionProviders The definition providers
+     * @param dialectOptions The resolved dialect options
+     * @return The {@code CREATE TABLE} statements
+     */
+    @Experimental
+    public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders, SqlDialectOptions dialectOptions) {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
@@ -386,7 +398,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect(), dialectOptions);
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -423,6 +435,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
                                                      Dialect dialect) {
+        return buildCreateTableStatements(definitionProviders, entities, dialect, SqlDialectOptions.defaults(dialect));
+    }
+
+    /**
+     * Builds the creation table statement for collection of entities.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The collection of entities
+     * @param dialect The dialect
+     * @param dialectOptions The resolved dialect options
+     * @return The tables for the given entities
+     */
+    @Experimental
+    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect,
+                                                     SqlDialectOptions dialectOptions) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -438,7 +467,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect, dialectOptions);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
@@ -819,6 +848,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " " + tableIdentity.getDefinition();
                 } else {
                     column += " " + tableIdentity.getSqlType(dialect);
+                    column = appendReservableAndCheckConstraints(column, tableIdentity, escape);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -839,6 +869,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 column += " " + tableColumn.getDefinition();
             } else {
                 column += " " + tableColumn.getSqlType(dialect);
+                column = appendReservableAndCheckConstraints(column, tableColumn, escape);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }
@@ -864,6 +895,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createSequenceStatements(table, escape, createStatements);
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
+        if (tableColumn.isReservable()) {
+            column += " reservable";
+        }
+        for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {
+            String columnName = tableColumn.getName();
+            if (escape) {
+                columnName = quote(columnName);
+            }
+            String constraintName = checkConstraint.name();
+            if (escape) {
+                constraintName = quote(constraintName);
+            }
+            column += " CONSTRAINT " + constraintName + " CHECK (" + columnName + " " + checkConstraint.operator() + " " + checkConstraint.value() + ")";
+        }
+        return column;
     }
 
     private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
