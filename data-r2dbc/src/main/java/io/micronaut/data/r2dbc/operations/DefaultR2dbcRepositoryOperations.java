@@ -522,7 +522,7 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
         return null;
     }
 
-    private static <T> Flux<T> executeAndMapEachRow(Statement statement, Function<Row, T> mapper) {
+    protected static <T> Flux<T> executeAndMapEachRow(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
     }
@@ -575,7 +575,7 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
             .map((Number n) -> n.longValue());
     }
 
-    private <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
+    protected <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
         return throwable -> {
             if (throwable instanceof R2dbcException r2dbcException) {
                 DataAccessException dataAccessException = mapR2dbcException(r2dbcException, dialect);
@@ -615,6 +615,32 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
 
     protected boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
         return storedQuery.getOperationType() == OperationType.UPSERT;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> SqlStoredQuery<T, ?> prepareStoredQuery(SqlStoredQuery<T, ?> storedQuery, T entity) {
+        if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+            SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
+            SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
+            DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
+            entityPreparedQuery.prepare(entity);
+            return entityPreparedQuery;
+        }
+        return storedQuery;
+    }
+
+    protected @Nullable Object mapOracleOutValue(Readable readable,
+                                                 Class<?> targetType,
+                                                 ColumnNameByIndexR2dbcResultReader resultReader,
+                                                 QueryOutParameterBinding out) {
+        Object value = resultReader.readDynamic(readable, out.name(), out.dataType());
+        if (value == null) {
+            return null;
+        }
+        if (targetType.isInstance(value)) {
+            return targetType.cast(value);
+        }
+        return conversionService.convert(value, targetType).orElse(null);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -677,7 +703,7 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
             );
         }
         if (storedQuery.getOutParameterBindings().size() == 1) {
-            QueryOutParameterBinding out = storedQuery.getOutParameterBindings().get(0);
+            QueryOutParameterBinding out = storedQuery.getOutParameterBindings().getFirst();
             return new SqlTypeMapper<>() {
                 @Override
                 public boolean hasNext(Readable resultSet) {
@@ -686,14 +712,7 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
 
                 @Override
                 public @Nullable R map(Readable object, Class<R> type) throws DataAccessException {
-                    Object value = resultReader.readDynamic(object, out.name(), out.dataType());
-                    if (value == null) {
-                        return null;
-                    }
-                    if (type.isInstance(value)) {
-                        return type.cast(value);
-                    }
-                    return conversionService.convert(value, type).orElse(null);
+                    return (R) mapOracleOutValue(object, type, resultReader, out);
                 }
 
                 @Override
@@ -1526,16 +1545,7 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
                             if (d.vetoed) {
                                 return Mono.just(d);
                             }
-                            SqlStoredQuery<T, ?> entityStoredQuery = storedQuery;
-                            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
-                                @SuppressWarnings("unchecked")
-                                SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
-                                @SuppressWarnings("unchecked")
-                                SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
-                                DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
-                                entityPreparedQuery.prepare(d.entity);
-                                entityStoredQuery = entityPreparedQuery;
-                            }
+                            SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
                             Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
                             R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
                             entityStoredQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);

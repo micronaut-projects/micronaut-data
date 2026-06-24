@@ -24,20 +24,21 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.inject.BeanDefinition;
 
 /**
- * Condition that enables the default R2DBC repository operations for non-Oracle datasources.
+ * Condition that enables the default R2DBC repository operations for datasources without a specialized implementation.
  */
 @Internal
 final class DefaultR2dbcRepositoryOperationsCondition implements Condition {
 
     /**
-     * Checks whether the current datasource is not configured with the Oracle dialect.
+     * Checks whether the current datasource is not configured with a dialect that has specialized R2DBC operations.
      *
      * @param context The condition context
      * @return {@code true} when default R2DBC operations should be enabled
      */
     @Override
     public boolean matches(ConditionContext context) {
-        return !R2dbcRepositoryOperationsConditions.isOracleDialect(context);
+        return !R2dbcRepositoryOperationsConditions.isOracleDialect(context)
+            && !R2dbcRepositoryOperationsConditions.isSqlServerDialect(context);
     }
 }
 
@@ -60,6 +61,24 @@ final class OracleR2dbcRepositoryOperationsCondition implements Condition {
 }
 
 /**
+ * Condition that enables SQL Server-specific R2DBC repository operations for SQL Server datasources.
+ */
+@Internal
+final class SqlServerR2dbcRepositoryOperationsCondition implements Condition {
+
+    /**
+     * Checks whether the current datasource is configured with the SQL Server dialect.
+     *
+     * @param context The condition context
+     * @return {@code true} when SQL Server R2DBC operations should be enabled
+     */
+    @Override
+    public boolean matches(ConditionContext context) {
+        return R2dbcRepositoryOperationsConditions.isSqlServerDialect(context);
+    }
+}
+
+/**
  * Shared condition utilities for selecting the R2DBC repository operations bean.
  */
 @Internal
@@ -68,6 +87,7 @@ final class R2dbcRepositoryOperationsConditions {
     private static final String DATASOURCES = "r2dbc.datasources";
     private static final String DIALECT = "dialect";
     private static final String ORACLE_DIALECT = "ORACLE";
+    private static final String SQL_SERVER_DIALECT = "SQL_SERVER";
     private static final String DEFAULT = "default";
 
     private R2dbcRepositoryOperationsConditions() {
@@ -80,10 +100,24 @@ final class R2dbcRepositoryOperationsConditions {
      * @return {@code true} when the datasource is configured with {@code r2dbc.datasources.<name>.dialect=ORACLE}
      */
     static boolean isOracleDialect(ConditionContext context) {
+        return isDialect(context, ORACLE_DIALECT);
+    }
+
+    /**
+     * Checks whether the datasource associated with the current bean resolution uses the SQL Server dialect.
+     *
+     * @param context The condition context
+     * @return {@code true} when the datasource is configured with {@code r2dbc.datasources.<name>.dialect=SQL_SERVER}
+     */
+    static boolean isSqlServerDialect(ConditionContext context) {
+        return isDialect(context, SQL_SERVER_DIALECT);
+    }
+
+    private static boolean isDialect(ConditionContext context, String expectedDialect) {
         String dataSourceName = resolveDataSourceName(context);
         String dialectProperty = DATASOURCES + '.' + dataSourceName + '.' + DIALECT;
         String dialect = context.getProperty(dialectProperty, String.class).orElse(null);
-        return ORACLE_DIALECT.equalsIgnoreCase(dialect);
+        return expectedDialect.equalsIgnoreCase(dialect);
     }
 
     /**

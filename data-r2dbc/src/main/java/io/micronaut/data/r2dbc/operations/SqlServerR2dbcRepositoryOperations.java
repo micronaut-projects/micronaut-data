@@ -31,13 +31,11 @@ import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
-import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
-import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.json.JsonMapper;
@@ -56,19 +54,18 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Oracle-specific R2DBC repository operations.
+ * SQL Server-specific R2DBC repository operations.
  *
- * <p>This implementation extends {@link DefaultR2dbcRepositoryOperations} so Oracle can reuse the
- * standard R2DBC repository behavior and only replace the entity operation objects that need Oracle
- * upsert generated-id returning. Oracle R2DBC exposes DML {@code RETURNING ... INTO} values as OUT
- * parameters, so Oracle upsert with generated IDs must bind the OUT parameters from the stored query
- * metadata and map the returned readable result instead of relying on generic
- * {@link Statement#returnGeneratedValues(String...)} handling.</p>
+ * <p>This implementation extends {@link DefaultR2dbcRepositoryOperations} so SQL Server can reuse
+ * the standard R2DBC repository behavior and only replace the entity operation objects that need
+ * SQL Server-specific upsert generated-id handling. SQL Server {@code MERGE ... OUTPUT inserted.id}
+ * returns generated IDs as a result row, so the upsert path needs to read that row instead of using
+ * generic {@link Statement#returnGeneratedValues(String...)} handling.</p>
  */
 @EachBean(ConnectionFactory.class)
-@Requires(condition = OracleR2dbcRepositoryOperationsCondition.class)
+@Requires(condition = SqlServerR2dbcRepositoryOperationsCondition.class)
 @Internal
-public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositoryOperations {
+public final class SqlServerR2dbcRepositoryOperations extends DefaultR2dbcRepositoryOperations {
 
     /**
      * Default constructor.
@@ -94,7 +91,7 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
-    OracleR2dbcRepositoryOperations(
+    SqlServerR2dbcRepositoryOperations(
         @Parameter String dataSourceName,
         ConnectionFactory connectionFactory,
         @NonNull DateTimeProvider<Object> dateTimeProvider,
@@ -149,7 +146,7 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
                                                                     T entity,
                                                                     SqlStoredQuery<T, ?> storedQuery,
                                                                     boolean insert) {
-        return new OracleR2dbcEntityOperations<>(ctx, persistentEntity, entity, storedQuery, insert);
+        return new SqlServerR2dbcEntityOperations<>(ctx, persistentEntity, entity, storedQuery, insert);
     }
 
     @Override
@@ -166,11 +163,11 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
                                                                         Iterable<T> entities,
                                                                         SqlStoredQuery<T, ?> storedQuery,
                                                                         boolean insert) {
-        return new OracleR2dbcEntitiesOperations<>(ctx, persistentEntity, entities, storedQuery, insert);
+        return new SqlServerR2dbcEntitiesOperations<>(ctx, persistentEntity, entities, storedQuery, insert);
     }
 
-    private boolean shouldUseOracleUpsertReturning(SqlStoredQuery<?, ?> storedQuery) {
-        return storedQuery.getDialect() == Dialect.ORACLE
+    private boolean shouldUseSqlServerUpsertReturning(SqlStoredQuery<?, ?> storedQuery) {
+        return storedQuery.getDialect() == Dialect.SQL_SERVER
             && isUpsertOperation(storedQuery)
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
@@ -178,37 +175,43 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
     private <T> Mono<Object> executeReturningId(R2dbcOperationContext ctx,
                                                 SqlStoredQuery<T, ?> storedQuery,
                                                 T entity,
-                                                Class<?> identityType,
                                                 @Nullable Map<QueryParameterBinding, Object> previousValues) {
         SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, entity);
         Statement statement = ctx.getConnection().createStatement(entityStoredQuery.getQuery());
         R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
         entityStoredQuery.bindParameters(binder, ctx.getInvocationContext(), entity, previousValues);
-        statement = bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
         List<QueryOutParameterBinding> outParameterBindings = entityStoredQuery.getOutParameterBindings();
         if (outParameterBindings.size() != 1) {
-            return Mono.error(new DataAccessException("Oracle upsert RETURNING requires exactly one generated identity OUT parameter, but got: " + outParameterBindings.size()));
+            return Mono.error(new DataAccessException("SQL Server upsert OUTPUT requires exactly one generated identity OUT parameter, but got: " + outParameterBindings.size()));
         }
         QueryOutParameterBinding out = outParameterBindings.getFirst();
-        OracleReturningMetadata metadata = getOracleReturningMetadata(entityStoredQuery);
-        ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, metadata.columnIndexesByName());
-        return executeAndMapOracleReturningSingleNullable(statement, entityStoredQuery.getDialect(),
-            readable -> mapOracleOutValue(readable, identityType, resultReader, out));
+        return executeAndMapEachRow(statement, row -> columnIndexResultSetReader.readDynamic(row, 0, out.dataType()))
+            .onErrorResume(errorHandler(entityStoredQuery.getDialect()))
+            .collectList()
+            .flatMap(ids -> {
+                if (ids.isEmpty()) {
+                    return Mono.error(new DataAccessException("SQL Server upsert OUTPUT clause produced no generated ID for entity: " + entity));
+                }
+                if (ids.size() != 1) {
+                    return Mono.error(new DataAccessException("SQL Server upsert OUTPUT clause produced " + ids.size() + " generated IDs for a single entity: " + entity));
+                }
+                return Mono.just(ids.getFirst());
+            });
     }
 
-    protected class OracleR2dbcEntityOperations<T> extends R2dbcEntityOperations<T> {
+    protected class SqlServerR2dbcEntityOperations<T> extends R2dbcEntityOperations<T> {
 
-        protected OracleR2dbcEntityOperations(R2dbcOperationContext ctx,
-                                              RuntimePersistentEntity<T> persistentEntity,
-                                              T entity,
-                                              SqlStoredQuery<T, ?> storedQuery,
-                                              boolean insert) {
+        protected SqlServerR2dbcEntityOperations(R2dbcOperationContext ctx,
+                                                 RuntimePersistentEntity<T> persistentEntity,
+                                                 T entity,
+                                                 SqlStoredQuery<T, ?> storedQuery,
+                                                 boolean insert) {
             super(ctx, storedQuery, persistentEntity, entity, insert);
         }
 
         @Override
         protected void execute() throws RuntimeException {
-            if (shouldUseOracleUpsertReturning(storedQuery)) {
+            if (shouldUseSqlServerUpsertReturning(storedQuery)) {
                 upsert();
             } else {
                 super.execute();
@@ -222,29 +225,28 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
                 if (d.vetoed) {
                     return Mono.just(d);
                 }
-                return executeReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
+                return executeReturningId(ctx, storedQuery, d.entity, d.previousValues)
                     .map(id -> {
                         d.entity = updateEntityId(identityProperty, d.entity, id);
                         return d;
-                    })
-                    .switchIfEmpty(Mono.just(d));
+                    });
             });
         }
     }
 
-    protected class OracleR2dbcEntitiesOperations<T> extends R2dbcEntitiesOperations<T> {
+    protected class SqlServerR2dbcEntitiesOperations<T> extends R2dbcEntitiesOperations<T> {
 
-        protected OracleR2dbcEntitiesOperations(R2dbcOperationContext ctx,
-                                                RuntimePersistentEntity<T> persistentEntity,
-                                                Iterable<T> entities,
-                                                SqlStoredQuery<T, ?> storedQuery,
-                                                boolean insert) {
+        protected SqlServerR2dbcEntitiesOperations(R2dbcOperationContext ctx,
+                                                   RuntimePersistentEntity<T> persistentEntity,
+                                                   Iterable<T> entities,
+                                                   SqlStoredQuery<T, ?> storedQuery,
+                                                   boolean insert) {
             super(ctx, storedQuery, persistentEntity, entities, insert);
         }
 
         @Override
         protected void execute() throws RuntimeException {
-            if (shouldUseOracleUpsertReturning(storedQuery)) {
+            if (shouldUseSqlServerUpsertReturning(storedQuery)) {
                 upsert();
             } else {
                 super.execute();
@@ -259,12 +261,11 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    return executeReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
+                    return executeReturningId(ctx, storedQuery, d.entity, d.previousValues)
                         .map(id -> {
                             d.entity = updateEntityId(identityProperty, d.entity, id);
                             return d;
-                        })
-                        .switchIfEmpty(Mono.just(d));
+                        });
                 })
                 .collectList());
         }
