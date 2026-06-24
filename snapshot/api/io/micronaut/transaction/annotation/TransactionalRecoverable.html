@@ -81,9 +81,13 @@ loadScripts(document, 'script');</script>
 <div class="block">Marks a <a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation"><code>Transactional</code></a> method or type as eligible for commit-outcome recovery.
 
 <p>The initial implementation is Oracle JDBC only and is applied only to synchronous
-transactional execution. Recovery is attempted only for the intercepted execution that
-owns the transaction commit boundary; participating calls still execute normally and
-leave any ambiguous commit outcome to the outer transaction boundary.</p>
+transactional execution.</p>
+
+<p>This annotation is a companion to <a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation"><code>Transactional</code></a> and does not start a
+transaction by itself. Recovery is attempted only for the intercepted execution that
+starts and owns the transaction commit boundary. If the annotated method joins an
+existing transaction, the outer transaction boundary owns commit and therefore owns
+any ambiguous commit recovery.</p>
 
 <p>If Oracle reports that the transaction committed but the user call did not complete,
 Micronaut returns the original result and logs a warning instead of replaying the call.</p>
