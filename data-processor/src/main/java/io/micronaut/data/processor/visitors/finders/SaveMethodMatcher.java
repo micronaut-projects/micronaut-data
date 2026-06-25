@@ -196,7 +196,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                             methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
                         }
                     } catch (NoUpdatePropertiesException ignored) {
-                        // The secondary update is an optional save fallback; insert-only save remains valid.
+                        // Only the optional save fallback update is invalid here. Oracle reservable columns
+                        // allow inserted initial values, but updates must be deltas like col = col + ?
+                        // instead of direct assignments like col = ?. Keep the valid insert-only save.
                     }
                 }
             }
@@ -214,8 +216,11 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
             return true;
         }
-        // Save methods can add a secondary update query for identity entities. Skip it only when reservable
-        // fields are present and every otherwise updatable property would be filtered from the generated update.
+        // Save methods can add a secondary update query for identity entities. Oracle reservable columns
+        // are numeric aggregate columns that accept inserted initial values, but updates must use reservation
+        // deltas like col = col + ? or col = col - ?. Generated entity updates are direct assignments
+        // like col = ?, so reservable properties are filtered from the SET clause. If every updateable
+        // property is reservable, the secondary update would have no legal SET item.
         boolean hasReservableUpdateProperty = false;
         boolean hasNonReservableUpdateProperty = false;
         List<? extends PersistentProperty> updateProperties = Stream.concat(
