@@ -59,8 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
-<li><a href="#ORACLE_23_1_VERSION" tabindex="0">ORACLE_23_1_VERSION</a></li>
-<li><a href="#DIALECT_OPTIONS_CONFIGURATION_PREFIX" tabindex="0">DIALECT_OPTIONS_CONFIGURATION_PREFIX</a></li>
+<li><a href="#ORACLE_26_0_VERSION" tabindex="0">ORACLE_26_0_VERSION</a></li>
 <li><a href="#MEMBER_VERSION" tabindex="0">MEMBER_VERSION</a></li>
 </ol>
 </li>
@@ -73,8 +72,6 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#defaults(io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">defaults(Dialect)</a></li>
 <li><a href="#of(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" tabindex="0">of(Dialect, String)</a></li>
-<li><a href="#of(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">of(AnnotationMetadata, Dialect)</a></li>
-<li><a href="#versionConfiguration(io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">versionConfiguration(Dialect)</a></li>
 <li><a href="#isVersionAtLeast(java.lang.String)" tabindex="0">isVersionAtLeast(String)</a></li>
 <li><a href="#toString()" tabindex="0">toString()</a></li>
 <li><a href="#hashCode()" tabindex="0">hashCode()</a></li>
@@ -98,15 +95,15 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
-<dd><code><span id="param-dialect">dialect</span></code> - The dialect these options apply to.</dd>
-<dd><code><span id="param-version">version</span></code> - The target dialect version.</dd>
+<dd><code><span id="param-dialect">dialect</span></code> - The dialect these options apply to</dd>
+<dd><code><span id="param-version">version</span></code> - The target dialect version</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlDialectOptions</span>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;version)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
-<div class="block">Resolved SQL dialect options used during SQL generation and runtime binding.</div>
+<div class="block">Resolved SQL dialect options used during SQL generation.</div>
 </div>
 </section>
 <section class="summary">
@@ -121,19 +118,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DIALECT_OPTIONS_CONFIGURATION_PREFIX" class="member-name-link">DIALECT_OPTIONS_CONFIGURATION_PREFIX</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MEMBER_VERSION" class="member-name-link">MEMBER_VERSION</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Annotation processor option prefix for SQL dialect options.</div>
-</div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#MEMBER_VERSION" class="member-name-link">MEMBER_VERSION</a></code></div>
-<div class="col-last odd-row-color">
 <div class="block">Annotation/configuration member for target dialect version.</div>
 </div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ORACLE_23_1_VERSION" class="member-name-link">ORACLE_23_1_VERSION</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Oracle version that enables native SQL boolean generation.</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ORACLE_26_0_VERSION" class="member-name-link">ORACLE_26_0_VERSION</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Oracle version that enables lock-free reservation generation.</div>
 </div>
 </div>
 </section>
@@ -187,31 +179,20 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isVersionAtLeast(java.lang.String)" class="member-name-link">isVersionAtLeast</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;requiredVersion)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">of</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Resolve options from annotation metadata.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">of</a><wbr>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#of(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">of</a><wbr>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;version)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Create options from explicit values.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#version()" class="member-name-link">version</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#version()" class="member-name-link">version</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-version"><code>version</code></a> record component.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#versionConfiguration(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">versionConfiguration</a><wbr>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Resolve the annotation processor option key for a dialect target version.</div>
 </div>
 </div>
 </div>
@@ -231,33 +212,16 @@ loadScripts(document, 'script');</script>
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="ORACLE_23_1_VERSION">
-<h3>ORACLE_23_1_VERSION</h3>
+<section class="detail" id="ORACLE_26_0_VERSION">
+<h3>ORACLE_26_0_VERSION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ORACLE_23_1_VERSION</span></div>
-<div class="block">Oracle version that enables native SQL boolean generation.</div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ORACLE_26_0_VERSION</span></div>
+<div class="block">Oracle version that enables lock-free reservation generation.</div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list">
-<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.SqlDialectOptions.ORACLE_23_1_VERSION">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="DIALECT_OPTIONS_CONFIGURATION_PREFIX">
-<h3>DIALECT_OPTIONS_CONFIGURATION_PREFIX</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">DIALECT_OPTIONS_CONFIGURATION_PREFIX</span></div>
-<div class="block">Annotation processor option prefix for SQL dialect options.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list">
-<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.SqlDialectOptions.DIALECT_OPTIONS_CONFIGURATION_PREFIX">Constant Field Values</a></li>
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.SqlDialectOptions.ORACLE_26_0_VERSION">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -339,38 +303,6 @@ loadScripts(document, 'script');</script>
 <dd><code>version</code> - The target dialect version</dd>
 <dt>Returns:</dt>
 <dd>resolved dialect options</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="of(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.Dialect)">
-<h3>of</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
-<div class="block">Resolve options from annotation metadata.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>annotationMetadata</code> - The annotation metadata</dd>
-<dd><code>dialect</code> - The dialect</dd>
-<dt>Returns:</dt>
-<dd>resolved dialect options</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="versionConfiguration(io.micronaut.data.model.query.builder.sql.Dialect)">
-<h3>versionConfiguration</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">versionConfiguration</span><wbr><span class="parameters">(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
-<div class="block">Resolve the annotation processor option key for a dialect target version.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>dialect</code> - The dialect</dd>
-<dt>Returns:</dt>
-<dd>The annotation processor option key</dd>
 </dl>
 </div>
 </section>
