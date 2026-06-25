@@ -140,6 +140,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     };
 
     private final Dialect dialect;
+    private final SqlDialectOptions dialectOptions;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
     /**
@@ -156,6 +157,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     annotationMetadata
                         .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                         .orElse(Dialect.ANSI));
+            this.dialectOptions = SqlDialectOptions.of(annotationMetadata, dialect);
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -176,6 +178,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         } else {
             this.dialect = Dialect.ANSI;
+            this.dialectOptions = SqlDialectOptions.defaults(dialect);
         }
     }
 
@@ -184,6 +187,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
+        this.dialectOptions = SqlDialectOptions.defaults(dialect);
     }
 
     /**
@@ -192,6 +196,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public SqlQueryBuilder(Dialect dialect) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
+        this.dialectOptions = SqlDialectOptions.defaults(dialect);
+    }
+
+    /**
+     * @param dialect The dialect
+     * @param dialectOptions The dialect options
+     */
+    public SqlQueryBuilder(Dialect dialect, SqlDialectOptions dialectOptions) {
+        ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
+        ArgumentUtils.requireNonNull("dialectOptions", dialectOptions);
+        this.dialect = dialect;
+        this.dialectOptions = dialectOptions;
     }
 
     /**
@@ -200,6 +216,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     public Dialect getDialect() {
         return dialect;
+    }
+
+    /**
+     * @return The resolved dialect options.
+     */
+    public SqlDialectOptions getDialectOptions() {
+        return dialectOptions;
     }
 
     @Override
@@ -376,7 +399,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
-        return buildCreateTableStatements(entity, definitionProviders, SqlDialectOptions.defaults(getDialect()));
+        return buildCreateTableStatements(entity, definitionProviders, dialectOptions);
     }
 
     /**
@@ -435,7 +458,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
                                                      Dialect dialect) {
-        return buildCreateTableStatements(definitionProviders, entities, dialect, SqlDialectOptions.defaults(dialect));
+        return buildCreateTableStatements(definitionProviders, entities, dialect, dialect == this.dialect ? dialectOptions : SqlDialectOptions.defaults(dialect));
     }
 
     /**
@@ -899,6 +922,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
         if (tableColumn.isReservable()) {
+            if (dialect != Dialect.ORACLE) {
+                throw new IllegalStateException("Reservable columns are only supported for Oracle");
+            }
             column += " reservable";
         }
         for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {

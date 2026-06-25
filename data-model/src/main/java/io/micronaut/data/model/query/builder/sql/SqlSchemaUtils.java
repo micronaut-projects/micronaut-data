@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -528,16 +527,16 @@ public final class SqlSchemaUtils {
         if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.NegativeOrZero", "javax.validation.constraints.NegativeOrZero")) {
             addCheck(constraints, property, "<=", "0");
         }
-        getFirstIntegralString(annotationMetadata, "jakarta.validation.constraints.Min", "javax.validation.constraints.Min")
+        getFirstLongMemberAsString(annotationMetadata, "jakarta.validation.constraints.Min", "javax.validation.constraints.Min")
             .ifPresent(value -> addCheck(constraints, property, ">=", value));
-        getFirstIntegralString(annotationMetadata, "jakarta.validation.constraints.Max", "javax.validation.constraints.Max")
+        getFirstLongMemberAsString(annotationMetadata, "jakarta.validation.constraints.Max", "javax.validation.constraints.Max")
             .ifPresent(value -> addCheck(constraints, property, "<=", value));
         getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMin", "javax.validation.constraints.DecimalMin")
             .ifPresent(annotation -> addCheck(constraints, property, annotation.booleanValue("inclusive").orElse(true) ? ">=" : ">",
-                extractMemberAsString(annotation, "value").orElse("0")));
+                annotation.stringValue(VALUE_MEMBER).orElse("0")));
         getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMax", "javax.validation.constraints.DecimalMax")
             .ifPresent(annotation -> addCheck(constraints, property, annotation.booleanValue("inclusive").orElse(true) ? "<=" : "<",
-                extractMemberAsString(annotation, "value").orElse("0")));
+                annotation.stringValue(VALUE_MEMBER).orElse("0")));
         return constraints;
     }
 
@@ -548,14 +547,16 @@ public final class SqlSchemaUtils {
             || annotationMetadata.hasAnnotation(javaxName + "$List");
     }
 
-    private static Optional<String> getFirstIntegralString(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
+    private static Optional<String> getFirstLongMemberAsString(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
         return getFirstAnnotation(annotationMetadata, jakartaName, javaxName)
-            .flatMap(annotation -> extractMemberAsString(annotation, VALUE_MEMBER));
+            .flatMap(annotation -> annotation.longValue(VALUE_MEMBER).stream().mapToObj(String::valueOf).findFirst());
     }
 
     private static Optional<AnnotationValue<Annotation>> getFirstAnnotation(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
         Optional<AnnotationValue<Annotation>> annotation = annotationMetadata.findAnnotation(jakartaName);
         if (annotation.isEmpty()) {
+            // Validation constraints are repeatable and Micronaut metadata can expose even a single constraint
+            // through the generated container annotation, for example PositiveOrZero.List.
             annotation = annotationMetadata.findAnnotation(jakartaName + "$List").flatMap(SqlSchemaUtils::firstContained);
         }
         if (annotation.isEmpty()) {
@@ -573,18 +574,6 @@ public final class SqlSchemaUtils {
             return Optional.empty();
         }
         return Optional.of(values.get(0));
-    }
-
-    private static Optional<String> extractMemberAsString(AnnotationValue<?> annotation, String member) {
-        OptionalLong longValue = annotation.longValue(member);
-        if (longValue.isPresent()) {
-            return Optional.of(String.valueOf(longValue.getAsLong()));
-        }
-        OptionalInt intValue = annotation.intValue(member);
-        if (intValue.isPresent()) {
-            return Optional.of(String.valueOf(intValue.getAsInt()));
-        }
-        return annotation.stringValue(member);
     }
 
     private static void addCheck(List<SqlCheckConstraint> constraints, PersistentProperty property, String operator, String value) {

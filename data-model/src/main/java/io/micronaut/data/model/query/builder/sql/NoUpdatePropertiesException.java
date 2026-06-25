@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.oracle.reservable;
+package io.micronaut.data.model.query.builder.sql;
 
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.core.annotation.Internal;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
-public interface ReservableAccountRepository extends CrudRepository<ReservableAccount, Long> {
+/**
+ * Exception thrown when an update statement has no renderable update properties.
+ *
+ * @author radovanradic
+ * @since 5.1.0
+ */
+@Internal
+public final class NoUpdatePropertiesException extends IllegalArgumentException {
 
-    @Query("UPDATE \"RESERVABLE_ACCOUNT\" SET \"BALANCE\" = \"BALANCE\" + :amount WHERE \"ID\" = :id")
-    int reserve(Long id, Long amount);
+    /**
+     * Creates a no update properties exception.
+     *
+     * @param message The exception message
+     */
+    public NoUpdatePropertiesException(String message) {
+        super(message);
+    }
 }

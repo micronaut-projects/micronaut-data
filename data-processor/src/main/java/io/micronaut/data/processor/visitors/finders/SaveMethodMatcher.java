@@ -16,15 +16,18 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Insert;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Save;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
@@ -32,6 +35,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.NoUpdatePropertiesException;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -56,6 +60,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A save method for saving a single entity.
@@ -179,7 +184,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     .queryResult(
                         queryResult
                 );
-                if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
+                if (saveOperation
+                    && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())
+                    && hasSecondaryUpdateProperties(rootEntity, mc.getAnnotationMetadata())) {
                     boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
                     try {
                         MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
@@ -188,11 +195,8 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                         if (updateQueryResult != null) {
                             methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
                         }
-                    } catch (IllegalArgumentException e) {
-                        String message = e.getMessage();
-                        if (message == null || !message.contains("all update properties are reservable")) {
-                            throw e;
-                        }
+                    } catch (NoUpdatePropertiesException ignored) {
+                        // The secondary update is an optional save fallback; insert-only save remains valid.
                     }
                 }
             }
@@ -204,6 +208,34 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             }
             return methodMatchInfo;
         };
+    }
+
+    private static boolean hasSecondaryUpdateProperties(SourcePersistentEntity rootEntity, AnnotationMetadata annotationMetadata) {
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
+            return true;
+        }
+        // Save methods can add a secondary update query for identity entities. Skip it only when reservable
+        // fields are present and every otherwise updatable property would be filtered from the generated update.
+        boolean hasReservableUpdateProperty = false;
+        boolean hasNonReservableUpdateProperty = false;
+        List<? extends PersistentProperty> updateProperties = Stream.concat(
+            rootEntity.getPersistentProperties().stream(),
+            rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.empty()
+        ).toList();
+        for (PersistentProperty property : updateProperties) {
+            if (property instanceof Association association && association.isForeignKey()) {
+                continue;
+            }
+            if (property.isGenerated() || !property.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true)) {
+                continue;
+            }
+            if (property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                hasReservableUpdateProperty = true;
+            } else {
+                hasNonReservableUpdateProperty = true;
+            }
+        }
+        return !hasReservableUpdateProperty || hasNonReservableUpdateProperty;
     }
 
     private MethodMatch saveProperties(boolean saveOperation) {

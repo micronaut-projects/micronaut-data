@@ -3,7 +3,45 @@ Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with 
 Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
 Micronaut Data supports schema generation for this feature on Oracle Database 26 and later.
 
-To enable Oracle reservable DDL, configure the Oracle dialect and set the dialect option version used for schema generation:
+To generate Oracle 26-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=26`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=26`.
+If both are present, the annotation processor option takes precedence.
+
+The configured dialect `version` is a SQL generation target.
+It is not runtime database version detection and it does not inspect JDBC or R2DBC connection metadata.
+Use dot-separated numeric notation only, such as `26` or `26.0.0`.
+
+For Gradle Java projects:
+
+[source,groovy]
+----
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=26")
+}
+----
+
+For Maven projects:
+
+[source,xml]
+----
+<compilerArgs>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=26</arg>
+</compilerArgs>
+----
+
+The target version can also be set on an individual repository:
+
+[source,java]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+interface AccountRepository {
+}
+----
+
+If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:
 
 [source,yaml]
 ----
@@ -25,6 +63,8 @@ r2dbc:
       dialect-options:
         version: 26
 ----
+
+IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
 The ann:data.annotation.Reservable[] annotation can be used on numeric persistent properties.
 It can also be combined with validation annotations to generate Oracle `CHECK` constraints for the reservable column.

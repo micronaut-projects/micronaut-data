@@ -36,6 +36,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getOperationType
 import static io.micronaut.data.processor.visitors.TestUtils.getOutBindingParameters
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 
@@ -328,6 +329,56 @@ interface MyInterface extends CrudRepository<Person, Long> {
         expect:
         getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
         getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId', 'company.myId'] as String[]
+    }
+
+    void "test save skips secondary update when all update properties are reservable"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    Account save(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+
+        expect:
+        getQuery(method) == 'INSERT INTO "ACCOUNT" ("BALANCE","ID") VALUES (?,"ACCOUNT_SEQ".nextval)'
+        getQueryParts(method).length == 0
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")

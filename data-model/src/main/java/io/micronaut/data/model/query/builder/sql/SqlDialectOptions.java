@@ -15,10 +15,14 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.version.SemanticVersion;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,6 +42,11 @@ public record SqlDialectOptions(
      * Oracle version that enables lock-free reservation generation.
      */
     public static final String ORACLE_26_0_VERSION = "26.0.0";
+
+    /**
+     * Annotation processor option prefix for SQL dialect options.
+     */
+    public static final String DIALECT_OPTIONS_CONFIGURATION_PREFIX = "micronaut.data.sql.dialect-options";
 
     /**
      * Annotation/configuration member for target dialect version.
@@ -76,6 +85,41 @@ public record SqlDialectOptions(
             .filter(val -> !val.isBlank())
             .flatMap(SqlDialectOptions::normalizeVersionOptional);
         return new SqlDialectOptions(dialect, versionValue);
+    }
+
+    /**
+     * Resolve options from annotation metadata.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param dialect The dialect
+     * @return resolved dialect options
+     */
+    public static SqlDialectOptions of(AnnotationMetadata annotationMetadata, Dialect dialect) {
+        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+        if (annotation != null) {
+            List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(
+                AnnotationMetadata.VALUE_MEMBER,
+                SqlQueryConfiguration.DialectConfiguration.class
+            );
+            for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
+                Optional<Dialect> configuredDialect = dialectConfig.enumValue("dialect", Dialect.class);
+                if (configuredDialect.isPresent() && configuredDialect.get() == dialect) {
+                    return of(dialect, dialectConfig.stringValue(MEMBER_VERSION).orElse(null));
+                }
+            }
+        }
+        return defaults(dialect);
+    }
+
+    /**
+     * Resolve the annotation processor option key for a dialect target version.
+     *
+     * @param dialect The dialect
+     * @return The annotation processor option key
+     */
+    public static String versionConfiguration(Dialect dialect) {
+        Objects.requireNonNull(dialect, "Dialect cannot be null");
+        return DIALECT_OPTIONS_CONFIGURATION_PREFIX + "." + normalizeDialectName(dialect) + ".version";
     }
 
     /**
@@ -129,5 +173,9 @@ public record SqlDialectOptions(
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
+    }
+
+    private static String normalizeDialectName(Dialect dialect) {
+        return dialect.name().toLowerCase(Locale.ENGLISH).replace('_', '-');
     }
 }
