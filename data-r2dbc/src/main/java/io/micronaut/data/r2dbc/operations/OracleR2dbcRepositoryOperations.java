@@ -175,11 +175,11 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
-    private <T> Mono<Object> executeReturningId(R2dbcOperationContext ctx,
-                                                SqlStoredQuery<T, ?> storedQuery,
-                                                T entity,
-                                                Class<?> identityType,
-                                                @Nullable Map<QueryParameterBinding, Object> previousValues) {
+    private <T> Mono<Object> executeUpsertReturningId(R2dbcOperationContext ctx,
+                                                      SqlStoredQuery<T, ?> storedQuery,
+                                                      T entity,
+                                                      Class<?> identityType,
+                                                      @Nullable Map<QueryParameterBinding, Object> previousValues) {
         SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, entity);
         Statement statement = ctx.getConnection().createStatement(entityStoredQuery.getQuery());
         R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
@@ -209,20 +209,20 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
         @Override
         protected void execute() throws RuntimeException {
             if (shouldUseOracleUpsertReturning(storedQuery)) {
-                upsert();
+                executeUpsertReturning();
             } else {
                 super.execute();
             }
         }
 
-        private void upsert() {
+        private void executeUpsertReturning() {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             data = data.flatMap(d -> {
                 if (d.vetoed) {
                     return Mono.just(d);
                 }
-                return executeReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
+                return executeUpsertReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
                     .map(id -> {
                         d.entity = updateEntityId(identityProperty, d.entity, id);
                         return d;
@@ -245,13 +245,13 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
         @Override
         protected void execute() throws RuntimeException {
             if (shouldUseOracleUpsertReturning(storedQuery)) {
-                upsert();
+                executeUpsertReturning();
             } else {
                 super.execute();
             }
         }
 
-        private void upsert() {
+        private void executeUpsertReturning() {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             entities = entities.flatMap(list -> Flux.fromIterable(list)
@@ -259,7 +259,7 @@ public final class OracleR2dbcRepositoryOperations extends DefaultR2dbcRepositor
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    return executeReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
+                    return executeUpsertReturningId(ctx, storedQuery, d.entity, identityProperty.getType(), d.previousValues)
                         .map(id -> {
                             d.entity = updateEntityId(identityProperty, d.entity, id);
                             return d;

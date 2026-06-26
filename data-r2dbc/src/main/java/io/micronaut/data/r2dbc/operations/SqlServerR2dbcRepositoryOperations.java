@@ -172,10 +172,10 @@ public final class SqlServerR2dbcRepositoryOperations extends DefaultR2dbcReposi
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
-    private <T> Mono<Object> executeReturningId(R2dbcOperationContext ctx,
-                                                SqlStoredQuery<T, ?> storedQuery,
-                                                T entity,
-                                                @Nullable Map<QueryParameterBinding, Object> previousValues) {
+    private <T> Mono<Object> executeUpsertReturningId(R2dbcOperationContext ctx,
+                                                      SqlStoredQuery<T, ?> storedQuery,
+                                                      T entity,
+                                                      @Nullable Map<QueryParameterBinding, Object> previousValues) {
         SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, entity);
         Statement statement = ctx.getConnection().createStatement(entityStoredQuery.getQuery());
         R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
@@ -212,20 +212,20 @@ public final class SqlServerR2dbcRepositoryOperations extends DefaultR2dbcReposi
         @Override
         protected void execute() throws RuntimeException {
             if (shouldUseSqlServerUpsertReturning(storedQuery)) {
-                upsert();
+                executeUpsertReturning();
             } else {
                 super.execute();
             }
         }
 
-        private void upsert() {
+        private void executeUpsertReturning() {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             data = data.flatMap(d -> {
                 if (d.vetoed) {
                     return Mono.just(d);
                 }
-                return executeReturningId(ctx, storedQuery, d.entity, d.previousValues)
+                return executeUpsertReturningId(ctx, storedQuery, d.entity, d.previousValues)
                     .map(id -> {
                         d.entity = updateEntityId(identityProperty, d.entity, id);
                         return d;
@@ -247,13 +247,13 @@ public final class SqlServerR2dbcRepositoryOperations extends DefaultR2dbcReposi
         @Override
         protected void execute() throws RuntimeException {
             if (shouldUseSqlServerUpsertReturning(storedQuery)) {
-                upsert();
+                executeUpsertReturning();
             } else {
                 super.execute();
             }
         }
 
-        private void upsert() {
+        private void executeUpsertReturning() {
             QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             entities = entities.flatMap(list -> Flux.fromIterable(list)
@@ -261,7 +261,7 @@ public final class SqlServerR2dbcRepositoryOperations extends DefaultR2dbcReposi
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    return executeReturningId(ctx, storedQuery, d.entity, d.previousValues)
+                    return executeUpsertReturningId(ctx, storedQuery, d.entity, d.previousValues)
                         .map(id -> {
                             d.entity = updateEntityId(identityProperty, d.entity, id);
                             return d;
