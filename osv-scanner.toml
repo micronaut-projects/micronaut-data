@@ -1,0 +1,15 @@
+[[IgnoredVulns]]
+id = "GHSA-5jmj-h7xm-6q6v"
+reason = "jackson 2.18.6 Dependency coming via upstream com.azure.cosome:azure-cosmos:4.80.0 library"
+
+[[IgnoredVulns]]
+id = "GHSA-hgj6-7826-r7m5"
+reason = "jackson 2.18.6 Dependency coming via upstream com.azure.cosome:azure-cosmos:4.80.0 library"
+
+[[IgnoredVulns]]
+id = "GHSA-j3rv-43j4-c7qm"
+reason = "jackson 2.18.6 Dependency coming via upstream com.azure.cosome:azure-cosmos:4.80.0 library"
+
+[[IgnoredVulns]]
+id = "GHSA-rmj7-2vxq-3g9f"
+reason = "jackson 2.18.6 Dependency coming via upstream com.azure.cosome:azure-cosmos:4.80.0 library"
