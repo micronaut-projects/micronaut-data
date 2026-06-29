@@ -91,8 +91,6 @@ io.micronaut.data.mongodb.transaction
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
-io.micronaut.data.processor.jpa.metamodel
-io.micronaut.data.processor.jpa.metamodel.visitor
 io.micronaut.data.processor.jq
 io.micronaut.data.processor.mappers
 io.micronaut.data.processor.mappers.jakarta.data
@@ -160,7 +158,6 @@ io.micronaut.data.tck.entities.embedded
 io.micronaut.data.tck.entities.schema
 io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.jdbc.entities.geo
-io.micronaut.data.tck.metamodel
 io.micronaut.data.tck.repositories
 io.micronaut.data.tck.repositories.embedded
 io.micronaut.data.tck.services
