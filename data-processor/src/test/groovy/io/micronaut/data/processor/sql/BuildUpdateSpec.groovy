@@ -40,11 +40,12 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
-interface AccountRepository extends CrudRepository<Account, Long> {
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
 }
 
 @MappedEntity
@@ -96,11 +97,12 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
-interface AccountRepository extends CrudRepository<Account, Long> {
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
 }
 
 @MappedEntity
@@ -131,6 +133,53 @@ class Account {
         then:
         def e = thrown(RuntimeException)
         e.message.contains("all update properties are reservable")
+    }
+
+    void "test entity update falls back to identity update when no updateable properties remain"() {
+        given:
+        def repository = buildRepository('test.AuditAccountRepository', """
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.time.Instant;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AuditAccountRepository extends GenericRepository<AuditAccount, Long> {
+    void update(AuditAccount account);
+}
+
+@MappedEntity
+class AuditAccount {
+    @Id
+    private Long id;
+    @DateCreated
+    private Instant createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "AUDIT_ACCOUNT" SET "ID"=? WHERE ("ID" = ?)'
     }
 
     @Unroll

@@ -35,7 +35,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.NoUpdatePropertiesException;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -184,21 +183,18 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     .queryResult(
                         queryResult
                 );
-                if (saveOperation
-                    && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())
-                    && hasSecondaryUpdateProperties(rootEntity, mc.getAnnotationMetadata())) {
+                if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
+                    SecondaryUpdateProperties secondaryUpdateProperties = resolveSecondaryUpdateProperties(rootEntity, mc.getAnnotationMetadata());
+                    if (secondaryUpdateProperties.hasOnlyReservableUpdateProperties()) {
+                        throw new MatchFailedException("Cannot generate save/update for entity [" + rootEntity.getName()
+                            + "]: all updateable properties are reservable. Use insert(...) for new rows and an explicit @Query delta update for reservable columns.");
+                    }
                     boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
-                    try {
-                        MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
-                            .buildMatchInfo(mc);
-                        QueryResult updateQueryResult = updateInfo.getQueryResult();
-                        if (updateQueryResult != null) {
-                            methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
-                        }
-                    } catch (NoUpdatePropertiesException ignored) {
-                        // Only the optional save fallback update is invalid here. Oracle reservable columns
-                        // allow inserted initial values, but updates must be deltas like col = col + ?
-                        // instead of direct assignments like col = ?. Keep the valid insert-only save.
+                    MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
+                        .buildMatchInfo(mc);
+                    QueryResult updateQueryResult = updateInfo.getQueryResult();
+                    if (updateQueryResult != null) {
+                        methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
                     }
                 }
             }
@@ -212,15 +208,14 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private static boolean hasSecondaryUpdateProperties(SourcePersistentEntity rootEntity, AnnotationMetadata annotationMetadata) {
+    private static SecondaryUpdateProperties resolveSecondaryUpdateProperties(SourcePersistentEntity rootEntity, AnnotationMetadata annotationMetadata) {
         if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata)) {
-            return true;
+            return new SecondaryUpdateProperties(false, true);
         }
-        // Save methods can add a secondary update query for identity entities. Oracle reservable columns
-        // are numeric aggregate columns that accept inserted initial values, but updates must use reservation
+        // Save methods can resolve to update for identity entities. Oracle reservable columns are
+        // numeric aggregate columns that accept inserted initial values, but updates must use reservation
         // deltas like col = col + ? or col = col - ?. Generated entity updates are direct assignments
-        // like col = ?, so reservable properties are filtered from the SET clause. If every updateable
-        // property is reservable, the secondary update would have no legal SET item.
+        // like col = ?, so reservable properties are filtered from the SET clause.
         boolean hasReservableUpdateProperty = false;
         boolean hasNonReservableUpdateProperty = false;
         List<? extends PersistentProperty> updateProperties = Stream.concat(
@@ -240,7 +235,13 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 hasNonReservableUpdateProperty = true;
             }
         }
-        return !hasReservableUpdateProperty || hasNonReservableUpdateProperty;
+        return new SecondaryUpdateProperties(hasReservableUpdateProperty, hasNonReservableUpdateProperty);
+    }
+
+    private record SecondaryUpdateProperties(boolean hasReservableUpdateProperty, boolean hasNonReservableUpdateProperty) {
+        boolean hasOnlyReservableUpdateProperties() {
+            return hasReservableUpdateProperty && !hasNonReservableUpdateProperty;
+        }
     }
 
     private MethodMatch saveProperties(boolean saveOperation) {

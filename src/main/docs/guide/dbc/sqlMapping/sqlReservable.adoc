@@ -134,6 +134,13 @@ interface AccountRepository extends CrudRepository<Account, Long> {
 Generated entity update operations skip reservable properties.
 For example, `repository.update(account)` updates non-reservable properties but does not assign the reservable column directly.
 If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
+The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
+If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
+Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable.
+Use `insert(...)` for new rows and an explicit delta `@Query` for existing rows.
+
+This restriction is specific to reservable-only update shapes.
+If an entity has at least one non-reservable updateable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
 Custom reservation update queries must not use Oracle DML `RETURNING`.
 Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
