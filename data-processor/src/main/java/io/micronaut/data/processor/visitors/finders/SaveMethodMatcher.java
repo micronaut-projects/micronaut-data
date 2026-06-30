@@ -238,12 +238,6 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         return new SecondaryUpdateProperties(hasReservableUpdateProperty, hasNonReservableUpdateProperty);
     }
 
-    private record SecondaryUpdateProperties(boolean hasReservableUpdateProperty, boolean hasNonReservableUpdateProperty) {
-        boolean hasOnlyReservableUpdateProperties() {
-            return hasReservableUpdateProperty && !hasNonReservableUpdateProperty;
-        }
-    }
-
     private MethodMatch saveProperties(boolean saveOperation) {
         return new MethodMatch() {
 
@@ -445,4 +439,9 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         return p.stringValue(Parameter.class).orElseGet(p::getName);
     }
 
+    private record SecondaryUpdateProperties(boolean hasReservableUpdateProperty, boolean hasNonReservableUpdateProperty) {
+        boolean hasOnlyReservableUpdateProperties() {
+            return hasReservableUpdateProperty && !hasNonReservableUpdateProperty;
+        }
+    }
 }
