@@ -67,6 +67,7 @@ r2dbc:
 IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
 The ann:data.annotation.Reservable[] annotation can be used on numeric persistent properties.
+That includes a scalar property inside an embedded component, but not the embedded association property itself.
 It can also be combined with validation annotations to generate Oracle `CHECK` constraints for the reservable column.
 Validation annotations without ann:data.annotation.Reservable[] do not create database constraints.
 
@@ -156,5 +157,6 @@ Micronaut Data validates reservable mappings during schema generation:
 * A reservable property cannot be a primary key, generated value, relationship, foreign key, indexed property, or use a custom column definition.
 * An entity can declare at most 10 reservable properties.
 * Only column-level check constraints derived from supported validation annotations are generated. Table-level check constraints are not generated.
+* Oracle applies additional table-level restrictions, for example on partition keys and some table types such as index-organized, external, temporary, blockchain, and sharded tables. Micronaut Data does not try to detect every database-side table restriction during compile-time schema generation.
 
 Supported validation annotations include `jakarta.validation` and `javax.validation` variants of `Positive`, `PositiveOrZero`, `Negative`, `NegativeOrZero`, `Min`, `Max`, `DecimalMin`, and `DecimalMax`.
