@@ -480,7 +480,7 @@ class Account {
         method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery).isEmpty()
     }
 
-    void "test save adds secondary update when non reservable update properties remain"() {
+    void "test save secondary update omits reservable properties instead of mixing assignments"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.AccountRepository', """
 import io.micronaut.data.annotation.Id;
@@ -538,6 +538,7 @@ class Account {
         getQuery(method) == 'INSERT INTO "ACCOUNT" ("NAME","BALANCE","ID") VALUES (?,?,"ACCOUNT_SEQ".nextval)'
         saveQueries.size() == 1
         saveQueries[0].stringValue().get() == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !saveQueries[0].stringValue().get().contains('"BALANCE"')
         saveQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
     }
 

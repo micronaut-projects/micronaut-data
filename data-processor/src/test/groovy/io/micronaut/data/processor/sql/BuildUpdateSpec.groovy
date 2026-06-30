@@ -32,7 +32,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
-    void "test entity update skips reservable properties"() {
+    void "test entity update omits reservable properties instead of mixing assignments"() {
         given:
         def repository = buildRepository('test.AccountRepository', """
 import io.micronaut.data.annotation.Reservable;
@@ -85,6 +85,7 @@ class Account {
 
         expect:
         getQuery(method) == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('"BALANCE"')
         getParameterBindingIndexes(method) == ['-1', '-1'] as String[]
         getParameterPropertyPaths(method) == ['name', 'id'] as String[]
     }

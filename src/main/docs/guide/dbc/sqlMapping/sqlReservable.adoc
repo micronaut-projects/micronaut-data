@@ -110,6 +110,7 @@ In that case Micronaut Data generates a reservable column without a `CHECK` cons
 == Updates
 
 Oracle reservable column updates must be expressed as delta operations, for example `balance = balance + ?` or `balance = balance - ?`, and must identify the primary key in the `WHERE` clause.
+Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
 For the first implementation, Micronaut Data does not generate reservation-delta update methods.
 Use a custom ann:data.annotation.Query[] for reservation updates:
 
@@ -142,6 +143,9 @@ Use `insert(...)` for new rows and an explicit delta `@Query` for existing rows.
 
 This restriction is specific to reservable-only update shapes.
 If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
+
+Custom reservation update queries must not mix reservable and non-reservable column assignments in the same `UPDATE`.
+Micronaut Data does not parse arbitrary raw SQL to detect this case in the first implementation.
 
 Custom reservation update queries must not use Oracle DML `RETURNING`.
 Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
