@@ -93,13 +93,13 @@ public class Account {
 }
 ----
 
-The generated Oracle DDL includes the `reservable` column modifier and, when supported validation annotations are present, a column `CHECK` constraint:
+The generated Oracle DDL includes the `RESERVABLE` column modifier and, when supported validation annotations are present, a column `CHECK` constraint:
 
 [source,sql]
 ----
 CREATE TABLE "ACCOUNT" (
     "ID" NUMBER(19) NOT NULL,
-    "BALANCE" NUMBER(19) reservable CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL,
+    "BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL,
     PRIMARY KEY("ID")
 )
 ----
@@ -141,7 +141,7 @@ Micronaut Data reports this at compilation time with a message that explains tha
 Use `insert(...)` for new rows and an explicit delta `@Query` for existing rows.
 
 This restriction is specific to reservable-only update shapes.
-If an entity has at least one non-reservable updateable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
+If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
 Custom reservation update queries must not use Oracle DML `RETURNING`.
 Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
