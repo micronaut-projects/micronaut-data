@@ -30,7 +30,7 @@ class SqlQueryBuilderReservableSpec extends Specification {
 
         expect:
         appendReservableAndCheckConstraints(builder, '"BALANCE" NUMBER(19)', column, true) ==
-                '"BALANCE" NUMBER(19) reservable CONSTRAINT "CHK_BALANCE_POSITIVE" CHECK ("BALANCE" >= 0)'
+                '"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CHK_BALANCE_POSITIVE" CHECK ("BALANCE" >= 0)'
     }
 
     private static SqlColumnMapping reservableColumn() {

@@ -925,7 +925,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (dialect != Dialect.ORACLE) {
                 throw new IllegalStateException("Reservable columns are only supported for Oracle");
             }
-            column += " reservable";
+            column += " RESERVABLE";
         }
         for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {
             String columnName = tableColumn.getName();

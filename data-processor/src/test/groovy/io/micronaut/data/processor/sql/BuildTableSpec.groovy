@@ -73,7 +73,7 @@ class Account {
         def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"BALANCE" NUMBER(19) reservable CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
     }
 
     void "test build create table with Oracle reservable column without validation constraint"() {
@@ -111,7 +111,7 @@ class Account {
         def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) reservable NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE NOT NULL, PRIMARY KEY("ID"))'
     }
 
     void "test build create table with Oracle reservable column supports repeatable validation annotations"() {
@@ -155,7 +155,7 @@ class Account {
         def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) reservable CONSTRAINT "CK_ACCOUNT_BALANCE_LE_100" CHECK ("BALANCE" <= 100) CONSTRAINT "CK_ACCOUNT_BALANCE_GT_0_01" CHECK ("BALANCE" > 0.01) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_LE_100" CHECK ("BALANCE" <= 100) CONSTRAINT "CK_ACCOUNT_BALANCE_GT_0_01" CHECK ("BALANCE" > 0.01) NOT NULL, PRIMARY KEY("ID"))'
     }
 
     void "test build create table does not derive checks without reservable"() {
@@ -422,7 +422,7 @@ class Stats {
         def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) reservable CONSTRAINT "CK_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
     }
 
 
