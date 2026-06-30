@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
 import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.AssignedIdReturningEntity
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
@@ -321,6 +322,73 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             newBook.postPersist == 1
             bookRepository.findById(newBook.id).get().title == "My book"
             bookRepository.findByTitle("My book")
+    }
+
+    void "test returning insert update and delete with assigned id"() {
+        given:
+            def repository = context.getBean(PostgresAssignedIdReturningRepository)
+            repository.deleteAll()
+            def entity = new AssignedIdReturningEntity(1L, "Assigned Insert")
+
+        when:
+            def inserted = repository.insertReturning(entity)
+
+        then:
+            !inserted.is(entity)
+            inserted.id == 1L
+            inserted.title == "Assigned Insert"
+            repository.findById(1L).get().title == "Assigned Insert"
+
+        when:
+            inserted.title = "Assigned Update"
+            def updated = repository.updateReturning(inserted)
+
+        then:
+            !updated.is(inserted)
+            updated.id == 1L
+            updated.title == "Assigned Update"
+            repository.findById(1L).get().title == "Assigned Update"
+
+        when:
+            def deleted = repository.deleteReturning(updated)
+
+        then:
+            deleted.id == 1L
+            deleted.title == "Assigned Update"
+            !repository.existsById(1L)
+
+        when:
+            def entities = [
+                    new AssignedIdReturningEntity(2L, "Assigned Insert 2"),
+                    new AssignedIdReturningEntity(3L, "Assigned Insert 3")
+            ]
+            def insertedEntities = repository.insertReturning(entities)
+
+        then:
+            insertedEntities*.id == [2L, 3L]
+            insertedEntities*.title == ["Assigned Insert 2", "Assigned Insert 3"]
+            repository.findById(2L).get().title == "Assigned Insert 2"
+            repository.findById(3L).get().title == "Assigned Insert 3"
+
+        when:
+            insertedEntities[0].title = "Assigned Update 2"
+            insertedEntities[1].title = "Assigned Update 3"
+            def updatedEntities = repository.updateReturning(insertedEntities)
+
+        then:
+            updatedEntities*.id == [2L, 3L]
+            updatedEntities*.title == ["Assigned Update 2", "Assigned Update 3"]
+            repository.findById(2L).get().title == "Assigned Update 2"
+            repository.findById(3L).get().title == "Assigned Update 3"
+
+        when:
+            def deletedEntities = repository.deleteReturning(updatedEntities)
+
+        then:
+            deletedEntities*.id == [2L, 3L]
+            deletedEntities*.title == ["Assigned Update 2", "Assigned Update 3"]
+            !repository.existsById(2L)
+            !repository.existsById(3L)
     }
 
     void "test insert returning books"() {
