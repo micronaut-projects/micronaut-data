@@ -21,7 +21,6 @@ import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionO
 import io.micronaut.data.tck.services.TxBookService;
 import io.micronaut.data.tck.services.TxEventsService;
 import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +40,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;

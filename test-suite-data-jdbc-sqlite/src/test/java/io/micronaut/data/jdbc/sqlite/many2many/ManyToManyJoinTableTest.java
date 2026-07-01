@@ -31,7 +31,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
 @SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite.many2many")

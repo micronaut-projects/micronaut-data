@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Proxy;
 import java.sql.CallableStatement;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

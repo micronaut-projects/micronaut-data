@@ -20,7 +20,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Meal;
 import io.micronaut.data.tck.repositories.MealRepository;
-import io.micronaut.validation.Validated;
 import jakarta.validation.Valid;
 
 @JdbcRepository(dialect = Dialect.SQLITE)

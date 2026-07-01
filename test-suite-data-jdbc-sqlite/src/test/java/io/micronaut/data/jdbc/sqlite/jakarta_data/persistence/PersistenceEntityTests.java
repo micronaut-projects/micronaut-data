@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.sqlite.jakarta_data.persistence;
 
-import io.micronaut.context.annotation.Property;
 import io.micronaut.data.jdbc.sqlite.SQLiteDBProperties;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.data.Order;
@@ -16,7 +15,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
