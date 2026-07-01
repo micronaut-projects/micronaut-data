@@ -1383,9 +1383,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 });
             }
 
-            builder = INSERT_INTO + getTableName(entity) +
-                " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
-                "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            if (columns.isEmpty()) {
+                // MySQL/MariaDB do not support DEFAULT VALUES syntax
+                if (dialect == Dialect.MYSQL) {
+                    builder = INSERT_INTO + getTableName(entity) + " () VALUES ()";
+                } else {
+                    builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
+                }
+            } else {
+                builder = INSERT_INTO + getTableName(entity) +
+                    " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
+                    "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            }
 
             if (definition.returning()) {
                 if (dialect == Dialect.ORACLE) {
