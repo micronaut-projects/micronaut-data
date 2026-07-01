@@ -150,6 +150,14 @@ Micronaut Data does not parse arbitrary raw SQL to detect this case in the first
 Custom reservation update queries must not use Oracle DML `RETURNING`.
 Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
 
+== Runtime Errors
+
+Reservation updates that fail because of a database integrity constraint, such as a generated reservable `CHECK` constraint, throw api:data.exceptions.DataIntegrityViolationException[].
+This applies to JDBC and R2DBC and is not limited to reservable columns. Micronaut Data maps broad SQL integrity failures to that exception type while preserving existing api:data.exceptions.EntityExistsException[] behavior for unique and duplicate-key cases.
+
+This database exception is distinct from Bean Validation failures.
+Method or entity validation that fails before SQL execution continues to throw `jakarta.validation.ConstraintViolationException`.
+
 == Restrictions
 
 Micronaut Data validates reservable mappings during schema generation:
