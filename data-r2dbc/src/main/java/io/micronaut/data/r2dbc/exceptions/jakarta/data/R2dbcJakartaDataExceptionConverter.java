@@ -19,11 +19,13 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataDeleteExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataUpdateExceptionConverter;
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
@@ -55,6 +57,9 @@ final class R2dbcJakartaDataExceptionConverter implements JakartaDataExceptionCo
         }
         if (isUniqueConstraintViolation(r2dbcException)) {
             return new EntityExistsException("Entity already exists: " + r2dbcException.getMessage(), exception);
+        }
+        if (r2dbcException instanceof R2dbcDataIntegrityViolationException) {
+            return new DataIntegrityViolationException("Data integrity violation: " + r2dbcException.getMessage(), exception);
         }
         if (exception instanceof DataAccessException) {
             return exception;

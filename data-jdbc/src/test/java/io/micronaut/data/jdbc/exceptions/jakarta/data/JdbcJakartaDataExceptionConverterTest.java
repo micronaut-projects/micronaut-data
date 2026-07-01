@@ -17,11 +17,13 @@ package io.micronaut.data.jdbc.exceptions.jakarta.data;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +55,13 @@ class JdbcJakartaDataExceptionConverterTest {
         Exception converted = converter.convert(new SQLException("syntax error", "42000", 0));
 
         assertInstanceOf(DataAccessException.class, converted);
+    }
+
+    @Test
+    void convertsNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
+        Exception converted = converter.convert(new SQLIntegrityConstraintViolationException("not null violation", "23502", 0));
+
+        assertInstanceOf(DataIntegrityViolationException.class, converted);
     }
 
     @Test

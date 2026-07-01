@@ -16,7 +16,7 @@
 package io.micronaut.data.r2dbc.oracle.reservable
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.DataIntegrityViolationException
 import io.micronaut.data.r2dbc.oraclexe.OracleXETestPropertyProvider
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -55,6 +55,6 @@ class OracleR2dbcReservableSpec extends Specification implements OracleXETestPro
         repository.reserve(account.id, -100L)
 
         then:
-        thrown(DataAccessException)
+        thrown(DataIntegrityViolationException)
     }
 }

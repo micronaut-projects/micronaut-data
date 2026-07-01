@@ -16,7 +16,6 @@
 package io.micronaut.data.r2dbc.operations;
 
 import io.micronaut.core.annotation.Internal;
-import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -47,10 +46,6 @@ final class OracleR2dbcExceptionMapper implements R2dbcExceptionMapper {
         if (r2dbcException.getErrorCode() == JSON_VIEW_ETAG_NOT_MATCHING_ERROR) {
             return new OptimisticLockException("ETAG did not match when updating record: " + r2dbcException.getMessage(), r2dbcException);
         }
-        if (r2dbcException instanceof R2dbcDataIntegrityViolationException dbcDataIntegrityViolationException) {
-            throw new DataAccessException("Data integrity violation: " + dbcDataIntegrityViolationException.getMessage(), dbcDataIntegrityViolationException);
-        }
         return null;
     }
 }
-

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataDeleteExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataExceptionConverter;
@@ -28,6 +29,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Locale;
 
 /**
@@ -55,6 +57,9 @@ final class JdbcJakartaDataExceptionConverter implements JakartaDataExceptionCon
         }
         if (isUniqueConstraintViolation(sqlException)) {
             return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), exception);
+        }
+        if (sqlException instanceof SQLIntegrityConstraintViolationException) {
+            return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), exception);
         }
         if (exception instanceof DataAccessException) {
             return exception;

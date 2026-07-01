@@ -36,6 +36,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
@@ -116,6 +117,7 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Readable;
@@ -486,6 +488,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return dataAccessException;
                 }
             }
+        }
+        if (r2dbcException instanceof R2dbcDataIntegrityViolationException) {
+            return new DataIntegrityViolationException("Data integrity violation: " + r2dbcException.getMessage(), r2dbcException);
         }
         return null;
     }

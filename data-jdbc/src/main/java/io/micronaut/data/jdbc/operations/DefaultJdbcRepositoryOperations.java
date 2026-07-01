@@ -36,6 +36,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -117,6 +118,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -1151,6 +1153,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
         if (dataAccessException != null) {
             return dataAccessException;
+        }
+        if (sqlException instanceof SQLIntegrityConstraintViolationException) {
+            return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), sqlException);
         }
         return fallbackMapper.apply(sqlException);
     }
