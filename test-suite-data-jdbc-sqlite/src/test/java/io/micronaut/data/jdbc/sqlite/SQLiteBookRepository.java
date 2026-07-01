@@ -41,4 +41,10 @@ public abstract class SQLiteBookRepository extends io.micronaut.data.tck.reposit
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
+
+    abstract Book insertReturning(Book book);
+
+    abstract Book updateReturning(Book book);
+
+    abstract Book deleteReturning(Book book);
 }

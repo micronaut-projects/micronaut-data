@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
 @MappedEntity("generated_value_entity")
-public class SqliteGeneratedValueEntity {
+public class GeneratedValueEntity {
 
     @Id
     @GeneratedValue
@@ -28,7 +28,7 @@ public class SqliteGeneratedValueEntity {
 
     private String name;
 
-    public SqliteGeneratedValueEntity(String name) {
+    public GeneratedValueEntity(String name) {
         this.name = name;
     }
 

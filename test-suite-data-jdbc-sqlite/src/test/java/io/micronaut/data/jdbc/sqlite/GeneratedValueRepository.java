@@ -20,5 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 
 @JdbcRepository(dialect = Dialect.SQLITE)
-public interface SqliteGeneratedValueRepository extends CrudRepository<SqliteGeneratedValueEntity, Long> {
+public interface GeneratedValueRepository extends CrudRepository<GeneratedValueEntity, Long> {
+
+    GeneratedValueEntity insertReturning(GeneratedValueEntity entity);
 }

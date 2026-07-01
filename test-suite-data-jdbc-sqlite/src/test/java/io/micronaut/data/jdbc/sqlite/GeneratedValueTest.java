@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.sqlite;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
@@ -26,13 +27,15 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
 @SQLiteDBProperties
-class SqliteGeneratedValueTest {
+@Property(name = "sqlite.sql-recorder.enabled", value = "true")
+class GeneratedValueTest {
 
     @Inject
-    SqliteGeneratedValueRepository repository;
+    GeneratedValueRepository repository;
 
     @AfterEach
     void cleanup() {
@@ -41,11 +44,11 @@ class SqliteGeneratedValueTest {
 
     @Test
     void testSaveAndLoadGeneratedIdentity() {
-        SqliteGeneratedValueEntity saved = repository.save(new SqliteGeneratedValueEntity("alpha"));
+        GeneratedValueEntity saved = repository.save(new GeneratedValueEntity("alpha"));
 
         assertNotNull(saved.getId());
 
-        SqliteGeneratedValueEntity reloaded = repository.findById(saved.getId()).orElse(null);
+        GeneratedValueEntity reloaded = repository.findById(saved.getId()).orElse(null);
 
         assertNotNull(reloaded);
         assertEquals(saved.getId(), reloaded.getId());
@@ -53,20 +56,36 @@ class SqliteGeneratedValueTest {
     }
 
     @Test
+    void testInsertReturningAssignsGeneratedIdentity() {
+        RecordedSql.clear();
+        GeneratedValueEntity inserted = repository.insertReturning(new GeneratedValueEntity("gamma"));
+
+        assertTrue(RecordedSql.hasStatementContaining("INSERT", "RETURNING"), RecordedSql.statements().toString());
+        assertNotNull(inserted.getId());
+        assertEquals("gamma", inserted.getName());
+
+        GeneratedValueEntity reloaded = repository.findById(inserted.getId()).orElse(null);
+
+        assertNotNull(reloaded);
+        assertEquals(inserted.getId(), reloaded.getId());
+        assertEquals("gamma", reloaded.getName());
+    }
+
+    @Test
     void testSaveAllAssignsGeneratedIdentities() {
-        List<SqliteGeneratedValueEntity> saved = repository.saveAll(List.of(
-            new SqliteGeneratedValueEntity("alpha"),
-            new SqliteGeneratedValueEntity("beta")
+        List<GeneratedValueEntity> saved = repository.saveAll(List.of(
+            new GeneratedValueEntity("alpha"),
+            new GeneratedValueEntity("beta")
         ));
 
         saved.forEach(entity -> assertNotNull(entity.getId()));
-        assertEquals(2, saved.stream().map(SqliteGeneratedValueEntity::getId).distinct().count());
+        assertEquals(2, saved.stream().map(GeneratedValueEntity::getId).distinct().count());
 
-        List<SqliteGeneratedValueEntity> reloaded = saved.stream()
+        List<GeneratedValueEntity> reloaded = saved.stream()
             .map(entity -> repository.findById(entity.getId()).orElse(null))
             .toList();
 
-        Set<String> names = reloaded.stream().map(SqliteGeneratedValueEntity::getName).collect(Collectors.toSet());
+        Set<String> names = reloaded.stream().map(GeneratedValueEntity::getName).collect(Collectors.toSet());
         assertEquals(Set.of("alpha", "beta"), names);
     }
 }
