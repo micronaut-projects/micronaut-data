@@ -1,17 +1,13 @@
 package io.micronaut.data.connection;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledInNativeImage;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultConnectionCapabilitiesTest {
@@ -46,7 +42,7 @@ class DefaultConnectionCapabilitiesTest {
         );
         return connection(metaData);
     }
-    
+
     private Connection connection(DatabaseMetaData metaData) {
         return (Connection) Proxy.newProxyInstance(
             Connection.class.getClassLoader(),

@@ -16,9 +16,7 @@
 package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.Internal;
-
 import java.sql.Connection;
-import java.util.function.Supplier;
 
 /**
  * Internal fallback {@link ConnectionCapabilities} implementation that assumes all capabilities are supported.
@@ -28,7 +26,7 @@ import java.util.function.Supplier;
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
     @Override
-    public boolean supports(Capability capability, Connection connection) {
+    public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
         return true;
     }
 }
