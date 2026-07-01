@@ -15,28 +15,16 @@
  */
 package io.micronaut.data.connection;
 
+import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.order.Ordered;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ServiceLoader;
-import java.util.function.Supplier;
 
 /**
- * Defines the capabilities of a database connection.
- * <p>
- * The primary API is {@link #supports(Capability, Supplier)}, which accepts a supplier of
- * the database product name so that capability detection works for both JDBC
- * ({@link Connection}) and R2DBC ({@code io.r2dbc.spi.Connection}) connections.
- * Convenience overloads such as {@link #supports(Capability, Connection)} delegate to the
- * supplier-based method.
- * <p>
- * When the database product name cannot be determined (e.g., the supplier throws or returns
- * an unrecognised value), implementations should default to returning {@code true} (capability
- * is supported) so that the calling code can fall back to its own default behaviour safely.
+ * Defines the capabilities of a {@link Connection}.
  * <p>
  * You can provide your own implementation via Java SPI by registering
  * {@code io.micronaut.data.connection.ConnectionCapabilities} in
@@ -82,10 +70,8 @@ public interface ConnectionCapabilities extends Ordered {
 
     private static ConnectionCapabilities loadInstance() {
         List<ConnectionCapabilities> providers = new ArrayList<>();
-        for (ConnectionCapabilities provider : ServiceLoader.load(ConnectionCapabilities.class)) {
-            providers.add(provider);
-        }
-        providers.sort(OrderUtil.COMPARATOR);
+        SoftServiceLoader.load(ConnectionCapabilities.class).collectAll(providers);
+        OrderUtil.sort(providers);
         return providers.isEmpty() ? new DefaultConnectionCapabilities() : providers.get(0);
     }
 }
