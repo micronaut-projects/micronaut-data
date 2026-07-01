@@ -160,11 +160,9 @@ io.micronaut.data.tck.entities.embedded
 io.micronaut.data.tck.entities.schema
 io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.jdbc.entities.geo
-io.micronaut.data.tck.jdbc.entities.upsert
 io.micronaut.data.tck.metamodel
 io.micronaut.data.tck.repositories
 io.micronaut.data.tck.repositories.embedded
-io.micronaut.data.tck.repositories.upsert
 io.micronaut.data.tck.services
 io.micronaut.data.tck.tests
 io.micronaut.transaction
