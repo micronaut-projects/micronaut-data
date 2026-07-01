@@ -490,6 +490,8 @@ interface MyRepository {
         Dialect.H2       || 'INSERT INTO `generated_id_only_entity` DEFAULT VALUES'
         Dialect.MYSQL    || 'INSERT INTO `generated_id_only_entity` () VALUES ()'
         Dialect.POSTGRES || 'INSERT INTO "generated_id_only_entity" DEFAULT VALUES'
+        Dialect.SQL_SERVER || 'INSERT INTO [generated_id_only_entity] DEFAULT VALUES'
+        Dialect.ORACLE   || 'INSERT INTO "GENERATED_ID_ONLY_ENTITY" DEFAULT VALUES'
     }
 
     void "test encode insert statement for embedded"() {
