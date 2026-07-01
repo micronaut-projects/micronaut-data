@@ -24,8 +24,8 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
-import io.micronaut.transaction.annotation.TransactionalRecoverable;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
@@ -245,7 +245,7 @@ class RecoverableSpec {
         private final AtomicInteger invocations = new AtomicInteger();
 
         @Transactional
-        @TransactionalRecoverable
+        @OracleTransactional.Recoverable
         String work() {
             return "ok-" + invocations.incrementAndGet();
         }
@@ -256,7 +256,7 @@ class RecoverableSpec {
         private final AtomicInteger invocations = new AtomicInteger();
 
         @Transactional
-        @TransactionalRecoverable(unknownOutcomePolicy = TransactionalRecoverable.OutcomePolicy.RETRY)
+        @OracleTransactional.Recoverable(unknownOutcomePolicy = OracleTransactional.Recoverable.OutcomePolicy.RETRY)
         String work() {
             return "ok-" + invocations.incrementAndGet();
         }
@@ -267,7 +267,7 @@ class RecoverableSpec {
         private final AtomicInteger invocations = new AtomicInteger();
 
         @Transactional
-        @TransactionalRecoverable(maxAttempts = 0)
+        @OracleTransactional.Recoverable(maxAttempts = 0)
         String work() {
             return "ok-" + invocations.incrementAndGet();
         }
@@ -278,7 +278,7 @@ class RecoverableSpec {
         private final AtomicInteger invocations = new AtomicInteger();
 
         @Transactional
-        @TransactionalRecoverable(on = CustomRecoverableCommitException.class)
+        @OracleTransactional.Recoverable(on = CustomRecoverableCommitException.class)
         String work() {
             return "ok-" + invocations.incrementAndGet();
         }
@@ -289,7 +289,7 @@ class RecoverableSpec {
         private final AtomicInteger invocations = new AtomicInteger();
 
         @Transactional("other")
-        @TransactionalRecoverable
+        @OracleTransactional.Recoverable
         String work() {
             return "other-ok-" + invocations.incrementAndGet();
         }

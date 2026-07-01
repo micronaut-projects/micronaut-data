@@ -23,7 +23,7 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.annotation.TransactionalRecoverable;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
 import io.micronaut.transaction.support.ExceptionUtil;
@@ -57,15 +57,7 @@ final class RecoverableTransactionExecutor {
                        TransactionDefinition definition,
                        MethodInvocationContext<Object, Object> context,
                        @Nullable String dataSourceName) {
-        Class<?>[] on = context.classValues(TransactionalRecoverable.class, "on");
-        if (on == null || on.length == 0) {
-            on = new Class[]{java.sql.SQLRecoverableException.class};
-        }
-        int maxAttempts = Math.max(context.intValue(TransactionalRecoverable.class, "maxAttempts").orElse(1), 0);
-        long backoff = Math.max(context.longValue(TransactionalRecoverable.class, "backoff").orElse(100L), 0L);
-        TransactionalRecoverable.OutcomePolicy unknownOutcomePolicy = context
-            .enumValue(TransactionalRecoverable.class, "unknownOutcomePolicy", TransactionalRecoverable.OutcomePolicy.class)
-            .orElse(TransactionalRecoverable.OutcomePolicy.FAIL);
+        RecoveryConfiguration configuration = resolveConfiguration(context);
 
         int attempt = 0;
         while (true) {
@@ -104,7 +96,7 @@ final class RecoverableTransactionExecutor {
                     }
                 });
             } catch (Throwable e) {
-                if (!ownsCommitBoundary.get() || !matchesRecoverable(e, on)) {
+                if (!ownsCommitBoundary.get() || !matchesRecoverable(e, configuration.on())) {
                     return ExceptionUtil.sneakyThrow(e);
                 }
                 CommitOutcomeResolver resolver = resolverRef.get();
@@ -125,11 +117,11 @@ final class RecoverableTransactionExecutor {
                     return resultRef.get();
                 }
                 boolean retry = outcome == CommitOutcome.NOT_COMMITTED
-                    || (outcome == CommitOutcome.UNKNOWN && unknownOutcomePolicy == TransactionalRecoverable.OutcomePolicy.RETRY);
-                if (retry && attempt++ < maxAttempts) {
-                    if (backoff > 0) {
+                    || (outcome == CommitOutcome.UNKNOWN && configuration.unknownOutcomePolicy() == UnknownOutcomePolicy.RETRY);
+                if (retry && attempt++ < configuration.maxAttempts()) {
+                    if (configuration.backoff() > 0) {
                         try {
-                            Thread.sleep(backoff);
+                            Thread.sleep(configuration.backoff());
                         } catch (InterruptedException interruptedException) {
                             Thread.currentThread().interrupt();
                             throw new IllegalStateException("Interrupted while retrying recoverable transaction", interruptedException);
@@ -140,6 +132,20 @@ final class RecoverableTransactionExecutor {
                 return ExceptionUtil.sneakyThrow(e);
             }
         }
+    }
+
+    private RecoveryConfiguration resolveConfiguration(MethodInvocationContext<Object, Object> context) {
+        Class<?>[] on = context.classValues(OracleTransactional.Recoverable.class, "on");
+        if (on == null || on.length == 0) {
+            on = new Class[]{java.sql.SQLRecoverableException.class};
+        }
+        int maxAttempts = Math.max(context.intValue(OracleTransactional.Recoverable.class, "maxAttempts").orElse(1), 0);
+        long backoff = Math.max(context.longValue(OracleTransactional.Recoverable.class, "backoff").orElse(100L), 0L);
+        UnknownOutcomePolicy unknownOutcomePolicy = context
+            .enumValue(OracleTransactional.Recoverable.class, "unknownOutcomePolicy", OracleTransactional.Recoverable.OutcomePolicy.class)
+            .map(policy -> policy == OracleTransactional.Recoverable.OutcomePolicy.RETRY ? UnknownOutcomePolicy.RETRY : UnknownOutcomePolicy.FAIL)
+            .orElse(UnknownOutcomePolicy.FAIL);
+        return new RecoveryConfiguration(on, maxAttempts, backoff, unknownOutcomePolicy);
     }
 
     @Nullable
@@ -170,5 +176,43 @@ final class RecoverableTransactionExecutor {
             current = current.getCause();
         }
         return false;
+    }
+
+    private static final class RecoveryConfiguration {
+        private final Class<?>[] on;
+        private final int maxAttempts;
+        private final long backoff;
+        private final UnknownOutcomePolicy unknownOutcomePolicy;
+
+        private RecoveryConfiguration(Class<?>[] on,
+                                      int maxAttempts,
+                                      long backoff,
+                                      UnknownOutcomePolicy unknownOutcomePolicy) {
+            this.on = on;
+            this.maxAttempts = maxAttempts;
+            this.backoff = backoff;
+            this.unknownOutcomePolicy = unknownOutcomePolicy;
+        }
+
+        private Class<?>[] on() {
+            return on;
+        }
+
+        private int maxAttempts() {
+            return maxAttempts;
+        }
+
+        private long backoff() {
+            return backoff;
+        }
+
+        private UnknownOutcomePolicy unknownOutcomePolicy() {
+            return unknownOutcomePolicy;
+        }
+    }
+
+    private enum UnknownOutcomePolicy {
+        RETRY,
+        FAIL
     }
 }

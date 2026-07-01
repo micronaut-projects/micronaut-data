@@ -26,8 +26,8 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionOperationsRegistry;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
-import io.micronaut.transaction.annotation.TransactionalRecoverable;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -145,7 +145,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                 }
                 case SYNCHRONOUS -> {
                     TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
-                    if (context.getAnnotationMetadata().hasAnnotation(TransactionalRecoverable.class)) {
+                    if (context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
                         return recoverableTransactionExecutor.execute(
                             transactionManager,
                             definition,

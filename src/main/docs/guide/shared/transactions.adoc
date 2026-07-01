@@ -29,5 +29,5 @@ Older Oracle versions that reject `txn_priority` continue without applying prior
 
 === Oracle Transaction Recovery
 
-For Oracle JDBC transactions, Micronaut Data supports ambiguous commit recovery with ann:transaction.annotation.TransactionalRecoverable[].
+For Oracle JDBC transactions, Micronaut Data supports ambiguous commit recovery with `@OracleTransactional.Recoverable`.
 See <<recoverableTransactions, Oracle Transaction Recovery>> for configuration, scope, and usage details.
