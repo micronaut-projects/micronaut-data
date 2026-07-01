@@ -23,9 +23,9 @@ import java.util.List;
 
 public interface CustomerProfileUuidRepository extends CrudRepository<CustomerProfileUuid, String> {
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CustomerProfileUuid upsert(CustomerProfileUuid customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     List<CustomerProfileUuid> upsertAll(Iterable<CustomerProfileUuid> customerProfiles);
 }

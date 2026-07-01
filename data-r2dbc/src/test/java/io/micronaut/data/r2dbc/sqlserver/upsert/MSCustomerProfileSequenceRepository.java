@@ -25,9 +25,9 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.SQL_SERVER)
 public interface MSCustomerProfileSequenceRepository extends CrudRepository<CustomerProfileSequence, Long> {
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CustomerProfileSequence upsert(CustomerProfileSequence customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     List<CustomerProfileSequence> upsertAll(Iterable<CustomerProfileSequence> customerProfiles);
 }

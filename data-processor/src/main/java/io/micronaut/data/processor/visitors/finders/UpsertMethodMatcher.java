@@ -252,7 +252,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
     }
 
     private List<String> conflictProperties(MethodMatchContext matchContext) {
-        return Arrays.asList(matchContext.getAnnotationMetadata().stringValues(Upsert.class, "conflictProperties"));
+        return Arrays.asList(matchContext.getAnnotationMetadata().stringValues(Upsert.class, "conflictsOn"));
     }
 
 }

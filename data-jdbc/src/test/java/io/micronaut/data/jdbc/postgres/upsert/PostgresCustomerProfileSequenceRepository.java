@@ -25,9 +25,9 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresCustomerProfileSequenceRepository extends CrudRepository<CustomerProfileSequence, Long> {
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CustomerProfileSequence upsert(CustomerProfileSequence customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     List<CustomerProfileSequence> upsertAll(Iterable<CustomerProfileSequence> customerProfiles);
 }

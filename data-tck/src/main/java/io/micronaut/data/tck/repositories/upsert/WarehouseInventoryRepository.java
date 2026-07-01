@@ -23,9 +23,9 @@ import java.util.List;
 
 public interface WarehouseInventoryRepository extends CrudRepository<WarehouseInventory, Long> {
 
-    @Upsert(conflictProperties = {"sku", "warehouse"})
+    @Upsert(conflictsOn = {"sku", "warehouse"})
     WarehouseInventory upsert(WarehouseInventory warehouseInventory);
 
-    @Upsert(conflictProperties = {"sku", "warehouse"})
+    @Upsert(conflictsOn = {"sku", "warehouse"})
     List<WarehouseInventory> upsertAll(Iterable<WarehouseInventory> warehouseInventories);
 }

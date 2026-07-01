@@ -26,39 +26,39 @@ import java.util.concurrent.CompletableFuture;
 
 public interface CustomerProfileRepository extends CrudRepository<CustomerProfile, Long> {
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CustomerProfile upsert(CustomerProfile customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     Mono<CustomerProfile> upsertMono(CustomerProfile profile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CompletableFuture<CustomerProfile> upsertFuture(CustomerProfile profile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     void upsertNoResult(CustomerProfile customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     Mono<Void> upsertMonoNoResult(CustomerProfile customerProfile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CompletableFuture<Void> upsertFutureNoResult(CustomerProfile profile);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     List<CustomerProfile> upsertAll(Iterable<CustomerProfile> customerProfiles);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     Flux<CustomerProfile> upsertAllFlux(Iterable<CustomerProfile> profiles);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CompletableFuture<List<CustomerProfile>> upsertAllFuture(Iterable<CustomerProfile> profiles);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     void upsertAllNoResult(Iterable<CustomerProfile> customerProfiles);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     Flux<Void> upsertAllFluxNoResult(Iterable<CustomerProfile> profiles);
 
-    @Upsert(conflictProperties = "email")
+    @Upsert(conflictsOn = "email")
     CompletableFuture<Void> upsertAllFutureNoResult(Iterable<CustomerProfile> profiles);
 }

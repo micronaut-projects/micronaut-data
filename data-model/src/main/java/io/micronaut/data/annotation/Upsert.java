@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
  * its parameter.
  * </p>
  * <p>By default, the entity identity is used to determine whether an existing row should be updated. The
- * {@link #conflictProperties()} member can be used to select a different property or set of properties as the conflict
+ * {@link #conflictsOn()} member can be used to select a different property or set of properties as the conflict
  * target.
  * </p>
  *
@@ -52,7 +52,7 @@ public @interface Upsert {
     /**
      * The persistent entity properties to use as the conflict target.
      *
-     * @return The conflict properties
+     * @return The conflict target properties
      */
-    String[] conflictProperties() default {};
+    String[] conflictsOn() default {};
 }

@@ -559,10 +559,10 @@ import java.util.List;
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     Test put(Test test);
 
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     List<Test> putAll(List<Test> tests);
 }
 
@@ -631,10 +631,10 @@ import java.util.List;
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     Test put(Test test);
 
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     List<Test> putAll(List<Test> tests);
 }
 
@@ -719,16 +719,16 @@ import reactor.core.publisher.Mono;
 @JdbcRepository(dialect=Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     Test put(Test test);
 
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     Mono<Test> putMono(Test test);
 
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     Flux<Test> putFlux(List<Test> tests);
 
-    @Upsert(conflictProperties = "name")
+    @Upsert(conflictsOn = "name")
     void putNoResult(Test test);
 }
 
@@ -795,7 +795,7 @@ import io.micronaut.data.repository.GenericRepository;
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
-    @Upsert(conflictProperties = {"name", "pages"})
+    @Upsert(conflictsOn = {"name", "pages"})
     Test put(Test test);
 }
 
@@ -978,8 +978,8 @@ class Test {
         "missing identity"           | ""                                                                                                                  | ""                                                                                                                  | ""                         | ""                | "entity does not define an identity"
         "versioned entity"           | ""                                                                                                                  | ""                                                                                                                  | "@Id"                      | "@Version"        | "versioned entities are not supported"
         "generated identity"         | ""                                                                                                                  | ""                                                                                                                  | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
-        "blank conflict property"    | "@Upsert(conflictProperties = \"\")"                                                                                | ""                                                                                                                  | "@Id"                      | ""                | "conflict property cannot be blank"
-        "unknown conflict property"  | "@Upsert(conflictProperties = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
+        "blank conflict property"    | "@Upsert(conflictsOn = \"\")"                                                                                | ""                                                                                                                  | "@Id"                      | ""                | "conflict property cannot be blank"
+        "unknown conflict property"  | "@Upsert(conflictsOn = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
     }
 
     void "test build upsert fails with both entity and iterable entity parameters"() {
