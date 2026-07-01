@@ -51,9 +51,10 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     void cleanup() {
-        warehouseInventoryRepository.deleteAll()
-        customerProfileRepository.deleteAll()
         productReviewRepository.deleteAll()
+        customerProfileRepository.deleteAll()
+        customerProfileUuidRepository.deleteAll()
+        warehouseInventoryRepository.deleteAll()
         cleanupAdditionalRepositories()
     }
 
