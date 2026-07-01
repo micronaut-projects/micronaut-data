@@ -66,7 +66,7 @@ public interface ConnectionCapabilities extends Ordered {
      * @param connection The JDBC connection
      * @return {@code true} if the connection supports the capability; {@code false} otherwise
      */
-    boolean supports(ConnectionCapabilities.Capability capability, Connection connection);
+    boolean supports(Capability capability, Connection connection);
 
     private static ConnectionCapabilities loadInstance() {
         List<ConnectionCapabilities> providers = new ArrayList<>();
