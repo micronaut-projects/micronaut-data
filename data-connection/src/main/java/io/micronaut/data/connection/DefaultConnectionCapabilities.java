@@ -28,11 +28,6 @@ import java.util.function.Supplier;
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
     @Override
-    public boolean supports(ConnectionCapabilities.Capability capability, Supplier<String> databaseProductNameSupplier) {
-        return true;
-    }
-
-    @Override
     public boolean supports(Capability capability, Connection connection) {
         return true;
     }
