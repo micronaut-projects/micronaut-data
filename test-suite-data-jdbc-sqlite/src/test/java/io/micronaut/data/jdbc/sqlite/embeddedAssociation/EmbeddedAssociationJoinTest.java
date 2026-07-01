@@ -109,7 +109,7 @@ class EmbeddedAssociationJoinTest {
             emId.setOne(entity);
             oneMainEntityEm.setId(emId);
             oneMainEntityEm.setName("Embedded is crazy");
-            oneMainEntityEm = oneMainEntityEmRepository.save(oneMainEntityEm);
+            oneMainEntityEm = oneMainEntityEmRepository.insert(oneMainEntityEm);
             oneMainEntityEm = oneMainEntityEmRepository.findById(oneMainEntityEm.getId()).orElseThrow();
 
             assertEquals("Embedded is crazy", oneMainEntityEm.getName());
@@ -126,12 +126,12 @@ class EmbeddedAssociationJoinTest {
             RelationshipStatus active = new RelationshipStatus();
             active.setId(1L);
             active.setName("Active");
-            relationshipStatusRepository.save(active);
+            relationshipStatusRepository.insert(active);
 
             RelationshipStatus inactive = new RelationshipStatus();
             inactive.setId(2L);
             inactive.setName("InActive");
-            relationshipStatusRepository.save(inactive);
+            relationshipStatusRepository.insert(inactive);
 
             RelationshipStatus status = relationshipStatusRepository.findById(1L).orElse(null);
             assertNotNull(status);

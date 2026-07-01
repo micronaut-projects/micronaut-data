@@ -155,7 +155,7 @@ abstract class AbstractSQLiteRepositoryBehaviorTest implements SQLiteTestingProp
         var bookEntityRepository = context.getBean(SQLiteBookEntityRepository.class);
         BookEntity bookEntity = new BookEntity(1L, new ResourceEntity<>("1984", BookState.BORROWED));
 
-        bookEntityRepository.save(bookEntity);
+        bookEntityRepository.insert(bookEntity);
         var result = bookEntityRepository.findAllByResourceState(BookState.BORROWED);
 
         assertFalse(result.isEmpty());

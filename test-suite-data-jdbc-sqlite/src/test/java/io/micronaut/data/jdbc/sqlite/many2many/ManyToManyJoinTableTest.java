@@ -105,7 +105,7 @@ class ManyToManyJoinTableTest {
         CourseRatingCompositeKey compositeRating = new CourseRatingCompositeKey();
         compositeRating.setId(key);
         compositeRating.setRating(5);
-        courseRatingCompositeKeyRepository.save(compositeRating);
+        courseRatingCompositeKeyRepository.insert(compositeRating);
         student = studentRepository.findByIdEquals(student.getId()).orElseThrow();
 
         assertEquals("Denis", student.getName());

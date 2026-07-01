@@ -242,8 +242,7 @@ class SQLiteJSONTest {
         loadedValues = new ArrayList<>();
         loaded.getValues().forEach(loadedValues::add);
         assertEquals(List.of("item1", "item2", "item3"), loadedValues);
-
-        JsonEntity b = jsonEntityRepository.save(2L, List.of("newitem1", "newitem2", "newitem3"));
+        JsonEntity b = jsonEntityRepository.insert(2L, List.of("newitem1", "newitem2", "newitem3"));
         loaded = jsonEntityRepository.findById(2L).orElseThrow();
         List<String> bValues = new ArrayList<>();
         b.getValues().forEach(bValues::add);

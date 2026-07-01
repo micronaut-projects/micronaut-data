@@ -38,7 +38,7 @@ class AutoPopulateEmbeddedTest {
             entity.setId("id1");
             entity.setFirstName("Peter");
 
-            MyAuditableEntity saved = repository.save(entity);
+            MyAuditableEntity saved = repository.insert(entity);
             MyAuditableEntity loaded = repository.findById(saved.getId()).orElse(null);
 
             assertNotNull(loaded);
@@ -239,7 +239,7 @@ class MyAuditableEntity {
 @JdbcRepository(dialect = Dialect.SQLITE)
 interface MyAuditableEntityRepository extends GenericRepository<MyAuditableEntity, String> {
 
-    MyAuditableEntity save(MyAuditableEntity entity);
+    MyAuditableEntity insert(MyAuditableEntity entity);
 
     Optional<MyAuditableEntity> findById(String id);
 }

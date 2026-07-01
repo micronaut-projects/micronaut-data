@@ -16,11 +16,11 @@ class TenancyPersonService {
     }
 
     TenancyPerson save(TenancyPerson tenancyPerson) {
-        return tenancyPersonRepository.save(tenancyPerson);
+        return tenancyPersonRepository.insert(tenancyPerson);
     }
 
     List<TenancyPerson> saveAll(List<TenancyPerson> tenancyPeople) {
-        return tenancyPersonRepository.saveAll(tenancyPeople);
+        return tenancyPersonRepository.insertAll(tenancyPeople);
     }
 
     Integer insertWithQuery(List<TenancyPerson> tenancyPeople) {

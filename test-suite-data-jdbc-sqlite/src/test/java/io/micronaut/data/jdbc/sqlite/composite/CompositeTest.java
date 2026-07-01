@@ -65,7 +65,7 @@ class CompositeTest {
 
         settlementTypeRepository.save(settlement.getSettlementType());
         zoneRepository.save(settlement.getZone());
-        settlementRepository.save(settlement);
+        settlementRepository.insert(settlement);
         settlement = settlementRepository.findById(settlement.getId()).orElseThrow();
 
         assertSettlement(settlement, "Some", "Danger", "New settlement", null, true);
@@ -80,7 +80,7 @@ class CompositeTest {
 
         settlement.getId().getCounty().setCountyName("Czech Republic");
         settlement.getId().getCounty().setEnabled(true);
-        countryRepository.save(settlement.getId().getCounty());
+        countryRepository.insert(settlement.getId().getCounty());
         settlement = settlementRepository.queryById(settlement.getId()).orElseThrow();
 
         assertSettlement(settlement, "Some", "Danger", "New settlement MODIFIED", "Czech Republic", true);
@@ -130,7 +130,7 @@ class CompositeTest {
 
         settlementTypeRepository.save(settlement.getSettlementType());
         zoneRepository.save(settlement.getZone());
-        settlementRepository.save(settlement);
+        settlementRepository.insert(settlement);
         settlement = settlementRepository.findById(settlement.getId()).orElseThrow();
 
         assertSettlement(settlement, "Some", "Danger", "New settlement", null, true);
@@ -146,7 +146,7 @@ class CompositeTest {
         SettlementPk settlementId = settlement.getId();
         settlementId.getCounty().setCountyName("Czech Republic");
         settlementId.getCounty().setEnabled(true);
-        countryRepository.save(settlementId.getCounty());
+        countryRepository.insert(settlementId.getCounty());
         settlement = settlementRepository.findOne(new CriteriaQueryBuilder<>() {
             @Override
             public CriteriaQuery<Settlement> build(CriteriaBuilder criteriaBuilder) {

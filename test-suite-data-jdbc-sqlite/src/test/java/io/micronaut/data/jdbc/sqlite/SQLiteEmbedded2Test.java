@@ -41,14 +41,14 @@ class SQLiteEmbedded2Test {
 
     @Test
     void filledInnerCanBeRetrieved() {
-        Foo saved = repo.save(new Foo(0, new Bar("1", "2")));
+        Foo saved = repo.insert(new Foo(0, new Bar("1", "2")));
         Foo found = repo.findById(saved.getId()).orElseThrow();
         assertEquals(new Bar("1", "2"), found.getBar());
     }
 
     @Test
     void partiallyFilledInnerCanBeRetrieved() {
-        Foo saved = repo.save(new Foo(0, new Bar("1", null)));
+        Foo saved = repo.insert(new Foo(0, new Bar("1", null)));
         Foo found = repo.findById(saved.getId()).orElseThrow();
         assertEquals(new Bar("1", null), found.getBar());
     }

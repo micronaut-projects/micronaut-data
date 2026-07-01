@@ -38,7 +38,7 @@ class SQLiteCompositePrimaryKeyTest {
         ProjectId id = new ProjectId(10, 1);
         Project p = new Project(id, "Project 1");
         p.setOrg("test");
-        Project project = projectRepository.save(p);
+        Project project = projectRepository.insert(p);
 
         assertEquals(10, project.getProjectId().getDepartmentId());
         assertEquals(1, project.getProjectId().getProjectId());

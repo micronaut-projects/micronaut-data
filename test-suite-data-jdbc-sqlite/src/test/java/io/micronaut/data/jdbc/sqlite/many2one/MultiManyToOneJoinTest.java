@@ -149,7 +149,7 @@ class MultiManyToOneJoinTest {
     @Test
     void testManyToOneWithEntityHavingOnlyIdField() {
         MyEntity ent = new MyEntity(-1L, null);
-        ent = myEntityRepository.save(ent);
+        ent = myEntityRepository.insert(ent);
         assertNotEquals(-1L, ent.getLid());
 
         Optional<MyEntity> optFound = myEntityRepository.findById(ent.getLid());
@@ -160,9 +160,9 @@ class MultiManyToOneJoinTest {
         myEntityRepository.update(myEntity);
 
         MyOther myOther = new MyOther("foo");
-        myOtherRepository.save(myOther);
+        myOtherRepository.insert(myOther);
         MyEntity newMyEntity = new MyEntity(-1L, myOther);
-        newMyEntity = myEntityRepository.save(newMyEntity);
+        newMyEntity = myEntityRepository.insert(newMyEntity);
         optFound = myEntityRepository.findById(newMyEntity.getLid());
 
         assertTrue(optFound.isPresent());

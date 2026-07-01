@@ -27,7 +27,7 @@ class ManyToManyAttributeTest {
             "test",
             List.of()
         );
-        studentRepository.save(student);
+        studentRepository.insert(student);
 
         assertEquals(student, studentRepository.findById(student.id()).orElseThrow());
     }
@@ -39,14 +39,14 @@ class ManyToManyAttributeTest {
             "computer science",
             List.of()
         );
-        courseRepository.save(course);
+        courseRepository.insert(course);
 
         Student student = new Student(
             new StudentId(UUID.randomUUID()),
             "test",
             List.of(course)
         );
-        assertEquals(student, studentRepository.save(student));
+        assertEquals(student, studentRepository.insert(student));
 
         assertEquals(student.name(), courseRepository.findStudentsById(course.id()).get(0).name());
     }

@@ -45,7 +45,7 @@ class AssignedUuidCascadePersistTest {
                 tenant.addRole(role);
             }
 
-            tenantRepository.save(tenant);
+            tenantRepository.insert(tenant);
 
             assertTrue(tenantRepository.findById(tenantId).isPresent());
             assertEquals(3, roleRepository.countByTenantId(tenantId));

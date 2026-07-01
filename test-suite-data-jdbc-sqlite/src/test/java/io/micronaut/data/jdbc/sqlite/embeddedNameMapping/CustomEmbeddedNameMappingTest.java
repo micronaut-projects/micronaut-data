@@ -58,7 +58,7 @@ class CustomEmbeddedNameMappingTest {
         author.setDetailsIncluded(details);
         book.setAuthor(author);
 
-        myBookRepository.save(book);
+        myBookRepository.insert(book);
         book = myBookRepository.findById("1").orElseThrow();
 
         assertNotNull(book.getAuthor());

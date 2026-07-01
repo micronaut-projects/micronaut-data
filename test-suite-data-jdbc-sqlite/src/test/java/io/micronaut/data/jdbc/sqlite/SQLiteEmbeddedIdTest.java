@@ -73,7 +73,7 @@ class SQLiteEmbeddedIdTest {
     void testEmptyOneToManyViaEmbeddedId() {
         ItemGroup itemGroup = new ItemGroup(1L);
         itemGroup.setSecondId(2L);
-        groupRepository.save(itemGroup);
+        groupRepository.insert(itemGroup);
 
         ItemGroup entity = groupRepository.findById(1L).orElseThrow();
 
@@ -85,16 +85,16 @@ class SQLiteEmbeddedIdTest {
         repository.deleteAll();
 
         ShipmentId id = new ShipmentId("a", "b");
-        repository.save(new Shipment(id, "test"));
+        repository.insert(new Shipment(id, "test"));
 
         ShipmentId id2 = new ShipmentId("c", "d");
-        repository.save(new Shipment(id2, "test2"));
+        repository.insert(new Shipment(id2, "test2"));
 
         ShipmentId id3 = new ShipmentId("e", "f");
-        repository.save(new Shipment(id3, "test3"));
+        repository.insert(new Shipment(id3, "test3"));
 
         ShipmentId id4 = new ShipmentId("g", "h");
-        repository.save(new Shipment(id4, "test4"));
+        repository.insert(new Shipment(id4, "test4"));
 
         Shipment entity = repository.findById(id).orElse(null);
 
@@ -164,10 +164,10 @@ class SQLiteEmbeddedIdTest {
     void testCriteriaOrderOfEmbedded() {
         repository.deleteAll();
 
-        repository.save(new Shipment(new ShipmentId("a", "b"), "test"));
-        repository.save(new Shipment(new ShipmentId("c", "d"), "test2"));
-        repository.save(new Shipment(new ShipmentId("e", "f"), "test3"));
-        repository.save(new Shipment(new ShipmentId("g", "h"), "test4"));
+        repository.insert(new Shipment(new ShipmentId("a", "b"), "test"));
+        repository.insert(new Shipment(new ShipmentId("c", "d"), "test2"));
+        repository.insert(new Shipment(new ShipmentId("e", "f"), "test3"));
+        repository.insert(new Shipment(new ShipmentId("g", "h"), "test4"));
 
         Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
         Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
@@ -181,11 +181,11 @@ class SQLiteEmbeddedIdTest {
 
     @Test
     void testCursoredPageable() {
-        repository.save(new Shipment(new ShipmentId("c1", "a"), "test"));
-        repository.save(new Shipment(new ShipmentId("c1", "b"), "test2"));
-        repository.save(new Shipment(new ShipmentId("c1", "c"), "test3"));
-        repository.save(new Shipment(new ShipmentId("c1", "d"), "test4"));
-        repository.save(new Shipment(new ShipmentId("c2", "a1"), "test5"));
+        repository.insert(new Shipment(new ShipmentId("c1", "a"), "test"));
+        repository.insert(new Shipment(new ShipmentId("c1", "b"), "test2"));
+        repository.insert(new Shipment(new ShipmentId("c1", "c"), "test3"));
+        repository.insert(new Shipment(new ShipmentId("c1", "d"), "test4"));
+        repository.insert(new Shipment(new ShipmentId("c2", "a1"), "test5"));
 
         CursoredPageable cursoredPageable = CursoredPageable.from(3, Sort.of());
         CursoredPage<Shipment> page = repository.findByShipmentIdCountry("c1", cursoredPageable);
@@ -213,7 +213,7 @@ class SQLiteEmbeddedIdTest {
         entity.setDescription("desc1");
         entity.setType("type1");
 
-        ConfigItemEntity configItem = configurationItemRepository.save(entity);
+        ConfigItemEntity configItem = configurationItemRepository.insert(entity);
         Page<ConfigItemEntity> page = configurationItemRepository.findAll(Pageable.from(0, 10));
 
         assertNotNull(page);
