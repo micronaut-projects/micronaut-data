@@ -26,6 +26,7 @@ import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
+import io.micronaut.test.support.TestPropertyProviderFactory
 
 class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPropertyProvider {
 
@@ -51,6 +52,17 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
 
     PostgresCustomerProfileSequenceRepository getCustomerProfileSequenceRepository() {
         return context.getBean(PostgresCustomerProfileSequenceRepository)
+    }
+
+    @Override
+    Map<String, String> getProperties() {
+        def props = getDataSourceProperties("default")
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    props.putAll(it.get().create(props, this.class).get())
+                }
+        props['spec.name'] = 'PostgresUpsertSpec'
+        return props
     }
 
     @Override

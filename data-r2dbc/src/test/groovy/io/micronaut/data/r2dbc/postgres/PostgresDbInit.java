@@ -15,10 +15,11 @@
  */
 package io.micronaut.data.r2dbc.postgres;
 
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.r2dbc.DefaultBasicR2dbcProperties;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
@@ -47,9 +48,18 @@ import java.util.concurrent.TimeUnit;
  * R2DBC connection factory. It is intentionally disabled in GitHub Actions,
  * where the timing issue has not been observed.
  */
-@Requires(missingProperty = "github.workflow")
 @Singleton
 public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2dbcProperties>, Ordered {
+
+    private final String githubWorkflow;
+
+    private final String specName;
+
+    public PostgresDbInit(@Value("${github.workflow:}") String githubWorkflow,
+                          @Value("${spec.name:}") String specName) {
+        this.githubWorkflow = githubWorkflow;
+        this.specName = specName;
+    }
 
     @Override
     public int getOrder() {
@@ -59,10 +69,6 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
     @Override
     public DefaultBasicR2dbcProperties onCreated(BeanCreatedEvent<DefaultBasicR2dbcProperties> event) {
         DefaultBasicR2dbcProperties configuration = event.getBean();
-        // Mirror the bean-level guard with the raw environment variable used by test specs.
-        if (System.getenv("GITHUB_WORKFLOW") != null) {
-            return configuration;
-        }
         ConnectionFactoryOptions options = configuration.getBuilder().build();
 
         Object driver = options.getValue(Option.valueOf("driver"));
@@ -80,14 +86,39 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
         String database = requireOption(options, "database", String.class);
         String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
 
-        // Wait until the host-side port forward is reachable before schema generation begins.
+        if (StringUtils.isEmpty(githubWorkflow)) {
+            waitUntilPortIsReachable(url, info);
+        }
+
+        boolean createVectorExtension = "PostgresR2dbcVectorEntitySpec".equals(specName);
+        boolean createUuidOsspExtension = "PostgresUpsertSpec".equals(specName);
+        if (createVectorExtension || createUuidOsspExtension) {
+            try (Connection connection = DriverManager.getConnection(url, info)) {
+                if (createVectorExtension) {
+                    try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
+                        st.execute();
+                    }
+                }
+                if (createUuidOsspExtension) {
+                    try (CallableStatement statement = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")) {
+                        statement.execute();
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to create postgres extension", e);
+            }
+        }
+        return configuration;
+    }
+
+    /**
+     * Wait until the host-side port forward is reachable before schema generation begins.
+     */
+    private static void waitUntilPortIsReachable(String url, Properties info) {
         int attempts = 30;
         SQLException last = null;
         while (attempts-- > 0) {
-            try (Connection connection = DriverManager.getConnection(url, info)) {
-                try (CallableStatement statement = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")) {
-                    statement.execute();
-                }
+            try (Connection ignored = DriverManager.getConnection(url, info)) {
                 last = null;
                 break;
             } catch (SQLException e) {
@@ -104,7 +135,6 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
         if (last != null) {
             throw new RuntimeException(last);
         }
-        return configuration;
     }
 
     private static <T> T requireOption(ConnectionFactoryOptions options, String optionName, Class<T> type) {
