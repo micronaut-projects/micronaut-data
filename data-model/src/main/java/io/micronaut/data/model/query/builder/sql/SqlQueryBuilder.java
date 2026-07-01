@@ -1387,6 +1387,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 // MySQL/MariaDB do not support DEFAULT VALUES syntax
                 if (dialect == Dialect.MYSQL) {
                     builder = INSERT_INTO + getTableName(entity) + " () VALUES ()";
+                } else if (dialect == Dialect.ORACLE) {
+                    builder = INSERT_INTO + getTableName(entity) + " VALUES (DEFAULT)";
                 } else {
                     builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
                 }
