@@ -25,6 +25,7 @@ import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link TransactionOperationsRegistry}.
@@ -43,7 +44,7 @@ final class DefaultTransactionOperationsRegistry implements TransactionOperation
     }
 
     @Override
-    public <T extends TransactionOperations<?>> T provideSynchronous(Class<T> transactionOperationsType, String dataSourceName) {
+    public <T extends TransactionOperations<?>> T provideSynchronous(Class<T> transactionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(transactionOperationsType, null);
@@ -59,7 +60,7 @@ final class DefaultTransactionOperationsRegistry implements TransactionOperation
     }
 
     @Override
-    public <T extends ReactiveTransactionOperations<?>> T provideReactive(Class<T> transactionOperationsType, String dataSourceName) {
+    public <T extends ReactiveTransactionOperations<?>> T provideReactive(Class<T> transactionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(transactionOperationsType, null);
@@ -75,7 +76,7 @@ final class DefaultTransactionOperationsRegistry implements TransactionOperation
     }
 
     @Override
-    public <T extends AsyncTransactionOperations<?>> T provideAsync(Class<T> transactionOperationsType, String dataSourceName) {
+    public <T extends AsyncTransactionOperations<?>> T provideAsync(Class<T> transactionOperationsType, @Nullable String dataSourceName) {
         if (dataSourceName == null) {
             try {
                 return beanLocator.getBean(transactionOperationsType, null);

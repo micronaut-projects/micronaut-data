@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -11,6 +13,8 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }

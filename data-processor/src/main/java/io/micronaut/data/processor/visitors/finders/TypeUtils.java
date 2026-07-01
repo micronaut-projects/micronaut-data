@@ -541,13 +541,10 @@ public class TypeUtils {
      */
     public static @Nullable String resolveDataConverter(ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
-        if (explicitConverter.isPresent()) {
-            return explicitConverter.get();
-        }
-        return dataConverters.keySet()
-                .stream()
-                .filter(type::isAssignable)
-                .findFirst().orElse(null);
+        return explicitConverter.orElseGet(() -> dataConverters.keySet()
+            .stream()
+            .filter(type::isAssignable)
+            .findFirst().orElse(null));
     }
 
     /**
@@ -587,6 +584,9 @@ public class TypeUtils {
             if (type.isArray()) {
                 if (type.isAssignable(String.class)) {
                     return DataType.STRING_ARRAY;
+                }
+                if (type.isAssignable(UUID.class)) {
+                    return DataType.UUID_ARRAY;
                 }
                 if (type.isAssignable(Short.class)) {
                     return DataType.SHORT_ARRAY;
@@ -681,7 +681,7 @@ public class TypeUtils {
         if (leftType.getName().equals(rightTypeName)) {
             return true;
         }
-        if (leftType.isAssignable(rightTypeName)) {
+        if (leftType.isAssignable(rightTypeName) || rightType.isAssignable(leftType.getName())) {
             return true;
         }
         if (getTypeName(leftType).equals(getTypeName(rightType))) {

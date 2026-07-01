@@ -7,7 +7,6 @@ test-resources:
       startup-timeout: 300s
     mysql:
       startup-timeout: 300s
-      image-name: mysql:8.4.5
     oracle:
       startup-timeout: 300s
     postgres:

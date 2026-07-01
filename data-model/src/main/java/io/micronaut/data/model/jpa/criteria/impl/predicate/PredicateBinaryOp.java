@@ -43,12 +43,14 @@ public enum PredicateBinaryOp {
     ENDS_WITH,
     STARTS_WITH_IGNORE_CASE,
     ENDS_WITH_IGNORE_CASE,
+    GEO_WITHIN,
+    GEO_INTERSECTS,
     ARRAY_CONTAINS,
     ;
 
     void validate(Expression<?> left, Expression<?> right) {
         switch (this) {
-            case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE -> {
+            case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE, GEO_WITHIN, GEO_INTERSECTS -> {
                 // Any type
             }
             case GREATER_THAN, GREATER_THAN_OR_EQUALS, LESS_THAN, LESS_THAN_OR_EQUALS -> {

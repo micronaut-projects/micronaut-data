@@ -17,9 +17,6 @@ package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -43,6 +40,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
@@ -55,6 +53,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -70,6 +69,8 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -117,6 +118,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String NEGATE = "$mn_negate"; // -vale
     public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
+    private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
@@ -1298,6 +1300,42 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of("$all", criteriaValue));
+        }
+
+        @Override
+        public void visitGeoWithin(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoWithin", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visitGeoIntersects(Expression<?> leftExpression, Expression<?> expression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$geoIntersects", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, expression)
+                )
+            ));
+        }
+
+        @Override
+        public void visit(NearPredicate nearPredicate) {
+            visitNear(nearPredicate.getValue(), nearPredicate.getGeometry(), nearPredicate.getDistance());
+        }
+
+        @Override
+        public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of(
+                "$near", Map.of(
+                    GEOMETRY_OPERATOR, valueRepresentation(queryState, propertyPath, geometryExpression),
+                    "$maxDistance", valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression)
+                )
+            ));
         }
 
         @Override

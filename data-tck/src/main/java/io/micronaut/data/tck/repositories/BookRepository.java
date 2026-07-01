@@ -16,8 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Id;
@@ -33,9 +32,21 @@ import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
+import io.micronaut.data.tck.entities.Author_;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
+import io.micronaut.data.tck.entities.Book_;
+import io.micronaut.data.tck.entities.Chapter;
+import io.micronaut.data.tck.entities.Chapter_;
 import io.micronaut.data.tck.entities.Genre;
+import io.micronaut.data.tck.entities.Genre_;
+import io.micronaut.data.tck.entities.Page_;
+import io.micronaut.data.tck.entities.Publisher;
+import io.micronaut.data.tck.entities.Publisher_;
+import io.micronaut.data.tck.entities.Student;
+import io.micronaut.data.tck.entities.Student_;
+import jakarta.persistence.criteria.JoinType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -210,4 +221,77 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
         countQuery = "SELECT COUNT(*) FROM book WHERE total_pages = :totalPages",
         nativeQuery = true)
     public abstract Page<Book> findBooksByTotalPages(int totalPages, Pageable pageable);
+
+    public static class Specification {
+        public static PredicateSpecification<Book> titleEquals(String title) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(Book_.title), title);
+        }
+
+        public static PredicateSpecification<Book> authorNameEquals(String name) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Author> authorJoin = root.join(Book_.author, JoinType.RIGHT);
+                return cb.equal(authorJoin.get(Author_.name), name);
+            };
+        }
+
+        public static PredicateSpecification<Book> withAuthorNickName(String name) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Author> authorJoin = root.join(Book_.author, JoinType.RIGHT);
+                return cb.equal(authorJoin.get(Author_.nickName), name);
+            };
+        }
+
+        public static PredicateSpecification<Book> withAuthorNickNameIsNull() {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Author> authorJoin = root.join(Book_.author, JoinType.RIGHT);
+                return cb.isNull(authorJoin.get(Author_.nickName));
+            };
+        }
+
+        public static PredicateSpecification<Book> withGenreName(String name) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Genre> genreJoin = root.join(Book_.genre, JoinType.RIGHT);
+                return cb.equal(genreJoin.get(Genre_.genreName), name);
+            };
+        }
+
+        public static PredicateSpecification<Book> withPublisherZipCode(String zipCode) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Publisher> publisherJoin = root.join(Book_.publisher, JoinType.RIGHT);
+                return cb.equal(publisherJoin.get(Publisher_.zipCode), zipCode);
+            };
+        }
+
+        public static PredicateSpecification<Book> withPageNum(Long number) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, io.micronaut.data.tck.entities.Page> pageJoin = root.join(Book_.pages);
+                return cb.equal(pageJoin.get(Page_.num), number);
+            };
+        }
+
+        public static PredicateSpecification<Book> withChapterPagesGreaterThanOrEqualTo(Integer page) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Chapter> chapterJoin = root.join(Book_.chapters);
+                return cb.greaterThanOrEqualTo(chapterJoin.get(Chapter_.pages), page);
+            };
+        }
+
+        public static PredicateSpecification<Book> withChapterTitle(String title) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Chapter> chapterJoin = root.join(Book_.chapters);
+                return cb.equal(chapterJoin.get(Chapter_.title), title);
+            };
+        }
+
+        public static PredicateSpecification<Book> withStudentName(String name) {
+            return (root, cb) -> {
+                jakarta.persistence.criteria.Join<Book, Student> studentJoin = root.join(Book_.students);
+                return cb.equal(studentJoin.get(Student_.name), name);
+            };
+        }
+
+        public static PredicateSpecification<Book> totalPagesGreaterThan(Integer pages) {
+            return (root, cb) -> cb.greaterThan(root.get(Book_.totalPages), pages);
+        }
+    }
 }

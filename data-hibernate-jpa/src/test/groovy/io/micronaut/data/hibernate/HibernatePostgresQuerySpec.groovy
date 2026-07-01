@@ -40,7 +40,7 @@ class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
     void "test updateReturning"() {
         given:
         def saved = new UserWithWhere(id: UUID.randomUUID(), email: "test@email.com", deleted: true)
-        userWithWhereRepository.save(saved)
+        userWithWhereRepository.insert(saved)
         when:"Update returning custom native query executed"
         userWithWhereRepository.updateEmailById(saved.id, "test1@email.com")
         def obj = userWithWhereRepository.updateReturningCustom("test2@email.com", false, saved.id)

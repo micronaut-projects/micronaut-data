@@ -80,6 +80,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
             if (tx != null) {
@@ -120,6 +121,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public Object interceptBeforeEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
             if (tx != null) {
@@ -145,6 +147,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public Object interceptAfterEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
             if (tx != null) {

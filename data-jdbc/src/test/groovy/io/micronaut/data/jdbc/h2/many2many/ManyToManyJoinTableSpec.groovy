@@ -86,7 +86,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             student.ratings[0].rating == 5
         when:
             rating = new CourseRatingCompositeKey(id: new CourseRatingKey(student: student, course: student.courses.get(1)), rating: 5)
-            courseRatingCompositeKeyRepository.save(rating)
+            courseRatingCompositeKeyRepository.insert(rating)
             student = studentRepository.findByIdEquals(student.id).get()
         then:
             student.name == "Denis"
@@ -112,7 +112,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build create CourseRating tables"() {
         when:
             SqlQueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating), List.of())
 
         then:
             statements.length == 2
@@ -123,7 +123,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     void "test build create Course tables"() {
         when:
             SqlQueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course))
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course), List.of())
 
         then:
             statements.length == 2

@@ -33,7 +33,7 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         noExceptionThrown()
         when:"Verify save and read works for manually created table"
         def repository = validationContext.getBean(UuidEntityRepository)
-        def uuidEntity = repository.save(new UuidEntity(id: 1L, uuidField: UUID.randomUUID()))
+        def uuidEntity = repository.insert(new UuidEntity(id: 1L, uuidField: UUID.randomUUID()))
         def foundEntity = repository.findById(1L).orElse(null)
         then:"Save and read works without errors"
         foundEntity

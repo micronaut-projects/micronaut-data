@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -33,7 +34,8 @@ import io.micronaut.transaction.impl.DefaultTransactionStatus;
 @Internal
 public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTransactionOperations<DefaultTransactionStatus<C>, C> {
 
-    public AbstractDefaultTransactionOperations(ConnectionOperations<C> connectionOperations, SynchronousConnectionManager<C> synchronousConnectionManager) {
+    public AbstractDefaultTransactionOperations(ConnectionOperations<C> connectionOperations,
+                                                @Nullable SynchronousConnectionManager<C> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
     }
 

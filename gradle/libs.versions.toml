@@ -1,33 +1,34 @@
 [versions]
-micronaut = "5.0.0-M25"
-micronaut-platform = "5.0.0-M2"
+micronaut = "5.1.3"
+micronaut-platform = "5.0.3"
 micronaut-docs = "3.0.0"
-micronaut-gradle-plugin = "5.0.0-M1"
-micronaut-testresources = "4.0.0-M1"
+micronaut-gradle-plugin = "5.0.1"
+micronaut-testresources = "4.0.0"
 
-micronaut-azure = "5.13.0"
-micronaut-reactor = "4.0.0-M2"
-micronaut-rxjava3 = "4.0.0-M1"
-micronaut-r2dbc = "7.0.1-M2"
-micronaut-sql = "7.0.1-M3"
-micronaut-serde = "3.0.0-M7"
-micronaut-spring = "6.0.0-M2"
-micronaut-test = "5.0.0-M8"
-micronaut-mongo = "6.0.1-M2"
-micronaut-kotlin = "5.0.0-M1"
-micronaut-multitenancy = "6.0.0-M1"
-micronaut-validation = "5.0.0-M2"
-micronaut-logging = "2.0.0-M2"
-micronaut-flyway = "8.0.0-M3"
-micronaut-coherence = "6.0.0-M1"
-#micronaut-sourcegen = "1.8.2"
+micronaut-azure = "6.0.0"
+micronaut-reactor = "4.1.0"
+micronaut-rxjava3 = "4.1.0"
+micronaut-r2dbc = "7.1.0"
+micronaut-sql = "7.0.2"
+micronaut-serde = "3.0.0"
+micronaut-spring = "6.0.1"
+micronaut-test = "5.0.0"
+micronaut-mongo = "6.0.1"
+micronaut-kotlin = "5.0.0"
+micronaut-multitenancy = "6.1.0"
+micronaut-validation = "5.0.0"
+micronaut-logging = "2.0.0"
+micronaut-flyway = "8.0.0"
+micronaut-coherence = "6.0.0"
+micronaut-sourcegen = "2.1.0"
 
-groovy = "5.0.5"
+groovy = "5.0.6"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M3"
+managed-pg-vector = "0.1.6"
 
-spring-data = "4.0.5"
+spring-data = "4.1.0"
 
 # Lombok
 
@@ -35,24 +36,22 @@ lombok = "1.18.46"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2025.1.5"
-spock = "2.4-groovy-5.0"
-testcontainers = "1.19.4"
+benchmark-spring-data = "2026.0.0"
 jmh = "1.37"
 h2gis = "2.2.5"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "2.3.7"
+ksp-gradle-plugin = "2.3.9"
 kotlin-gradle-plugin = "2.3.21"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "4.0.6"
+spring-boot-gradle-plugin = "4.1.0"
 spring-dependency-management-gradle-plugin = "1.1.7"
-shadow-gradle-plugin = "9.4.1"
+shadow-gradle-plugin = "9.4.3"
 errorprone-gradle-plugin = "5.1.0"
-nullaway = "0.13.4"
-error_prone_core = "2.49.0"
-groovy_yaml = "5.0.5"
+nullaway = "0.13.7"
+error_prone_core = "2.50.0"
+groovy_yaml = "5.0.6"
 
 antlr = "4.13.2"
 
@@ -78,7 +77,7 @@ micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.r
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
-#micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
+micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
@@ -89,7 +88,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
 managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
 managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data-stateful', version.ref = "managed-jakarta-data" }
-
+managed-pg-vector = { module = 'com.pgvector:pgvector', version.ref = "managed-pg-vector"}
 # JPA
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }

@@ -221,7 +221,6 @@ public final class SqlColumnMapping {
                 if (dialect == Dialect.ORACLE) {
                     yield "NUMBER(1)";
                 } else if (dialect == Dialect.SQL_SERVER) {
-                    // TODO: was "BIT NOT NULL";
                     yield "BIT";
                 } else {
                     yield "BOOLEAN";
@@ -348,9 +347,9 @@ public final class SqlColumnMapping {
                 }
             }
             case JSON -> getJsonSqlType(dialect);
-            // TODO: Array types are not supported for all dialects so might throw an error?
             // Think only H2 and Postgres support these type defs
             case STRING_ARRAY, CHARACTER_ARRAY -> "VARCHAR(255) ARRAY";
+            case UUID_ARRAY -> "UUID ARRAY";
             case SHORT_ARRAY -> {
                 if (dialect == Dialect.POSTGRES) {
                     yield "SMALLINT ARRAY";
@@ -409,6 +408,8 @@ public final class SqlColumnMapping {
                     } else {
                         yield "BLOB";
                     }
+                } else if (dbType == SqlDbType.JSON_OBJECT) {
+                    yield getJsonObjectSqlType(dialect);
                 } else {
                     throw new MappingException("Unable to create table column for property [" + name + "] with unknown data type: " + dataType);
                 }
@@ -438,6 +439,13 @@ public final class SqlColumnMapping {
             }
             default -> "JSON";
         };
+    }
+
+    private String getJsonObjectSqlType(Dialect dialect) {
+        if (dialect == Dialect.ORACLE) {
+            return "JSON(OBJECT)";
+        }
+        return getJsonSqlType(dialect);
     }
 
     private static String floatType(Integer precision) {

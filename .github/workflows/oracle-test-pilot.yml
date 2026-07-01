@@ -36,6 +36,7 @@ jobs:
 
     steps:
       - name: Remove system JDKs
+        if: runner.environment == 'github-hosted'
         run: |
           sudo rm -rf /usr/lib/jvm/*
           unset JAVA_HOME
@@ -54,7 +55,7 @@ jobs:
 
       - name: Create Oracle Test Pilot Databases...
         id: create_database
-        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        uses: oracle-actions/setup-testpilot@37676e7f43dabdebb120915f2862f6ddd55d28d6 # v1.0.25
         with:
           oci-service: ${{ matrix.db }}
           action: create
@@ -64,7 +65,7 @@ jobs:
         id: disable_tfo
         run: |
           TESTPILOT_CONNECTION_STRING_SUFFIX=${{ steps.create_database.outputs.connection_string_suffix }}
-          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//USE_TCP_FAST_OPEN=ON/USE_TCP_FAST_OPEN=OFF}
+          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//useTcpFastOpen=true/useTcpFastOpen=false}
           echo "TESTPILOT_CONNECTION_STRING_SUFFIX=$TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO" >> $GITHUB_ENV
         shell: bash
 
@@ -93,7 +94,7 @@ jobs:
       - name: Delete Oracle Test Pilot Databases...
         id: delete_database
         if: always() && steps.create_database.outcome == 'success'
-        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        uses: oracle-actions/setup-testpilot@37676e7f43dabdebb120915f2862f6ddd55d28d6 # v1.0.25
         with:
           oci-service: ${{ matrix.db }}
           action: delete

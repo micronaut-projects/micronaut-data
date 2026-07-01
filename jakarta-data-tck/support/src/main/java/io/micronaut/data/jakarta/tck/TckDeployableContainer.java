@@ -42,6 +42,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 import java.util.Objects;
 
 @NullUnmarked
@@ -143,6 +144,7 @@ public final class TckDeployableContainer implements DeployableContainer<TckCont
             ApplicationContext applicationContext = ApplicationContext.builder()
                 .packages("ee.jakarta.tck.data")
                 .classLoader(classLoader)
+                .properties(Map.of("micronaut.data.save-assigned-id-fallback-to-update", true))
                 .build()
                 .start();
 

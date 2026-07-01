@@ -6,11 +6,18 @@ import io.micronaut.data.model.geo.LineString
 import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
+import io.micronaut.test.support.TestPropertyProviderFactory
 
+@TestResourcesScope("jdbc-oracle-geo")
 class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvider {
 
     @Memoized
@@ -31,9 +38,43 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
         return context.getBean(OracleXESchoolRepository)
     }
 
+    @Memoized
+    @Override
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(OracleXEHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(OracleXEHotelWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverJsonRepository getDeliveryDriverJsonRepository() {
+        return context.getBean(OracleXEDeliveryDriverJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
+        return context.getBean(OracleXEDeliveryDriverWktRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
+    }
+
+    @Override
+    Map<String, String> getProperties() {
+        def props = getDataSourceProperties("oraclegeospatial")
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    props.putAll(it.get().create(props, this.class).get())
+                }
+        return props
     }
 
     @Override
@@ -41,8 +82,8 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
         def prefix = 'datasources.' + dataSourceName
         return [
                 (prefix + '.db-type')                        : dbType(),
-                (prefix + '.schema-generate')                : schemaGenerate(),
-                (prefix + '.dialect')                        : dialect(),
+                (prefix + '.schema-generate')                : schemaGenerate().name(),
+                (prefix + '.dialect')                        : dialect().name(),
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.enabled')                        : dataSourceEnabled(dataSourceName),
                 "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",

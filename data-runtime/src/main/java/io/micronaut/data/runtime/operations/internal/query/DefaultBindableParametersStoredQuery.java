@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
@@ -25,17 +26,24 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.ScoringFunction;
+import io.micronaut.data.model.vector.search.Similarity;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SimilarityNormalizer;
+import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import io.micronaut.inject.annotation.EvaluatedAnnotationValue;
 
@@ -46,6 +54,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+
+import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.getParametersOfType;
 
 /**
  * Implementation of {@link BindableParametersStoredQuery}.
@@ -130,6 +140,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
+                persistentProperty = findPersistentProperty(binding, persistentEntity);
             } else if (binding.isAutoPopulated()) {
                 PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
                 persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
@@ -222,6 +233,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             };
             skipExpansion = true;
         }
+        value = unwrapVectorSearchValue(value, invocationContext);
         List<Object> values;
         if (binding.isExpandable()) {
             if (skipExpansion) {
@@ -256,6 +268,49 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             }
             binder.bindMany(binding, values);
         }
+    }
+
+    @Nullable
+    private Object unwrapVectorSearchValue(@Nullable Object value,
+                                           @Nullable InvocationContext<?, ?> invocationContext) {
+        if (value instanceof Score(double score)) {
+            return score;
+        }
+        if (value instanceof Similarity(double similarity)) {
+            ScoringFunction scoringFunction = resolveScoringFunction(invocationContext);
+            if (scoringFunction != null) {
+                return SimilarityNormalizer.forScoringFunction(scoringFunction).getScore(similarity);
+            }
+            return similarity;
+        }
+        return value;
+    }
+
+    @Nullable
+    private ScoringFunction resolveScoringFunction(@Nullable InvocationContext<?, ?> invocationContext) {
+        if (!(invocationContext instanceof MethodInvocationContext<?, ?> methodInvocationContext)) {
+            return defaultScoringFunction();
+        }
+        List<ScoringFunction> scoringFunctions = getParametersOfType(
+            Argument.of(ScoringFunction.class),
+            methodInvocationContext,
+            conversionService
+        );
+        if (scoringFunctions.isEmpty()) {
+            return defaultScoringFunction();
+        }
+        if (scoringFunctions.size() > 1) {
+            throw new IllegalArgumentException("Only one ScoringFunction parameter is allowed for vector derived search queries");
+        }
+        return scoringFunctions.getFirst();
+    }
+
+    @Nullable
+    private ScoringFunction defaultScoringFunction() {
+        if (!(storedQuery instanceof SqlStoredQuery<?, ?> sqlStoredQuery)) {
+            return null;
+        }
+        return VectorScoringDialectSupport.defaultScoringFunctionForDialect(sqlStoredQuery.getDialect());
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
@@ -305,6 +360,27 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             throw new IllegalStateException("Cannot find property: " + String.join(".", propertyPath));
         }
         return pp;
+    }
+
+    @Nullable
+    private RuntimePersistentProperty<Object> findPersistentProperty(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<E> persistentEntity) {
+        String[] propertyPath = queryParameterBinding.getPropertyPath();
+        if (propertyPath == null) {
+            return null;
+        }
+        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+        if (pp == null) {
+            return null;
+        }
+        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) pp.getProperty();
+        DataType bindingDataType = queryParameterBinding.getDataType();
+        if (bindingDataType == DataType.OBJECT || bindingDataType == property.getDataType()) {
+            return property;
+        }
+        if (!(property instanceof Association)) {
+            return property;
+        }
+        return null;
     }
 
     private String invocationIsRequiredMessage() {

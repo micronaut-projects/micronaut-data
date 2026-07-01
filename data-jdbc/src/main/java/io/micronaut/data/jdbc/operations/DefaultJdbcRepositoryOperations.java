@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
@@ -70,6 +71,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -77,6 +79,7 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -91,7 +94,9 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
@@ -128,7 +133,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -156,16 +160,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
-    @Nullable
-    private ExecutorAsyncOperations asyncOperations;
-    @Nullable
-    private ExecutorService executorService;
+    private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
+    private final ExecutorServiceResolver executorServiceResolver;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
-
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
@@ -189,6 +190,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param schemaHandler               The schema handler
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param conversionContextFactory    The conversion context factory
      * @param sqlExceptionMapperList The SQL exception mapper list
      */
     @Internal
@@ -208,7 +210,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
+                                    @Parameter DatabaseConversionContextFactory conversionContextFactory,
                                     List<SqlExceptionMapper> sqlExceptionMapperList) {
+
         super(
             dataSourceName,
             new ColumnNameResultSetReader(conversionService),
@@ -220,7 +224,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            conversionContextFactory);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -228,7 +233,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
         this.transactionOperations = transactionOperations;
-        this.executorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
@@ -250,12 +255,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     protected ResultReader<ResultSet, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
         return new ColumnNameExistenceAwareResultSetReader(columnNameResultSetReader);
-    }
-
-    @NonNull
-    private ExecutorService newLocalThreadPool() {
-        this.executorService = Executors.newCachedThreadPool();
-        return executorService;
     }
 
     @Override
@@ -331,20 +330,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public ExecutorAsyncOperations async() {
-        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
-        if (asyncOperations == null) {
-            synchronized (this) { // double check
-                asyncOperations = this.asyncOperations;
-                if (asyncOperations == null) {
-                    asyncOperations = new ExecutorAsyncOperations(
-                        this,
-                        executorService != null ? executorService : newLocalThreadPool()
-                    );
-                    this.asyncOperations = asyncOperations;
-                }
-            }
-        }
-        return asyncOperations;
+        return asyncOperations.get(() -> new ExecutorAsyncOperations(
+            this,
+            executorServiceResolver.get()
+        ));
     }
 
     @NonNull
@@ -362,13 +351,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Nullable
     private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
-        boolean limitToSingleResult = !jdbcConfiguration.isUniqueResultOnFindOne();
+        boolean isSearchResults = preparedQuery.getResultType().equals(SearchResults.class);
+        boolean limitToSingleResult = !isSearchResults && !jdbcConfiguration.isUniqueResultOnFindOne();
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, limitToSingleResult)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             try (ResultSet rs = ps.executeQuery()) {
                 SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
                 R result;
-                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                if (isSearchResults) {
+                    result = mapper.map(rs, preparedQuery.getResultType());
+                    if (result == null) {
+                        result = (R) SearchResults.of(List.of());
+                    }
+                } else if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
 
                     SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
@@ -392,8 +387,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     result = null;
                 }
                 if (result != null && preparedQuery.hasResultConsumer()) {
+                    R finalResult = result;
                     preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                        .ifPresent(consumer -> consumer.accept(finalResult, newMappingContext(rs)));
                 }
                 return result;
             }
@@ -440,7 +436,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             return DefaultJdbcRepositoryOperations.this.isDtoProjection(query);
                         }
                     },
-                    this::triggerOracleReturningPostLoad
+                    this::triggerOracleReturningPostLoad,
+                    getConversionContextFactory()
                 ).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
@@ -735,7 +732,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
             RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
-            if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
+            // DELETE_RETURNING must use the returning path so returned rows are mapped; Oracle also requires OUT parameters.
+            if (storedQuery.getOperationType() != StoredQuery.OperationType.DELETE_RETURNING
+                    && isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
                 JdbcEntitiesOperations<E> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
                 op.delete();
                 return (List<R>) op.getEntities();
@@ -899,9 +898,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     @PreDestroy
     public void close() {
-        if (executorService != null) {
-            executorService.shutdown();
-        }
+        executorServiceResolver.close();
     }
 
     private void applySchema(Connection connection) {
@@ -1243,12 +1240,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                               @Nullable Argument<?> argument) {
             Objects.requireNonNull(connection);
             if (property != null) {
-                return new RuntimePersistentPropertyJdbcCC(connection, property);
+                return new RuntimePersistentPropertyJdbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), property);
             }
             if (argument != null) {
-                return new ArgumentJdbcCC(connection, argument);
+                return new ArgumentJdbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), argument);
             }
-            return new JdbcConversionContextImpl(connection);
+            return new JdbcConversionContextImpl(connection, DatabaseType.from(sqlStoredQuery.getDialect()));
         }
 
         @Override
@@ -1370,7 +1367,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         outCtx,
                         columnIndexCallableResultReader,
                         jsonMapper,
-                        jdbcDataConversionService()
+                        jdbcDataConversionService(),
+                        getConversionContextFactory()
                     );
                     entity = (T) mapper.readEntity(cs);
 
@@ -1553,8 +1551,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final RuntimePersistentProperty<?> property;
 
-        private RuntimePersistentPropertyJdbcCC(Connection connection, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection);
+        public RuntimePersistentPropertyJdbcCC(Connection connection, DatabaseType databaseType, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, databaseType);
             this.property = property;
         }
 
@@ -1564,12 +1562,24 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
+    /**
+     * Internal argument-based JDBC conversion context used by repository operations.
+     *
+     * <p>This type is exposed only to share the current {@link Connection}, database type, and
+     * {@link Argument} metadata with converter infrastructure. It is not intended for user code.</p>
+     */
+    @Internal
+    public static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        private ArgumentJdbcCC(Connection connection, Argument argument) {
-            super(ConversionContext.of(argument), connection);
+        /**
+         * @param connection the current JDBC connection
+         * @param databaseType the canonical database type
+         * @param argument the conversion argument metadata
+         */
+        public ArgumentJdbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
+            super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
 
@@ -1579,17 +1589,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static class JdbcConversionContextImpl extends AbstractConversionContext implements JdbcConversionContext {
+    static class JdbcConversionContextImpl extends AbstractConversionContext
+        implements JdbcConversionContext {
 
         private final Connection connection;
+        private final DatabaseType databaseType;
 
-        private JdbcConversionContextImpl(Connection connection) {
-            this(ConversionContext.DEFAULT, connection);
+        public JdbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
+            this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
+            this.databaseType = databaseType;
         }
 
         @Override
@@ -1597,6 +1610,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return connection;
         }
 
+        @Override
+        public DatabaseType getDatabaseType() {
+            return databaseType;
+        }
     }
 
     private record ConnectionContext(Connection connection, boolean needsToBeClosed) {

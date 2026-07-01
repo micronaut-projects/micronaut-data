@@ -1,15 +1,23 @@
 package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.geo.Point
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
+import io.micronaut.data.tck.repositories.HotelJsonRepository
+import io.micronaut.data.tck.repositories.HotelWktRepository
 import io.micronaut.data.tck.repositories.SchoolRepository
 import io.micronaut.data.tck.tests.AbstractGeoSpec
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
+import io.micronaut.test.support.TestPropertyProviderFactory
 
 import java.time.Duration
 
 import static org.junit.jupiter.api.Assertions.assertNull
 
+@TestResourcesScope("r2dbc-postgres-geo")
 class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyProvider {
 
     @Memoized
@@ -40,9 +48,48 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         return context.getBean(PostgresSchoolRepository)
     }
 
+    @Memoized
+    @Override
+    HotelJsonRepository getHotelJsonRepository() {
+        return context.getBean(PostgresHotelJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    HotelWktRepository getHotelWktRepository() {
+        return context.getBean(PostgresHotelWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverJsonRepository getDeliveryDriverJsonRepository() {
+        return context.getBean(PostgresDeliveryDriverJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
+        return context.getBean(PostgresDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    PostgresDeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(PostgresDeliveryDriverWktGeographyRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo", "io.micronaut.data.r2dbc.postgres")
+    }
+
+    @Override
+    Map<String, String> getProperties() {
+        def props = getDataSourceProperties("postgresgeospatial")
+        ServiceLoader.load(TestPropertyProviderFactory).stream()
+                .forEach {
+                    props.putAll(it.get().create(props, this.class).get())
+                }
+        return props
     }
 
     @Override
@@ -50,8 +97,8 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         def prefix = 'r2dbc.datasources.' + dataSourceName
         return [
                 (prefix + '.db-type')                          : dbType(),
-                (prefix + '.schema-generate')                  : schemaGenerate(),
-                (prefix + '.dialect')                          : dialect(),
+                (prefix + '.schema-generate')                  : schemaGenerate().name(),
+                (prefix + '.dialect')                          : dialect().name(),
                 (prefix + '.packages')                         : packages(),
                 (prefix + '.connectTimeout')                   : Duration.ofMinutes(1).toString(),
                 (prefix + '.statementTimeout')                 : Duration.ofMinutes(1).toString(),
@@ -59,6 +106,13 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
                 "test-resources.containers.postgres.image-name": "postgis/postgis",
                 "test-resources.containers.postgres.image-tag" : "17-3.5"
         ] as Map<String, String>
+    }
+
+    @Override
+    protected boolean supportsGeometryTypeWithGeographicCrs() {
+        // Geography type should be used instead of geometry type
+        // when using geographic coordinate reference system
+        return false
     }
 
     void "test crud when json conversion used on geography type"() {
@@ -73,7 +127,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeographyEntityJson savedEntity = getGeographyEntityJsonRepository().save(entity)
+        GeographyEntityJson savedEntity = getGeographyEntityJsonRepository().insert(entity)
 
         then:
         savedEntity.id > 0
@@ -147,7 +201,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         entity.setGeometryCollection(createGeometryCollection(3))
 
         when:
-        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().save(entity)
+        GeographyEntityWkt savedEntity = getGeographyEntityWktRepository().insert(entity)
 
         then:
         savedEntity.id > 0
@@ -207,5 +261,29 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
             assertNull(it.getMultiPolygon())
             assertNull(it.getGeometryCollection())
         }
+    }
+
+    void "test findByLocationNear on geography database type when geographic crs is used and wkt conversion applied"() {
+        given:
+        DeliveryDriverWktGeography nearby = new DeliveryDriverWktGeography("Nearby Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverWktGeography closest = new DeliveryDriverWktGeography("Closest Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverWktGeography busy = new DeliveryDriverWktGeography("Busy Driver", DeliveryDriverWktGeography.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverWktGeography far = new DeliveryDriverWktGeography("Far Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverWktGeographyRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverWktGeography> candidates = getDeliveryDriverWktGeographyRepository().findByStatusAndLocationNear(
+                DeliveryDriverWktGeography.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+        List<String> names = candidates.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 }

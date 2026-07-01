@@ -119,14 +119,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     }
 
     @Override
-    protected final <R> R doExecute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<C, R> callback) {
+    protected final <R extends @Nullable Object> R doExecute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<C, R> callback) {
         if (synchronousConnectionManager == null) {
             return doExecuteWithoutSynchronousConnectionManager(definition, callback);
         }
         return executeTransactional(getTransaction(definition), callback, definition);
     }
 
-    private <R> R doExecuteWithoutSynchronousConnectionManager(TransactionDefinition definition, TransactionCallback<C, R> callback) {
+    private <R extends @Nullable Object> R doExecuteWithoutSynchronousConnectionManager(TransactionDefinition definition, TransactionCallback<C, R> callback) {
         Optional<T> existingTransactionOptional = findTransactionStatusInternal();
         if (existingTransactionOptional.isEmpty()) {
             return connectionOperations.execute(
@@ -309,7 +309,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     protected void doResume(T transaction) {
     }
 
-    private <R> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
+    private <R extends @Nullable Object> R executeTransactional(T transaction, TransactionCallback<C, R> callback, TransactionDefinition definition) {
         R result;
         try {
             if (logger.isDebugEnabled()) {

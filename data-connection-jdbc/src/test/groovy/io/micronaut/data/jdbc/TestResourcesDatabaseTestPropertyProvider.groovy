@@ -42,11 +42,10 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         return [
                 'micronaut.test.resources.scope': dbType(),
                 (prefix + '.db-type')           : dbType(),
-                (prefix + '.schema-generate')   : schemaGenerate(),
-                (prefix + '.dialect')           : dialect(),
+                (prefix + '.schema-generate')   : schemaGenerate().name(),
+                (prefix + '.dialect')           : dialect().name(),
                 (prefix + '.packages')          : packages(),
         ] as Map<String, String>
     }
 
 }
-

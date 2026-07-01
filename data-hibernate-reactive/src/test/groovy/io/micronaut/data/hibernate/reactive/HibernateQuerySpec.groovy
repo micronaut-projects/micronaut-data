@@ -110,7 +110,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
 
     void "test @where on find one"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).block()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: false)).block()
             def found = userWithWhereRepository.findById(e.id).block()
         then:
             found
@@ -118,7 +118,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
 
     void "test @where on find one deleted"() {
         when:
-            def e = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).block()
+            def e = userWithWhereRepository.insert(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: true)).block()
             def found = userWithWhereRepository.findById(e.id).block()
         then:
             !found
@@ -285,7 +285,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         k.id2 = 22
 
         when:
-        entityWithIdClassRepository.save(e).block()
+        entityWithIdClassRepository.insert(e).block()
         e = entityWithIdClassRepository.findById(k).block()
 
         then:
@@ -294,14 +294,14 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
         e.name == "Xyz"
 
         when:
-        entityWithIdClassRepository.save(f).block()
+        entityWithIdClassRepository.insert(f).block()
         List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2).collectList().block()
 
         then:
         ef.size() == 2
 
         when:
-        entityWithIdClassRepository.save(g).block()
+        entityWithIdClassRepository.insert(g).block()
         List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1).collectList().block()
 
         then:

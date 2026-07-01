@@ -89,7 +89,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlementTypeRepository.save(type)
             zoneRepository.save(zone)
-            settlementRepository.save(settlement)
+            settlementRepository.insert(settlement)
             settlement = settlementRepository.findById(settlement.getId()).get()
 
         then:
@@ -130,7 +130,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlement.id.county.countyName = "Czech Republic"
             settlement.id.county.enabled = true
-            countryRepository.save(settlement.id.county)
+            countryRepository.insert(settlement.id.county)
             settlement = settlementRepository.queryById(settlement.getId()).get()
 
         then:
@@ -265,7 +265,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlementTypeRepository.save(type)
             zoneRepository.save(zone)
-            settlementRepository.save(settlement)
+            settlementRepository.insert(settlement)
             settlement = settlementRepository.findById(settlement.getId()).get()
 
         then:
@@ -306,7 +306,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         when:
             settlement.id.county.countyName = "Czech Republic"
             settlement.id.county.enabled = true
-            countryRepository.save(settlement.id.county)
+            countryRepository.insert(settlement.id.county)
             settlement = settlementRepository.findOne(new CriteriaQueryBuilder<Settlement>() {
             @Override
             CriteriaQuery<Settlement> build(CriteriaBuilder criteriaBuilder) {
@@ -341,7 +341,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build create Settlement"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement))
+            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Settlement), List.of())
 
         then:
             statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INT NOT NULL,"id_county_id_id" INT NOT NULL,"id_county_id_state_id" INT NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
@@ -350,7 +350,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build create Citizen"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Citizen))
+            def statements = encoder.buildCreateTableStatements(builder.runtimeEntityRegistry.getEntity(Citizen), List.of())
 
         then:
             statements.length == 2

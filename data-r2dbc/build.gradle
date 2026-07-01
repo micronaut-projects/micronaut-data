@@ -23,7 +23,9 @@ dependencies {
     implementation mnReactor.micronaut.reactor
 
     compileOnly mnR2dbc.r2dbc.oracle
+    compileOnly mnSql.ojdbc11
     compileOnly mnSql.jakarta.persistence.api
+    compileOnly mnR2dbc.r2dbc.postgresql
 
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
@@ -35,6 +37,7 @@ dependencies {
     testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mnTest.micronaut.test.junit5
+    testImplementation libs.managed.jakarta.data.api
     testImplementation mn.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
     testImplementation(mnSql.jakarta.persistence.api)
@@ -49,6 +52,7 @@ dependencies {
 
     // oracle
     testImplementation mnR2dbc.r2dbc.oracle
+    testImplementation mnSql.ojdbc11
 
     // mariadb
     testImplementation mnR2dbc.r2dbc.mariadb
@@ -56,7 +60,7 @@ dependencies {
 
     // mysql
     testImplementation mnR2dbc.r2dbc.mysql
-    testImplementation mnSql.mysql.connector.java
+    testImplementation mnSql.mysql.connector.j
 
     // h2
     testImplementation mnR2dbc.r2dbc.h2
@@ -79,12 +83,13 @@ dependencies {
 
     testResourcesService mnSql.mariadb.java.client
     testResourcesService mnSql.ojdbc11
-    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.mysql.connector.j
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
 
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mnSerde.micronaut.serde.support
+    testImplementation mn.micronaut.jackson.databind
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
     testRuntimeOnly mnSql.micronaut.jdbc.hikari

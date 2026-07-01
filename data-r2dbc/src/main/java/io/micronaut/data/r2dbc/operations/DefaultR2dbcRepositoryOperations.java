@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.runtime.convert.DatabaseType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +44,9 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResult;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -80,6 +84,7 @@ import io.micronaut.data.r2dbc.mapper.ReadableTupleMapper;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -87,12 +92,15 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SearchResultsMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
@@ -114,6 +122,7 @@ import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
 import org.reactivestreams.Publisher;
@@ -136,7 +145,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -159,10 +167,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private final ConnectionFactory connectionFactory;
     private final DefaultR2dbcReactiveRepositoryOperations reactiveOperations;
-    @Nullable
-    private ExecutorService ioExecutorService;
-    @Nullable
-    private AsyncRepositoryOperations asyncRepositoryOperations;
+    private final ExecutorServiceResolver executorServiceResolver;
+    private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncRepositoryOperations = new SynchronizedLazyValue<>();
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
@@ -170,6 +176,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
+    private final Map<Dialect, VectorBindSupport> vectorBindSupportByDialect = new EnumMap<>(Dialect.class);
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
     private final Integer defaultFetchSize;
 
@@ -192,6 +199,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param r2dbcExceptionMapperList    The R2dbc exception mapper list
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
+     * @param conversionContextFactory    The conversion context factory
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -210,8 +218,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
+        List<VectorBindSupport> vectorBindSupports,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
-        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations,
+        @Parameter DatabaseConversionContextFactory conversionContextFactory) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -223,9 +233,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            conversionContextFactory);
         this.connectionFactory = connectionFactory;
-        this.ioExecutorService = executorService;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.configuration = configuration;
@@ -233,6 +244,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
+        if (CollectionUtils.isNotEmpty(vectorBindSupports)) {
+            for (VectorBindSupport vectorBindSupport : vectorBindSupports) {
+                vectorBindSupportByDialect.put(vectorBindSupport.getDialect(), vectorBindSupport);
+            }
+        }
         if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
             for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
                 Dialect dialect = r2dbcExceptionMapper.getDialect();
@@ -370,13 +386,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public AsyncRepositoryOperations async() {
-        if (asyncRepositoryOperations == null) {
-            if (ioExecutorService == null) {
-                ioExecutorService = Executors.newCachedThreadPool();
-            }
-            asyncRepositoryOperations = new ReactorToAsyncOperationsAdaptor(reactiveOperations, ioExecutorService);
-        }
-        return Objects.requireNonNull(asyncRepositoryOperations);
+        return asyncRepositoryOperations.get(() -> new ReactorToAsyncOperationsAdaptor(
+            reactiveOperations,
+            executorServiceResolver.get()
+        ));
+    }
+
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @NonNull
@@ -485,6 +503,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private static <T> Flux<T> executeAndMapEachRowNullable(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
+    }
+
+    @Override
+    protected void setStatementParameter(Statement preparedStatement,
+                                         int index,
+                                         DataType dataType,
+                                         @Nullable JsonDataType jsonDataType,
+                                         @Nullable Object value,
+        SqlStoredQuery<?, ?> storedQuery) {
+        VectorBindSupport vectorBindSupport = vectorBindSupportByDialect.get(storedQuery.getDialect());
+        if (vectorBindSupport != null && isVectorBindingCandidate(value)) {
+            io.r2dbc.spi.Parameter vectorParameter = vectorBindSupport.toTypedVectorParameter(value, storedQuery.getQuery());
+            if (vectorParameter != null) {
+                preparedStatementWriter.setValue(preparedStatement, index, vectorParameter);
+                return;
+            }
+        }
+        super.setStatementParameter(preparedStatement, index, dataType, jsonDataType, value, storedQuery);
+    }
+
+    static boolean isVectorBindingCandidate(@Nullable Object value) {
+        return value instanceof Vector;
     }
 
     private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
@@ -715,8 +755,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
             return executeReadMono(preparedQuery, connection -> {
-                Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
+                boolean isSearchResults = preparedQuery.getResultType().equals(SearchResults.class);
+                Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, !isSearchResults);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+
+                if (isSearchResults) {
+                    return executeAndMapSearchResults(statement, preparedQuery);
+                }
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
@@ -732,6 +777,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType()));
             });
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T, R> Mono<R> executeAndMapSearchResults(Statement statement, SqlPreparedQuery<T, R> preparedQuery) {
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            SearchResultsMapper<Row, T> searchResultsMapper = createSearchResultsResultMapper(preparedQuery, Row.class);
+            Class<T> entityType = persistentEntity.getIntrospection().getBeanType();
+
+            return executeAndMapEachRowNullable(statement, row -> {
+                SearchResult<T> searchResult = searchResultsMapper.mapOne(row, entityType);
+                if (searchResult == null) {
+                    return null;
+                }
+                return searchResult;
+            }).collectList().map(results -> (R) SearchResults.of(results));
         }
 
         @NonNull
@@ -1196,12 +1256,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
                                                               @Nullable Argument<?> argument) {
             if (property != null) {
-                return new RuntimePersistentPropertyR2dbcCC(connection, property);
+                return new RuntimePersistentPropertyR2dbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), property);
             }
             if (argument != null) {
-                return new ArgumentR2dbcCC(connection, argument);
+                return new ArgumentR2dbcCC(connection, DatabaseType.from(sqlStoredQuery.getDialect()), argument);
             }
-            return new R2dbcConversionContextImpl(connection);
+            return new R2dbcConversionContextImpl(connection, DatabaseType.from(sqlStoredQuery.getDialect()));
         }
 
         @Override
@@ -1226,7 +1286,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public int currentIndex() {
             return index;
         }
-
     }
 
     private final class R2dbcEntityOperations<T> extends AbstractReactiveEntityOperations<R2dbcOperationContext, T, RuntimeException> {
@@ -1309,27 +1368,33 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             Statement statement = prepare(ctx.connection);
             setParameters(statement, storedQuery);
-            if (hasGeneratedId) {
+            // DELETE_RETURNING is handled by the dedicated deleteReturning/deleteAllReturning paths.
+            if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING
+                || storedQuery.getOperationType() == OperationType.UPDATE_RETURNING) {
                 data = data.flatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
-                        SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
-                        if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
-                            return Mono.error(new DataAccessException("Expected entity mapper for INSERT_RETURNING operation: " + storedQuery.getQuery()));
-                        }
-                        @SuppressWarnings("unchecked")
-                        SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(storedQuery)
-                            ? getOracleReturningEntityMapper(storedQuery)
-                            : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
-                        Mono<T> result = isOracleReturningQuery(storedQuery)
-                            ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
-                            : executeAndMapEachRowSingle(statement, ctx.dialect, row -> entityTypeMapper.readEntity(row));
-                        return result.map(entity -> {
-                            d.entity = entity;
-                            return d;
-                        });
+                    SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
+                    if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
+                        return Mono.error(new DataAccessException("Expected entity mapper for returning operation: " + storedQuery.getQuery()));
+                    }
+                    @SuppressWarnings("unchecked")
+                    SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(storedQuery)
+                        ? getOracleReturningEntityMapper(storedQuery)
+                        : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
+                    Mono<T> result = isOracleReturningQuery(storedQuery)
+                        ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
+                        : executeAndMapEachRowSingle(statement, ctx.dialect, row -> entityTypeMapper.readEntity(row));
+                    return result.map(entity -> {
+                        d.entity = entity;
+                        return d;
+                    });
+                });
+            } else if (hasGeneratedId) {
+                data = data.flatMap(d -> {
+                    if (d.vetoed) {
+                        return Mono.just(d);
                     }
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     Function<Object, Data> idMapper = id -> {
@@ -1559,8 +1624,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final RuntimePersistentProperty<?> property;
 
-        public RuntimePersistentPropertyR2dbcCC(Connection connection, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection);
+        public RuntimePersistentPropertyR2dbcCC(Connection connection, DatabaseType databaseType, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, databaseType);
             this.property = property;
         }
 
@@ -1570,12 +1635,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
+    static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(Connection connection, Argument argument) {
-            super(ConversionContext.of(argument), connection);
+        public ArgumentR2dbcCC(Connection connection, DatabaseType databaseType, Argument<?> argument) {
+            super(ConversionContext.of(argument), connection, databaseType);
             this.argument = argument;
         }
 
@@ -1589,14 +1654,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         implements R2dbcConversionContext {
 
         private final Connection connection;
+        private final DatabaseType databaseType;
 
-        public R2dbcConversionContextImpl(Connection connection) {
-            this(ConversionContext.DEFAULT, connection);
+        public R2dbcConversionContextImpl(Connection connection, DatabaseType databaseType) {
+            this(ConversionContext.DEFAULT, connection, databaseType);
         }
 
-        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, DatabaseType databaseType) {
             super(conversionContext);
             this.connection = connection;
+            this.databaseType = databaseType;
         }
 
         @Override
@@ -1604,5 +1671,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return connection;
         }
 
+        @Override
+        public DatabaseType getDatabaseType() {
+            return databaseType;
+        }
     }
 }
