@@ -59,6 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#buildInsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.InsertQueryDefinition)" tabindex="0">buildInsert(AnnotationMetadata, QueryBuilder.InsertQueryDefinition)</a></li>
+<li><a href="#buildUpsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.UpsertQueryDefinition)" tabindex="0">buildUpsert(AnnotationMetadata, QueryBuilder.UpsertQueryDefinition)</a></li>
 <li><a href="#buildSelect(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.SelectQueryDefinition)" tabindex="0">buildSelect(AnnotationMetadata, QueryBuilder.SelectQueryDefinition)</a></li>
 <li><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.UpdateQueryDefinition)" tabindex="0">buildUpdate(AnnotationMetadata, QueryBuilder.UpdateQueryDefinition)</a></li>
 <li><a href="#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.DeleteQueryDefinition)" tabindex="0">buildDelete(AnnotationMetadata, QueryBuilder.DeleteQueryDefinition)</a></li>
@@ -126,6 +127,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">The update query definition.</div>
 </div>
+<div class="col-first odd-row-color"><code>static interface&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="QueryBuilder.UpsertQueryDefinition.html" class="type-name-link" title="interface in io.micronaut.data.model.query.builder">QueryBuilder.UpsertQueryDefinition</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">The upsert query definition.</div>
+</div>
 </div>
 </section>
 </li>
@@ -134,7 +140,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -170,6 +176,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildUpsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.UpsertQueryDefinition)" class="member-name-link">buildUpsert</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
+ <a href="QueryBuilder.UpsertQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder.UpsertQueryDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Builds an upsert statement for the given entity.</div>
+</div>
 </div>
 </div>
 </div>
@@ -197,6 +209,25 @@ loadScripts(document, 'script');</script>
 <dd><code>definition</code> - The definition</dd>
 <dt>Returns:</dt>
 <dd>The insert statement or null if the implementation doesn't require insert statements</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildUpsert(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.UpsertQueryDefinition)">
+<h3>buildUpsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildUpsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
+ <a href="QueryBuilder.UpsertQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder.UpsertQueryDefinition</a>&nbsp;definition)</span></div>
+<div class="block">Builds an upsert statement for the given entity.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>repositoryMetadata</code> - The repository annotation metadata</dd>
+<dd><code>definition</code> - The definition</dd>
+<dt>Returns:</dt>
+<dd>The upsert statement</dd>
+<dt>Since:</dt>
+<dd>5.1.0</dd>
 </dl>
 </div>
 </section>
