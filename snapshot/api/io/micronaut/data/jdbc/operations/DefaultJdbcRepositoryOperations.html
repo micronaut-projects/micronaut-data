@@ -97,14 +97,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#readEntity(java.lang.String,java.sql.ResultSet,java.lang.Class)" tabindex="0">readEntity(String, ResultSet, Class)</a></li>
 <li><a href="#readDTO(java.lang.String,java.sql.ResultSet,java.lang.Class,java.lang.Class)" tabindex="0">readDTO(String, ResultSet, Class, Class)</a></li>
 <li><a href="#entityStream(java.sql.ResultSet,java.lang.String,java.lang.Class)" tabindex="0">entityStream(ResultSet, String, Class)</a></li>
-<li><a href="#mapSqlException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">mapSqlException(SQLException, Dialect)</a></li>
-<li><a href="#getGeneratedIdentity(java.sql.ResultSet,io.micronaut.data.model.runtime.RuntimePersistentProperty,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getGeneratedIdentity(ResultSet, RuntimePersistentProperty, Dialect)</a></li>
-<li><a href="#isUpsertOperation(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">isUpsertOperation(SqlStoredQuery)</a></li>
-<li><a href="#getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">getJdbcEntityOperations(DefaultJdbcRepositoryOperations.JdbcOperationContext, RuntimePersistentEntity, T, SqlStoredQuery)</a></li>
-<li><a href="#getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)" tabindex="0">getJdbcEntityOperations(DefaultJdbcRepositoryOperations.JdbcOperationContext, RuntimePersistentEntity, T, SqlStoredQuery, boolean)</a></li>
-<li><a href="#getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" tabindex="0">getJdbcEntitiesOperations(DefaultJdbcRepositoryOperations.JdbcOperationContext, RuntimePersistentEntity, Iterable, SqlStoredQuery)</a></li>
-<li><a href="#getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)" tabindex="0">getJdbcEntitiesOperations(DefaultJdbcRepositoryOperations.JdbcOperationContext, RuntimePersistentEntity, Iterable, SqlStoredQuery, boolean)</a></li>
-<li><a href="#sqlExceptionToDataAccessException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect,java.util.function.Function)" tabindex="0">sqlExceptionToDataAccessException(SQLException, Dialect, Function)</a></li>
 <li><a href="#isSupportsBatchInsert(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity)" tabindex="0">isSupportsBatchInsert(DefaultJdbcRepositoryOperations.JdbcOperationContext, RuntimePersistentEntity)</a></li>
 </ol>
 </li>
@@ -127,16 +119,11 @@ loadScripts(document, 'script');</script>
 <dt>All Implemented Interfaces:</dt>
 <dd><code>io.micronaut.context.ApplicationContextProvider, io.micronaut.core.convert.ConversionServiceProvider, <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a>, <a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a>, <a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a>, <a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>, <a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;, <a href="../../runtime/query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a>, <a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
-<dl class="notes">
-<dt>Direct Known Subclasses:</dt>
-<dd><code><a href="OracleJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">OracleJdbcRepositoryOperations</a>, <a href="SqlServerJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">SqlServerJdbcRepositoryOperations</a></code></dd>
-</dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@EachBean(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>.class)
-@Requires(condition=io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperationsCondition.class)
 @Internal
-</span><span class="modifiers">public class </span><span class="element-name type-name-label">DefaultJdbcRepositoryOperations</span>
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">DefaultJdbcRepositoryOperations</span>
 <span class="extends-implements">extends <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&gt;
 implements <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a>, <a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, <a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;</span></div>
 <div class="block">Implementation of <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
@@ -164,18 +151,9 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 <div class="col-last even-row-color">
 <div class="block">Internal argument-based JDBC conversion context used by repository operations.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected class&nbsp;</code></div>
-<div class="col-second odd-row-color"><code><a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntitiesOperations</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html#type-param-T" title="type parameter in DefaultJdbcRepositoryOperations.JdbcEntitiesOperations">T</a>&gt;</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntityOperations</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html#type-param-T" title="type parameter in DefaultJdbcRepositoryOperations.JdbcEntityOperations">T</a>&gt;</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected static class&nbsp;</code></div>
 <div class="col-second odd-row-color"><code><a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected class&nbsp;</code></div>
-<div class="col-second even-row-color"><code><a href="DefaultJdbcRepositoryOperations.JdbcParameterBinder.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcParameterBinder</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="nested-classes-inherited-from-class-io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations">Nested classes/interfaces inherited from class&nbsp;<a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#nested-class-summary" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></h3>
@@ -323,139 +301,80 @@ if no transaction is present.</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFirstResultSetIndex()" class="member-name-link">getFirstResultSetIndex</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getGeneratedIdentity(java.sql.ResultSet,io.micronaut.data.model.runtime.RuntimePersistentProperty,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">getGeneratedIdentity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;generatedKeysResultSet,
- <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;identity,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Gets the generated id on record insert.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntitiesOperations</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">getJdbcEntitiesOperations</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;entities,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates the entity operation for a batch write.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntitiesOperations</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)" class="member-name-link">getJdbcEntitiesOperations</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;entities,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery,
- boolean&nbsp;insert)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates the entity operation for a batch write.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntityOperations</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">getJdbcEntityOperations</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- T&nbsp;entity,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates the entity operation for a single write.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntityOperations</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)" class="member-name-link">getJdbcEntityOperations</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- T&nbsp;entity,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery,
- boolean&nbsp;insert)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates the entity operation for a single write.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;jdbcOperationContext,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;jdbcOperationContext,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is supports batch insert.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isUpsertOperation(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isUpsertOperation</a><wbr>(<a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Checks whether the stored query represents an upsert operation.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#mapSqlException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">mapSqlException</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Maps SQL exception, used in context of update but could be used elsewhere.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(@NonNull <a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(@NonNull <a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist all the given entities.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;values,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;childPersistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationship.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationships in batch.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
  T&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist one entity during cascade.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;@NonNull R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareStatement(java.lang.String,io.micronaut.data.jdbc.runtime.PreparedStatementCallback)" class="member-name-link">prepareStatement</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sql,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;R&gt;&nbsp;@NonNull R</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareStatement(java.lang.String,io.micronaut.data.jdbc.runtime.PreparedStatementCallback)" class="member-name-link">prepareStatement</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sql,
  @NonNull <a href="../runtime/PreparedStatementCallback.html" title="interface in io.micronaut.data.jdbc.runtime">PreparedStatementCallback</a>&lt;R&gt;&nbsp;callback)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute the given operation with the given callback.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reactive()" class="member-name-link">reactive</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>D&gt;&nbsp;@NonNull D</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDTO(java.lang.String,java.sql.ResultSet,java.lang.Class,java.lang.Class)" class="member-name-link">readDTO</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#reactive()" class="member-name-link">reactive</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>D&gt;&nbsp;@NonNull D</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDTO(java.lang.String,java.sql.ResultSet,java.lang.Class,java.lang.Class)" class="member-name-link">readDTO</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;resultSet,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;D&gt;&nbsp;dtoType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E&gt;&nbsp;@NonNull E</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readEntity(java.lang.String,java.sql.ResultSet,java.lang.Class)" class="member-name-link">readEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;resultSet,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sqlExceptionToDataAccessException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect,java.util.function.Function)" class="member-name-link">sqlExceptionToDataAccessException</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>, <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a>&gt;&nbsp;fallbackMapper)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E&gt;&nbsp;@NonNull E</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readEntity(java.lang.String,java.sql.ResultSet,java.lang.Class)" class="member-name-link">readEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;prefix,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;resultSet,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Handles <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> first trying to map it to <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> using <a href="SqlExceptionMapper.html" title="interface in io.micronaut.data.jdbc.operations"><code>SqlExceptionMapper</code></a>.</div>
+<div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull T</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(io.micronaut.data.model.runtime.UpdateOperation)" class="member-name-link">update</a><wbr>(@NonNull <a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
@@ -1280,180 +1199,6 @@ if no transaction is present.</div>
 <dd><code>rootEntity</code> - The entity type</dd>
 <dt>Returns:</dt>
 <dd>The stream</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="mapSqlException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect)">
-<h3>mapSqlException</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">mapSqlException</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
-<div class="block">Maps SQL exception, used in context of update but could be used elsewhere.
-It will return custom  based on the <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> or null
-if it cannot be mapped to the custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a>.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>sqlException</code> - the SQL exception</dd>
-<dd><code>dialect</code> - the SQL dialect</dd>
-<dt>Returns:</dt>
-<dd>custom <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> exception based on <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> that was thrown or null
-if exception is not mappable to <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> in given dialect <a href="SqlExceptionMapper.html" title="interface in io.micronaut.data.jdbc.operations"><code>SqlExceptionMapper</code></a></dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getGeneratedIdentity(java.sql.ResultSet,io.micronaut.data.model.runtime.RuntimePersistentProperty,io.micronaut.data.model.query.builder.sql.Dialect)">
-<h3>getGeneratedIdentity</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getGeneratedIdentity</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;generatedKeysResultSet,
- <a href="../../model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;identity,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
-<div class="block">Gets the generated id on record insert.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>generatedKeysResultSet</code> - the generated keys result set</dd>
-<dd><code>identity</code> - the identity persistent field</dd>
-<dd><code>dialect</code> - the SQL dialect</dd>
-<dt>Returns:</dt>
-<dd>the generated id</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="isUpsertOperation(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)">
-<h3>isUpsertOperation</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isUpsertOperation</span><wbr><span class="parameters">(<a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</span></div>
-<div class="block">Checks whether the stored query represents an upsert operation.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dt>Returns:</dt>
-<dd>true if the stored query is an upsert operation</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)">
-<h3 id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)">getJdbcEntityOperations</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type"><a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntityOperations</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getJdbcEntityOperations</span><wbr><span class="parameters">(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- T&nbsp;entity,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery)</span></div>
-<div class="block">Creates the entity operation for a single write.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><span id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)-type-param-T"><code>T</code> - The entity type</span></dd>
-<dt>Parameters:</dt>
-<dd><code>ctx</code> - The operation context</dd>
-<dd><code>persistentEntity</code> - The persistent entity</dd>
-<dd><code>entity</code> - The entity instance</dd>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dt>Returns:</dt>
-<dd>The entity operation</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)">
-<h3 id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)">getJdbcEntityOperations</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type"><a href="DefaultJdbcRepositoryOperations.JdbcEntityOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntityOperations</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getJdbcEntityOperations</span><wbr><span class="parameters">(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- T&nbsp;entity,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery,
- boolean&nbsp;insert)</span></div>
-<div class="block">Creates the entity operation for a single write.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><span id="getJdbcEntityOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)-type-param-T"><code>T</code> - The entity type</span></dd>
-<dt>Parameters:</dt>
-<dd><code>ctx</code> - The operation context</dd>
-<dd><code>persistentEntity</code> - The persistent entity</dd>
-<dd><code>entity</code> - The entity instance</dd>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dd><code>insert</code> - Whether the operation should use insert-generated-id mechanics</dd>
-<dt>Returns:</dt>
-<dd>The entity operation</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)">
-<h3>getJdbcEntitiesOperations</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type"><a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntitiesOperations</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getJdbcEntitiesOperations</span><wbr><span class="parameters">(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;entities,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery)</span></div>
-<div class="block">Creates the entity operation for a batch write.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><span id="getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)-type-param-T"><code>T</code> - The entity type</span></dd>
-<dt>Parameters:</dt>
-<dd><code>ctx</code> - The operation context</dd>
-<dd><code>persistentEntity</code> - The persistent entity</dd>
-<dd><code>entities</code> - The entity instances</dd>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dt>Returns:</dt>
-<dd>The entity operation</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)">
-<h3>getJdbcEntitiesOperations</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type"><a href="DefaultJdbcRepositoryOperations.JdbcEntitiesOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcEntitiesOperations</a>&lt;T&gt;</span>&nbsp;<span class="element-name">getJdbcEntitiesOperations</span><wbr><span class="parameters">(<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&nbsp;ctx,
- <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;entities,
- <a href="../../runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;&nbsp;storedQuery,
- boolean&nbsp;insert)</span></div>
-<div class="block">Creates the entity operation for a batch write.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><span id="getJdbcEntitiesOperations(io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations.JdbcOperationContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,boolean)-type-param-T"><code>T</code> - The entity type</span></dd>
-<dt>Parameters:</dt>
-<dd><code>ctx</code> - The operation context</dd>
-<dd><code>persistentEntity</code> - The persistent entity</dd>
-<dd><code>entities</code> - The entity instances</dd>
-<dd><code>storedQuery</code> - The stored query</dd>
-<dd><code>insert</code> - Whether the operation should use insert-generated-id mechanics</dd>
-<dt>Returns:</dt>
-<dd>The entity operation</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="sqlExceptionToDataAccessException(java.sql.SQLException,io.micronaut.data.model.query.builder.sql.Dialect,java.util.function.Function)">
-<h3>sqlExceptionToDataAccessException</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">sqlExceptionToDataAccessException</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&nbsp;sqlException,
- <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>, <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a>&gt;&nbsp;fallbackMapper)</span></div>
-<div class="block">Handles <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> first trying to map it to <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> using <a href="SqlExceptionMapper.html" title="interface in io.micronaut.data.jdbc.operations"><code>SqlExceptionMapper</code></a>.
-If mapped exception is not <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> then returns <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> using provided fallbackMapper.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>sqlException</code> - The SQL exception that was thrown</dd>
-<dd><code>dialect</code> - The dialect</dd>
-<dd><code>fallbackMapper</code> - The fallback mapper that returns <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a> if <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a> was not mapped to <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions"><code>DataAccessException</code></a></dd>
-<dt>Returns:</dt>
-<dd>DataAccessException</dd>
 </dl>
 </div>
 </section>
