@@ -109,16 +109,6 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 |This is the generic SQL `MERGE` form. Actual support depends on the database used with the ANSI dialect.
 |===
 
-== JDBC and R2DBC
-
-JDBC and R2DBC repositories use the same compile-time matcher and SQL query builder for upsert methods, so the repository declarations and generated SQL shapes are the same for the same dialect.
-The main differences are in runtime execution:
-
-* JDBC repositories execute blocking operations and may use JDBC batching for `upsertAll` when the dialect and driver support batching.
-* R2DBC repositories execute through reactive publishers. Reactive return types such as `Mono` and `Flux` are intended for R2DBC/reactive repositories.
-* Dialect-specific generated-id returning is runtime dependent. Oracle and SQL Server have dedicated handling for generated IDs on upsert. Other dialects may execute the upsert successfully but not mutate the entity with a database-generated value.
-* R2DBC generated-id returning depends on driver support for the generated SQL and return mechanism. Do not assume every generated value that can be produced by the database can also be read back through every R2DBC driver.
-
 == Single and Batch Upsert
 
 A single-entity upsert method executes the generated upsert statement for one entity.
@@ -200,27 +190,3 @@ It only makes sense when the application needs to read the existing row under lo
 == JSON Duality Views
 
 Upsert is not currently supported for entities that use JSON entity representation, including Oracle JSON Duality view entities mapped with ann:data.annotation.JsonView[].
-
-Oracle JSON Duality views are updatable for supported insert, update, and delete use cases, but Micronaut Data's upsert implementation also needs to return generated values for some upsert methods.
-`MERGE` with a `RETURNING` clause over a JSON view document may fail with the following Oracle error:
-
-[source]
-----
-SQL Error: ORA-03001: unimplemented feature
-----
-
-For example:
-
-[source,sql]
-----
-MERGE INTO "CONTACT_VIEW" target
-USING (SELECT ? c0, ? DATA FROM DUAL) source
-ON (JSON_VALUE(target.DATA,'$._id') = source.c0)
-WHEN MATCHED THEN
-  UPDATE SET target.DATA = source.DATA
-WHEN NOT MATCHED THEN
-  INSERT (DATA) VALUES (source.DATA)
-RETURNING JSON_VALUE(DATA,'$._id') INTO ?
-----
-
-Because this cannot be implemented consistently across supported upsert method shapes, Micronaut Data rejects upsert methods for ann:data.annotation.JsonView[] entities.
