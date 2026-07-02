@@ -92,6 +92,10 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 |`INSERT INTO <table> (...) VALUES (...) ON CONFLICT (...) DO UPDATE SET ...`
 |The `ON CONFLICT` columns are the identity columns or the configured conflict properties. If there are no mutable columns to update, Micronaut Data generates `DO NOTHING`.
 
+|`Dialect.SQLITE`
+|`INSERT INTO <table> (...) VALUES (...) ON CONFLICT (...) DO UPDATE SET ...`
+|The `ON CONFLICT` columns are the identity columns or the configured conflict properties. If there are no mutable columns to update, Micronaut Data generates `DO NOTHING`.
+
 |`Dialect.SQL_SERVER`
 |`MERGE INTO <table> WITH (HOLDLOCK) AS target USING (VALUES (...)) AS source (...) ON ...`
 |The generated `MERGE` uses `WITH (HOLDLOCK)` to make the match and write atomic for the target key. Generated identity returning uses `OUTPUT inserted.<id-column>` when supported.

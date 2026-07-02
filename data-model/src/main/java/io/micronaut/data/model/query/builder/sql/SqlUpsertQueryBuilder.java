@@ -74,7 +74,7 @@ final class SqlUpsertQueryBuilder {
         String query = switch (dialect) {
             case H2 -> buildH2Upsert(tableName, data);
             case MYSQL -> buildMySqlUpsert(tableName, data);
-            case POSTGRES -> buildPostgresUpsert(tableName, data);
+            case POSTGRES, SQLITE -> buildPostgresUpsert(tableName, data);
             case SQL_SERVER -> buildSqlServerUpsert(tableName, data);
             case ORACLE -> buildOracleUpsert(tableName, data);
             case ANSI -> buildAnsiUpsert(tableName, data);
