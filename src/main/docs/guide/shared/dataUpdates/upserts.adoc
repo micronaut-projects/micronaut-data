@@ -1,0 +1,222 @@
+An upsert is a native database operation that inserts a row when no matching row exists, or updates the existing row when a match is found.
+Micronaut Data supports explicitly declared upsert operations for SQL repositories.
+
+Upsert methods are opt-in.
+They are not inherited from api:data.repository.CrudRepository[].
+Declare an upsert method only on repositories that need this behavior.
+
+The default conflict target is the entity identity.
+Use ann:data.annotation.Upsert[] with `conflictsOn` to use another persistent property, or a set of persistent properties, as the conflict target.
+
+[source,java]
+----
+Contact upsert(Contact contact);
+
+List<Contact> upsertAll(Iterable<Contact> contacts);
+
+@Upsert
+Contact put(Contact contact);
+
+@Upsert(conflictsOn = "email")
+Contact putByEmail(Contact contact);
+
+@Upsert(conflictsOn = {"provider", "email"})
+Contact putByProviderAndEmail(Contact contact);
+----
+
+The same repository method shapes are supported for asynchronous and reactive repositories where the repository type supports those return types:
+
+[source,java]
+----
+@Upsert(conflictsOn = "email")
+Mono<Contact> upsertMono(Contact contact);
+
+@Upsert(conflictsOn = "email")
+CompletableFuture<Contact> upsertFuture(Contact contact);
+
+@Upsert(conflictsOn = "email")
+Flux<Contact> upsertAllFlux(Iterable<Contact> contacts);
+
+@Upsert(conflictsOn = "email")
+CompletableFuture<List<Contact>> upsertAllFuture(Iterable<Contact> contacts);
+----
+
+Upsert methods must accept exactly one entity parameter or one iterable entity parameter.
+A method cannot mix a single entity parameter and an iterable entity parameter.
+The return type may be `void`, a number type, the entity type, or an iterable/reactive/asynchronous container that produces the entity type for the corresponding operation.
+
+IMPORTANT: Upsert support is implemented for explicit SQL repositories.
+It is not implemented for repositories that rely on implicit query execution, such as MongoDB or Azure Cosmos repositories.
+
+== Conflict Properties
+
+When `conflictsOn` is not specified, Micronaut Data uses the entity identity properties to decide whether the upsert should update an existing row.
+
+When `conflictsOn` is specified, those properties define the conflict target:
+
+[source,java]
+----
+@Upsert(conflictsOn = "email")
+Contact putByEmail(Contact contact);
+
+@Upsert(conflictsOn = {"provider", "email"})
+Contact putByProviderAndEmail(Contact contact);
+----
+
+Conflict properties must resolve to persistent, non-generated properties.
+Micronaut Data does not infer the conflict target from every unique constraint on the table.
+The database schema should still define a primary key or unique constraint that matches the conflict target used by the repository method.
+That database constraint is what makes the operation reliable under concurrent writes.
+
+Non-conflict persistent properties are updated when a matching row is found.
+Identifier properties and conflict properties are preserved as needed by the generated statement.
+All bindable columns required by the generated statement are available to the insert branch.
+
+== Supported SQL Dialects
+
+Micronaut Data generates dialect-specific SQL for upsert operations.
+
+[cols="1,3,3"]
+|===
+|Dialect |Generated SQL shape |Notes
+
+|`Dialect.H2`
+|`MERGE INTO <table> (...) KEY(...) VALUES (...)`
+|The `KEY` columns are the identity columns or the configured conflict properties.
+
+|`Dialect.MYSQL`
+|`INSERT INTO <table> (...) VALUES (...) ON DUPLICATE KEY UPDATE ...`
+|Used for MySQL-compatible databases, including MariaDB. The database detects duplicate rows from primary key or unique constraints, so the schema should match the selected conflict properties.
+
+|`Dialect.POSTGRES`
+|`INSERT INTO <table> (...) VALUES (...) ON CONFLICT (...) DO UPDATE SET ...`
+|The `ON CONFLICT` columns are the identity columns or the configured conflict properties. If there are no mutable columns to update, Micronaut Data generates `DO NOTHING`.
+
+|`Dialect.SQL_SERVER`
+|`MERGE INTO <table> WITH (HOLDLOCK) AS target USING (VALUES (...)) AS source (...) ON ...`
+|The generated `MERGE` uses `WITH (HOLDLOCK)` to make the match and write atomic for the target key. Generated identity returning uses `OUTPUT inserted.<id-column>` when supported.
+
+|`Dialect.ORACLE`
+|`MERGE INTO <table> target USING (SELECT ... FROM DUAL) source ON (...) ...`
+|Oracle uses a single-row `SELECT ... FROM DUAL` source. Generated identity returning uses `RETURNING <id-column> INTO ?` when supported.
+
+|`Dialect.ANSI`
+|`MERGE INTO <table> target USING (VALUES (...)) source (...) ON (...) ...`
+|This is the generic SQL `MERGE` form. Actual support depends on the database used with the ANSI dialect.
+|===
+
+== JDBC and R2DBC
+
+JDBC and R2DBC repositories use the same compile-time matcher and SQL query builder for upsert methods, so the repository declarations and generated SQL shapes are the same for the same dialect.
+The main differences are in runtime execution:
+
+* JDBC repositories execute blocking operations and may use JDBC batching for `upsertAll` when the dialect and driver support batching.
+* R2DBC repositories execute through reactive publishers. Reactive return types such as `Mono` and `Flux` are intended for R2DBC/reactive repositories.
+* Dialect-specific generated-id returning is runtime dependent. Oracle and SQL Server have dedicated handling for generated IDs on upsert. Other dialects may execute the upsert successfully but not mutate the entity with a database-generated value.
+* R2DBC generated-id returning depends on driver support for the generated SQL and return mechanism. Do not assume every generated value that can be produced by the database can also be read back through every R2DBC driver.
+
+== Single and Batch Upsert
+
+A single-entity upsert method executes the generated upsert statement for one entity.
+
+[source,java]
+----
+Contact upsert(Contact contact);
+----
+
+An iterable upsert method applies the same upsert operation to each entity.
+
+[source,java]
+----
+List<Contact> upsertAll(Iterable<Contact> contacts);
+----
+
+`upsertAll` is a batch operation at the repository API level, but it should not be understood as a portable multi-row SQL statement.
+Depending on the dialect, driver, and repository implementation, Micronaut Data may use JDBC batching, driver-specific batching, or execute one statement per entity.
+Each entity still has its own bind values.
+Returned entities are produced in the same logical order as the input values.
+
+If one item in a batch fails, transaction behavior depends on the transaction boundary configured by the application and on the database driver.
+Use an explicit transaction when all items must commit or roll back together.
+
+== Generated Identity Values
+
+Assigned identifiers are the most portable option for upsert.
+
+When the default identity conflict target is used, generated identity properties are rejected because Micronaut Data needs a non-generated value to match an existing row.
+When `conflictsOn` is used, the identity can be generated by the database because another property, such as `email`, is used to find the row.
+
+Returning generated values from an upsert is not equally supported by every database and driver.
+Micronaut Data can populate generated IDs only when the generated SQL and runtime implementation can read the value back.
+Oracle uses `MERGE ... RETURNING ... INTO`.
+SQL Server uses `MERGE ... OUTPUT inserted.<id-column>`.
+For other dialects, an inserted row may be created with a database-generated identity, but the returned entity is not guaranteed to contain that generated value unless the dialect/runtime supports returning it for upsert.
+
+== Optimistic Locking
+
+Optimistic locking is not supported by the native upsert implementation.
+Entities with ann:data.annotation.Version[] are rejected for upsert methods.
+
+To support optimistic locking in a single native merge statement, the match condition would need to include both the identity and the expected version, for example:
+
+[source,sql]
+----
+MERGE INTO book b
+USING (SELECT ? id, ? version, ? title FROM DUAL) v
+ON (b.id = v.id AND b.version = v.version)
+WHEN MATCHED THEN
+  UPDATE SET b.title = v.title, b.version = v.version + 1
+WHEN NOT MATCHED THEN
+  INSERT (id, version, title)
+  VALUES (v.id, v.version, v.title)
+----
+
+However, this makes the `WHEN NOT MATCHED` branch ambiguous:
+
+* No row exists for the given id, so insert is valid.
+* A row exists for the id, but its version is different, so the operation should fail with api:data.exceptions.OptimisticLockException[].
+
+Because a native upsert cannot portably distinguish those two cases, Micronaut Data does not enforce optimistic locking in the native upsert path.
+Use an update or save operation when version checking is required.
+
+== Pessimistic Locking
+
+Pessimistic locking is supported by finder methods such as `find*ForUpdate`.
+It is separate from upsert.
+
+If `find*ForUpdate` is executed before an upsert operation in the same transaction:
+
+* If no row exists, there is no row to lock. Another transaction can still insert the same unique key before this transaction writes. This is exactly where database-native upsert is useful: the unique constraint together with `MERGE`, `ON CONFLICT`, or the dialect-specific equivalent handles the race atomically.
+* If a row exists, `find*ForUpdate` locks that row until the transaction completes. A following upsert will update that existing row while the lock is held. However, since the row is already known to exist, a normal update or save is usually clearer than upsert, unless the code intentionally wants the same method to handle both existing and missing rows.
+
+For a simple "insert or update this entity" operation, using `find*ForUpdate` before upsert is generally unnecessary.
+It should not fail, but it usually adds an extra query and lock without much benefit.
+It only makes sense when the application needs to read the existing row under lock, make decisions from its current state, and then write.
+
+== JSON Duality Views
+
+Upsert is not currently supported for entities that use JSON entity representation, including Oracle JSON Duality view entities mapped with ann:data.annotation.JsonView[].
+
+Oracle JSON Duality views are updatable for supported insert, update, and delete use cases, but Micronaut Data's upsert implementation also needs to return generated values for some upsert methods.
+`MERGE` with a `RETURNING` clause over a JSON view document may fail with the following Oracle error:
+
+[source]
+----
+SQL Error: ORA-03001: unimplemented feature
+----
+
+For example:
+
+[source,sql]
+----
+MERGE INTO "CONTACT_VIEW" target
+USING (SELECT ? c0, ? DATA FROM DUAL) source
+ON (JSON_VALUE(target.DATA,'$._id') = source.c0)
+WHEN MATCHED THEN
+  UPDATE SET target.DATA = source.DATA
+WHEN NOT MATCHED THEN
+  INSERT (DATA) VALUES (source.DATA)
+RETURNING JSON_VALUE(DATA,'$._id') INTO ?
+----
+
+Because this cannot be implemented consistently across supported upsert method shapes, Micronaut Data rejects upsert methods for ann:data.annotation.JsonView[] entities.
