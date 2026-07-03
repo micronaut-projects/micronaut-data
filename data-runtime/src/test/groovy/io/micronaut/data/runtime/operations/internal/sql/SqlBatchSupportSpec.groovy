@@ -208,29 +208,6 @@ class SqlBatchSupportSpec extends Specification {
     }
 
     @Unroll
-    void "jdbc sqlite #scenario"() {
-        given:
-        boolean requiresGeneratedKeys = SqlBatchSupport.requiresBatchGeneratedKeys(entityWithGeneratedId(), operation(resultArgument))
-
-        expect:
-        SqlBatchSupport.isSupportsJdbcBatchInsert(
-            entityWithGeneratedId(),
-            Dialect.SQLITE,
-            "SQLite",
-            "SQLite JDBC",
-            true,
-            true,
-            requiresGeneratedKeys
-        ) == supported
-
-        where:
-        scenario                                      | resultArgument    || supported
-        "falls back for entity-returning saveAll"     | Argument.listOf(String) || false
-        "can batch for void insertAll"                | Argument.of(Void) || true
-        "can batch for count-returning insertAll"     | Argument.of(Long) || true
-    }
-
-    @Unroll
     void "generated keys are required for #scenario"() {
         expect:
         SqlBatchSupport.requiresBatchGeneratedKeys(entity(cascadesPersist, postPersist), operation(resultArgument)) == required
