@@ -42,7 +42,6 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AbstractPreparedDataOperation;

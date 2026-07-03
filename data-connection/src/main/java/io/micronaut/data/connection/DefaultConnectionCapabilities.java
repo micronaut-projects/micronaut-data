@@ -25,7 +25,6 @@ import java.sql.Connection;
  */
 @Internal
 final class DefaultConnectionCapabilities implements ConnectionCapabilities {
-
     @Override
     public boolean supports(ConnectionCapabilities.Capability capability, Connection connection) {
         return true;

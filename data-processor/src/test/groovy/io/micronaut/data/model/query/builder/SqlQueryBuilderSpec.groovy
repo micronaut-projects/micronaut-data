@@ -22,11 +22,14 @@ import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
+import io.micronaut.data.model.entities.GeneratedIdentityOnlyEntity
+import io.micronaut.data.model.entities.GeneratedIdOnlyEntity
 import io.micronaut.data.model.entities.GeogEntityJson
 import io.micronaut.data.model.entities.GeogEntityWkt
 import io.micronaut.data.model.entities.GeomEntityCompositeIndex
 import io.micronaut.data.model.entities.GeomEntityJson
 import io.micronaut.data.model.entities.GeomEntityWGS84
+import io.micronaut.data.model.entities.GeomEntityWGS84Wkt
 import io.micronaut.data.model.entities.GeomEntityWkt
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
@@ -473,6 +476,34 @@ interface MyRepository {
         result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId", '5': 'company.myId')
     }
 
+    @Unroll
+    void "test encode #dialect insert statement with only generated id"() {
+        given:
+        def result = builder.createCriteriaInsert(GeneratedIdOnlyEntity).build(new SqlQueryBuilder(dialect))
+
+        expect:
+        result.query == expectedQuery
+        result.parameters.isEmpty()
+
+        where:
+        dialect          || expectedQuery
+        Dialect.ANSI     || 'INSERT INTO "generated_id_only_entity" DEFAULT VALUES'
+        Dialect.H2       || 'INSERT INTO `generated_id_only_entity` DEFAULT VALUES'
+        Dialect.MYSQL    || 'INSERT INTO `generated_id_only_entity` () VALUES ()'
+        Dialect.POSTGRES || 'INSERT INTO "generated_id_only_entity" DEFAULT VALUES'
+        Dialect.SQL_SERVER || 'INSERT INTO [generated_id_only_entity] DEFAULT VALUES'
+        Dialect.ORACLE   || 'INSERT INTO "GENERATED_ID_ONLY_ENTITY" ("ID") VALUES ("GENERATED_ID_ONLY_ENTITY_SEQ".nextval)'
+    }
+
+    void "test encode oracle insert statement with only identity id"() {
+        given:
+        def result = builder.createCriteriaInsert(GeneratedIdentityOnlyEntity).build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        expect:
+        result.query == 'INSERT INTO "GENERATED_IDENTITY_ONLY_ENTITY" VALUES (DEFAULT)'
+        result.parameters.isEmpty()
+    }
+
     void "test encode insert statement for embedded"() {
         given:
         def result = builder.createCriteriaInsert(Restaurant).build(new SqlQueryBuilder())
@@ -640,6 +671,24 @@ interface MyRepository {
         Dialect.POSTGRES   | GeomEntityWkt  || 'SELECT geom_entity_wkt_."id",ST_AsText(geom_entity_wkt_."location") AS "location",ST_AsText(geom_entity_wkt_."multi_point") AS "multi_point",ST_AsText(geom_entity_wkt_."line_string") AS "line_string",ST_AsText(geom_entity_wkt_."multi_line_string") AS "multi_line_string" FROM "geom_entity_wkt" geom_entity_wkt_ WHERE (ST_DWithin(geom_entity_wkt_."location",ST_GeomFromText(?, 3857),?))'
         Dialect.SQL_SERVER | GeomEntityJson || 'SELECT geom_entity_json_.[id],geom_entity_json_.[location].STAsText() AS [location],geom_entity_json_.[multi_point].STAsText() AS [multi_point],geom_entity_json_.[line_string].STAsText() AS [line_string],geom_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_json] geom_entity_json_ WHERE (geom_entity_json_.[location].STDistance(geometry::STGeomFromText(?, 3857)) <= ?)'
         Dialect.SQL_SERVER | GeomEntityWkt  || 'SELECT geom_entity_wkt_.[id],geom_entity_wkt_.[location].STAsText() AS [location],geom_entity_wkt_.[multi_point].STAsText() AS [multi_point],geom_entity_wkt_.[line_string].STAsText() AS [line_string],geom_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_wkt] geom_entity_wkt_ WHERE (geom_entity_wkt_.[location].STDistance(geometry::STGeomFromText(?, 3857)) <= ?)'
+    }
+
+    @Unroll
+    void "test encode #dialect near predicate with geographic crs for #entityClass.simpleName"() {
+        given:
+        def query = builder.createQuery(entityClass)
+        def root = query.from(entityClass)
+        query.where(builder.near(root.get('point'), builder.parameter(Object), builder.parameter(Double)))
+
+        expect:
+        query.build(new SqlQueryBuilder(dialect)).query == expectedQuery
+
+        where:
+        dialect       | entityClass        || expectedQuery
+        Dialect.MYSQL | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_.`id`,ST_AsGeoJSON(geom_entity_wgs84_.`location`) AS `location` FROM `geom_entity_wgs84` geom_entity_wgs84_ WHERE (ST_Distance_Sphere(geom_entity_wgs84_.`location`,ST_GeomFromGeoJSON(?, 1, 4326)) <= ?)'
+        Dialect.MYSQL | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_.`id`,ST_AsText(geom_entity_wgs84_wkt_.`location`) AS `location` FROM `geom_entity_wgs84_wkt` geom_entity_wgs84_wkt_ WHERE (ST_Distance_Sphere(geom_entity_wgs84_wkt_.`location`,ST_GeomFromText(?, 4326)) <= ?)'
+        Dialect.H2    | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_.`id`,ST_AsGeoJSON(geom_entity_wgs84_.`location`) AS `location` FROM `geom_entity_wgs84` geom_entity_wgs84_ WHERE (ST_DistanceSphere(geom_entity_wgs84_.`location`,ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)) <= ?)'
+        Dialect.H2    | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_.`id`,ST_AsText(geom_entity_wgs84_wkt_.`location`) AS `location` FROM `geom_entity_wgs84_wkt` geom_entity_wgs84_wkt_ WHERE (ST_DistanceSphere(geom_entity_wgs84_wkt_.`location`,ST_GeomFromText(?, 4326)) <= ?)'
     }
 
     void "test encode create statement for embedded"() {

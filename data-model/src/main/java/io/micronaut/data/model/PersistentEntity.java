@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -24,6 +23,8 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.jspecify.annotations.Nullable;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -231,7 +232,7 @@ public interface PersistentEntity extends PersistentElement {
 
     /**
      * Returns the parent entity of this entity.
-     * @return The ParentEntity instance
+     * @return The ParentEntity instance , {@code null} if no parent is present.
      */
     @Nullable PersistentEntity getParentEntity();
 

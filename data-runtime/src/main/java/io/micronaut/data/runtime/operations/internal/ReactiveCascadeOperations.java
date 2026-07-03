@@ -184,9 +184,10 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                                 LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                             }
 
+                            RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) cascadeOp.ctx.getAssociation();
                             Flux<Object> childrenFlux = Flux.empty();
                             for (Object child : cascadeManyOp.children) {
-                                if (ctx.persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
+                                if (ctx.persisted.contains(child) || !shouldPersistChildOnPersist(childPersistentEntity, association, child)) {
                                     childrenFlux = childrenFlux.concatWith(Mono.just(child));
                                     continue;
                                 }

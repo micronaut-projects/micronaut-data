@@ -1,0 +1,23 @@
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor projects.micronautDataProcessor
+
+    implementation mnSql.jakarta.persistence.api
+    implementation projects.micronautDataModel
+    testAnnotationProcessor projects.micronautDataJpaMetamodelProcessor
+    testImplementation projects.micronautDataJpaMetamodelProcessor
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation projects.micronautDataTck
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation(mnTest.junit.platform.suite)
+}

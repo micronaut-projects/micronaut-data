@@ -108,7 +108,11 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
                 logger.debug("Executing with a connection: [{}]", connection);
             }
             setupConnection(connection);
-            return connection.propagate(() -> callback.apply(connection));
+            for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
+                callback = connectionCustomizer.intercept(callback);
+            }
+            Function<ConnectionStatus<C>, R> finalCallback = callback;
+            return connection.propagate(() -> finalCallback.apply(connection));
         } finally {
             complete(connection);
         }

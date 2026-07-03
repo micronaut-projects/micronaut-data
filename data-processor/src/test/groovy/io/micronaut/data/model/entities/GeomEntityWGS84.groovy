@@ -15,7 +15,7 @@ class GeomEntityWGS84 {
     @GeneratedValue
     private Long id
 
-    @Srid(4326)
+    @Srid(value = 4326, type = Srid.CrsType.GEOGRAPHIC)
     @Index(columns = "location")
     @MappedProperty("location")
     private Point point

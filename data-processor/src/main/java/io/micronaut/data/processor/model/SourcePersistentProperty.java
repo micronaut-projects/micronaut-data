@@ -17,7 +17,6 @@ package io.micronaut.data.processor.model;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.Association;
@@ -30,6 +29,7 @@ import io.micronaut.inject.ast.EnumConstantElement;
 import io.micronaut.inject.ast.EnumElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -199,6 +199,13 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
      */
     public PropertyElement getPropertyElement() {
         return propertyElement;
+    }
+
+    /**
+     * @return The declaring type of the property.
+     */
+    public ClassElement getDeclaringType() {
+        return propertyElement.getDeclaringType();
     }
 
     @Override

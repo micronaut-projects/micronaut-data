@@ -27,4 +27,5 @@ dependencies {
     testImplementation mn.micronaut.inject.java.test
     testImplementation mnSerde.micronaut.serde.jackson
     testImplementation mn.micronaut.jackson.databind
+    testImplementation(mnTest.micronaut.test.junit5)
 }

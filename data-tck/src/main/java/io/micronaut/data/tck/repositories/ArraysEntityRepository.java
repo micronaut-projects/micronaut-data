@@ -18,13 +18,14 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.ArraysDto;
 import io.micronaut.data.tck.entities.ArraysEntity;
-
 import org.jspecify.annotations.Nullable;
+
 import java.util.Collection;
 
-public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Long> {
+public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Long>, JpaSpecificationExecutor<ArraysEntity> {
 
     void update(@Id Long id,
                 @Parameter("stringArray") String[] stringArray,

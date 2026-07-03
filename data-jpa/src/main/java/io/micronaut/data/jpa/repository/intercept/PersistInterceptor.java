@@ -27,7 +27,7 @@ import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 import java.lang.reflect.Array;
 
 /**
- * Interceptor for {@link jakarta.data.repository.stateful.Persist} methods.
+ * Interceptor for {@code jakarta.data.repository.stateful.Persist} methods.
  *
  * @param <T> The entity type
  * @author Denis Stepanov

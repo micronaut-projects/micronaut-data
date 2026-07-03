@@ -19,11 +19,11 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.tck.entities.Car;
-
 import org.jspecify.annotations.Nullable;
 
-public interface CarRepository extends CrudRepository<Car, Long> {
+public interface CarRepository extends CrudRepository<Car, Long>, JpaSpecificationExecutor<Car> {
 
     void update(@Id Long id, @Parameter("name") @Nullable @io.micronaut.core.annotation.Nullable String name);
 

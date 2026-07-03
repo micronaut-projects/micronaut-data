@@ -36,4 +36,6 @@ public interface PageRepository extends GenericRepository<Page, Long> {
     // Join on book so chapters.book will be populated
     @Join(value = "book.chapters.book", type = Join.Type.FETCH)
     List<Chapter> findBookChaptersByIdAndNum(Long id, long num);
+
+    void deleteAll();
 }

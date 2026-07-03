@@ -31,6 +31,7 @@ import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -2453,22 +2454,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(distanceExpression);
                     query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
-                case POSTGRES, H2 -> {
-                    query.append("ST_DWithin(");
-                    appendExpression(leftExpression);
-                    query.append(COMMA);
-                    appendExpression(geometryExpression, leftExpression);
-                    query.append(COMMA);
-                    appendExpression(distanceExpression);
-                    query.append(CLOSE_BRACKET);
+                case POSTGRES -> appendDistanceFunctionComparison("ST_DWithin", leftExpression, geometryExpression, distanceExpression, true);
+                case H2 -> {
+                    if (isGeographicCrs(leftExpression)) {
+                        appendDistanceFunctionComparison("ST_DistanceSphere", leftExpression, geometryExpression, distanceExpression);
+                    } else {
+                        appendDistanceFunctionComparison("ST_DWithin", leftExpression, geometryExpression, distanceExpression, true);
+                    }
                 }
                 case MYSQL -> {
-                    query.append("ST_Distance(");
-                    appendExpression(leftExpression);
-                    query.append(COMMA);
-                    appendExpression(geometryExpression, leftExpression);
-                    query.append(") <= ");
-                    appendExpression(distanceExpression);
+                    String distanceFunction = isGeographicCrs(leftExpression) ? "ST_Distance_Sphere" : "ST_Distance";
+                    appendDistanceFunctionComparison(distanceFunction, leftExpression, geometryExpression, distanceExpression);
                 }
                 case SQL_SERVER -> {
                     appendExpression(leftExpression);
@@ -2479,6 +2475,43 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 default -> throw new UnsupportedOperationException("Near is not supported by dialect: " + getDialect());
             }
+        }
+
+        private void appendDistanceFunctionComparison(String distanceFunction,
+                                                      Expression<?> leftExpression,
+                                                      Expression<?> geometryExpression,
+                                                      Expression<? extends Number> distanceExpression) {
+            appendDistanceFunctionComparison(distanceFunction, leftExpression, geometryExpression, distanceExpression, false);
+        }
+
+        private void appendDistanceFunctionComparison(String distanceFunction,
+                                                      Expression<?> leftExpression,
+                                                      Expression<?> geometryExpression,
+                                                      Expression<? extends Number> distanceExpression,
+                                                      boolean distanceAsFunctionArgument) {
+            query.append(distanceFunction).append(OPEN_BRACKET);
+            appendExpression(leftExpression);
+            query.append(COMMA);
+            appendExpression(geometryExpression, leftExpression);
+            if (distanceAsFunctionArgument) {
+                query.append(COMMA);
+                appendExpression(distanceExpression);
+                query.append(CLOSE_BRACKET);
+            } else {
+                query.append(") <= ");
+                appendExpression(distanceExpression);
+            }
+        }
+
+        private boolean isGeographicCrs(Expression<?> expression) {
+            PersistentPropertyPath propertyPath = findParameterBoundProperty(expression);
+            if (propertyPath == null) {
+                return false;
+            }
+            return propertyPath.getProperty()
+                .getAnnotationMetadata()
+                .enumValue(Srid.class, "type", Srid.CrsType.class)
+                .orElse(Srid.CrsType.PROJECTED) == Srid.CrsType.GEOGRAPHIC;
         }
 
         @Override

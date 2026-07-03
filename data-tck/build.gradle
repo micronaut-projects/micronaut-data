@@ -8,6 +8,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mnValidation.micronaut.validation.processor
     annotationProcessor projects.micronautDataProcessor
+    annotationProcessor projects.micronautDataJpaMetamodelProcessor
 
     implementation mnValidation.micronaut.validation
     implementation mn.micronaut.http.client
@@ -31,4 +32,9 @@ dependencies {
 
 tasks.withType(Javadoc).configureEach {
     exclude("io/micronaut/data/tck/tests/AbstractJakartaDataTest.java")
+}
+
+tasks.named("prepareJavadocAggregation").configure {
+    dependsOn(tasks.named("compileJava"))
+    getSources().from(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main"))
 }

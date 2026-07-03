@@ -15,22 +15,22 @@
  */
 package io.micronaut.data.model.runtime;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.exceptions.MappingException;
-import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
-import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.exceptions.MappingException;
+import io.micronaut.data.model.AbstractPersistentEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.AbstractPersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

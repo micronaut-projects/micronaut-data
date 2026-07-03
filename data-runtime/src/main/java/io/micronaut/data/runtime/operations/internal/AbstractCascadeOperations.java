@@ -259,8 +259,22 @@ abstract class AbstractCascadeOperations {
     }
 
     /**
+     * Common decision if a child in a to-many association should be persisted on PERSIST cascade.
+     * Join-table associations must treat non-null ids as existing rows and only create the association row.
+     */
+    protected static boolean shouldPersistChildOnPersist(RuntimePersistentEntity<Object> childPersistentEntity,
+                                                         @Nullable RuntimeAssociation<Object> association,
+                                                         Object child) {
+        if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+            return childPersistentEntity.getIdentity().getProperty().get(child) == null;
+        }
+        return shouldPersistChildOnPersist(childPersistentEntity, child);
+    }
+
+    /**
      * Build a veto predicate for batch persist of many children.
-     * For join-table associations, veto any child with a non-null id (existing). For direct FKs, veto when id present and generated.
+     * For join-table associations, veto any child with a non-null id (existing).
+     * For direct FKs, use the same persistability decision as the single-child cascade path.
      */
     protected static Predicate<Object> batchPersistVeto(io.micronaut.data.model.runtime.RuntimePersistentEntity<Object> childPersistentEntity,
                                                         @Nullable RuntimeAssociation<Object> association,
@@ -269,13 +283,7 @@ abstract class AbstractCascadeOperations {
         if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
             return val -> alreadyPersisted.contains(val) || identity.getProperty().get(val) != null;
         }
-        return val -> {
-            if (alreadyPersisted.contains(val)) {
-                return true;
-            }
-            Object idVal = identity.getProperty().get(val);
-            return idVal != null && identity.isGenerated() && !(identity instanceof Association);
-        };
+        return val -> alreadyPersisted.contains(val) || !shouldPersistChildOnPersist(childPersistentEntity, association, val);
     }
 
     /**
