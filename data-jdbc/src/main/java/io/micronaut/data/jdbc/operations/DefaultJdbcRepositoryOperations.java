@@ -736,7 +736,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
             RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
-            if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
+            // DELETE_RETURNING must use the returning path so returned rows are mapped; Oracle also requires OUT parameters.
+            if (storedQuery.getOperationType() != StoredQuery.OperationType.DELETE_RETURNING
+                    && isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
                 JdbcEntitiesOperations<E> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
                 op.delete();
                 return (List<R>) op.getEntities();

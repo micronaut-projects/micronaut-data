@@ -1,6 +1,9 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.geo.Point
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -43,6 +46,23 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
     }
 
     @Memoized
+    @Override
+    DeliveryDriverJsonRepository getDeliveryDriverJsonRepository() {
+        return context.getBean(MSDeliveryDriverJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
+        return context.getBean(MSDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    MSDeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(MSDeliveryDriverWktGeographyRepository)
+    }
+
+    @Memoized
     MSGeographyEntityWktRepository getGeographyEntityWktRepository() {
         return context.getBean(MSGeographyEntityWktRepository)
     }
@@ -56,6 +76,13 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
     protected boolean supportsGeometryJsonConversion() {
         // SqlServer doesn't have built-in functions for conversion
         // between json and internal geometry/geography data types
+        return false
+    }
+
+    @Override
+    protected boolean supportsGeometryTypeWithGeographicCrs() {
+        // Geography type should be used instead of geometry type
+        // when using geographic coordinate reference system
         return false
     }
 
@@ -131,5 +158,29 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements MSSQLTestPropertyProvi
             assertNull(it.getMultiPolygon())
             assertNull(it.getGeometryCollection())
         }
+    }
+
+    void "test findByLocationNear on geography database type when geographic crs is used and wkt conversion applied"() {
+        given:
+        DeliveryDriverWktGeography nearby = new DeliveryDriverWktGeography("Nearby Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverWktGeography closest = new DeliveryDriverWktGeography("Closest Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverWktGeography busy = new DeliveryDriverWktGeography("Busy Driver", DeliveryDriverWktGeography.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverWktGeography far = new DeliveryDriverWktGeography("Far Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverWktGeographyRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverWktGeography> candidates = getDeliveryDriverWktGeographyRepository().findByStatusAndLocationNear(
+                DeliveryDriverWktGeography.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+        List<String> names = candidates.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 }
