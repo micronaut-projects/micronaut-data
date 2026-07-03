@@ -1179,21 +1179,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private boolean isSupportsBatchInsert(JdbcOperationContext ctx,
                                           RuntimePersistentEntity<?> persistentEntity,
                                           boolean requiresGeneratedKeys) {
-        if (ctx.dialect == Dialect.SQLITE) {
-            return SqlBatchSupport.isSupportsJdbcBatchInsert(
-                persistentEntity,
-                ctx.dialect,
-                null,
-                null,
-                null,
-                null,
-                requiresGeneratedKeys
-            );
-        }
         // JDBC metadata is only needed for the MySQL dialect, where Micronaut Data must
         // distinguish MySQL from MariaDB and account for their generated-key batch behavior.
         if (ctx.dialect != Dialect.MYSQL) {
-            return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, ctx.dialect);
+            return isSupportsBatchInsert(persistentEntity, ctx.dialect);
         }
         JdbcBatchCapabilities capabilities = jdbcBatchCapabilities(ctx);
         return SqlBatchSupport.isSupportsJdbcBatchInsert(

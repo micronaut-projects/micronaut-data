@@ -117,6 +117,33 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             secondAttempt
     }
 
+    void "sqlite batch insert stays disabled even when generated keys are not required"() {
+        given:
+            DefaultJdbcRepositoryOperations operations = newOperations(null)
+            RuntimePersistentProperty<?> identity = Mock {
+                isGenerated() >> false
+            }
+            RuntimePersistentEntity<?> persistentEntity = Mock {
+                hasIdentity() >> true
+                getIdentity() >> identity
+            }
+            Connection connection = Mock()
+            def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                    AnnotationMetadata.EMPTY_METADATA,
+                    null,
+                    Object,
+                    Dialect.SQLITE,
+                    connection
+            )
+
+        when:
+            boolean supported = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+            !supported
+            0 * connection._
+    }
+
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {
         context = ApplicationContext.run()
         return new DefaultJdbcRepositoryOperations(

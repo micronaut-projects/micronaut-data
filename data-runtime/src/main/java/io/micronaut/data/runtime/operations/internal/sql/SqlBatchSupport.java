@@ -99,11 +99,6 @@ public final class SqlBatchSupport {
                                                     @Nullable Boolean supportsBatchUpdates,
                                                     @Nullable Boolean supportsGetGeneratedKeys,
                                                     boolean requiresGeneratedKeys) {
-        if (dialect == Dialect.SQLITE) {
-            // SQLite JDBC does not reliably expose one generated key per row for executeBatch(),
-            // so entity-returning saveAll operations must fall back to per-row inserts.
-            return !requiresGeneratedKeys;
-        }
         if (dialect == Dialect.MYSQL) {
             if (isMariaDb(databaseProductName, driverName)) {
                 // MariaDB reports generated-key support generally, but complete generated keys for
