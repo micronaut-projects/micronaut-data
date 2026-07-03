@@ -32,10 +32,10 @@ import java.lang.annotation.Target;
  * </p>
  * <ul>
  *     <li>the class of the entity to be upserted, or</li>
- *     <li>{@code List<E>} or {@code E[]} where {@code E} is the class of the entities to be upserted.</li>
+ *     <li>{@code Iterable<E>} where {@code E} is the class of the entities to be upserted.</li>
  * </ul>
- * <p>The annotated method must either be declared {@code void}, or have a return type that is the same as the type of
- * its parameter.
+ * <p>The annotated method may be declared {@code void}, return a number type, return the entity type, or return an
+ * iterable/reactive/asynchronous container producing the entity type, depending on the repository type.
  * </p>
  * <p>By default, the entity identity is used to determine whether an existing row should be updated. The
  * {@link #conflictsOn()} member can be used to select a different property or set of properties as the conflict

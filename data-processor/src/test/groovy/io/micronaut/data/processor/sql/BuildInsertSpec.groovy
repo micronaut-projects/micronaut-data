@@ -986,7 +986,46 @@ class Test {
         "unknown conflict property"  | "@Upsert(conflictsOn = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
     }
 
-    void "test build upsert fails with both entity and iterable entity parameters"() {
+    void "test explicit upsert fails for non sql repository"() {
+        when:
+buildJpaRepository('test.MyInterface', """
+@Repository
+interface MyInterface extends GenericRepository<Test, Long> {
+    @io.micronaut.data.annotation.Upsert(conflictsOn = "name")
+    Test put(Test test);
+}
+
+@io.micronaut.data.annotation.MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Cannot implement explicit upsert query: upsert is only supported for explicit SQL repositories")
+    }
+
+    @Unroll
+    void "test build upsert fails with invalid entity parameter count - #description"() {
         when:
         buildRepository('test.MyInterface', """
 import io.micronaut.data.annotation.*;
@@ -999,7 +1038,7 @@ import java.util.List;
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
     @Upsert
-    List<Test> put(Test test, List<Test> tests);
+    ${method}
 }
 
 @MappedEntity("upsert_test")
@@ -1028,7 +1067,12 @@ class Test {
 
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("Cannot implement upsert method with both entity and iterable entity parameters")
+        ex.message.contains("Upsert method requires exactly one entity or iterable entity parameter")
+
+        where:
+        description             | method
+        "two entity parameters" | "Test put(Test test, Test other);"
+        "entity and iterable"   | "List<Test> put(Test test, List<Test> tests);"
     }
 
     void "POSTGRES test build save returning "() {

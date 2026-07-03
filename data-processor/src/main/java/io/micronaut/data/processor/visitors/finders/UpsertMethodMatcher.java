@@ -79,6 +79,9 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
     @Nullable
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder) || matchContext.supportsImplicitQueries()) {
+            if (matchContext.getMethodElement().hasStereotype(Upsert.class)) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Cannot implement explicit upsert query: upsert is only supported for explicit SQL repositories");
+            }
             return null;
         }
         MethodElement methodElement = matchContext.getMethodElement();
@@ -95,6 +98,9 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
 
         if (matchContext.getParameters().length == 0) {
             throw new ProcessingException(methodElement, "Upsert method requires parameters");
+        }
+        if (matchContext.getParametersNotInRole().size() != 1) {
+            throw new ProcessingException(methodElement, "Upsert method requires exactly one entity or iterable entity parameter");
         }
         if (matchContext.getParametersNotInRole().stream().allMatch(p -> TypeUtils.isIterableOfEntity(p.getGenericType()) || TypeUtils.isEntity(p.getGenericType()))) {
             String unsupportedReason = explicitUpsertUnsupportedReason(matchContext);
