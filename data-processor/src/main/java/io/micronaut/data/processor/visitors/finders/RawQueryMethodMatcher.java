@@ -139,13 +139,12 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     if (resultType == null) {
                         resultType = matchContext.getRootEntity().getType();
                     } else {
-                        if (operationType == DataMethod.OperationType.QUERY) {
-                            if (resultType.hasStereotype(Introspected.class)) {
-                                if (!resultType.hasStereotype(MappedEntity.class)) {
-                                    isDto = true;
-                                }
-                            }
-                        } else if (!isValidReturnType(resultType, operationType)) {
+                        if (isDtoProjectionOperation(operationType)
+                            && resultType.hasStereotype(Introspected.class)
+                            && !resultType.hasStereotype(MappedEntity.class)) {
+                            isDto = true;
+                        } else if (operationType != DataMethod.OperationType.QUERY
+                            && !isValidReturnType(resultType, operationType)) {
                             throw new MatchFailedException("Invalid result type: " + resultType.getName() + " for '" + operationType + "' operation");
                         }
                     }
@@ -355,6 +354,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return operationType == DataMethod.OperationType.INSERT_RETURNING
             || operationType == DataMethod.OperationType.UPDATE_RETURNING
             || operationType == DataMethod.OperationType.DELETE_RETURNING;
+    }
+
+    private static boolean isDtoProjectionOperation(DataMethod.OperationType operationType) {
+        return operationType == DataMethod.OperationType.QUERY || isReturningOperation(operationType);
     }
 
     private static boolean containsReturningClause(String query) {

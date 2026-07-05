@@ -159,6 +159,51 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         query == 'UPDATE User SET enabled = false WHERE id = :id'
     }
 
+    void "test raw update returning marks dto projection"() {
+        given:
+        def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@Repository
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@Executable
+interface MovieRepository extends CrudRepository<Movie, Long> {
+    @Query(value = "UPDATE movie SET title = :title WHERE id = :id RETURNING id AS \\"id\\", title AS \\"title\\"", nativeQuery = true)
+    MovieDto updateReturningDto(Long id, String title);
+}
+
+${entity('Movie', [title: String])}
+
+@Introspected
+class MovieDto {
+    private final Long id;
+    private final String title;
+
+    MovieDto(Long id, String title) {
+        this.id = id;
+        this.title = title;
+    }
+
+    Long getId() {
+        return id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+}
+""")
+        def method = repository.getRequiredMethod("updateReturningDto", Long, String)
+        def dataMethod = method.synthesize(DataMethod)
+
+        expect:
+        method.enumValue(DataMethod, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE_RETURNING
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+    }
+
     void "test build CRUD repository with no named parameter support"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
