@@ -139,7 +139,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     if (resultType == null) {
                         resultType = matchContext.getRootEntity().getType();
                     } else {
-                        if (isDtoProjectionOperation(operationType)
+                        if (supportsDtoProjection(operationType)
                             && resultType.hasStereotype(Introspected.class)
                             && !resultType.hasStereotype(MappedEntity.class)) {
                             isDto = true;
@@ -356,7 +356,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             || operationType == DataMethod.OperationType.DELETE_RETURNING;
     }
 
-    private static boolean isDtoProjectionOperation(DataMethod.OperationType operationType) {
+    private static boolean supportsDtoProjection(DataMethod.OperationType operationType) {
         return operationType == DataMethod.OperationType.QUERY || isReturningOperation(operationType);
     }
 
