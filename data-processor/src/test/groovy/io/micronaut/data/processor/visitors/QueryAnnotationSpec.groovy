@@ -168,7 +168,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 interface MovieRepository extends CrudRepository<Movie, Long> {
-    @Query(value = "UPDATE movie SET title = :title WHERE id = :id RETURNING id AS \\"id\\", title AS \\"title\\"", nativeQuery = true)
+    @Query(value = "UPDATE movie SET title = :title WHERE id = :id RETURNING id AS \\"id\\", title AS \\"title\\"")
     MovieDto updateReturningDto(Long id, String title);
 }
 
