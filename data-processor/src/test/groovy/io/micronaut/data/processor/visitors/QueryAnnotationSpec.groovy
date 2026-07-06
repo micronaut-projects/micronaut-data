@@ -163,13 +163,10 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         given:
         def repository = buildRepository('test.MovieRepository', """
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
-@Repository
 @JdbcRepository(dialect = Dialect.POSTGRES)
-@Executable
 interface MovieRepository extends CrudRepository<Movie, Long> {
     @Query(value = "UPDATE movie SET title = :title WHERE id = :id RETURNING id AS \\"id\\", title AS \\"title\\"", nativeQuery = true)
     MovieDto updateReturningDto(Long id, String title);
