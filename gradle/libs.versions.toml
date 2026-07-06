@@ -22,7 +22,7 @@ micronaut-flyway = "8.0.0"
 micronaut-coherence = "6.0.0"
 micronaut-sourcegen = "2.1.0"
 
-groovy = "5.0.6"
+groovy = "5.0.7"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M3"
@@ -51,7 +51,7 @@ shadow-gradle-plugin = "9.5.0"
 errorprone-gradle-plugin = "5.1.0"
 nullaway = "0.13.7"
 error_prone_core = "2.50.0"
-groovy_yaml = "5.0.6"
+groovy_yaml = "5.0.7"
 
 antlr = "4.13.2"
 
