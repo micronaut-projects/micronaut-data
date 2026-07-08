@@ -40,19 +40,26 @@ class OracleR2dbcReservableSpec extends Specification implements OracleXETestPro
         repository.deleteAll()
     }
 
-    void "test Oracle reservable column with raw delta update"() {
+    void "test Oracle reservable column with generated reservation delta updates"() {
         given:
         def account = repository.save(new ReservableAccount(name: "primary", balance: 100L))
 
         when:
-        repository.reserve(account.id, -40L)
+        repository.reserve(account.id, 40L)
         def updated = repository.findById(account.id).orElseThrow()
 
         then:
         updated.balance == 60L
 
         when:
-        repository.reserve(account.id, -100L)
+        repository.release(account.id, 10L)
+        updated = repository.findById(account.id).orElseThrow()
+
+        then:
+        updated.balance == 70L
+
+        when:
+        repository.reserve(account.id, 100L)
 
         then:
         thrown(DataIntegrityViolationException)

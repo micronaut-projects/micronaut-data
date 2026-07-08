@@ -49,6 +49,7 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -917,7 +918,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             })
             .collect(Collectors.toList());
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
-            .filter(e -> !e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))
+            .filter(e -> !e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class)
+                || e.getValue() instanceof BinaryExpression<?>)
             .collect(Collectors.toList());
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))) {

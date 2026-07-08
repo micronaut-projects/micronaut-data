@@ -32,6 +32,96 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
+    void "test reserve methods render reservable delta updates"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Reserve;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    @Reserve(property = "balance", operation = Reserve.Operation.DECREMENT)
+    long reserve(@Id Long id, Long amount);
+
+    @Reserve(property = "balance", operation = Reserve.Operation.INCREMENT)
+    long release(@Id Long id, Long amount);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserve").findFirst().get()) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+        getQuery(repository.findPossibleMethods("release").findFirst().get()) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" + ?) WHERE ("ID" = ?)'
+    }
+
+    void "test reserve method expands an embedded composite ID"() {
+        given:
+        def repository = buildRepository('test.OrderLineRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Reserve;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@io.micronaut.context.annotation.Executable
+interface OrderLineRepository extends GenericRepository<Project, ProjectId> {
+    @Reserve(property = "quantity", operation = Reserve.Operation.DECREMENT)
+    long reserve(@Id ProjectId id, Long amount);
+}
+
+@MappedEntity
+class Project {
+    @EmbeddedId
+    private ProjectId id;
+    @Reservable
+    private Long quantity;
+
+    public ProjectId getId() { return id; }
+    public void setId(ProjectId id) { this.id = id; }
+    public Long getQuantity() { return quantity; }
+    public void setQuantity(Long quantity) { this.quantity = quantity; }
+}
+
+@Embeddable
+class ProjectId {
+    private Long departmentId;
+    private Long projectId;
+
+    public Long getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+    public Long getProjectId() { return projectId; }
+    public void setProjectId(Long projectId) { this.projectId = projectId; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserve").findFirst().get()) == 'UPDATE "PROJECT" SET "QUANTITY"=("QUANTITY" - ?) WHERE ("DEPARTMENT_ID" = ? AND "PROJECT_ID" = ?)'
+        getParameterPropertyPaths(repository.findPossibleMethods("reserve").findFirst().get()) == ['quantity', 'id.departmentId', 'id.projectId'] as String[]
+    }
+
     void "test entity update omits reservable properties instead of mixing assignments"() {
         given:
         def repository = buildRepository('test.AccountRepository', """

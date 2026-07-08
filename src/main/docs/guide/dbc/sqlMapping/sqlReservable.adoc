@@ -111,25 +111,29 @@ In that case Micronaut Data generates a reservable column without a `CHECK` cons
 
 Oracle reservable column updates must be expressed as delta operations, for example `balance = balance + ?` or `balance = balance - ?`, and must identify the primary key in the `WHERE` clause.
 Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
-For the first implementation, Micronaut Data does not generate reservation-delta update methods.
-Use a custom ann:data.annotation.Query[] for reservation updates:
+Use ann:data.annotation.Reserve[] to generate reservation-delta update methods:
+
+This `Account` example has no non-reservable mutable properties, so it extends api:data.repository.GenericRepository[] and explicitly declares only the operations it supports.
+Entities with at least one non-reservable updatable property can continue to extend api:data.repository.CrudRepository[].
 
 [source,java]
 ----
-import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Reserve;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface AccountRepository extends CrudRepository<Account, Long> {
+@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+interface AccountRepository extends GenericRepository<Account, Long> {
 
-    @Query("""
-        UPDATE "ACCOUNT"
-        SET "BALANCE" = "BALANCE" + :amount
-        WHERE "ID" = :id
-        """)
-    int reserve(Long id, Long amount);
+    Account insert(Account account);
+
+    @Reserve(property = "balance", operation = Reserve.Operation.DECREMENT)
+    int reserve(@Id Long id, Long amount);
+
+    @Reserve(property = "balance", operation = Reserve.Operation.INCREMENT)
+    int release(@Id Long id, Long amount);
 }
 ----
 
@@ -139,16 +143,15 @@ If an entity has no non-reservable update properties, Micronaut Data fails query
 The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
 If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
 Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable.
-Use `insert(...)` for new rows and an explicit delta `@Query` for existing rows.
+For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and ann:data.annotation.Reserve[] methods.
+Use `insert(...)` for new rows and an explicit `@Reserve` delta method for existing rows.
 
 This restriction is specific to reservable-only update shapes.
 If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
-Custom reservation update queries must not mix reservable and non-reservable column assignments in the same `UPDATE`.
-Micronaut Data does not parse arbitrary raw SQL to detect this case in the first implementation.
-
-Custom reservation update queries must not use Oracle DML `RETURNING`.
-Oracle does not support DML returning clauses on reservable column update statements, and Micronaut Data does not parse arbitrary raw SQL to detect this case.
+Each `@Reserve` method updates one reservable property by the supplied delta and identifies the row with one `@Id` parameter. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
+Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML `RETURNING`.
+Criteria API updates of reservable properties are not supported. Use `@Reserve` methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.
 
 == Runtime Errors
 
