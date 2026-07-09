@@ -27,10 +27,12 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.TypeDefUtils;
 import io.micronaut.data.model.naming.NamingStrategy;
 
 import java.lang.annotation.Annotation;
@@ -58,6 +60,19 @@ final class SqlQueryBuilderUtils {
     private static final String SUFFIX = "}";
 
     private SqlQueryBuilderUtils() { }
+
+    /**
+     * Returns whether the property explicitly opts into Oracle native boolean storage.
+     *
+     * @param property The persistent property
+     * @param dialect The SQL dialect
+     * @return Whether the property uses Oracle native boolean storage
+     */
+    static boolean isNativeOracleBoolean(PersistentProperty property, Dialect dialect) {
+        return dialect == Dialect.ORACLE
+            && property.getDataType() == DataType.BOOLEAN
+            && TypeDefUtils.hasDeclaredTypeDef(property, DataType.BOOLEAN);
+    }
 
     /**
      * Maps the persisted name by applying the provided mapping function to each segment

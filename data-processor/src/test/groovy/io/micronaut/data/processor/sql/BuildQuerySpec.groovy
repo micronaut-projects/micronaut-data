@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
@@ -1039,6 +1040,61 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
         query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
         query3.endsWith('WHERE ((purchase_.`customer_id` = ? OR purchase_.`invoice_id` = ?) AND purchase_.`should_receive_copy_of_invoice` = TRUE)')
 
+    }
+
+    void "test Oracle boolean query generation uses explicit TypeDef"() {
+        given:
+        def repository = buildRepository('test.OracleBooleanRepository', """
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface OracleBooleanRepository extends CrudRepository<OracleBooleanEntity, Long> {
+    List<OracleBooleanEntity> findByLegacyActiveTrue();
+    List<OracleBooleanEntity> findByNativeActiveTrue();
+    List<OracleBooleanEntity> findByNativeActiveFalse();
+    @Query("SELECT * FROM oracle_boolean_entity WHERE native_active = :active")
+    List<OracleBooleanEntity> findByNativeActive(@TypeDef(type = DataType.BOOLEAN) Boolean active);
+    @Query("SELECT * FROM oracle_boolean_entity WHERE legacy_active = :active")
+    List<OracleBooleanEntity> findByLegacyActive(Boolean active);
+}
+
+@MappedEntity("oracle_boolean_entity")
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+class OracleBooleanEntity {
+    @Id
+    @GeneratedValue
+    Long id;
+    Boolean legacyActive;
+    @TypeDef(type = DataType.BOOLEAN)
+    Boolean nativeActive;
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByLegacyActiveTrue")).contains('"LEGACY_ACTIVE" = 1)')
+        getQuery(repository.getRequiredMethod("findByNativeActiveTrue")).contains('"NATIVE_ACTIVE" IS TRUE)')
+        getQuery(repository.getRequiredMethod("findByNativeActiveFalse")).contains('"NATIVE_ACTIVE" IS FALSE)')
+        repository.getRequiredMethod("findByNativeActive", Boolean).getAnnotationMetadata()
+            .getAnnotation(DataMethod)
+            .getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+            .first()
+            .booleanValue(DataMethodQueryParameter.META_MEMBER_NATIVE_BOOLEAN)
+            .orElse(false)
+        !repository.getRequiredMethod("findByLegacyActive", Boolean).getAnnotationMetadata()
+            .getAnnotation(DataMethod)
+            .getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+            .first()
+            .booleanValue(DataMethodQueryParameter.META_MEMBER_NATIVE_BOOLEAN)
+            .orElse(false)
     }
 
     void "test query using InRange"() {

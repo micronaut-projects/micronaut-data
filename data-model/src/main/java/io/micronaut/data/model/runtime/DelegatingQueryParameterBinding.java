@@ -104,6 +104,11 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.isExpandable();
     }
 
+    @Override
+    public boolean isNativeBoolean() {
+        return delegate.isNativeBoolean();
+    }
+
     @Nullable
     @Override
     public Object getValue() {

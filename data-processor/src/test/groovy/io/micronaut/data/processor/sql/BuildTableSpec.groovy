@@ -102,6 +102,59 @@ class Test {
                            'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
     }
 
+    void "test build create table for explicit Oracle boolean type"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+
+@Entity
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+
+    private Boolean legacyActive;
+
+    @TypeDef(type = DataType.BOOLEAN)
+    private Boolean nativeActive;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Boolean getLegacyActive() {
+        return legacyActive;
+    }
+
+    public void setLegacyActive(Boolean legacyActive) {
+        this.legacyActive = legacyActive;
+    }
+
+    public Boolean getNativeActive() {
+        return nativeActive;
+    }
+
+    public void setNativeActive(Boolean nativeActive) {
+        this.nativeActive = nativeActive;
+    }
+}
+''')
+
+        when:
+        def sql = new SqlQueryBuilder(Dialect.ORACLE).buildBatchCreateTableStatement(List.of(), entity)
+
+        then:
+        sql.contains('"LEGACY_ACTIVE" NUMBER(1)')
+        sql.contains('"NATIVE_ACTIVE" BOOLEAN')
+    }
+
     void "test custom column definition"() {
         given:
         def entity = buildJpaEntity('test.Test', '''

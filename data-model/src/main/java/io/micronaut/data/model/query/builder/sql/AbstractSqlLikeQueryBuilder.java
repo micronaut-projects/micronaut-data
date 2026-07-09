@@ -2584,7 +2584,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsFalse(Expression<?> expression) {
-            appendUnaryCondition(" = FALSE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                appendUnaryCondition(isNativeOracleBoolean(expression) ? " IS FALSE" : " = " + asLiteral(false), expression);
+            } else {
+                appendUnaryCondition(" = FALSE", expression);
+            }
         }
 
         @Override
@@ -2599,7 +2603,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsTrue(Expression<?> expression) {
-            appendUnaryCondition(" = TRUE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                appendUnaryCondition(isNativeOracleBoolean(expression) ? " IS TRUE" : " = " + asLiteral(true), expression);
+            } else {
+                appendUnaryCondition(" = TRUE", expression);
+            }
         }
 
         @Override
@@ -2642,6 +2650,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private void appendUnaryCondition(String sqlOp, Expression<?> expression) {
             appendExpression(expression);
             query.append(sqlOp);
+        }
+
+        private boolean isNativeOracleBoolean(@Nullable Expression<?> expression) {
+            PersistentPropertyPath propertyPath = findParameterBoundProperty(expression);
+            return propertyPath != null
+                && SqlQueryBuilderUtils.isNativeOracleBoolean(propertyPath.getProperty(), getDialect());
         }
 
         @Override
@@ -2825,9 +2839,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             visit(new IdExpression<>(entityRoot));
         }
 
+        private boolean isNativeOracleBoolean(@Nullable Expression<?> expression) {
+            PersistentPropertyPath propertyPath = findParameterBoundProperty(expression);
+            return propertyPath != null
+                && SqlQueryBuilderUtils.isNativeOracleBoolean(propertyPath.getProperty(), getDialect());
+        }
+
         @Override
         public void visit(LiteralExpression<?> literalExpression) {
-            query.append(asLiteral(literalExpression));
+            if (getDialect() == Dialect.ORACLE
+                && literalExpression.getValue() instanceof Boolean booleanValue
+                && isNativeOracleBoolean(boundedExpression)) {
+                query.append(booleanValue ? "TRUE" : "FALSE");
+            } else {
+                query.append(asLiteral(literalExpression));
+            }
         }
 
         @Override

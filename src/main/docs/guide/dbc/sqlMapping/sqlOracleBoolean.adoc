@@ -1,0 +1,53 @@
+Oracle Database 23.1 and later support native SQL `BOOLEAN` columns and boolean predicates.
+
+Micronaut Data preserves the legacy Oracle mapping by default, so applications that target Oracle 19c or Oracle 21c continue to work:
+
+* `Boolean` properties are mapped to `NUMBER(1)` for schema generation.
+* Derived boolean predicates use numeric values such as `1` and `0`.
+* JDBC null values use the legacy Oracle boolean type mapping.
+
+To opt a property into native Oracle boolean storage, declare `@TypeDef(type = DataType.BOOLEAN)` directly on that mapped property:
+
+[source,java]
+----
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.model.DataType;
+
+@MappedEntity
+class Product {
+    // ...
+
+    @TypeDef(type = DataType.BOOLEAN)
+    private Boolean active;
+}
+----
+
+For an Oracle repository, this generates a `BOOLEAN` column during schema generation. Derived predicates for the property use native syntax, for example `active IS TRUE` and `active IS FALSE`.
+JDBC binds null values for the property as SQL `BOOLEAN`; R2DBC binds the value as a Java `Boolean`.
+
+This is a property-level decision, so one schema can contain both representations:
+
+[source,java]
+----
+@MappedEntity
+class Product {
+    private Boolean legacyActive; // NUMBER(1)
+
+    @TypeDef(type = DataType.BOOLEAN)
+    private Boolean active; // BOOLEAN
+}
+----
+
+The annotation is an explicit request to use native Oracle boolean SQL. Micronaut Data does not inspect JDBC or R2DBC connection metadata and does not validate the Oracle server version at runtime.
+Use this mapping only when the application runs against Oracle Database 23.1 or later.
+
+IMPORTANT: Repository SQL is generated at compilation time. A repository compiled for an entity with a native boolean property can contain `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, or `IS FALSE` SQL that Oracle 19c and Oracle 21c do not accept. Applications that consume repositories from another jar are responsible for running them against a compatible Oracle database.
+
+For raw `@Query` methods, Micronaut Data does not rewrite user-provided SQL. Write the appropriate legacy or native Oracle boolean syntax for the referenced column. When a raw query parameter targets a native `BOOLEAN` column, annotate that parameter with `@TypeDef(type = DataType.BOOLEAN)` so that a null value is bound as SQL `BOOLEAN`:
+
+[source,java]
+----
+@Query("SELECT * FROM product WHERE active = :active")
+List<Product> findByActive(@TypeDef(type = DataType.BOOLEAN) Boolean active);
+----

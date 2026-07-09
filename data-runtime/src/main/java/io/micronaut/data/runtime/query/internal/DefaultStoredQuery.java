@@ -318,6 +318,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
                             av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_NATIVE_BOOLEAN).orElse(false),
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),
                             value,
                             av.stringValue(DataMethodQueryParameter.META_MEMBER_ROLE).orElse(null),

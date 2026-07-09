@@ -48,6 +48,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     @Nullable
     private final Class<?> parameterConverterClass;
     private final boolean expandable;
+    private final boolean nativeBoolean;
     private final List<QueryParameterBinding> all;
     private final boolean expression;
     @Nullable
@@ -72,6 +73,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                          boolean requiresPreviousPopulatedValue,
                          @Nullable Class<?> parameterConverterClass,
                          boolean expandable,
+                         boolean nativeBoolean,
                          final boolean expression,
                          @Nullable Object value,
                          @Nullable String role,
@@ -87,6 +89,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
         this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
         this.parameterConverterClass = parameterConverterClass;
         this.expandable = expandable;
+        this.nativeBoolean = nativeBoolean;
         this.expression = expression;
         this.value = value;
         this.role = role;
@@ -159,6 +162,11 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     @Override
     public boolean isExpandable() {
         return expandable;
+    }
+
+    @Override
+    public boolean isNativeBoolean() {
+        return nativeBoolean;
     }
 
     @Override

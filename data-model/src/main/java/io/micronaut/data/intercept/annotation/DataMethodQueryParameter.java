@@ -107,6 +107,11 @@ public @interface DataMethodQueryParameter {
     String META_MEMBER_TABLE_ALIAS = "tableAlias";
 
     /**
+     * The member name that indicates an explicitly native boolean parameter.
+     */
+    String META_MEMBER_NATIVE_BOOLEAN = "nativeBoolean";
+
+    /**
      * @return The query parameter value
      */
     String value() default "";
@@ -161,4 +166,9 @@ public @interface DataMethodQueryParameter {
      * @return true if the value has to be previous populated value and not a newly generated.
      */
     boolean requiresPreviousPopulatedValue() default false;
+
+    /**
+     * @return Whether the parameter explicitly uses the native SQL boolean type.
+     */
+    boolean nativeBoolean() default false;
 }

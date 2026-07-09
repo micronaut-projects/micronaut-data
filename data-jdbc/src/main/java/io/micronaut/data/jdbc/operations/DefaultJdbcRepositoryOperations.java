@@ -30,8 +30,8 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.annotation.Fetch;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
@@ -53,6 +53,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.TypeDefUtils;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -1255,8 +1256,38 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (dataType == DataType.JSON) {
                 jsonDataType = binding.getJsonDataType();
             }
-            setStatementParameter(ps, index, dataType, jsonDataType, value, sqlStoredQuery);
+            if (value == null && isNativeOracleBoolean(binding)) {
+                try {
+                    ps.setNull(index, Types.BOOLEAN);
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
+                }
+            } else {
+                setStatementParameter(ps, index, dataType, jsonDataType, value, sqlStoredQuery);
+            }
             index++;
+        }
+
+        private boolean isNativeOracleBoolean(QueryParameterBinding binding) {
+            if (binding.getDataType() != DataType.BOOLEAN || sqlStoredQuery.getDialect() != Dialect.ORACLE) {
+                return false;
+            }
+            if (binding.isNativeBoolean()) {
+                return true;
+            }
+            // Generated repository queries carry explicit native-boolean intent in their binding metadata.
+            // Runtime Criteria bindings do not pass through the annotation processor, so resolve the
+            // mapped property to apply the same rule.
+            String[] propertyPath = binding.getPropertyPath();
+            if (propertyPath == null) {
+                return false;
+            }
+            var persistentPropertyPath = sqlStoredQuery.getPersistentEntity().getPropertyPath(propertyPath);
+            if (persistentPropertyPath == null) {
+                return false;
+            }
+            var property = persistentPropertyPath.getProperty();
+            return TypeDefUtils.hasDeclaredTypeDef(property, DataType.BOOLEAN);
         }
 
         @Override

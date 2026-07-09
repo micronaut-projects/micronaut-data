@@ -133,6 +133,14 @@ public interface QueryParameterBinding {
     }
 
     /**
+     * @return Whether this parameter explicitly uses the native SQL boolean type
+     * @since 5.1.0
+     */
+    default boolean isNativeBoolean() {
+        return false;
+    }
+
+    /**
      * The constant runtime value for the parameter.
      *
      * @return the value or null

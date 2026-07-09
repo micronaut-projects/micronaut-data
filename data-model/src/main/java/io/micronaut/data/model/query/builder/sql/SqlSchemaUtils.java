@@ -391,6 +391,9 @@ public final class SqlSchemaUtils {
         if (definitionOpt.isPresent()) {
             return definitionOpt.get();
         }
+        if (SqlQueryBuilderUtils.isNativeOracleBoolean(prop, dialect)) {
+            return "BOOLEAN";
+        }
         if (prop.isAssignable(Geometry.class)) {
             String definition = null;
             if (dialect == Dialect.ORACLE) {

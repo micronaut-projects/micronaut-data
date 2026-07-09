@@ -41,6 +41,7 @@ import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Update;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -766,6 +767,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         if (CollectionUtils.isNotEmpty(parameterBinding)) {
             bindParameters(
+                methodMatchContext,
                 methodMatchContext.supportsImplicitQueries(),
                 parameterBinding,
                 encodeEntityParameters,
@@ -774,7 +776,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private void bindParameters(boolean supportsImplicitQueries,
+    private void bindParameters(MethodMatchContext methodMatchContext,
+                                boolean supportsImplicitQueries,
                                 List<QueryParameterBinding> parameterBinding,
                                 boolean finalEncodeEntityParameters,
                                 AnnotationValueBuilder<Annotation> annotationBuilder) {
@@ -810,6 +813,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
             if (p.isExpandable()) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_EXPANDABLE, true);
+            }
+            if (isExplicitNativeBooleanParameter(methodMatchContext, p)) {
+                builder.member(DataMethodQueryParameter.META_MEMBER_NATIVE_BOOLEAN, true);
             }
             if (p.isExpression()) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_EXPRESSION, true);
@@ -849,6 +855,25 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
         AnnotationValue[] annotations = annotationValues.toArray(new AnnotationValue[0]);
         annotationBuilder.member(DataMethod.META_MEMBER_PARAMETERS, annotations);
+    }
+
+    private boolean isExplicitNativeBooleanParameter(MethodMatchContext methodMatchContext,
+                                                     QueryParameterBinding parameterBinding) {
+        if (parameterBinding.getDataType() != DataType.BOOLEAN
+            || parameterBinding.getPropertyPath() != null
+            || parameterBinding.getParameterIndex() < 0) {
+            return false;
+        }
+        ParameterElement[] parameters = methodMatchContext.getParameters();
+        int parameterIndex = parameterBinding.getParameterIndex();
+        if (parameterIndex >= parameters.length) {
+            return false;
+        }
+        AnnotationMetadata annotationMetadata = parameters[parameterIndex].getAnnotationMetadata();
+        return annotationMetadata.hasDeclaredAnnotation(TypeDef.class)
+            && annotationMetadata.enumValue(TypeDef.class, "type", DataType.class)
+                .filter(DataType.BOOLEAN::equals)
+                .isPresent();
     }
 
     private void bindAdditionalParameters(MethodMatchContext methodMatchContext,
