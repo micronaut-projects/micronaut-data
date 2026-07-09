@@ -60,6 +60,7 @@ jobs:
           oci-service: ${{ matrix.db }}
           action: create
           user: ${{ matrix.native_test_task }}
+          surround-connection-string-with-double-quotes: true
 
       - name: Disable TCP Fast Open for Autonomous databases
         id: disable_tfo
