@@ -116,8 +116,6 @@ import static org.hibernate.query.Page.page;
 final class HibernateJpaOperations extends AbstractHibernateOperations<Session, CommonQueryContract, Query<?>>
     implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, CriteriaRepositoryOperations {
 
-    private static final String HINT_LIMIT_IN_MEMORY = "org.hibernate.limitInMemory";
-
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
     private final TransactionOperations<Session> transactionOperations;
@@ -789,9 +787,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return executeRead(session -> {
             Query<T> sessionQuery = session.createQuery(query);
-            // Hibernate 7.4 applies limits in SQL for collection fetch joins. Keep the
-            // previous in-memory behavior so a page is limited by root entities.
-            sessionQuery.setHint(HINT_LIMIT_IN_MEMORY, true);
             if (offset > 0) {
                 sessionQuery = sessionQuery.setFirstResult(offset);
             }

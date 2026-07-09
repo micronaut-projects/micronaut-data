@@ -252,10 +252,11 @@ class HibernateTxTest {
             val saved2 = repositorySuspended.save(parent2)
 
             val query = query {
-                val children: Join<Parent, Child> = if (query.resultType != Long::class.javaObjectType) {
-                    root.fetch<Parent, Child>("children", JoinType.LEFT) as Join<Parent, Child>
-                }  else {
-                    root.joinMany(Parent::children)
+                val children: Join<Parent, Child> = root.joinMany(Parent::children, JoinType.LEFT)
+                // Paging invokes this specification for entity, ID, and count queries.
+                // A fetch join is valid only when selecting entities.
+                if (query.resultType == Parent::class.java) {
+                    root.fetch<Parent, Child>("children", JoinType.LEFT)
                 }
 
                 where {
