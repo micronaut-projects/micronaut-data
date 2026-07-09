@@ -6,6 +6,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -17,5 +18,5 @@ public interface NativeOracleBooleanRepository extends CrudRepository<NativeOrac
     List<NativeOracleBooleanEntity> findByActiveFalse();
 
     @Query("SELECT * FROM \"NATIVE_ORACLE_BOOLEAN_ENTITY\" WHERE \"ACTIVE\" = :active")
-    List<NativeOracleBooleanEntity> findByActive(@TypeDef(type = DataType.BOOLEAN) Boolean active);
+    List<NativeOracleBooleanEntity> findByActive(@TypeDef(type = DataType.BOOLEAN) @Nullable Boolean active);
 }
