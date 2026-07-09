@@ -55,7 +55,7 @@ jobs:
 
       - name: Create Oracle Test Pilot Databases...
         id: create_database
-        uses: oracle-actions/setup-testpilot@7381248e5b0a21c301b4f7336dbd668de8f70051 # v1.0.26
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: create
@@ -94,7 +94,7 @@ jobs:
       - name: Delete Oracle Test Pilot Databases...
         id: delete_database
         if: always() && steps.create_database.outcome == 'success'
-        uses: oracle-actions/setup-testpilot@7381248e5b0a21c301b4f7336dbd668de8f70051 # v1.0.26
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: delete
