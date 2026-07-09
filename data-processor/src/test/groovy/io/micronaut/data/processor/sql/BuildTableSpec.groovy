@@ -76,6 +76,49 @@ class Account {
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
     }
 
+    void "test Oracle reservable constraint names use the mapped table name"() {
+        given:
+        def first = buildJpaEntity('test.FirstAccount', '''
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@MappedEntity("ledger_a")
+class FirstAccount {
+    @javax.persistence.Id private Long id;
+    @Reservable @PositiveOrZero private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+''')
+        def second = buildJpaEntity('test.SecondAccount', '''
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@MappedEntity("ledger_b")
+class SecondAccount {
+    @javax.persistence.Id private Long id;
+    @Reservable @PositiveOrZero private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def firstSql = builder.buildCreateTableStatements(first, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def secondSql = builder.buildCreateTableStatements(second, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+
+        then:
+        firstSql.contains('CONSTRAINT "CK_LEDGER_A_BALANCE_GE_0"')
+        secondSql.contains('CONSTRAINT "CK_LEDGER_B_BALANCE_GE_0"')
+    }
+
     void "test build create table with Oracle reservable column without validation constraint"() {
         given:
         def entity = buildJpaEntity('test.Account', '''
@@ -422,7 +465,7 @@ class Stats {
         def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
     }
 
 
