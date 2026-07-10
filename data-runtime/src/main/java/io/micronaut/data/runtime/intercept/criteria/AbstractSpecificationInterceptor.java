@@ -59,6 +59,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import io.micronaut.data.runtime.operations.PageIdCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -162,6 +163,18 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     protected final <B> List<B> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
+        return findAll(methodKey, context, pageable, criteriaQuery, false);
+    }
+
+    protected final <B> List<B> findPageIds(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
+        return findAll(methodKey, context, pageable, criteriaQuery, true);
+    }
+
+    private <B> List<B> findAll(RepositoryMethodKey methodKey,
+                                MethodInvocationContext<?, ?> context,
+                                Pageable pageable,
+                                CriteriaQuery<B> criteriaQuery,
+                                boolean pageIdsQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (criteriaRepositoryOperations != null) {
             Limit limit = Limit.UNLIMITED;
@@ -186,6 +199,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
             if (limit.isLimited()) {
+                if (pageIdsQuery && criteriaRepositoryOperations instanceof PageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return pageIdOperations.findPageIds(criteriaQuery, (int) limit.offset(), limit.maxResults());
+                }
                 return criteriaRepositoryOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults());
             }
             return criteriaRepositoryOperations.findAll(criteriaQuery);

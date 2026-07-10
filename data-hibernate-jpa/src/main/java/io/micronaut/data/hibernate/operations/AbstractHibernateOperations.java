@@ -326,9 +326,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param query The paginated criteria query
      */
     protected static void convertFetchesToJoinsForIdQuery(CriteriaQuery<?> query) {
-        if (query.getResultType() != Tuple.class || !query.isDistinct()) {
-            return;
-        }
         for (Root<?> root : query.getRoots()) {
             convertFetchesToJoins(root);
         }

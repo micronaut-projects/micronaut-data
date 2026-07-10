@@ -61,7 +61,7 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             iterable = findAll(methodKey, context, pageable, criteriaQuery);
         } else {
             CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
-            List<Tuple> tupleResult = findAll(methodKey, context, pageable, criteriaIdsQuery);
+            List<Tuple> tupleResult = findPageIds(methodKey, context, pageable, criteriaIdsQuery);
             if (tupleResult.isEmpty()) {
                 iterable = List.of();
             } else {
