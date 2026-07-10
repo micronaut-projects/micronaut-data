@@ -11,6 +11,7 @@ The following settings are supported:
     * `IN_MEMORY`: Pure in-memory database (equivalent to leaving `db-path` empty).
     * `ROCKSDB`: RocksDB-backed persistent database.
 - `nitrite.field-separator`: The character used to separate nested fields in query strings (default: `.`).
+- `nitrite.create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
 - `nitrite.username`: Optional username (for authenticated databases).
 - `nitrite.password`: Optional password.
 
@@ -20,6 +21,7 @@ Example (Persistent):
 ----
 nitrite:
   db-path: /data/myapp.db
+  create-indexes: true
 ----
 
 If no `db-path` is provided, an in-memory database is created by default.

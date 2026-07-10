@@ -11,12 +11,13 @@ This naming strategy applies to:
 
 == Date/Time Serialization
 
-Date and time types such as `Instant`, `LocalDate`, and `LocalDateTime` are stored as ISO-8601 string representations in Nitrite documents. For example:
+Date and time types are normalized before being stored in Nitrite documents so filtering, sorting, and aggregation use stable representations. For example:
 
-- `LocalDate.of(1990, 5, 15)` is stored as `"1990-05-15"`
-- `Instant.parse("2024-01-15T10:30:00Z")` is stored as `"2024-01-15T10:30:00Z"`
+- `LocalDate` is stored as an epoch-day number.
+- `Instant` and `LocalDateTime` are stored as epoch-nanosecond numbers.
+- `OffsetDateTime` and `ZonedDateTime` are stored as ISO-8601 offset strings.
 
-This ensures consistent querying and sorting of date/time values.
+The runtime applies the same normalization to query parameters, so repository methods can continue to use Java time types directly.
 
 == Example Entity
 
@@ -26,7 +27,7 @@ In this example:
 
 - The entity class `PersonWithDateOfBirth` maps to the collection `person_with_date_of_birth`
 - The property `dateOfBirth` maps to the document field `date_of_birth`
-- The `LocalDate` value is stored as an ISO-8601 string (e.g., `"1990-05-15"`)
+- The `LocalDate` value is normalized for storage and converted back to `LocalDate` when the entity is read.
 
 == Repository Example
 

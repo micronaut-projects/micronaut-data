@@ -10,6 +10,7 @@ See the following sections for Nitrite-specific mapping notes:
 - <<nitriteIndexes, Automated Index Creation>>
 - <<nitriteIdGenerator, ID generation>>
 - <<nitriteCompositeId, Composite primary keys>>
+- <<nitriteNaming, Naming strategies>>
 - <<nitriteAssociationMapping, Association Mapping>>
 - <<nitriteAssociationFetching, Association Fetching>>
 - <<nitriteOptimisticLocking, Optimistic Locking>>

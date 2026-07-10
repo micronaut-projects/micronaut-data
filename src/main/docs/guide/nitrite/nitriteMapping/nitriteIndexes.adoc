@@ -21,6 +21,14 @@ You can define multi-column indexes at the class level:
 
 snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="compound-index"]
 
+=== Full-text and Spatial Indexes
+
+Nitrite-specific indexes can be declared with ann:data.nitrite.annotation.FullTextIndex[] and ann:data.nitrite.annotation.SpatialIndex[].
+
+Use `@FullTextIndex` on string fields that should be queried with Nitrite's `$text` filter in JSON `@Query` methods.
+
+Spatial indexes are covered in <<nitriteSpatial>>.
+
 === Configuration
 
 Automatic index creation can be disabled by setting `nitrite.create-indexes` to `false` in your application configuration.

@@ -156,6 +156,10 @@ nitrite:
     nitriteIndexes: Automated Index Creation
     nitriteIdGenerator: ID Generation
     nitriteCompositeId: Composite Primary Keys
+    nitriteNaming: Naming Strategies
+    nitriteAssociationMapping: Association Mapping
+  nitriteAssociationFetching: Association Fetching
+  nitriteOptimisticLocking: Optimistic Locking
   nitriteTransactions: Transactions
   nitriteCriteriaSpecifications:
     title: Repositories with Criteria API

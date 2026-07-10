@@ -8,7 +8,7 @@ Nitrite supports the following association types with `@Join`:
 * `Kind.ONE_TO_ONE` - Single-valued association
 * `Kind.MANY_TO_ONE` - Single-valued association
 * `Kind.ONE_TO_MANY` - Collection-valued association
-* `Kind.MANY_TO_MANY` - Collection-valued association (owning side only)
+* `Kind.MANY_TO_MANY` - Collection-valued association
 
 == Using @Join
 
@@ -41,7 +41,7 @@ The `@Join` annotation triggers a batch fetch that:
 
 == Fetching MANY_TO_MANY Associations
 
-For `MANY_TO_MANY` associations, `@Join` works the same way as `ONE_TO_MANY` - it must be used on the **owning side** of the relationship (the side without `mappedBy`).
+For `MANY_TO_MANY` associations, `@Join` works the same way as `ONE_TO_MANY`. The owning side stores the relationship, and Nitrite can resolve the association when fetching from either side.
 
 In the Student/Book example, `Book` is the owning side (it has `@Relation(value = Relation.Kind.MANY_TO_MANY)` without `mappedBy`), while `Student` is the inverse side (it has `mappedBy = "students"`).
 
@@ -62,7 +62,7 @@ snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-exampl
 <1> `@Join("students")` on `findAll()` triggers batch fetching
 <2> Students collection is already populated, no additional queries
 
-NOTE: `@Join` on the inverse side (`mappedBy`) of a MANY_TO_MANY relationship is not supported because the inverse side does not own the foreign key relationship. Use the owning side's repository for eager fetching.
+NOTE: For bidirectional `MANY_TO_MANY` associations, persist relationship changes through the owning side. Fetching can still be declared on repository methods for either side when the association metadata identifies the owning side.
 
 See the <<nitriteAssociationMapping, Association Mapping>> section for a complete Student/Book MANY_TO_MANY example.
 
@@ -80,12 +80,12 @@ This approach minimizes database queries and is efficient for loading collection
 
 == Limitations
 
-Current limitations of `@Join` support in Nitrite:
+Current boundaries of `@Join` support in Nitrite:
 
-* Only single-level joins are fully supported (e.g., `@Join("books")`)
-* Nested joins (e.g., `@Join("books.pages")`) require multiple `@Join` annotations
-* Complex nested paths may require explicit handling in future versions
-* Only default join type is supported (no `LEFT_FETCH`, `INNER_FETCH`, etc.)
+* Use explicit `@Join` annotations for each association path that should be fetched.
+* Nested association paths are supported by declaring each path explicitly, for example `@Join("books")` and `@Join("books.pages")`.
+* Deep nested graphs should be modeled deliberately; avoid relying on broad implicit graph loading.
+* Only the default join behavior is supported; custom join types such as `LEFT_FETCH` and `INNER_FETCH` are not currently distinguished.
 
 == Association Name Matching
 

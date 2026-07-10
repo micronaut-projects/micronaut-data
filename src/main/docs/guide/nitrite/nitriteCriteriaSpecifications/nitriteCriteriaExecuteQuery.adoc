@@ -69,6 +69,6 @@ NOTE: Reverse lookups on ONE_TO_MANY associations require that the child entity 
 Nitrite-specific notes:
 
 - Parameters are bound positionally using placeholders of the form `"$mn_qp:<index>"`.
-- `Instant` values are stored and queried as ISO-8601 string representations; query parameters are normalized to match the stored representation.
+- Temporal query parameters are normalized to match Nitrite's stored representation. For example, `Instant` and `LocalDateTime` values are compared using epoch-nanosecond values.
 - Numeric equality comparisons are tolerant to representation differences introduced by the mapping layer (for example `Long` vs `BigDecimal`).
 - Date/time field names use snake_case format in aggregation queries (e.g., `last_updated`).

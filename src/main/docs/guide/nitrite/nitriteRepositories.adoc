@@ -36,13 +36,23 @@ snippet::example.BookRepository[project-base="doc-examples/nitrite-example", sou
 
 == Field Projections
 
-Nitrite supports single-field projections and aggregate functions:
+Nitrite supports single-field projections and aggregate functions, including property-scoped distinct counts:
 
 snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="projections"]
 
+For example, methods such as `findDistinctTitle()`, `countByAuthorId(...)`, and `countByTitle(...)` are resolved by the Nitrite runtime without requiring a native Nitrite aggregation pipeline. Native single-field projections, including `@Query` methods that use `"$project"`, return scalar result lists such as `List<String>`.
+
+== Explicit JSON Queries
+
+Nitrite does not support SQL-style `@Query` strings. User-authored `@Query` methods must use JSON filter documents with named placeholders.
+
+Supported JSON filter operators include `$eq`, `$ne`, `$regex`, `$exists`, `$in`, `$nin`, `$like`, `$not`, `$empty`, `$all`, and spatial operators when the spatial module is present. Full-text search uses Nitrite's `$text` filter on fields indexed with `@FullTextIndex`.
+
+If a query needs to update fields, keep the filter document and update document separate and use named parameters. The runtime handles the Mongo-style `$set` wrapper used by some generated and JSON update queries before applying the Nitrite update.
+
 For complex query logic, Micronaut Data provides:
 
-- Criteria API repositories (see <<criteriaSpecifications>>)
-- `@Query` for explicit queries (see <<explicitQueries>>)
+- Criteria API repositories (see <<nitriteCriteriaSpecifications>>)
+- `@Query` for explicit JSON filter queries
 
 NOTE: Nitrite's runtime query execution supports the query strings encoded by Micronaut Data's document processor and the Nitrite query builder. If you use `@Query` with JSON, use named placeholders like `:name` and keep update documents separate from filter documents.

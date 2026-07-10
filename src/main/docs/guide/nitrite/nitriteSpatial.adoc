@@ -36,7 +36,7 @@ snippet::example.GeometryTypesExample[project-base="doc-examples/nitrite-example
 
 === Spatial Filters
 
-Micronaut Data Nitrite supports three spatial filters via the `@Query` annotation:
+Micronaut Data Nitrite supports spatial filters through explicit JSON `@Query` methods and derived spatial query predicates.
 
 ==== $near - Find Objects Near a Location
 
@@ -67,6 +67,8 @@ snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-exampl
 Usage example:
 
 snippet::example.SpatialExample[project-base="doc-examples/nitrite-example", source="main", tags="intersects-usage", indent="0"]
+
+Derived spatial repository methods are translated to the same Nitrite spatial filter operations. If the `nitrite-spatial` module is missing at runtime, spatial filter creation fails with a data access error instead of silently returning all documents.
 
 === Complete Examples
 
