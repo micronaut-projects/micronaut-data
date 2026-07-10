@@ -56,6 +56,8 @@ import jakarta.persistence.TupleElement;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.FetchParent;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
@@ -64,6 +66,7 @@ import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.graph.SubGraph;
 import org.hibernate.query.SortDirection;
+import org.hibernate.query.sqm.tree.from.SqmAttributeJoin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -314,6 +317,31 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @return new query
      */
     protected abstract P createQuery(S session, CriteriaQuery<?> criteriaQuery);
+
+    /**
+     * Converts fetch joins in Micronaut Data's paginated ID query to regular joins. The query specification may use
+     * a Hibernate fetch as a join in its predicate, but fetching is invalid once the query selects IDs instead of the
+     * owning entity. Keeping the join preserves the predicate while allowing the database to page distinct parent IDs.
+     *
+     * @param query The paginated criteria query
+     */
+    protected static void convertFetchesToJoinsForIdQuery(CriteriaQuery<?> query) {
+        if (query.getResultType() != Tuple.class || !query.isDistinct()) {
+            return;
+        }
+        for (Root<?> root : query.getRoots()) {
+            convertFetchesToJoins(root);
+        }
+    }
+
+    private static void convertFetchesToJoins(FetchParent<?, ?> fetchParent) {
+        for (Fetch<?, ?> fetch : fetchParent.getFetches()) {
+            convertFetchesToJoins(fetch);
+            if (fetch instanceof SqmAttributeJoin<?, ?> attributeJoin) {
+                attributeJoin.clearFetched();
+            }
+        }
+    }
 
     /**
      * Collect one result.

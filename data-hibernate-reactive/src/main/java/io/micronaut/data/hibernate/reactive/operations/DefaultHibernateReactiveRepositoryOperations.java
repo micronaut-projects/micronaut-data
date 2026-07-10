@@ -464,6 +464,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        convertFetchesToJoinsForIdQuery(query);
         return withSession(session -> helper.monoFromCompletionStage(() -> {
             Stage.SelectionQuery<T> sessionQuery = session.createQuery(query);
             if (offset > 0) {

@@ -333,6 +333,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     /**
+     * @param root The criteria query root
+     * @return Whether the root contains a join or fetch
+     */
+    protected static boolean hasJoinsOrFetches(Root<?> root) {
+        return !root.getJoins().isEmpty() || !root.getFetches().isEmpty();
+    }
+
+    /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
      * @param context    The context

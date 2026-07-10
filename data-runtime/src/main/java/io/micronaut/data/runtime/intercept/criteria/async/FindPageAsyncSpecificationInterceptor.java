@@ -71,7 +71,7 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         CompletionStage<List<Object>> content;
-        if (root.getJoins().isEmpty()) {
+        if (!hasJoinsOrFetches(root)) {
             content = findAllAsync(methodKey, context, pageable, criteriaQuery);
         } else {
             CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);

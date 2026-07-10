@@ -71,7 +71,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
             Root<?> root = criteriaQuery.getRoots().iterator().next();
             Flux<Object> content;
-            if (root.getJoins().isEmpty() || root.getFetches().isEmpty()) {
+            if (!hasJoinsOrFetches(root)) {
                 content = findAllReactive(methodKey, context, pageable, criteriaQuery);
             } else {
                 CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);

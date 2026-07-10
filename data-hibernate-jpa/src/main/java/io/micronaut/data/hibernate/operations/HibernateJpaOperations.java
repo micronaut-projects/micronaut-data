@@ -785,6 +785,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     public <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        convertFetchesToJoinsForIdQuery(query);
         return executeRead(session -> {
             Query<T> sessionQuery = session.createQuery(query);
             if (offset > 0) {
