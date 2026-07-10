@@ -2,7 +2,6 @@ package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.data.nitrite.model.NitriteProject
 import io.micronaut.data.nitrite.model.NitriteProjectId
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.data.nitrite.repository.NitriteProjectRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

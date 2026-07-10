@@ -338,8 +338,8 @@ class NitriteQueryBuilderSpec extends Specification {
         thrown(UnsupportedOperationException)
     }
 
-    // Operator-expression rejection folded from mongoport/NitriteCriteriaSpec: each unsupported
-    // criteria operator must be rejected with its own exception + message (PROD/LENGTH above).
+    // Operator-expression rejection: each unsupported criteria operator must be rejected
+    // with its own exception + message (PROD/LENGTH above).
     void "test criteria with SUM expression throws"() {
         when:
         eventRepository.findAll({ root, cb ->

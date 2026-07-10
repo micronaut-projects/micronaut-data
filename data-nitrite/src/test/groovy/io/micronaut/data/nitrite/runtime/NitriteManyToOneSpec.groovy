@@ -6,7 +6,6 @@ import io.micronaut.data.nitrite.model.NitriteMtoRefA
 import io.micronaut.data.nitrite.model.NitriteMtoRefB
 import io.micronaut.data.nitrite.model.NitriteMtoRefC
 import io.micronaut.data.nitrite.repository.NitriteMtoRefARepository
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup

@@ -3,7 +3,6 @@ package io.micronaut.data.nitrite.runtime
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.NitriteOtoChild
 import io.micronaut.data.nitrite.model.NitriteOtoParent
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.data.nitrite.repository.NitriteOtoParentRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

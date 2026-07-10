@@ -6,7 +6,6 @@ import io.micronaut.data.nitrite.model.NitriteOption
 import io.micronaut.data.nitrite.model.NitriteProduct
 import io.micronaut.data.nitrite.model.NitriteProductOption
 import io.micronaut.data.nitrite.repository.NitriteCategoryRepository
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup

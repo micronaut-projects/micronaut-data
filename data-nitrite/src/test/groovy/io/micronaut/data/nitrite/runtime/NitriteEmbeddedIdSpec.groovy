@@ -3,7 +3,6 @@ package io.micronaut.data.nitrite.runtime
 import io.micronaut.data.nitrite.model.NitriteItemGroup
 import io.micronaut.data.nitrite.model.NitriteShipment
 import io.micronaut.data.nitrite.model.NitriteShipmentId
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.data.nitrite.repository.NitriteItemGroupRepository
 import io.micronaut.data.nitrite.repository.NitriteShipmentRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest

@@ -9,7 +9,6 @@ import io.micronaut.data.nitrite.model.NitriteMpPerson
 import io.micronaut.data.nitrite.repository.NitriteCriteriaPersonRepository
 import io.micronaut.data.nitrite.repository.NitriteDocumentEntityRepository
 import io.micronaut.data.nitrite.repository.NitriteMpPersonRepository
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

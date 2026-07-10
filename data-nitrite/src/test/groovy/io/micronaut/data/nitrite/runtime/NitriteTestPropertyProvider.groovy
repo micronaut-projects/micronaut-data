@@ -1,4 +1,4 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.test.support.TestPropertyProvider
 

@@ -4,7 +4,6 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.NitriteEmbAddress
 import io.micronaut.data.nitrite.model.NitriteEmbRestaurant
 import io.micronaut.data.nitrite.repository.NitriteEmbRestaurantRepository
-import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
