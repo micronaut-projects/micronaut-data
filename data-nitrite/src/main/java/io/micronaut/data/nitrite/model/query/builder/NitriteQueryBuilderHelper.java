@@ -50,7 +50,9 @@ public final class NitriteQueryBuilderHelper {
     }
 
     public static void addLookups(Collection<JoinPath> joins, PersistentEntity rootEntity, List<Map<String, Object>> pipeline) {
-        if (joins == null || joins.isEmpty()) return;
+        if (joins == null || joins.isEmpty()) {
+            return;
+        }
         List<String> sorted = joins.stream().map(JoinPath::getPath)
             .sorted((a, b) -> a.length() != b.length() ? Integer.compare(a.length(), b.length()) : a.compareTo(b))
             .toList();
@@ -71,8 +73,12 @@ public final class NitriteQueryBuilderHelper {
                     continue;
                 }
                 PersistentPropertyPath propPath = currentEntity.getPropertyPath(segment);
-                if (propPath == null || !(propPath.getProperty() instanceof Association association)) continue;
-                if (association.isEmbedded()) continue;
+                if (propPath == null || !(propPath.getProperty() instanceof Association association)) {
+                    continue;
+                }
+                if (association.isEmbedded()) {
+                    continue;
+                }
 
                 // Composite foreign key via @JoinColumn (multiple = composite FK).
                 // The annotation processor maps each jakarta @JoinColumn to a separate
@@ -107,9 +113,13 @@ public final class NitriteQueryBuilderHelper {
                     // ONE_TO_MANY: localField=_id, foreignField=FK persisted name in other entity
                     String mappedBy = association.getAnnotationMetadata()
                         .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
-                    if (mappedBy == null) continue;
+                    if (mappedBy == null) {
+                        continue;
+                    }
                     PersistentPropertyPath backPropPath = association.getAssociatedEntity().getPropertyPath(mappedBy);
-                    if (backPropPath == null) continue;
+                    if (backPropPath == null) {
+                        continue;
+                    }
                     String foreignField = backPropPath.getProperty().getPersistedName();
                     currentPipeline.add(lookup(joinedCollection, "_id", foreignField, stage.pipeline, segment));
                 } else {
@@ -166,7 +176,9 @@ public final class NitriteQueryBuilderHelper {
     }
 
     public static void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {
-        if (selection == null) return;
+        if (selection == null) {
+            return;
+        }
         switch (selection) {
             case UnaryExpression<?> unary -> {
                 switch (unary.getType()) {
@@ -209,6 +221,9 @@ public final class NitriteQueryBuilderHelper {
         final PersistentEntity entity;
         final List<Map<String, Object>> pipeline = new ArrayList<>();
         final Map<String, LookupsStage> subLookups = new HashMap<>();
-        LookupsStage(PersistentEntity entity) { this.entity = entity; }
+
+        LookupsStage(PersistentEntity entity) {
+            this.entity = entity;
+        }
     }
 }

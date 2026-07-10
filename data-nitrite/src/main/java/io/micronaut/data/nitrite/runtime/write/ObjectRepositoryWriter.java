@@ -23,8 +23,6 @@ import org.dizitart.no2.collection.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-
 /**
  * Writer for converting entities/DTOs to Nitrite Documents.
  * Used for single entity write operations (insert, update).

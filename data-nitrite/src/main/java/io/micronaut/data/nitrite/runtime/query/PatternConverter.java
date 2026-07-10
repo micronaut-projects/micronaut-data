@@ -21,21 +21,29 @@ import java.util.regex.Pattern;
 @Internal
 final class PatternConverter {
 
-    private PatternConverter() {}
+    private PatternConverter() { }
 
     static String resolveRegexPattern(Object resolved) {
-        if (resolved == null) return "";
-        if (resolved instanceof Pattern pattern) return pattern.pattern();
+        if (resolved == null) {
+            return "";
+        }
+        if (resolved instanceof Pattern pattern) {
+            return pattern.pattern();
+        }
         String value = resolved.toString();
         if (value.length() >= 2 && value.startsWith("/") && value.endsWith("/")) {
             return value.substring(1, value.length() - 1);
         }
-        if (looksLikeWildcardPattern(value)) return convertLikeToRegex(value);
+        if (looksLikeWildcardPattern(value)) {
+            return convertLikeToRegex(value);
+        }
         return value;
     }
 
     static boolean looksLikeWildcardPattern(String value) {
-        if (value == null || value.isEmpty()) return false;
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
         if (value.startsWith("^") || value.endsWith("$") || value.contains("[")
                 || value.contains("(") || value.contains("|") || value.contains("\\")) {
             return false;
@@ -45,7 +53,9 @@ final class PatternConverter {
 
     static String convertLikeToRegex(String pattern) {
         StringBuilder regex = new StringBuilder(pattern.length() + 6);
-        if (pattern.isEmpty() || pattern.charAt(0) != '^') regex.append('^');
+        if (pattern.isEmpty() || pattern.charAt(0) != '^') {
+            regex.append('^');
+        }
         for (int i = 0; i < pattern.length(); i++) {
             char ch = pattern.charAt(i);
             if (ch == '%') {
@@ -58,7 +68,9 @@ final class PatternConverter {
                 regex.append(ch);
             }
         }
-        if (regex.isEmpty() || regex.charAt(regex.length() - 1) != '$') regex.append('$');
+        if (regex.isEmpty() || regex.charAt(regex.length() - 1) != '$') {
+            regex.append('$');
+        }
         String converted = regex.toString();
         return converted.startsWith("(?s)") ? converted : "(?s)" + converted;
     }

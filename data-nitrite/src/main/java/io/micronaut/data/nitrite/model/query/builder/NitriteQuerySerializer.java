@@ -21,7 +21,7 @@ import java.util.Map;
 /** Serializes query maps and values into the Nitrite JSON filter string format. */
 final class NitriteQuerySerializer {
 
-    private NitriteQuerySerializer() {}
+    private NitriteQuerySerializer() { }
 
     static String toJsonString(Object obj) {
         switch (obj) {
@@ -33,8 +33,12 @@ final class NitriteQuerySerializer {
                 boolean first = true;
                 for (Map.Entry<?, ?> entry : map.entrySet()) {
                     Object val = entry.getValue();
-                    if (val instanceof Collection<?> c && c.isEmpty()) continue;
-                    if (!first) sb.append(",");
+                    if (val instanceof Collection<?> c && c.isEmpty()) {
+                        continue;
+                    }
+                    if (!first) {
+                        sb.append(",");
+                    }
                     first = false;
                     String k = entry.getKey().toString();
                     sb.append(needsQuoting(k) ? "'" + k + "'" : k).append(":");
@@ -47,7 +51,9 @@ final class NitriteQuerySerializer {
                 StringBuilder sb = new StringBuilder("[");
                 boolean first = true;
                 for (Object item : coll) {
-                    if (!first) sb.append(",");
+                    if (!first) {
+                        sb.append(",");
+                    }
                     first = false;
                     sb.append(toJsonString(item));
                 }

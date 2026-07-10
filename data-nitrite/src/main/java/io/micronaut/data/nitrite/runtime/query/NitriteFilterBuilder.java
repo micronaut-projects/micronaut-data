@@ -43,15 +43,6 @@ import java.util.Map;
 @Internal
 public final class NitriteFilterBuilder {
 
-    /**
-     * Handler for a single filter operator (e.g. {@code $eq}, {@code $in}).
-     * Registered at construction time; add new operators without touching the dispatch path.
-     */
-    @FunctionalInterface
-    public interface OperatorHandler {
-        Filter build(RuntimePersistentEntity<?> entity, String field, Object value, Object[] params, Map<String, Object> named);
-    }
-
     private static final Filter NONE = element -> false;
 
     private final NitriteEntityMapper entityMapper;
@@ -110,7 +101,9 @@ public final class NitriteFilterBuilder {
                 if (value instanceof List<?> list) {
                     List<NitriteFilterAST> ands = new ArrayList<>();
                     for (Object item : list) {
-                        if (item instanceof Map<?, ?> m) ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                        if (item instanceof Map<?, ?> m) {
+                            ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                        }
                     }
                     compiledFilters.add(new NitriteFilterAST.AndNode(ands));
                 }
@@ -118,7 +111,9 @@ public final class NitriteFilterBuilder {
                 if (value instanceof List<?> list) {
                     List<NitriteFilterAST> ors = new ArrayList<>();
                     for (Object item : list) {
-                        if (item instanceof Map<?, ?> m) ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                        if (item instanceof Map<?, ?> m) {
+                            ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                        }
                     }
                     compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                 }
@@ -127,8 +122,12 @@ public final class NitriteFilterBuilder {
             }
         }
 
-        if (compiledFilters.isEmpty()) return new NitriteFilterAST.AllNode();
-        if (compiledFilters.size() == 1) return compiledFilters.getFirst();
+        if (compiledFilters.isEmpty()) {
+            return new NitriteFilterAST.AllNode();
+        }
+        if (compiledFilters.size() == 1) {
+            return compiledFilters.getFirst();
+        }
         return new NitriteFilterAST.AndNode(compiledFilters);
     }
 
@@ -148,7 +147,9 @@ public final class NitriteFilterBuilder {
                         || "id".equals(rawField) || "_id".equals(rawField))) {
                     persistedName = entityMapper.normalizeFieldName(rawField, entity);
                 }
-            } catch (IllegalStateException ignored) {}
+            } catch (IllegalStateException ignored) {
+                // Entity metadata may not expose an identity property for all mappings.
+            }
         }
 
         final Map<String, Object> operators;
@@ -180,7 +181,11 @@ public final class NitriteFilterBuilder {
     }
 
     /**
-     * Prepare a value for filtering (coercion, conversion, UUID handling).
+     * Prepare a value for filtering.
+     *
+     * @param persistedName the persisted field name
+     * @param value the raw value
+     * @return the normalized value used for Nitrite filtering
      */
     public Object prepareFilterValue(String persistedName, Object value) {
         return entityMapper.toNitriteFilterValue(
@@ -188,7 +193,13 @@ public final class NitriteFilterBuilder {
     }
 
     /**
-     * Build a Nitrite Filter from a Map structure.
+     * Build a Nitrite filter from a map structure.
+     *
+     * @param entity the entity metadata
+     * @param filterObj the filter object
+     * @param params positional parameters
+     * @param namedParameters named parameters
+     * @return the bound Nitrite filter
      */
     public Filter buildFilterFromJson(
             final RuntimePersistentEntity<?> entity,
@@ -199,7 +210,14 @@ public final class NitriteFilterBuilder {
     }
 
     /**
-     * Builds a filter for a field with operators.
+     * Build a filter for a field with operators.
+     *
+     * @param entity the entity metadata
+     * @param rawField the raw field name
+     * @param operators the operators to apply
+     * @param params positional parameters
+     * @param namedParameters named parameters
+     * @return the Nitrite filter for the field
      */
     public Filter buildFieldFilter(
             final RuntimePersistentEntity<?> entity,
@@ -215,7 +233,9 @@ public final class NitriteFilterBuilder {
                 persistedName = entityMapper.normalizeFieldName(rawField, entity);
             } else {
                 RuntimePersistentProperty<?> prop = entity.getPropertyByName(rawField);
-                if (prop != null) persistedName = prop.getPersistedName();
+                if (prop != null) {
+                    persistedName = prop.getPersistedName();
+                }
             }
         }
         return buildAssociationOrNestedField(entity, rawField, persistedName, operators, params, namedParameters);
@@ -230,7 +250,9 @@ public final class NitriteFilterBuilder {
             final Map<String, Object> namedParameters) {
 
         Filter assocFilter = assocResolver.buildAssociationFilter(entity, rawField, operators, params, namedParameters);
-        if (assocFilter != null) return assocFilter;
+        if (assocFilter != null) {
+            return assocFilter;
+        }
         if (rawField.contains(".")) {
             return assocResolver.buildNestedFilter(entity, rawField, operators, params, namedParameters);
         }
@@ -291,21 +313,29 @@ public final class NitriteFilterBuilder {
     }
 
     private Filter buildInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
-        if (finalValue == null) return NONE;
+        if (finalValue == null) {
+            return NONE;
+        }
         List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
         return values.isEmpty() ? NONE : FluentFilter.where(field).in(values.toArray(new Comparable[0]));
     }
 
     private Filter buildArrayContainsFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
         List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
-        if (values.isEmpty()) return Filter.ALL;
-        if (values.size() == 1) return FluentFilter.where(field).elemMatch(FluentFilter.$.eq(values.getFirst()));
+        if (values.isEmpty()) {
+            return Filter.ALL;
+        }
+        if (values.size() == 1) {
+            return FluentFilter.where(field).elemMatch(FluentFilter.$.eq(values.getFirst()));
+        }
         Filter[] filters = values.stream().map(elem -> (Filter) FluentFilter.where(field).elemMatch(FluentFilter.$.eq(elem))).toArray(Filter[]::new);
         return Filter.and(filters);
     }
 
     private Filter buildNotInFilter(String field, Object finalValue, Object[] params, Map<String, Object> namedParameters) {
-        if (finalValue == null) return Filter.ALL;
+        if (finalValue == null) {
+            return Filter.ALL;
+        }
         List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
         return values.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(values.toArray(new Comparable[0]));
     }
@@ -324,19 +354,32 @@ public final class NitriteFilterBuilder {
             Object finalValue = entityMapper.toNitriteFilterValue(
                 valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
             Filter f = buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
-            if (f != null && f != Filter.ALL) fieldFilters.add(f);
+            if (f != null && f != Filter.ALL) {
+                fieldFilters.add(f);
+            }
         }
         return fieldFilters.size() == 1 ? fieldFilters.getFirst() : Filter.and(fieldFilters.toArray(new Filter[0]));
     }
 
     private boolean isPlaceholder(Object value) {
-        if (value instanceof String s && (s.startsWith("$mn_qp:") || s.startsWith(":"))) return true;
+        if (value instanceof String s && (s.startsWith("$mn_qp:") || s.startsWith(":"))) {
+            return true;
+        }
         return value instanceof Map<?, ?> vm && vm.size() == 1 && vm.containsKey("$mn_qp");
     }
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> toStringObjectMap(Map<?, ?> map) {
         return (Map<String, Object>) map;
+    }
+
+    /**
+     * Handler for a single filter operator (e.g. {@code $eq}, {@code $in}).
+     * Registered at construction time; add new operators without touching the dispatch path.
+     */
+    @FunctionalInterface
+    public interface OperatorHandler {
+        Filter build(RuntimePersistentEntity<?> entity, String field, Object value, Object[] params, Map<String, Object> named);
     }
 
     /**

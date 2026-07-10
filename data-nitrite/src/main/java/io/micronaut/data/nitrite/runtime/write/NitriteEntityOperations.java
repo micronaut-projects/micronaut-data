@@ -70,6 +70,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private final OperationType operationType;
     private Object preVersionValue;
 
+    /**
+     * Supported entity operation types.
+     */
     public enum OperationType {
         INSERT, UPDATE, DELETE
     }

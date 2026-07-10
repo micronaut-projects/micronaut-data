@@ -15,11 +15,9 @@
  */
 package io.micronaut.data.nitrite.model.query.builder.compile;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.nitrite.model.query.builder.NitriteExpressionHandler;
-import io.micronaut.data.nitrite.model.query.builder.NitritePredicateVisitor;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryState;
 import io.micronaut.data.nitrite.model.query.builder.RuntimeExpressionHandler;
 import io.micronaut.data.nitrite.runtime.ValueConverter;

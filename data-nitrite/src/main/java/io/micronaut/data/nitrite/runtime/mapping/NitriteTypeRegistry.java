@@ -50,22 +50,6 @@ import java.util.function.Function;
 @Internal
 public final class NitriteTypeRegistry {
 
-    /**
-     * Per-type serialization descriptor.
-     *
-     * @param <T>        the Java type
-     * @param strategy   the {@link PropertyStrategy} to assign at meta-build time
-     * @param write      converts a Java value to its Nitrite storage format
-     * @param fromNumber reverses a stored {@link Number} back to {@code T} (null if not applicable)
-     * @param fromString reverses a stored ISO {@link String} back to {@code T} (null if not applicable)
-     */
-    public record TypeEntry<T>(
-        PropertyStrategy strategy,
-        Function<T, Object> write,
-        @Nullable Function<Number, T> fromNumber,
-        @Nullable Function<String, T> fromString
-    ) {}
-
     private static final Map<Class<?>, TypeEntry<?>> ENTRIES = new LinkedHashMap<>();
 
     static {
@@ -105,7 +89,8 @@ public final class NitriteTypeRegistry {
             ZoneId::getId,            null, null);
     }
 
-    private NitriteTypeRegistry() {}
+    private NitriteTypeRegistry() {
+    }
 
     private static <T> void add(Class<T> type, PropertyStrategy strategy,
                                  Function<T, Object> write,
@@ -114,17 +99,33 @@ public final class NitriteTypeRegistry {
         ENTRIES.put(type, new TypeEntry<>(strategy, write, fromNumber, fromString));
     }
 
-    /** Returns the entry for {@code type} (or a supertype), or {@code null} if not registered. */
+    /**
+     * Returns the entry for {@code type} or a registered supertype.
+     *
+     * @param <T> the requested Java type
+     * @param type the type to resolve
+     * @return the matching entry, or {@code null} if the type is not registered
+     */
     public static <T> TypeEntry<T> get(Class<T> type) {
         return findEntry(type);
     }
 
-    /** Returns {@code true} if a type entry exists for {@code type} (or a supertype). */
+    /**
+     * Returns whether a type entry exists for {@code type} or a registered supertype.
+     *
+     * @param type the type to check
+     * @return {@code true} if an entry exists
+     */
     public static boolean hasEntry(Class<?> type) {
         return findEntry(type) != null;
     }
 
-    /** Returns the {@link PropertyStrategy} for a registered type (or supertype), or {@code null} if not registered. */
+    /**
+     * Returns the {@link PropertyStrategy} for a registered type or supertype.
+     *
+     * @param type the type to resolve
+     * @return the matching property strategy, or {@code null} if not registered
+     */
     public static PropertyStrategy strategyFor(Class<?> type) {
         TypeEntry<?> entry = findEntry(type);
         return entry != null ? entry.strategy() : null;
@@ -136,6 +137,9 @@ public final class NitriteTypeRegistry {
      *
      * <p>Walks the superclass hierarchy to handle abstract registered types (e.g. {@link Charset},
      * {@link ZoneId}) whose concrete runtime class differs from the registered key.</p>
+     *
+     * @param value the Java value to convert
+     * @return the Nitrite storage representation, or the original value if unregistered
      */
     public static Object write(Object value) {
         if (value == null) {
@@ -160,6 +164,11 @@ public final class NitriteTypeRegistry {
      * Converts a stored Nitrite value back to {@code targetType} using the registered reverse
      * function. Returns {@code null} if the type is not registered, or neither
      * {@code fromNumber} nor {@code fromString} applies to {@code value}.
+     *
+     * @param <T> the requested Java type
+     * @param value the stored value
+     * @param targetType the target Java type
+     * @return the converted Java value, or {@code null} if no conversion applies
      */
     public static <T> T read(Object value, Class<T> targetType) {
         TypeEntry<T> entry = findEntry(targetType);
@@ -173,5 +182,22 @@ public final class NitriteTypeRegistry {
             return entry.fromString().apply(s);
         }
         return null;
+    }
+
+    /**
+     * Per-type serialization descriptor.
+     *
+     * @param <T> the Java type
+     * @param strategy the {@link PropertyStrategy} to assign at meta-build time
+     * @param write converts a Java value to its Nitrite storage format
+     * @param fromNumber reverses a stored {@link Number} back to {@code T} when applicable
+     * @param fromString reverses a stored ISO {@link String} back to {@code T} when applicable
+     */
+    public record TypeEntry<T>(
+        PropertyStrategy strategy,
+        Function<T, Object> write,
+        @Nullable Function<Number, T> fromNumber,
+        @Nullable Function<String, T> fromString
+    ) {
     }
 }

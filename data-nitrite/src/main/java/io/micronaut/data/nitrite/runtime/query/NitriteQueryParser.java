@@ -34,7 +34,8 @@ import java.util.Map;
 public final class NitriteQueryParser {
 
     /** Default constructor. */
-    public NitriteQueryParser() {}
+    public NitriteQueryParser() {
+    }
 
     /**
      * Parse a JSON query string into a Map/List structure.
@@ -56,6 +57,9 @@ public final class NitriteQueryParser {
      * pipeline List, the {@code $match} stage map is returned, or an empty
      * map when no {@code $match} stage is present (= match all).
      * Returns {@code null} for any other type.
+     *
+     * @param parsed the parsed JSON structure
+     * @return the extracted filter map, an empty map for a pipeline without {@code $match}, or {@code null}
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> extractFilterMap(Object parsed) {
@@ -110,12 +114,16 @@ public final class NitriteQueryParser {
      * @return the field name to project, or null if not using $project syntax
      */
     public String extractProjectionField(String jsonQuery) {
-        if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) return null;
+        if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
+            return null;
+        }
         try {
             Object parsed = parseJson(jsonQuery);
             if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
                 Object val = map.get("$project");
-                if (val instanceof String s) return s;
+                if (val instanceof String s) {
+                    return s;
+                }
             }
         } catch (Exception ignored) {
             // Best-effort JSON parsing; if it fails, assume no projection
@@ -180,12 +188,6 @@ public final class NitriteQueryParser {
         return null;
     }
 
-    /** Holds the filter and update maps parsed from a stored query's JSON. */
-    public record ParsedJsonQuery(
-        @Nullable Map<String, Object> filterMap,
-        @Nullable Map<String, Object> updateMap
-    ) {}
-
     // ─── Private recursive-descent parser ────────────────────────────────────────
 
     private static final class JsonParser {
@@ -199,7 +201,9 @@ public final class NitriteQueryParser {
 
         Object parse() {
             skipWhitespace();
-            if (pos >= src.length()) throw new IllegalArgumentException("Invalid JSON: " + src);
+            if (pos >= src.length()) {
+                throw new IllegalArgumentException("Invalid JSON: " + src);
+            }
             return parseValue();
         }
 
@@ -207,7 +211,9 @@ public final class NitriteQueryParser {
 
         private Object parseValue() {
             skipWhitespace();
-            if (pos >= src.length()) return null;
+            if (pos >= src.length()) {
+                return null;
+            }
             return switch (src.charAt(pos)) {
                 case '{'  -> parseObject();
                 case '['  -> parseArray();
@@ -224,12 +230,19 @@ public final class NitriteQueryParser {
             Map<String, Object> result = new LinkedHashMap<>();
             while (pos < src.length()) {
                 skipWhitespaceAndCommas();
-                if (pos >= src.length()) break;
-                if (src.charAt(pos) == '}') { pos++; break; }
+                if (pos >= src.length()) {
+                    break;
+                }
+                if (src.charAt(pos) == '}') {
+                    pos++;
+                    break;
+                }
 
                 String key = parseKey();
                 skipWhitespace();
-                if (pos < src.length() && src.charAt(pos) == ':') pos++;
+                if (pos < src.length() && src.charAt(pos) == ':') {
+                    pos++;
+                }
                 result.put(key, parseValue());
             }
             return result;
@@ -242,8 +255,13 @@ public final class NitriteQueryParser {
             List<Object> result = new ArrayList<>();
             while (pos < src.length()) {
                 skipWhitespaceAndCommas();
-                if (pos >= src.length()) break;
-                if (src.charAt(pos) == ']') { pos++; break; }
+                if (pos >= src.length()) {
+                    break;
+                }
+                if (src.charAt(pos) == ']') {
+                    pos++;
+                    break;
+                }
                 result.add(parseValue());
             }
             return result;
@@ -252,12 +270,18 @@ public final class NitriteQueryParser {
         // ── Key ──────────────────────────────────────────────────────────────────
 
         private String parseKey() {
-            if (pos >= src.length()) return "";
+            if (pos >= src.length()) {
+                return "";
+            }
             char c = src.charAt(pos);
-            if (c == '"' || c == '\'') return parseString(c);
+            if (c == '"' || c == '\'') {
+                return parseString(c);
+            }
             // Unquoted key — read until ':' or whitespace
             int start = pos;
-            while (pos < src.length() && src.charAt(pos) != ':' && !Character.isWhitespace(src.charAt(pos))) pos++;
+            while (pos < src.length() && src.charAt(pos) != ':' && !Character.isWhitespace(src.charAt(pos))) {
+                pos++;
+            }
             return src.substring(start, pos);
         }
 
@@ -269,13 +293,17 @@ public final class NitriteQueryParser {
             while (pos < src.length() && src.charAt(pos) != quote) {
                 if (src.charAt(pos) == '\\') {
                     pos++;
-                    if (pos < src.length()) sb.append(unescape(src.charAt(pos)));
+                    if (pos < src.length()) {
+                        sb.append(unescape(src.charAt(pos)));
+                    }
                 } else {
                     sb.append(src.charAt(pos));
                 }
                 pos++;
             }
-            if (pos < src.length()) pos++; // skip closing quote
+            if (pos < src.length()) {
+                pos++;
+            } // skip closing quote
             return sb.toString();
         }
 
@@ -294,7 +322,9 @@ public final class NitriteQueryParser {
             int start = pos;
             while (pos < src.length()) {
                 char c = src.charAt(pos);
-                if (c == ',' || c == '}' || c == ']' || Character.isWhitespace(c)) break;
+                if (c == ',' || c == '}' || c == ']' || Character.isWhitespace(c)) {
+                    break;
+                }
                 pos++;
             }
             String s = src.substring(start, pos).trim();
@@ -308,9 +338,13 @@ public final class NitriteQueryParser {
 
         private static Object parseNumber(String s) {
             // Named parameters and positional placeholders are returned as-is
-            if (s.startsWith(":") || s.startsWith("$mn_qp:")) return s;
+            if (s.startsWith(":") || s.startsWith("$mn_qp:")) {
+                return s;
+            }
             try {
-                if (s.contains(".")) return Double.parseDouble(s);
+                if (s.contains(".")) {
+                    return Double.parseDouble(s);
+                }
                 return Integer.parseInt(s);
             } catch (NumberFormatException ignored) {
                 return s;
@@ -320,11 +354,27 @@ public final class NitriteQueryParser {
         // ── Utilities ────────────────────────────────────────────────────────────
 
         private void skipWhitespace() {
-            while (pos < src.length() && Character.isWhitespace(src.charAt(pos))) pos++;
+            while (pos < src.length() && Character.isWhitespace(src.charAt(pos))) {
+                pos++;
+            }
         }
 
         private void skipWhitespaceAndCommas() {
-            while (pos < src.length() && (Character.isWhitespace(src.charAt(pos)) || src.charAt(pos) == ',')) pos++;
+            while (pos < src.length() && (Character.isWhitespace(src.charAt(pos)) || src.charAt(pos) == ',')) {
+                pos++;
+            }
         }
+    }
+
+    /**
+     * Holds the filter and update maps parsed from a stored query's JSON.
+     *
+     * @param filterMap the parsed filter map
+     * @param updateMap the parsed update map
+     */
+    public record ParsedJsonQuery(
+        @Nullable Map<String, Object> filterMap,
+        @Nullable Map<String, Object> updateMap
+    ) {
     }
 }

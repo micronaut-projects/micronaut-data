@@ -42,14 +42,9 @@ final class AssociationFilterResolver {
     private final SubQueryExecutor subQueryExecutor;
     private final ValueResolver valueResolver;
     /** Callback into NitriteFilterBuilder for nested filter building. */
-    // TODO: break this circular reference once the compile/build duality is resolved
+    // Follow-up: break this circular reference once the compile/build duality is resolved.
     private final FieldFilterProvider fieldFilterProvider;
     private final FieldFilterProvider operatorFiltersForPath;
-
-    @FunctionalInterface
-    interface FieldFilterProvider {
-        Filter build(RuntimePersistentEntity<?> entity, String field, Map<String, Object> ops, Object[] params, Map<String, Object> named);
-    }
 
     AssociationFilterResolver(
             SubQueryExecutor subQueryExecutor,
@@ -69,14 +64,22 @@ final class AssociationFilterResolver {
             Object[] params,
             Map<String, Object> namedParameters) {
 
-        if (!operators.containsKey("$eq")) return null;
+        if (!operators.containsKey("$eq")) {
+            return null;
+        }
 
         Object value = valueResolver.resolveValue(operators.get("$eq"), params, namedParameters);
-        if (value == null) return null;
+        if (value == null) {
+            return null;
+        }
 
         PathResolution resolution = PathResolver.resolve(entity, field);
-        if (!resolution.isReference()) return null;
-        if (resolution.chain().isEmpty()) return null;
+        if (!resolution.isReference()) {
+            return null;
+        }
+        if (resolution.chain().isEmpty()) {
+            return null;
+        }
 
         RuntimeAssociation<?> headAssoc = resolution.chain().get(0);
         Relation.Kind kind = headAssoc.getKind();
@@ -93,15 +96,21 @@ final class AssociationFilterResolver {
 
         if (kind == Relation.Kind.MANY_TO_ONE) {
             // Dotted MANY_TO_ONE paths (e.g. "author.name") go through buildNestedFilter.
-            if (field.contains(".")) return null;
-            if (!useSubQuery || subQueryExecutor == null) return null;
+            if (field.contains(".")) {
+                return null;
+            }
+            if (!useSubQuery || subQueryExecutor == null) {
+                return null;
+            }
             // Use the association's persisted FK name (e.g. "widget_id"), not the raw property
             // name ("widget"), so the final where(...).in(ids) targets the stored column.
             return buildForwardLookupFilter(resolution.persistedField(), headAssoc, value, params, namedParameters);
         }
 
         if (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY) {
-            if (!useSubQuery || subQueryExecutor == null) return null;
+            if (!useSubQuery || subQueryExecutor == null) {
+                return null;
+            }
             // For dotted paths (e.g. "children.name"), extract target from the resolved terminal.
             String targetPropertyName = (field.contains(".") && resolution.terminal() != null)
                 ? resolution.terminal().getName()
@@ -118,21 +127,32 @@ final class AssociationFilterResolver {
             Object value, Object[] params, Map<String, Object> namedParameters) {
 
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-        if (mappedBy == null) return null;
-        if (targetPropertyName == null || targetPropertyName.equals(mappedBy)) return null;
+        if (mappedBy == null) {
+            return null;
+        }
+        if (targetPropertyName == null || targetPropertyName.equals(mappedBy)) {
+            return null;
+        }
 
         RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
 
         RuntimePersistentProperty<?> targetProperty = associatedEntity.getPropertyByName(targetPropertyName);
         if (targetProperty == null) {
             for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
-                if (p.getPersistedName().equals(targetPropertyName)) { targetProperty = p; break; }
+                if (p.getPersistedName().equals(targetPropertyName)) {
+                    targetProperty = p;
+                    break;
+                }
             }
         }
-        if (targetProperty == null) return null;
+        if (targetProperty == null) {
+            return null;
+        }
 
         RuntimePersistentProperty<?> backRefProp = associatedEntity.getPropertyByName(mappedBy);
-        if (backRefProp == null) return null;
+        if (backRefProp == null) {
+            return null;
+        }
         String backRefPersistedName = backRefProp.getPersistedName();
 
         Map<String, Object> subFilterMap = Collections.singletonMap(
@@ -143,7 +163,9 @@ final class AssociationFilterResolver {
 
         List<Object> matchingValues = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
-        if (matchingValues.isEmpty()) return NONE;
+        if (matchingValues.isEmpty()) {
+            return NONE;
+        }
 
         String idField = entity.getIdentity().getPersistedName();
         Comparable<?>[] ids = toComparableArray(matchingValues);
@@ -162,12 +184,16 @@ final class AssociationFilterResolver {
                 orClauses.add(Collections.singletonMap(p.getPersistedName(), Collections.singletonMap("$eq", value)));
             }
         }
-        if (orClauses.isEmpty()) return null;
+        if (orClauses.isEmpty()) {
+            return null;
+        }
 
         Map<String, Object> subFilterMap = Collections.singletonMap("$or", orClauses);
         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, null, params, namedParameters);
-        if (matchingIds.isEmpty()) return NONE;
+        if (matchingIds.isEmpty()) {
+            return NONE;
+        }
 
         Comparable<?>[] ids = toComparableArray(matchingIds);
         return ids.length == 0 ? NONE : FluentFilter.where(field).in(ids);
@@ -218,12 +244,18 @@ final class AssociationFilterResolver {
                     if (kind == Relation.Kind.MANY_TO_MANY) {
                         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
                             associatedEntity, subFilterMap, null, params, namedParameters);
-                        if (matchingIds.isEmpty()) return NONE;
+                        if (matchingIds.isEmpty()) {
+                            return NONE;
+                        }
                         return pair -> {
                             org.dizitart.no2.collection.Document doc = pair.getSecond();
                             Object val = doc.get(fieldName);
                             if (val instanceof java.util.Collection<?> coll) {
-                                for (Object id : matchingIds) { if (coll.contains(id)) return true; }
+                                for (Object id : matchingIds) {
+                                    if (coll.contains(id)) {
+                                        return true;
+                                    }
+                                }
                             }
                             return false;
                         };
@@ -232,7 +264,9 @@ final class AssociationFilterResolver {
                 }
 
                 RuntimePersistentProperty<?> backRefProp = associatedEntity.getPropertyByName(mappedBy);
-                if (backRefProp == null) return NONE;
+                if (backRefProp == null) {
+                    return NONE;
+                }
                 String backRefPersistedName = backRefProp.getPersistedName();
 
                 LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
@@ -240,7 +274,9 @@ final class AssociationFilterResolver {
 
                 List<Object> matchingValues = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
-                if (matchingValues.isEmpty()) return NONE;
+                if (matchingValues.isEmpty()) {
+                    return NONE;
+                }
 
                 String idField = entity.getIdentity().getPersistedName();
                 Comparable<?>[] ids = toComparableArray(matchingValues);
@@ -254,7 +290,9 @@ final class AssociationFilterResolver {
                 Map<String, Object> subFilterMap = Collections.singletonMap(remaining, resolvedOperators);
                 List<Object> matchingIds = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, null, params, namedParameters);
-                if (matchingIds.isEmpty()) return NONE;
+                if (matchingIds.isEmpty()) {
+                    return NONE;
+                }
                 Comparable<?>[] ids = toComparableArray(matchingIds);
                 return ids.length == 0 ? NONE : FluentFilter.where(fieldName).in(ids);
             } else {
@@ -267,11 +305,18 @@ final class AssociationFilterResolver {
     }
 
     private boolean looksLikeId(String value, Class<?> idType) {
-        if (value == null || value.isEmpty()) return false;
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
         if (idType == java.util.UUID.class) {
             if (value.length() == 36 && value.charAt(8) == '-' && value.charAt(13) == '-'
                     && value.charAt(18) == '-' && value.charAt(23) == '-') {
-                try { java.util.UUID.fromString(value); return true; } catch (IllegalArgumentException e) { return false; }
+                try {
+                    java.util.UUID.fromString(value);
+                    return true;
+                } catch (IllegalArgumentException e) {
+                    return false;
+                }
             }
             return false;
         }
@@ -283,5 +328,10 @@ final class AssociationFilterResolver {
             .filter(java.util.Objects::nonNull)
             .map(id -> id instanceof Comparable<?> c ? c : id.toString())
             .toArray(Comparable<?>[]::new);
+    }
+
+    @FunctionalInterface
+    interface FieldFilterProvider {
+        Filter build(RuntimePersistentEntity<?> entity, String field, Map<String, Object> ops, Object[] params, Map<String, Object> named);
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.nitrite.runtime.query;
 
-// TODO: move to query/spatial/ subpackage once the optional-dependency interface is defined
+// Follow-up: move to query/spatial/ subpackage once the optional-dependency interface is defined.
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
@@ -97,7 +97,9 @@ final class SpatialFilterFactory {
     }
 
     Filter createSpatialFilter(String field, Object geometry, String method) {
-        if (geometry == null) return Filter.ALL;
+        if (geometry == null) {
+            return Filter.ALL;
+        }
         if (!ClassUtils.isPresent(SPATIAL_FLUENT_FILTER_CLASS, null)) {
             throw new DataAccessException("Spatial filters require nitrite-spatial on the classpath. Add the nitrite-spatial dependency to use $" + method + ".");
         }

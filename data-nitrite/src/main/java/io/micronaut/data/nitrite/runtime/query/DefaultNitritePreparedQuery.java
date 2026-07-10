@@ -85,6 +85,4 @@ public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParameters
     public Map<String, Object> getUpdateMap() {
         return updateMap;
     }
-
-
 }

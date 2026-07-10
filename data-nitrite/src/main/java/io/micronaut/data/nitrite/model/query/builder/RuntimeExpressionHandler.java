@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.nitrite.model.query.builder;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.criteria.Expression;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

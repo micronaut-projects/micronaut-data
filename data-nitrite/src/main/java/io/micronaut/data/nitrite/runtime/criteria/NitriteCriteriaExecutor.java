@@ -342,7 +342,9 @@ public final class NitriteCriteriaExecutor {
                 } else if (parsed instanceof List<?> pipeline) {
                     List<Map<?, ?>> pipelineStages = new ArrayList<>();
                     for (Object s : pipeline) {
-                        if (s instanceof Map<?, ?> sm) pipelineStages.add(sm);
+                        if (s instanceof Map<?, ?> sm) {
+                            pipelineStages.add(sm);
+                        }
                     }
                     stages = pipelineStages;
                 } else {

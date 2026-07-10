@@ -30,10 +30,11 @@ import java.util.List;
 /** Maps entity property paths to Nitrite document field names. */
 final class NitriteFieldNameResolver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NitriteFieldNameResolver.class);
     static final String ID_FIELD = "id";
 
-    private NitriteFieldNameResolver() {}
+    private static final Logger LOG = LoggerFactory.getLogger(NitriteFieldNameResolver.class);
+
+    private NitriteFieldNameResolver() { }
 
     static String getFieldName(PersistentPropertyPath propertyPath) {
         String result = resolve(propertyPath);

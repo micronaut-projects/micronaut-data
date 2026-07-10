@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.nitrite.model.query.builder;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.BindingParameter;

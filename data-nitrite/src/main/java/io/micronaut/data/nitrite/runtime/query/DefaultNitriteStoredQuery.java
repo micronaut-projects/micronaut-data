@@ -79,6 +79,4 @@ public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParame
     public Map<String, Object> getUpdateMap() {
         return updateMap;
     }
-
-
 }

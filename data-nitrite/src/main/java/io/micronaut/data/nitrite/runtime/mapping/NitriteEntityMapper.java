@@ -285,6 +285,7 @@ public final class NitriteEntityMapper {
    * @param field the field name
    * @param value the comparison value
    * @param dottedPath the full path for logging
+   * @param <E> the entity type
    * @return the Nitrite Filter
    */
   public <E> Filter eqWithNumericCoercion(final RuntimePersistentEntity<E> entity, final String field, final Object value, final String dottedPath) {
@@ -1104,7 +1105,6 @@ public final class NitriteEntityMapper {
         return associationStoredEmbedded;
     }
 
-
     @SuppressWarnings("unchecked")
     private static <T> Class<T> castClass(Class<?> clazz) {
         return (Class<T>) clazz;
@@ -1113,7 +1113,9 @@ public final class NitriteEntityMapper {
     private static Object docGet(Document doc, String... keys) {
         for (String key : keys) {
             Object val = doc.get(key);
-            if (val != null) return val;
+            if (val != null) {
+                return val;
+            }
         }
         return null;
     }

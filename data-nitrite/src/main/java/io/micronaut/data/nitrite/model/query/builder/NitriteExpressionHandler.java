@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.nitrite.model.query.builder;
 
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentPropertyPath;
 import jakarta.persistence.criteria.Expression;
 

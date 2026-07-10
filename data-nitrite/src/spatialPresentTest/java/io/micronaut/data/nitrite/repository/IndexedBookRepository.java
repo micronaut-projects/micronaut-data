@@ -16,6 +16,7 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
 
     /**
      * Search books by description text (full-text search).
+     *
      * @param text the search text
      * @return matching books
      */
@@ -23,13 +24,21 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
     List<IndexedBook> searchByDescription(String text);
 
     /**
-     * Search books by description text (full-text search).
+     * Find books near the given geometry using an explicit Nitrite spatial query.
+     *
+     * @param location the reference geometry
+     * @param maxDistance the maximum distance from the reference geometry
+     * @return matching books
      */
     @Query("{\"location\": {\"$near\": {\"center\": :location, \"distance\": :maxDistance}}}")
     List<IndexedBook> findByLocationNearQuery(Geometry location, double maxDistance);
 
     /**
-     * Find books within a geometry (derived query — no @Query).
+     * Find books near the given geometry using a derived query.
+     *
+     * @param location the reference geometry
+     * @param maxDistance the maximum distance from the reference geometry
+     * @return matching books
      */
     List<IndexedBook> findByLocationNear(Geometry location, double maxDistance);
 

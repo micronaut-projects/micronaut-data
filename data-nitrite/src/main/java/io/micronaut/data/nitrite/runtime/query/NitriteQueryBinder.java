@@ -60,6 +60,9 @@ public final class NitriteQueryBinder {
     /**
      * Extracts the numeric placeholder index from a {@code "$mn_qp:N"} string or
      * a {@code {"$mn_qp": N}} map. Returns {@code null} if the value is not a placeholder.
+     *
+     * @param value the raw value to inspect
+     * @return the placeholder index, or {@code null} if the value is not a placeholder
      */
     public static Integer extractPlaceholderIndex(Object value) {
         if (value instanceof String s && s.startsWith("$mn_qp:")) {
@@ -78,6 +81,12 @@ public final class NitriteQueryBinder {
      * Resolves a raw filter or update value: replaces {@code "$mn_qp:N"} placeholders and
      * {@code ":"}-prefixed named parameters with their actual values, converting through
      * {@code toFilterValue}. Returns the value unchanged if it is not a placeholder.
+     *
+     * @param value the raw value
+     * @param jsonParams positional JSON parameters
+     * @param namedParameters named parameters
+     * @param toFilterValue mapper used to normalize resolved values
+     * @return the resolved value
      */
     @SuppressWarnings({"rawtypes"})
     public static Object resolveParameterValue(Object value, Object[] jsonParams,
@@ -117,6 +126,11 @@ public final class NitriteQueryBinder {
     /**
      * Ensures the JSON params array is large enough to hold all {@code $mn_qp:N} placeholder
      * indices found in the filter map, then calls {@code fillMissing} to populate any null slots.
+     *
+     * @param filterMap the filter map
+     * @param jsonParams the existing JSON parameters
+     * @param fillMissing callback that fills unresolved parameter slots
+     * @return the expanded JSON parameter array
      */
     static Object[] ensureJsonParamsForFilter(Map<String, Object> filterMap, Object[] jsonParams,
                                               Consumer<Object[]> fillMissing) {
@@ -150,13 +164,17 @@ public final class NitriteQueryBinder {
                         // handles $near: {center: {$mn_qp:0}, distance: {$mn_qp:1}}
                         for (Object nestedVal : nestedMap.values()) {
                             idx = extractPlaceholderIndex(nestedVal);
-                            if (idx != null) max = Math.max(max, idx);
+                            if (idx != null) {
+                                max = Math.max(max, idx);
+                            }
                         }
                     }
                 }
             } else {
                 Integer idx = extractPlaceholderIndex(value);
-                if (idx != null) max = Math.max(max, idx);
+                if (idx != null) {
+                    max = Math.max(max, idx);
+                }
             }
         }
         return max;
@@ -165,6 +183,10 @@ public final class NitriteQueryBinder {
     /**
      * Builds a named-parameter map from query bindings and method argument names.
      * Values are converted via {@code toFilterValue} before being stored.
+     *
+     * @param q the prepared query
+     * @param toFilterValue mapper used to normalize values
+     * @return the named parameter map
      */
     public static Map<String, Object> buildNamedParameterValues(PreparedQuery<?, ?> q,
                                                           Function<Object, Object> toFilterValue) {
@@ -246,7 +268,9 @@ public final class NitriteQueryBinder {
         }
         Object current = base;
         for (String segment : path) {
-            if (current == null) break;
+            if (current == null) {
+                break;
+            }
             current = readSegmentValue.apply(current, segment);
         }
         return toFilterValue.apply(current);
@@ -316,7 +340,9 @@ public final class NitriteQueryBinder {
             Object current = arg;
             for (int i = start; i < parts.length; i++) {
                 current = readSegmentValue(current, parts[i]);
-                if (current == null) break;
+                if (current == null) {
+                    break;
+                }
             }
             if (current != null) {
                 return entityMapper.toNitriteFilterValue(current);
@@ -327,7 +353,9 @@ public final class NitriteQueryBinder {
 
     @Nullable
     private Object readSegmentValue(@Nullable Object current, String segment) {
-        if (current == null) return null;
+        if (current == null) {
+            return null;
+        }
         String alt = NameUtils.snakeToCamel(segment);
         return switch (current) {
             case Document d -> {

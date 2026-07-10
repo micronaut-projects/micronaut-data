@@ -144,7 +144,9 @@ final class JoinFetcher {
                 Object val = doc.get(finalBackFieldName);
                 if (val instanceof Collection<?> coll) {
                     for (Object id : parentIds) {
-                        if (coll.contains(id)) return true;
+                        if (coll.contains(id)) {
+                            return true;
+                        }
                     }
                 }
                 return false;

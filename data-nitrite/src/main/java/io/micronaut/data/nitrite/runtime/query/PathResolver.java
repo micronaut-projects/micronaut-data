@@ -32,25 +32,7 @@ import java.util.List;
 @Internal
 final class PathResolver {
 
-    private PathResolver() {}
-
-    /**
-     * Describes how a raw field name resolves against an entity's metadata.
-     *
-     * @param kind           PLAIN: no association; EMBEDDED: all hops are embedded; REFERENCE: first hop is a reference association
-     * @param chain          the resolved association chain (empty for PLAIN)
-     * @param terminal       the terminal property (null when the path ends at an association itself)
-     * @param persistedField PLAIN/EMBEDDED: persisted field name or dotted path; REFERENCE: persisted name of chain head
-     */
-    record PathResolution(
-        Kind kind,
-        List<RuntimeAssociation<?>> chain,
-        RuntimePersistentProperty<?> terminal,
-        String persistedField
-    ) {
-        enum Kind { PLAIN, EMBEDDED, REFERENCE }
-
-        boolean isReference() { return kind == Kind.REFERENCE; }
+    private PathResolver() {
     }
 
     /**
@@ -80,7 +62,8 @@ final class PathResolver {
                     "_id".equals(rawField))) {
                 return plain(identity.getPersistedName());
             }
-        } catch (IllegalStateException ignored) {}
+        } catch (IllegalStateException ignored) {
+        }
 
         // Step 2: direct FK match — MANY_TO_ONE whose persistedName == rawField (non-dotted).
         // Matches FK fields stored in the document (e.g. "author" in a Book document).
@@ -155,7 +138,8 @@ final class PathResolver {
                     || "_id".equals(name))) {
                 return id;
             }
-        } catch (IllegalStateException ignored) {}
+        } catch (IllegalStateException ignored) {
+        }
         // Fallback 2: persisted-name match for plain (non-association) properties
         for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
             if (!(p instanceof RuntimeAssociation<?>) && p.getPersistedName().equals(name)) {
@@ -170,7 +154,9 @@ final class PathResolver {
             if (p instanceof RuntimeAssociation<?> assoc
                     && (assoc.getKind() == Relation.Kind.ONE_TO_MANY || assoc.getKind() == Relation.Kind.MANY_TO_MANY)) {
                 String joinSegment = assoc.getAssociatedEntity().getPersistedName() + "_" + entity.getPersistedName();
-                if (joinSegment.equals(name) || assoc.getPersistedName().equals(name)) return p;
+                if (joinSegment.equals(name) || assoc.getPersistedName().equals(name)) {
+                    return p;
+                }
             }
         }
         return null;
@@ -184,5 +170,28 @@ final class PathResolver {
                                              RuntimePersistentProperty<?> terminal,
                                              String persistedField) {
         return new PathResolution(PathResolution.Kind.REFERENCE, chain, terminal, persistedField);
+    }
+
+    /**
+     * Describes how a raw field name resolves against an entity's metadata.
+     *
+     * @param kind PLAIN: no association; EMBEDDED: all hops are embedded; REFERENCE: first hop is a reference association
+     * @param chain the resolved association chain (empty for PLAIN)
+     * @param terminal the terminal property (null when the path ends at an association itself)
+     * @param persistedField PLAIN/EMBEDDED: persisted field name or dotted path; REFERENCE: persisted name of chain head
+     */
+    record PathResolution(
+        Kind kind,
+        List<RuntimeAssociation<?>> chain,
+        RuntimePersistentProperty<?> terminal,
+        String persistedField
+    ) {
+        boolean isReference() {
+            return kind == Kind.REFERENCE;
+        }
+
+        enum Kind {
+            PLAIN, EMBEDDED, REFERENCE
+        }
     }
 }

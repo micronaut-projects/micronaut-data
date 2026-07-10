@@ -192,13 +192,24 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         List<QueryParameterBinding> parameterBindings = queryState.getParameterBindings();
         return new QueryResult() {
             @Override
-            public String getQuery() { return predicateString; }
+            public String getQuery() {
+                return predicateString;
+            }
+
             @Override
-            public String getUpdate() { return updateString; }
+            public String getUpdate() {
+                return updateString;
+            }
+
             @Override
-            public List<String> getQueryParts() { return Collections.emptyList(); }
+            public List<String> getQueryParts() {
+                return Collections.emptyList();
+            }
+
             @Override
-            public List<QueryParameterBinding> getParameterBindings() { return parameterBindings; }
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
         };
     }
 
