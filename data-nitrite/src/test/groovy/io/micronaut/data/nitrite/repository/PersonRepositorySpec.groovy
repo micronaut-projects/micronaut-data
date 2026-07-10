@@ -1124,9 +1124,6 @@ class PersonRepositorySpec extends Specification {
         personRepository.count() == 2
     }
 
-    // TODO: Enable once projection support is implemented
-    // See: https://github.com/micronaut-projects/micronaut-data/issues/XXXX
-    // @spock.lang.Ignore("Nitrite does not yet support projection to simple types in @Query methods")
     void "test projection to single property returns list of values"() {
         given:
         personRepository.save(new Person("Alice", 25))
