@@ -126,6 +126,35 @@ class IndexedBookRepositoryTest {
         assertTrue(intersectsResults.stream().anyMatch(b -> b.getTitle().equals("NYC Guide")));
     }
 
+    // tag::derived-spatial-usage[]
+    @Test
+    void testDerivedSpatialQueries() {
+        Point nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128));
+        Point boston = factory.createPoint(new Coordinate(-71.0589, 42.3601));
+        IndexedBook nycBook = new IndexedBook("NYC Guide", 100);
+        nycBook.setLocation(nyc);
+        IndexedBook bostonBook = new IndexedBook("Boston Guide", 80);
+        bostonBook.setLocation(boston);
+        repository.saveAll(List.of(nycBook, bostonBook));
+
+        Polygon nycBox = factory.createPolygon(new Coordinate[] {
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 40.5),
+            new Coordinate(-73.5, 41.0),
+            new Coordinate(-74.5, 41.0),
+            new Coordinate(-74.5, 40.5)
+        });
+        LineString crossingNyc = factory.createLineString(new Coordinate[] {
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 41.0)
+        });
+
+        assertTrue(repository.findByLocationNear(nyc, 0.5).stream().anyMatch(b -> b.getTitle().equals("NYC Guide")));
+        assertEquals(1, repository.findByLocationGeoWithin(nycBox).size());
+        assertTrue(repository.findByLocationGeoIntersects(crossingNyc).stream().anyMatch(b -> b.getTitle().equals("NYC Guide")));
+    }
+    // end::derived-spatial-usage[]
+
     @Test
     void testFullTextSearch() {
         // Create books with descriptions

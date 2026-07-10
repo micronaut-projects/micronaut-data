@@ -5,9 +5,9 @@ Micronaut Data Nitrite automatically creates indexes based on standard Micronaut
 
 You can define indexes at the class level or property level using ann:data.annotation.Index[] or ann:data.annotation.Indexes[].
 
-=== Primary Key Index
+=== Primary Key Uniqueness
 
-The identity property (mapped to the `id` field) is automatically indexed with a unique index to ensure optimal lookup performance.
+No secondary index is created on the identity property. Nitrite enforces document uniqueness internally through its own `_id` field, and Micronaut Data Nitrite deliberately avoids adding a unique index on `id`: doing so would cause spurious constraint violations for identifiers generated in rapid succession (for example, timestamp-based `Long`/`Integer` ids, see <<nitriteIdGenerator>>).
 
 === Property-level Index
 
@@ -20,6 +20,32 @@ snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source
 You can define multi-column indexes at the class level:
 
 snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="compound-index"]
+
+=== Unique Index
+
+Set `unique = true` on `@Index` to enforce a uniqueness constraint on a property:
+
+snippet::example.CatalogItem[project-base="doc-examples/nitrite-example", source="main", tags="unique-index"]
+
+Attempting to save an entity whose indexed value already exists raises an api:data.exceptions.DataAccessException[] wrapping Nitrite's own `org.dizitart.no2.exceptions.UniqueConstraintException`:
+
+.Java
+[source,java]
+----
+include::doc-examples/nitrite-example-java/src/test/java/example/CatalogItemRepositoryTest.java[tag=unique-index-usage]
+----
+
+.Groovy
+[source,groovy]
+----
+include::doc-examples/nitrite-example-groovy/src/test/groovy/example/CatalogItemRepositorySpec.groovy[tag=unique-index-usage]
+----
+
+.Kotlin
+[source,kotlin]
+----
+include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/CatalogItemRepositoryTest.kt[tag=unique-index-usage]
+----
 
 === Full-text and Spatial Indexes
 

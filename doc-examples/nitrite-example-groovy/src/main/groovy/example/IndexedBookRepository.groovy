@@ -18,11 +18,14 @@ interface IndexedBookRepository extends CrudRepository<IndexedBook, String> {
 
     /**
      * Find books near a location using spatial $near filter.
-     */
+    */
     // tag::near-query[]
     @Query('{"location": {"$near": {"center": :location, "distance": :maxDistance}}}')
-    List<IndexedBook> findByLocationNear(Geometry location, double maxDistance)
+    List<IndexedBook> findByLocationNearQuery(Geometry location, double maxDistance)
     // end::near-query[]
+
+    // tag::derived-spatial[]
+    List<IndexedBook> findByLocationNear(Geometry location, double maxDistance)
 
     /**
      * Find books within a geometry using spatial $within filter.
@@ -32,6 +35,8 @@ interface IndexedBookRepository extends CrudRepository<IndexedBook, String> {
     List<IndexedBook> findByLocationWithin(Geometry area)
     // end::within-query[]
 
+    List<IndexedBook> findByLocationGeoWithin(Geometry area)
+
     /**
      * Find books intersecting a geometry using spatial $intersects filter.
      */
@@ -39,4 +44,7 @@ interface IndexedBookRepository extends CrudRepository<IndexedBook, String> {
     @Query('{"location": {"$intersects": :geometry}}')
     List<IndexedBook> findByLocationIntersects(Geometry geometry)
     // end::intersects-query[]
+
+    List<IndexedBook> findByLocationGeoIntersects(Geometry geometry)
+    // end::derived-spatial[]
 }

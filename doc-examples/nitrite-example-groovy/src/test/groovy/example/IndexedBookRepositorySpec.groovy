@@ -109,6 +109,36 @@ class IndexedBookRepositorySpec extends Specification {
         results.any { it.title == "NYC Guide" }
     }
 
+    // tag::derived-spatial-usage[]
+    def "derived spatial queries"() {
+        given:
+        def nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128))
+        def boston = factory.createPoint(new Coordinate(-71.0589, 42.3601))
+        IndexedBook nycBook = new IndexedBook("NYC Guide", 100)
+        nycBook.location = nyc
+        IndexedBook bostonBook = new IndexedBook("Boston Guide", 80)
+        bostonBook.location = boston
+        repository.saveAll([nycBook, bostonBook])
+
+        def nycBox = factory.createPolygon([
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 40.5),
+            new Coordinate(-73.5, 41.0),
+            new Coordinate(-74.5, 41.0),
+            new Coordinate(-74.5, 40.5)
+        ] as Coordinate[])
+        def crossingNyc = factory.createLineString([
+            new Coordinate(-74.5, 40.5),
+            new Coordinate(-73.5, 41.0)
+        ] as Coordinate[])
+
+        expect:
+        repository.findByLocationNear(nyc, 0.5).any { it.title == "NYC Guide" }
+        repository.findByLocationGeoWithin(nycBox).size() == 1
+        repository.findByLocationGeoIntersects(crossingNyc).any { it.title == "NYC Guide" }
+    }
+    // end::derived-spatial-usage[]
+
     def "full-text search by description"() {
         given:
         IndexedBook book1 = new IndexedBook("NYC Guide", 100)

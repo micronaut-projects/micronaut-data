@@ -19,6 +19,48 @@ Date and time types are normalized before being stored in Nitrite documents so f
 
 The runtime applies the same normalization to query parameters, so repository methods can continue to use Java time types directly.
 
+== Type Mapping
+
+Nitrite supports common Java value types including enums, Java time values, `BigDecimal`, byte arrays, lists, maps, `Optional` values, and embedded objects.
+
+.Java
+[source,java]
+----
+include::doc-examples/nitrite-example-java/src/main/java/example/ExampleEvent.java[tag=event-type-mapping]
+----
+
+.Groovy
+[source,groovy]
+----
+include::doc-examples/nitrite-example-groovy/src/main/groovy/example/ExampleEvent.groovy[tag=event-type-mapping]
+----
+
+.Kotlin
+[source,kotlin]
+----
+include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/ExampleEvent.kt[tag=event-type-mapping]
+----
+
+The following executable example saves and reloads an entity using those types:
+
+.Java
+[source,java]
+----
+include::doc-examples/nitrite-example-java/src/test/java/example/ExampleEventRepositoryTest.java[tag=type-mapping-usage]
+----
+
+.Groovy
+[source,groovy]
+----
+include::doc-examples/nitrite-example-groovy/src/test/groovy/example/ExampleEventRepositorySpec.groovy[tag=type-mapping-usage]
+----
+
+.Kotlin
+[source,kotlin]
+----
+include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/ExampleEventRepositoryTest.kt[tag=type-mapping-usage]
+----
+
 == Example Entity
 
 snippet::example.PersonWithDateOfBirth[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirth"]

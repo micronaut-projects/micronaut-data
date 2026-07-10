@@ -130,6 +130,36 @@ class IndexedBookRepositoryTest {
         assertTrue(intersectsResults.any { it.title == "NYC Guide" })
     }
 
+    // tag::derived-spatial-usage[]
+    @Test
+    fun testDerivedSpatialQueries() {
+        val factory = GeometryFactory()
+        val nyc = factory.createPoint(Coordinate(-74.0060, 40.7128))
+        val boston = factory.createPoint(Coordinate(-71.0589, 42.3601))
+        val nycBook = IndexedBook("NYC Guide", 100)
+        nycBook.location = nyc
+        val bostonBook = IndexedBook("Boston Guide", 80)
+        bostonBook.location = boston
+        indexedBookRepository.saveAll(listOf(nycBook, bostonBook))
+
+        val nycBox = factory.createPolygon(arrayOf(
+            Coordinate(-74.5, 40.5),
+            Coordinate(-73.5, 40.5),
+            Coordinate(-73.5, 41.0),
+            Coordinate(-74.5, 41.0),
+            Coordinate(-74.5, 40.5)
+        ))
+        val crossingNyc = factory.createLineString(arrayOf(
+            Coordinate(-74.5, 40.5),
+            Coordinate(-73.5, 41.0)
+        ))
+
+        assertTrue(indexedBookRepository.findByLocationNear(nyc, 0.5).any { it.title == "NYC Guide" })
+        assertEquals(1, indexedBookRepository.findByLocationGeoWithin(nycBox).size)
+        assertTrue(indexedBookRepository.findByLocationGeoIntersects(crossingNyc).any { it.title == "NYC Guide" })
+    }
+    // end::derived-spatial-usage[]
+
     @Test
     fun testFullTextSearch() {
         // Create books with descriptions

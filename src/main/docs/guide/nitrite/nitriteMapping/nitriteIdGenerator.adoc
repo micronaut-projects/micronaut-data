@@ -7,8 +7,8 @@ When ann:data.annotation.GeneratedValue[] is present on the identity property, t
 
 - `String`: UUID string
 - `java.util.UUID`: UUID
-- `Long` / `long`: timestamp-based (`System.currentTimeMillis()`)
-- `Integer` / `int`: timestamp-based (modulo `Integer.MAX_VALUE`)
+- `Long` / `long`: monotonically increasing value from a process-wide counter, seeded at startup with `System.currentTimeMillis()`
+- `Integer` / `int`: same counter, taken modulo `Integer.MAX_VALUE`
 
 Example:
 
