@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
-class CatalogItemRepositoryTest {
+class CatalogItemRepositorySpec {
 
     @Inject
     CatalogItemRepository repository;

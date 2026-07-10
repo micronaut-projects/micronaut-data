@@ -28,7 +28,7 @@ final class VersionedBookExample {
         VersionedBook book = bookRepository.findById(id).orElse(null);
         if (book != null) {
             book.setTitle("Updated Title");
-            VersionedBook updated = bookRepository.save(book); // <2>
+            VersionedBook updated = bookRepository.save(book); // <1>
         }
     }
     // end::save-versioned-existing[]

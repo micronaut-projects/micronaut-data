@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest(transactional = false)
-class WidgetOrderRepositoryTest {
+class WidgetOrderRepositorySpec {
 
     @Inject
     WidgetRepository widgetRepository;

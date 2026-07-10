@@ -9,10 +9,12 @@ class AssociationMappingSpec extends Specification {
 
     @Inject AuthorRepository authorRepository
     @Inject BookRepository bookRepository
+    @Inject CustomerRepository customerRepository
 
     def cleanup() {
         authorRepository.deleteAll()
         bookRepository.deleteAll()
+        customerRepository.deleteAll()
     }
 
     def "one-to-many with cascade persist"() {
@@ -53,15 +55,23 @@ class AssociationMappingSpec extends Specification {
         saved.author.name == "Stephen King"
     }
 
+    // tag::embedded-address-usage[]
     def "embedded address fields are preserved"() {
         given:
         Address address = new Address("123 Main St", "New York", "10001")
+        Customer customer = new Customer("Jane Doe", address)
 
-        expect:
-        address.street == "123 Main St"
-        address.city == "New York"
-        address.zipCode == "10001"
+        when:
+        customerRepository.save(customer)
+        def saved = customerRepository.findById(customer.id).orElse(null)
+
+        then:
+        saved != null
+        saved.address.street == "123 Main St"
+        saved.address.city == "New York"
+        saved.address.zipCode == "10001"
     }
+    // end::embedded-address-usage[]
 
     def "bidirectional association is persisted"() {
         given:

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 @MicronautTest(transactional = false)
-class CompositeFkAssociationTest {
+class CompositeFkAssociationSpec {
 
     @Inject
     lateinit var parentRepository: CompositeFkParentRepository

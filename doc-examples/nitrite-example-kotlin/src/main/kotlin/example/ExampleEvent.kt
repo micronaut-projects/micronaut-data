@@ -12,14 +12,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Optional
 
-// tag::event-type-mapping[]
 @MappedEntity
 class ExampleEvent {
-    enum class Status {
-        ACTIVE,
-        INACTIVE,
-        PENDING
-    }
 
     @Id
     @GeneratedValue
@@ -28,18 +22,27 @@ class ExampleEvent {
     var type: String? = null
     var payload: String? = null
     var priority: Int? = null
-    var status: Status? = null
-    var eventDate: LocalDate? = null
-    var eventDateTime: LocalDateTime? = null
-    var occurredAt: Instant? = null
-    var amount: BigDecimal? = null
     var score: Double? = null
-    var data: ByteArray? = null
-    var tags: List<String>? = null
-    var metadata: Map<String, String>? = null
-    var attempts: Map<String, EventAttempt>? = null
-    var note: Optional<String>? = null
-    var location: EventLocation? = null
+
+    // tag::event-type-mapping[]
+    enum class Status {
+        ACTIVE,
+        INACTIVE,
+        PENDING
+    }
+
+    var status: Status? = null // <1>
+    var eventDate: LocalDate? = null // <2>
+    var eventDateTime: LocalDateTime? = null // <2>
+    var occurredAt: Instant? = null // <2>
+    var amount: BigDecimal? = null // <3>
+    var data: ByteArray? = null // <4>
+    var tags: List<String>? = null // <5>
+    var metadata: Map<String, String>? = null // <6>
+    var attempts: Map<String, EventAttempt>? = null // <6>
+    var note: Optional<String>? = null // <7>
+    var location: EventLocation? = null // <8>
+    // end::event-type-mapping[]
 
     constructor()
 
@@ -77,4 +80,3 @@ class ExampleEvent {
         }
     }
 }
-// end::event-type-mapping[]

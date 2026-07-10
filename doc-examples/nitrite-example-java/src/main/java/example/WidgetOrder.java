@@ -18,14 +18,17 @@ public class WidgetOrder {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     private Widget widget;
+    // end::uuid-widget-order[]
 
     public WidgetOrder() {
     }
 
+    // tag::uuid-widget-order[]
     public WidgetOrder(String orderNumber, Widget widget) {
         this.orderNumber = orderNumber;
         this.widget = widget;
     }
+    // end::uuid-widget-order[]
 
     public UUID getId() {
         return id;
@@ -50,5 +53,6 @@ public class WidgetOrder {
     public void setWidget(Widget widget) {
         this.widget = widget;
     }
+// tag::uuid-widget-order[]
 }
 // end::uuid-widget-order[]

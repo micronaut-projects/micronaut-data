@@ -15,7 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
-class IndexedBookRepositoryTest {
+class IndexedBookRepositorySpec {
 
     @Inject
     IndexedBookRepository repository;

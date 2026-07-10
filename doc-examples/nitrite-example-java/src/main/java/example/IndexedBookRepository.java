@@ -21,7 +21,9 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @return matching books
      */
     // tag::text-query[]
-    @Query("{\"description\": {\"$text\": :text}}")
+    @Query("""
+    {"description": {"$text": :text}}
+    """)
     List<IndexedBook> searchByDescription(String text);
     // end::text-query[]
 
@@ -32,7 +34,9 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @return books near the location
     */
     // tag::near-query[]
-    @Query("{\"location\": {\"$near\": {\"center\": :location, \"distance\": :maxDistance}}}")
+    @Query("""
+    {"location": {"$near": {"center": :location, "distance": :maxDistance}}}
+    """)
     List<IndexedBook> findByLocationNearQuery(Geometry location, double maxDistance);
     // end::near-query[]
 
@@ -45,7 +49,9 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @return books within the area
      */
     // tag::within-query[]
-    @Query("{\"location\": {\"$within\": :area}}")
+    @Query("""
+    {"location": {"$within": :area}}
+    """)
     List<IndexedBook> findByLocationWithin(Polygon area);
     // end::within-query[]
 
@@ -57,7 +63,9 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @return books intersecting the geometry
      */
     // tag::intersects-query[]
-    @Query("{\"location\": {\"$intersects\": :geometry}}")
+    @Query("""
+    {"location": {"$intersects": :geometry}}
+    """)
     List<IndexedBook> findByLocationIntersects(LineString geometry);
     // end::intersects-query[]
 

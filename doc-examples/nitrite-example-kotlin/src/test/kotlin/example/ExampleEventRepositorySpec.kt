@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 import java.util.Optional
 
 @MicronautTest(transactional = false)
-class ExampleEventRepositoryTest {
+class ExampleEventRepositorySpec {
 
     @Inject
     lateinit var repository: ExampleEventRepository
@@ -120,18 +120,18 @@ class ExampleEventRepositoryTest {
         val saved = repository.save(event)
         val reloaded = repository.findById(saved.id!!).orElseThrow()
 
-        assertEquals(ExampleEvent.Status.PENDING, reloaded.status)
-        assertEquals(LocalDate.of(2024, 1, 1), reloaded.eventDate)
-        assertEquals(eventDateTime, reloaded.eventDateTime)
-        assertEquals(occurredAt, reloaded.occurredAt)
-        assertEquals(BigDecimal("123.45"), reloaded.amount)
-        assertArrayEquals("payload-bytes".toByteArray(StandardCharsets.UTF_8), reloaded.data)
-        assertEquals("docs", reloaded.metadata?.get("source"))
-        assertEquals("worker-a", reloaded.attempts?.get("first")?.handler)
-        assertEquals(2, reloaded.attempts?.get("second")?.retries)
-        assertNotNull(reloaded.note)
-        assertTrue(reloaded.note.toString().contains("optional note"))
-        assertEquals("eu-west", reloaded.location?.region)
+        assertEquals(ExampleEvent.Status.PENDING, reloaded.status) // <1>
+        assertEquals(LocalDate.of(2024, 1, 1), reloaded.eventDate) // <2>
+        assertEquals(eventDateTime, reloaded.eventDateTime) // <2>
+        assertEquals(occurredAt, reloaded.occurredAt) // <2>
+        assertEquals(BigDecimal("123.45"), reloaded.amount) // <3>
+        assertArrayEquals("payload-bytes".toByteArray(StandardCharsets.UTF_8), reloaded.data) // <4>
+        assertEquals("docs", reloaded.metadata?.get("source")) // <5>
+        assertEquals("worker-a", reloaded.attempts?.get("first")?.handler) // <5>
+        assertEquals(2, reloaded.attempts?.get("second")?.retries) // <5>
+        assertNotNull(reloaded.note) // <6>
+        assertTrue(reloaded.note.toString().contains("optional note")) // <6>
+        assertEquals("eu-west", reloaded.location?.region) // <7>
     }
     // end::type-mapping-usage[]
 

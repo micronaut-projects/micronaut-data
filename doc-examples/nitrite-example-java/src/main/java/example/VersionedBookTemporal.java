@@ -19,11 +19,12 @@ public class VersionedBookTemporal {
     @Version
     private Instant version; // <1>
 
-    public VersionedBookTemporal() {
-    }
-
     public VersionedBookTemporal(String title) {
         this.title = title;
+    }
+    // end::versioned-book-temporal[]
+
+    public VersionedBookTemporal() {
     }
 
     public String getId() {
@@ -49,5 +50,6 @@ public class VersionedBookTemporal {
     public void setVersion(Instant version) {
         this.version = version;
     }
+// tag::versioned-book-temporal[]
 }
 // end::versioned-book-temporal[]

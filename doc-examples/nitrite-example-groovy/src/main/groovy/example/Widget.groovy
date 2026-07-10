@@ -14,12 +14,16 @@ class Widget {
     UUID id
 
     String name
+    // end::uuid-widget[]
 
     Widget() {
     }
 
+    // tag::uuid-widget[]
     Widget(String name) {
         this.name = name
     }
+    // end::uuid-widget[]
+// tag::uuid-widget[]
 }
 // end::uuid-widget[]

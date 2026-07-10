@@ -15,5 +15,7 @@ interface VersionedBookRepository : CrudRepository<VersionedBook, String> {
 
     // Partial delete with version check
     fun delete(@Id id: String, version: Long?)
+    // end::versioned-repository[]
+// tag::versioned-repository-declaration[]
 }
-// end::versioned-repository[]
+// end::versioned-repository-declaration[]

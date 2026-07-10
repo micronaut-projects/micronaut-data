@@ -18,10 +18,12 @@ class VersionedBookTemporal {
     @Version
     Instant version // <1>
 
-    VersionedBookTemporal() {}
-
     VersionedBookTemporal(String title) {
         this.title = title
     }
+    // end::versioned-book-temporal[]
+
+    VersionedBookTemporal() {}
+// tag::versioned-book-temporal[]
 }
 // end::versioned-book-temporal[]

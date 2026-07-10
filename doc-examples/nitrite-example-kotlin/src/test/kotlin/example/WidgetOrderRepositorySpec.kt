@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 @MicronautTest(transactional = false)
-class WidgetOrderRepositoryTest {
+class WidgetOrderRepositorySpec {
 
     @Inject
     lateinit var widgetRepository: WidgetRepository

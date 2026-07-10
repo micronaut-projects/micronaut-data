@@ -17,12 +17,16 @@ class WidgetOrder {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     var widget: Widget? = null
+    // end::uuid-widget-order[]
 
     constructor()
 
+    // tag::uuid-widget-order[]
     constructor(orderNumber: String, widget: Widget) {
         this.orderNumber = orderNumber
         this.widget = widget
     }
+    // end::uuid-widget-order[]
+// tag::uuid-widget-order[]
 }
 // end::uuid-widget-order[]

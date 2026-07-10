@@ -8,7 +8,7 @@ import java.util.UUID
 // tag::uuid-widget-order-repository[]
 @NitriteRepository
 interface WidgetOrderRepository : CrudRepository<WidgetOrder, UUID> {
-    @Query("{\"widget\": {\"\$eq\": :value}}")
+    @Query("""{"widget": {"${'$'}eq": :value}}""")
     fun findByWidgetValue(value: String): List<WidgetOrder>
 }
 // end::uuid-widget-order-repository[]

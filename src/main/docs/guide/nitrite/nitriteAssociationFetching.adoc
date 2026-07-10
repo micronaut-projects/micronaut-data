@@ -103,30 +103,18 @@ When a `MANY_TO_ONE` association's target entity has a `UUID` id, a `@Query` fil
 .Widget entity with a UUID id
 snippet::example.Widget[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget"]
 
+`WidgetOrder` references `Widget` via a `MANY_TO_ONE` association:
+
 .WidgetOrder entity referencing Widget
 snippet::example.WidgetOrder[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget-order"]
+
+The repository defines a `@Query` filter on the association property:
 
 .Repository filtering on the association value
 snippet::example.WidgetOrderRepository[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget-order-repository"]
 
 If the supplied `:value` parses as a `UUID`, the filter matches the stored foreign key directly. Otherwise, it falls back to a sub-query that matches against the associated `Widget`'s own string properties (for example, `name`):
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/WidgetOrderRepositoryTest.java[tag=uuid-association-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/WidgetOrderRepositorySpec.groovy[tag=uuid-association-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/WidgetOrderRepositoryTest.kt[tag=uuid-association-usage]
-----
+snippet::example.WidgetOrderRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="uuid-association-usage"]
 
 For more complex association fetching patterns, consider using the Criteria API (see <<nitriteCriteriaSpecifications>>).

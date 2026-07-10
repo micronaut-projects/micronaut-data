@@ -22,14 +22,17 @@ public class CompositeFkChild {
         @JoinColumn(name = "fk_ref_id", referencedColumnName = "refId")
     })
     private CompositeFkParent parent;
+    // end::composite-fk-child[]
 
     public CompositeFkChild() {
     }
 
+    // tag::composite-fk-child[]
     public CompositeFkChild(String name, CompositeFkParent parent) {
         this.name = name;
         this.parent = parent;
     }
+    // end::composite-fk-child[]
 
     public String getId() {
         return id;
@@ -54,5 +57,6 @@ public class CompositeFkChild {
     public void setParent(CompositeFkParent parent) {
         this.parent = parent;
     }
+// tag::composite-fk-child[]
 }
 // end::composite-fk-child[]

@@ -10,7 +10,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
-class AssociationMappingTest {
+class AssociationMappingSpec {
 
     @Inject
     AuthorRepository authorRepository;
@@ -18,10 +18,14 @@ class AssociationMappingTest {
     @Inject
     BookRepository bookRepository;
 
+    @Inject
+    CustomerRepository customerRepository;
+
     @AfterEach
     void cleanup() {
         authorRepository.deleteAll();
         bookRepository.deleteAll();
+        customerRepository.deleteAll();
     }
 
     @Test
@@ -68,16 +72,20 @@ class AssociationMappingTest {
     }
 
     @Test
+    // tag::embedded-address-usage[]
     void testEmbeddedAddress() {
-        // Address is a @MappedEntity (embedded-style in Nitrite)
-        // This tests that nested objects are properly serialized/deserialized
         Address address = new Address("123 Main St", "New York", "10001");
+        Customer customer = new Customer("Jane Doe", address);
 
-        // Verify fields are set correctly (id is null before save)
-        assertEquals("123 Main St", address.getStreet());
-        assertEquals("New York", address.getCity());
-        assertEquals("10001", address.getZipCode());
+        customerRepository.save(customer);
+
+        Optional<Customer> saved = customerRepository.findById(customer.getId());
+        assertTrue(saved.isPresent());
+        assertEquals("123 Main St", saved.get().getAddress().getStreet());
+        assertEquals("New York", saved.get().getAddress().getCity());
+        assertEquals("10001", saved.get().getAddress().getZipCode());
     }
+    // end::embedded-address-usage[]
 
     @Test
     void testBidirectionalAssociation() {

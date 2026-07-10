@@ -114,18 +114,18 @@ class ExampleEventRepositorySpec extends Specification {
         ExampleEvent reloaded = repository.findById(saved.id).orElseThrow()
 
         then:
-        reloaded.status == ExampleEvent.Status.PENDING
-        reloaded.eventDate == LocalDate.of(2024, 1, 1)
-        reloaded.eventDateTime == eventDateTime
-        reloaded.occurredAt == occurredAt
-        reloaded.amount == new BigDecimal("123.45")
-        reloaded.data == "payload-bytes".bytes
-        reloaded.metadata.source == "docs"
-        reloaded.attempts.first.handler == "worker-a"
-        reloaded.attempts.second.retries == 2
-        reloaded.note != null
-        reloaded.note.toString().contains("optional note")
-        reloaded.location.region == "eu-west"
+        reloaded.status == ExampleEvent.Status.PENDING // <1>
+        reloaded.eventDate == LocalDate.of(2024, 1, 1) // <2>
+        reloaded.eventDateTime == eventDateTime // <2>
+        reloaded.occurredAt == occurredAt // <2>
+        reloaded.amount == new BigDecimal("123.45") // <3>
+        reloaded.data == "payload-bytes".bytes // <4>
+        reloaded.metadata.source == "docs" // <5>
+        reloaded.attempts.first.handler == "worker-a" // <5>
+        reloaded.attempts.second.retries == 2 // <5>
+        reloaded.note != null // <6>
+        reloaded.note.toString().contains("optional note") // <6>
+        reloaded.location.region == "eu-west" // <7>
     }
     // end::type-mapping-usage[]
 

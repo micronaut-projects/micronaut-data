@@ -11,14 +11,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// tag::event-type-mapping[]
 @MappedEntity
 class ExampleEvent {
-    enum Status {
-        ACTIVE,
-        INACTIVE,
-        PENDING
-    }
 
     @Id
     @GeneratedValue
@@ -27,18 +21,27 @@ class ExampleEvent {
     String type
     String payload
     Integer priority
-    Status status
-    LocalDate eventDate
-    LocalDateTime eventDateTime
-    Instant occurredAt
-    BigDecimal amount
     Double score
-    byte[] data
-    List<String> tags
-    Map<String, String> metadata
-    Map<String, EventAttempt> attempts
-    Optional<String> note
-    EventLocation location
+
+    // tag::event-type-mapping[]
+    enum Status {
+        ACTIVE,
+        INACTIVE,
+        PENDING
+    }
+
+    Status status // <1>
+    LocalDate eventDate // <2>
+    LocalDateTime eventDateTime // <2>
+    Instant occurredAt // <2>
+    BigDecimal amount // <3>
+    byte[] data // <4>
+    List<String> tags // <5>
+    Map<String, String> metadata // <6>
+    Map<String, EventAttempt> attempts // <6>
+    Optional<String> note // <7>
+    EventLocation location // <8>
+    // end::event-type-mapping[]
 
     ExampleEvent() {
     }
@@ -79,4 +82,3 @@ class ExampleEvent {
         }
     }
 }
-// end::event-type-mapping[]

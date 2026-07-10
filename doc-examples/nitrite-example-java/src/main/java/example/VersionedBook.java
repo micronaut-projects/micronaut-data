@@ -17,11 +17,12 @@ public class VersionedBook {
     @Version
     private Long version; // <1>
 
-    public VersionedBook() {
-    }
-
     public VersionedBook(String title) {
         this.title = title;
+    }
+    // end::versioned-book[]
+
+    public VersionedBook() {
     }
 
     public String getId() {
@@ -47,5 +48,6 @@ public class VersionedBook {
     public void setVersion(Long version) {
         this.version = version;
     }
+// tag::versioned-book[]
 }
 // end::versioned-book[]

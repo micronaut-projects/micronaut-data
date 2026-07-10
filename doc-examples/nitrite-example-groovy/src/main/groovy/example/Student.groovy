@@ -16,11 +16,15 @@ class Student {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students")
     Set<Book> books = [] as HashSet // <1>
+    // end::student[]
 
     Student() {}
 
+    // tag::student[]
     Student(String name) {
         this.name = name
     }
+    // end::student[]
+// tag::student[]
 }
 // end::student[]

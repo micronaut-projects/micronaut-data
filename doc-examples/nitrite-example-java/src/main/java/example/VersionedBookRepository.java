@@ -15,5 +15,7 @@ public interface VersionedBookRepository extends CrudRepository<VersionedBook, S
 
     // Partial delete with version check
     void delete(@Id String id, Long version);
+    // end::versioned-repository[]
+// tag::versioned-repository-declaration[]
 }
-// end::versioned-repository[]
+// end::versioned-repository-declaration[]

@@ -19,6 +19,7 @@ public class Project {
         this.projectId = projectId;
         this.name = name;
     }
+    // end::project[]
 
     public ProjectId getProjectId() {
         return projectId;
@@ -35,6 +36,7 @@ public class Project {
     public void setName(String name) {
         this.name = name;
     }
+// tag::project[]
 }
 // end::project[]
 

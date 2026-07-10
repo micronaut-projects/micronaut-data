@@ -2,29 +2,26 @@ package example;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 
-// tag::unique-index[]
+// tag::customer[]
 @MappedEntity
-public class CatalogItem {
+public class Customer {
     @Id
     @GeneratedValue
     private String id;
 
-    @Index(columns = "sku", unique = true)
-    private String sku;
-
     private String name;
+    private Address address;
 
-    public CatalogItem() {
-    }
-
-    public CatalogItem(String sku, String name) {
-        this.sku = sku;
+    public Customer(String name, Address address) {
         this.name = name;
+        this.address = address;
     }
-    // end::unique-index[]
+    // end::customer[]
+
+    public Customer() {
+    }
 
     public String getId() {
         return id;
@@ -34,14 +31,6 @@ public class CatalogItem {
         this.id = id;
     }
 
-    public String getSku() {
-        return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
-    }
-
     public String getName() {
         return name;
     }
@@ -49,6 +38,14 @@ public class CatalogItem {
     public void setName(String name) {
         this.name = name;
     }
-// tag::unique-index[]
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+// tag::customer[]
 }
-// end::unique-index[]
+// end::customer[]

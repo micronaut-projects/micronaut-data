@@ -13,6 +13,16 @@ class Book {
     String id
 
     String title
+    // end::book[]
+
+    Book() {
+    }
+
+    // tag::book[]
+    Book(String title) {
+        this.title = title
+    }
+    // end::book[]
 
     // tag::book-many-to-one[]
     @Relation(value = Relation.Kind.MANY_TO_ONE)
@@ -23,14 +33,6 @@ class Book {
     @Relation(value = Relation.Kind.MANY_TO_MANY)
     Set<Student> students = [] as HashSet // <1>
     // end::book-many-to-many[]
-
-    List<Page> pages = []
-
-    Book() {
-    }
-
-    Book(String title) {
-        this.title = title
-    }
+// tag::book[]
 }
 // end::book[]

@@ -17,10 +17,12 @@ class VersionedBook {
     @Version
     var version: Long? = null // <1>
 
-    constructor()
-
     constructor(title: String) {
         this.title = title
     }
+    // end::versioned-book[]
+
+    constructor()
+// tag::versioned-book[]
 }
 // end::versioned-book[]

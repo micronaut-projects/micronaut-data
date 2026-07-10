@@ -14,7 +14,7 @@ import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 
 @MicronautTest(transactional = false)
-class IndexedBookRepositoryTest {
+class IndexedBookRepositorySpec {
 
     @Inject
     lateinit var indexedBookRepository: IndexedBookRepository

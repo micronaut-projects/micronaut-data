@@ -10,7 +10,9 @@ import java.util.UUID;
 // tag::uuid-widget-order-repository[]
 @NitriteRepository
 public interface WidgetOrderRepository extends CrudRepository<WidgetOrder, UUID> {
-    @Query("{\"widget\": {\"$eq\": :value}}")
+    @Query("""
+    {"widget": {"$eq": :value}}
+    """)
     List<WidgetOrder> findByWidgetValue(String value);
 }
 // end::uuid-widget-order-repository[]

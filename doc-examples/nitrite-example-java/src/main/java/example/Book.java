@@ -5,9 +5,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 // tag::book[]
@@ -18,6 +16,16 @@ public class Book {
     private String id;
 
     private String title;
+    // end::book[]
+
+    public Book() {
+    }
+
+    // tag::book[]
+    public Book(String title) {
+        this.title = title;
+    }
+    // end::book[]
 
     // tag::book-many-to-one[]
     @Relation(value = Relation.Kind.MANY_TO_ONE)
@@ -28,15 +36,6 @@ public class Book {
     @Relation(value = Relation.Kind.MANY_TO_MANY)
     private Set<Student> students = new HashSet<>(); // <1>
     // end::book-many-to-many[]
-
-    private List<Page> pages = new ArrayList<>();
-
-    public Book() {
-    }
-
-    public Book(String title) {
-        this.title = title;
-    }
 
     public String getId() {
         return id;
@@ -69,13 +68,6 @@ public class Book {
     public void setStudents(Set<Student> students) {
         this.students = students;
     }
-
-    public List<Page> getPages() {
-        return pages;
-    }
-
-    public void setPages(List<Page> pages) {
-        this.pages = pages;
-    }
+// tag::book[]
 }
 // end::book[]

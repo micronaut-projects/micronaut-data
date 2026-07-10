@@ -15,14 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// tag::event-type-mapping[]
 @MappedEntity
 public class ExampleEvent {
-    public enum Status {
-        ACTIVE,
-        INACTIVE,
-        PENDING
-    }
 
     @Id
     @GeneratedValue
@@ -31,18 +25,27 @@ public class ExampleEvent {
     private String type;
     private String payload;
     private Integer priority;
-    private Status status;
-    private LocalDate eventDate;
-    private LocalDateTime eventDateTime;
-    private Instant occurredAt;
-    private BigDecimal amount;
     private Double score;
-    private byte[] data;
-    private List<String> tags;
-    private Map<String, String> metadata;
-    private Map<String, EventAttempt> attempts;
-    private Optional<String> note;
-    private EventLocation location;
+
+    // tag::event-type-mapping[]
+    public enum Status {
+        ACTIVE,
+        INACTIVE,
+        PENDING
+    }
+
+    private Status status; // <1>
+    private LocalDate eventDate; // <2>
+    private LocalDateTime eventDateTime; // <2>
+    private Instant occurredAt; // <2>
+    private BigDecimal amount; // <3>
+    private byte[] data; // <4>
+    private List<String> tags; // <5>
+    private Map<String, String> metadata; // <6>
+    private Map<String, EventAttempt> attempts; // <6>
+    private Optional<String> note; // <7>
+    private EventLocation location; // <8>
+    // end::event-type-mapping[]
 
     public ExampleEvent() {
     }
@@ -243,4 +246,3 @@ public class ExampleEvent {
         }
     }
 }
-// end::event-type-mapping[]

@@ -98,11 +98,17 @@ NOTE: For bidirectional `MANY_TO_MANY` associations, only the owning side (witho
 
 == Example: Embedded Association
 
-Embedded associations store the associated entity's fields inline within the owning document:
+Embedded associations store the associated entity's fields inline within the owning document. Annotate the value type with ann:data.annotation.Embeddable[] instead of `@MappedEntity` — it has no `@Id` of its own, since it isn't persisted as a separate document:
 
 snippet::example.Address[project-base="doc-examples/nitrite-example", source="main", tags="address"]
 
-The `Address` fields are stored directly in the owning document rather than as a reference.
+Reference it as a plain field on the owning entity:
+
+snippet::example.Customer[project-base="doc-examples/nitrite-example", source="main", tags="customer"]
+
+The `Address` fields are stored directly in the `Customer` document rather than as a reference:
+
+snippet::example.AssociationMappingSpec[project-base="doc-examples/nitrite-example", source="test", tags="embedded-address-usage"]
 
 == Example: Composite Foreign Key with @JoinColumns
 
@@ -110,6 +116,8 @@ A `MANY_TO_ONE` association can be keyed on more than one property of the associ
 
 .Parent entity with a two-property natural key
 snippet::example.CompositeFkParent[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-parent"]
+
+`CompositeFkChild` joins back to its parent using both properties together:
 
 .Child entity referencing the parent by composite key
 snippet::example.CompositeFkChild[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-child"]
@@ -121,23 +129,7 @@ snippet::example.CompositeFkChildRepository[project-base="doc-examples/nitrite-e
 
 Usage example:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/CompositeFkAssociationTest.java[tag=composite-fk-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/CompositeFkAssociationSpec.groovy[tag=composite-fk-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/CompositeFkAssociationTest.kt[tag=composite-fk-usage]
-----
+snippet::example.CompositeFkAssociationSpec[project-base="doc-examples/nitrite-example", source="test", tags="composite-fk-usage"]
 
 == Notes
 

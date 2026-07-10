@@ -14,13 +14,16 @@ public class Widget {
     private UUID id;
 
     private String name;
+    // end::uuid-widget[]
 
     public Widget() {
     }
 
+    // tag::uuid-widget[]
     public Widget(String name) {
         this.name = name;
     }
+    // end::uuid-widget[]
 
     public UUID getId() {
         return id;
@@ -37,5 +40,6 @@ public class Widget {
     public void setName(String name) {
         this.name = name;
     }
+// tag::uuid-widget[]
 }
 // end::uuid-widget[]

@@ -29,23 +29,7 @@ snippet::example.CatalogItem[project-base="doc-examples/nitrite-example", source
 
 Attempting to save an entity whose indexed value already exists raises an api:data.exceptions.DataAccessException[] wrapping Nitrite's own `org.dizitart.no2.exceptions.UniqueConstraintException`:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/CatalogItemRepositoryTest.java[tag=unique-index-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/CatalogItemRepositorySpec.groovy[tag=unique-index-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/CatalogItemRepositoryTest.kt[tag=unique-index-usage]
-----
+snippet::example.CatalogItemRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="unique-index-usage"]
 
 === Full-text and Spatial Indexes
 

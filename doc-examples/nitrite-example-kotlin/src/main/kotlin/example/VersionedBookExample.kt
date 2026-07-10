@@ -28,7 +28,7 @@ internal class VersionedBookExample {
         val book = bookRepository.findById(id).orElse(null)
         if (book != null) {
             book.title = "Updated Title"
-            val updated = bookRepository.save(book) // <2>
+            val updated = bookRepository.save(book) // <1>
         }
     }
     // end::save-versioned-existing[]

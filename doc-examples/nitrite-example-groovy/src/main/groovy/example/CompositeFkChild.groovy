@@ -23,12 +23,14 @@ class CompositeFkChild {
     ])
     CompositeFkParent parent
 
-    CompositeFkChild() {
-    }
-
     CompositeFkChild(String name, CompositeFkParent parent) {
         this.name = name
         this.parent = parent
     }
+    // end::composite-fk-child[]
+
+    CompositeFkChild() {
+    }
+// tag::composite-fk-child[]
 }
 // end::composite-fk-child[]

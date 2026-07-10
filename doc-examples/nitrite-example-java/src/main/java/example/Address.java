@@ -1,35 +1,22 @@
 package example;
 
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Embeddable;
 
 // tag::address[]
-@MappedEntity
+@Embeddable
 public class Address {
-    @Id
-    @GeneratedValue
-    private String id;
-
     private String street;
     private String city;
     private String zipCode;
-
-    public Address() {
-    }
 
     public Address(String street, String city, String zipCode) {
         this.street = street;
         this.city = city;
         this.zipCode = zipCode;
     }
+    // end::address[]
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public Address() {
     }
 
     public String getStreet() {
@@ -55,5 +42,6 @@ public class Address {
     public void setZipCode(String zipCode) {
         this.zipCode = zipCode;
     }
+// tag::address[]
 }
 // end::address[]

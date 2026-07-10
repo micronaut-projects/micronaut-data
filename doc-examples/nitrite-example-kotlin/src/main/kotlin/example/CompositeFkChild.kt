@@ -23,11 +23,13 @@ class CompositeFkChild {
     )
     var parent: CompositeFkParent? = null
 
-    constructor()
-
     constructor(name: String, parent: CompositeFkParent) {
         this.name = name
         this.parent = parent
     }
+    // end::composite-fk-child[]
+
+    constructor()
+// tag::composite-fk-child[]
 }
 // end::composite-fk-child[]

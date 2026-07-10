@@ -13,11 +13,15 @@ class Widget {
     var id: UUID? = null
 
     var name: String? = null
+    // end::uuid-widget[]
 
     constructor()
 
+    // tag::uuid-widget[]
     constructor(name: String) {
         this.name = name
     }
+    // end::uuid-widget[]
+// tag::uuid-widget[]
 }
 // end::uuid-widget[]

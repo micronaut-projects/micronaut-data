@@ -18,13 +18,17 @@ class WidgetOrder {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     Widget widget
+    // end::uuid-widget-order[]
 
     WidgetOrder() {
     }
 
+    // tag::uuid-widget-order[]
     WidgetOrder(String orderNumber, Widget widget) {
         this.orderNumber = orderNumber
         this.widget = widget
     }
+    // end::uuid-widget-order[]
+// tag::uuid-widget-order[]
 }
 // end::uuid-widget-order[]

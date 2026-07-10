@@ -17,11 +17,15 @@ class Student {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students")
     var books: MutableSet<Book> = HashSet() // <1>
+    // end::student[]
 
     constructor()
 
+    // tag::student[]
     constructor(name: String) {
         this.name = name
     }
+    // end::student[]
+// tag::student[]
 }
 // end::student[]

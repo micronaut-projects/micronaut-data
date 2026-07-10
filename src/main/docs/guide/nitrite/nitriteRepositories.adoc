@@ -42,143 +42,35 @@ snippet::example.BookRepository[project-base="doc-examples/nitrite-example", sou
 
 For example, methods such as `findDistinctTitle()`, `countByAuthorId(...)`, and `countByTitle(...)` are resolved by the Nitrite runtime without requiring a native Nitrite aggregation pipeline. Native single-field projections, including `@Query` methods that use `"$project"`, return scalar result lists such as `List<String>`.
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/ExampleEventRepository.java[tag=json-project]
-----
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="json-project"]
 
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/ExampleEventRepository.groovy[tag=json-project]
-----
+Usage example:
 
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/ExampleEventRepository.kt[tag=json-project]
-----
-
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/ExampleEventRepositoryTest.java[tag=json-project-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/ExampleEventRepositorySpec.groovy[tag=json-project-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/ExampleEventRepositoryTest.kt[tag=json-project-usage]
-----
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="json-project-usage"]
 
 == DTO Projections
 
 Micronaut Data Nitrite supports reflection-free https://micronaut-projects.github.io/micronaut-data/latest/guide/#dto[DTO projections] (see <<dto, shared DTO Projections guide>>) for repository methods that return a type other than the root entity. The DTO must be a concrete class (or record/data class) annotated with `@Introspected`, with a constructor or getter/setter pair for every projected property. Unlike JDBC/JPA, only concrete DTO types work: an `@Introspected` interface compiles but fails at runtime, because the Nitrite mapper instantiates the DTO via its `BeanIntrospection` constructor, and interfaces have none.
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/EventSummary.java[tag=dto-projection]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/EventSummary.groovy[tag=dto-projection]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/EventSummary.kt[tag=dto-projection]
-----
+snippet::example.EventSummary[project-base="doc-examples/nitrite-example", source="main", tags="dto-projection"]
 
 The repository method's return type declares the DTO projection:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/ExampleEventRepository.java[tag=dto-projection-repository]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/ExampleEventRepository.groovy[tag=dto-projection-repository]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/ExampleEventRepository.kt[tag=dto-projection-repository]
-----
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="dto-projection-repository"]
 
 Usage example:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/ExampleEventRepositoryTest.java[tag=dto-projection-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/ExampleEventRepositorySpec.groovy[tag=dto-projection-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/ExampleEventRepositoryTest.kt[tag=dto-projection-usage]
-----
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="dto-projection-usage"]
 
 == Aggregation Queries
 
 Nitrite supports derived aggregate queries for numeric fields and min/max queries for temporal fields:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/ExampleEventRepository.java[tag=aggregations]
-----
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="aggregations"]
 
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/ExampleEventRepository.groovy[tag=aggregations]
-----
+Usage example:
 
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/ExampleEventRepository.kt[tag=aggregations]
-----
-
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/ExampleEventRepositoryTest.java[tag=aggregation-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/ExampleEventRepositorySpec.groovy[tag=aggregation-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/ExampleEventRepositoryTest.kt[tag=aggregation-usage]
-----
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="aggregation-usage"]
 
 NOTE: `sum` and `avg` are intended for numeric fields. For temporal fields, use `min` and `max`.
 
@@ -188,41 +80,11 @@ Nitrite does not support SQL-style `@Query` strings. User-authored `@Query` meth
 
 Supported JSON filter operators include `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$null`, `$notNull`, `$between`, `$regex`, `$like`, `$not`, `$exists`, `$empty`, `$all`, and spatial operators (`$near`, `$within`, `$intersects`) when the spatial module is present. Full-text search uses Nitrite's `$text` filter on fields indexed with `@FullTextIndex`.
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/ExampleEventRepository.java[tag=json-query-operators]
-----
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="json-query-operators"]
 
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/ExampleEventRepository.groovy[tag=json-query-operators]
-----
+Usage example:
 
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/ExampleEventRepository.kt[tag=json-query-operators]
-----
-
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/ExampleEventRepositoryTest.java[tag=json-query-operators-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/ExampleEventRepositorySpec.groovy[tag=json-query-operators-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/ExampleEventRepositoryTest.kt[tag=json-query-operators-usage]
-----
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="json-query-operators-usage"]
 
 If a query needs to update fields, keep the filter document and update document separate and use named parameters. The runtime handles the Mongo-style `$set` wrapper used by some generated and JSON update queries before applying the Nitrite update.
 
@@ -237,40 +99,8 @@ NOTE: Nitrite's runtime query execution supports the query strings encoded by Mi
 
 Micronaut Data Nitrite supports the same entity lifecycle listener mechanism described in <<entityEvents>>. A Micronaut bean implementing api:data.event.EntityEventListener[] (or one of its functional sub-interfaces) can veto a persist operation by returning `false` from `prePersist`:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/VetoTimestampedRecordListener.java[tag=pre-persist-listener]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/VetoTimestampedRecordListener.groovy[tag=pre-persist-listener]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/VetoTimestampedRecordListener.kt[tag=pre-persist-listener]
-----
+snippet::example.VetoTimestampedRecordListener[project-base="doc-examples/nitrite-example", source="main", tags="pre-persist-listener"]
 
 Entities that fail the veto are silently skipped by `saveAll`, so only the remaining entities are inserted:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/TimestampedRecordRepositoryTest.java[tag=pre-persist-listener-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/TimestampedRecordRepositorySpec.groovy[tag=pre-persist-listener-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/TimestampedRecordRepositoryTest.kt[tag=pre-persist-listener-usage]
-----
+snippet::example.TimestampedRecordRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="pre-persist-listener-usage"]

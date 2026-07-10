@@ -6,8 +6,16 @@ import io.micronaut.data.repository.CrudRepository
 
 import java.time.LocalDate
 
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 @NitriteRepository
 interface ExampleEventRepository extends CrudRepository<ExampleEvent, String> {
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]
 
     // tag::json-query-operators[]
     @Query('{"type": {"$eq": :type}}')
@@ -65,4 +73,13 @@ interface ExampleEventRepository extends CrudRepository<ExampleEvent, String> {
 
     long countDistinctType()
     // end::aggregations[]
+
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 }
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]

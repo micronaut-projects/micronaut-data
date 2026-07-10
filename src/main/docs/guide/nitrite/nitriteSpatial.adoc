@@ -74,43 +74,11 @@ Derived spatial repository methods are translated to the same Nitrite spatial fi
 
 Instead of writing an explicit `@Query`, spatial filters can also be expressed as derived query methods using the `Near`, `GeoWithin`, and `GeoIntersects` predicates:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/main/java/example/IndexedBookRepository.java[tag=derived-spatial]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/main/groovy/example/IndexedBookRepository.groovy[tag=derived-spatial]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/main/kotlin/example/IndexedBookRepository.kt[tag=derived-spatial]
-----
+snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="derived-spatial", indent="0"]
 
 Usage example:
 
-.Java
-[source,java]
-----
-include::doc-examples/nitrite-example-java/src/test/java/example/IndexedBookRepositoryTest.java[tag=derived-spatial-usage]
-----
-
-.Groovy
-[source,groovy]
-----
-include::doc-examples/nitrite-example-groovy/src/test/groovy/example/IndexedBookRepositorySpec.groovy[tag=derived-spatial-usage]
-----
-
-.Kotlin
-[source,kotlin]
-----
-include::doc-examples/nitrite-example-kotlin/src/test/kotlin/example/IndexedBookRepositoryTest.kt[tag=derived-spatial-usage]
-----
+snippet::example.IndexedBookRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="derived-spatial-usage", indent="0"]
 
 === Complete Examples
 

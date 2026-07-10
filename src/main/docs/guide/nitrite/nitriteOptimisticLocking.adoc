@@ -42,10 +42,13 @@ The `save()` method correctly handles versioned entities:
 * **New entities** (no ID): Inserts with initial version `0`
 * **Existing entities** (has ID): Updates and increments the version automatically
 
-snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="save-versioned-new,save-versioned-existing"]
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="save-versioned-new"]
 
 <1> New entities are saved with version `0`
-<2> Existing entities have their version incremented on save
+
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="save-versioned-existing"]
+
+<1> Existing entities have their version incremented on save
 
 This allows you to use `save()` for both create and update operations while maintaining proper optimistic locking semantics.
 
@@ -55,7 +58,13 @@ You can use the `@Version` field in partial update or delete methods. In this ca
 
 snippet::example.VersionedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-repository"]
 
-snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="partial-update-version,partial-delete-version"]
+Calling `updateTitle` with the current version updates the record and increments the version:
+
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="partial-update-version"]
+
+Calling `delete` with the current version removes the record only if the version still matches:
+
+snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="partial-delete-version"]
 
 == Temporal Version Types
 
@@ -68,6 +77,8 @@ snippet::example.VersionedBookTemporal[project-base="doc-examples/nitrite-exampl
 For temporal versions, the repository methods accept `Instant` (or other temporal type) instead of `Long`:
 
 snippet::example.VersionedBookTemporalRepository[project-base="doc-examples/nitrite-example", source="main", tags="versioned-temporal-repository"]
+
+Calling `updateTitle` with the current `Instant` version updates the record and replaces the version with the current timestamp:
 
 snippet::example.VersionedBookExample[project-base="doc-examples/nitrite-example", source="main", tags="temporal-version-update"]
 

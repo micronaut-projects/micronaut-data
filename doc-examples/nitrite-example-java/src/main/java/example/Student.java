@@ -19,13 +19,16 @@ public class Student {
 
     @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "students")
     private Set<Book> books = new HashSet<>(); // <1>
+    // end::student[]
 
     public Student() {
     }
 
+    // tag::student[]
     public Student(String name) {
         this.name = name;
     }
+    // end::student[]
 
     public String getId() {
         return id;
@@ -50,5 +53,6 @@ public class Student {
     public void setBooks(Set<Book> books) {
         this.books = books;
     }
+// tag::student[]
 }
 // end::student[]

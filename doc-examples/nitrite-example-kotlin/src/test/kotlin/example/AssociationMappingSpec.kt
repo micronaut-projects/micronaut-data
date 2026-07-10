@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 
 @MicronautTest(transactional = false)
-class AssociationMappingTest {
+class AssociationMappingSpec {
 
     @Inject
     lateinit var authorRepository: AuthorRepository
@@ -17,10 +17,14 @@ class AssociationMappingTest {
     @Inject
     lateinit var bookRepository: BookRepository
 
+    @Inject
+    lateinit var customerRepository: CustomerRepository
+
     @AfterEach
     fun cleanup() {
         authorRepository.deleteAll()
         bookRepository.deleteAll()
+        customerRepository.deleteAll()
     }
 
     @Test
@@ -67,20 +71,24 @@ class AssociationMappingTest {
     }
 
     @Test
+    // tag::embedded-address-usage[]
     fun testEmbeddedAddress() {
-        // Address is a @MappedEntity (embedded-style in Nitrite)
-        // This tests that nested objects are properly serialized/deserialized
         val address = Address(
             street = "123 Main St",
             city = "New York",
             zipCode = "10001"
         )
+        val customer = Customer("Jane Doe", address)
 
-        // Verify fields are set correctly (id is null before save)
-        assertEquals("123 Main St", address.street)
-        assertEquals("New York", address.city)
-        assertEquals("10001", address.zipCode)
+        customerRepository.save(customer)
+
+        val saved = customerRepository.findById(customer.id!!).orElse(null)
+        assertNotNull(saved)
+        assertEquals("123 Main St", saved!!.address!!.street)
+        assertEquals("New York", saved.address!!.city)
+        assertEquals("10001", saved.address!!.zipCode)
     }
+    // end::embedded-address-usage[]
 
     @Test
     fun testBidirectionalAssociation() {

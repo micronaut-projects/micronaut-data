@@ -17,7 +17,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest(transactional = false)
-class ExampleEventRepositoryTest {
+class ExampleEventRepositorySpec {
 
     @Inject
     ExampleEventRepository repository;
@@ -121,18 +121,18 @@ class ExampleEventRepositoryTest {
         ExampleEvent saved = repository.save(event);
         ExampleEvent reloaded = repository.findById(saved.getId()).orElseThrow();
 
-        assertEquals(ExampleEvent.Status.PENDING, reloaded.getStatus());
-        assertEquals(LocalDate.of(2024, 1, 1), reloaded.getEventDate());
-        assertEquals(eventDateTime, reloaded.getEventDateTime());
-        assertEquals(occurredAt, reloaded.getOccurredAt());
-        assertEquals(new BigDecimal("123.45"), reloaded.getAmount());
-        assertArrayEquals("payload-bytes".getBytes(StandardCharsets.UTF_8), reloaded.getData());
-        assertEquals("docs", reloaded.getMetadata().get("source"));
-        assertEquals("worker-a", reloaded.getAttempts().get("first").getHandler());
-        assertEquals(2, reloaded.getAttempts().get("second").getRetries());
-        assertNotNull(reloaded.getNote());
-        assertTrue(reloaded.getNote().toString().contains("optional note"));
-        assertEquals("eu-west", reloaded.getLocation().getRegion());
+        assertEquals(ExampleEvent.Status.PENDING, reloaded.getStatus()); // <1>
+        assertEquals(LocalDate.of(2024, 1, 1), reloaded.getEventDate()); // <2>
+        assertEquals(eventDateTime, reloaded.getEventDateTime()); // <2>
+        assertEquals(occurredAt, reloaded.getOccurredAt()); // <2>
+        assertEquals(new BigDecimal("123.45"), reloaded.getAmount()); // <3>
+        assertArrayEquals("payload-bytes".getBytes(StandardCharsets.UTF_8), reloaded.getData()); // <4>
+        assertEquals("docs", reloaded.getMetadata().get("source")); // <5>
+        assertEquals("worker-a", reloaded.getAttempts().get("first").getHandler()); // <5>
+        assertEquals(2, reloaded.getAttempts().get("second").getRetries()); // <5>
+        assertNotNull(reloaded.getNote()); // <6>
+        assertTrue(reloaded.getNote().toString().contains("optional note")); // <6>
+        assertEquals("eu-west", reloaded.getLocation().getRegion()); // <7>
     }
     // end::type-mapping-usage[]
 

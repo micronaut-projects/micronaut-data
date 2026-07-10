@@ -17,10 +17,12 @@ class VersionedBook {
     @Version
     Long version // <1>
 
-    VersionedBook() {}
-
     VersionedBook(String title) {
         this.title = title
     }
+    // end::versioned-book[]
+
+    VersionedBook() {}
+// tag::versioned-book[]
 }
 // end::versioned-book[]

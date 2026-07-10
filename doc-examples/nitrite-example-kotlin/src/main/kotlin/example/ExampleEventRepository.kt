@@ -6,43 +6,51 @@ import io.micronaut.data.repository.CrudRepository
 import java.time.LocalDate
 import java.util.Optional
 
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 @NitriteRepository
 interface ExampleEventRepository : CrudRepository<ExampleEvent, String> {
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]
 
     // tag::json-query-operators[]
-    @Query("{\"type\": {\"\$eq\": :type}}")
+    @Query("""{"type": {"${'$'}eq": :type}}""")
     fun findByTypeJson(type: String): Optional<ExampleEvent>
 
-    @Query("{\"type\": {\"\$ne\": :type}}")
+    @Query("""{"type": {"${'$'}ne": :type}}""")
     fun findByTypeNotEqualJson(type: String): List<ExampleEvent>
 
-    @Query("{\"payload\": {\"\$regex\": :pattern}}")
+    @Query("""{"payload": {"${'$'}regex": :pattern}}""")
     fun findByPayloadRegex(pattern: String): List<ExampleEvent>
 
-    @Query("{\"priority\": {\"\$exists\": :exists}}")
+    @Query("""{"priority": {"${'$'}exists": :exists}}""")
     fun findByPriorityExists(exists: Boolean): List<ExampleEvent>
 
-    @Query("{\"priority\": {\"\$in\": :priorities}}")
+    @Query("""{"priority": {"${'$'}in": :priorities}}""")
     fun findByPriorityInJson(priorities: List<Int>): List<ExampleEvent>
 
-    @Query("{\"priority\": {\"\$nin\": :priorities}}")
+    @Query("""{"priority": {"${'$'}nin": :priorities}}""")
     fun findByPriorityNotInJson(priorities: List<Int>): List<ExampleEvent>
 
-    @Query("{\"payload\": {\"\$like\": :pattern}}")
+    @Query("""{"payload": {"${'$'}like": :pattern}}""")
     fun findByPayloadLike(pattern: String): List<ExampleEvent>
 
-    @Query("{\"priority\": {\"\$not\": {\"\$eq\": :priority}}}")
+    @Query("""{"priority": {"${'$'}not": {"${'$'}eq": :priority}}}""")
     fun findByPriorityNot(priority: Int): List<ExampleEvent>
 
-    @Query("{\"payload\": {\"\$empty\": :empty}}")
+    @Query("""{"payload": {"${'$'}empty": :empty}}""")
     fun findByPayloadEmpty(empty: Boolean): List<ExampleEvent>
 
-    @Query("{\"tags\": {\"\$all\": :tags}}")
+    @Query("""{"tags": {"${'$'}all": :tags}}""")
     fun findByTagsAll(tags: List<String>): List<ExampleEvent>
     // end::json-query-operators[]
 
     // tag::json-project[]
-    @Query("{\"\$project\": \"type\", \"status\": {\"\$eq\": :status}}")
+    @Query("""{"${'$'}project": "type", "status": {"${'$'}eq": :status}}""")
     fun findTypesByStatus(status: ExampleEvent.Status): List<String>
     // end::json-project[]
 
@@ -65,4 +73,13 @@ interface ExampleEventRepository : CrudRepository<ExampleEvent, String> {
 
     fun countDistinctType(): Long
     // end::aggregations[]
+
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 }
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]

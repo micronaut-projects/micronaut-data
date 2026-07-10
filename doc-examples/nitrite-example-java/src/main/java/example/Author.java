@@ -21,13 +21,16 @@ public class Author {
               mappedBy = "author",
               cascade = Relation.Cascade.PERSIST)
     private Set<Book> books = new HashSet<>(); // <1>
+    // end::author[]
 
     public Author() {
     }
 
+    // tag::author[]
     public Author(String name) {
         this.name = name;
     }
+    // end::author[]
 
     public String getId() {
         return id;
@@ -57,5 +60,6 @@ public class Author {
         books.add(book);
         book.setAuthor(this);
     }
+// tag::author[]
 }
 // end::author[]

@@ -17,16 +17,20 @@ class Author {
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author", cascade = [Relation.Cascade.PERSIST])
     var books: MutableSet<Book> = HashSet() // <1>
+    // end::author[]
 
     constructor()
 
+    // tag::author[]
     constructor(name: String) {
         this.name = name
     }
+    // end::author[]
 
     fun addBook(book: Book) {
         books.add(book)
         book.author = this
     }
+// tag::author[]
 }
 // end::author[]

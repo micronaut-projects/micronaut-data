@@ -8,43 +8,73 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 @NitriteRepository
 public interface ExampleEventRepository extends CrudRepository<ExampleEvent, String> {
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]
 
     // tag::json-query-operators[]
-    @Query("{\"type\": {\"$eq\": :type}}")
+    @Query("""
+    {"type": {"$eq": :type}}
+    """)
     Optional<ExampleEvent> findByTypeJson(String type);
 
-    @Query("{\"type\": {\"$ne\": :type}}")
+    @Query("""
+    {"type": {"$ne": :type}}
+    """)
     List<ExampleEvent> findByTypeNotEqualJson(String type);
 
-    @Query("{\"payload\": {\"$regex\": :pattern}}")
+    @Query("""
+    {"payload": {"$regex": :pattern}}
+    """)
     List<ExampleEvent> findByPayloadRegex(String pattern);
 
-    @Query("{\"priority\": {\"$exists\": :exists}}")
+    @Query("""
+    {"priority": {"$exists": :exists}}
+    """)
     List<ExampleEvent> findByPriorityExists(Boolean exists);
 
-    @Query("{\"priority\": {\"$in\": :priorities}}")
+    @Query("""
+    {"priority": {"$in": :priorities}}
+    """)
     List<ExampleEvent> findByPriorityInJson(List<Integer> priorities);
 
-    @Query("{\"priority\": {\"$nin\": :priorities}}")
+    @Query("""
+    {"priority": {"$nin": :priorities}}
+    """)
     List<ExampleEvent> findByPriorityNotInJson(List<Integer> priorities);
 
-    @Query("{\"payload\": {\"$like\": :pattern}}")
+    @Query("""
+    {"payload": {"$like": :pattern}}
+    """)
     List<ExampleEvent> findByPayloadLike(String pattern);
 
-    @Query("{\"priority\": {\"$not\": {\"$eq\": :priority}}}")
+    @Query("""
+    {"priority": {"$not": {"$eq": :priority}}}
+    """)
     List<ExampleEvent> findByPriorityNot(Integer priority);
 
-    @Query("{\"payload\": {\"$empty\": :empty}}")
+    @Query("""
+    {"payload": {"$empty": :empty}}
+    """)
     List<ExampleEvent> findByPayloadEmpty(Boolean empty);
 
-    @Query("{\"tags\": {\"$all\": :tags}}")
+    @Query("""
+    {"tags": {"$all": :tags}}
+    """)
     List<ExampleEvent> findByTagsAll(List<String> tags);
     // end::json-query-operators[]
 
     // tag::json-project[]
-    @Query("{\"$project\": \"type\", \"status\": {\"$eq\": :status}}")
+    @Query("""
+    {"$project": "type", "status": {"$eq": :status}}
+    """)
     List<String> findTypesByStatus(ExampleEvent.Status status);
     // end::json-project[]
 
@@ -67,4 +97,13 @@ public interface ExampleEventRepository extends CrudRepository<ExampleEvent, Str
 
     long countDistinctType();
     // end::aggregations[]
+
+// tag::json-query-operators[]
+// tag::json-project[]
+// tag::dto-projection-repository[]
+// tag::aggregations[]
 }
+// end::json-query-operators[]
+// end::json-project[]
+// end::dto-projection-repository[]
+// end::aggregations[]

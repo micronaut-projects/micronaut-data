@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 @MicronautTest(transactional = false)
-class TimestampedRecordRepositoryTest {
+class TimestampedRecordRepositorySpec {
 
     @Inject
     lateinit var repository: TimestampedRecordRepository

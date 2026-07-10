@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 @MicronautTest(transactional = false)
-class CatalogItemRepositoryTest {
+class CatalogItemRepositorySpec {
 
     @Inject
     lateinit var repository: CatalogItemRepository

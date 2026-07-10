@@ -18,10 +18,12 @@ class VersionedBookTemporal {
     @Version
     var version: Instant? = null // <1>
 
-    constructor()
-
     constructor(title: String) {
         this.title = title
     }
+    // end::versioned-book-temporal[]
+
+    constructor()
+// tag::versioned-book-temporal[]
 }
 // end::versioned-book-temporal[]

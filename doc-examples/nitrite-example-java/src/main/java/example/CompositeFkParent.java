@@ -14,12 +14,13 @@ public class CompositeFkParent {
     private String tenantId;
     private Long refId;
 
-    public CompositeFkParent() {
-    }
-
     public CompositeFkParent(String tenantId, Long refId) {
         this.tenantId = tenantId;
         this.refId = refId;
+    }
+    // end::composite-fk-parent[]
+
+    public CompositeFkParent() {
     }
 
     public String getId() {
@@ -45,5 +46,6 @@ public class CompositeFkParent {
     public void setRefId(Long refId) {
         this.refId = refId;
     }
+// tag::composite-fk-parent[]
 }
 // end::composite-fk-parent[]

@@ -28,7 +28,7 @@ final class VersionedBookExample {
         def book = bookRepository.findById(id).orElse(null)
         if (book != null) {
             book.title = "Updated Title"
-            def updated = bookRepository.save(book) // <2>
+            def updated = bookRepository.save(book) // <1>
         }
     }
     // end::save-versioned-existing[]
