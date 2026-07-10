@@ -19,7 +19,7 @@ micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.0.0"
 micronaut-logging = "2.1.0"
 micronaut-flyway = "8.0.0"
-micronaut-coherence = "6.0.0"
+micronaut-coherence = "7.0.1"
 micronaut-sourcegen = "2.1.0"
 
 groovy = "5.0.7"
@@ -42,7 +42,7 @@ h2gis = "2.2.5"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "2.3.9"
+ksp-gradle-plugin = "2.3.10"
 kotlin-gradle-plugin = "2.3.21"
 jmh-gradle-plugin = "0.7.3"
 spring-boot-gradle-plugin = "4.1.0"
