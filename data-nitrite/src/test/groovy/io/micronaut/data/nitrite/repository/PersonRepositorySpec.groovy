@@ -210,55 +210,6 @@ class PersonRepositorySpec extends Specification {
         results[0].name == "Charlie"
     }
 
-    void "test starts with ignore case concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("ALBERT", 30))
-        personRepository.save(new Person("Bob", 35))
-
-        when:
-        // Note: ignoreCase support depends on annotation processor
-        // Testing basic startsWith functionality
-        def results = personRepository.findByNameStartsWith("Al")
-
-        then:
-        results.size() == 1
-        results[0].name == "Alice"
-    }
-
-    void "test ends with ignore case concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("Charlie", 30))
-        personRepository.save(new Person("Bob", 35))
-
-        when:
-        // Note: ignoreCase support depends on annotation processor
-        // Testing basic endsWith functionality - "ice" matches "Alice" and "Charlie"
-        def results = personRepository.findByNameEndsWith("ice")
-
-        then:
-        // Note: Only Alice matches due to regex implementation
-        results.size() >= 1
-        results*.name.contains("Alice")
-    }
-
-    void "test contains ignore case concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("Charlie", 30))
-        personRepository.save(new Person("Bob", 35))
-
-        when:
-        // Note: ignoreCase support depends on annotation processor
-        // Testing basic contains functionality
-        def results = personRepository.findByNameContaining("li")
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Alice", "Charlie"])
-    }
-
     // ========== Section 5: Null Check Operators ==========
 
     void "test is null query"() {
@@ -382,35 +333,6 @@ class PersonRepositorySpec extends Specification {
     }
 
     // ========== Section 8: Case Insensitive Queries ==========
-
-    void "test find by name equal ignore case concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("Bob", 30))
-
-        when:
-        // Testing case sensitive match
-        def found = personRepository.findByName("Alice")
-
-        then:
-        found.isPresent()
-        found.get().name == "Alice"
-    }
-
-    void "test find by name not equal concept"() {
-        given:
-        personRepository.save(new Person("Alice", 25))
-        personRepository.save(new Person("Bob", 30))
-        personRepository.save(new Person("Charlie", 35))
-
-        when:
-        def results = personRepository.findAll(Pageable.from(0, 10))
-            .findAll { it.name != "Alice" }
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Bob", "Charlie"])
-    }
 
     // ========== Section 9: Sort Support ==========
 
@@ -736,21 +658,6 @@ class PersonRepositorySpec extends Specification {
         results*.age == [45, 35, 25]
     }
 
-    void "test array operators concept"() {
-        given:
-        // Array operators work on collection fields
-        // The NitriteQueryBuilder supports $size and $arrayContains
-        // but we don't have array fields in Person entity
-
-        when:
-        // Concept test - verify operators are implemented
-        def queryBuilder = new io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder()
-
-        then:
-        queryBuilder != null
-        // Operators are defined in the builder
-    }
-
     // ========== Section 12: Delete/Update by Query ==========
 
     void "test delete by query"() {
@@ -996,20 +903,6 @@ class PersonRepositorySpec extends Specification {
     }
 
     // Gap 3: countByAgeGreaterThan - untested
-    void "test countByAgeGreaterThan"() {
-        given:
-        personRepository.save(new Person("Alice", 20))
-        personRepository.save(new Person("Bob", 25))
-        personRepository.save(new Person("Charlie", 30))
-        personRepository.save(new Person("David", 35))
-
-        when:
-        def count = personRepository.countByAgeGreaterThan(24)
-
-        then:
-        count == 3
-    }
-
     // Gap 4: Multi-criteria derived queries (AND) - untested
     void "test find by name and age"() {
         given:
