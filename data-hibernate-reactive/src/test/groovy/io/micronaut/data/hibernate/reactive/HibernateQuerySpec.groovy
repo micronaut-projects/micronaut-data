@@ -663,9 +663,11 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             def page1 = authorRepository.findAll(specification, Pageable.from(1, 1, sort)).block()
 
         then:
+            page0.size == 1
             page0.totalSize == 2
             page0.content*.name == ["James Patterson"]
             (page0.content[0].books*.title as Set) == (["Along Came a Spider", "Double Cross"] as Set)
+            page1.size == 1
             page1.totalSize == 2
             page1.content*.name == ["Stephen King"]
             (page1.content[0].books*.title as Set) == (["The Stand", "Pet Cemetery"] as Set)
