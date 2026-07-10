@@ -1,9 +1,10 @@
-package io.micronaut.data.nitrite.mongoport
+package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.nitrite.mongoport.entities.NitriteEmbAddress
-import io.micronaut.data.nitrite.mongoport.entities.NitriteEmbRestaurant
-import io.micronaut.data.nitrite.mongoport.repositories.NitriteEmbRestaurantRepository
+import io.micronaut.data.nitrite.model.NitriteEmbAddress
+import io.micronaut.data.nitrite.model.NitriteEmbRestaurant
+import io.micronaut.data.nitrite.repository.NitriteEmbRestaurantRepository
+import io.micronaut.data.nitrite.mongoport.NitriteTestPropertyProvider
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
