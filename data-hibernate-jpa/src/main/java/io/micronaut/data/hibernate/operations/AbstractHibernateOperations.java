@@ -319,9 +319,10 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     protected abstract P createQuery(S session, CriteriaQuery<?> criteriaQuery);
 
     /**
-     * Converts fetch joins in Micronaut Data's paginated ID query to regular joins. The query specification may use
-     * a Hibernate fetch as a join in its predicate, but fetching is invalid once the query selects IDs instead of the
-     * owning entity. Keeping the join preserves the predicate while allowing the database to page distinct parent IDs.
+     * Converts fetch joins in Micronaut Data's dedicated paginated ID query to regular joins. The query specification
+     * may use a Hibernate fetch as a join in its predicate, but fetching is invalid once the query selects IDs instead
+     * of the owning entity. Keeping the join preserves the predicate while allowing the database to page distinct
+     * parent IDs. This method is invoked only through the internal page-ID operation, never for a user criteria query.
      *
      * @param query The paginated criteria query
      */

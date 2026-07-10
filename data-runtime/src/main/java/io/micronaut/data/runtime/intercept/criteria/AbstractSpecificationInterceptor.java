@@ -166,6 +166,20 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return findAll(methodKey, context, pageable, criteriaQuery, false);
     }
 
+    /**
+     * Executes the internal ID prequery for a paged specification that contains joins or fetches.
+     *
+     * Pagination is applied to distinct root IDs before the entity query executes, because a collection join can
+     * otherwise consume a page with multiple rows for the same root. Providers may adapt this dedicated query
+     * without changing normal user criteria queries.
+     *
+     * @param methodKey The repository method
+     * @param context The invocation context
+     * @param pageable The requested page
+     * @param criteriaQuery The ID criteria query
+     * @param <B> The ID query result type
+     * @return The page IDs
+     */
     protected final <B> List<B> findPageIds(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
         return findAll(methodKey, context, pageable, criteriaQuery, true);
     }
