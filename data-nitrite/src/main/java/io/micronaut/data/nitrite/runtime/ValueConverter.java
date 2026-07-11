@@ -45,12 +45,22 @@ public final class ValueConverter {
         this.conversionService = conversionService;
     }
 
+    /**
+     * Converts a java.time.Instant to epoch nanoseconds.
+     * @param instant the instant to convert
+     * @return the total nanoseconds since the Unix epoch
+     */
     public static long epochNanos(Instant instant) {
         return Math.addExact(
             Math.multiplyExact(instant.getEpochSecond(), 1_000_000_000L),
             instant.getNano());
     }
 
+    /**
+     * Converts epoch nanoseconds back to a java.time.Instant.
+     * @param nanos the total nanoseconds since the Unix epoch
+     * @return the parsed Instant
+     */
     public static Instant fromEpochNanos(long nanos) {
         return Instant.ofEpochSecond(
             Math.floorDiv(nanos, 1_000_000_000L),

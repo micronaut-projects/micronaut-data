@@ -56,9 +56,16 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
- * Executor for Nitrite queries.
+ * Executes runtime data retrieval queries against a Nitrite collection.
+ * <p>
+ * This executor consolidates fetching, aggregation, and projection logic:
+ * <ul>
+ *   <li><strong>Distinct Counts:</strong> Supports {@code COUNT_DISTINCT} via implicit {@code $group._id} pipelines.</li>
+ *   <li><strong>Single-Field Projections:</strong> Fully supports native single-field projections (e.g. querying a {@code List<String>} of names), contrary to stale legacy comments.</li>
+ *   <li><strong>Aggregations:</strong> Resolves derived aggregations (max, min, sum, avg) for numeric and temporal fields (note: sum/avg on dates is intentionally excluded).</li>
+ * </ul>
  *
- * @since 4.14.0
+ * @since 5.0.0
  */
 @Internal
 public final class NitriteQueryExecutor {
@@ -395,6 +402,16 @@ public final class NitriteQueryExecutor {
         return Optional.of(count);
     }
 
+    /**
+     * Executes a delete operation based on the provided prepared query.
+     * Extracts the pre-compiled Nitrite filter, applies optimistic locking rules if applicable,
+     * and performs the removal against the underlying Nitrite collection.
+     *
+     * @param q the generic prepared query containing execution metadata
+     * @param nq the compiled Nitrite prepared query holding the exact filter
+     * @return an optional containing the number of deleted records
+     * @throws OptimisticLockException if optimistic locking is enabled and no records were deleted
+     */
     public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
         helper.logDelete(collectionFactory.apply(nq.getRootEntity()).getName(), nq.getNitriteFilter());
         long count = collectionFactory.apply(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount();
@@ -404,6 +421,16 @@ public final class NitriteQueryExecutor {
         return Optional.of(count);
     }
 
+    /**
+     * Executes a count query to determine the number of matching documents.
+     * This operation bypasses normal result projection and mapping entirely to efficiently size 
+     * the query result directly from the Nitrite cursor. It natively supports {@code COUNT_DISTINCT} 
+     * by resolving a nested {@code $group} stage if present in the translated JSON string.
+     *
+     * @param q the generic prepared query
+     * @param nq the compiled Nitrite prepared query holding the exact filter
+     * @return the total number of documents matching the query filter
+     */
     public long count(@NonNull PreparedQuery<?, ?> q, NitritePreparedQuery<?, ?> nq) {
         return collectionFactory.apply(nq.getRootEntity()).find(nq.getNitriteFilter()).size();
     }

@@ -54,6 +54,10 @@ public final class NitriteQueryBinder {
 
     private final NitriteEntityMapper entityMapper;
 
+    /**
+     * Creates a new query binder for Nitrite queries.
+     * @param entityMapper the entity mapper used to convert parameter values
+     */
     public NitriteQueryBinder(NitriteEntityMapper entityMapper) {
         this.entityMapper = entityMapper;
     }
@@ -218,6 +222,11 @@ public final class NitriteQueryBinder {
 
     // ─── Instance methods: PreparedQuery parameter resolution ─────────────────────
 
+    /**
+     * Builds the positional JSON parameter values array from a prepared query.
+     * @param q the prepared query containing the arguments
+     * @return an array of resolved and converted JSON parameter values
+     */
     public Object[] buildJsonParameterValues(@NonNull PreparedQuery<?, ?> q) {
         return buildJsonParameterValues(q, this::toFilterValue, this::readSegmentValue);
     }
@@ -241,6 +250,13 @@ public final class NitriteQueryBinder {
         return bindings.stream().map(binding -> resolveJsonBindingValue(binding, methodParams, toFilterValue, readSegmentValue)).toArray();
     }
 
+    /**
+     * Ensures that the positional JSON parameters array contains the required values for the given filter map.
+     * @param filterMap the JSON filter map
+     * @param methodParams the original method parameters
+     * @param jsonParams the current JSON parameters array, if any
+     * @return a complete array of JSON parameter values required by the filter
+     */
     public Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
                                        @NonNull Object[] methodParams,
                                        @Nullable Object[] jsonParams) {

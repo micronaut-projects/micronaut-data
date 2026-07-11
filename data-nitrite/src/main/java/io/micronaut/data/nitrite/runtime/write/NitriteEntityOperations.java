@@ -74,7 +74,12 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
      * Supported entity operation types.
      */
     public enum OperationType {
-        INSERT, UPDATE, DELETE
+        /** Represents a new entity insertion operation. */
+        INSERT,
+        /** Represents an existing entity update operation. */
+        UPDATE,
+        /** Represents an entity deletion operation. */
+        DELETE
     }
 
     /**

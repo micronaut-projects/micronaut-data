@@ -37,6 +37,12 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
 
     private final NitriteExpressionHandler fallback = new RuntimeExpressionHandler();
 
+    /**
+     * Creates a new instance of CompileExpressionHandler for compile-time query expression translation.
+     */
+    public CompileExpressionHandler() {
+    }
+
     @Override
     public Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Object value) {
         if (value instanceof LiteralExpression<?> literal) {

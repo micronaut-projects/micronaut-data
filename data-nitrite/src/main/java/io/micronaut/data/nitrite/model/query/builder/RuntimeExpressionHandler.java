@@ -30,6 +30,12 @@ import java.util.Map;
  */
 public final class RuntimeExpressionHandler implements NitriteExpressionHandler {
 
+    /**
+     * Creates a new instance of RuntimeExpressionHandler for runtime parameter binding.
+     */
+    public RuntimeExpressionHandler() {
+    }
+
     @Override
     public Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Object value) {
         if (value instanceof BindingParameter bindingParameter) {

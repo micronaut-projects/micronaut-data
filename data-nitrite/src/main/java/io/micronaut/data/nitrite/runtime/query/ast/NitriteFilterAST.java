@@ -151,6 +151,17 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      * @param valueExpression the compiled value expression
      */
     record OperatorBinding(String op, CompiledValue valueExpression) {
+        /**
+         * Converts this operator binding into a functional Nitrite Filter by resolving and preparing the value.
+         * @param preparer the preparer to coerce the resolved value
+         * @param evaluator the evaluator to build the final operator filter
+         * @param entity the runtime persistent entity being queried
+         * @param persistedName the persisted name of the field
+         * @param rawField the raw property path of the field
+         * @param params the positional parameters array
+         * @param namedParameters the named parameters map
+         * @return the constructed Nitrite Filter representing this binding
+         */
         public Filter toFilter(FieldValuePreparer preparer, OperatorFilterEvaluator evaluator, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
             Object finalValue = preparer.prepare(persistedName, resolvedValue);
@@ -163,6 +174,12 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      */
     @FunctionalInterface
     interface FieldValuePreparer {
+        /**
+         * Prepares a raw value for use in a Nitrite filter (e.g., type coercion, UUID string conversion).
+         * @param field the name of the field the value belongs to
+         * @param value the raw value to prepare
+         * @return the prepared value ready for Nitrite filter matching
+         */
         Object prepare(String field, Object value);
     }
 
@@ -171,6 +188,16 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      */
     @FunctionalInterface
     interface OperatorFilterEvaluator {
+        /**
+         * Evaluates and builds a Nitrite filter for a specific operator on a single field.
+         * @param entity the runtime persistent entity being queried
+         * @param field the persisted name of the field
+         * @param op the operator string (e.g., "$eq", "$gt")
+         * @param value the value to compare against
+         * @param params the positional parameters array
+         * @param namedParameters the named parameters map
+         * @return the constructed Nitrite Filter for the given operator
+         */
         Filter evaluate(RuntimePersistentEntity<?> entity, String field, String op, Object value,
                         Object[] params, Map<String, Object> namedParameters);
     }
@@ -180,6 +207,16 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
      */
     @FunctionalInterface
     interface AssociationFieldEvaluator {
+        /**
+         * Evaluates and builds a Nitrite filter for an association field (e.g., a joined collection).
+         * @param entity the runtime persistent entity being queried
+         * @param rawField the raw property path of the association
+         * @param persistedName the persisted name of the association
+         * @param operators the map of nested operators for this association
+         * @param params the positional parameters array
+         * @param namedParameters the named parameters map
+         * @return the constructed Nitrite Filter for the association
+         */
         Filter evaluate(RuntimePersistentEntity<?> entity, String rawField, String persistedName,
                         Map<String, Object> operators, Object[] params, Map<String, Object> namedParameters);
     }

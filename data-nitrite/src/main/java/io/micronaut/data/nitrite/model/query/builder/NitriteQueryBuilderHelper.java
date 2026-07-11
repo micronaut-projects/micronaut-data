@@ -49,6 +49,16 @@ public final class NitriteQueryBuilderHelper {
     private NitriteQueryBuilderHelper() {
     }
 
+    /**
+     * Appends Nitrite lookup and unwind stages to the aggregation pipeline for the given join paths.
+     * This method resolves the complex structural logic of entity associations (e.g. single vs multiple 
+     * `@JoinColumn` annotations, explicit foreign keys, and mapped-by relations), synthesizing the appropriate 
+     * `$lookup` and `$unwind` document pipeline stages for the Nitrite query.
+     *
+     * @param joins the collection of join paths to process
+     * @param rootEntity the root persistent entity of the query
+     * @param pipeline the aggregation pipeline to append the lookup stages to
+     */
     public static void addLookups(Collection<JoinPath> joins, PersistentEntity rootEntity, List<Map<String, Object>> pipeline) {
         if (joins == null || joins.isEmpty()) {
             return;
@@ -175,6 +185,15 @@ public final class NitriteQueryBuilderHelper {
         return Map.of("$unwind", u);
     }
 
+    /**
+     * Builds aggregation group and count projection stages based on the given selection.
+     * Mutates the provided group and count objects with the corresponding Nitrite operations 
+     * (`$sum`, `$avg`, `$max`, `$min`, `$count`) mapped from the generic Criteria API expressions.
+     *
+     * @param selection the generic selection criteria (e.g., SUM, AVG, COUNT)
+     * @param group the group map to populate with aggregation operations
+     * @param countObj the count map to populate if a count projection is present
+     */
     public static void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {
         if (selection == null) {
             return;

@@ -36,10 +36,24 @@ public final class NitriteQueryState {
     this.persistentEntity = persistentEntity;
   }
 
+  /**
+   * Retrieves the root persistent entity associated with this query context.
+   * This is used during AST traversal to resolve property paths and document mappings
+   * strictly against the root entity of the query.
+   *
+   * @return The root persistent entity being queried.
+   */
   public PersistentEntity getEntity() {
     return persistentEntity;
   }
 
+  /**
+   * Retrieves the ordered list of parameter bindings collected during query translation.
+   * At compile-time or runtime query construction, any non-literal method parameters
+   * are pushed to this list, returning an index used for positional JSON parameter binding in Nitrite filters.
+   *
+   * @return The list of parameter bindings.
+   */
     public List<QueryParameterBinding> getParameterBindings() {
     return parameterBindings;
   }

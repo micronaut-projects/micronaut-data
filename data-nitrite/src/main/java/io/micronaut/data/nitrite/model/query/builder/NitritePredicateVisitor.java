@@ -43,7 +43,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Translates JPA Criteria predicates into a NitriteDB JSON filter map. */
+/**
+ * Translates JPA Criteria predicates into a NitriteDB JSON filter map.
+ * 
+ * <p><strong>Supported Operators:</strong> {@code $ne}, {@code $regex}, {@code $exists}, 
+ * {@code $in}, {@code $nin}, {@code $like}, {@code $not}, {@code $empty}, {@code $all}.
+ * 
+ * <p><strong>Unsupported Features:</strong>
+ * <ul>
+ *   <li>Full-text search ({@code $text}) requires dedicated indexing and will throw an exception.</li>
+ *   <li>Arithmetic or string transform operations in queries (e.g., {@code sum}, {@code diff}, {@code lower}, {@code upper}) 
+ *       are not supported by Nitrite and will intentionally throw {@link IllegalStateException}.</li>
+ * </ul>
+ * 
+ * @since 5.0.0
+ */
 public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
     private static final String REGEX = "$regex";

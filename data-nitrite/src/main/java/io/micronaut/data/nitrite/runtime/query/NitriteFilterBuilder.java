@@ -259,6 +259,16 @@ public final class NitriteFilterBuilder {
         return buildOperatorFiltersForPath(entity, persistedName, operators, params, namedParameters);
     }
 
+    /**
+     * Builds a Nitrite filter for a specific operator and field on the given entity.
+     * @param entity the runtime persistent entity being queried
+     * @param field the persisted name of the field
+     * @param op the operator string (e.g., "$eq", "$in")
+     * @param finalValue the prepared value to compare against
+     * @param params the positional parameters array
+     * @param namedParameters the named parameters map
+     * @return the constructed Nitrite Filter for the operator
+     */
     public Filter buildOperatorFilter(
             final RuntimePersistentEntity<?> entity,
             final String field,
@@ -379,6 +389,15 @@ public final class NitriteFilterBuilder {
      */
     @FunctionalInterface
     public interface OperatorHandler {
+        /**
+         * Handles the creation of a Nitrite filter for a specific comparison operator.
+         * @param entity the runtime persistent entity being queried
+         * @param field the persisted name of the field
+         * @param value the value to compare against
+         * @param params the positional parameters array
+         * @param named the named parameters map
+         * @return the constructed Nitrite Filter
+         */
         Filter build(RuntimePersistentEntity<?> entity, String field, Object value, Object[] params, Map<String, Object> named);
     }
 
