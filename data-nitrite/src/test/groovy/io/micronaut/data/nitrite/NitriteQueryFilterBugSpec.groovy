@@ -48,4 +48,17 @@ class NitriteQueryFilterBugSpec extends Specification {
             byFindAll != null
             byFindAll.canonicalName == canonicalName
     }
+
+    void "test deleteById with UUID id does not wipe collection"() {
+        given:
+            def keep = new UuidTestEntity(UUID.randomUUID(), "keep")
+            repo.save(keep)
+
+        when: "deleting by a UUID id that does not exist in the collection"
+            repo.deleteById(UUID.randomUUID())
+
+        then:
+            repo.findAll().size() == 1
+            repo.findAll().get(0).id == keep.id
+    }
 }

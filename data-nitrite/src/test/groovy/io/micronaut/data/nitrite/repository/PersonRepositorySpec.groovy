@@ -72,6 +72,32 @@ class PersonRepositorySpec extends Specification {
         personRepository.count() == 0
     }
 
+    void "test delete by id leaves other rows intact"() {
+        given:
+        def keep = personRepository.save(new Person("Keep", 20))
+        def gone = personRepository.save(new Person("Gone", 21))
+
+        when:
+        personRepository.deleteById(gone.id)
+
+        then:
+        !personRepository.findById(gone.id).isPresent()
+        personRepository.findById(keep.id).isPresent()
+        personRepository.count() == 1
+    }
+
+    void "test delete by non-existent id does not wipe collection"() {
+        given:
+        def keep = personRepository.save(new Person("Keep", 20))
+
+        when:
+        personRepository.deleteById(java.util.UUID.randomUUID().toString())
+
+        then:
+        personRepository.findById(keep.id).isPresent()
+        personRepository.count() == 1
+    }
+
     void "test find all"() {
         given:
         personRepository.saveAll([new Person("Alice", 25), new Person("Bob", 35)])
