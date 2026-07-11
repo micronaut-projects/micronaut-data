@@ -3,7 +3,7 @@ package io.micronaut.data.nitrite.tck
 import io.micronaut.data.document.tck.AbstractDocumentTransactionSpec
 import io.micronaut.data.document.tck.repositories.BookRepository
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder
-import io.micronaut.data.nitrite.transaction.NitriteTransactionManager
+import io.micronaut.data.nitrite.transaction.NitriteTransactionOperations
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.transaction.TransactionOperations
 
@@ -23,7 +23,7 @@ class NitriteDocumentTransactionSpec extends AbstractDocumentTransactionSpec imp
 
     @Override
     protected TransactionOperations getTransactionOperations() {
-        return context.getBean(NitriteTransactionManager)
+        return context.getBean(NitriteTransactionOperations)
     }
 
     @Override

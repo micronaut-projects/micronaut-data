@@ -14,7 +14,7 @@ Nitrite does not currently provide the broader JPA-style infrastructure (naming 
 
 ## Transactions
 
-Nitrite supports Micronaut `@Transactional` methods via `NitriteTransactionManager` and the `NitriteTransactionHolder`. When a transaction is active, repository operations use the `Transaction` returned by the holder instead of the raw database so that all reads/writes participate in the same MVStore transaction and are committed or rolled back together. See `io.micronaut.data.nitrite.service.NitriteTransactionManagementService` and its spec (`data-nitrite/src/test/groovy/io/micronaut/data/nitrite/service/NitriteTransactionManagementSpec.groovy`) for examples that exercise the various propagation modes and rollback behavior.
+Nitrite supports Micronaut `@Transactional` methods via `NitriteTransactionOperations` and the `NitriteTransactionHolder`. When a transaction is active, repository operations use the `Transaction` returned by the holder instead of the raw database so that all reads/writes participate in the same MVStore transaction and are committed or rolled back together. See `io.micronaut.data.nitrite.service.NitriteTransactionManagementService` and its spec (`data-nitrite/src/test/groovy/io/micronaut/data/nitrite/service/NitriteTransactionManagementSpec.groovy`) for examples that exercise the various propagation modes and rollback behavior.
 
 Nitrite is **not** a feature-equivalent MongoDB replacement. Mongo-specific features such as BSON
 filters, aggregation pipelines, and Mongo-only annotations are out of scope for this module.

@@ -22,6 +22,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
+import io.micronaut.core.annotation.Internal;
 import jakarta.inject.Singleton;
 import org.dizitart.no2.transaction.Session;
 import org.dizitart.no2.transaction.Transaction;
@@ -29,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Transaction manager for Nitrite databases.
+ * Default implementation of {@link NitriteTransactionOperations} for Nitrite databases.
  *
  * <p>Extends {@link AbstractDefaultTransactionOperations} to integrate with Micronaut's transaction
  * infrastructure. Uses Nitrite {@link Session} as the connection type.
@@ -57,25 +58,26 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Primary
-public class NitriteTransactionManager extends AbstractDefaultTransactionOperations<Session> {
+@Internal
+public class DefaultNitriteTransactionOperations extends AbstractDefaultTransactionOperations<Session> implements NitriteTransactionOperations {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NitriteTransactionManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNitriteTransactionOperations.class);
   private final NitriteTransactionHolder holder;
 
   /**
-   * Create a new Nitrite transaction manager.
+   * Create a new Nitrite transaction operations instance.
    *
    * @param connectionOperations the connection operations
    * @param synchronousConnectionManager the synchronous connection manager
    * @param holder the transaction context holder
    */
-  public NitriteTransactionManager(
+  public DefaultNitriteTransactionOperations(
       final NitriteConnectionOperations connectionOperations,
       final SynchronousConnectionManager<Session> synchronousConnectionManager,
       final NitriteTransactionHolder holder) {
     super(connectionOperations, synchronousConnectionManager);
     this.holder = holder;
-    LOG.trace("NitriteTransactionManager initialized: {}", System.identityHashCode(this));
+    LOG.trace("DefaultNitriteTransactionOperations initialized: {}", System.identityHashCode(this));
   }
 
   @Override
@@ -89,7 +91,7 @@ public class NitriteTransactionManager extends AbstractDefaultTransactionOperati
   @Override
   protected void doBegin(final DefaultTransactionStatus<Session> tx) {
     LOG.trace(
-        "NitriteTransactionManager[{}] doBegin for {}",
+        "DefaultNitriteTransactionOperations[{}] doBegin for {}",
         System.identityHashCode(this),
         System.identityHashCode(tx));
     Session session = tx.getConnection();

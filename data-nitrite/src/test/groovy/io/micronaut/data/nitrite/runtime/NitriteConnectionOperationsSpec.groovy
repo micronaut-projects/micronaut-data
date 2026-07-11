@@ -5,7 +5,8 @@ import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.data.nitrite.transaction.NitriteConnectionOperations
 import io.micronaut.data.nitrite.transaction.NitriteTransactionContext
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder
-import io.micronaut.data.nitrite.transaction.NitriteTransactionManager
+import io.micronaut.data.nitrite.transaction.DefaultNitriteTransactionOperations
+import io.micronaut.data.nitrite.transaction.NitriteTransactionOperations
 import io.micronaut.transaction.exceptions.NoTransactionException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
 import org.dizitart.no2.Nitrite
@@ -15,12 +16,12 @@ import spock.lang.Specification
 
 class NitriteConnectionOperationsSpec extends Specification {
 
-    void "test NitriteConnectionOperations and NitriteTransactionManager"() {
+    void "test NitriteConnectionOperations and NitriteTransactionOperations"() {
         given:
         Nitrite database = Nitrite.builder().openOrCreate()
         NitriteConnectionOperations connectionOperations = new NitriteConnectionOperations(database)
         NitriteTransactionHolder holder = new NitriteTransactionHolder()
-        NitriteTransactionManager transactionManager = new NitriteTransactionManager(connectionOperations, connectionOperations, holder)
+        NitriteTransactionOperations transactionManager = new DefaultNitriteTransactionOperations(connectionOperations, connectionOperations, holder)
         
         when:
         ConnectionDefinition definition = ConnectionDefinition.DEFAULT
