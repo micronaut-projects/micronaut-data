@@ -40,7 +40,6 @@ import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.serde.ObjectMapper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteId;
-import org.dizitart.no2.common.mapper.NitriteMapper;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
@@ -78,7 +77,6 @@ public final class NitriteEntityMapper {
   private final ConversionService conversionService;
   private final ValueConverter valueConverter;
   private final ObjectMapper serdeObjectMapper;
-  private final NitriteMapper nitriteMapper;
   private final RuntimeEntityRegistry runtimeEntityRegistry;
   private NitriteOperationsHelper helper;
   private final Class<?> geometryClass;
@@ -89,22 +87,21 @@ public final class NitriteEntityMapper {
    *
    * <p><strong>Architecture:</strong> This mapper uses Micronaut Serde at the boundary
    * for entity ↔ Map conversion, and ConversionService for individual field conversions.
-   * Jackson is used only internally by Nitrite for Document storage.</p>
+   * No Jackson dependency is used anywhere in this class; POJOs without a
+   * {@link BeanIntrospection} are converted via plain JDK JavaBean reflection
+   * (see {@link #reflectToMap}).</p>
    *
    * @param conversionService the conversion service (for field-level conversions)
    * @param serdeObjectMapper the Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
-   * @param nitriteMapper the Nitrite mapper
    * @param runtimeEntityRegistry the runtime entity registry
    */
   public NitriteEntityMapper(
       final ConversionService conversionService,
       final ObjectMapper serdeObjectMapper,
-      final NitriteMapper nitriteMapper,
       final RuntimeEntityRegistry runtimeEntityRegistry) {
     this.conversionService = conversionService;
     this.valueConverter = new ValueConverter(conversionService);
     this.serdeObjectMapper = serdeObjectMapper;
-    this.nitriteMapper = nitriteMapper;
     this.runtimeEntityRegistry = runtimeEntityRegistry;
     this.geometryClass = ClassUtils.forName(GEOMETRY_CLASS, NitriteEntityMapper.class.getClassLoader()).orElse(null);
   }
@@ -151,11 +148,25 @@ public final class NitriteEntityMapper {
                 return toFilterValue(idValue);
             }
         }
-    } catch (Exception ignored) {
-        // Best-effort ID extraction; if it fails (e.g. no identity), return the entity itself
+    } catch (RuntimeException e) {
+        // Expected for values whose class isn't a registered entity (the common case for
+        // this method); fall through and return the value itself.
+        LOG.debug("Best-effort entity ID extraction skipped for type {}: {}", clazz, e.getMessage());
     }
 
     return value;
+  }
+
+  /**
+   * Converts an arbitrary value (a {@link Document}, a {@link Map}, an {@code @Introspected}
+   * POJO, or a plain JavaBean) to a {@link Document}, for callers that need to traverse an
+   * intermediate value's fields (e.g. segment-by-segment path resolution on a query parameter).
+   *
+   * @param value the value to convert
+   * @return the document representation of the value
+   */
+  public Document convertValueToDocument(final Object value) {
+    return toDocumentValue(value);
   }
 
   /**
@@ -688,6 +699,37 @@ public final class NitriteEntityMapper {
   }
 
   /**
+   * Converts a plain POJO with no registered {@link BeanIntrospection} (e.g. a class not
+   * processed by the Micronaut annotation processor) to a map using standard JDK JavaBean
+   * reflection ({@link java.beans.Introspector}). This is the fallback used when a value is
+   * neither a {@link Document}, a {@link Map}, nor an {@code @Introspected} type.
+   *
+   * @param value the POJO to convert
+   * @return a map representation, keyed by JavaBean property name
+   */
+  private Map<String, Object> reflectToMap(Object value) {
+    try {
+      Map<String, Object> map = new LinkedHashMap<>();
+      java.beans.BeanInfo beanInfo = java.beans.Introspector.getBeanInfo(value.getClass(), Object.class);
+      for (java.beans.PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+        java.lang.reflect.Method readMethod = pd.getReadMethod();
+        if (readMethod != null) {
+          Object propertyValue = readMethod.invoke(value);
+          // Document storage requires Serializable values; skip synthetic properties
+          // (e.g. Groovy's getMetaClass()) that don't satisfy that constraint.
+          if (propertyValue == null || propertyValue instanceof java.io.Serializable) {
+            map.put(pd.getName(), propertyValue);
+          }
+        }
+      }
+      return map;
+    } catch (Exception e) {
+      throw new io.micronaut.data.exceptions.DataAccessException(
+          "Could not convert value of type " + value.getClass() + " to a Document", e);
+    }
+  }
+
+  /**
    * Recursively converts an {@code @Introspected} POJO to a plain {@link LinkedHashMap} for
    * Nitrite Document storage. Nested {@code @Introspected} types are converted recursively;
    * all other values are normalised via {@link #toFilterValue}.
@@ -939,7 +981,7 @@ public final class NitriteEntityMapper {
           }
           yield document;
         }
-        yield (Document) nitriteMapper.tryConvert(value, Document.class);
+        yield toDocumentValue(reflectToMap(value));
       }
     };
   }

@@ -26,8 +26,9 @@ import io.micronaut.data.nitrite.runtime.DefaultNitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.read.NitriteQueryExecutor;
-import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.temporal.Temporal;
 import java.util.Arrays;
@@ -49,12 +50,12 @@ import java.util.function.Function;
 @Internal
 public final class NitriteQueryBinder {
 
-    private final NitriteEntityMapper entityMapper;
-    private final Nitrite database;
+    private static final Logger LOG = LoggerFactory.getLogger(NitriteQueryBinder.class);
 
-    public NitriteQueryBinder(NitriteEntityMapper entityMapper, Nitrite database) {
+    private final NitriteEntityMapper entityMapper;
+
+    public NitriteQueryBinder(NitriteEntityMapper entityMapper) {
         this.entityMapper = entityMapper;
-        this.database = database;
     }
 
     /**
@@ -373,11 +374,14 @@ public final class NitriteQueryBinder {
     @Nullable
     private Object tryConvertAndRead(Object current, String segment, String alt) {
         try {
-            Document doc = (Document) database.getConfig().nitriteMapper().tryConvert(current, Document.class);
+            Document doc = entityMapper.convertValueToDocument(current);
             Object v = doc.get(segment);
             return v != null || segment.equals(alt) ? v : doc.get(alt);
-        } catch (Exception ignored) {
-            // If conversion or field access fails, return null as fallback
+        } catch (RuntimeException e) {
+            // Expected when segment traversal reaches a scalar value (e.g. a String or
+            // Number) that cannot be converted to a Document; treat as "no such segment".
+            LOG.debug("Could not resolve segment '{}' on value of type {}: {}",
+                segment, current.getClass(), e.getMessage());
             return null;
         }
     }

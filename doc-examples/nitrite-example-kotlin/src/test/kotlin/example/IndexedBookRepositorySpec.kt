@@ -106,13 +106,14 @@ class IndexedBookRepositorySpec {
     fun testIntersectsQuery() {
         val factory = GeometryFactory()
 
+        val nycCoordinate = Coordinate(-74.0060, 40.7128)
         // Create a line that crosses NYC
         val line: LineString = factory.createLineString(arrayOf(
-            Coordinate(-74.5, 40.5),
-            Coordinate(-73.5, 41.0)
+            Coordinate(-75.0, 40.0),
+            nycCoordinate
         ))
 
-        val nyc = factory.createPoint(Coordinate(-74.0060, 40.7128))
+        val nyc = factory.createPoint(nycCoordinate)
         val boston = factory.createPoint(Coordinate(-71.0589, 42.3601))
 
         val book1 = IndexedBook("NYC Guide", 100)
@@ -150,8 +151,8 @@ class IndexedBookRepositorySpec {
             Coordinate(-74.5, 40.5)
         ))
         val crossingNyc = factory.createLineString(arrayOf(
-            Coordinate(-74.5, 40.5),
-            Coordinate(-73.5, 41.0)
+            Coordinate(-75.0, 40.0),
+            nyc.coordinate
         ))
 
         assertTrue(indexedBookRepository.findByLocationNear(nyc, 0.5).any { it.title == "NYC Guide" })

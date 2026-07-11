@@ -179,8 +179,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         this.database = database;
         this.collectionRegistry = new NitriteCollectionRegistry(database, transactionHolder, configuration, this::getEntity);
         this.entityMapper =
-            new NitriteEntityMapper(
-                conversionService, serdeObjectMapper, database.getConfig().nitriteMapper(), runtimeEntityRegistry);
+            new NitriteEntityMapper(conversionService, serdeObjectMapper, runtimeEntityRegistry);
         this.entityMapper.setHelper(this);
         this.queryParser = new NitriteQueryParser();
         // Create filter builder with sub-query executor for auto-join on MANY_TO_ONE associations
@@ -206,7 +205,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             this::buildFindOptions,
             this,
             runtimeEntityRegistry.getEntityEventListener());
-        this.queryBinder = new NitriteQueryBinder(entityMapper, database);
+        this.queryBinder = new NitriteQueryBinder(entityMapper);
     }
 
     /**

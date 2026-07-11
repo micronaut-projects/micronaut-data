@@ -102,13 +102,14 @@ class IndexedBookRepositorySpec {
 
     @Test
     void testIntersectsQuery() {
+        Coordinate nycCoordinate = new Coordinate(-74.0060, 40.7128);
         // Create a line that crosses NYC
         LineString line = factory.createLineString(new Coordinate[] {
-            new Coordinate(-74.5, 40.5),
-            new Coordinate(-73.5, 41.0)
+            new Coordinate(-75.0, 40.0),
+            nycCoordinate
         });
 
-        Point nyc = factory.createPoint(new Coordinate(-74.0060, 40.7128));
+        Point nyc = factory.createPoint(nycCoordinate);
         Point boston = factory.createPoint(new Coordinate(-71.0589, 42.3601));
 
         IndexedBook book1 = new IndexedBook("NYC Guide", 100);
@@ -145,8 +146,8 @@ class IndexedBookRepositorySpec {
             new Coordinate(-74.5, 40.5)
         });
         LineString crossingNyc = factory.createLineString(new Coordinate[] {
-            new Coordinate(-74.5, 40.5),
-            new Coordinate(-73.5, 41.0)
+            new Coordinate(-75.0, 40.0),
+            nyc.getCoordinate()
         });
 
         assertTrue(repository.findByLocationNear(nyc, 0.5).stream().anyMatch(b -> b.getTitle().equals("NYC Guide")));

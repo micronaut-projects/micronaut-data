@@ -49,11 +49,8 @@ dependencies {
 
     api libs.nitrite
     api libs.nitrite.mvstore.adapter
-    api libs.nitrite.jackson.mapper
     compileOnly libs.nitrite.rocksdb.adapter
     compileOnly libs.nitrite.spatial
-    compileOnly libs.jackson.datatype.jts
-    api libs.jackson.datatype.jsr310
     api libs.managed.javax.persistence.api
     compileOnly mnSql.jakarta.persistence.api
 
@@ -78,7 +75,6 @@ dependencies {
     // Optional dependency tests - Spatial module (only for spatialPresentTest source set)
     spatialPresentTestCompileOnly libs.nitrite.spatial
     spatialPresentTestRuntimeOnly libs.nitrite.spatial
-    spatialPresentTestRuntimeOnly libs.jackson.datatype.jts
     spatialPresentTestAnnotationProcessor projects.micronautDataNitrite
 }
 

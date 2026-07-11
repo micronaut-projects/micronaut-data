@@ -22,7 +22,7 @@ class SpatialFilterFactorySpec extends Specification {
 
     def "test SpatialFilterFactory branches"() {
         given:
-        def entityMapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def entityMapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
         def valueResolver = new ValueResolver(entityMapper)
         def factory = new SpatialFilterFactory(entityMapper, valueResolver)
 

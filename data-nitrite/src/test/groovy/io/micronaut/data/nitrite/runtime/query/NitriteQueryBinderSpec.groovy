@@ -3,15 +3,11 @@ package io.micronaut.data.nitrite.runtime.query
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.dizitart.no2.Nitrite
 import org.dizitart.no2.collection.Document
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
 class NitriteQueryBinderSpec extends Specification {
-
-    @Inject
-    Nitrite database
 
     @Inject
     io.micronaut.data.model.runtime.RuntimeEntityRegistry runtimeEntityRegistry
@@ -25,9 +21,9 @@ class NitriteQueryBinderSpec extends Specification {
     void "test readSegmentValue"() {
         given:
         NitriteEntityMapper entityMapper = new NitriteEntityMapper(
-            conversionService, objectMapper, database.getConfig().nitriteMapper(), runtimeEntityRegistry
+            conversionService, objectMapper, runtimeEntityRegistry
         )
-        NitriteQueryBinder binder = new NitriteQueryBinder(entityMapper, database)
+        NitriteQueryBinder binder = new NitriteQueryBinder(entityMapper)
         Document doc = Document.createDocument("firstName", "John")
         Map map = ["firstName": "Jane"]
 

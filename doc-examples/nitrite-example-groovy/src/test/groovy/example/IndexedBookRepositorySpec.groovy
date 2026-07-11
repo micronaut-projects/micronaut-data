@@ -88,13 +88,14 @@ class IndexedBookRepositorySpec extends Specification {
 
     def "intersects query finds matching books"() {
         given:
+        def nycCoordinate = new Coordinate(-74.0060, 40.7128)
         def line = factory.createLineString([
-            new Coordinate(-74.5, 40.5),
-            new Coordinate(-73.5, 41.0)
+            new Coordinate(-75.0, 40.0),
+            nycCoordinate
         ] as Coordinate[])
 
         IndexedBook book1 = new IndexedBook("NYC Guide", 100)
-        book1.location = factory.createPoint(new Coordinate(-74.0060, 40.7128))
+        book1.location = factory.createPoint(nycCoordinate)
 
         IndexedBook book2 = new IndexedBook("Boston Guide", 80)
         book2.location = factory.createPoint(new Coordinate(-71.0589, 42.3601))
@@ -128,8 +129,8 @@ class IndexedBookRepositorySpec extends Specification {
             new Coordinate(-74.5, 40.5)
         ] as Coordinate[])
         def crossingNyc = factory.createLineString([
-            new Coordinate(-74.5, 40.5),
-            new Coordinate(-73.5, 41.0)
+            new Coordinate(-75.0, 40.0),
+            nyc.coordinate
         ] as Coordinate[])
 
         expect:

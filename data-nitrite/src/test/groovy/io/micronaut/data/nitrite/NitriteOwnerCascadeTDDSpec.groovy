@@ -26,7 +26,6 @@ import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
-import org.dizitart.no2.common.mapper.NitriteMapper
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -58,8 +57,7 @@ class NitriteOwnerCascadeTDDSpec extends Specification {
     void "test cascadeProps includes owner-side ManyToOne associations"() {
         given: "Create NitriteEntityMapper manually"
             // NitriteEntityMapper is not a bean, so we create it manually for testing
-            NitriteMapper nitriteMapper = nitrite.config.nitriteMapper()
-            def entityMapper = new NitriteEntityMapper(conversionService, serdeObjectMapper, nitriteMapper, runtimeEntityRegistry)
+            def entityMapper = new NitriteEntityMapper(conversionService, serdeObjectMapper, runtimeEntityRegistry)
 
         when: "Getting metadata for City entity"
             def meta = entityMapper.getOrBuildMeta(City)

@@ -15,10 +15,6 @@
  */
 package io.micronaut.data.nitrite.runtime;
 
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
@@ -36,8 +32,6 @@ import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
-import org.dizitart.no2.common.module.NitritePlugin;
-import org.dizitart.no2.mapper.jackson.JacksonMapper;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +52,6 @@ public final class NitriteOperationsFactory {
   private static final Logger LOG = LoggerFactory.getLogger(NitriteOperationsFactory.class);
   private static final String ROCKSDB_MODULE_CLASS = "org.dizitart.no2.rocksdb.RocksDBModule";
   private static final String SPATIAL_MODULE_CLASS = "org.dizitart.no2.spatial.SpatialModule";
-  private static final String GEOMETRY_MODULE_CLASS = "org.dizitart.no2.spatial.jackson.GeometryModule";
 
   NitriteOperationsFactory() {
   }
@@ -66,9 +59,12 @@ public final class NitriteOperationsFactory {
   /**
    * Create a Nitrite database instance.
    *
-   * <p>Note: the mapper is configured with Jackson's {@link JavaTimeModule}. The runtime normalizes
-   * certain values (notably {@link java.time.Instant}) to match the mapper's stored representation
-   * when building query filters (see {@code DefaultNitriteRepositoryOperations.toFilterValue}).
+   * <p>No {@code NitriteMapper} module is loaded explicitly; Nitrite falls back to its built-in
+   * {@code SimpleNitriteMapper}. This module only calls Nitrite's {@code NitriteCollection} API
+   * (not {@code ObjectRepository}), and {@code SimpleNitriteMapper.tryConvert} passes through any
+   * value that already implements the requested target type — true for the {@link Comparable}
+   * check performed by filter value normalization (see {@code FieldBasedFilter}) for common types
+   * like {@link java.time.Instant}, so no Jackson-based mapper is required.
    *
    * @param config the configuration
    * @return the Nitrite database instance
@@ -100,8 +96,6 @@ public final class NitriteOperationsFactory {
     }
 
     loadSpatialModule().ifPresent(builder::loadModule);
-
-    builder.loadModule(createJacksonMapperModule());
 
     builder.fieldSeparator(config.getFieldSeparator());
 
@@ -137,50 +131,6 @@ public final class NitriteOperationsFactory {
       }
     }
     return Optional.empty();
-  }
-
-  /**
-   * Creates a NitriteModule with a Nitrite-internal Jackson ObjectMapper.
-   *
-   * <p><strong>Architecture Note:</strong> Jackson is an internal implementation detail of the
-   * Nitrite integration, not part of this module's public API. Entity ↔ Map conversion at the
-   * module boundary is handled by {@code NitriteEntityMapper} using Micronaut Serde. This
-   * Jackson ObjectMapper is used only for Nitrite's internal Document storage.</p>
-   *
-   * <p>This factory method centralizes Jackson configuration in a single place to ensure:</p>
-   * <ul>
-   *   <li>Consistent date handling for any raw temporal values Nitrite stores internally</li>
-   *   <li>Proper NitriteId serialization via NitriteIdModule</li>
-   *   <li>Optional JTS module support for Geometry types</li>
-   * </ul>
-   *
-   * @return NitriteModule with configured internal Jackson mapper
-   */
-  private NitriteModule createJacksonMapperModule() {
-    ObjectMapper mapper = new ObjectMapper();
-
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    mapper.registerModule(new JavaTimeModule());
-
-    try {
-      Class<?> nitriteIdModuleClass = Class.forName("org.dizitart.no2.mapper.jackson.modules.NitriteIdModule");
-      mapper.registerModule((Module) nitriteIdModuleClass.getDeclaredConstructor().newInstance());
-    } catch (Exception e) {
-      LOG.warn("NitriteIdModule found but could not be registered: {}", e.getMessage());
-    }
-
-    if (ClassUtils.isPresent(GEOMETRY_MODULE_CLASS, null)) {
-      try {
-        Class<?> geometryModuleClass = Class.forName(GEOMETRY_MODULE_CLASS);
-        Object geometryModule = geometryModuleClass.getDeclaredConstructor().newInstance();
-        mapper.registerModule((Module) geometryModule);
-        LOG.debug("GeometryModule registered for JTS Geometry serialization");
-      } catch (Exception e) {
-        LOG.warn("GeometryModule found but could not be registered: {}", e.getMessage());
-      }
-    }
-
-    return new NitriteJacksonMapperModule(mapper);
   }
 
   private File prepareDbFile(String dbPath) {
@@ -226,28 +176,5 @@ public final class NitriteOperationsFactory {
         attributeConverterRegistry,
         transactionHolder,
         serdeObjectMapper);
-  }
-
-  /**
-   * NitriteModule wrapping a locally-constructed, Nitrite-internal Jackson ObjectMapper.
-   * This is not Micronaut's ObjectMapper bean — it is a dedicated instance configured
-   * with configured date handling and optional spatial type support, used only inside Nitrite.
-   */
-  private static class NitriteJacksonMapperModule implements NitriteModule {
-    private final JacksonMapper jacksonMapper;
-
-    NitriteJacksonMapperModule(ObjectMapper nitriteMapper) {
-      this.jacksonMapper = new JacksonMapper() {
-        @Override
-        public ObjectMapper getObjectMapper() {
-          return nitriteMapper;
-        }
-      };
-    }
-
-    @Override
-    public java.util.Set<NitritePlugin> plugins() {
-      return java.util.Collections.singleton(jacksonMapper);
-    }
   }
 }

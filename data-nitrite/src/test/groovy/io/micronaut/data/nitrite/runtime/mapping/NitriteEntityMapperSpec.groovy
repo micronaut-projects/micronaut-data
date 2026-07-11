@@ -27,7 +27,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test cyclic association handling in NitriteEntityMapper"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
 
         def parent = new CyclicEntity(name: "Parent")
         parent.id = 1L
@@ -49,7 +49,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test nested POJO mapping and naming strategies"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
         
         def pojo = new NestedPojo(camelCaseField: "camel", snake_case_field: "snake")
         def holder = new PojoHolder(id: 1L, nested: pojo)
@@ -87,7 +87,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test NitriteEntityMapper misc gaps"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
 
         expect:
         mapper.isSimpleType(String)
@@ -111,7 +111,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test serializeForDocument fallback paths for store values"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
 
         when: "an id map holds a Serde-incompatible (but Serializable) POJO and a raw array"
         def id = new CustomId(info: [bad: new PlainSerializable(), arr: [1, 2, 3] as int[]])
@@ -129,7 +129,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test Map conversion with nested POJOs"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
 
         def map = [
             "key1": new NestedPojo(camelCaseField: "v1", snake_case_field: "s1"),
@@ -158,7 +158,7 @@ class NitriteEntityMapperSpec extends Specification {
 
     def "test toNitriteFilterValue coverage"() {
         given:
-        def mapper = new NitriteEntityMapper(conversionService, objectMapper, nitrite.getConfig().nitriteMapper(), runtimeEntityRegistry)
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
 
         expect:
         mapper.toNitriteFilterValue(null) == null

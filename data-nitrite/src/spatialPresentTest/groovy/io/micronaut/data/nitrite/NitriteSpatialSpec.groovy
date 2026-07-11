@@ -148,8 +148,8 @@ class NitriteSpatialSpec extends Specification {
         ])
 
         def line = factory.createLineString([
-            new Coordinate(-74.5, 40.5),
-            new Coordinate(-73.5, 41.0)
+            new Coordinate(-75.0, 40.0),
+            nyc.coordinate
         ] as Coordinate[])
 
         when:

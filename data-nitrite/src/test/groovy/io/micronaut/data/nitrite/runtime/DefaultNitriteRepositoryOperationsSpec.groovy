@@ -60,7 +60,6 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
         def entityMapper = new io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper(
             io.micronaut.core.convert.ConversionService.SHARED,
             objectMapper,
-            operations.database.getConfig().nitriteMapper(),
             runtimeEntityRegistry
         )
         def mapper = new io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper(valueConverter, entityMapper)
