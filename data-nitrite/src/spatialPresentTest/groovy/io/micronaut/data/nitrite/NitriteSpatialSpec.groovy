@@ -4,6 +4,7 @@ import io.micronaut.data.nitrite.model.IndexedBook
 import io.micronaut.data.nitrite.repository.IndexedBookRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.dizitart.no2.spatial.GeoPoint
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.GeometryFactory
 import spock.lang.Shared
@@ -91,6 +92,28 @@ class NitriteSpatialSpec extends Specification {
         then:
         !results.isEmpty()
         results.any { it.title == "NYC Guide" }
+    }
+
+    def "\$near derived query with GeoPoint uses geodesic distance, not a latitude-agnostic degree conversion"() {
+        // At 80 degrees latitude, one degree of longitude is only ~19.3km (vs ~111.3km at the
+        // equator). A naive implementation that converts meters to degrees using the equatorial
+        // ratio regardless of latitude would wrongly exclude bookNear (true geodesic distance
+        // ~9.66km, within the 10km radius) and would need ~5.5x the actual radius to include it.
+        given:
+        def center = new GeoPoint(80.0, 0.0)
+        def near = factory.createPoint(new Coordinate(0.5, 80.0))   // ~9.66km geodesic from center
+        def far = factory.createPoint(new Coordinate(2.0, 80.0))    // ~38.65km geodesic from center
+
+        repository.saveAll([
+            new IndexedBook("Near the pole", 10, "geodesic near", near),
+            new IndexedBook("Far from the pole", 10, "geodesic far", far)
+        ])
+
+        when:
+        def results = repository.findByLocationNearGeoPoint(center, 10000.0)
+
+        then:
+        results*.title == ["Near the pole"]
     }
 
     def "\$near @Query and derived query produce same results"() {

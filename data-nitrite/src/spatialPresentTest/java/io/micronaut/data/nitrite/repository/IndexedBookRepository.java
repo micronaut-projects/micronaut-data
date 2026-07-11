@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.IndexedBook;
 import io.micronaut.data.repository.CrudRepository;
+import org.dizitart.no2.spatial.GeoPoint;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
@@ -41,6 +42,19 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
      * @return matching books
      */
     List<IndexedBook> findByLocationNear(Geometry location, double maxDistance);
+
+    /**
+     * Find books near the given geographic point, with the distance always interpreted
+     * geodesically (meters) regardless of latitude. A derived-query method can't take a
+     * {@link GeoPoint} parameter directly here because {@link IndexedBook#location} is typed
+     * as {@link Geometry}, so this goes through an explicit Nitrite {@code $near} query instead.
+     *
+     * @param point the reference geographic point
+     * @param maxDistanceMeters the maximum distance from the reference point, in meters
+     * @return matching books
+     */
+    @Query("{\"location\": {\"$near\": {\"center\": :point, \"distance\": :maxDistanceMeters}}}")
+    List<IndexedBook> findByLocationNearGeoPoint(GeoPoint point, double maxDistanceMeters);
 
     @Query("{\"location\": {\"$within\": :area}}")
     List<IndexedBook> findByLocationWithin(Geometry area);
