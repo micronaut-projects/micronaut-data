@@ -1,7 +1,17 @@
 plugins {
     id "io.micronaut.build.internal.data-module"
     id "groovy"
+    id "io.micronaut.test-resources"
 }
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
 
 // Source sets for testing with optional dependencies present
 sourceSets {
@@ -110,4 +120,10 @@ tasks.named('check') {
 // Disable baseline check for new module until first release
 tasks.named("findBaseline").configure {
     enabled = false
+}
+
+spotless {
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'src/rocksDbPresentTest/java/**/*.java', 'src/spatialPresentTest/java/**/*.java'
+    }
 }
