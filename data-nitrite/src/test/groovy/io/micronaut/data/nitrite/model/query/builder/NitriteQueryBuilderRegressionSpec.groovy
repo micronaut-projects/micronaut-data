@@ -70,31 +70,36 @@ class NitriteQueryBuilderRegressionSpec extends Specification {
         found.get().id == saved.id
     }
 
-    // ========== Bug #4: MongoDB $expr/$multiply/$strLenCP operators ==========
+    // ========== Bug #4: $expr/$multiply/$strLenCP computed-expression criteria ==========
 
-    void "test string length query throws UnsupportedOperationException"() {
+    void "test string length query evaluated via Criteria API"() {
         given: "Events with different payload lengths"
         eventRepository.save(new Event("E1", "a"))      // length 1
         eventRepository.save(new Event("E2", "abc"))    // length 3
 
-        when: 'Querying by string length using Criteria API (Nitrite doesn\'t support $strLenCP)'
-        eventRepository.findAll({ root, cb -> cb.gt(cb.length(root.get("payload")), 2) } as PredicateSpecification)
+        when: 'Querying by string length using Criteria API (evaluated in-process; Nitrite has no $strLenCP)'
+        def results = eventRepository.findAll({ root, cb -> cb.gt(cb.length(root.get("payload")), 2) } as PredicateSpecification)
 
-        then: "Should throw UnsupportedOperationException for unsupported operator"
-        thrown(UnsupportedOperationException)
+        then: "only the payload longer than 2 characters matches"
+        results.size() == 1
+        results[0].type == "E2"
     }
 
-    void "test multiplication expression throws UnsupportedOperationException"() {
+    void "test multiplication expression evaluated via Criteria API"() {
         given: "Events with priorities"
         def e1 = new Event("E1", "p1")
         e1.setPriority(2)
         eventRepository.save(e1)
+        def e2 = new Event("E2", "p2")
+        e2.setPriority(3)
+        eventRepository.save(e2)
 
-        when: 'Querying with multiplication expression using Criteria API (Nitrite doesn\'t support $multiply)'
-        eventRepository.findAll({ root, cb -> cb.equal(cb.prod(root.get("priority"), 2), 4) } as PredicateSpecification)
+        when: 'Querying with multiplication expression using Criteria API (evaluated in-process; Nitrite has no $multiply)'
+        def results = eventRepository.findAll({ root, cb -> cb.equal(cb.prod(root.get("priority"), 2), 4) } as PredicateSpecification)
 
-        then: "Should throw UnsupportedOperationException for unsupported operator"
-        thrown(UnsupportedOperationException)
+        then: "only the event whose priority * 2 == 4 matches"
+        results.size() == 1
+        results[0].type == "E1"
     }
 
     // ========== Bug #5: Invalid $null/$notNull/$true/$false/$empty operators ==========

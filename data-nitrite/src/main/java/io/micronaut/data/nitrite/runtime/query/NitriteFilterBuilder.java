@@ -117,6 +117,15 @@ public final class NitriteFilterBuilder {
                     }
                     compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                 }
+            } else if ("$expr".equals(key)) {
+                if (value instanceof Map<?, ?> m && m.size() == 1) {
+                    Map.Entry<?, ?> exprEntry = m.entrySet().iterator().next();
+                    String op = (String) exprEntry.getKey();
+                    if (exprEntry.getValue() instanceof List<?> operands && operands.size() == 2) {
+                        compiledFilters.add(new NitriteFilterAST.ExprNode(
+                            op, compileExprValue(operands.get(0)), compileExprValue(operands.get(1))));
+                    }
+                }
             } else {
                 compiledFilters.add(compileFieldFilter(entity, key, value));
             }
@@ -129,6 +138,31 @@ public final class NitriteFilterBuilder {
             return compiledFilters.getFirst();
         }
         return new NitriteFilterAST.AndNode(compiledFilters);
+    }
+
+    /**
+     * Compile a {@code $expr} value tree node: a field reference ({@code "$fieldName"}),
+     * a {@code $strLenCP}/{@code $multiply} operator, or a literal/bound-parameter value.
+     */
+    @SuppressWarnings("unchecked")
+    private NitriteFilterAST.ExprValueNode compileExprValue(Object node) {
+        if (node instanceof String s && s.startsWith("$") && !isPlaceholder(s)) {
+            return new NitriteFilterAST.ExprValueNode.FieldRef(s.substring(1));
+        }
+        if (node instanceof Map<?, ?> m && m.size() == 1) {
+            Map.Entry<?, ?> entry = m.entrySet().iterator().next();
+            if ("$strLenCP".equals(entry.getKey())) {
+                return new NitriteFilterAST.ExprValueNode.StrLen(compileExprValue(entry.getValue()));
+            }
+            if ("$multiply".equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
+                List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
+                for (Object operand : operands) {
+                    compiled.add(compileExprValue(operand));
+                }
+                return new NitriteFilterAST.ExprValueNode.Multiply(compiled);
+            }
+        }
+        return new NitriteFilterAST.ExprValueNode.Literal(valueResolver.compileValue(node));
     }
 
     private NitriteFilterAST compileFieldFilter(

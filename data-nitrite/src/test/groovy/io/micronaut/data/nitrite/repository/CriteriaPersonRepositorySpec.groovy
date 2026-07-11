@@ -305,4 +305,47 @@ class CriteriaPersonRepositorySpec extends Specification {
         results.size() == 2
         results*.name.containsAll(["Alice", "Charlie"])
     }
+
+    // ========== Section 9: computed-expression predicates (length, prod) ==========
+
+    void "test criteria length() predicate"() {
+        given:
+        // setup already has Denis(13, 5 chars) and Josh(22, 4 chars)
+        repository.save(new CriteriaPerson("Al", 40))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.equal(cb.length(root.get("name")), 4)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Josh"
+    }
+
+    void "test criteria length() with greaterThan"() {
+        given:
+        repository.save(new CriteriaPerson("Al", 40))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.greaterThan(cb.length(root.get("name")), 4)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Denis"
+    }
+
+    void "test criteria prod() predicate against a literal multiplier"() {
+        given:
+        // setup already has Denis(13) and Josh(22): age * 2 == 44 selects Josh only
+        repository.save(new CriteriaPerson("Amy", 40))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.equal(cb.prod(root.get("age"), 2), 44)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "Josh"
+    }
 }

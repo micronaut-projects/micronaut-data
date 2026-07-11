@@ -17,11 +17,13 @@ package io.micronaut.data.nitrite.runtime.query.ast;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A structured AST for Nitrite filters.
@@ -251,6 +253,126 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             return Filter.ALL;
+        }
+    }
+
+    /**
+     * A computed-expression comparison (e.g. {@code cb.length(...)}, {@code cb.prod(...)}),
+     * evaluated in application code against each candidate document since Nitrite has no
+     * {@code $expr}/aggregation-expression support of its own.
+     *
+     * @param op the comparison operator ({@code $eq}, {@code $ne}, {@code $gt}, {@code $gte}, {@code $lt}, {@code $lte})
+     * @param left the left-hand computed value
+     * @param right the right-hand value to compare against
+     */
+    record ExprNode(String op, ExprValueNode left, ExprValueNode right) implements NitriteFilterAST {
+        @Override
+        public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
+            return pair -> {
+                Document doc = pair.getSecond();
+                Object lhs = left.evaluate(doc, params, namedParameters);
+                Object rhs = right.evaluate(doc, params, namedParameters);
+                return compare(op, lhs, rhs);
+            };
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        private static boolean compare(String op, Object lhs, Object rhs) {
+            if (lhs == null || rhs == null) {
+                boolean eq = Objects.equals(lhs, rhs);
+                return "$ne".equals(op) ? !eq : "$eq".equals(op) && eq;
+            }
+            int cmp;
+            if (lhs instanceof Number ln && rhs instanceof Number rn) {
+                cmp = Double.compare(ln.doubleValue(), rn.doubleValue());
+            } else if (lhs instanceof Comparable lc && lhs.getClass().isInstance(rhs)) {
+                cmp = lc.compareTo(rhs);
+            } else {
+                cmp = lhs.equals(rhs) ? 0 : 1;
+            }
+            return switch (op) {
+                case "$eq" -> cmp == 0;
+                case "$ne" -> cmp != 0;
+                case "$gt" -> cmp > 0;
+                case "$gte" -> cmp >= 0;
+                case "$lt" -> cmp < 0;
+                case "$lte" -> cmp <= 0;
+                default -> false;
+            };
+        }
+    }
+
+    /**
+     * A node in a small computed-value tree used by {@link ExprNode} (field reference, literal,
+     * string length, or multiplication), evaluated directly against a document.
+     */
+    sealed interface ExprValueNode {
+
+        /**
+         * Evaluate this node against a document.
+         *
+         * @param doc the candidate document
+         * @param params positional parameters
+         * @param namedParameters named parameters
+         * @return the computed value
+         */
+        Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters);
+
+        /**
+         * A reference to a persisted document field.
+         *
+         * @param persistedName the persisted field name
+         */
+        record FieldRef(String persistedName) implements ExprValueNode {
+            @Override
+            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                return doc.get(persistedName);
+            }
+        }
+
+        /**
+         * A literal or bound-parameter value.
+         *
+         * @param value the compiled value
+         */
+        record Literal(CompiledValue value) implements ExprValueNode {
+            @Override
+            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                return value.resolve(params, namedParameters);
+            }
+        }
+
+        /**
+         * The character length of a string value, mirroring Mongo's {@code $strLenCP}.
+         *
+         * @param inner the value to measure
+         */
+        record StrLen(ExprValueNode inner) implements ExprValueNode {
+            @Override
+            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = inner.evaluate(doc, params, namedParameters);
+                return v == null ? null : v.toString().length();
+            }
+        }
+
+        /**
+         * The product of two or more values, mirroring Mongo's {@code $multiply}.
+         *
+         * @param operands the values to multiply
+         */
+        record Multiply(List<ExprValueNode> operands) implements ExprValueNode {
+            @Override
+            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                double result = 1;
+                for (ExprValueNode operand : operands) {
+                    Object v = operand.evaluate(doc, params, namedParameters);
+                    if (!(v instanceof Number num)) {
+                        return null;
+                    }
+                    result *= num.doubleValue();
+                }
+                return result;
+            }
         }
     }
 }

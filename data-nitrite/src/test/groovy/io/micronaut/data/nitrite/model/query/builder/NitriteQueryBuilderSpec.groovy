@@ -320,22 +320,33 @@ class NitriteQueryBuilderSpec extends Specification {
         results[0].type == "E2"
     }
 
-    void "test criteria with PROD expression throws UnsupportedOperationException"() {
+    void "test criteria with PROD expression evaluates the product against candidate documents"() {
+        given: "an event with the default priority of 5, so priority * priority == 25"
+        eventRepository.save(new Event("order-created", "payload"))
+
         when:
-        eventRepository.findAll({ root, cb ->
+        def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.prod(root.get("priority"), root.get("priority")), cb.literal(25))
         } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
         then:
-        thrown(UnsupportedOperationException)
+        results.size() == 1
+        results[0].type == "order-created"
     }
 
-    void "test criteria with LENGTH expression throws UnsupportedOperationException"() {
+    void "test criteria with LENGTH expression evaluates string length against candidate documents"() {
+        given: "an event whose type is exactly 5 characters"
+        eventRepository.save(new Event("hello", "payload"))
+        eventRepository.save(new Event("hi", "payload"))
+
         when:
-        eventRepository.findAll({ root, cb ->
-            cb.equal(cb.length(root.get("type")), cb.literal(5))
+        def results = eventRepository.findAll({ root, cb ->
+            cb.equal(cb.length(root.get("type")), 5)
         } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
         then:
-        thrown(UnsupportedOperationException)
+        results.size() == 1
+        results[0].type == "hello"
     }
 
     // Operator-expression rejection: each unsupported criteria operator must be rejected

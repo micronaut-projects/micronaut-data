@@ -498,18 +498,23 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         final Expression<?> leftExpression, final String op, final Expression<?> value) {
         if (leftExpression instanceof BinaryExpression<?> binaryExpression) {
             if (binaryExpression.getType().name().equals("PROD")) {
-                throw new UnsupportedOperationException(
-                    "NitriteDB does not support $multiply expressions ($expr). "
-                    + "Perform multiplication in application code before querying.");
+                PersistentPropertyPath ctx =
+                    requirePropertyOperand(binaryExpression.getLeft(), binaryExpression.getRight());
+                Object multiplyExpr = Map.of("$multiply", List.of(
+                    exprOperand(binaryExpression.getLeft(), ctx), exprOperand(binaryExpression.getRight(), ctx)));
+                appendExprComparison(multiplyExpr, op, value, ctx);
+                return;
             }
             throw new IllegalStateException(
                 "Unsupported binary expression type: " + binaryExpression.getType());
         }
         if (leftExpression instanceof UnaryExpression<?> unaryExpression) {
             if (unaryExpression.getType().name().equals("LENGTH")) {
-                throw new UnsupportedOperationException(
-                    "NitriteDB does not support string length expressions ($strLenCP / $expr). "
-                    + "Filter by length in application code.");
+                PersistentPropertyPath innerPath =
+                    CriteriaUtils.requireProperty(unaryExpression.getExpression()).getPropertyPath();
+                Object lengthExpr = Map.of("$strLenCP", "$" + getFieldName(innerPath));
+                appendExprComparison(lengthExpr, op, value, innerPath);
+                return;
             }
             throw new IllegalStateException(
                 "Unsupported unary expression type: " + unaryExpression.getType());
@@ -517,6 +522,38 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         PersistentPropertyPath propertyPath =
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         appendOperatorExpression(op, value, propertyPath);
+    }
+
+    /**
+     * Appends a {@code $expr} comparison of a computed left-hand value tree ({@code $strLenCP},
+     * {@code $multiply}) against the right-hand value expression.
+     */
+    private void appendExprComparison(
+        final Object leftExprTree, final String op, final Expression<?> value,
+        final PersistentPropertyPath bindingContextPath) {
+        Object valueExpr = valueRepresentation(queryState, bindingContextPath, bindingContextPath, value);
+        query.put("$expr", Map.of(op, List.of(leftExprTree, valueExpr)));
+    }
+
+    /**
+     * Resolves a {@code $multiply} operand to either a field reference ({@code "$fieldName"}) or
+     * a literal/bound-parameter value, using the same resolution as ordinary comparison values.
+     */
+    private Object exprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
+        if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
+            return "$" + getFieldName(getRequiredProperty(ppp));
+        }
+        return valueRepresentation(queryState, bindingContextPath, bindingContextPath, expr);
+    }
+
+    private PersistentPropertyPath requirePropertyOperand(final Expression<?> left, final Expression<?> right) {
+        if (left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
+            return getRequiredProperty(ppp);
+        }
+        if (right instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
+            return getRequiredProperty(ppp);
+        }
+        throw new IllegalStateException("$multiply requires at least one property-path operand.");
     }
 
     private void appendOperatorExpression(
