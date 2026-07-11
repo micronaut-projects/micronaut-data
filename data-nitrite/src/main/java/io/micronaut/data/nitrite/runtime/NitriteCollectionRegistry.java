@@ -58,6 +58,7 @@ final class NitriteCollectionRegistry {
 
     private final Set<String> indexedCollections = ConcurrentHashMap.newKeySet();
     private final Map<String, NitriteCollection> collectionCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, String> collectionNameCache = new ConcurrentHashMap<>();
 
     NitriteCollectionRegistry(Nitrite database,
                               NitriteTransactionHolder transactionHolder,
@@ -70,8 +71,10 @@ final class NitriteCollectionRegistry {
     }
 
     String getCollectionName(Class<?> type) {
-        MappedEntity mappedEntity = type.getAnnotation(MappedEntity.class);
-        return (mappedEntity != null && !mappedEntity.value().isEmpty()) ? mappedEntity.value() : type.getSimpleName();
+        return collectionNameCache.computeIfAbsent(type, t -> {
+            MappedEntity mappedEntity = t.getAnnotation(MappedEntity.class);
+            return (mappedEntity != null && !mappedEntity.value().isEmpty()) ? mappedEntity.value() : t.getSimpleName();
+        });
     }
 
     NitriteCollection getCollection(Class<?> type) {
@@ -79,8 +82,9 @@ final class NitriteCollectionRegistry {
         NitriteCollection collection;
         if (transactionHolder.isActive()) {
             // Nitrite transactions require the collection to pre-exist before the transaction started.
-            // Touch the collection on the database first (idempotent: creates if absent).
-            database.getCollection(name);
+            // Touch the collection on the database first (idempotent: creates if absent), reusing
+            // collectionCache so the touch only happens once per name instead of on every call.
+            collectionCache.computeIfAbsent(name, database::getCollection);
             collection = transactionHolder.get().getCollection(name);
         } else {
             collection = collectionCache.computeIfAbsent(name, database::getCollection);
