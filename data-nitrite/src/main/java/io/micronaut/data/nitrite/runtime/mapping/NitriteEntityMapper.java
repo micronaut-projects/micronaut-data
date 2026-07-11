@@ -23,9 +23,11 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -436,6 +438,7 @@ public final class NitriteEntityMapper {
       String mappedByValue = null;
       BeanProperty<Object, Object> associatedIdProp = null;
       BeanProperty<Object, Object> backRefProp = null;
+      List<CompositeJoinColumn> compositeJoinColumns = List.of();
 
       if (prop instanceof RuntimeAssociation<?> assoc) {
         mappedByValue = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
@@ -461,6 +464,22 @@ public final class NitriteEntityMapper {
             boolean isCollection = Iterable.class.isAssignableFrom(prop.getType());
             strategy = isCollection ? PropertyStrategy.ASSOCIATION_IDS_REF : PropertyStrategy.ASSOCIATION_ID_REF;
             associatedIdProp = (BeanProperty<Object, Object>) idPropRaw.getProperty();
+
+            // Composite foreign key: more than one @JoinColumn means the association also needs
+            // its own local fields (matching NitriteQueryBuilderHelper's $lookup expectations)
+            // mirroring the referenced properties on the associated entity, in addition to the
+            // normal single-field ID reference used for eager hydration.
+            List<AnnotationValue<JoinColumn>> joinColumnValues =
+                assoc.getAnnotationMetadata().getAnnotationValuesByType(JoinColumn.class);
+            if (joinColumnValues.size() > 1) {
+              List<CompositeJoinColumn> list = new ArrayList<>();
+              for (AnnotationValue<JoinColumn> jc : joinColumnValues) {
+                String localName = jc.stringValue("name").orElse(fieldName);
+                jc.stringValue("referencedColumnName").ifPresent(
+                    referenced -> list.add(new CompositeJoinColumn(localName, referenced)));
+              }
+              compositeJoinColumns = List.copyOf(list);
+            }
           }
         }
         // Pre-compute cascade-capable associations for PERSIST/ALL (for ALL associations, not just mappedBy)
@@ -483,7 +502,7 @@ public final class NitriteEntityMapper {
       }
 
       WritablePropertyMeta<T> meta = new WritablePropertyMeta<>(
-          prop, fieldName, strategy, mappedByValue, associatedIdProp, backRefProp);
+          prop, fieldName, strategy, mappedByValue, associatedIdProp, backRefProp, compositeJoinColumns);
       if (strategy == PropertyStrategy.ASSOCIATION_MAPPED_BY) {
         mappedByList.add(meta);
       } else {
@@ -597,6 +616,17 @@ public final class NitriteEntityMapper {
       };
       if (stored != null) {
         doc.put(fieldName, stored);
+      }
+      if (!wpm.compositeJoinColumns().isEmpty() && value != null) {
+        BeanIntrospection<Object> associatedIntro = BeanIntrospector.SHARED.getIntrospection(castClass(value.getClass()));
+        for (CompositeJoinColumn joinColumn : wpm.compositeJoinColumns()) {
+          associatedIntro.getProperty(joinColumn.referencedProperty()).ifPresent(referencedProp -> {
+            Object referencedValue = referencedProp.get(value);
+            if (referencedValue != null) {
+              doc.put(joinColumn.localName(), toFilterValue(referencedValue));
+            }
+          });
+        }
       }
     }
 
@@ -982,7 +1012,13 @@ public final class NitriteEntityMapper {
             Object val = storedName.equals(ID_FIELD)
                 ? docGet(doc, storedName, name, "_id")
                 : docGet(doc, storedName, name);
-            args[i] = val == null ? null : convertFromDocumentValue(val, arg);
+            if (val == null) {
+                args[i] = null;
+            } else if (prop instanceof RuntimeAssociation) {
+                args[i] = resolveAssociationValue(prop, val, visited);
+            } else {
+                args[i] = convertFromDocumentValue(val, arg);
+            }
         }
         entity = introspection.instantiate(args);
     } else {
@@ -1023,8 +1059,23 @@ public final class NitriteEntityMapper {
         if (value != null) {
             boolean associationStoredEmbedded = isAssociationStoredEmbedded(prop);
             if (prop instanceof RuntimeAssociation association && !associationStoredEmbedded) {
-                if (helper != null) {
-                    Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+                Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+                // A @Join fetch replaces the raw foreign-key scalar with the full joined
+                // sub-document (or array of them) via $lookup — hydrate directly from what's
+                // already there rather than treating it as an id to re-query.
+                if (value instanceof Document embeddedDoc) {
+                    property.set(entity, fromDocumentInternal(embeddedDoc, associatedType, visited));
+                    continue;
+                } else if (value instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Document) {
+                    List<Object> associatedEntities = new ArrayList<>();
+                    for (Object item : list) {
+                        if (item instanceof Document d) {
+                            associatedEntities.add(fromDocumentInternal(d, associatedType, visited));
+                        }
+                    }
+                    property.set(entity, conversionService.convert(associatedEntities, property.asArgument()).orElse(null));
+                    continue;
+                } else if (helper != null) {
                     if (value instanceof Iterable<?> ids) {
                         List<Object> associatedEntities = new ArrayList<>();
                         for (Object associatedId : ids) {
@@ -1089,6 +1140,30 @@ public final class NitriteEntityMapper {
 
     return entity;
   }
+
+    /**
+     * Resolve the raw foreign-key value of an association-typed constructor argument into the actual
+     * associated entity. Constructor arguments would otherwise be passed straight to
+     * {@link #convertFromDocumentValue}, which cannot turn the foreign key into the associated entity
+     * type, yielding {@code null} and (for a non-nullable constructor parameter) an instantiation
+     * failure.
+     *
+     * <p>Only single-valued {@code MANY_TO_ONE}/{@code ONE_TO_ONE} associations reach this path and
+     * they are resolved eagerly on every read (with or without {@code @Join}): the raw value is the
+     * foreign-key id, so the associated document is re-queried and hydrated.
+     * {@link #fromDocumentInternal} returns {@code null} for a missing (dangling) reference.
+     *
+     * @param prop      the association property being resolved (guaranteed a {@link RuntimeAssociation} by the caller)
+     * @param rawValue  the raw foreign-key value read from the document (never null)
+     * @param visited   the in-progress hydration cache, to short-circuit cycles
+     * @return the hydrated associated entity, or {@code null} if the reference is dangling
+     */
+    private <T> Object resolveAssociationValue(RuntimePersistentProperty<T> prop, Object rawValue, Map<String, Object> visited) {
+        RuntimeAssociation association = (RuntimeAssociation) prop;
+        Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+        Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter(associatedType, rawValue)).firstOrNull();
+        return fromDocumentInternal(associatedDoc, associatedType, visited);
+    }
 
     private static <T> boolean isAssociationStoredEmbedded(RuntimePersistentProperty<T> prop) {
         boolean associationStoredEmbedded;

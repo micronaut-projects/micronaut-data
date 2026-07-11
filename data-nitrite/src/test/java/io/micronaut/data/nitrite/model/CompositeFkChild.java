@@ -1,5 +1,6 @@
 package io.micronaut.data.nitrite.model;
 
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -26,6 +27,7 @@ public class CompositeFkChild {
     public CompositeFkChild() {
     }
 
+    @Creator
     public CompositeFkChild(String name, CompositeFkParent parent) {
         this.name = name;
         this.parent = parent;

@@ -18,10 +18,12 @@ snippet::example.AuthorRepository[project-base="doc-examples/nitrite-example", s
 
 == Lazy by Default
 
-Associations are **lazy-loaded by default** in Nitrite. This means:
+`ONE_TO_MANY` and `MANY_TO_MANY` associations are **lazy-loaded by default** in Nitrite. This means:
 
-* Without `@Join`: associations are not loaded (collections are empty)
-* With `@Join`: associations are fetched in the same query operation
+* Without `@Join`: the collection is not loaded (empty)
+* With `@Join`: the collection is fetched in the same query operation, using a single batch query rather than one query per entity
+
+`MANY_TO_ONE` and `ONE_TO_ONE` associations, by contrast, are always eagerly resolved — the owning entity stores the foreign key directly, so Nitrite fetches the associated entity whether or not `@Join` is used. Adding `@Join` to these still helps: it replaces the per-entity lookup with a single `$lookup`-based query, and is required to filter or project through the association with the Criteria API.
 
 snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-usage"]
 

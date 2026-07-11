@@ -112,7 +112,7 @@ snippet::example.AssociationMappingSpec[project-base="doc-examples/nitrite-examp
 
 == Example: Composite Foreign Key with @JoinColumns
 
-A `MANY_TO_ONE` association can be keyed on more than one property of the associated entity using the ann:data.annotation.sql.JoinColumns[] annotation with multiple ann:data.annotation.sql.JoinColumn[] entries. Each `@JoinColumn` maps one local foreign-key field to one `referencedColumnName` on the associated entity, together forming a composite key.
+A `MANY_TO_ONE` association can be keyed on more than one property of the associated entity using the ann:data.annotation.sql.JoinColumns[] annotation with multiple ann:data.annotation.sql.JoinColumn[] entries. Each `@JoinColumn` maps one local foreign-key field to one `referencedColumnName` on the associated entity, together forming a composite key — useful for natural keys such as a tenant ID plus a per-tenant reference number, without introducing a synthetic single-column ID.
 
 .Parent entity with a two-property natural key
 snippet::example.CompositeFkParent[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-parent"]
@@ -122,7 +122,14 @@ snippet::example.CompositeFkParent[project-base="doc-examples/nitrite-example", 
 .Child entity referencing the parent by composite key
 snippet::example.CompositeFkChild[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-child"]
 
+<1> ann:core.annotation.Creator[] marks the constructor Micronaut Data uses to hydrate the entity on read. It is **required** here: because the parent association is a constructor argument, the resolved `CompositeFkParent` is passed in at construction time rather than through a setter.
+
 The `@JoinColumns` annotation pairs each local `@JoinColumn` with the `referencedColumnName` on `CompositeFkParent` it corresponds to, so the join is resolved on both `tenantId` and `refId` together.
+
+[IMPORTANT]
+====
+When an entity declares more than one constructor — for example a no-argument constructor alongside an all-arguments one — annotate the intended constructor with ann:core.annotation.Creator[]. Without it, which constructor bean introspection selects is unspecified, and an entity whose association is a constructor argument may fail to hydrate (an `InstantiationException` at read time). `@Creator` makes the choice explicit and independent of constructor declaration order. Both `CompositeFkParent` and `CompositeFkChild` above annotate their all-arguments constructor for this reason.
+====
 
 .Repository joining the composite foreign key
 snippet::example.CompositeFkChildRepository[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-repository"]
@@ -133,7 +140,7 @@ snippet::example.CompositeFkAssociationSpec[project-base="doc-examples/nitrite-e
 
 == Notes
 
-- Associations are **lazy-loaded by default**. Use the `@Join` annotation to eagerly fetch associations (see <<nitriteAssociationFetching>>).
+- `ONE_TO_MANY` and `MANY_TO_MANY` associations are **lazy-loaded by default**; use `@Join` to fetch them eagerly in a single batch query. `MANY_TO_ONE` and `ONE_TO_ONE` associations are always eagerly resolved regardless of `@Join` — see <<nitriteAssociationFetching>>.
 - For `ONE_TO_MANY` and `MANY_TO_MANY` associations, the associated entities are stored in separate collections with foreign key references.
 - Cascade operations trigger entity lifecycle events for child entities (children before parent for cascade operations).
 - The `mappedBy` attribute is required for bidirectional associations to specify the inverse side.

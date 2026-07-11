@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.core.annotation.Creator
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -23,6 +24,7 @@ class CompositeFkChild {
     ])
     CompositeFkParent parent
 
+    @Creator // <1>
     CompositeFkChild(String name, CompositeFkParent parent) {
         this.name = name
         this.parent = parent

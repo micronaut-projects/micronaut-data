@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.core.annotation.Creator
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -14,6 +15,7 @@ class CompositeFkParent {
     String tenantId
     Long refId
 
+    @Creator
     CompositeFkParent(String tenantId, Long refId) {
         this.tenantId = tenantId
         this.refId = refId
