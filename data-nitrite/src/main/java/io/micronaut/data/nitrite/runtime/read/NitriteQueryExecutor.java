@@ -206,7 +206,19 @@ public final class NitriteQueryExecutor {
             return valueConverter.convertWithTemporalHandling(result, nq.getResultType());
         }
 
-        Document doc = coll.find(filter).firstOrNull();
+        Sort sort = nq.getSort();
+        if (sort == null || !sort.isSorted()) {
+            String query = nq.getQuery();
+            if (query != null) {
+                sort = helper.parseSortFromJsonQuery(query);
+            }
+            if ((sort == null || !sort.isSorted()) && nq.getQueryHints() != null) {
+                sort = helper.parseSortFromHints(nq.getQueryHints());
+            }
+        }
+        Document doc = (sort != null && sort.isSorted())
+            ? coll.find(filter, findOptionsFactory.apply(nq.getPageable(), sort)).firstOrNull()
+            : coll.find(filter).firstOrNull();
         if (doc == null) {
             return null;
         }

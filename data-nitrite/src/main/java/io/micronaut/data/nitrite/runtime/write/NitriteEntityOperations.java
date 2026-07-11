@@ -149,10 +149,23 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Class<T> type = persistentEntity.getIntrospection().getBeanType();
             NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
-            // Check if entity has an existing ID - if so, use update lifecycle
-            boolean hasExistingId = meta.idAccessor() != null && meta.idAccessor().get(entity) != null;
+            // A non-null id alone isn't proof the row already exists: entities with a
+            // manually-assigned id (no @GeneratedValue - UUID, String, Long, ...) always
+            // carry a non-null id, even on their very first save. Only treat the id as
+            // evidence of an existing row when it's framework-generated (null pre-insert),
+            // or otherwise confirm by checking the collection.
+            Object idValue = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            boolean isUpdate;
+            if (idValue == null) {
+                isUpdate = false;
+            } else if (meta.idProp() != null && meta.idProp().isGenerated()) {
+                isUpdate = true;
+            } else {
+                Filter existsFilter = entityMapper.idEqualsFilter(meta, idValue);
+                isUpdate = collection.find(existsFilter).size() > 0;
+            }
 
-            if (hasExistingId) {
+            if (isUpdate) {
                 // Entity has ID - use update lifecycle for proper version/@DateUpdated handling
                 boolean vetoed = triggerPreUpdate();
                 if (vetoed) {
