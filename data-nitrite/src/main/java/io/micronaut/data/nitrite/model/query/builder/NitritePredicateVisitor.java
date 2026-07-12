@@ -23,14 +23,19 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.BoundPathParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import jakarta.persistence.criteria.Expression;
@@ -87,12 +92,25 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     @Override
     public void visitIdEquals(final Expression<?> expression) {
-        // Only reachable with a composite-id entity: PersistentEntityRoot.id() yields an
-        // IdExpression (which routes here) solely for composite identities — a single id
-        // collapses to a property path handled by visitEquals. Whole-identity equality via
-        // id() is unsupported for composite ids; query the individual id properties instead
-        // (composite/embedded-id entities are otherwise queryable by their sub-fields).
-        throw new IllegalStateException("Composite ID not supported!");
+        // Only reachable with a multi-@Id composite identity (no single @EmbeddedId property):
+        // PersistentEntityRoot.id() yields an IdExpression (which routes here) solely in that
+        // case — a single identity property (plain @Id or @EmbeddedId) collapses to a property
+        // path handled by visitEquals. Mirrors AbstractSqlLikeQueryBuilder.visitIdEquals: expand
+        // whole-identity equality into a per-property AND, each bound to the matching sub-path
+        // of the id parameter. Only supported against a bound parameter (there is no single
+        // value type to compare a multi-@Id identity against as a literal).
+        if (!(expression instanceof IParameterExpression<?> parameterExpression)) {
+            throw new IllegalStateException("Composite identity expressions can only be used with parameters");
+        }
+        new ConjunctionPredicate(Arrays.stream(persistentEntity.getCompositeIdentity())
+            .map(prop -> {
+                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(Collections.emptyList(), prop, prop.getName());
+                return new BinaryPredicate(
+                    new DefaultPersistentPropertyPath<>(propertyPath),
+                    new BoundPathParameterExpression<>(parameterExpression, propertyPath),
+                    PredicateBinaryOp.EQUALS);
+            })
+            .toList()).visitPredicate(this);
     }
 
     @Override

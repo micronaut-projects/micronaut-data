@@ -580,18 +580,14 @@ class NitriteCriteriaUnitSpec extends Specification {
     // Phase 2: Error-path and edge-case coverage (NitritePredicateVisitor)
     // -----------------------------------------------------------------------
 
-    void "test id equal on composite identity entity throws"() {
-        given:
+    void "test id equal on composite identity entity with a parameter expands to a per-property AND"() {
+        given: "whole-identity equality against a bound parameter expands into per-composite-property equality"
             criteriaQuery = criteriaBuilder.createQuery()
             def root = criteriaQuery.from(CompositeIdEntity)
-            criteriaQuery.where(criteriaBuilder.equal(root.id(), criteriaBuilder.literal("someId")))
+            criteriaQuery.where(criteriaBuilder.equal(root.id(), criteriaBuilder.parameter(CompositeIdEntity)))
 
-        when:
-            getQuery(criteriaQuery)
-
-        then:
-            def e = thrown(IllegalStateException)
-            e.message == "Composite ID not supported!"
+        expect:
+            getQuery(criteriaQuery) == '''{$and:[{tenant_id:{$eq:{$mn_qp:0}}},{ref_id:{$eq:{$mn_qp:1}}}]}'''
     }
 
     void "test and with single isTrue covers conjunction single-predicate path"() {
