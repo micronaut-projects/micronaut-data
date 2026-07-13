@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.oraclexe.bool.legacy
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.oraclexe.OracleXE21TestPropertyProvider
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -35,6 +36,20 @@ class OracleLegacyBooleanTypeSpec extends Specification implements OracleXE21Tes
 
         and:
         columnTypeName("LEGACY_ORACLE_BOOLEAN_ENTITY", "ACTIVE") == "NUMBER"
+    }
+
+    void "test oracle 21 warns for a native boolean query target and rejects native boolean SQL"() {
+        given:
+        def legacyRepository = applicationContext.getBean(LegacyOracleBooleanRepository)
+        def nativeRepository = applicationContext.getBean(Oracle21NativeBooleanRepository)
+        legacyRepository.save(new LegacyOracleBooleanEntity(null, true))
+
+        when:
+        nativeRepository.findByActiveTrue()
+
+        then:
+        def exception = thrown(DataAccessException)
+        exception.message.contains("Error executing SQL Query")
     }
 
     private String columnTypeName(String tableName, String columnName) {

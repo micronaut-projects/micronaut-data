@@ -78,6 +78,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             context = ApplicationContext.run([
                 "datasources.default.dialect": "ORACLE",
                 "datasources.default.dialect-options.version": "23.1",
+                "datasources.default.dialect-options.validate-version": false,
                 "datasources.default.enabled": false
             ])
 
@@ -87,6 +88,12 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         then:
             configuration.dialect == Dialect.ORACLE
             configuration.resolveDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
+            !configuration.dialectOptions.validateVersion
+    }
+
+    void "enables datasource target version validation by default"() {
+        expect:
+            new DataJdbcConfiguration("default").dialectOptions.validateVersion
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {

@@ -12,7 +12,7 @@ If both are present, the annotation processor option takes precedence.
 
 The configured dialect `version` is a SQL generation target.
 It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
-It is not runtime database version detection, it does not inspect JDBC or R2DBC connection metadata, and it is not a general datasource capability check.
+It is not runtime database version detection and it is not a general datasource capability check.
 Use dot-separated numeric notation only, such as `23.1` or `23.1.0`.
 Micronaut Data compares semantic version values, so a later configured version such as `23.4` also satisfies SQL features that require `23.1`.
 
@@ -47,6 +47,22 @@ interface ProductRepository {
 ----
 
 With this target version, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
+
+When a JDBC repository has a target version, Micronaut Data reads the JDBC server major and minor version on first use and caches it for the datasource.
+It logs one warning for each dialect and target-version pair when the reported server major/minor version is lower than the SQL target major/minor version or has a different major version.
+The warning does not prevent execution; the database remains responsible for accepting or rejecting generated SQL.
+JDBC exposes only server major and minor versions. If a SQL feature requires a specific patch version within the same major and minor release, this diagnostic cannot verify that requirement and does not warn based on the patch number alone.
+This diagnostic is enabled by default. Disable it for a datasource when necessary, for example for a heterogeneous routing datasource or to avoid the JDBC metadata lookup:
+
+[configuration]
+----
+datasources:
+  default:
+    dialect-options:
+      validate-version: false
+----
+
+R2DBC does not perform this diagnostic because it does not expose a reliable structured server version.
 
 If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:
 

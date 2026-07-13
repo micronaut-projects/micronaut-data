@@ -110,10 +110,13 @@ import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -132,6 +135,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -157,6 +161,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     AutoCloseable,
     SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
+
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
@@ -169,8 +175,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Set<DialectTargetVersion> reportedTargetVersionMismatches = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean databaseVersionUnavailableWarned = new AtomicBoolean();
 
     private final Integer defaultFetchSize;
+    @Nullable
+    private volatile Optional<DatabaseVersion> databaseVersion;
 
     /**
      * Default constructor.
@@ -351,6 +361,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Nullable
     private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
+        validateTargetVersion(connection, preparedQuery);
         boolean isSearchResults = preparedQuery.getResultType().equals(SearchResults.class);
         boolean limitToSingleResult = !isSearchResults && !jdbcConfiguration.isUniqueResultOnFindOne();
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, limitToSingleResult)) {
@@ -399,6 +410,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
+        validateTargetVersion(connection, preparedQuery);
         if (preparedQuery.getDialect() == Dialect.ORACLE && (
             preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
             preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
@@ -492,6 +504,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
         return executeRead(connection -> {
             try {
+                validateTargetVersion(connection, preparedQuery);
                 try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
                     preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                     try (ResultSet rs = ps.executeQuery()) {
@@ -516,6 +529,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> pq, Connection connection, boolean closeConnection) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
+        validateTargetVersion(connection, preparedQuery);
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         Class<R> resultType = preparedQuery.getResultType();
         AtomicBoolean finished = new AtomicBoolean();
@@ -620,6 +634,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> pq) {
         SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
         return executeWrite(connection -> {
+            validateTargetVersion(connection, preparedQuery);
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
                 preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                 int result = ps.executeUpdate();
@@ -653,6 +668,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
+        validateTargetVersion(connection, preparedQuery);
         try (CallableStatement callableStatement = connection.prepareCall(preparedQuery.getQuery())) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
@@ -1119,7 +1135,67 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T> JdbcOperationContext createContext(EntityOperation<T> operation, Connection connection, SqlStoredQuery<T, ?> storedQuery) {
+        validateTargetVersion(connection, storedQuery);
         return new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
+    }
+
+    private void validateTargetVersion(Connection connection, SqlStoredQuery<?, ?> storedQuery) {
+        if (!jdbcConfiguration.getDialectOptions().isValidateVersion()) {
+            return;
+        }
+        Optional<String> targetVersion = storedQuery.getDialectOptions().version();
+        if (targetVersion.isEmpty()) {
+            return;
+        }
+        String target = targetVersion.get();
+        DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
+        if (reportedTargetVersionMismatches.contains(targetVersionKey)) {
+            return;
+        }
+        Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
+        if (serverVersion.isEmpty()) {
+            return;
+        }
+        DatabaseVersion server = serverVersion.get();
+        int targetMajor = Integer.parseInt(target.substring(0, target.indexOf('.')));
+        int targetMinor = Integer.parseInt(target.substring(target.indexOf('.') + 1, target.lastIndexOf('.')));
+        // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
+        // because a patch-only target version cannot be validated reliably from this metadata.
+        boolean serverIsOlder = server.major() < targetMajor
+            || (server.major() == targetMajor && server.minor() < targetMinor);
+        if ((server.major() != targetMajor || serverIsOlder) && reportedTargetVersionMismatches.add(targetVersionKey)) {
+            LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
+                server, dataSourceName, target, storedQuery.getDialect());
+        }
+    }
+
+    private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
+        Optional<DatabaseVersion> cached = databaseVersion;
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (this) {
+            cached = databaseVersion;
+            if (cached != null) {
+                return cached;
+            }
+            try {
+                DatabaseMetaData metadata = connection.getMetaData();
+                int major = metadata.getDatabaseMajorVersion();
+                int minor = metadata.getDatabaseMinorVersion();
+                if (major < 1 || minor < 0) {
+                    throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
+                }
+                cached = Optional.of(new DatabaseVersion(major, minor));
+            } catch (SQLException e) {
+                if (databaseVersionUnavailableWarned.compareAndSet(false, true)) {
+                    LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics are disabled.", dataSourceName, e);
+                }
+                cached = Optional.empty();
+            }
+            databaseVersion = cached;
+            return cached;
+        }
     }
 
     /**
@@ -1206,6 +1282,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             this.connection = connection;
             this.ps = ps;
             this.sqlStoredQuery = sqlStoredQuery;
+            validateTargetVersion(connection, sqlStoredQuery);
         }
 
         @Override
@@ -1617,5 +1694,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private record ConnectionContext(Connection connection, boolean needsToBeClosed) {
+    }
+
+    private record DatabaseVersion(int major, int minor) {
+        @Override
+        public String toString() {
+            return major + "." + minor + ".0";
+        }
+    }
+
+    private record DialectTargetVersion(Dialect dialect, String version) {
     }
 }
