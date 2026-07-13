@@ -79,5 +79,6 @@ class DefaultCoroutineTransactionOperations<C : Any>(private val reactiveTransac
         return null
     }
 
+    // Reactor Mono cannot emit null; retain nullable coroutine results as a non-null emitted value.
     private data class ResultBox<R>(val value: R)
 }
