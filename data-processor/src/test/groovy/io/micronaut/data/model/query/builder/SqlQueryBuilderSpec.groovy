@@ -22,6 +22,8 @@ import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
+import io.micronaut.data.model.entities.GeneratedIdentityOnlyEntity
+import io.micronaut.data.model.entities.GeneratedIdOnlyEntity
 import io.micronaut.data.model.entities.GeogEntityJson
 import io.micronaut.data.model.entities.GeogEntityWkt
 import io.micronaut.data.model.entities.GeomEntityCompositeIndex
@@ -553,6 +555,34 @@ interface MyRepository {
         expect:
         result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId", '5': 'company.myId')
+    }
+
+    @Unroll
+    void "test encode #dialect insert statement with only generated id"() {
+        given:
+        def result = builder.createCriteriaInsert(GeneratedIdOnlyEntity).build(new SqlQueryBuilder(dialect))
+
+        expect:
+        result.query == expectedQuery
+        result.parameters.isEmpty()
+
+        where:
+        dialect          || expectedQuery
+        Dialect.ANSI     || 'INSERT INTO "generated_id_only_entity" DEFAULT VALUES'
+        Dialect.H2       || 'INSERT INTO `generated_id_only_entity` DEFAULT VALUES'
+        Dialect.MYSQL    || 'INSERT INTO `generated_id_only_entity` () VALUES ()'
+        Dialect.POSTGRES || 'INSERT INTO "generated_id_only_entity" DEFAULT VALUES'
+        Dialect.SQL_SERVER || 'INSERT INTO [generated_id_only_entity] DEFAULT VALUES'
+        Dialect.ORACLE   || 'INSERT INTO "GENERATED_ID_ONLY_ENTITY" ("ID") VALUES ("GENERATED_ID_ONLY_ENTITY_SEQ".nextval)'
+    }
+
+    void "test encode oracle insert statement with only identity id"() {
+        given:
+        def result = builder.createCriteriaInsert(GeneratedIdentityOnlyEntity).build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        expect:
+        result.query == 'INSERT INTO "GENERATED_IDENTITY_ONLY_ENTITY" VALUES (DEFAULT)'
+        result.parameters.isEmpty()
     }
 
     void "test encode insert statement for embedded"() {
