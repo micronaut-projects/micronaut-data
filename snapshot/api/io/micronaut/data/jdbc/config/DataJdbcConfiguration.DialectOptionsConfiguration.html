@@ -66,6 +66,9 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getVersion()" tabindex="0">getVersion()</a></li>
 <li><a href="#setVersion(java.lang.String)" tabindex="0">setVersion(String)</a></li>
+<li><a href="#isValidateVersion()" tabindex="0">isValidateVersion()</a></li>
+<li><a href="#setValidateVersion(boolean)" tabindex="0">setValidateVersion(boolean)</a></li>
+<li><a href="#toDialectOptions(io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">toDialectOptions(Dialect)</a></li>
 </ol>
 </li>
 </ol>
@@ -87,7 +90,7 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public static final class </span><span class="element-name type-name-label">DataJdbcConfiguration.DialectOptionsConfiguration</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">SQL dialect options configuration.</div>
+<div class="block">SQL dialect options for JDBC schema generation.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>1.0.0</dd>
@@ -125,9 +128,20 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getVersion()" class="member-name-link">getVersion</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isValidateVersion()" class="member-name-link">isValidateVersion</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setValidateVersion(boolean)" class="member-name-link">setValidateVersion</a><wbr>(boolean&nbsp;validateVersion)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setVersion(java.lang.String)" class="member-name-link">setVersion</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;version)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toDialectOptions(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">toDialectOptions</a><wbr>(<a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolve the configured options for a dialect.</div>
+</div>
 </div>
 </div>
 </div>
@@ -169,6 +183,8 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The target dialect version.</dd>
+<dt>Since:</dt>
+<dd>5.1.0</dd>
 </dl>
 </div>
 </section>
@@ -181,6 +197,51 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>version</code> - The target dialect version.</dd>
+<dt>Since:</dt>
+<dd>5.1.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isValidateVersion()">
+<h3>isValidateVersion</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidateVersion</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether JDBC should validate generated SQL target versions against the connected server version.</dd>
+<dt>Since:</dt>
+<dd>5.1.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setValidateVersion(boolean)">
+<h3>setValidateVersion</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setValidateVersion</span><wbr><span class="parameters">(boolean&nbsp;validateVersion)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>validateVersion</code> - Whether JDBC should validate generated SQL target versions against the connected server version.</dd>
+<dt>Since:</dt>
+<dd>5.1.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="toDialectOptions(io.micronaut.data.model.query.builder.sql.Dialect)">
+<h3>toDialectOptions</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></span>&nbsp;<span class="element-name">toDialectOptions</span><wbr><span class="parameters">(<a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+<div class="block">Resolve the configured options for a dialect.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dialect</code> - The dialect</dd>
+<dt>Returns:</dt>
+<dd>The resolved options</dd>
 </dl>
 </div>
 </section>
