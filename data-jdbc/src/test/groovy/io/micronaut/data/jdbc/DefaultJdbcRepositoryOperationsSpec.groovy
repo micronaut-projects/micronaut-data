@@ -36,6 +36,7 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.PreparedStatement
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -123,6 +124,36 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         then:
             result == Optional.of(0)
             0 * connection.getMetaData()
+    }
+
+    void "normalizes major-only target version metadata for JDBC diagnostics"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            DatabaseMetaData databaseMetaData = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            connection.getMetaData() >> databaseMetaData
+            databaseMetaData.databaseMajorVersion >> 23
+            databaseMetaData.databaseMinorVersion >> 0
+            statement.executeUpdate() >> 0
+
+        when:
+            Optional<Number> result = operations.executeUpdate(query)
+
+        then:
+            result == Optional.of(0)
+            1 * connection.getMetaData()
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {

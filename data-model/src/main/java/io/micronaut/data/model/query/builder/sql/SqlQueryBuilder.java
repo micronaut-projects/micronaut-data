@@ -237,6 +237,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
+    protected SqlDialectOptions getDialectOptions() {
+        return dialectOptions;
+    }
+
+    @Override
     protected boolean shouldEscape(PersistentEntity entity) {
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
         return Objects.requireNonNullElseGet(shouldEscapeDialect, () -> super.shouldEscape(entity));
@@ -856,7 +861,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
                     column += " " + tableIdentity.getDefinition();
                 } else {
-                    column += " " + tableIdentity.getSqlType(dialect, dialectOptions.version().orElse(null));
+                    column += " " + tableIdentity.getSqlType(dialectOptions);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -876,7 +881,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
             } else {
-                column += " " + tableColumn.getSqlType(dialect, dialectOptions.version().orElse(null));
+                column += " " + tableColumn.getSqlType(dialectOptions);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }

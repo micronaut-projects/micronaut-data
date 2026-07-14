@@ -428,12 +428,22 @@ public final class SqlColumnMapping {
      * @since 5.1
      */
     public String getSqlType(Dialect dialect, @Nullable String dialectVersion) {
+        return getSqlType(SqlDialectOptions.of(dialect, dialectVersion));
+    }
+
+    /**
+     * Returns the SQL type representation of this column for the given dialect options.
+     *
+     * @param dialectOptions the resolved dialect options to generate the type for
+     * @return the SQL type representation of this column
+     */
+    public String getSqlType(SqlDialectOptions dialectOptions) {
         if (dataType == DataType.BOOLEAN
-            && dialect == Dialect.ORACLE
-            && SqlDialectOptions.of(dialect, dialectVersion).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+            && dialectOptions.dialect() == Dialect.ORACLE
+            && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
             return "BOOLEAN";
         }
-        return getSqlType(dialect);
+        return getSqlType(dialectOptions.dialect());
     }
 
     /**

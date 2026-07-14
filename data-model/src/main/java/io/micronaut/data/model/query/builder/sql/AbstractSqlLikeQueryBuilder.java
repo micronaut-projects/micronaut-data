@@ -215,6 +215,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * @return the resolved dialect options for this builder
+     */
+    protected SqlDialectOptions getDialectOptions() {
+        return SqlDialectOptions.of(getDialect(), getDialectVersion());
+    }
+
+    /**
      * @return True if embedded properties should be traversed
      */
     protected boolean traverseEmbedded() {
@@ -3533,11 +3540,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
-            return getCastDbType(type, dialect, SqlDialectOptions.defaults(dialect));
+            return getCastDbType(type, SqlDialectOptions.defaults(dialect));
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type,
-                                    Dialect dialect,
                                     SqlDialectOptions dialectOptions) {
             if (type == null) {
                 throw new IllegalStateException("CAST type is expected");
@@ -3550,14 +3556,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dataType == DataType.OBJECT) {
                 throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
             }
-            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect, dialectOptions.version().orElse(null));
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialectOptions);
         }
 
         private void appendCast(ExpressionType<?> type, Expression<?> expression) {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect(), SqlDialectOptions.of(getDialect(), getDialectVersion())));
+            query.append(getCastDbType(type, getDialectOptions()));
             query.append(CLOSE_BRACKET);
         }
 

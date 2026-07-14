@@ -55,6 +55,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -1139,14 +1140,23 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (target == null) {
             return;
         }
-        DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
+        Dialect dialect = storedQuery.getDialect();
+        Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
+        String targetVersion = normalizedTarget.orElse(target);
+        DialectTargetVersion targetVersionKey = new DialectTargetVersion(dialect, targetVersion);
         // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
         // without waiting because this diagnostic does not affect query execution.
         if (targetVersionValidations.putIfAbsent(targetVersionKey, TargetVersionValidation.IN_PROGRESS) != null) {
             return;
         }
         try {
-            DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(target, targetVersionKey);
+            if (normalizedTarget.isEmpty()) {
+                LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                    target, dialect);
+                targetVersionValidations.put(targetVersionKey, TargetVersionValidation.INVALID);
+                return;
+            }
+            DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(targetVersion, targetVersionKey);
             if (targetDatabaseVersion == null) {
                 targetVersionValidations.put(targetVersionKey, TargetVersionValidation.INVALID);
                 return;
@@ -1163,7 +1173,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
             if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
                 LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
-                    server, dataSourceName, target, storedQuery.getDialect());
+                    server, dataSourceName, targetVersion, dialect);
                 targetVersionValidations.put(targetVersionKey, TargetVersionValidation.MISMATCH);
             } else {
                 targetVersionValidations.put(targetVersionKey, TargetVersionValidation.VALID);
@@ -1178,21 +1188,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
         try {
             String[] targetParts = target.split("\\.", -1);
-            if (targetParts.length < 2 || targetParts.length > 3) {
-                throw new IllegalArgumentException("Target version must contain major, minor, and optional patch components");
-            }
-            for (String targetPart : targetParts) {
-                if (targetPart.isEmpty()) {
-                    throw new IllegalArgumentException("Target version components cannot be empty");
-                }
-                for (int i = 0; i < targetPart.length(); i++) {
-                    if (!Character.isDigit(targetPart.charAt(i))) {
-                        throw new IllegalArgumentException("Target version components must be numeric");
-                    }
-                }
-            }
             return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
-        } catch (IllegalArgumentException e) {
+        } catch (NumberFormatException e) {
             LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
                 target, targetVersionKey.dialect());
             return null;

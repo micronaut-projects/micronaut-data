@@ -329,11 +329,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private static void configureSqlDialectOptions(ClassElement element, VisitorContext context) {
         AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
-        boolean usesSqlQueryBuilder = annotationMetadata.stringValue(
+        boolean usesSqlQueryBuilder = annotationMetadata.classValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER
             )
-            .filter(SqlQueryBuilder.class.getName()::equals)
+            .filter(SqlQueryBuilder.class::equals)
             .isPresent();
         if (!usesSqlQueryBuilder) {
             return;

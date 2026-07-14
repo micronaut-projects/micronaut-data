@@ -60,7 +60,7 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
                 }
                 oracleSqlType += ")";
             }
-            return columnMapping.getSqlType(Dialect.ORACLE, dialectOptions.version().orElse(null)).equalsIgnoreCase(oracleSqlType);
+            return columnMapping.getSqlType(dialectOptions).equalsIgnoreCase(oracleSqlType);
         } else if (isOracleBinaryDoubleOrFloat(columnMetadata.typeName())) {
             return isFloatOrRealOrDouble(columnMapping.getDbType().getType());
         }
