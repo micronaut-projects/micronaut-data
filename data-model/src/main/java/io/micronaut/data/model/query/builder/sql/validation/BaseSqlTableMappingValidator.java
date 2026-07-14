@@ -91,7 +91,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      */
     protected final boolean matchingColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata,
                                                Dialect dialect) {
-        return matchingColumnType(columnMapping, columnMetadata, dialect, SqlDialectOptions.defaults(dialect));
+        return matchingColumnType(columnMapping, columnMetadata, SqlDialectOptions.defaults(dialect));
     }
 
     /**
@@ -100,13 +100,11 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      *
      * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
      * @param columnMetadata the SQL column metadata from the database
-     * @param dialect        the SQL dialect to consider during type comparison
      * @param dialectOptions the dialect options
      * @return true if the column type matches, false otherwise
      */
     protected final boolean matchingColumnType(SqlColumnMapping columnMapping,
                                                SqlColumnMetadata columnMetadata,
-                                               Dialect dialect,
                                                SqlDialectOptions dialectOptions) {
         if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return true;
@@ -195,7 +193,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             // and let user be responsible for mapping of that field
             return;
         }
-        if (matchingColumnType(columnMapping, columnMetadata, dialect, dialectOptions)) {
+        if (matchingColumnType(columnMapping, columnMetadata, dialectOptions)) {
             return;
         }
         throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",

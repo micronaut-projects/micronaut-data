@@ -1132,60 +1132,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
     }
 
-    private void validateTargetVersion(Connection connection, SqlStoredQuery<?, ?> storedQuery) {
-        if (!jdbcConfiguration.getDialectOptions().isValidateVersion()) {
-            return;
-        }
-        String target = storedQuery.getDialectVersion();
-        if (target == null) {
-            return;
-        }
-        Dialect dialect = storedQuery.getDialect();
-        Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
-        String targetVersion = normalizedTarget.orElse(target);
-        DialectTargetVersion targetVersionKey = new DialectTargetVersion(dialect, targetVersion);
-        // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
-        // without waiting because this diagnostic does not affect query execution.
-        if (!checkedTargetVersions.add(targetVersionKey)) {
-            return;
-        }
-        try {
-            if (normalizedTarget.isEmpty()) {
-                LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
-                    target, dialect);
-                return;
-            }
-            DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(targetVersion, targetVersionKey);
-            if (targetDatabaseVersion == null) {
-                return;
-            }
-            Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
-            if (serverVersion.isEmpty()) {
-                // Do not cache a failed metadata lookup. A later operation can retry the diagnostic.
-                checkedTargetVersions.remove(targetVersionKey);
-                return;
-            }
-            DatabaseVersion server = serverVersion.get();
-            // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
-            // because a patch-only target version cannot be validated reliably from this metadata.
-            boolean serverIsOlder = server.major() < targetDatabaseVersion.major()
-                || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
-            if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
-                LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
-                    server, dataSourceName, targetVersion, dialect);
-            }
-        } catch (RuntimeException e) {
-            checkedTargetVersions.remove(targetVersionKey);
-            throw e;
-        }
-    }
-
     @Nullable
     private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
         try {
             String[] targetParts = target.split("\\.", -1);
             return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
                 target, targetVersionKey.dialect());
             return null;
@@ -1365,6 +1317,53 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return index;
         }
 
+        private void validateTargetVersion(Connection connection, SqlStoredQuery<?, ?> storedQuery) {
+            if (!jdbcConfiguration.getDialectOptions().isValidateVersion()) {
+                return;
+            }
+            String target = storedQuery.getDialectVersion();
+            if (target == null) {
+                return;
+            }
+            Dialect dialect = storedQuery.getDialect();
+            Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
+            String targetVersion = normalizedTarget.orElse(target);
+            DialectTargetVersion targetVersionKey = new DialectTargetVersion(dialect, targetVersion);
+            // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
+            // without waiting because this diagnostic does not affect query execution.
+            if (!checkedTargetVersions.add(targetVersionKey)) {
+                return;
+            }
+            try {
+                if (normalizedTarget.isEmpty()) {
+                    LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                        target, dialect);
+                    return;
+                }
+                DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(targetVersion, targetVersionKey);
+                if (targetDatabaseVersion == null) {
+                    return;
+                }
+                Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
+                if (serverVersion.isEmpty()) {
+                    // Do not cache a failed metadata lookup. A later operation can retry the diagnostic.
+                    checkedTargetVersions.remove(targetVersionKey);
+                    return;
+                }
+                DatabaseVersion server = serverVersion.get();
+                // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
+                // because a patch-only target version cannot be validated reliably from this metadata.
+                boolean serverIsOlder = server.major() < targetDatabaseVersion.major()
+                    || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
+                if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
+                    LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
+                        server, dataSourceName, targetVersion, dialect);
+                }
+            } catch (RuntimeException e) {
+                checkedTargetVersions.remove(targetVersionKey);
+                throw e;
+            }
+        }
     }
 
     private final class JdbcEntityOperations<T> extends AbstractSyncEntityOperations<JdbcOperationContext, T, SQLException> {

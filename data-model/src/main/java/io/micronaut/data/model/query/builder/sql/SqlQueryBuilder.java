@@ -258,7 +258,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     protected String asLiteral(@Nullable Object value) {
         if (dialect == Dialect.SQL_SERVER && value instanceof Boolean vBoolean) {
-            return vBoolean ? "1" : "0";
+            return Boolean.TRUE.equals(vBoolean) ? "1" : "0";
         }
         if (dialect == Dialect.ORACLE
             && value instanceof Boolean vBoolean
