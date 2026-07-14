@@ -43,7 +43,7 @@ public record SqlDialectOptions(
     /**
      * Oracle version that enables native SQL boolean generation.
      */
-    public static final String ORACLE_23_1_VERSION = "23.1.0";
+    public static final String ORACLE_23_1_0_VERSION = "23.1.0";
 
     /**
      * Annotation processor option prefix for SQL dialect options.

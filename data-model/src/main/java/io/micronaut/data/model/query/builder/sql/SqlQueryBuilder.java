@@ -262,7 +262,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         if (dialect == Dialect.ORACLE
             && value instanceof Boolean vBoolean
-            && !dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+            && !dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
             return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);

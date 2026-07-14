@@ -242,7 +242,7 @@ interface MyRepository {
 
         then:
         sqlQueryBuilder.dialect == Dialect.ORACLE
-        sqlQueryBuilder.dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
+        sqlQueryBuilder.dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)
     }
 
     void "test encode update with JSON and MySQL"() {
@@ -275,7 +275,7 @@ interface MyRepository {
         def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
         def nativeBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.ORACLE_23_1_VERSION
+            SqlDialectOptions.ORACLE_23_1_0_VERSION
         )
 
         when:

@@ -27,12 +27,12 @@ class SqlColumnMappingSpec extends Specification {
 
         expect:
         column.getSqlType(Dialect.ORACLE) == "NUMBER(1)"
-        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION) == "BOOLEAN"
+        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_0_VERSION) == "BOOLEAN"
     }
 
     void "dialect options compare parsed target versions"() {
         expect:
-        SqlDialectOptions.of(Dialect.ORACLE, version).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION) == compatible
+        SqlDialectOptions.of(Dialect.ORACLE, version).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION) == compatible
 
         where:
         version      | compatible
