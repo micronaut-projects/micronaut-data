@@ -31,7 +31,7 @@ import java.sql.Types;
  * This class extends {@link BaseSqlTableMappingValidator} and provides Oracle-specific logic for validating
  * SQL table mappings against actual table metadata from an Oracle database.
  * <p>
- * It overrides the {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata)} method to handle
+ * It overrides the {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)} method to handle
  * Oracle-specific type mappings, such as UUIDs stored as VARCHAR(36) and numeric types represented as NUMBER.
  *
  * @since 4.13.0

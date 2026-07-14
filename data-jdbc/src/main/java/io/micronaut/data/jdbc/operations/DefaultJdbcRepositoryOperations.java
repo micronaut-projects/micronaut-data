@@ -1699,7 +1699,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private record DatabaseVersion(int major, int minor) {
         @Override
         public String toString() {
-            return major + "." + minor + ".0";
+            return major + "." + minor;
         }
     }
 
