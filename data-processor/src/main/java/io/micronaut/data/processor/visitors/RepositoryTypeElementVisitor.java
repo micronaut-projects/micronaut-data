@@ -342,8 +342,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
             .orElseGet(() ->
                 annotationMetadata
-                    .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
-                    .orElse(Dialect.ANSI));
+                    .enumValue(R2DBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
+                    .orElseGet(() ->
+                        annotationMetadata
+                            .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
+                            .orElse(Dialect.ANSI)));
         if (hasExplicitSqlDialectVersion(annotationMetadata, dialect)) {
             return;
         }

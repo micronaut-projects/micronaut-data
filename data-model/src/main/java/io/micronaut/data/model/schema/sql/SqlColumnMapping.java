@@ -427,6 +427,9 @@ public final class SqlColumnMapping {
      * @return the SQL type representation of this column
      */
     public String getSqlType(Dialect dialect, SqlDialectOptions dialectOptions) {
+        if (dialectOptions.dialect() != dialect) {
+            throw new IllegalArgumentException("Dialect options must match the requested dialect");
+        }
         if (dataType == DataType.BOOLEAN
             && dialect == Dialect.ORACLE
             && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {

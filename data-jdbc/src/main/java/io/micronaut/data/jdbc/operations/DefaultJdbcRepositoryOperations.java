@@ -1147,6 +1147,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
         String target = targetVersion.get();
         DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
+        // The atomic add below remains the warning gate. This fast path avoids JDBC metadata
+        // access for target versions that have already been reported as mismatched.
         if (reportedTargetVersionMismatches.contains(targetVersionKey)) {
             return;
         }
@@ -1155,8 +1157,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return;
         }
         DatabaseVersion server = serverVersion.get();
-        int targetMajor = Integer.parseInt(target.substring(0, target.indexOf('.')));
-        int targetMinor = Integer.parseInt(target.substring(target.indexOf('.') + 1, target.lastIndexOf('.')));
+        String[] targetParts = target.split("\\.", -1);
+        int targetMajor = Integer.parseInt(targetParts[0]);
+        int targetMinor = Integer.parseInt(targetParts[1]);
         // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
         // because a patch-only target version cannot be validated reliably from this metadata.
         boolean serverIsOlder = server.major() < targetMajor
