@@ -362,7 +362,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             version = System.getProperty(versionConfiguration);
         }
         if (StringUtils.isNotEmpty(version)) {
-            annotateSqlDialectVersion(element, annotationMetadata, dialect, version);
+            if (SqlDialectOptions.of(dialect, version).version().isPresent()) {
+                annotateSqlDialectVersion(element, annotationMetadata, dialect, version);
+            } else {
+                context.warn("Invalid SQL dialect target version '" + version + "' for dialect " + dialect
+                    + ". Expected numeric major[.minor[.patch]] notation.", element);
+            }
         }
     }
 
