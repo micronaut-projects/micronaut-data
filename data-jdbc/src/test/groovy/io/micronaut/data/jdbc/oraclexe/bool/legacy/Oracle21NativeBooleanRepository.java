@@ -7,8 +7,8 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 
 /**
- * Used to test the new boolean oracle column that requires Oracle 23.1+ against Oracle 21
- * which would cause log to be warned and also query to fail.
+ * Used to test Oracle native BOOLEAN SQL generation (requires Oracle 23.1+) against Oracle 21,
+ * which should trigger a warning log message and cause the query to fail.
  */
 @JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
 public interface Oracle21NativeBooleanRepository extends CrudRepository<LegacyOracleBooleanEntity, Long> {
