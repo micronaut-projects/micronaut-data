@@ -1178,8 +1178,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
         try {
             String[] targetParts = target.split("\\.", -1);
-            if (targetParts.length < 2) {
-                throw new IllegalArgumentException("Target version must contain major and minor components");
+            if (targetParts.length < 2 || targetParts.length > 3) {
+                throw new IllegalArgumentException("Target version must contain major, minor, and optional patch components");
             }
             for (String targetPart : targetParts) {
                 if (targetPart.isEmpty()) {

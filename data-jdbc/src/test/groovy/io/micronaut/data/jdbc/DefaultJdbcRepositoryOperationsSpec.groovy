@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
@@ -29,11 +30,13 @@ import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.PreparedStatement
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -96,13 +99,44 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             new DataJdbcConfiguration("default").dialectOptions.validateVersion
     }
 
+    void "ignores malformed target version metadata for JDBC diagnostics"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23.1.0.1"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            statement.executeUpdate() >> 0
+
+        when:
+            Optional<Number> result = operations.executeUpdate(query)
+
+        then:
+            result == Optional.of(0)
+            0 * connection.getMetaData()
+    }
+
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {
+        newOperations(executorService, Mock(ConnectionOperations<Connection>))
+    }
+
+    private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService,
+                                                           ConnectionOperations<Connection> connectionOperations) {
         context = ApplicationContext.run()
         return new DefaultJdbcRepositoryOperations(
                 "default",
                 new DataJdbcConfiguration("default"),
                 Mock(DataSource),
-                Mock(ConnectionOperations<Connection>),
+                connectionOperations,
                 Mock(TransactionOperations<Connection>),
                 executorService,
                 context,
