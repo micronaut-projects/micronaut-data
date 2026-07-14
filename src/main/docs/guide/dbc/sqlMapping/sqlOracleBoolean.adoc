@@ -13,7 +13,7 @@ If both are present, the annotation processor option takes precedence.
 The configured dialect `version` is a SQL generation target.
 It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
 It is not runtime database version detection and it is not a general datasource capability check.
-Use dot-separated numeric notation only, such as `23.1` or `23.1.0`.
+Use numeric major[.minor[.patch]] notation, such as `23.1` or `23.1.0`. Major-only values such as `23` are treated as `23.0.0` and do not enable features that require `23.1`.
 Micronaut Data compares semantic version values, so a later configured version such as `23.4` also satisfies SQL features that require `23.1`.
 
 For Gradle Java projects:
