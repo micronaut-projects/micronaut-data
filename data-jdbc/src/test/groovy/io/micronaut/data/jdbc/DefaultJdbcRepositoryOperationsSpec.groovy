@@ -22,7 +22,6 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory

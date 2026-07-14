@@ -1213,12 +1213,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static final class DatabaseVersionLookupException extends RuntimeException {
-        private DatabaseVersionLookupException(SQLException cause) {
-            super(cause);
-        }
-    }
-
     /**
      * Gets the generated id on record insert.
      *
@@ -1727,5 +1721,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private record DialectTargetVersion(Dialect dialect, String version) {
+    }
+
+    private static final class DatabaseVersionLookupException extends RuntimeException {
+        private DatabaseVersionLookupException(SQLException cause) {
+            super(cause);
+        }
     }
 }
