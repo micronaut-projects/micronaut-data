@@ -2,9 +2,7 @@ package io.micronaut.data.jdbc.oraclexe.bool.nativebool
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
-import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.oraclexe.Oracle23TestPropertyProvider
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification

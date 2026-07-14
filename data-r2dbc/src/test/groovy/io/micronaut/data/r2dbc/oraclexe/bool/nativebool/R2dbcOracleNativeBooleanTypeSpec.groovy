@@ -1,8 +1,6 @@
 package io.micronaut.data.r2dbc.oraclexe.bool.nativebool
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
-import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration
 import io.micronaut.data.r2dbc.oraclexe.Oracle23TestPropertyProvider
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
