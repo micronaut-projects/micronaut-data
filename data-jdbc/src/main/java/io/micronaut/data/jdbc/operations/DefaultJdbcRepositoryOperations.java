@@ -175,6 +175,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Set<DialectTargetVersion> validatedTargetVersions = ConcurrentHashMap.newKeySet();
     private final Set<DialectTargetVersion> reportedTargetVersionMismatches = ConcurrentHashMap.newKeySet();
     private final SynchronizedLazyValue<Optional<DatabaseVersion>> databaseVersion = new SynchronizedLazyValue<>();
 
@@ -1146,9 +1147,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return;
         }
         DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
-        // The atomic add below remains the warning gate. This fast path avoids JDBC metadata
-        // access for target versions that have already been reported as mismatched.
-        if (reportedTargetVersionMismatches.contains(targetVersionKey)) {
+        // The atomic adds below remain the validation and warning gates. This fast path avoids JDBC metadata
+        // access after a target version has been validated or reported as mismatched for this datasource.
+        if (validatedTargetVersions.contains(targetVersionKey)
+            || reportedTargetVersionMismatches.contains(targetVersionKey)) {
             return;
         }
         Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
@@ -1163,9 +1165,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         // because a patch-only target version cannot be validated reliably from this metadata.
         boolean serverIsOlder = server.major() < targetMajor
             || (server.major() == targetMajor && server.minor() < targetMinor);
-        if ((server.major() != targetMajor || serverIsOlder) && reportedTargetVersionMismatches.add(targetVersionKey)) {
-            LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
-                server, dataSourceName, target, storedQuery.getDialect());
+        if (server.major() != targetMajor || serverIsOlder) {
+            if (reportedTargetVersionMismatches.add(targetVersionKey)) {
+                LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
+                    server, dataSourceName, target, storedQuery.getDialect());
+            }
+        } else {
+            validatedTargetVersions.add(targetVersionKey);
         }
     }
 

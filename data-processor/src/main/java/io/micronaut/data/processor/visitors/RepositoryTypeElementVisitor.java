@@ -353,7 +353,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         String versionConfiguration = SqlDialectOptions.versionConfiguration(dialect);
         String version = annotationMetadata
             .stringValue(JDBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION)
-            .or(() -> annotationMetadata.stringValue(R2DBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION))
+            .filter(StringUtils::isNotEmpty)
+            .or(() -> annotationMetadata
+                .stringValue(R2DBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION)
+                .filter(StringUtils::isNotEmpty))
             .orElseGet(() -> context.getOptions().get(versionConfiguration));
         if (StringUtils.isEmpty(version)) {
             version = System.getProperty(versionConfiguration);
