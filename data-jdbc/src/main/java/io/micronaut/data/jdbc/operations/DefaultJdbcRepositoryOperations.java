@@ -136,6 +136,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -175,9 +176,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
-    private final Set<DialectTargetVersion> validatedTargetVersions = ConcurrentHashMap.newKeySet();
-    private final Set<DialectTargetVersion> reportedInvalidTargetVersions = ConcurrentHashMap.newKeySet();
-    private final Set<DialectTargetVersion> reportedTargetVersionMismatches = ConcurrentHashMap.newKeySet();
+    private final ConcurrentMap<DialectTargetVersion, TargetVersionValidation> targetVersionValidations = new ConcurrentHashMap<>();
     private final SynchronizedLazyValue<Optional<DatabaseVersion>> databaseVersion = new SynchronizedLazyValue<>();
 
     private final Integer defaultFetchSize;
@@ -1141,33 +1140,37 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return;
         }
         DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
-        // The atomic adds below remain the validation and warning gates. This fast path avoids JDBC metadata
-        // access after a target version has been validated, found invalid, or reported as mismatched for this datasource.
-        if (validatedTargetVersions.contains(targetVersionKey)
-            || reportedInvalidTargetVersions.contains(targetVersionKey)
-            || reportedTargetVersionMismatches.contains(targetVersionKey)) {
+        // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
+        // without waiting because this diagnostic does not affect query execution.
+        if (targetVersionValidations.putIfAbsent(targetVersionKey, TargetVersionValidation.IN_PROGRESS) != null) {
             return;
         }
-        DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(target, targetVersionKey);
-        if (targetDatabaseVersion == null) {
-            return;
-        }
-        Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
-        if (serverVersion.isEmpty()) {
-            return;
-        }
-        DatabaseVersion server = serverVersion.get();
-        // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
-        // because a patch-only target version cannot be validated reliably from this metadata.
-        boolean serverIsOlder = server.major() < targetDatabaseVersion.major()
-            || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
-        if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
-            if (reportedTargetVersionMismatches.add(targetVersionKey)) {
+        try {
+            DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(target, targetVersionKey);
+            if (targetDatabaseVersion == null) {
+                targetVersionValidations.put(targetVersionKey, TargetVersionValidation.INVALID);
+                return;
+            }
+            Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
+            if (serverVersion.isEmpty()) {
+                targetVersionValidations.put(targetVersionKey, TargetVersionValidation.UNAVAILABLE);
+                return;
+            }
+            DatabaseVersion server = serverVersion.get();
+            // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
+            // because a patch-only target version cannot be validated reliably from this metadata.
+            boolean serverIsOlder = server.major() < targetDatabaseVersion.major()
+                || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
+            if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
                 LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
                     server, dataSourceName, target, storedQuery.getDialect());
+                targetVersionValidations.put(targetVersionKey, TargetVersionValidation.MISMATCH);
+            } else {
+                targetVersionValidations.put(targetVersionKey, TargetVersionValidation.VALID);
             }
-        } else {
-            validatedTargetVersions.add(targetVersionKey);
+        } catch (RuntimeException e) {
+            targetVersionValidations.remove(targetVersionKey, TargetVersionValidation.IN_PROGRESS);
+            throw e;
         }
     }
 
@@ -1190,10 +1193,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
             return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
         } catch (IllegalArgumentException e) {
-            if (reportedInvalidTargetVersions.add(targetVersionKey)) {
-                LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
-                    target, targetVersionKey.dialect());
-            }
+            LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                target, targetVersionKey.dialect());
             return null;
         }
     }
@@ -1723,5 +1724,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private record DialectTargetVersion(Dialect dialect, String version) {
+    }
+
+    private enum TargetVersionValidation {
+        IN_PROGRESS,
+        VALID,
+        INVALID,
+        MISMATCH,
+        UNAVAILABLE
     }
 }
