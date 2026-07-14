@@ -48,7 +48,8 @@ interface ProductRepository {
 
 With this target version, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
 
-When a JDBC repository has a target version, Micronaut Data reads the JDBC server major and minor version on first use and caches it for the datasource.
+When a JDBC repository has a target version, Micronaut Data reads the JDBC server major and minor version on first use and caches a successful result for the datasource.
+If that metadata lookup fails, a later operation retries it.
 It logs one warning for each dialect and target-version pair when the reported server major/minor version is lower than the SQL target major/minor version or has a different major version.
 The warning does not prevent execution; the database remains responsible for accepting or rejecting generated SQL.
 JDBC exposes only server major and minor versions. If a SQL feature requires a specific patch version within the same major and minor release, this diagnostic cannot verify that requirement and does not warn based on the patch number alone.

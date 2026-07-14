@@ -177,7 +177,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
     private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
-    private final SynchronizedLazyValue<Optional<DatabaseVersion>> databaseVersion = new SynchronizedLazyValue<>();
+    private final SynchronizedLazyValue<DatabaseVersion> databaseVersion = new SynchronizedLazyValue<>();
 
     private final Integer defaultFetchSize;
 
@@ -1161,6 +1161,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
             Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
             if (serverVersion.isEmpty()) {
+                // Do not cache a failed metadata lookup. A later operation can retry the diagnostic.
+                checkedTargetVersions.remove(targetVersionKey);
                 return;
             }
             DatabaseVersion server = serverVersion.get();
@@ -1191,20 +1193,30 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
-        return databaseVersion.get(() -> {
-            try {
-                DatabaseMetaData metadata = connection.getMetaData();
-                int major = metadata.getDatabaseMajorVersion();
-                int minor = metadata.getDatabaseMinorVersion();
-                if (major < 1 || minor < 0) {
-                    throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
+        try {
+            return Optional.of(databaseVersion.get(() -> {
+                try {
+                    DatabaseMetaData metadata = connection.getMetaData();
+                    int major = metadata.getDatabaseMajorVersion();
+                    int minor = metadata.getDatabaseMinorVersion();
+                    if (major < 1 || minor < 0) {
+                        throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
+                    }
+                    return new DatabaseVersion(major, minor);
+                } catch (SQLException e) {
+                    throw new DatabaseVersionLookupException(e);
                 }
-                return Optional.of(new DatabaseVersion(major, minor));
-            } catch (SQLException e) {
-                LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics are disabled.", dataSourceName, e);
-                return Optional.empty();
-            }
-        });
+            }));
+        } catch (DatabaseVersionLookupException e) {
+            LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics will be retried.", dataSourceName, e.getCause());
+            return Optional.empty();
+        }
+    }
+
+    private static final class DatabaseVersionLookupException extends RuntimeException {
+        private DatabaseVersionLookupException(SQLException cause) {
+            super(cause);
+        }
     }
 
     /**

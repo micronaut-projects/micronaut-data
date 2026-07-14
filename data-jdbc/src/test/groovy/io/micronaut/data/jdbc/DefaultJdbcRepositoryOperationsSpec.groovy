@@ -38,6 +38,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.PreparedStatement
+import java.sql.SQLException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -135,6 +136,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             PreparedStatement statement = Mock()
             DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
             SqlPreparedQuery<Object, Number> query = Mock()
+            int metadataCalls = 0
             query.dialect >> Dialect.ORACLE
             query.dialectVersion >> "23"
             query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
@@ -143,7 +145,10 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
             connectionStatus.connection >> connection
             connection.prepareStatement("UPDATE test SET active = 1") >> statement
-            connection.getMetaData() >> databaseMetaData
+            connection.getMetaData() >> {
+                metadataCalls++
+                databaseMetaData
+            }
             databaseMetaData.databaseMajorVersion >> 23
             databaseMetaData.databaseMinorVersion >> 0
             statement.executeUpdate() >> 0
@@ -153,7 +158,43 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             result == Optional.of(0)
-            1 * connection.getMetaData()
+            metadataCalls == 1
+    }
+
+    void "retries JDBC target-version diagnostics after a metadata lookup failure"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            DatabaseMetaData databaseMetaData = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            int metadataAttempts = 0
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            connection.getMetaData() >> {
+                if (metadataAttempts++ == 0) {
+                    throw new SQLException("Temporary metadata failure")
+                }
+                databaseMetaData
+            }
+            databaseMetaData.databaseMajorVersion >> 23
+            databaseMetaData.databaseMinorVersion >> 0
+            statement.executeUpdate() >> 0
+
+        when:
+            operations.executeUpdate(query)
+            operations.executeUpdate(query)
+
+        then:
+            metadataAttempts == 2
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {
