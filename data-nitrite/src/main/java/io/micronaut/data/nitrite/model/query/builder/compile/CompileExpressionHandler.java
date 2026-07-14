@@ -21,6 +21,7 @@ import io.micronaut.data.nitrite.model.query.builder.NitriteExpressionHandler;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryState;
 import io.micronaut.data.nitrite.model.query.builder.RuntimeExpressionHandler;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Object value) {
+    public @Nullable Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Object value) {
         if (value instanceof LiteralExpression<?> literal) {
             Object val = literal.getValue();
             if (val instanceof RegexPattern regex) {
@@ -56,20 +57,21 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public Object handleRegex(
+    public @Nullable Object handleRegex(
         String fieldName,
         boolean ignoreCase,
         boolean negated,
         boolean startsWith,
         boolean endsWith,
-        Expression<?> rightExpression,
+        @Nullable Expression<?> rightExpression,
         boolean isLike,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath) {
 
         if (rightExpression instanceof LiteralExpression<?> literal) {
             String ciPrefix = ignoreCase ? "(?i)" : "";
-            String pattern = literal.getValue().toString();
+            Object val = literal.getValue();
+            String pattern = val != null ? val.toString() : "";
             if (isLike) {
                 pattern = convertLikeToRegex(pattern);
             } else if (startsWith) {
@@ -94,7 +96,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression) {
+    public @Nullable Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
         if (expression instanceof LiteralExpression<?> literal && literal.getValue() instanceof String pattern) {
             return new RegexPattern(pattern).value();
         }
@@ -102,7 +104,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression) {
+    public List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
         Object rawValue = expression instanceof LiteralExpression<?> lit ? lit.getValue() : expression;
         if (rawValue instanceof Iterable<?> iterable) {
             List<Object> criteriaValues = new ArrayList<>();

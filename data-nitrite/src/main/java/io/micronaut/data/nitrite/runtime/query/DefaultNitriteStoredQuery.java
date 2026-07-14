@@ -35,9 +35,9 @@ import java.util.Map;
 @Internal
 public final class DefaultNitriteStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements NitriteStoredQuery<E, R> {
 
-    private final Map<String, Object> filterMap;
-    private final CompiledNitriteFilter compiledFilter;
-    private final Map<String, Object> updateMap;
+    private final @Nullable Map<String, Object> filterMap;
+    private final @Nullable CompiledNitriteFilter compiledFilter;
+    private final @Nullable Map<String, Object> updateMap;
 
     /**
      * Default constructor.

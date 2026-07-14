@@ -36,9 +36,9 @@ import java.util.Map;
 public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements NitritePreparedQuery<E, R> {
 
     private final Filter nitriteFilter;
-    private final Map<String, Object> filterMap;
-    private final CompiledNitriteFilter compiledFilter;
-    private final Map<String, Object> updateMap;
+    private final @Nullable Map<String, Object> filterMap;
+    private final @Nullable CompiledNitriteFilter compiledFilter;
+    private final @Nullable Map<String, Object> updateMap;
 
     /**
      * Create a delegating Nitrite prepared query.

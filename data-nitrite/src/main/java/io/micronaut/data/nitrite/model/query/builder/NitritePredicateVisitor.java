@@ -50,17 +50,17 @@ import java.util.Map;
 
 /**
  * Translates JPA Criteria predicates into a NitriteDB JSON filter map.
- * 
- * <p><strong>Supported Operators:</strong> {@code $ne}, {@code $regex}, {@code $exists}, 
+ *
+ * <p><strong>Supported Operators:</strong> {@code $ne}, {@code $regex}, {@code $exists},
  * {@code $in}, {@code $nin}, {@code $like}, {@code $not}, {@code $empty}, {@code $all}.
- * 
+ *
  * <p><strong>Unsupported Features:</strong>
  * <ul>
  *   <li>Full-text search ({@code $text}) requires dedicated indexing and will throw an exception.</li>
- *   <li>Arithmetic or string transform operations in queries (e.g., {@code sum}, {@code diff}, {@code lower}, {@code upper}) 
+ *   <li>Arithmetic or string transform operations in queries (e.g., {@code sum}, {@code diff}, {@code lower}, {@code upper})
  *       are not supported by Nitrite and will intentionally throw {@link IllegalStateException}.</li>
  * </ul>
- * 
+ *
  * @since 5.0.0
  */
 public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
@@ -310,7 +310,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                 int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
                 resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
             } else {
-                resolvedValues = List.of(valueRepresentation(queryState, propertyPath, singleValue));
+                resolvedValues = Collections.singletonList(valueRepresentation(queryState, propertyPath, singleValue));
             }
         } else {
             resolvedValues = values.stream()
@@ -334,8 +334,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(value).getPropertyPath();
         // Use Nitrite's native $between operator instead of decomposing to $gte + $lte
         List<Object> betweenValues = Arrays.asList(
-            valueRepresentation(queryState, propertyPath, propertyPath, from),
-            valueRepresentation(queryState, propertyPath, propertyPath, to)
+            valueRepresentation(queryState, propertyPath, from),
+            valueRepresentation(queryState, propertyPath, to)
         );
         Map<String, Object> betweenOp = Map.of("$between", betweenValues);
         // negated is always false: visit(BetweenPredicate) hardcodes it, and a negated
@@ -410,7 +410,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
         Object geoValue = valueRepresentation(queryState, propertyPath, geometryExpression);
-        Object distValue = valueRepresentation(queryState, propertyPath, propertyPath, distanceExpression);
+        Object distValue = valueRepresentation(queryState, propertyPath, distanceExpression);
         Map<String, Object> nearMap = new LinkedHashMap<>();
         nearMap.put("center", geoValue);
         nearMap.put("distance", distValue);
@@ -431,8 +431,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         IExpression<Boolean> single = predicates.iterator().next();
         if (single instanceof IPredicate iPredicate) {
             iPredicate.visitPredicate(this);
-        } else if (single instanceof jakarta.persistence.criteria.Expression<?> expr) {
-            visitIsTrue(expr);
+        } else if (single != null) {
+            visitIsTrue((Expression<?>) single);
         }
     }
 
@@ -518,7 +518,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             if (binaryExpression.getType().name().equals("PROD")) {
                 PersistentPropertyPath ctx =
                     requirePropertyOperand(binaryExpression.getLeft(), binaryExpression.getRight());
-                Object multiplyExpr = Map.of("$multiply", List.of(
+                Object multiplyExpr = Map.of("$multiply", Arrays.asList(
                     exprOperand(binaryExpression.getLeft(), ctx), exprOperand(binaryExpression.getRight(), ctx)));
                 appendExprComparison(multiplyExpr, op, value, ctx);
                 return;
@@ -549,7 +549,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
     private void appendExprComparison(
         final Object leftExprTree, final String op, final Expression<?> value,
         final PersistentPropertyPath bindingContextPath) {
-        Object valueExpr = valueRepresentation(queryState, bindingContextPath, bindingContextPath, value);
+        Object valueExpr = valueRepresentation(queryState, bindingContextPath, value);
         query.put("$expr", Map.of(op, List.of(leftExprTree, valueExpr)));
     }
 
@@ -557,11 +557,11 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
      * Resolves a {@code $multiply} operand to either a field reference ({@code "$fieldName"}) or
      * a literal/bound-parameter value, using the same resolution as ordinary comparison values.
      */
-    private Object exprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
+    private @Nullable Object exprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
         if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
             return "$" + getFieldName(getRequiredProperty(ppp));
         }
-        return valueRepresentation(queryState, bindingContextPath, bindingContextPath, expr);
+        return valueRepresentation(queryState, bindingContextPath, expr);
     }
 
     private PersistentPropertyPath requirePropertyOperand(final Expression<?> left, final Expression<?> right) {
@@ -595,7 +595,6 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                         valueRepresentation(
                             queryState,
                             propertyPath,
-                            ppp,
                             value)));
             });
     }
@@ -637,17 +636,16 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         }
     }
 
-    private Object valueRepresentation(
+    private @Nullable Object valueRepresentation(
         final NitriteQueryState queryState,
         final PersistentPropertyPath propertyPath,
         final Object value) {
         return expressionHandler.resolveValue(queryState, propertyPath, value);
     }
 
-    private Object valueRepresentation(
+    private @Nullable Object valueRepresentation(
         final NitriteQueryState queryState,
         final PersistentPropertyPath propertyPath,
-        final PersistentPropertyPath persistentPropertyPath,
         final Expression<?> expression) {
         return expressionHandler.resolveValue(queryState, propertyPath, expression);
     }

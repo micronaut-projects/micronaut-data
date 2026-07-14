@@ -17,6 +17,7 @@ package io.micronaut.data.nitrite.repository;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.Person;
@@ -234,8 +235,8 @@ public interface PersonRepository
    *
    * @return list of names
    */
-  @io.micronaut.data.annotation.Query("{\"$project\": \"name\"}")
-  java.util.List<String> findAllNames();
+  @Query("{\"$project\": \"name\"}")
+  List<String> findAllNames();
 
   /**
    * Finds names of active persons using JSON query with explicit $project field.
@@ -243,6 +244,6 @@ public interface PersonRepository
    *
    * @return list of names of active persons
    */
-  @io.micronaut.data.annotation.Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
-  java.util.List<String> findActivePersonNames();
+  @Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
+  List<String> findActivePersonNames();
 }

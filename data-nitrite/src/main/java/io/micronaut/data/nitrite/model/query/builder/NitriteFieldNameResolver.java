@@ -80,6 +80,7 @@ final class NitriteFieldNameResolver {
                     PersistentProperty ownerIdentity = association.getOwner().getIdentity();
                     isIdentityAssoc = ownerIdentity.equals(association);
                 } catch (IllegalStateException ignored) {
+                    // Entity may not have an identity property
                 }
                 String segment = isIdentityAssoc ? "_id" : association.getPersistedName();
                 sb.append(segment).append(".");
@@ -93,6 +94,7 @@ final class NitriteFieldNameResolver {
                         PersistentProperty assocOwnerIdentity = association.getOwner().getIdentity();
                         isAssocIdentity = assocOwnerIdentity.equals(association);
                     } catch (IllegalStateException ignored) {
+                        // Entity may not have an identity property
                     }
                     String embeddedName;
                     if (isAssocIdentity) {
@@ -107,7 +109,7 @@ final class NitriteFieldNameResolver {
                     sb.append(association.getPersistedName()).append(".");
                 } else {
                     List<Association> assocs = propertyPath.getAssociations();
-                    boolean isLast = association == assocs.get(assocs.size() - 1);
+                    boolean isLast = association.equals(assocs.get(assocs.size() - 1));
                     boolean isIdentityAccess = false;
                     if (isLast) {
                         try {
@@ -129,6 +131,7 @@ final class NitriteFieldNameResolver {
                 PersistentProperty ownerIdentity = property.getOwner().getIdentity();
                 isPropertyIdentity = ownerIdentity.equals(property);
             } catch (IllegalStateException ignored) {
+                // Entity may not have an identity property
             }
             sb.append(isPropertyIdentity ? "_id" : property.getPersistedName());
         } else {

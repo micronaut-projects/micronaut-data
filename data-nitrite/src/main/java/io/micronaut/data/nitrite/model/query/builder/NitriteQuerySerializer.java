@@ -76,7 +76,8 @@ final class NitriteQuerySerializer {
     }
 
     private static boolean needsQuoting(String key) {
-        for (char c : key.toCharArray()) {
+        for (int i = 0; i < key.length(); i++) {
+            char c = key.charAt(i);
             if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {
                 return true;
             }

@@ -83,7 +83,7 @@ public final class CollectionProjectionMapper {
      * @return the mapped result, or null if not applicable
      */
     @SuppressWarnings("unchecked")
-    public <R> R mapDocument(Document doc, List<String> fields, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
+    public <R> @Nullable R mapDocument(@Nullable Document doc, List<String> fields, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
         if (doc == null) {
             return null;
         }

@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.write;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -37,7 +38,7 @@ public final class ObjectRepositoryWriter<T> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectRepositoryWriter.class);
 
     private final NitriteEntityMapper entityMapper;
-    private final RuntimePersistentProperty<T> versionProperty;
+    private final @Nullable RuntimePersistentProperty<T> versionProperty;
 
     /**
      * Creates a new ObjectRepositoryWriter.
@@ -62,7 +63,7 @@ public final class ObjectRepositoryWriter<T> {
      * @param entity the entity
      * @return the Document
      */
-    public Document toDocument(T entity) {
+    public @Nullable Document toDocument(T entity) {
         if (entity == null) {
             return null;
         }

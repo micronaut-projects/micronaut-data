@@ -16,12 +16,14 @@
 package io.micronaut.data.nitrite.runtime.write;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
@@ -33,10 +35,13 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations.SyncCascadeOperationsHelper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -65,10 +70,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     private final ObjectRepositoryWriter<T> repositoryWriter;
     private final NitriteEntityMapper entityMapper;
-    private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
     private final OperationType operationType;
-    private Object preVersionValue;
+    private @Nullable Object preVersionValue;
 
     /**
      * Supported entity operation types.
@@ -106,7 +110,6 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             T entity,
             OperationType operationType) {
         super(ctx, cascadeOperations, entityEventListener, persistentEntity, conversionService, entity, operationType == OperationType.INSERT);
-        this.cascadeOperations = cascadeOperations;
         this.entityMapper = entityMapper;
         this.repositoryWriter = new ObjectRepositoryWriter<>(entityMapper, persistentEntity);
         this.helper = helper;
@@ -162,7 +165,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 isUpdate = true;
             } else {
                 Filter existsFilter = entityMapper.idEqualsFilter(meta, idValue);
-                isUpdate = collection.find(existsFilter).size() > 0;
+                isUpdate = !collection.find(existsFilter).isEmpty();
             }
 
             if (isUpdate) {
@@ -233,31 +236,37 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             if (entityId != null) {
                 // Entity has ID - use upsert (update with insert-if-absent)
                 // Initialize version to 0 if not set (for optimistic locking)
-                if (repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
+                RuntimePersistentProperty<T> versionProp = meta.versionProp();
+                if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
+                    BeanProperty<T, Object> versionProperty = versionProp.getProperty();
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
                 }
                 Document doc = repositoryWriter.toDocument(entity);
-                Filter filter = entityMapper.idEqualsFilter(meta, entityId);
-                helper.logUpdate(collection.getName(), filter, doc);
-                long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
-                if (meta.versionProp() != null) {
-                    checkOptimisticLocking(rows);
+                if (doc != null) {
+                    Filter filter = entityMapper.idEqualsFilter(meta, entityId);
+                    helper.logUpdate(collection.getName(), filter, doc);
+                    long rows = collection.update(filter, doc, UpdateOptions.updateOptions(true)).getAffectedCount();
+                    if (meta.versionProp() != null) {
+                        checkOptimisticLocking(rows);
+                    }
                 }
             } else {
                 // No ID - generate and insert as new
                 helper.generateIdIfNecessary(entity, type);
                 // Initialize version to 0 if not set (for optimistic locking)
-                if (repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
+                RuntimePersistentProperty<T> versionProp = meta.versionProp();
+                if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
+                    BeanProperty<T, Object> versionProperty = versionProp.getProperty();
                     entity = helper.updateEntityId(versionProperty, entity, 0L);
                 }
                 Document doc = repositoryWriter.toDocument(entity);
-                helper.logInsert(collection.getName(), doc);
-                collection.insert(doc);
-                Object generatedId = doc.get("_id");
-                if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
-                    entity = helper.updateEntityId(meta.idAccessor(), entity, generatedId);
+                if (doc != null) {
+                    helper.logInsert(collection.getName(), doc);
+                    collection.insert(doc);
+                    Object generatedId = doc.get("_id");
+                    if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
+                        entity = helper.updateEntityId(meta.idAccessor(), entity, generatedId);
+                    }
                 }
             }
             ctx.persisted.add(entity);
@@ -274,13 +283,15 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (versionValue == null) {
                     versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
             Document update = repositoryWriter.toDocument(entity);
-            helper.logUpdate(collection.getName(), filter, update);
-            boolean upsert = meta.versionProp() == null;
-            long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(upsert)).getAffectedCount();
-            checkOptimisticLocking(rows);
+            if (update != null) {
+                helper.logUpdate(collection.getName(), filter, update);
+                boolean upsert = meta.versionProp() == null;
+                long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
+                checkOptimisticLocking(rows);
+            }
         } else {
             // Delete operation
             // Use cached idAccessor from meta - eliminates chained lookups
@@ -291,7 +302,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (versionValue == null) {
                     versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
             helper.logFind(collection.getName(), filter);
             long rows = collection.remove(filter, false).getAffectedCount();
@@ -301,7 +312,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
     @SuppressWarnings("unchecked")
     private void persistNewCascadeChildren(NitriteEntityMeta<T> meta) {
-        for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
+        for (RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             RuntimePersistentEntity<Object> associatedEntity =
                 (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity();
             RuntimePersistentProperty<Object> associatedId;
@@ -355,17 +366,17 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
         // Use pre-computed cascadeProps from metadata - avoids iterating all properties + instanceof checks
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
-        for (io.micronaut.data.model.runtime.RuntimeAssociation<T> assoc : meta.cascadeProps()) {
+        for (RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             Object value = assoc.getProperty().get(entity);
             if (value instanceof Iterable<?> iterable) {
                 // No ArrayList copy needed - persistBatch accepts Iterable directly
                 if (iterable.iterator().hasNext()) {
                     @SuppressWarnings("unchecked")
                     Iterable<Object> iterableObjects = (Iterable<Object>) iterable;
-                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, iterableObjects, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), null);
+                    ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistBatch(ctx, iterableObjects, (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity(), x -> false);
                 }
             } else if (value != null) {
-                ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, (io.micronaut.data.model.runtime.RuntimePersistentEntity<Object>) assoc.getAssociatedEntity());
+                ((SyncCascadeOperationsHelper<NitriteOperationContext>) helper).persistOne(ctx, value, (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity());
             }
         }
 
@@ -392,7 +403,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             return true;
         }
         T newEntity = event.getEntity();
-        if (entity != newEntity) {
+        if (!Objects.equals(entity, newEntity)) {
             entity = newEntity;
         }
         return false;
@@ -403,7 +414,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
         fn.accept((EntityEventContext<Object>) event);
         T newEntity = event.getEntity();
-        if (entity != newEntity) {
+        if (!Objects.equals(entity, newEntity)) {
             entity = newEntity;
         }
     }

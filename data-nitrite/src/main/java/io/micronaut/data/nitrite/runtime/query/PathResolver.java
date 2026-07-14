@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -63,6 +64,7 @@ final class PathResolver {
                 return plain(identity.getPersistedName());
             }
         } catch (IllegalStateException ignored) {
+            // Identity might not exist on embedded or non-entity types
         }
 
         // Step 2: direct FK match — MANY_TO_ONE whose persistedName == rawField (non-dotted).
@@ -123,7 +125,7 @@ final class PathResolver {
      * Finds a property on {@code entity} whose name (or, as fallbacks, whose persisted name or
      * identity alias) matches {@code name}.
      */
-    private static RuntimePersistentProperty<?> findPropertyByName(RuntimePersistentEntity<?> entity, String name) {
+    private static @Nullable RuntimePersistentProperty<?> findPropertyByName(RuntimePersistentEntity<?> entity, String name) {
         // Primary: match on property name
         for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
             if (p.getName().equals(name)) {
@@ -139,6 +141,7 @@ final class PathResolver {
                 return id;
             }
         } catch (IllegalStateException ignored) {
+            // Identity might not exist on embedded or non-entity types
         }
         // Fallback 2: persisted-name match for plain (non-association) properties
         for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
@@ -167,7 +170,7 @@ final class PathResolver {
     }
 
     private static PathResolution reference(List<RuntimeAssociation<?>> chain,
-                                             RuntimePersistentProperty<?> terminal,
+                                             @Nullable RuntimePersistentProperty<?> terminal,
                                              String persistedField) {
         return new PathResolution(PathResolution.Kind.REFERENCE, chain, terminal, persistedField);
     }
@@ -183,7 +186,7 @@ final class PathResolver {
     record PathResolution(
         Kind kind,
         List<RuntimeAssociation<?>> chain,
-        RuntimePersistentProperty<?> terminal,
+        @Nullable RuntimePersistentProperty<?> terminal,
         String persistedField
     ) {
         boolean isReference() {

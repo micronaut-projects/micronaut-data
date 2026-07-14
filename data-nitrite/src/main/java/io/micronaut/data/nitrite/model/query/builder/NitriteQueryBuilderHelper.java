@@ -17,6 +17,7 @@ package io.micronaut.data.nitrite.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -51,8 +52,8 @@ public final class NitriteQueryBuilderHelper {
 
     /**
      * Appends Nitrite lookup and unwind stages to the aggregation pipeline for the given join paths.
-     * This method resolves the complex structural logic of entity associations (e.g. single vs multiple 
-     * `@JoinColumn` annotations, explicit foreign keys, and mapped-by relations), synthesizing the appropriate 
+     * This method resolves the complex structural logic of entity associations (e.g. single vs multiple
+     * `@JoinColumn` annotations, explicit foreign keys, and mapped-by relations), synthesizing the appropriate
      * `$lookup` and `$unwind` document pipeline stages for the Nitrite query.
      *
      * @param joins the collection of join paths to process
@@ -72,7 +73,7 @@ public final class NitriteQueryBuilderHelper {
             List<Map<String, Object>> currentPipeline = pipeline;
             Map<String, LookupsStage> currentSubLookups = subLookupMap;
             StringJoiner processedPath = new StringJoiner(".");
-            for (String segment : join.split("\\.")) {
+            for (String segment : join.split("\\.", -1)) {
                 processedPath.add(segment);
                 String pathKey = processedPath.toString();
                 if (currentSubLookups.containsKey(pathKey)) {
@@ -117,12 +118,12 @@ public final class NitriteQueryBuilderHelper {
                 String joinedCollection = association.getAssociatedEntity().getPersistedName();
                 boolean isForeignKey = association.isForeignKey();
                 boolean hasMappedBy = association.getAnnotationMetadata()
-                    .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").isPresent();
+                    .stringValue(Relation.class, "mappedBy").isPresent();
 
                 if (isForeignKey || hasMappedBy) {
                     // ONE_TO_MANY: localField=_id, foreignField=FK persisted name in other entity
                     String mappedBy = association.getAnnotationMetadata()
-                        .stringValue(io.micronaut.data.annotation.Relation.class, "mappedBy").orElse(null);
+                        .stringValue(Relation.class, "mappedBy").orElse(null);
                     if (mappedBy == null) {
                         continue;
                     }
@@ -187,7 +188,7 @@ public final class NitriteQueryBuilderHelper {
 
     /**
      * Builds aggregation group and count projection stages based on the given selection.
-     * Mutates the provided group and count objects with the corresponding Nitrite operations 
+     * Mutates the provided group and count objects with the corresponding Nitrite operations
      * (`$sum`, `$avg`, `$max`, `$min`, `$count`) mapped from the generic Criteria API expressions.
      *
      * @param selection the generic selection criteria (e.g., SUM, AVG, COUNT)

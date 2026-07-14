@@ -43,7 +43,10 @@ public final class NitriteQueryParser {
      * @param jsonStr the JSON string
      * @return the parsed object
      */
-    public Object parseJson(String jsonStr) {
+    public @Nullable Object parseJson(@Nullable String jsonStr) {
+        if (jsonStr == null) {
+            return null;
+        }
         String json = jsonStr.trim();
         if (!json.startsWith("{") && !json.startsWith("[")) {
             throw new IllegalArgumentException("Invalid JSON: " + json);
@@ -62,7 +65,7 @@ public final class NitriteQueryParser {
      * @return the extracted filter map, an empty map for a pipeline without {@code $match}, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public Map<String, Object> extractFilterMap(Object parsed) {
+    public @Nullable Map<String, Object> extractFilterMap(@Nullable Object parsed) {
         if (parsed instanceof List<?> pipeline) {
             for (Object stage : pipeline) {
                 if (stage instanceof Map<?, ?> m && m.containsKey("$match")) {
@@ -84,7 +87,7 @@ public final class NitriteQueryParser {
      * @param jsonQuery the JSON query string
      * @return the field path to count distinct values of, or null
      */
-    public String extractGroupFieldPath(String jsonQuery) {
+    public @Nullable String extractGroupFieldPath(@Nullable String jsonQuery) {
         try {
             Object parsed = parseJson(jsonQuery);
             if (parsed instanceof List<?> pipeline) {
@@ -113,7 +116,7 @@ public final class NitriteQueryParser {
      * @param jsonQuery the JSON query string
      * @return the field name to project, or null if not using $project syntax
      */
-    public String extractProjectionField(String jsonQuery) {
+    public @Nullable String extractProjectionField(@Nullable String jsonQuery) {
         if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
             return null;
         }
@@ -156,8 +159,9 @@ public final class NitriteQueryParser {
         if (trimmedQuery.startsWith("{") || trimmedQuery.startsWith("[")) {
             try {
                 Object parsed = parseJson(query);
-                filterMap = new LinkedHashMap<>(extractFilterMap(parsed));
-                if (parsed instanceof Map<?, ?> m) {
+                Map<String, Object> extracted = extractFilterMap(parsed);
+                filterMap = extracted != null ? new LinkedHashMap<>(extracted) : null;
+                if (filterMap != null && parsed instanceof Map<?, ?> m) {
                     filterMap.remove("$project");
                     @SuppressWarnings("unchecked")
                     Map<String, Object> setMap = m.get("$set") instanceof Map<?, ?> s ? (Map<String, Object>) s : null;
@@ -199,7 +203,7 @@ public final class NitriteQueryParser {
             this.src = src;
         }
 
-        Object parse() {
+        @Nullable Object parse() {
             skipWhitespace();
             if (pos >= src.length()) {
                 throw new IllegalArgumentException("Invalid JSON: " + src);
@@ -209,7 +213,7 @@ public final class NitriteQueryParser {
 
         // ── Dispatch ─────────────────────────────────────────────────────────────
 
-        private Object parseValue() {
+        private @Nullable Object parseValue() {
             skipWhitespace();
             if (pos >= src.length()) {
                 return null;
@@ -318,7 +322,7 @@ public final class NitriteQueryParser {
 
         // ── Literal: boolean / null / number / placeholder ────────────────────
 
-        private Object parseLiteral() {
+        private @Nullable Object parseLiteral() {
             int start = pos;
             while (pos < src.length()) {
                 char c = src.charAt(pos);
@@ -329,8 +333,8 @@ public final class NitriteQueryParser {
             }
             String s = src.substring(start, pos).trim();
             return switch (s) {
-                case "true"  -> Boolean.TRUE;
-                case "false" -> Boolean.FALSE;
+                case "true"  -> true;
+                case "false" -> false;
                 case "null"  -> null;
                 default      -> parseNumber(s);
             };

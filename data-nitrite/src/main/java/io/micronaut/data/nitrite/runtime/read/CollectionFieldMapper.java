@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 
 import java.util.regex.Matcher;
@@ -51,7 +52,7 @@ public final class CollectionFieldMapper {
      * @param methodName the method name
      * @return the field name, or null if not found
      */
-    public String extractFieldName(String query, String methodName) {
+    public @Nullable String extractFieldName(@Nullable String query, String methodName) {
         // First try to extract field from method name (most reliable for native projections)
         if (!COUNT_METHOD_PATTERN.matcher(methodName).matches()) {
             Matcher matcher = FIELD_BY_PATTERN.matcher(methodName);

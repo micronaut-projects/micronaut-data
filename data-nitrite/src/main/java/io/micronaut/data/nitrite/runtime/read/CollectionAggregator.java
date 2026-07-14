@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import org.dizitart.no2.collection.Document;
 
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -49,7 +51,7 @@ public final class CollectionAggregator {
      * @param aggFunc the aggregation function (Max, Min, Sum, Avg)
      * @return the aggregated result, or null if no documents
      */
-    public Object aggregate(List<Document> docs, String fieldName, String aggFunc) {
+    public @Nullable Object aggregate(@Nullable List<Document> docs, String fieldName, String aggFunc) {
         if (docs == null || docs.isEmpty()) {
             return null;
         }
@@ -84,7 +86,7 @@ public final class CollectionAggregator {
      * @param values the values to aggregate
      * @return the aggregated result
      */
-    private Object executeAggregate(String aggFunc, List<Object> values) {
+    private @Nullable Object executeAggregate(String aggFunc, List<Object> values) {
         if (values.isEmpty()) {
             return null;
         }
@@ -157,8 +159,8 @@ public final class CollectionAggregator {
      * @param methodName the method name
      * @return the aggregation function (Max, Min, Sum, Avg), or null if not an aggregation method
      */
-    public String extractAggFunc(String methodName) {
-        java.util.regex.Matcher matcher = AGG_FUNC_PATTERN.matcher(methodName);
+    public @Nullable String extractAggFunc(String methodName) {
+        Matcher matcher = AGG_FUNC_PATTERN.matcher(methodName);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -171,8 +173,8 @@ public final class CollectionAggregator {
      * @param methodName the method name
      * @return the field name, or null if not an aggregation method
      */
-    public String extractFieldName(String methodName) {
-        java.util.regex.Matcher matcher = FIELD_NAME_PATTERN.matcher(methodName);
+    public @Nullable String extractFieldName(String methodName) {
+        Matcher matcher = FIELD_NAME_PATTERN.matcher(methodName);
         if (matcher.find()) {
             String fieldName = matcher.group(2);
             return Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);

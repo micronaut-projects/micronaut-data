@@ -69,11 +69,12 @@ public final class NitriteQueryBinder {
      * @param value the raw value to inspect
      * @return the placeholder index, or {@code null} if the value is not a placeholder
      */
-    public static Integer extractPlaceholderIndex(Object value) {
+    public static @Nullable Integer extractPlaceholderIndex(@Nullable Object value) {
         if (value instanceof String s && s.startsWith("$mn_qp:")) {
             try {
                 return Integer.parseInt(s.substring(7));
             } catch (NumberFormatException ignored) {
+                // Fall back if the suffix is not a valid integer placeholder
             }
         }
         if (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) {
@@ -137,11 +138,12 @@ public final class NitriteQueryBinder {
      * @param fillMissing callback that fills unresolved parameter slots
      * @return the expanded JSON parameter array
      */
-    static Object[] ensureJsonParamsForFilter(Map<String, Object> filterMap, Object[] jsonParams,
+    static Object[] ensureJsonParamsForFilter(@Nullable Map<String, Object> filterMap,
+                                              @Nullable Object[] jsonParams,
                                               Consumer<Object[]> fillMissing) {
         int maxIdx = findMaxPlaceholderIndex(filterMap);
         if (maxIdx < 0) {
-            return jsonParams;
+            return jsonParams == null ? new Object[0] : jsonParams;
         }
         Object[] out = jsonParams == null ? new Object[0] : jsonParams;
         if (out.length <= maxIdx) {
@@ -156,7 +158,10 @@ public final class NitriteQueryBinder {
      * Scans one level deep into operator maps ({@code {"$eq": "$mn_qp:0"}}),
      * which matches the structure produced by the Nitrite query builder.
      */
-    private static int findMaxPlaceholderIndex(Map<String, Object> filterMap) {
+    private static int findMaxPlaceholderIndex(@Nullable Map<String, Object> filterMap) {
+        if (filterMap == null) {
+            return -1;
+        }
         int max = -1;
         for (Object value : filterMap.values()) {
             if (value instanceof Map<?, ?> m) {
@@ -217,7 +222,7 @@ public final class NitriteQueryBinder {
                 }
             }
         }
-        return result;
+        return Collections.unmodifiableMap(result);
     }
 
     // ─── Instance methods: PreparedQuery parameter resolution ─────────────────────
@@ -257,9 +262,12 @@ public final class NitriteQueryBinder {
      * @param jsonParams the current JSON parameters array, if any
      * @return a complete array of JSON parameter values required by the filter
      */
-    public Object[] ensureJsonParamsForFilter(@NonNull Map<String, Object> filterMap,
-                                       @NonNull Object[] methodParams,
-                                       @Nullable Object[] jsonParams) {
+    public Object[] ensureJsonParamsForFilter(@Nullable Map<String, Object> filterMap,
+                                              @NonNull Object[] methodParams,
+                                              @Nullable Object[] jsonParams) {
+        if (filterMap == null) {
+            return methodParams;
+        }
         return NitriteQueryBinder.ensureJsonParamsForFilter(
             filterMap, jsonParams, out -> fillMissingParamsFromFilter(filterMap, methodParams, out));
     }
@@ -344,7 +352,7 @@ public final class NitriteQueryBinder {
         }
     }
 
-    private Object extractPropertyFromSingleArg(@Nullable Object[] methodParams, String property) {
+    private @Nullable Object extractPropertyFromSingleArg(@Nullable Object[] methodParams, String property) {
         if (methodParams == null || methodParams.length != 1 || methodParams[0] == null) {
             return null;
         }
@@ -352,7 +360,7 @@ public final class NitriteQueryBinder {
         if ("id".equals(property) || "_id".equals(property)) {
             return entityMapper.toNitriteFilterValue(arg);
         }
-        String[] parts = property.split("\\.");
+        String[] parts = property.split("\\.", -1);
         for (int start = 0; start < parts.length; start++) {
             Object current = arg;
             for (int i = start; i < parts.length; i++) {
@@ -391,6 +399,9 @@ public final class NitriteQueryBinder {
     private Object tryConvertAndRead(Object current, String segment, String alt) {
         try {
             Document doc = entityMapper.convertValueToDocument(current);
+            if (doc == null) {
+                return null;
+            }
             Object v = doc.get(segment);
             return v != null || segment.equals(alt) ? v : doc.get(alt);
         } catch (RuntimeException e) {
@@ -402,7 +413,7 @@ public final class NitriteQueryBinder {
         }
     }
 
-    private Object toFilterValue(Object value) {
+    private @Nullable Object toFilterValue(@Nullable Object value) {
         return entityMapper.toFilterValue(value);
     }
 }

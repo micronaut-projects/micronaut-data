@@ -24,6 +24,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.transaction.NitriteTransactionContext;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.NitriteCollection;
@@ -85,7 +86,12 @@ final class NitriteCollectionRegistry {
             // Touch the collection on the database first (idempotent: creates if absent), reusing
             // collectionCache so the touch only happens once per name instead of on every call.
             collectionCache.computeIfAbsent(name, database::getCollection);
-            collection = transactionHolder.get().getCollection(name);
+            NitriteTransactionContext tx = transactionHolder.get();
+            if (tx != null) {
+                collection = tx.getCollection(name);
+            } else {
+                collection = collectionCache.computeIfAbsent(name, database::getCollection);
+            }
         } else {
             collection = collectionCache.computeIfAbsent(name, database::getCollection);
         }
@@ -119,11 +125,13 @@ final class NitriteCollectionRegistry {
         for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
             if (property.getAnnotationMetadata().hasAnnotation(Index.class)) {
                 AnnotationValue<Index> index = property.getAnnotationMetadata().getAnnotation(Index.class);
-                boolean unique = index.booleanValue("unique").orElse(false);
-                try {
-                    collection.createIndex(indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE), property.getPersistedName());
-                } catch (Exception e) {
-                    LOG.warn("Could not create index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
+                if (index != null) {
+                    boolean unique = index.booleanValue("unique").orElse(false);
+                    try {
+                        collection.createIndex(indexOptions(unique ? IndexType.UNIQUE : IndexType.NON_UNIQUE), property.getPersistedName());
+                    } catch (Exception e) {
+                        LOG.warn("Could not create index for field {} in collection {}: {}", property.getName(), collection.getName(), e.getMessage());
+                    }
                 }
             }
             if (property.getAnnotationMetadata().hasAnnotation(FullTextIndex.class)) {

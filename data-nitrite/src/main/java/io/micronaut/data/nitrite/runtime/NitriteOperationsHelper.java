@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.Sort;
 import org.dizitart.no2.collection.Document;
@@ -66,7 +67,7 @@ public interface NitriteOperationsHelper {
      * @param value the value to convert
      * @return the converted value
      */
-    Object toFilterValue(Object value);
+    @Nullable Object toFilterValue(@Nullable Object value);
 
     /**
      * Logs an insert operation.
@@ -107,7 +108,7 @@ public interface NitriteOperationsHelper {
      * @param queryString the JSON query string
      * @return the parsed sort
      */
-    Sort parseSortFromJsonQuery(String queryString);
+    @Nullable Sort parseSortFromJsonQuery(@Nullable String queryString);
 
     /**
      * Parses a sort from query hints.
@@ -115,5 +116,5 @@ public interface NitriteOperationsHelper {
      * @param hints the query hints
      * @return the parsed sort
      */
-    Sort parseSortFromHints(Map<String, Object> hints);
+    @Nullable Sort parseSortFromHints(@Nullable Map<String, Object> hints);
 }

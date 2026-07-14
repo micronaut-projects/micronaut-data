@@ -125,7 +125,7 @@ public class DefaultNitriteTransactionOperations extends AbstractDefaultTransact
 
   @Override
   protected void doResume(final DefaultTransactionStatus<Session> transaction) {
-    Session session = transaction.getConnection();
+    transaction.getConnection();
     Object txObj = transaction.getTransaction();
     if (txObj instanceof Transaction nitriteTx) {
       holder.bind(new NitriteTransactionContext(nitriteTx));

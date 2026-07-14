@@ -17,6 +17,7 @@ package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.event.EntityEventListener;
@@ -47,12 +48,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -133,7 +136,7 @@ public final class NitriteQueryExecutor {
      * @param value the value to convert
      * @return the converted value
      */
-    public Object toFilterValue(Object value) {
+    public @Nullable Object toFilterValue(@Nullable Object value) {
         if (value == null) {
             return null;
         }
@@ -147,18 +150,17 @@ public final class NitriteQueryExecutor {
         return entityMapper.toFilterValue(value);
     }
 
-    @SuppressWarnings("unchecked")
-    private <R> R handleDistinctCount(NitriteCollection coll, Filter filter, String queryStr) {
+    private Long handleDistinctCount(NitriteCollection coll, Filter filter, String queryStr) {
         String fieldPath = queryParser.extractGroupFieldPath(queryStr);
         if (fieldPath == null) {
-            return (R) Long.valueOf(coll.find(filter).size());
+            return Long.valueOf(coll.find(filter).size());
         }
         long count = coll.find(filter).toList().stream()
             .map(doc -> doc.get(fieldPath))
             .filter(Objects::nonNull)
             .distinct()
             .count();
-        return (R) Long.valueOf(count);
+        return Long.valueOf(count);
     }
 
     /**
@@ -170,7 +172,7 @@ public final class NitriteQueryExecutor {
      * @param <R> the result type
      * @return the first matching result, or null if none found
      */
-    public <T, R> R findOne(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
+    public <T, R> @Nullable R findOne(@NonNull PreparedQuery<T, R> q, NitritePreparedQuery<T, R> nq) {
         NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
         if (nq.getUpdateMap() != null) {
             Optional<Number> result = executeUpdate((PreparedQuery<?, Number>) nq, (NitritePreparedQuery<?, Number>) nq);
@@ -189,7 +191,7 @@ public final class NitriteQueryExecutor {
                 (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
                 if (queryStr != null && queryStr.contains("$group")) {
-                    return handleDistinctCount(coll, filter, queryStr);
+                    return (R) handleDistinctCount(coll, filter, queryStr);
                 }
                 return (R) Long.valueOf(coll.find(filter).size());
             }
@@ -201,9 +203,11 @@ public final class NitriteQueryExecutor {
         if (aggregationHandler.isAggregationMethod(methodName)) {
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
-            List<Document> docs = coll.find(filter).toList();
-            Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
-            return valueConverter.convertWithTemporalHandling(result, nq.getResultType());
+            if (aggFunc != null && fieldName != null) {
+                List<Document> docs = coll.find(filter).toList();
+                Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+                return valueConverter.convertWithTemporalHandling(result, nq.getResultType());
+            }
         }
 
         Sort sort = nq.getSort();
@@ -276,7 +280,7 @@ public final class NitriteQueryExecutor {
                 (queryStr != null && queryStr.contains("$count"));
             if (isCountQuery) {
                 if (queryStr != null && queryStr.contains("$group")) {
-                    return Collections.singletonList(handleDistinctCount(coll, filter, queryStr));
+                    return Collections.singletonList((R) handleDistinctCount(coll, filter, queryStr));
                 }
                 return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
             }
@@ -296,7 +300,7 @@ public final class NitriteQueryExecutor {
         Limit limit = nq.getQueryLimit();
         if (limit.maxResults() <= 0) {
             String methodName = q.getName();
-            java.util.regex.Matcher matcher = TOP_FIRST_PATTERN.matcher(methodName);
+            Matcher matcher = TOP_FIRST_PATTERN.matcher(methodName);
             if (matcher.find()) {
                 limit = Limit.of(Integer.parseInt(matcher.group(1)), 0);
             }
@@ -318,8 +322,10 @@ public final class NitriteQueryExecutor {
             List<Document> docs = cursor.toList();
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
-            Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
-            return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+            if (aggFunc != null && fieldName != null) {
+                Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+                return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+            }
         }
 
         // Handle DTO projection
@@ -408,7 +414,7 @@ public final class NitriteQueryExecutor {
         Filter finalFilter = filter != null ? filter : nq.getNitriteFilter();
         helper.logUpdate(collectionFactory.apply(nq.getRootEntity()).getName(), finalFilter, updateDoc);
         long count = collectionFactory.apply(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
-        if (count == 0 && finalFilter != Filter.ALL && isOptimisticLocking(q)) {
+        if (count == 0 && !Filter.ALL.equals(finalFilter) && isOptimisticLocking(q)) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
         }
         return Optional.of(count);
@@ -427,7 +433,7 @@ public final class NitriteQueryExecutor {
     public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
         helper.logDelete(collectionFactory.apply(nq.getRootEntity()).getName(), nq.getNitriteFilter());
         long count = collectionFactory.apply(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount();
-        if (count == 0 && nq.getNitriteFilter() != Filter.ALL && isOptimisticLocking(q)) {
+        if (count == 0 && !Filter.ALL.equals(nq.getNitriteFilter()) && isOptimisticLocking(q)) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
         }
         return Optional.of(count);
@@ -435,8 +441,8 @@ public final class NitriteQueryExecutor {
 
     /**
      * Executes a count query to determine the number of matching documents.
-     * This operation bypasses normal result projection and mapping entirely to efficiently size 
-     * the query result directly from the Nitrite cursor. It natively supports {@code COUNT_DISTINCT} 
+     * This operation bypasses normal result projection and mapping entirely to efficiently size
+     * the query result directly from the Nitrite cursor. It natively supports {@code COUNT_DISTINCT}
      * by resolving a nested {@code $group} stage if present in the translated JSON string.
      *
      * @param q the generic prepared query
@@ -455,7 +461,7 @@ public final class NitriteQueryExecutor {
         if (methodName.contains("AndVersion") || methodName.contains("ByVersion")) {
             return true;
         }
-        return q.getQuery().toLowerCase().contains("version");
+        return q.getQuery().toLowerCase(Locale.ROOT).contains("version");
     }
 
     private void applyVersionIncrement(Document updateDoc, RuntimePersistentEntity<?> entity, Map<String, Object> namedParameters) {

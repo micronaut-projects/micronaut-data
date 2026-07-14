@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.write;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
@@ -31,13 +32,16 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncEntitiesOperations;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -72,9 +76,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final ObjectRepositoryWriter<T> repositoryWriter;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
-    private final EntityEventListener<Object> entityEventListener;
     /** Prior version per entity, keyed by identity. Populated by triggerPre for !insert paths. */
-    private IdentityHashMap<T, Object> priorVersions;
+    private @Nullable IdentityHashMap<T, Object> priorVersions;
 
     /**
      * Creates a new NitriteEntitiesOperations.
@@ -102,7 +105,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         super(entityEventListener, persistentEntity, conversionService);
         this.ctx = ctx;
         this.cascadeOperations = cascadeOperations;
-        this.entityEventListener = entityEventListener;
         this.entityMapper = entityMapper;
         this.helper = helper;
         this.collection = helper.getCollection(persistentEntity.getIntrospection().getBeanType());
@@ -200,6 +202,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
      * Delete all entities with optimistic locking support.
      */
     @SuppressWarnings("unchecked")
+    @Override
     public void delete() {
         if (entities.isEmpty()) {
             return;
@@ -222,7 +225,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             if (meta.versionProp() != null) {
                 BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                 Object versionValue = versionProperty.get(entity);
-                filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
             }
 
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
@@ -283,15 +286,17 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                         entities.set(i, entity);
                     }
                     Document doc = repositoryWriter.toDocument(entity);
-                    Filter filter = entityMapper.idEqualsFilter(meta, id);
-                    helper.logUpdate(collection.getName(), filter, doc);
-                    long rows = collection.update(filter, doc, org.dizitart.no2.collection.UpdateOptions.updateOptions(true)).getAffectedCount();
-                    if (meta.versionProp() != null) {
-                        if (rows != 1) {
-                            throw new OptimisticLockException("Upsert expected 1 row but got " + rows);
+                    if (doc != null) {
+                        Filter filter = entityMapper.idEqualsFilter(meta, id);
+                        helper.logUpdate(collection.getName(), filter, doc);
+                        long rows = collection.update(filter, doc, UpdateOptions.updateOptions(true)).getAffectedCount();
+                        if (meta.versionProp() != null) {
+                            if (rows != 1) {
+                                throw new OptimisticLockException("Upsert expected 1 row but got " + rows);
+                            }
                         }
+                        ctx.persisted.add(entity);
                     }
-                    ctx.persisted.add(entity);
                 } else {
                     helper.generateIdIfNecessary(entity, type);
                     if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
@@ -299,7 +304,10 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                         entity = helper.updateEntityId(versionProperty, entity, 0L);
                         entities.set(i, entity);
                     }
-                    docsToInsert.add(repositoryWriter.toDocument(entity));
+                    Document doc = repositoryWriter.toDocument(entity);
+                    if (doc != null) {
+                        docsToInsert.add(doc);
+                    }
                 }
             }
 
@@ -322,16 +330,18 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     if (versionValue == null) {
                         versionValue = meta.versionProp().getProperty().get(entity);
                     }
-                    filter = Filter.and(filter, org.dizitart.no2.filters.FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                    filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
                     entity = helper.updateEntityId(meta.versionProp().getProperty(), entity, nextVersion);
                     entities.set(i, entity);
                 }
                 Document update = repositoryWriter.toDocument(entity);
-                helper.logUpdate(collection.getName(), filter, update);
-                boolean upsert = meta.versionProp() == null;
-                long rows = collection.update(filter, update, org.dizitart.no2.collection.UpdateOptions.updateOptions(upsert)).getAffectedCount();
-                affectedCount += rows;
+                if (update != null) {
+                    helper.logUpdate(collection.getName(), filter, update);
+                    boolean upsert = meta.versionProp() == null;
+                    long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
+                    affectedCount += rows;
+                }
             }
 
             if (meta.versionProp() != null && affectedCount != expectedCount) {
@@ -362,7 +372,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 continue;
             }
             T newEntity = event.getEntity();
-            if (entity != newEntity) {
+            if (!Objects.equals(entity, newEntity)) {
                 entities.set(i, newEntity);
                 // Carry the captured version to the replacement instance.
                 Object v = priorVersions.remove(entity);
@@ -386,7 +396,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             fn.accept((EntityEventContext<Object>) event);
             T newEntity = event.getEntity();
-            if (entity != newEntity) {
+            if (!Objects.equals(entity, newEntity)) {
                 entities.set(i, newEntity);
             }
         });

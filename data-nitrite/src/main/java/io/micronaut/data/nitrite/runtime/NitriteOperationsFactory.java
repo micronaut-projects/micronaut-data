@@ -20,14 +20,17 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
@@ -107,7 +110,7 @@ public final class NitriteOperationsFactory {
     return builder.openOrCreate();
   }
 
-  private NitriteModule loadRocksDbModule(File file) {
+  private @Nullable NitriteModule loadRocksDbModule(File file) {
     if (ClassUtils.isPresent(ROCKSDB_MODULE_CLASS, null)) {
       try {
         Class<?> rocksDbModuleClass = Class.forName(ROCKSDB_MODULE_CLASS);
@@ -162,11 +165,11 @@ public final class NitriteOperationsFactory {
       Nitrite database,
       NitriteConfiguration configuration,
       DateTimeProvider<Object> dateTimeProvider,
-      io.micronaut.data.model.runtime.RuntimeEntityRegistry runtimeEntityRegistry,
+      RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
       AttributeConverterRegistry attributeConverterRegistry,
       NitriteTransactionHolder transactionHolder,
-      io.micronaut.serde.ObjectMapper serdeObjectMapper) {
+      ObjectMapper serdeObjectMapper) {
     return new DefaultNitriteRepositoryOperations(
         database,
         configuration,

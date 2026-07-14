@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.read;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.collection.Document;
 
@@ -49,7 +50,7 @@ public final class ObjectRepositoryMapper {
      * @param <T> the entity type
      * @return the loaded entity, or null if document is null
      */
-    public <T> T loadEntity(Document doc, Class<T> entityType) {
+    public <T> @Nullable T loadEntity(@Nullable Document doc, Class<T> entityType) {
         if (doc == null) {
             return null;
         }

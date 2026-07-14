@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.nitrite.runtime.mapping;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.MappedEntity;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -51,13 +53,13 @@ public enum PropertyStrategy {
     URI,
     /** Represents a {@link java.nio.charset.Charset} mapped as a string. */
     CHARSET,
-    /** Represents an {@link java.util.Optional} mapped to its inner value or null. */
+    /** Represents an {@link Optional} mapped to its inner value or null. */
     OPTIONAL,
     /** Represents a reference to another entity by its ID (foreign key). */
     ENTITY_ID_REF,
     /** Represents a geospatial Geometry object. */
     GEOMETRY,
-    /** Represents a generic {@link java.util.Map}. Nested POJOs within the map are recursively hydrated correctly. */
+    /** Represents a generic {@link Map}. Nested POJOs within the map are recursively hydrated correctly. */
     MAP,
     /** Represents a POJO introspected by Micronaut for serialization. */
     INTROSPECTED_POJO,
@@ -76,13 +78,13 @@ public enum PropertyStrategy {
      * Classify the serialization strategy for a non-association property from its declared type.
      * Called once per property during meta construction; never on the hot path.
      */
-    static <T> PropertyStrategy classifyValueStrategy(Class<?> geometryClass, Class<T> type) {
+    static <T> @Nullable PropertyStrategy classifyValueStrategy(@Nullable Class<?> geometryClass, Class<T> type) {
       return switch (type) {
         case Class<T> _ when geometryClass != null && geometryClass.isAssignableFrom(type) -> GEOMETRY;
         case Class<T> _ when type == String.class || type == Boolean.class || type == Character.class -> JAVA_PASSTHROUGH;
         case Class<T> _ when Number.class.isAssignableFrom(type) || type.isPrimitive()    -> JAVA_PASSTHROUGH;
         case Class<T> _ when NitriteTypeRegistry.hasEntry(type)                           -> NitriteTypeRegistry.strategyFor(type);
-        case Class<T> _ when type == java.util.Map.class || java.util.Map.class.isAssignableFrom(type) -> MAP;
+        case Class<T> _ when type == Map.class || Map.class.isAssignableFrom(type) -> MAP;
         case Class<T> _ when type == Optional.class                                       -> OPTIONAL;
         case Class<T> _ when type.isEnum()                                                -> ENUM;
         case Class<T> _ when type.isArray() || type.getPackageName().startsWith("java.")  -> JAVA_PASSTHROUGH;

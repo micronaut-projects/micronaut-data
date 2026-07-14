@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 
@@ -64,7 +65,7 @@ public final class ValueConverter {
     public static Instant fromEpochNanos(long nanos) {
         return Instant.ofEpochSecond(
             Math.floorDiv(nanos, 1_000_000_000L),
-            (int) Math.floorMod(nanos, 1_000_000_000L));
+            Math.floorMod(nanos, 1_000_000_000L));
     }
 
     /**
@@ -76,7 +77,7 @@ public final class ValueConverter {
      * @param value the raw value
      * @return the normalized value, or the value itself if no conversion applies
      */
-    public static Object toFilterValueStatic(Object value) {
+    public static @Nullable Object toFilterValueStatic(@Nullable Object value) {
       return switch (value) {
         case null            -> null;
         case String s        -> s;
@@ -98,7 +99,7 @@ public final class ValueConverter {
      * @return the converted value, or null if input is null
      */
     @SuppressWarnings("unchecked")
-    public <T> T convert(Object value, Class<T> targetType) {
+    public <T> @Nullable T convert(@Nullable Object value, Class<T> targetType) {
         if (value == null) {
             return null;
         }
@@ -119,7 +120,7 @@ public final class ValueConverter {
      * @return the converted value, or null if input is null
      */
     @SuppressWarnings("unchecked")
-    public <T> T convertWithTemporalHandling(Object value, Class<T> targetType) {
+    public <T> @Nullable T convertWithTemporalHandling(@Nullable Object value, Class<T> targetType) {
         if (value == null) {
             return null;
         }

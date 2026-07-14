@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.runtime.criteria;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
@@ -25,6 +26,8 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteri
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -38,9 +41,11 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,7 +60,7 @@ import java.util.function.Function;
 @Internal
 public final class NitriteCriteriaExecutor {
 
-    private final io.micronaut.data.model.query.builder.QueryBuilder queryBuilder;
+    private final QueryBuilder queryBuilder;
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
     private final NitriteFilterBuilder filterBuilder;
@@ -72,7 +77,7 @@ public final class NitriteCriteriaExecutor {
      * @param collectionFactory the collection factory function
      * @param entityFactory the entity factory function
      */
-    public NitriteCriteriaExecutor(io.micronaut.data.model.query.builder.QueryBuilder queryBuilder,
+    public NitriteCriteriaExecutor(QueryBuilder queryBuilder,
                                    NitriteEntityMapper entityMapper,
                                    NitriteQueryParser queryParser,
                                    NitriteFilterBuilder filterBuilder,
@@ -107,7 +112,7 @@ public final class NitriteCriteriaExecutor {
      * @param <R> the result type
      * @return the first matching entity, or null if none found
      */
-    public <R> R findOne(@NonNull CriteriaQuery<R> query) {
+    public <R> @Nullable R findOne(@NonNull CriteriaQuery<R> query) {
         QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
                 .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
         Class<?> entityType = getEntityType(query);
@@ -219,7 +224,7 @@ public final class NitriteCriteriaExecutor {
                     doc.put(entry.getKey(), entry.getValue());
                 }
                 // Update the document in the collection
-                Filter idFilter = org.dizitart.no2.filters.FluentFilter.where("_id").eq(doc.get("_id"));
+                Filter idFilter = FluentFilter.where("_id").eq(doc.get("_id"));
                 collection.update(idFilter, doc);
             }
 
@@ -229,10 +234,10 @@ public final class NitriteCriteriaExecutor {
         }
     }
 
-    private Map<String, Object> getUpdateValues(jakarta.persistence.criteria.CriteriaUpdate<?> query) {
+    private Map<String, Object> getUpdateValues(CriteriaUpdate<?> query) {
         if (query instanceof AbstractPersistentEntityCriteriaUpdate<?> update) {
             Map<String, Object> rawValues = update.getUpdateValues();
-            Map<String, Object> resolvedValues = new java.util.LinkedHashMap<>();
+            Map<String, Object> resolvedValues = new LinkedHashMap<>();
             for (Map.Entry<String, Object> entry : rawValues.entrySet()) {
                 Object value = entry.getValue();
                 if (value instanceof BindingParameter bindingParam) {
@@ -240,7 +245,7 @@ public final class NitriteCriteriaExecutor {
                 }
                 resolvedValues.put(entry.getKey(), value);
             }
-            return resolvedValues;
+            return Collections.unmodifiableMap(resolvedValues);
         }
         return Collections.emptyMap();
     }
@@ -261,9 +266,9 @@ public final class NitriteCriteriaExecutor {
     }
 
     private Class<?> getEntityType(Object query) {
-        if (query instanceof jakarta.persistence.criteria.CriteriaUpdate<?> update) {
+        if (query instanceof CriteriaUpdate<?> update) {
             return ((RuntimePersistentEntity) ((PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
-        } else if (query instanceof jakarta.persistence.criteria.CriteriaDelete<?> delete) {
+        } else if (query instanceof CriteriaDelete<?> delete) {
             return ((RuntimePersistentEntity) ((PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
         } else {
             return ((RuntimePersistentEntity) ((PersistentEntityQuery<?>) query).getPersistentEntity()).getIntrospection().getBeanType();
@@ -282,7 +287,7 @@ public final class NitriteCriteriaExecutor {
             }
 
             // Build parameter array from parameter bindings
-            List<io.micronaut.data.model.query.builder.QueryParameterBinding> bindings = queryResult.getParameterBindings();
+            List<QueryParameterBinding> bindings = queryResult.getParameterBindings();
             Object[] params = new Object[bindings.size()];
             for (int i = 0; i < bindings.size(); i++) {
                 params[i] = bindings.get(i).getValue();

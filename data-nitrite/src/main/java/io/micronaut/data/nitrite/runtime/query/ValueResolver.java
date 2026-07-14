@@ -16,12 +16,14 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteTypeRegistry;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,13 +41,16 @@ final class ValueResolver {
         this.entityMapper = entityMapper;
     }
 
-    Object resolveValue(Object value, Object[] params, Map<String, Object> namedParameters) {
+    @Nullable Object resolveValue(@Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
         Object resolved = resolveValueInternal(value, params, namedParameters);
         LOG.debug("resolveValue: value={}, resolved={}", value, resolved);
         return resolved;
     }
 
-    Object resolveValueInternal(Object value, Object[] params, Map<String, Object> namedParameters) {
+    @Nullable Object resolveValueInternal(@Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
+        if (value == null) {
+            return null;
+        }
         if (value instanceof String s) {
             if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
                 try {
@@ -100,11 +105,11 @@ final class ValueResolver {
         return value;
     }
 
-    Object preConvertForFilter(Object value) {
+    @Nullable Object preConvertForFilter(@Nullable Object value) {
         return NitriteTypeRegistry.write(value);
     }
 
-    Object maybeCoerceUuid(String field, Object value) {
+    @Nullable Object maybeCoerceUuid(String field, @Nullable Object value) {
         if (value instanceof String s && ("id".equals(field) || "_id".equals(field))) {
             try {
                 return UUID.fromString(s);
@@ -150,9 +155,9 @@ final class ValueResolver {
                     }
                 }
             } else if (resolved != null && resolved.getClass().isArray()) {
-                int len = java.lang.reflect.Array.getLength(resolved);
+                int len = Array.getLength(resolved);
                 for (int i = 0; i < len; i++) {
-                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(java.lang.reflect.Array.get(resolved, i)));
+                    Object r = entityMapper.toNitriteFilterValue(preConvertForFilter(Array.get(resolved, i)));
                     if (r instanceof Comparable<?> c) {
                         resolvedValues.add(c);
                     }

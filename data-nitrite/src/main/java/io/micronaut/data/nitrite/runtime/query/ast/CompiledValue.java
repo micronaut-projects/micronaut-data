@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.query.ast;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 
 import java.util.Map;
 
@@ -35,16 +36,16 @@ public interface CompiledValue {
      * @param namedParameters named parameters
      * @return the resolved value
      */
-    Object resolve(Object[] params, Map<String, Object> namedParameters);
+    @Nullable Object resolve(Object[] params, Map<String, Object> namedParameters);
 
     /**
      * A literal value that doesn't change.
      *
      * @param value the literal value
      */
-    record Literal(Object value) implements CompiledValue {
+    record Literal(@Nullable Object value) implements CompiledValue {
         @Override
-        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+        public @Nullable Object resolve(Object[] params, Map<String, Object> namedParameters) {
             return value;
         }
     }
@@ -56,7 +57,7 @@ public interface CompiledValue {
      */
     record Parameter(int index) implements CompiledValue {
         @Override
-        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+        public @Nullable Object resolve(Object[] params, Map<String, Object> namedParameters) {
             return params != null && index >= 0 && index < params.length ? params[index] : null;
         }
     }
@@ -68,7 +69,7 @@ public interface CompiledValue {
      */
     record NamedParameter(String name) implements CompiledValue {
         @Override
-        public Object resolve(Object[] params, Map<String, Object> namedParameters) {
+        public @Nullable Object resolve(Object[] params, Map<String, Object> namedParameters) {
             return namedParameters != null ? namedParameters.get(name) : null;
         }
     }

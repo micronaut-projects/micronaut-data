@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.runtime.query;
 // Follow-up: move to query/spatial/ subpackage once the optional-dependency interface is defined.
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -42,7 +43,7 @@ final class SpatialFilterFactory {
         this.valueResolver = valueResolver;
     }
 
-    Filter buildNearFilter(String field, Object value, Object[] params, Map<String, Object> namedParameters) {
+    Filter buildNearFilter(String field, @Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
         if (!(value instanceof Map<?, ?> m)) {
             return Filter.ALL;
         }
@@ -96,7 +97,7 @@ final class SpatialFilterFactory {
         return Filter.ALL;
     }
 
-    Filter createSpatialFilter(String field, Object geometry, String method) {
+    Filter createSpatialFilter(String field, @Nullable Object geometry, String method) {
         if (geometry == null) {
             return Filter.ALL;
         }

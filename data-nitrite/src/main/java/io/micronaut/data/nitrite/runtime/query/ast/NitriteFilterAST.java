@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.query.ast;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
@@ -58,7 +59,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             List<Filter> results = new ArrayList<>(children.size());
             for (NitriteFilterAST child : children) {
                 Filter f = child.toFilter(params, namedParameters);
-                if (f != null && f != Filter.ALL) {
+                if (f != null && !f.equals(Filter.ALL)) {
                     results.add(f);
                 }
             }
@@ -77,7 +78,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             List<Filter> results = new ArrayList<>(children.size());
             for (NitriteFilterAST child : children) {
                 Filter f = child.toFilter(params, namedParameters);
-                if (f != null && f != Filter.ALL) {
+                if (f != null && !f.equals(Filter.ALL)) {
                     results.add(f);
                 }
             }
@@ -108,7 +109,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
             Object finalValue = preparer.prepare(persistedName, resolvedValue);
-            return evaluator.evaluate(entity, persistedName, "$eq", finalValue, params, namedParameters);
+            Filter f = evaluator.evaluate(entity, persistedName, "$eq", finalValue, params, namedParameters);
+            return f != null ? f : Filter.ALL;
         }
     }
 
@@ -138,7 +140,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             List<Filter> results = new ArrayList<>(operators.size());
             for (OperatorBinding op : operators) {
                 Filter f = op.toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters);
-                if (f != null && f != Filter.ALL) {
+                if (f != null && !f.equals(Filter.ALL)) {
                     results.add(f);
                 }
             }
@@ -167,7 +169,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         public Filter toFilter(FieldValuePreparer preparer, OperatorFilterEvaluator evaluator, RuntimePersistentEntity<?> entity, String persistedName, String rawField, Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
             Object finalValue = preparer.prepare(persistedName, resolvedValue);
-            return evaluator.evaluate(entity, persistedName, op, finalValue, params, namedParameters);
+            Filter f = evaluator.evaluate(entity, persistedName, op, finalValue, params, namedParameters);
+            return f != null ? f : Filter.ALL;
         }
     }
 
@@ -182,7 +185,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          * @param value the raw value to prepare
          * @return the prepared value ready for Nitrite filter matching
          */
-        Object prepare(String field, Object value);
+        @Nullable Object prepare(String field, @Nullable Object value);
     }
 
     /**
@@ -200,7 +203,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          * @param namedParameters the named parameters map
          * @return the constructed Nitrite Filter for the given operator
          */
-        Filter evaluate(RuntimePersistentEntity<?> entity, String field, String op, Object value,
+        @Nullable Filter evaluate(RuntimePersistentEntity<?> entity, String field, String op, @Nullable Object value,
                         Object[] params, Map<String, Object> namedParameters);
     }
 
@@ -219,7 +222,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          * @param namedParameters the named parameters map
          * @return the constructed Nitrite Filter for the association
          */
-        Filter evaluate(RuntimePersistentEntity<?> entity, String rawField, String persistedName,
+        @Nullable Filter evaluate(RuntimePersistentEntity<?> entity, String rawField, String persistedName,
                         Map<String, Object> operators, Object[] params, Map<String, Object> namedParameters);
     }
 
@@ -242,7 +245,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     ) implements NitriteFilterAST {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
-            return evaluator.evaluate(entity, rawField, persistedName, operators, params, namedParameters);
+            Filter f = evaluator.evaluate(entity, rawField, persistedName, operators, params, namedParameters);
+            return f != null ? f : Filter.ALL;
         }
     }
 
@@ -277,7 +281,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
-        private static boolean compare(String op, Object lhs, Object rhs) {
+        private static boolean compare(String op, @Nullable Object lhs, @Nullable Object rhs) {
             if (lhs == null || rhs == null) {
                 boolean eq = Objects.equals(lhs, rhs);
                 return "$ne".equals(op) ? !eq : "$eq".equals(op) && eq;
@@ -316,7 +320,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          * @param namedParameters named parameters
          * @return the computed value
          */
-        Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters);
+        @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters);
 
         /**
          * A reference to a persisted document field.
@@ -325,7 +329,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          */
         record FieldRef(String persistedName) implements ExprValueNode {
             @Override
-            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 return doc.get(persistedName);
             }
         }
@@ -337,7 +341,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          */
         record Literal(CompiledValue value) implements ExprValueNode {
             @Override
-            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 return value.resolve(params, namedParameters);
             }
         }
@@ -349,7 +353,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          */
         record StrLen(ExprValueNode inner) implements ExprValueNode {
             @Override
-            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 Object v = inner.evaluate(doc, params, namedParameters);
                 return v == null ? null : v.toString().length();
             }
@@ -362,7 +366,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          */
         record Multiply(List<ExprValueNode> operands) implements ExprValueNode {
             @Override
-            public Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 double result = 1;
                 for (ExprValueNode operand : operands) {
                     Object v = operand.evaluate(doc, params, namedParameters);

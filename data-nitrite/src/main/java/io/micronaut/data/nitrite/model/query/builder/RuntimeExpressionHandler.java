@@ -18,8 +18,10 @@ package io.micronaut.data.nitrite.model.query.builder;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.criteria.Expression;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +39,7 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Object value) {
+    public @Nullable Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Object value) {
         if (value instanceof BindingParameter bindingParameter) {
             BindingParameter.BindingContext context = NitritePredicateVisitor.newBindingContext(propertyPath, propertyPath);
             int index = queryState.pushParameter(bindingParameter, context);
@@ -51,13 +53,13 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
     }
 
     @Override
-    public Object handleRegex(
+    public @Nullable Object handleRegex(
         String fieldName,
         boolean ignoreCase,
         boolean negated,
         boolean startsWith,
         boolean endsWith,
-        Expression<?> rightExpression,
+        @Nullable Expression<?> rightExpression,
         boolean isLike,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath) {
@@ -73,19 +75,20 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
             Object idx = m.get(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
             paramStr = NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + idx;
         } else {
-            paramStr = paramPlaceholder.toString();
+            paramStr = paramPlaceholder != null ? paramPlaceholder.toString() : "";
         }
 
         return ciPrefix + prefix + paramStr + suffix;
     }
 
     @Override
-    public Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression) {
+    public @Nullable Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
         return resolveValue(queryState, propertyPath, expression);
     }
 
     @Override
-    public List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression) {
-        return List.of(resolveValue(queryState, propertyPath, expression));
+    public List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
+        Object resolved = resolveValue(queryState, propertyPath, expression);
+        return Collections.singletonList(resolved);
     }
 }

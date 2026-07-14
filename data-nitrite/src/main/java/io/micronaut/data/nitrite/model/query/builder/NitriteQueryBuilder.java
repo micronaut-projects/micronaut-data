@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
@@ -204,7 +205,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             }
 
             @Override
-            public String getUpdate() {
+            public @Nullable String getUpdate() {
                 return updateString;
             }
 
@@ -258,7 +259,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         }
         Map<String, Object> queryMap = new LinkedHashMap<>();
         if (predicate instanceof IPredicate predicateVisitable) {
-            NitriteExpressionHandler handler = queryBuilderMetadata != AnnotationMetadata.EMPTY_METADATA
+            NitriteExpressionHandler handler = !queryBuilderMetadata.equals(AnnotationMetadata.EMPTY_METADATA)
                 ? new CompileExpressionHandler()
                 : new RuntimeExpressionHandler();
             predicateVisitable.visitPredicate(new NitritePredicateVisitor(queryState, queryMap, handler));

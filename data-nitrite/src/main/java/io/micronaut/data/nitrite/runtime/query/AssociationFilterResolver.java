@@ -16,22 +16,27 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
 import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
+import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 @Internal
 final class AssociationFilterResolver {
@@ -39,7 +44,7 @@ final class AssociationFilterResolver {
     private static final Logger LOG = LoggerFactory.getLogger(AssociationFilterResolver.class);
     private static final Filter NONE = element -> false;
 
-    private final SubQueryExecutor subQueryExecutor;
+    private final @Nullable SubQueryExecutor subQueryExecutor;
     private final ValueResolver valueResolver;
     /** Callback into NitriteFilterBuilder for nested filter building. */
     // Follow-up: break this circular reference once the compile/build duality is resolved.
@@ -47,7 +52,7 @@ final class AssociationFilterResolver {
     private final FieldFilterProvider operatorFiltersForPath;
 
     AssociationFilterResolver(
-            SubQueryExecutor subQueryExecutor,
+            @Nullable SubQueryExecutor subQueryExecutor,
             ValueResolver valueResolver,
             FieldFilterProvider fieldFilterProvider,
             FieldFilterProvider operatorFiltersForPath) {
@@ -57,7 +62,7 @@ final class AssociationFilterResolver {
         this.operatorFiltersForPath = operatorFiltersForPath;
     }
 
-    Filter buildAssociationFilter(
+    @Nullable Filter buildAssociationFilter(
             RuntimePersistentEntity<?> entity,
             String field,
             Map<String, Object> operators,
@@ -87,7 +92,7 @@ final class AssociationFilterResolver {
         RuntimePersistentProperty<?> assocIdentity = headAssoc.getAssociatedEntity().getIdentity();
         boolean useSubQuery = false;
         if (value instanceof String strValue) {
-            if (assocIdentity.getType() == java.util.UUID.class) {
+            if (assocIdentity.getType() == UUID.class) {
                 useSubQuery = !looksLikeId(strValue, assocIdentity.getType());
             } else if (assocIdentity.getType() == String.class) {
                 useSubQuery = strValue.contains(" ");
@@ -121,11 +126,14 @@ final class AssociationFilterResolver {
         return null;
     }
 
-    private Filter buildReverseLookupFilter(
+    private @Nullable Filter buildReverseLookupFilter(
             RuntimePersistentEntity<?> entity,
-            RuntimeAssociation<?> association, String targetPropertyName,
+            RuntimeAssociation<?> association, @Nullable String targetPropertyName,
             Object value, Object[] params, Map<String, Object> namedParameters) {
 
+        if (subQueryExecutor == null) {
+            return null;
+        }
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
         if (mappedBy == null) {
             return null;
@@ -172,11 +180,14 @@ final class AssociationFilterResolver {
         return ids.length == 0 ? NONE : FluentFilter.where(idField).in(ids);
     }
 
-    private Filter buildForwardLookupFilter(
+    private @Nullable Filter buildForwardLookupFilter(
             String field,
             RuntimeAssociation<?> association, Object value,
             Object[] params, Map<String, Object> namedParameters) {
 
+        if (subQueryExecutor == null) {
+            return null;
+        }
         RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
         List<Map<String, Object>> orClauses = new ArrayList<>();
         for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
@@ -199,7 +210,7 @@ final class AssociationFilterResolver {
         return ids.length == 0 ? NONE : FluentFilter.where(field).in(ids);
     }
 
-    Filter buildNestedFilter(
+    @Nullable Filter buildNestedFilter(
             RuntimePersistentEntity<?> entity,
             String fieldPath,
             Map<String, Object> operators,
@@ -248,9 +259,9 @@ final class AssociationFilterResolver {
                             return NONE;
                         }
                         return pair -> {
-                            org.dizitart.no2.collection.Document doc = pair.getSecond();
+                            Document doc = pair.getSecond();
                             Object val = doc.get(fieldName);
-                            if (val instanceof java.util.Collection<?> coll) {
+                            if (val instanceof Collection<?> coll) {
                                 for (Object id : matchingIds) {
                                     if (coll.contains(id)) {
                                         return true;
@@ -308,11 +319,11 @@ final class AssociationFilterResolver {
         if (value == null || value.isEmpty()) {
             return false;
         }
-        if (idType == java.util.UUID.class) {
+        if (idType == UUID.class) {
             if (value.length() == 36 && value.charAt(8) == '-' && value.charAt(13) == '-'
                     && value.charAt(18) == '-' && value.charAt(23) == '-') {
                 try {
-                    java.util.UUID.fromString(value);
+                    UUID.fromString(value);
                     return true;
                 } catch (IllegalArgumentException e) {
                     return false;
@@ -325,13 +336,13 @@ final class AssociationFilterResolver {
 
     private static Comparable<?>[] toComparableArray(List<Object> values) {
         return values.stream()
-            .filter(java.util.Objects::nonNull)
+            .filter(Objects::nonNull)
             .map(id -> id instanceof Comparable<?> c ? c : id.toString())
             .toArray(Comparable<?>[]::new);
     }
 
     @FunctionalInterface
     interface FieldFilterProvider {
-        Filter build(RuntimePersistentEntity<?> entity, String field, Map<String, Object> ops, Object[] params, Map<String, Object> named);
+        @Nullable Filter build(RuntimePersistentEntity<?> entity, String field, Map<String, Object> ops, Object[] params, Map<String, Object> named);
     }
 }

@@ -60,6 +60,7 @@ import io.micronaut.data.nitrite.runtime.write.NitriteEntitiesOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntityOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteOperationContext;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
+import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -70,6 +71,10 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaDelete;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
@@ -110,10 +115,10 @@ import java.util.stream.StreamSupport;
  *
  * <ul>
  *   <li>Criteria-generated JSON uses {@code "$mn_qp:<index>"} placeholders resolved from {@link
- *       io.micronaut.data.model.runtime.PreparedQuery#getParameterArray()}.</li>
+ *       PreparedQuery#getParameterArray()}.</li>
  *   <li>User-authored JSON {@code @Query} methods may use named placeholders like {@code :title}.
  *       These are bound using query bindings when available, otherwise by falling back to {@link
- *       io.micronaut.data.model.runtime.PreparedQuery#getArguments()} names.</li>
+ *       PreparedQuery#getArguments()} names.</li>
  * </ul>
  *
  * <h2>Update semantics</h2>
@@ -136,7 +141,7 @@ import java.util.stream.StreamSupport;
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
     SyncCascadeOperations.SyncCascadeOperationsHelper<NitriteOperationContext>,
-    io.micronaut.data.operations.CriteriaRepositoryOperations {
+    CriteriaRepositoryOperations {
 
     private static final Logger LOG =
         LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
@@ -147,7 +152,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     private final NitriteQueryParser queryParser;
     private final NitriteFilterBuilder filterBuilder;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
-    private final jakarta.persistence.criteria.CriteriaBuilder criteriaBuilder;
+    private final CriteriaBuilder criteriaBuilder;
     private final NitriteCriteriaExecutor criteriaExecutor;
     private final NitriteQueryExecutor queryExecutor;
     private final ValueConverter valueConverter;
@@ -270,41 +275,41 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     // ========== CriteriaRepositoryOperations implementation ==========
 
     @Override
-    public jakarta.persistence.criteria.CriteriaBuilder getCriteriaBuilder() {
+    public CriteriaBuilder getCriteriaBuilder() {
         return criteriaBuilder;
     }
 
     @Override
-    public boolean exists(@NonNull jakarta.persistence.criteria.CriteriaQuery<?> query) {
+    public boolean exists(@NonNull CriteriaQuery<?> query) {
         return criteriaExecutor.exists(query);
     }
 
     @Override
-    public <R> R findOne(@NonNull jakarta.persistence.criteria.CriteriaQuery<R> query) {
+    public <R> @Nullable R findOne(@NonNull CriteriaQuery<R> query) {
         return criteriaExecutor.findOne(query);
     }
 
     @Override
     @NonNull
-    public <T> List<T> findAll(@NonNull jakarta.persistence.criteria.CriteriaQuery<T> query) {
+    public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
         return criteriaExecutor.findAll(query);
     }
 
     @Override
     @NonNull
-    public <T> List<T> findAll(@NonNull jakarta.persistence.criteria.CriteriaQuery<T> query, int offset, int limit) {
+    public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
         return criteriaExecutor.findAll(query, offset, limit);
     }
 
     @Override
     @NonNull
-    public Optional<Number> updateAll(@NonNull jakarta.persistence.criteria.CriteriaUpdate<Number> query) {
+    public Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query) {
         return criteriaExecutor.updateAll(query);
     }
 
     @Override
     @NonNull
-    public Optional<Number> deleteAll(@NonNull jakarta.persistence.criteria.CriteriaDelete<Number> query) {
+    public Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query) {
         return criteriaExecutor.deleteAll(query);
     }
 
@@ -452,7 +457,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     @Override
-    public <T> T findOne(final Class<T> type, final Object id) {
+    public <T> @Nullable T findOne(final Class<T> type, final Object id) {
         Filter filter = entityMapper.idEqualsFilter(type, id);
         Document doc = getCollection(type).find(filter).firstOrNull();
         if (doc == null) {
@@ -618,8 +623,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             return null;
         }
         List<Sort.Order> orders = new ArrayList<>();
-        for (String part : sortStr.split(",")) {
-            String[] parts = part.trim().split(":");
+        for (String part : sortStr.split(",", -1)) {
+            String[] parts = part.trim().split(":", -1);
             if (parts.length == 2) {
                 orders.add(Sort.Order.Direction.valueOf(parts[1]) == Sort.Order.Direction.ASC ? Sort.Order.asc(parts[0]) : Sort.Order.desc(parts[0]));
             }
@@ -664,7 +669,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         return queryBinder.buildJsonParameterValues(q);
     }
 
-    private Object[] ensureJsonParamsForFilter(@NonNull final Map<String, Object> filterMap,
+    private Object[] ensureJsonParamsForFilter(@Nullable final Map<String, Object> filterMap,
                                                @NonNull final Object[] methodParams,
                                                @Nullable final Object[] jsonParams) {
         return queryBinder.ensureJsonParamsForFilter(filterMap, methodParams, jsonParams);
@@ -744,7 +749,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     @Override
-    public Object toFilterValue(Object value) {
+    public @Nullable Object toFilterValue(@Nullable Object value) {
         return entityMapper.toFilterValue(value);
     }
 
@@ -757,7 +762,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      * @return the result
      */
     @Override
-    public <T, R> R findOne(@NonNull final PreparedQuery<T, R> q) {
+    public <T, R> @Nullable R findOne(@NonNull final PreparedQuery<T, R> q) {
         R result = queryExecutor.findOne(q, getNitritePreparedQuery(q));
         // Projected scalar results (e.g. LocalDate, Instant) come back as raw numbers from Nitrite.
         // Convert them here before the framework interceptor calls ConversionService on them.
@@ -795,7 +800,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      * @param targetType the target type
      * @return the converted value
      */
-    private Object convertValue(Object value, Class<?> targetType) {
+    private @Nullable Object convertValue(@Nullable Object value, Class<?> targetType) {
         return valueConverter.convertWithTemporalHandling(value, targetType);
     }
 

@@ -41,7 +41,7 @@ import java.util.List;
 public record WritablePropertyMeta<T>(
     RuntimePersistentProperty<T> prop,
     String fieldName,
-    PropertyStrategy strategy,
+    @Nullable PropertyStrategy strategy,
     @Nullable String mappedBy,
     @Nullable BeanProperty<Object, Object> associatedIdProp,
     @Nullable BeanProperty<Object, Object> backRefProperty,

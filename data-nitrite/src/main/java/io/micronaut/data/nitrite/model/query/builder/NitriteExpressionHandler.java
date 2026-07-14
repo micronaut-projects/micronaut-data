@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.nitrite.model.query.builder;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import jakarta.persistence.criteria.Expression;
 
@@ -36,7 +37,7 @@ public interface NitriteExpressionHandler {
      * @param expression   the expression to resolve
      * @return the resolved value
      */
-    Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Object expression);
+    @Nullable Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Object expression);
 
     /**
      * Handle a regex-based expression (Like, StartsWith, EndsWith, Contains).
@@ -52,13 +53,13 @@ public interface NitriteExpressionHandler {
      * @param propertyPath    the property path for the left-hand side
      * @return the generated regex value or filter map
      */
-    Object handleRegex(
+    @Nullable Object handleRegex(
         String fieldName,
         boolean ignoreCase,
         boolean negated,
         boolean startsWith,
         boolean endsWith,
-        Expression<?> rightExpression,
+        @Nullable Expression<?> rightExpression,
         boolean isLike,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath);
@@ -71,7 +72,7 @@ public interface NitriteExpressionHandler {
      * @param expression   the expression to resolve
      * @return the resolved regex value
      */
-    Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression);
+    @Nullable Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression);
 
     /**
      * Resolve an expression that might be a collection to a list of values.
@@ -81,5 +82,5 @@ public interface NitriteExpressionHandler {
      * @param expression   the expression to resolve
      * @return the list of resolved values
      */
-    List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, Expression<?> expression);
+    List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression);
 }

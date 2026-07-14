@@ -16,6 +16,7 @@
 package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import java.util.regex.Pattern;
 
 @Internal
@@ -23,7 +24,7 @@ final class PatternConverter {
 
     private PatternConverter() { }
 
-    static String resolveRegexPattern(Object resolved) {
+    static String resolveRegexPattern(@Nullable Object resolved) {
         if (resolved == null) {
             return "";
         }

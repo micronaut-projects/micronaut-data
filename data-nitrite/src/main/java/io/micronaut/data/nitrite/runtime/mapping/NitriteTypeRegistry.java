@@ -106,7 +106,7 @@ public final class NitriteTypeRegistry {
      * @param type the type to resolve
      * @return the matching entry, or {@code null} if the type is not registered
      */
-    public static <T> TypeEntry<T> get(Class<T> type) {
+    public static <T> @Nullable TypeEntry<T> get(Class<T> type) {
         return findEntry(type);
     }
 
@@ -126,7 +126,7 @@ public final class NitriteTypeRegistry {
      * @param type the type to resolve
      * @return the matching property strategy, or {@code null} if not registered
      */
-    public static PropertyStrategy strategyFor(Class<?> type) {
+    public static @Nullable PropertyStrategy strategyFor(Class<?> type) {
         TypeEntry<?> entry = findEntry(type);
         return entry != null ? entry.strategy() : null;
     }
@@ -141,7 +141,7 @@ public final class NitriteTypeRegistry {
      * @param value the Java value to convert
      * @return the Nitrite storage representation, or the original value if unregistered
      */
-    public static Object write(Object value) {
+    public static @Nullable Object write(@Nullable Object value) {
         if (value == null) {
             return null;
         }
@@ -150,7 +150,7 @@ public final class NitriteTypeRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> TypeEntry<T> findEntry(Class<?> cls) {
+    private static <T> @Nullable TypeEntry<T> findEntry(Class<?> cls) {
         for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
             TypeEntry<?> entry = ENTRIES.get(c);
             if (entry != null) {
@@ -170,7 +170,7 @@ public final class NitriteTypeRegistry {
      * @param targetType the target Java type
      * @return the converted Java value, or {@code null} if no conversion applies
      */
-    public static <T> T read(Object value, Class<T> targetType) {
+    public static <T> @Nullable T read(@Nullable Object value, Class<T> targetType) {
         TypeEntry<T> entry = findEntry(targetType);
         if (entry == null) {
             return null;
