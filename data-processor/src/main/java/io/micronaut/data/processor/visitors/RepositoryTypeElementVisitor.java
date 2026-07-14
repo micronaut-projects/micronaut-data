@@ -380,6 +380,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                   Dialect dialect,
                                                   String version) {
         AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+        // Compiler options are not available at runtime. Preserve existing per-dialect settings while
+        // materializing the target version into repository metadata for runtime query-builder reconstruction.
         List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation == null
             ? Collections.emptyList()
             : annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);

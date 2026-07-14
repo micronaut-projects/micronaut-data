@@ -246,7 +246,7 @@ public class DataR2dbcConfiguration implements Named {
 
         /**
          * @return The target dialect version.
-         * @since 5.1.0
+         * @since 5.1
          */
         @Nullable
         public String getVersion() {
@@ -255,7 +255,7 @@ public class DataR2dbcConfiguration implements Named {
 
         /**
          * @param version The target dialect version.
-         * @since 5.1.0
+         * @since 5.1
          */
         public void setVersion(@Nullable String version) {
             this.version = version;
