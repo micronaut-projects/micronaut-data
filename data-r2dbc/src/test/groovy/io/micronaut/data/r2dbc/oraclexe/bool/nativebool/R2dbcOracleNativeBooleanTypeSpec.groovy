@@ -22,9 +22,6 @@ class R2dbcOracleNativeBooleanTypeSpec extends Specification implements Oracle23
 
     void "test oracle native boolean type is used for r2dbc schema and queries"() {
         given:
-        assert applicationContext.getBean(DataR2dbcConfiguration)
-            .resolveDialectOptions()
-            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         def repository = applicationContext.getBean(R2dbcNativeOracleBooleanRepository)
 
         when:

@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -49,13 +48,13 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      */
     Dialect getDialect();
 
-    /**
-     * Get resolved dialect options.
-     *
-     * @return dialect options
-     */
-    default SqlDialectOptions getDialectOptions() {
-        return getQueryBuilder().getDialectOptions();
+    default boolean isDialectVersionAtLeast(String requiredVersion) {
+        return getQueryBuilder().isDialectVersionAtLeast(requiredVersion);
+    }
+
+    @Nullable
+    default String getDialectVersion() {
+        return getQueryBuilder().getDialectVersion();
     }
 
     /**

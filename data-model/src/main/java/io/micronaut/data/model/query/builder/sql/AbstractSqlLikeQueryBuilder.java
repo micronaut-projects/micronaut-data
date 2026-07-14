@@ -199,12 +199,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Get dialect options.
-     *
-     * @return dialect options
+     * @param requiredVersion the required target dialect version
+     * @return whether the target dialect version meets the requirement
      */
-    protected SqlDialectOptions getDialectOptions() {
-        return SqlDialectOptions.defaults(getDialect());
+    protected boolean isDialectVersionAtLeast(String requiredVersion) {
+        return false;
+    }
+
+    /**
+     * @return the normalized target dialect version, or {@code null} when none is configured
+     */
+    @Nullable
+    protected String getDialectVersion() {
+        return null;
     }
 
     /**
@@ -2630,7 +2637,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public void visitIsFalse(Expression<?> expression) {
             if (getDialect() == Dialect.ORACLE) {
-                if (getDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+                if (isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
                     appendUnaryCondition(" IS FALSE", expression);
                 } else {
                     appendUnaryCondition(" = " + asLiteral(false), expression);
@@ -2653,7 +2660,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public void visitIsTrue(Expression<?> expression) {
             if (getDialect() == Dialect.ORACLE) {
-                if (getDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+                if (isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
                     appendUnaryCondition(" IS TRUE", expression);
                 } else {
                     appendUnaryCondition(" = " + asLiteral(true), expression);
@@ -3543,14 +3550,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dataType == DataType.OBJECT) {
                 throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
             }
-            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect, dialectOptions);
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect, dialectOptions.version().orElse(null));
         }
 
         private void appendCast(ExpressionType<?> type, Expression<?> expression) {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect(), getDialectOptions()));
+            query.append(getCastDbType(type, getDialect(), SqlDialectOptions.of(getDialect(), getDialectVersion())));
             query.append(CLOSE_BRACKET);
         }
 

@@ -275,7 +275,7 @@ interface MyRepository {
         def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
         def nativeBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION)
+            SqlDialectOptions.ORACLE_23_1_VERSION
         )
 
         when:
@@ -291,7 +291,7 @@ interface MyRepository {
         def laterBaselineDeleteRoot = laterBaselineDeleteQuery.from(Contact)
         def laterBaselineBuilder = new SqlQueryBuilder(
             Dialect.ORACLE,
-            SqlDialectOptions.of(Dialect.ORACLE, "23.4")
+            "23.4"
         )
 
         when:

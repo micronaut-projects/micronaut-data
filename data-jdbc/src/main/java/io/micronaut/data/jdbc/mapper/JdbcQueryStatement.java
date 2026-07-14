@@ -80,7 +80,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      */
     @Internal
     public static int findSqlType(DataType dataType, Dialect dialect) {
-        return findSqlType(dataType, dialect, SqlDialectOptions.defaults(dialect));
+        return findSqlType(dataType, dialect, null);
     }
 
     /**
@@ -88,18 +88,18 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      *
      * @param dataType The data type
      * @param dialect The dialect
-     * @param dialectOptions The dialect options
+     * @param dialectVersion The target dialect version
      * @return The SQL type
      */
     @Internal
-    public static int findSqlType(DataType dataType, Dialect dialect, SqlDialectOptions dialectOptions) {
+    public static int findSqlType(DataType dataType, Dialect dialect, @Nullable String dialectVersion) {
         return switch (dataType) {
             case LONG -> Types.BIGINT;
             case STRING, JSON -> Types.VARCHAR;
             case DATE -> Types.DATE;
             case BOOLEAN -> {
                 if (dialect == Dialect.ORACLE) {
-                    if (dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+                    if (SqlDialectOptions.of(dialect, dialectVersion).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
                         yield Types.BOOLEAN;
                     }
                     // oracle driver treats Boolean types as bits

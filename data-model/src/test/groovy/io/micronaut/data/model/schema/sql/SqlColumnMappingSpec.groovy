@@ -27,19 +27,7 @@ class SqlColumnMappingSpec extends Specification {
 
         expect:
         column.getSqlType(Dialect.ORACLE) == "NUMBER(1)"
-        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION)) == "BOOLEAN"
-    }
-
-    void "dialect options must match the requested dialect"() {
-        given:
-        def column = new SqlColumnMapping("active", DataType.BOOLEAN, SqlDbType.BOOLEAN)
-
-        when:
-        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.defaults(Dialect.POSTGRES))
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message == "Dialect options must match the requested dialect"
+        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_VERSION) == "BOOLEAN"
     }
 
     void "dialect options compare parsed target versions"() {

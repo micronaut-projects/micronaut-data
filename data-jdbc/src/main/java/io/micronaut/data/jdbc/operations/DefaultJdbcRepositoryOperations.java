@@ -671,7 +671,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
                 DataType resultDataType = preparedQuery.getResultDataType();
-                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, preparedQuery.getDialect(), preparedQuery.getDialectOptions());
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, preparedQuery.getDialect(), preparedQuery.getDialectVersion());
                 int outIndex = preparedQuery.getQueryBindings().size() + 1;
                 callableStatement.registerOutParameter(outIndex, sqlType);
             }
@@ -1141,11 +1141,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (!jdbcConfiguration.getDialectOptions().isValidateVersion()) {
             return;
         }
-        Optional<String> targetVersion = storedQuery.getDialectOptions().version();
-        if (targetVersion.isEmpty()) {
+        String target = storedQuery.getDialectVersion();
+        if (target == null) {
             return;
         }
-        String target = targetVersion.get();
         DialectTargetVersion targetVersionKey = new DialectTargetVersion(storedQuery.getDialect(), target);
         // The atomic add below remains the warning gate. This fast path avoids JDBC metadata
         // access for target versions that have already been reported as mismatched.

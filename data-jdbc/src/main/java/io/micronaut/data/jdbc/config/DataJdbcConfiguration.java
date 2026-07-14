@@ -25,7 +25,6 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.Toggleable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 
@@ -158,13 +157,6 @@ public class DataJdbcConfiguration implements Named, Toggleable {
         if (dialectOptions != null) {
             this.dialectOptions = dialectOptions;
         }
-    }
-
-    /**
-     * @return The resolved dialect options.
-     */
-    public SqlDialectOptions resolveDialectOptions() {
-        return dialectOptions.toDialectOptions(dialect);
     }
 
     @NonNull

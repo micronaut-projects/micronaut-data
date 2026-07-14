@@ -87,7 +87,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             configuration.dialect == Dialect.ORACLE
-            configuration.resolveDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
+            configuration.dialectOptions.version == "23.1"
             !configuration.dialectOptions.validateVersion
     }
 

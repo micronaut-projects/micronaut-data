@@ -19,9 +19,6 @@ class OracleNativeBooleanTypeSpec extends Specification implements Oracle23TestP
 
     void "test oracle native boolean type is used for schema and queries"() {
         given:
-        assert applicationContext.getBean(DataJdbcConfiguration)
-            .resolveDialectOptions()
-            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         def repository = applicationContext.getBean(NativeOracleBooleanRepository)
 
         when:

@@ -199,6 +199,7 @@ public final class SqlColumnMapping {
      *
      * @param dialect the SQL dialect to generate the type for
      * @return the SQL type representation of this column
+     * @since 5.1
      */
     @SuppressWarnings("java:S3776")
     public  String getSqlType(Dialect dialect) {
@@ -420,19 +421,16 @@ public final class SqlColumnMapping {
     }
 
     /**
-     * Returns the SQL type representation of this column for the given dialect and dialect options.
+     * Returns the SQL type representation of this column for the given dialect and target version.
      *
      * @param dialect the SQL dialect to generate the type for
-     * @param dialectOptions the dialect options
+     * @param dialectVersion the target dialect version
      * @return the SQL type representation of this column
      */
-    public String getSqlType(Dialect dialect, SqlDialectOptions dialectOptions) {
-        if (dialectOptions.dialect() != dialect) {
-            throw new IllegalArgumentException("Dialect options must match the requested dialect");
-        }
+    public String getSqlType(Dialect dialect, @Nullable String dialectVersion) {
         if (dataType == DataType.BOOLEAN
             && dialect == Dialect.ORACLE
-            && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
+            && SqlDialectOptions.of(dialect, dialectVersion).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)) {
             return "BOOLEAN";
         }
         return getSqlType(dialect);

@@ -111,7 +111,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return true;
         }
-        String sqlType = columnMapping.getSqlType(dialect, dialectOptions);
+        String sqlType = columnMapping.getSqlType(dialect, dialectOptions.version().orElse(null));
         if (sqlType.equalsIgnoreCase(columnMetadata.typeName())) {
             return true;
         }

@@ -41,7 +41,10 @@ import jakarta.data.page.PageRequest
 import jakarta.data.restrict.Restriction
 import spock.lang.Issue
 import spock.lang.PendingFeature
+import spock.lang.ResourceLock
 import spock.lang.Unroll
+import spock.util.environment.RestoreSystemProperties
+import org.spockframework.runtime.model.parallel.Resources
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getCountQuery
@@ -60,8 +63,6 @@ import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
-
-    private static final Object DIALECT_OPTIONS_VERSION_LOCK = new Object()
 
     void "test to-many join on repository type that inherits from CrudRepository"() {
         given:
@@ -1112,6 +1113,8 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
 
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    @RestoreSystemProperties
     void "test oracle boolean query generation uses global 23.1 version"() {
         given:
         def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
@@ -1148,6 +1151,8 @@ class OracleBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveFalse")) == 'SELECT oracle_boolean_entity_."ID",oracle_boolean_entity_."ACTIVE" FROM "ORACLE_BOOLEAN_ENTITY" oracle_boolean_entity_ WHERE (oracle_boolean_entity_."ACTIVE" IS FALSE)'
     }
 
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    @RestoreSystemProperties
     void "test global dialect version is recorded for SQL repositories"() {
         given:
         def repository = withDialectOptionsVersion(Dialect.MYSQL, "9") {
@@ -1182,6 +1187,8 @@ class MySqlBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    @RestoreSystemProperties
     void "test global dialect version is not recorded for other SQL dialect repositories"() {
         given:
         def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
@@ -1216,6 +1223,8 @@ class MySqlBooleanEntity {
         getQuery(repository.getRequiredMethod("findByActiveTrue")) == 'SELECT my_sql_boolean_entity_.`id`,my_sql_boolean_entity_.`active` FROM `mysql_boolean_entity` my_sql_boolean_entity_ WHERE (my_sql_boolean_entity_.`active` = TRUE)'
     }
 
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    @RestoreSystemProperties
     void "test global dialect version is visible to criteria methods"() {
         given:
         def repository = withDialectOptionsVersion(Dialect.ORACLE, "23.1") {
@@ -1256,12 +1265,6 @@ interface OracleBooleanRepository extends GenericRepository<Contact, Long> {
         sqlDialectVersion(repository, Dialect.ORACLE) == '23.1'
         sqlDialectVersion(criteriaQueryBuilderMethod, Dialect.ORACLE) == '23.1'
         sqlDialectVersion(predicateSpecificationMethod, Dialect.ORACLE) == '23.1'
-        new SqlQueryBuilder(criteriaQueryBuilderMethod.getAnnotationMetadata())
-            .getDialectOptions()
-            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
-        new SqlQueryBuilder(predicateSpecificationMethod.getAnnotationMetadata())
-            .getDialectOptions()
-            .isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_VERSION)
         queryResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
     }
 
@@ -3294,18 +3297,16 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
     }
 
     private <T> T withDialectOptionsVersion(Dialect dialect, String version, Closure<T> closure) {
-        synchronized (DIALECT_OPTIONS_VERSION_LOCK) {
-            def configuration = SqlDialectOptions.versionConfiguration(dialect)
-            def previous = System.getProperty(configuration)
-            System.setProperty(configuration, version)
-            try {
-                return closure.call()
-            } finally {
-                if (previous == null) {
-                    System.clearProperty(configuration)
-                } else {
-                    System.setProperty(configuration, previous)
-                }
+        def configuration = SqlDialectOptions.versionConfiguration(dialect)
+        def previous = System.getProperty(configuration)
+        System.setProperty(configuration, version)
+        try {
+            return closure.call()
+        } finally {
+            if (previous == null) {
+                System.clearProperty(configuration)
+            } else {
+                System.setProperty(configuration, previous)
             }
         }
     }

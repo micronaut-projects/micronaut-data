@@ -23,7 +23,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
@@ -168,13 +167,6 @@ public class DataR2dbcConfiguration implements Named {
         if (dialectOptions != null) {
             this.dialectOptions = dialectOptions;
         }
-    }
-
-    /**
-     * @return The resolved dialect options.
-     */
-    public SqlDialectOptions resolveDialectOptions() {
-        return dialectOptions.toDialectOptions(dialect);
     }
 
     @NonNull

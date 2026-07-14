@@ -194,18 +194,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
-        this(dialect, SqlDialectOptions.defaults(dialect));
+        this(dialect, null);
     }
 
     /**
      * @param dialect The dialect
-     * @param dialectOptions The dialect options
+     * @param dialectVersion The target dialect version
+     * @since 5.1
      */
-    public SqlQueryBuilder(Dialect dialect, SqlDialectOptions dialectOptions) {
+    public SqlQueryBuilder(Dialect dialect, @Nullable String dialectVersion) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
-        ArgumentUtils.requireNonNull("dialectOptions", dialectOptions);
         this.dialect = dialect;
-        this.dialectOptions = dialectOptions;
+        this.dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
     }
 
     /**
@@ -217,11 +217,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * @return The resolved dialect options.
+     * @param requiredVersion The required target dialect version
+     * @return Whether the target dialect version meets the requirement
+     * @since 5.1
      */
     @Override
-    public SqlDialectOptions getDialectOptions() {
-        return dialectOptions;
+    public boolean isDialectVersionAtLeast(String requiredVersion) {
+        return dialectOptions.isVersionAtLeast(requiredVersion);
+    }
+
+    /**
+     * @return The normalized target dialect version, or {@code null} when none is configured.
+     * @since 5.1
+     */
+    @Override
+    @Nullable
+    public String getDialectVersion() {
+        return dialectOptions.version().orElse(null);
     }
 
     @Override
@@ -844,7 +856,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
                     column += " " + tableIdentity.getDefinition();
                 } else {
-                    column += " " + tableIdentity.getSqlType(dialect, dialectOptions);
+                    column += " " + tableIdentity.getSqlType(dialect, dialectOptions.version().orElse(null));
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -864,7 +876,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
             } else {
-                column += " " + tableColumn.getSqlType(dialect, dialectOptions);
+                column += " " + tableColumn.getSqlType(dialect, dialectOptions.version().orElse(null));
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }

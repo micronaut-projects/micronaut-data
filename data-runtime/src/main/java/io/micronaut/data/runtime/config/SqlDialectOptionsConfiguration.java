@@ -15,9 +15,6 @@
  */
 package io.micronaut.data.runtime.config;
 
-import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -25,7 +22,6 @@ import org.jspecify.annotations.Nullable;
  *
  * @since 5.1
  */
-@Internal
 public class SqlDialectOptionsConfiguration {
 
     @Nullable
@@ -33,6 +29,7 @@ public class SqlDialectOptionsConfiguration {
 
     /**
      * @return The target dialect version.
+     * @since 5.1
      */
     @Nullable
     public String getVersion() {
@@ -41,18 +38,10 @@ public class SqlDialectOptionsConfiguration {
 
     /**
      * @param version The target dialect version.
+     * @since 5.1
      */
     public void setVersion(@Nullable String version) {
         this.version = version;
     }
 
-    /**
-     * Resolve the configured options for a dialect.
-     *
-     * @param dialect The dialect
-     * @return The resolved options
-     */
-    public SqlDialectOptions toDialectOptions(Dialect dialect) {
-        return SqlDialectOptions.of(dialect, version);
-    }
 }

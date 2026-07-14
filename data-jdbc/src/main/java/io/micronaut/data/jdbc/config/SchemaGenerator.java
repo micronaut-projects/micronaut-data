@@ -193,7 +193,7 @@ public class SchemaGenerator {
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.resolveDialectOptions());
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -274,7 +274,7 @@ public class SchemaGenerator {
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
                                  List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlDialectOptions dialectOptions = configuration.resolveDialectOptions();
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);

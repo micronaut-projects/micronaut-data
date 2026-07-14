@@ -135,7 +135,7 @@ class Test {
     }
 }
 ''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, SqlDialectOptions.of(Dialect.ORACLE, version))
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
         def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
