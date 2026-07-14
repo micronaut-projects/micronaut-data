@@ -176,11 +176,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
     private final Set<DialectTargetVersion> reportedTargetVersionMismatches = ConcurrentHashMap.newKeySet();
-    private final AtomicBoolean databaseVersionUnavailableWarned = new AtomicBoolean();
+    private final SynchronizedLazyValue<Optional<DatabaseVersion>> databaseVersion = new SynchronizedLazyValue<>();
 
     private final Integer defaultFetchSize;
-    @Nullable
-    private volatile Optional<DatabaseVersion> databaseVersion;
 
     /**
      * Default constructor.
@@ -1170,15 +1168,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
-        Optional<DatabaseVersion> cached = databaseVersion;
-        if (cached != null) {
-            return cached;
-        }
-        synchronized (this) {
-            cached = databaseVersion;
-            if (cached != null) {
-                return cached;
-            }
+        return databaseVersion.get(() -> {
             try {
                 DatabaseMetaData metadata = connection.getMetaData();
                 int major = metadata.getDatabaseMajorVersion();
@@ -1186,16 +1176,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (major < 1 || minor < 0) {
                     throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
                 }
-                cached = Optional.of(new DatabaseVersion(major, minor));
+                return Optional.of(new DatabaseVersion(major, minor));
             } catch (SQLException e) {
-                if (databaseVersionUnavailableWarned.compareAndSet(false, true)) {
-                    LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics are disabled.", dataSourceName, e);
-                }
-                cached = Optional.empty();
+                LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics are disabled.", dataSourceName, e);
+                return Optional.empty();
             }
-            databaseVersion = cached;
-            return cached;
-        }
+        });
     }
 
     /**

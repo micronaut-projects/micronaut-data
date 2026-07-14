@@ -27,6 +27,7 @@ import io.micronaut.core.util.Toggleable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -270,28 +271,9 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     /**
      * SQL dialect options for JDBC schema generation.
      */
-    public static final class DialectOptionsConfiguration {
+    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
 
-        @Nullable
-        private String version;
         private boolean validateVersion = true;
-
-        /**
-         * @return The target dialect version.
-         * @since 5.1
-         */
-        @Nullable
-        public String getVersion() {
-            return version;
-        }
-
-        /**
-         * @param version The target dialect version.
-         * @since 5.1
-         */
-        public void setVersion(@Nullable String version) {
-            this.version = version;
-        }
 
         /**
          * @return Whether JDBC should validate generated SQL target versions against the connected server version.
@@ -307,16 +289,6 @@ public class DataJdbcConfiguration implements Named, Toggleable {
          */
         public void setValidateVersion(boolean validateVersion) {
             this.validateVersion = validateVersion;
-        }
-
-        /**
-         * Resolve the configured options for a dialect.
-         *
-         * @param dialect The dialect
-         * @return The resolved options
-         */
-        public SqlDialectOptions toDialectOptions(Dialect dialect) {
-            return SqlDialectOptions.of(dialect, version);
         }
     }
 }

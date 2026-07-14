@@ -26,6 +26,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import io.micronaut.r2dbc.BasicR2dbcProperties;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Provider;
@@ -239,36 +240,6 @@ public class DataR2dbcConfiguration implements Named {
     /**
      * SQL dialect options for R2DBC schema generation.
      */
-    public static final class DialectOptionsConfiguration {
-
-        @Nullable
-        private String version;
-
-        /**
-         * @return The target dialect version.
-         * @since 5.1
-         */
-        @Nullable
-        public String getVersion() {
-            return version;
-        }
-
-        /**
-         * @param version The target dialect version.
-         * @since 5.1
-         */
-        public void setVersion(@Nullable String version) {
-            this.version = version;
-        }
-
-        /**
-         * Resolve the configured options for a dialect.
-         *
-         * @param dialect The dialect
-         * @return The resolved options
-         */
-        public SqlDialectOptions toDialectOptions(Dialect dialect) {
-            return SqlDialectOptions.of(dialect, version);
-        }
+    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
     }
 }
