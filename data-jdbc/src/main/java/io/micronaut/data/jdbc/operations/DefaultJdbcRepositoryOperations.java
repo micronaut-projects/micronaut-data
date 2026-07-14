@@ -1137,7 +1137,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             String[] targetParts = target.split("\\.", -1);
             return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
-        } catch (NumberFormatException _) {
+        } catch (NumberFormatException ignored) {
             LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
                 target, targetVersionKey.dialect());
             return null;

@@ -139,7 +139,7 @@ public record SqlDialectOptions(
             return version
                 .filter(configuredVersion -> SemanticVersion.isAtLeast(configuredVersion, normalizedRequiredVersion))
                 .isPresent();
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException ignored) {
             return false;
         }
     }
@@ -174,7 +174,7 @@ public record SqlDialectOptions(
     private static Optional<String> normalizeVersionOptional(String value) {
         try {
             return Optional.of(normalizeVersion(value));
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException ignored) {
             return Optional.empty();
         }
     }
