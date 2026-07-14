@@ -14,13 +14,11 @@ class JdbcQueryStatementSpec extends Specification {
         JdbcQueryStatement.findSqlType(DataType.BOOLEAN, Dialect.ORACLE) == Types.BIT
         JdbcQueryStatement.findSqlType(
             DataType.BOOLEAN,
-            Dialect.ORACLE,
-            SqlDialectOptions.ORACLE_23_1_0_VERSION
+            SqlDialectOptions.of(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_0_VERSION)
         ) == Types.BOOLEAN
         JdbcQueryStatement.findSqlType(
             DataType.BOOLEAN,
-            Dialect.ORACLE,
-            "23.4"
+            SqlDialectOptions.of(Dialect.ORACLE, "23.4")
         ) == Types.BOOLEAN
         JdbcQueryStatement.findSqlType(DataType.BOOLEAN, Dialect.POSTGRES) == Types.BOOLEAN
         JdbcQueryStatement.findSqlType(DataType.OBJECT, Dialect.ORACLE) == Types.OTHER
