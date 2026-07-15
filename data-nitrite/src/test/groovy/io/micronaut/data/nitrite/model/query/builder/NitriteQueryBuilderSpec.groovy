@@ -8,7 +8,6 @@ import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.time.Instant
@@ -102,31 +101,24 @@ class NitriteQueryBuilderSpec extends Specification {
         found.get().id == saved.id
     }
 
-    // ========== Bug #4: MongoDB $expr/$multiply/$strLenCP operators ==========
+    // ========== Bug #4: $expr/$multiply/$strLenCP computed-expression criteria ==========
 
-    @Ignore('Placeholder: requires a repository method that triggers \$expr/\$strLenCP; Nitrite does not support it (bug #4)')
-    void "test string length query throws UnsupportedOperationException"() {
+    void "test string length query evaluates via Criteria API"() {
         given: "Events with different payload lengths"
         eventRepository.save(new Event("E1", "a"))      // length 1
         eventRepository.save(new Event("E2", "abc"))    // length 3
         eventRepository.save(new Event("E3", "abcde"))  // length 5
 
-        when: "Querying by string length (uses \$strLenCP which is MongoDB-only)"
-        // This generates: { "\$expr": { "\$gt": [{ "\$strLenCP": "\$payload" }, 2 ] } }
-        // Nitrite doesn't support \$expr or \$strLenCP
-        // Triggering via @Query which bypasses the runtime buildSelect check if buildSelect isn't called.
-        // If we want to test the builder detection, we need to ensure the builder is invoked.
-        // Repository methods with @Query are pre-compiled and might not hit NitriteQueryBuilder.buildSelect at runtime
-        // in the same way criteria queries do.
-        eventRepository.findByPayloadLengthGreaterThan(2)
+        when: "Querying by string length using Criteria API"
+        def results = eventRepository.findAll({ root, cb ->
+            cb.gt(cb.length(root.get("payload")), 2)
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
 
-        then: "Should throw UnsupportedOperationException for unsupported operator"
-        // The exception should be thrown by NitritePredicateVisitor or NitriteQueryBuilder during query building
-        thrown(UnsupportedOperationException)
+        then: "Only payloads longer than 2 characters match"
+        results*.type as Set == ["E2", "E3"] as Set
     }
 
-    @Ignore('Placeholder: requires a repository method that triggers \$expr/\$multiply; Nitrite does not support it (bug #4)')
-    void "test multiplication expression throws UnsupportedOperationException"() {
+    void "test multiplication expression evaluates via Criteria API"() {
         given: "Events with priorities"
         def e1 = new Event("E1", "p1")
         e1.setPriority(2)
@@ -134,13 +126,14 @@ class NitriteQueryBuilderSpec extends Specification {
         e2.setPriority(3)
         eventRepository.saveAll([e1, e2])
 
-        when: "Querying with multiplication expression"
-        // This generates: { "\$expr": { "\$eq": [{ "\$multiply": [...] }, ...] } }
-        // Nitrite doesn't support \$expr or \$multiply
-        eventRepository.findAll() // Would need criteria with multiply
+        when: "Querying with multiplication expression using Criteria API"
+        def results = eventRepository.findAll({ root, cb ->
+            cb.equal(cb.prod(root.get("priority"), 2), 4)
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
 
-        then: "Should throw UnsupportedOperationException for unsupported operator"
-        thrown(UnsupportedOperationException)
+        then: "Only the event whose priority * 2 == 4 matches"
+        results.size() == 1
+        results[0].type == "E1"
     }
 
     // ========== Bug #5: Invalid \$null/\$notNull/\$true/\$false/\$empty operators ==========
