@@ -49,7 +49,7 @@ public class SqlDialectOptionsConfiguration {
     /**
      * Returns {@link SqlDialectOptions} based on given dialect and version.
      *
-     * @param dialect
+     * @param dialect The dialect
      * @return the {@link SqlDialectOptions}
      */
     public SqlDialectOptions toDialectOptions(Dialect dialect) {
