@@ -44,7 +44,7 @@ import java.util.Objects;
  * Matches explicit Oracle lock-free reservation delta methods.
  *
  * @author radovanradic
- * @since 5.1.0
+ * @since 5.1
  */
 @Internal
 public final class ReserveMethodMatcher implements MethodMatcher {

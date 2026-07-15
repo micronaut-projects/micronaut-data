@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * Marks a numeric property as an Oracle reservable column.
  *
  * @author radovanradic
- * @since 5.1.0
+ * @since 5.1
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

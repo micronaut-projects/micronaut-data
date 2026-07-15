@@ -19,7 +19,7 @@ package io.micronaut.data.exceptions;
  * Exception thrown when a database operation fails due to a data integrity constraint.
  *
  * @author radovanradic
- * @since 5.1.0
+ * @since 5.1
  */
 public class DataIntegrityViolationException extends DataAccessException {
 
