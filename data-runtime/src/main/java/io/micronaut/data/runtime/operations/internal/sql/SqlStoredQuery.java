@@ -48,10 +48,17 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      */
     Dialect getDialect();
 
+    /**
+     * @param requiredVersion The required target dialect version
+     * @return Whether the configured target dialect version meets the requirement
+     */
     default boolean isDialectVersionAtLeast(String requiredVersion) {
         return getQueryBuilder().isDialectVersionAtLeast(requiredVersion);
     }
 
+    /**
+     * @return The normalized target dialect version, or {@code null} when none is configured
+     */
     @Nullable
     default String getDialectVersion() {
         return getQueryBuilder().getDialectVersion();
