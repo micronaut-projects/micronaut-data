@@ -76,6 +76,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#setDialect(io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">setDialect(Dialect)</a></li>
 <li><a href="#resolveDialectOptions()" tabindex="0">resolveDialectOptions()</a></li>
 <li><a href="#getDialectOptions()" tabindex="0">getDialectOptions()</a></li>
+<li><a href="#setDialectOptions(io.micronaut.data.r2dbc.config.DataR2dbcConfiguration.DialectOptionsConfiguration)" tabindex="0">setDialectOptions(DataR2dbcConfiguration.DialectOptionsConfiguration)</a></li>
 <li><a href="#getName()" tabindex="0">getName()</a></li>
 <li><a href="#getSchemaGenerateName()" tabindex="0">getSchemaGenerateName()</a></li>
 <li><a href="#setSchemaGenerateName(java.lang.String)" tabindex="0">setSchemaGenerateName(String)</a></li>
@@ -130,7 +131,7 @@ implements io.micronaut.core.naming.Named</span></div>
 <div class="col-first even-row-color"><code>static final class&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="DataR2dbcConfiguration.DialectOptionsConfiguration.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">SQL dialect options configuration.</div>
+<div class="block">SQL dialect options for R2DBC schema generation.</div>
 </div>
 </div>
 </section>
@@ -215,21 +216,24 @@ implements io.micronaut.core.naming.Named</span></div>
 <div class="block">Sets the dialect.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setPackages(java.util.List)" class="member-name-link">setPackages</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;packages)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets the packages to include use for the purposes of schema generation.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerate(io.micronaut.data.runtime.config.SchemaGenerate)" class="member-name-link">setSchemaGenerate</a><wbr>(<a href="../../runtime/config/SchemaGenerate.html" title="enum class in io.micronaut.data.runtime.config">SchemaGenerate</a>&nbsp;schemaGenerate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets the schema generation strategy.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerateName(java.lang.String)" class="member-name-link">setSchemaGenerateName</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaGenerateName)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDialectOptions(io.micronaut.data.r2dbc.config.DataR2dbcConfiguration.DialectOptionsConfiguration)" class="member-name-link">setDialectOptions</a><wbr>(@Nullable <a href="DataR2dbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a>&nbsp;dialectOptions)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerateNames(java.util.List)" class="member-name-link">setSchemaGenerateNames</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaGenerateNames)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setPackages(java.util.List)" class="member-name-link">setPackages</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;packages)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the packages to include use for the purposes of schema generation.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerate(io.micronaut.data.runtime.config.SchemaGenerate)" class="member-name-link">setSchemaGenerate</a><wbr>(<a href="../../runtime/config/SchemaGenerate.html" title="enum class in io.micronaut.data.runtime.config">SchemaGenerate</a>&nbsp;schemaGenerate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the schema generation strategy.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerateName(java.lang.String)" class="member-name-link">setSchemaGenerateName</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schemaGenerateName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSchemaGenerateNames(java.util.List)" class="member-name-link">setSchemaGenerateNames</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;schemaGenerateNames)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -417,7 +421,19 @@ implements io.micronaut.core.naming.Named</span></div>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="DataR2dbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a></span>&nbsp;<span class="element-name">getDialectOptions</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The SQL dialect options configuration</dd>
+<dd>The dialect options.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setDialectOptions(io.micronaut.data.r2dbc.config.DataR2dbcConfiguration.DialectOptionsConfiguration)">
+<h3>setDialectOptions</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setDialectOptions</span><wbr><span class="parameters">(@Nullable <a href="DataR2dbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a>&nbsp;dialectOptions)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dialectOptions</code> - The dialect options.</dd>
 </dl>
 </div>
 </section>

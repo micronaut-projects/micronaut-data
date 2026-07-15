@@ -4900,7 +4900,7 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 </dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html" class="type-name-link" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration.DialectOptionsConfiguration</a> - Class in <a href="io/micronaut/data/jdbc/config/package-summary.html">io.micronaut.data.jdbc.config</a></dt>
 <dd>
-<div class="block">SQL dialect options configuration.</div>
+<div class="block">SQL dialect options for JDBC schema generation.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#DATALINK" class="member-name-link">DATALINK</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
@@ -4943,7 +4943,7 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 </dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a> - Class in <a href="io/micronaut/data/r2dbc/config/package-summary.html">io.micronaut.data.r2dbc.config</a></dt>
 <dd>
-<div class="block">SQL dialect options configuration.</div>
+<div class="block">SQL dialect options for R2DBC schema generation.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/config/DataSettings.html" class="type-name-link" title="interface in io.micronaut.data.runtime.config">DataSettings</a> - Interface in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
 <dd>
@@ -12872,9 +12872,15 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getDialectOptions()" class="member-name-link">getDialectOptions()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getDialectOptions()" class="member-name-link">getDialectOptions()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getDialectOptions()" class="member-name-link">getDialectOptions()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#getDialectOptions()" class="member-name-link">getDialectOptions()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getDialectVersion()" class="member-name-link">getDialectVersion()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getDialectVersion()" class="member-name-link">getDialectVersion()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Sort.Order.html#getDirection()" class="member-name-link">getDirection()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
@@ -16397,8 +16403,6 @@ without dialect-specific quoting applied.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Student.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Student.html" title="class in io.micronaut.data.document.tck.entities">Student</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration.DialectOptionsConfiguration</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#getVersion()" class="member-name-link">getVersion()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
 <div class="block">Returns the version property.</div>
@@ -16407,7 +16411,7 @@ without dialect-specific quoting applied.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a></dt>
+<dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Audited.html#getVersion()" class="member-name-link">getVersion()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Audited.html" title="class in io.micronaut.data.tck.entities">Audited</a></dt>
 <dd>&nbsp;</dd>
@@ -19178,6 +19182,10 @@ whether it has already been committed or rolled back.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html#isDeleteSpecification(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">isDeleteSpecification(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#isDialectVersionAtLeast(java.lang.String)" class="member-name-link">isDialectVersionAtLeast(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isDialectVersionAtLeast(java.lang.String)" class="member-name-link">isDialectVersionAtLeast(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html#isDisableNonStreamingOrderBy()" class="member-name-link">isDisableNonStreamingOrderBy()</a> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a></dt>
 <dd>
 <div class="block">Gets an indicator telling whether non-streaming order by is by default disabled.</div>
@@ -19824,6 +19832,8 @@ entity.</div>
 <div class="block">Return whether existing transactions should be validated before participating
 in them.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html#isValidateVersion()" class="member-name-link">isValidateVersion()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration.DialectOptionsConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isValidBatchUpdateReturnType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isValidBatchUpdateReturnType(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Returns true if the return type is considered valid for batch update operations likes deletes and updates.</div>
@@ -23986,7 +23996,11 @@ exists.</div>
 <dd>
 <div class="block">Oracle Database.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#ORACLE_26_0_VERSION" class="member-name-link">ORACLE_26_0_VERSION</a> - Static variable in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#ORACLE_23_1_0_VERSION" class="member-name-link">ORACLE_23_1_0_VERSION</a> - Static variable in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
+<dd>
+<div class="block">Oracle version that enables native SQL boolean generation.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#ORACLE_23_26_1_VERSION" class="member-name-link">ORACLE_23_26_1_VERSION</a> - Static variable in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
 <dd>
 <div class="block">Oracle version that enables lock-free reservation generation.</div>
 </dd>
@@ -29089,6 +29103,10 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dd>
 <div class="block">Sets the dialect.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setDialectOptions(io.micronaut.data.jdbc.config.DataJdbcConfiguration.DialectOptionsConfiguration)" class="member-name-link">setDialectOptions(DataJdbcConfiguration.DialectOptionsConfiguration)</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#setDialectOptions(io.micronaut.data.r2dbc.config.DataR2dbcConfiguration.DialectOptionsConfiguration)" class="member-name-link">setDialectOptions(DataR2dbcConfiguration.DialectOptionsConfiguration)</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html#setDisableNonStreamingOrderBy(boolean)" class="member-name-link">setDisableNonStreamingOrderBy(boolean)</a> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a></dt>
 <dd>
 <div class="block">Sets an indicator telling whether non-streaming order by is by default disabled.</div>
@@ -30366,6 +30384,8 @@ with a non-generated identity already exists.</div>
 <div class="block">Set whether existing transactions should be validated before participating
 in them.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html#setValidateVersion(boolean)" class="member-name-link">setValidateVersion(boolean)</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration.DialectOptionsConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setValue(io.r2dbc.spi.Statement,java.lang.Integer,java.lang.Object)" class="member-name-link">setValue(Statement, Integer, Object)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#setValue(java.lang.String,java.lang.Object)" class="member-name-link">setValue(String, Object)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
@@ -30386,9 +30406,7 @@ in them.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Client.html#setVersion(long)" class="member-name-link">setVersion(long)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Client.html" title="class in io.micronaut.data.tck.entities">Client</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html#setVersion(java.lang.String)" class="member-name-link">setVersion(String)</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration.DialectOptionsConfiguration</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html#setVersion(java.lang.String)" class="member-name-link">setVersion(String)</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration.DialectOptionsConfiguration</a></dt>
+<dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html#setVersion(java.lang.String)" class="member-name-link">setVersion(String)</a> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Student.html#setVersion(java.lang.Long)" class="member-name-link">setVersion(Long)</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Student.html" title="class in io.micronaut.data.document.tck.entities">Student</a></dt>
 <dd>&nbsp;</dd>
@@ -31214,6 +31232,12 @@ pagination operations.</div>
 <dd>
 <div class="block">Creates dialect options.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" class="type-name-link" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
+<dd>
+<div class="block">Common SQL dialect option configuration shared by JDBC and R2DBC datasource configuration.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html#%3Cinit%3E()" class="member-name-link">SqlDialectOptionsConfiguration()</a> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" class="type-name-link" title="class in io.micronaut.data.runtime.mapper.sql">SqlDTOMapper&lt;T,<wbr>S,<wbr>R&gt;</a> - Class in <a href="io/micronaut/data/runtime/mapper/sql/package-summary.html">io.micronaut.data.runtime.mapper.sql</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
@@ -32225,6 +32249,10 @@ or none if timeouts are not supported.</div>
 <dt><a href="io/micronaut/data/model/vector/SparseFloatVector.html#toDenseVector()" class="member-name-link">toDenseVector()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/SparseFloatVector.html" title="class in io.micronaut.data.model.vector">SparseFloatVector</a></dt>
 <dd>
 <div class="block">Converts this sparse vector into dense <a href="io/micronaut/data/model/vector/FloatVector.html" title="class in io.micronaut.data.model.vector"><code>FloatVector</code></a> form.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html#toDialectOptions(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">toDialectOptions(Dialect)</a> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a></dt>
+<dd>
+<div class="block">Returns <a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql"><code>SqlDialectOptions</code></a> based on given dialect and version.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#toDouble(byte%5B%5D)" class="member-name-link">toDouble(byte[])</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>
 <dd>

@@ -76,6 +76,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getDialect()" tabindex="0">getDialect()</a></li>
+<li><a href="#isDialectVersionAtLeast(java.lang.String)" tabindex="0">isDialectVersionAtLeast(String)</a></li>
+<li><a href="#getDialectVersion()" tabindex="0">getDialectVersion()</a></li>
 <li><a href="#getDialectOptions()" tabindex="0">getDialectOptions()</a></li>
 <li><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" tabindex="0">shouldEscape(PersistentEntity)</a></li>
 <li><a href="#asLiteral(java.lang.Object)" tabindex="0">asLiteral(Object)</a></li>
@@ -387,25 +389,31 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get dialect.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDialectOptions()" class="member-name-link">getDialectOptions</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTableAsKeyword()" class="member-name-link">getTableAsKeyword</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDialectVersion()" class="member-name-link">getDialectVersion</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTableAsKeyword()" class="member-name-link">getTableAsKeyword</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the AS keyword to use for table aliases.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTableName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getTableName</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTableName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getTableName</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get the table name for the given entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAliasForBatch(io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">isAliasForBatch</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isAliasForBatch(io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">isAliasForBatch</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Should aliases be used in batch statements.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDialectVersionAtLeast(java.lang.String)" class="member-name-link">isDialectVersionAtLeast</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;requiredVersion)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isForeignKeyWithJoinTable(io.micronaut.data.model.Association)" class="member-name-link">isForeignKeyWithJoinTable</a><wbr>(<a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
@@ -586,13 +594,49 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 </section>
 </li>
 <li>
+<section class="detail" id="isDialectVersionAtLeast(java.lang.String)">
+<h3>isDialectVersionAtLeast</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isDialectVersionAtLeast</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;requiredVersion)</span></div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractSqlLikeQueryBuilder.html#isDialectVersionAtLeast(java.lang.String)">isDialectVersionAtLeast</a></code>&nbsp;in class&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>requiredVersion</code> - The required target dialect version</dd>
+<dt>Returns:</dt>
+<dd>Whether the target dialect version meets the requirement</dd>
+<dt>Since:</dt>
+<dd>5.1</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getDialectVersion()">
+<h3>getDialectVersion</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getDialectVersion</span>()</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractSqlLikeQueryBuilder.html#getDialectVersion()">getDialectVersion</a></code>&nbsp;in class&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dt>Returns:</dt>
+<dd>The normalized target dialect version, or <code>null</code> when none is configured.</dd>
+<dt>Since:</dt>
+<dd>5.1</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="getDialectOptions()">
 <h3>getDialectOptions</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></span>&nbsp;<span class="element-name">getDialectOptions</span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></span>&nbsp;<span class="element-name">getDialectOptions</span>()</div>
 <dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractSqlLikeQueryBuilder.html#getDialectOptions()">getDialectOptions</a></code>&nbsp;in class&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></code></dd>
 <dt>Returns:</dt>
-<dd>The resolved dialect options.</dd>
+<dd>the resolved dialect options for this builder</dd>
 </dl>
 </div>
 </section>
