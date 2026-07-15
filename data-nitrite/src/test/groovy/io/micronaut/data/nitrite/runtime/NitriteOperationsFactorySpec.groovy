@@ -3,6 +3,8 @@ package io.micronaut.data.nitrite.runtime
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.exceptions.BeanInstantiationException
 import io.micronaut.data.nitrite.conf.NitriteConfiguration
+import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations
+import io.micronaut.serde.ObjectMapper
 import org.dizitart.no2.Nitrite
 import spock.lang.Specification
 import java.nio.file.Files
@@ -14,6 +16,20 @@ class NitriteOperationsFactorySpec extends Specification {
         def ctx = ApplicationContext.run(["nitrite.storage-mode": "IN_MEMORY"])
         then:
         ctx.getBean(Nitrite) != null
+        cleanup:
+        ctx?.close()
+    }
+
+    void "test nitrite repository operations without serde object mapper"() {
+        when:
+        def ctx = ApplicationContext.builder(["nitrite.storage-mode": "IN_MEMORY"])
+            .classLoader(new HidingClassLoader(Thread.currentThread().contextClassLoader, "io.micronaut.serde.jackson"))
+            .start()
+
+        then:
+        !ctx.containsBean(ObjectMapper)
+        ctx.getBean(NitriteRepositoryOperations) != null
+
         cleanup:
         ctx?.close()
     }
@@ -70,18 +86,18 @@ class NitriteOperationsFactorySpec extends Specification {
         ctx3.getBean(Nitrite) != null
         cleanup:
         ctx3?.close()
-        }
+    }
 
-        void "test nitrite factory with partial auth"() {
+    void "test nitrite factory with partial auth"() {
         when: "Only username provided"
         def ctx = ApplicationContext.run(["nitrite.username": "admin"])
         then:
         ctx.getBean(Nitrite) != null
         cleanup:
         ctx?.close()
-        }
+    }
 
-        void "test nitrite factory with explicit path and nested dirs"() {
+    void "test nitrite factory with explicit path and nested dirs"() {
         given:
         def tempDir = Files.createTempDirectory("nitrite-factory-test").toFile()
 
@@ -111,6 +127,38 @@ class NitriteOperationsFactorySpec extends Specification {
         ctx6?.close()
         new File("standalone.db").delete()
         tempDir.deleteDir()
-        }
+    }
+
+    private static final class HidingClassLoader extends ClassLoader {
+        private final String hiddenPackage
+
+        HidingClassLoader(ClassLoader parent, String hiddenPackage) {
+            super(parent)
+            this.hiddenPackage = hiddenPackage
         }
 
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            if (name.startsWith(hiddenPackage)) {
+                throw new ClassNotFoundException(name)
+            }
+            return super.loadClass(name, resolve)
+        }
+
+        @Override
+        URL getResource(String name) {
+            if (name.contains(hiddenPackage.replace('.', '/'))) {
+                return null
+            }
+            return super.getResource(name)
+        }
+
+        @Override
+        Enumeration<URL> getResources(String name) throws IOException {
+            if (name.contains(hiddenPackage.replace('.', '/'))) {
+                return Collections.emptyEnumeration()
+            }
+            return super.getResources(name)
+        }
+    }
+}

@@ -169,7 +169,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      * @param conversionService          Conversion service (for field-level conversions)
      * @param attributeConverterRegistry Attribute converter registry
      * @param transactionHolder          Transaction context holder
-     * @param serdeObjectMapper          Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
+     * @param serdeObjectMapper          Optional Micronaut Serde ObjectMapper
      */
     public DefaultNitriteRepositoryOperations(
         final Nitrite database,
@@ -179,7 +179,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         final DataConversionService conversionService,
         final AttributeConverterRegistry attributeConverterRegistry,
         final NitriteTransactionHolder transactionHolder,
-        final ObjectMapper serdeObjectMapper) {
+        final @Nullable ObjectMapper serdeObjectMapper) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.database = database;
         this.collectionRegistry = new NitriteCollectionRegistry(database, transactionHolder, configuration, this::getEntity);

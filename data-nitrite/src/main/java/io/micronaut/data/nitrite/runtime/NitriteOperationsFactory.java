@@ -155,7 +155,7 @@ public final class NitriteOperationsFactory {
    * @param conversionService the conversion service (for field-level conversions)
    * @param attributeConverterRegistry the attribute converter registry
    * @param transactionHolder the transaction holder
-   * @param serdeObjectMapper the Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
+   * @param serdeObjectMapper the optional Micronaut Serde ObjectMapper
    * @return the repository operations
    */
   @Bean
@@ -169,7 +169,7 @@ public final class NitriteOperationsFactory {
       DataConversionService conversionService,
       AttributeConverterRegistry attributeConverterRegistry,
       NitriteTransactionHolder transactionHolder,
-      ObjectMapper serdeObjectMapper) {
+      @Nullable ObjectMapper serdeObjectMapper) {
     return new DefaultNitriteRepositoryOperations(
         database,
         configuration,

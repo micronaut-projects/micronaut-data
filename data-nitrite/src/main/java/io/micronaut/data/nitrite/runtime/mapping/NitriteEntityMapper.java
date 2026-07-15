@@ -86,7 +86,7 @@ public final class NitriteEntityMapper {
 
   private final ConversionService conversionService;
   private final ValueConverter valueConverter;
-  private final ObjectMapper serdeObjectMapper;
+  private final @Nullable ObjectMapper serdeObjectMapper;
   private final RuntimeEntityRegistry runtimeEntityRegistry;
   private @Nullable NitriteOperationsHelper helper;
   private final @Nullable Class<?> geometryClass;
@@ -95,19 +95,18 @@ public final class NitriteEntityMapper {
   /**
    * Create a new mapper.
    *
-   * <p><strong>Architecture:</strong> This mapper uses Micronaut Serde at the boundary
-   * for entity ↔ Map conversion, and ConversionService for individual field conversions.
-   * No Jackson dependency is used anywhere in this class; POJOs without a
-   * {@link BeanIntrospection} are converted via plain JDK JavaBean reflection
-   * (see {@link #reflectToMap}).</p>
+   * <p><strong>Architecture:</strong> This mapper uses Micronaut Serde only when an
+   * application provides a Serde {@link ObjectMapper}; otherwise it relies on
+   * {@link ConversionService}, {@link BeanIntrospection}, and plain JDK JavaBean
+   * reflection (see {@link #reflectToMap}).</p>
    *
    * @param conversionService the conversion service (for field-level conversions)
-   * @param serdeObjectMapper the Micronaut Serde ObjectMapper (for entity ↔ Map conversion at boundary)
+   * @param serdeObjectMapper the optional Micronaut Serde ObjectMapper
    * @param runtimeEntityRegistry the runtime entity registry
    */
   public NitriteEntityMapper(
       final ConversionService conversionService,
-      final ObjectMapper serdeObjectMapper,
+      final @Nullable ObjectMapper serdeObjectMapper,
       final RuntimeEntityRegistry runtimeEntityRegistry) {
     this.conversionService = conversionService;
     this.valueConverter = new ValueConverter(conversionService);
@@ -622,6 +621,9 @@ public final class NitriteEntityMapper {
         case MAP                                 -> toDocumentValue(value);
         case INTROSPECTED_POJO                   -> pojoToMap(value);
         case SERDE                               -> {
+          if (serdeObjectMapper == null) {
+            yield value;
+          }
           try {
             String json = serdeObjectMapper.writeValueAsString(value);
             yield serdeObjectMapper.readValue(json, Object.class);
@@ -891,11 +893,13 @@ public final class NitriteEntityMapper {
         if (maybeIntro.isPresent()) {
           return mapToPojo(mapValue, maybeIntro.get());
         }
-        try {
-          String json = serdeObjectMapper.writeValueAsString(value);
-          return serdeObjectMapper.readValue(json, target);
-        } catch (Exception e) {
-          return conversionService.convert(value, target).orElse(null);
+        if (serdeObjectMapper != null) {
+          try {
+            String json = serdeObjectMapper.writeValueAsString(value);
+            return serdeObjectMapper.readValue(json, target);
+          } catch (Exception e) {
+            return conversionService.convert(value, target).orElse(null);
+          }
         }
       }
     }
@@ -943,7 +947,7 @@ public final class NitriteEntityMapper {
     // toFilterValue returned the original: either a java.* type (collection, array — store as-is)
     // or a custom POJO it doesn't know about. For custom non-java types, use Serde so that
     // Jackson/Serde annotations (@JsonSerialize etc.) on the type are respected.
-    if (!value.getClass().getName().startsWith("java.") && !value.getClass().isArray()) {
+    if (serdeObjectMapper != null && !value.getClass().getName().startsWith("java.") && !value.getClass().isArray()) {
       try {
         String json = serdeObjectMapper.writeValueAsString(value);
         return serdeObjectMapper.readValue(json, Object.class);
