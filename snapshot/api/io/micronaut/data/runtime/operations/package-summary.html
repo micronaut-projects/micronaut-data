@@ -83,7 +83,8 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="caption"><span>Classes</span></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button></div>
+<div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
@@ -91,25 +92,38 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">An implementation of <a href="../../operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncRepositoryOperations</code></a> that delegates to a reactive operation.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="AsyncPageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">AsyncPageIdCriteriaRepositoryOperations</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Asynchronously executes the internal criteria query that selects the IDs for a page containing joins or fetches.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">An implementation of <a href="../../operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A variation of <a href="ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations"><code>ExecutorAsyncOperations</code></a> that supports <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncCriteriaRepositoryOperations</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">An implementation of <a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactiveRepositoryOperations</code></a> that delegates to a blocking operations and specified <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html" title="class or interface in java.util.concurrent" class="external-link"><code>Executor</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">A variation of <a href="ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations"><code>ExecutorReactiveOperations</code></a> that supports <a href="../../operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactiveCriteriaRepositoryOperations</code></a>.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="PageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">PageIdCriteriaRepositoryOperations</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Executes the internal criteria query that selects the IDs for a page containing joins or fetches.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ReactivePageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">ReactivePageIdCriteriaRepositoryOperations</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Reactively executes the internal criteria query that selects the IDs for a page containing joins or fetches.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">An implementation of <a href="../../operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncRepositoryOperations</code></a> that delegates to a reactive operation.</div>
+</div>
 </div>
 </div>
 </div>

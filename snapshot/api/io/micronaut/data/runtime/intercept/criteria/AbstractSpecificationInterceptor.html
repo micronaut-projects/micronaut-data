@@ -74,6 +74,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getPageable(MethodInvocationContext)</a></li>
 <li><a href="#findAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findAll(RepositoryMethodKey, MethodInvocationContext, Pageable, CriteriaQuery)</a></li>
+<li><a href="#findPageIds(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findPageIds(RepositoryMethodKey, MethodInvocationContext, Pageable, CriteriaQuery)</a></li>
 <li><a href="#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">getMethodJoinPaths(RepositoryMethodKey, MethodInvocationContext)</a></li>
 <li><a href="#getQueryBuilder(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">getQueryBuilder(RepositoryMethodKey, MethodInvocationContext)</a></li>
 <li><a href="#buildExistsQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">buildExistsQuery(RepositoryMethodKey, MethodInvocationContext)</a></li>
@@ -83,6 +84,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#buildQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">buildQuery(RepositoryMethodKey, MethodInvocationContext)</a></li>
 <li><a href="#applyPaginationAndSort(io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery,boolean)" tabindex="0">applyPaginationAndSort(Pageable, CriteriaQuery, boolean)</a></li>
 <li><a href="#buildIdsQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Sort)" tabindex="0">buildIdsQuery(RepositoryMethodKey, MethodInvocationContext, Sort)</a></li>
+<li><a href="#hasJoinsOrFetches(jakarta.persistence.criteria.Root)" tabindex="0">hasJoinsOrFetches(Root)</a></li>
 <li><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" tabindex="0">getQuerySpecification(MethodInvocationContext, Class)</a></li>
 <li><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,java.lang.Class)" tabindex="0">getCriteriaQueryBuilder(MethodInvocationContext, Set, Class)</a></li>
 <li><a href="#getIdsCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,io.micronaut.data.model.Sort,java.lang.Class)" tabindex="0">getIdsCriteriaQueryBuilder(MethodInvocationContext, Set, Sort, Class)</a></li>
@@ -191,7 +193,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -231,76 +233,87 @@ loadScripts(document, 'script');</script>
  <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
  jakarta.persistence.criteria.CriteriaQuery&lt;B&gt;&nbsp;criteriaQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCountCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,java.lang.Class)" class="member-name-link">getCountCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;B&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;B&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findPageIds(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findPageIds</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ jakarta.persistence.criteria.CriteriaQuery&lt;B&gt;&nbsp;criteriaQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Executes the internal ID prequery for a paged specification that contains joins or fetches.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCountCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,java.lang.Class)" class="member-name-link">getCountCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
 or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a><wbr>&lt;K&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getCriteriaDeleteBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a><wbr>&lt;K&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getCriteriaDeleteBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;K&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
 or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,java.lang.Class)" class="member-name-link">getCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,java.lang.Class)" class="member-name-link">getCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;K&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaQueryBuilder</code></a>
 or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a><wbr>&lt;K&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaUpdateBuilder(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getCriteriaUpdateBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a><wbr>&lt;K&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaUpdateBuilder(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getCriteriaUpdateBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;K&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/CriteriaUpdateBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaUpdateBuilder</code></a>
 or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a><wbr>&lt;K&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteSpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getDeleteSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a><wbr>&lt;K&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDeleteSpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getDeleteSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;K&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdExpression(jakarta.persistence.criteria.Root)" class="member-name-link">getIdExpression</a><wbr>(jakarta.persistence.criteria.Root&lt;?&gt;&nbsp;root)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdsCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,io.micronaut.data.model.Sort,java.lang.Class)" class="member-name-link">getIdsCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final jakarta.persistence.criteria.Expression<wbr>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdExpression(jakarta.persistence.criteria.Root)" class="member-name-link">getIdExpression</a><wbr>(jakarta.persistence.criteria.Root&lt;?&gt;&nbsp;root)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../../repository/jpa/criteria/CriteriaQueryBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a><wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdsCriteriaQueryBuilder(io.micronaut.aop.MethodInvocationContext,java.util.Set,io.micronaut.data.model.Sort,java.lang.Class)" class="member-name-link">getIdsCriteriaQueryBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
  <a href="../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getMethodJoinPaths</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageable</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getMethodJoinPaths</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageable</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves the <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../../model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryBuilder(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getQueryBuilder</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../../model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryBuilder(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getQueryBuilder</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a><wbr>&lt;K&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getQuerySpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a><wbr>&lt;K&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getQuerySpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a><wbr>&lt;K&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateSpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getUpdateSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a><wbr>&lt;K&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateSpecification(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">getUpdateSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;K&gt;&nbsp;rootEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a> in context.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasJoinsOrFetches(jakarta.persistence.criteria.Root)" class="member-name-link">hasJoinsOrFetches</a><wbr>(jakarta.persistence.criteria.Root&lt;?&gt;&nbsp;root)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -415,6 +428,33 @@ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="int
 </section>
 </li>
 <li>
+<section class="detail" id="findPageIds(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)">
+<h3>findPageIds</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;B&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;B&gt;</span>&nbsp;<span class="element-name">findPageIds</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ jakarta.persistence.criteria.CriteriaQuery&lt;B&gt;&nbsp;criteriaQuery)</span></div>
+<div class="block">Executes the internal ID prequery for a paged specification that contains joins or fetches.
+
+Pagination is applied to distinct root IDs before the entity query executes, because a collection join can
+otherwise consume a page with multiple rows for the same root. Providers may adapt this dedicated query
+without changing normal user criteria queries.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="findPageIds(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)-type-param-B"><code>B</code> - The ID query result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>methodKey</code> - The repository method</dd>
+<dd><code>context</code> - The invocation context</dd>
+<dd><code>pageable</code> - The requested page</dd>
+<dd><code>criteriaQuery</code> - The ID criteria query</dd>
+<dt>Returns:</dt>
+<dd>The page IDs</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
 <h3>getMethodJoinPaths</h3>
 <div class="horizontal-scroll">
@@ -494,6 +534,20 @@ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="int
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.CriteriaQuery&lt;jakarta.persistence.Tuple&gt;</span>&nbsp;<span class="element-name">buildIdsQuery</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="hasJoinsOrFetches(jakarta.persistence.criteria.Root)">
+<h3>hasJoinsOrFetches</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasJoinsOrFetches</span><wbr><span class="parameters">(jakarta.persistence.criteria.Root&lt;?&gt;&nbsp;root)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>root</code> - The criteria query root</dd>
+<dt>Returns:</dt>
+<dd>Whether the root contains a join or fetch</dd>
+</dl>
 </div>
 </section>
 </li>

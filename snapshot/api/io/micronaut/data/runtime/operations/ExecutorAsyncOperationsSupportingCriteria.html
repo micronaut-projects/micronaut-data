@@ -68,6 +68,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#findOne(jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findOne(CriteriaQuery)</a></li>
 <li><a href="#findAll(jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findAll(CriteriaQuery)</a></li>
 <li><a href="#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" tabindex="0">findAll(CriteriaQuery, int, int)</a></li>
+<li><a href="#findPageIds(jakarta.persistence.criteria.CriteriaQuery,int,int)" tabindex="0">findPageIds(CriteriaQuery, int, int)</a></li>
 <li><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" tabindex="0">updateAll(CriteriaUpdate)</a></li>
 <li><a href="#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" tabindex="0">deleteAll(CriteriaDelete)</a></li>
 </ol>
@@ -87,14 +88,14 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="../../operations/async/AsyncCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaCapableRepository</a>, <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a>, <a href="../../operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncRepositoryOperations</a></code></dd>
+<dd><code><a href="../../operations/async/AsyncCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaCapableRepository</a>, <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a>, <a href="../../operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncRepositoryOperations</a>, <a href="AsyncPageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">AsyncPageIdCriteriaRepositoryOperations</a></code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">ExecutorAsyncOperationsSupportingCriteria</span>
 <span class="extends-implements">extends <a href="ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>
-implements <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></span></div>
+implements <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a>, <a href="AsyncPageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">AsyncPageIdCriteriaRepositoryOperations</a></span></div>
 <div class="block">A variation of <a href="ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations"><code>ExecutorAsyncOperations</code></a> that supports <a href="../../operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><code>AsyncCriteriaRepositoryOperations</code></a>.</div>
 <dl class="notes">
 <dt>Author:</dt>
@@ -159,12 +160,17 @@ implements <a href="../../operations/async/AsyncCriteriaRepositoryOperations.htm
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by Query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CriteriaBuilder</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findPageIds(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findPageIds</a><wbr>(jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;offset,
+ int&nbsp;limit)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.CriteriaBuilder</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Executes an update for the given query and parameter values.</div>
 </div>
 </div>
@@ -310,6 +316,28 @@ implements <a href="../../operations/async/AsyncCriteriaRepositoryOperations.htm
 <dd><code>limit</code> - The limit</dd>
 <dt>Returns:</dt>
 <dd>An iterable result</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findPageIds(jakarta.persistence.criteria.CriteriaQuery,int,int)">
+<h3>findPageIds</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&gt;</span>&nbsp;<span class="element-name">findPageIds</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;offset,
+ int&nbsp;limit)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="AsyncPageIdCriteriaRepositoryOperations.html#findPageIds(jakarta.persistence.criteria.CriteriaQuery,int,int)">findPageIds</a></code>&nbsp;in interface&nbsp;<code><a href="AsyncPageIdCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.runtime.operations">AsyncPageIdCriteriaRepositoryOperations</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><span id="findPageIds(jakarta.persistence.criteria.CriteriaQuery,int,int)-type-param-T"><code>T</code> - The result type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>query</code> - The page-ID criteria query</dd>
+<dd><code>offset</code> - The offset</dd>
+<dd><code>limit</code> - The limit</dd>
+<dt>Returns:</dt>
+<dd>The page IDs</dd>
 </dl>
 </div>
 </section>
