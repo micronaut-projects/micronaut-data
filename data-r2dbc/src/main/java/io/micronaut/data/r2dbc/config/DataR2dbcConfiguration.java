@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.data.annotation.Fetch;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
@@ -46,7 +47,7 @@ public class DataR2dbcConfiguration implements Named {
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
     @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
-    private final DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
+    private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     private final ConnectionFactory connectionFactory;
@@ -161,10 +162,19 @@ public class DataR2dbcConfiguration implements Named {
     }
 
     /**
-     * @return The SQL dialect options configuration
+     * @return The dialect options.
      */
     public DialectOptionsConfiguration getDialectOptions() {
         return dialectOptions;
+    }
+
+    /**
+     * @param dialectOptions The dialect options.
+     */
+    public void setDialectOptions(@Nullable DialectOptionsConfiguration dialectOptions) {
+        if (dialectOptions != null) {
+            this.dialectOptions = dialectOptions;
+        }
     }
 
     @NonNull
@@ -228,29 +238,8 @@ public class DataR2dbcConfiguration implements Named {
     }
 
     /**
-     * SQL dialect options configuration.
+     * SQL dialect options for R2DBC schema generation.
      */
-    public static final class DialectOptionsConfiguration {
-        @Nullable
-        private String version;
-
-        /**
-         * @return The target dialect version.
-         */
-        @Nullable
-        public String getVersion() {
-            return version;
-        }
-
-        /**
-         * @param version The target dialect version.
-         */
-        public void setVersion(@Nullable String version) {
-            this.version = version;
-        }
-
-        SqlDialectOptions toDialectOptions(Dialect dialect) {
-            return SqlDialectOptions.of(dialect, version);
-        }
+    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
     }
 }

@@ -201,6 +201,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * @param requiredVersion the required target dialect version
+     * @return whether the target dialect version meets the requirement
+     */
+    protected boolean isDialectVersionAtLeast(String requiredVersion) {
+        return false;
+    }
+
+    /**
+     * @return the normalized target dialect version, or {@code null} when none is configured
+     */
+    @Nullable
+    protected String getDialectVersion() {
+        return null;
+    }
+
+    /**
+     * @return the resolved dialect options for this builder
+     */
+    protected SqlDialectOptions getDialectOptions() {
+        return SqlDialectOptions.of(getDialect(), getDialectVersion());
+    }
+
+    /**
      * @return True if embedded properties should be traversed
      */
     protected boolean traverseEmbedded() {

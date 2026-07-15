@@ -39,9 +39,14 @@ public record SqlDialectOptions(
 ) {
 
     /**
+     * Oracle version that enables native SQL boolean generation.
+     */
+    public static final String ORACLE_23_1_0_VERSION = "23.1.0";
+
+    /**
      * Oracle version that enables lock-free reservation generation.
      */
-    public static final String ORACLE_26_0_VERSION = "26.0.0";
+    public static final String ORACLE_23_26_1_VERSION = "23.26.1";
 
     /**
      * Annotation processor option prefix for SQL dialect options.
@@ -52,6 +57,8 @@ public record SqlDialectOptions(
      * Annotation/configuration member for target dialect version.
      */
     public static final String MEMBER_VERSION = "version";
+
+    private static final String DIALECT_MEMBER = "dialect";
 
     /**
      * Creates dialect options.
@@ -102,7 +109,7 @@ public record SqlDialectOptions(
                 SqlQueryConfiguration.DialectConfiguration.class
             );
             for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
-                Optional<Dialect> configuredDialect = dialectConfig.enumValue("dialect", Dialect.class);
+                Optional<Dialect> configuredDialect = dialectConfig.enumValue(DIALECT_MEMBER, Dialect.class);
                 if (configuredDialect.isPresent() && configuredDialect.get() == dialect) {
                     return of(dialect, dialectConfig.stringValue(MEMBER_VERSION).orElse(null));
                 }
@@ -135,7 +142,7 @@ public record SqlDialectOptions(
             return version
                 .filter(configuredVersion -> SemanticVersion.isAtLeast(configuredVersion, normalizedRequiredVersion))
                 .isPresent();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException ignored) {
             return false;
         }
     }
@@ -170,7 +177,7 @@ public record SqlDialectOptions(
     private static Optional<String> normalizeVersionOptional(String value) {
         try {
             return Optional.of(normalizeVersion(value));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException ignored) {
             return Optional.empty();
         }
     }

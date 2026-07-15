@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.data.annotation.Fetch;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
@@ -48,7 +49,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
     @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
-    private final DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
+    private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     @Nullable
@@ -151,10 +152,19 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     }
 
     /**
-     * @return The SQL dialect options configuration
+     * @return The dialect options.
      */
     public DialectOptionsConfiguration getDialectOptions() {
         return dialectOptions;
+    }
+
+    /**
+     * @param dialectOptions The dialect options.
+     */
+    public void setDialectOptions(@Nullable DialectOptionsConfiguration dialectOptions) {
+        if (dialectOptions != null) {
+            this.dialectOptions = dialectOptions;
+        }
     }
 
     @NonNull
@@ -259,29 +269,26 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     }
 
     /**
-     * SQL dialect options configuration.
+     * SQL dialect options for JDBC schema generation.
      */
-    public static final class DialectOptionsConfiguration {
-        @Nullable
-        private String version;
+    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
+
+        private boolean validateVersion = true;
 
         /**
-         * @return The target dialect version.
+         * @return Whether JDBC should validate generated SQL target versions against the connected server version.
+         * @since 5.1
          */
-        @Nullable
-        public String getVersion() {
-            return version;
+        public boolean isValidateVersion() {
+            return validateVersion;
         }
 
         /**
-         * @param version The target dialect version.
+         * @param validateVersion Whether JDBC should validate generated SQL target versions against the connected server version.
+         * @since 5.1
          */
-        public void setVersion(@Nullable String version) {
-            this.version = version;
-        }
-
-        SqlDialectOptions toDialectOptions(Dialect dialect) {
-            return SqlDialectOptions.of(dialect, version);
+        public void setValidateVersion(boolean validateVersion) {
+            this.validateVersion = validateVersion;
         }
     }
 }

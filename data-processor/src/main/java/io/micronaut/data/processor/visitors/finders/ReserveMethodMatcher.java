@@ -58,7 +58,7 @@ public final class ReserveMethodMatcher implements MethodMatcher {
         }
         if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder queryBuilder)
             || queryBuilder.getDialect() != Dialect.ORACLE
-            || !queryBuilder.getDialectOptions().isVersionAtLeast(SqlDialectOptions.ORACLE_26_0_VERSION)) {
+            || !queryBuilder.isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_26_1_VERSION)) {
             throw new MatchFailedException("@Reserve methods require Oracle dialect version 26 or later");
         }
         if (!TypeUtils.isValidBatchUpdateReturnType(method)) {

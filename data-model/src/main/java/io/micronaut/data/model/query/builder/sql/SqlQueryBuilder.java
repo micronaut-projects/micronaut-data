@@ -219,9 +219,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * @return The resolved dialect options.
+     * @param requiredVersion The required target dialect version
+     * @return Whether the target dialect version meets the requirement
+     * @since 5.1
      */
-    public SqlDialectOptions getDialectOptions() {
+    @Override
+    public boolean isDialectVersionAtLeast(String requiredVersion) {
+        return dialectOptions.isVersionAtLeast(requiredVersion);
+    }
+
+    /**
+     * @return The normalized target dialect version, or {@code null} when none is configured.
+     * @since 5.1
+     */
+    @Override
+    @Nullable
+    public String getDialectVersion() {
+        return dialectOptions.version().orElse(null);
+    }
+
+    @Override
+    protected SqlDialectOptions getDialectOptions() {
         return dialectOptions;
     }
 
