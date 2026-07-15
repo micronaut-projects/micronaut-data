@@ -1132,39 +1132,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
     }
 
-    @Nullable
-    private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
-        try {
-            String[] targetParts = target.split("\\.", -1);
-            return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
-        } catch (NumberFormatException ignored) {
-            LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
-                target, targetVersionKey.dialect());
-            return null;
-        }
-    }
-
-    private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
-        try {
-            return Optional.of(databaseVersion.get(() -> {
-                try {
-                    DatabaseMetaData metadata = connection.getMetaData();
-                    int major = metadata.getDatabaseMajorVersion();
-                    int minor = metadata.getDatabaseMinorVersion();
-                    if (major < 1 || minor < 0) {
-                        throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
-                    }
-                    return new DatabaseVersion(major, minor);
-                } catch (SQLException e) {
-                    throw new DatabaseVersionLookupException(e);
-                }
-            }));
-        } catch (DatabaseVersionLookupException e) {
-            LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics will be retried.", dataSourceName, e.getCause());
-            return Optional.empty();
-        }
-    }
-
     /**
      * Gets the generated id on record insert.
      *
@@ -1362,6 +1329,39 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (RuntimeException e) {
                 checkedTargetVersions.remove(targetVersionKey);
                 throw e;
+            }
+        }
+
+        @Nullable
+        private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
+            try {
+                String[] targetParts = target.split("\\.", -1);
+                return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
+            } catch (NumberFormatException ignored) {
+                LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                    target, targetVersionKey.dialect());
+                return null;
+            }
+        }
+
+        private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
+            try {
+                return Optional.of(databaseVersion.get(() -> {
+                    try {
+                        DatabaseMetaData metadata = connection.getMetaData();
+                        int major = metadata.getDatabaseMajorVersion();
+                        int minor = metadata.getDatabaseMinorVersion();
+                        if (major < 1 || minor < 0) {
+                            throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
+                        }
+                        return new DatabaseVersion(major, minor);
+                    } catch (SQLException e) {
+                        throw new DatabaseVersionLookupException(e);
+                    }
+                }));
+            } catch (DatabaseVersionLookupException e) {
+                LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics will be retried.", dataSourceName, e.getCause());
+                return Optional.empty();
             }
         }
     }

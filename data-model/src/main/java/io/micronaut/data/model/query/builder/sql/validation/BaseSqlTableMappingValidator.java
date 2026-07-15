@@ -67,7 +67,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             if (columnMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             }
-            validateColumn(columnMapping, columnMetadata, getSupportedDialect(), dialectOptions, tableMetadata.getName());
+            validateColumn(columnMapping, columnMetadata, dialectOptions, tableMetadata.getName());
         }
     }
 
@@ -179,13 +179,11 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      *
      * @param columnMapping     the SQL column mapping from {@link PersistentEntity} field to validate
      * @param columnMetadata    the SQL column metadata from the database to compare against
-     * @param dialect           the dialect of the schema where column belongs
      * @param tableName         the name of the table where column is stored
      * @throws SchemaValidationException when the expected column does not match the actual column metadata
      */
     private void validateColumn(SqlColumnMapping columnMapping,
                                 SqlColumnMetadata columnMetadata,
-                                Dialect dialect,
                                 SqlDialectOptions dialectOptions,
                                 String tableName) {
         if (StringUtils.isNotEmpty(columnMapping.getDefinition())) {
