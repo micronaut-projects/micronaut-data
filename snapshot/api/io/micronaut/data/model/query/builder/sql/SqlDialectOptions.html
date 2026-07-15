@@ -59,7 +59,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
-<li><a href="#ORACLE_23_1_VERSION" tabindex="0">ORACLE_23_1_VERSION</a></li>
+<li><a href="#ORACLE_26_0_VERSION" tabindex="0">ORACLE_26_0_VERSION</a></li>
 <li><a href="#DIALECT_OPTIONS_CONFIGURATION_PREFIX" tabindex="0">DIALECT_OPTIONS_CONFIGURATION_PREFIX</a></li>
 <li><a href="#MEMBER_VERSION" tabindex="0">MEMBER_VERSION</a></li>
 </ol>
@@ -98,15 +98,15 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>Record Components:</dt>
-<dd><code><span id="param-dialect">dialect</span></code> - The dialect these options apply to.</dd>
-<dd><code><span id="param-version">version</span></code> - The target dialect version.</dd>
+<dd><code><span id="param-dialect">dialect</span></code> - The dialect these options apply to</dd>
+<dd><code><span id="param-version">version</span></code> - The target dialect version</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlDialectOptions</span>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;version)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
-<div class="block">Resolved SQL dialect options used during SQL generation and runtime binding.</div>
+<div class="block">Resolved SQL dialect options used during SQL generation.</div>
 </div>
 </section>
 <section class="summary">
@@ -131,9 +131,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Annotation/configuration member for target dialect version.</div>
 </div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ORACLE_23_1_VERSION" class="member-name-link">ORACLE_23_1_VERSION</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ORACLE_26_0_VERSION" class="member-name-link">ORACLE_26_0_VERSION</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Oracle version that enables native SQL boolean generation.</div>
+<div class="block">Oracle version that enables lock-free reservation generation.</div>
 </div>
 </div>
 </section>
@@ -231,16 +231,16 @@ loadScripts(document, 'script');</script>
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="ORACLE_23_1_VERSION">
-<h3>ORACLE_23_1_VERSION</h3>
+<section class="detail" id="ORACLE_26_0_VERSION">
+<h3>ORACLE_26_0_VERSION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ORACLE_23_1_VERSION</span></div>
-<div class="block">Oracle version that enables native SQL boolean generation.</div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ORACLE_26_0_VERSION</span></div>
+<div class="block">Oracle version that enables lock-free reservation generation.</div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
 <ul class="tag-list">
-<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.SqlDialectOptions.ORACLE_23_1_VERSION">Constant Field Values</a></li>
+<li><a href="../../../../../../../constant-values.html#io.micronaut.data.model.query.builder.sql.SqlDialectOptions.ORACLE_26_0_VERSION">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
