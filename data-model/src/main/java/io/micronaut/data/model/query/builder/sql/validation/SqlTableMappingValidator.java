@@ -43,7 +43,9 @@ public interface SqlTableMappingValidator {
      * @param tableMetadata   The SQL table metadata from the database to compare against
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    void validateTable(SqlTableMapping tableMapping,  SqlTableMetadata tableMetadata);
+    default void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
+        validateTable(tableMapping, tableMetadata, SqlDialectOptions.defaults(getSupportedDialect()));
+    }
 
     /**
      * Validates a table definition based on {@link PersistentEntity} mapping against its actual corresponding metadata from the database.
@@ -53,9 +55,7 @@ public interface SqlTableMappingValidator {
      * @param dialectOptions  The dialect options
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    default void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SqlDialectOptions dialectOptions) {
-        validateTable(tableMapping, tableMetadata);
-    }
+    void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SqlDialectOptions dialectOptions);
 
     /**
      * Returns the SQL dialect supported by this validator.

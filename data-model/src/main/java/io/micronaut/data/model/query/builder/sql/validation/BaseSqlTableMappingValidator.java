@@ -46,11 +46,6 @@ import java.util.List;
 abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator {
 
     @Override
-    public final void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
-        validateTable(tableMapping, tableMetadata, SqlDialectOptions.defaults(getSupportedDialect()));
-    }
-
-    @Override
     public final void validateTable(SqlTableMapping tableMapping,
                                     SqlTableMetadata tableMetadata,
                                     SqlDialectOptions dialectOptions) {
