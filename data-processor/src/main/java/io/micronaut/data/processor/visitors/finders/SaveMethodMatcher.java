@@ -145,67 +145,110 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
     }
 
     public static MethodMatch saveEntity(MethodMatchContext matchContext, DataMethod.OperationType operationType, boolean saveOperation) {
-        return mc -> {
-            ParameterElement[] parameters = mc.getParameters();
-            ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
-            ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
-            if (entityParameter == null && entitiesParameter == null) {
-                throw new MatchFailedException("Cannot implement save method for specified arguments and return type", mc.getMethodElement());
-            }
-            FindersUtils.InterceptorMatch entry = saveOperation
-                ? FindersUtils.resolveSaveInterceptorType(entityParameter != null, entitiesParameter != null, mc)
-                : FindersUtils.resolveInterceptorTypeByOperationType(
-                    entityParameter != null,
-                    entitiesParameter != null,
-                    operationType, mc
-                );
-            MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
-                operationType,
-                entry.returnType(),
-                entry.interceptor()
-            );
-            if (!mc.supportsImplicitQueries()) {
-                final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                    mc.getRepositoryClass().getAnnotationMetadata(),
-                    mc.getAnnotationMetadata()
-                );
-                boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(mc.getAnnotationMetadata());
-                SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
-                SourcePersistentEntity rootEntity = mc.getRootEntity();
-                Objects.requireNonNull(rootEntity, "Root entity is required for save method");
-                PersistentEntityCriteriaInsert<Object> criteriaInsert = criteriaBuilder.createCriteriaInsert(rootEntity);
-                if (operationType == DataMethod.OperationType.INSERT_RETURNING) {
-                    criteriaInsert.setReturning();
-                }
-                QueryResult queryResult = criteriaInsert.build(annotationMetadataHierarchy, mc.getQueryBuilder());
-                methodMatchInfo
-                    .encodeEntityParameters(encodeEntityParameters)
-                    .queryResult(
-                        queryResult
-                );
-                if (saveOperation && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
-                    SecondaryUpdateProperties secondaryUpdateProperties = resolveSecondaryUpdateProperties(rootEntity, mc.getAnnotationMetadata());
-                    if (secondaryUpdateProperties.hasOnlyReservableUpdateProperties()) {
-                        throw new MatchFailedException("Cannot generate save/update for entity [" + rootEntity.getName()
-                            + "]: all updateable properties are reservable. Use insert(...) for new rows and an explicit @Query delta update for reservable columns.");
-                    }
-                    boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
-                    MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(List.of(), entityParameter, entitiesParameter, updateReturning)
-                        .buildMatchInfo(mc);
-                    QueryResult updateQueryResult = updateInfo.getQueryResult();
-                    if (updateQueryResult != null) {
-                        methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
-                    }
-                }
-            }
-            if (entitiesParameter != null) {
-                methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
-            }
-            if (entityParameter != null) {
-                methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
-            }
-            return methodMatchInfo;
-        };
+        return mc -> buildSaveEntityMatchInfo(mc, operationType, saveOperation);
+    }
+
+    private static MethodMatchInfo buildSaveEntityMatchInfo(MethodMatchContext matchContext,
+                                                            DataMethod.OperationType operationType,
+                                                            boolean saveOperation) {
+        EntityParameters entityParameters = resolveEntityParameters(matchContext);
+        FindersUtils.InterceptorMatch interceptorMatch = resolveSaveInterceptor(
+            entityParameters,
+            operationType,
+            saveOperation,
+            matchContext
+        );
+        MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+            operationType,
+            interceptorMatch.returnType(),
+            interceptorMatch.interceptor()
+        );
+        if (!matchContext.supportsImplicitQueries()) {
+            SourcePersistentEntity rootEntity = addInsertQuery(methodMatchInfo, matchContext, operationType);
+            addSecondaryUpdateQuery(methodMatchInfo, matchContext, entityParameters, rootEntity, operationType, saveOperation);
+        }
+        addEntityParameterRoles(methodMatchInfo, entityParameters);
+        return methodMatchInfo;
+    }
+
+    private static EntityParameters resolveEntityParameters(MethodMatchContext matchContext) {
+        ParameterElement[] parameters = matchContext.getParameters();
+        ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
+        ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        if (entityParameter == null && entitiesParameter == null) {
+            throw new MatchFailedException("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());
+        }
+        return new EntityParameters(entityParameter, entitiesParameter);
+    }
+
+    private static FindersUtils.InterceptorMatch resolveSaveInterceptor(EntityParameters entityParameters,
+                                                                         DataMethod.OperationType operationType,
+                                                                         boolean saveOperation,
+                                                                         MethodMatchContext matchContext) {
+        if (saveOperation) {
+            return FindersUtils.resolveSaveInterceptorType(entityParameters.hasEntity(), entityParameters.hasEntities(), matchContext);
+        }
+        return FindersUtils.resolveInterceptorTypeByOperationType(
+            entityParameters.hasEntity(),
+            entityParameters.hasEntities(),
+            operationType,
+            matchContext
+        );
+    }
+
+    private static SourcePersistentEntity addInsertQuery(MethodMatchInfo methodMatchInfo,
+                                                          MethodMatchContext matchContext,
+                                                          DataMethod.OperationType operationType) {
+        AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
+            matchContext.getRepositoryClass().getAnnotationMetadata(),
+            matchContext.getAnnotationMetadata()
+        );
+        SourcePersistentEntity rootEntity = Objects.requireNonNull(matchContext.getRootEntity(), "Root entity is required for save method");
+        PersistentEntityCriteriaInsert<Object> criteriaInsert = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext)
+            .createCriteriaInsert(rootEntity);
+        if (operationType == DataMethod.OperationType.INSERT_RETURNING) {
+            criteriaInsert.setReturning();
+        }
+        methodMatchInfo
+            .encodeEntityParameters(!DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata()))
+            .queryResult(criteriaInsert.build(annotationMetadataHierarchy, matchContext.getQueryBuilder()));
+        return rootEntity;
+    }
+
+    private static void addSecondaryUpdateQuery(MethodMatchInfo methodMatchInfo,
+                                                MethodMatchContext matchContext,
+                                                EntityParameters entityParameters,
+                                                SourcePersistentEntity rootEntity,
+                                                DataMethod.OperationType operationType,
+                                                boolean saveOperation) {
+        if (!saveOperation || !(rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
+            return;
+        }
+        SecondaryUpdateProperties secondaryUpdateProperties = resolveSecondaryUpdateProperties(rootEntity, matchContext.getAnnotationMetadata());
+        if (secondaryUpdateProperties.hasOnlyReservableUpdateProperties()) {
+            throw new MatchFailedException("Cannot generate save/update for entity [" + rootEntity.getName()
+                + "]: all updateable properties are reservable. Use insert(...) for new rows and an explicit @Query delta update for reservable columns.");
+        }
+        boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
+        MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(
+            List.of(),
+            entityParameters.entity(),
+            entityParameters.entities(),
+            updateReturning
+        ).buildMatchInfo(matchContext);
+        QueryResult updateQueryResult = updateInfo.getQueryResult();
+        if (updateQueryResult != null) {
+            methodMatchInfo.addQueryResult(updateInfo.getOperationType(), updateInfo.getResultType(), updateQueryResult, true);
+        }
+    }
+
+    private static void addEntityParameterRoles(MethodMatchInfo methodMatchInfo, EntityParameters entityParameters) {
+        if (entityParameters.entities() != null) {
+            methodMatchInfo.addParameterRole(entityParameters.entities(), TypeRole.ENTITIES);
+        }
+        if (entityParameters.entity() != null) {
+            methodMatchInfo.addParameterRole(entityParameters.entity(), TypeRole.ENTITY);
+        }
     }
 
     private static SecondaryUpdateProperties resolveSecondaryUpdateProperties(SourcePersistentEntity rootEntity, AnnotationMetadata annotationMetadata) {
@@ -442,6 +485,17 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
     private record SecondaryUpdateProperties(boolean hasReservableUpdateProperty, boolean hasNonReservableUpdateProperty) {
         boolean hasOnlyReservableUpdateProperties() {
             return hasReservableUpdateProperty && !hasNonReservableUpdateProperty;
+        }
+    }
+
+    private record EntityParameters(@Nullable ParameterElement entity, @Nullable ParameterElement entities) {
+
+        boolean hasEntity() {
+            return entity != null;
+        }
+
+        boolean hasEntities() {
+            return entities != null;
         }
     }
 }

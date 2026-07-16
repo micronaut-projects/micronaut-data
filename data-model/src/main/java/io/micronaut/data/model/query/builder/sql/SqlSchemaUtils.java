@@ -104,6 +104,8 @@ public final class SqlSchemaUtils {
     public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
     public static final String NULLABLE_COLUMN = "NULLABLE";
 
+    static final String LIST_ANNOTATION_SUFFIX = "$List";
+
     static final int SRID_WGS_84 = 4326;
     static final int SRID_ETRS_89 = 4258;
     static final int SRID_WEB_MERCATOR = 3857;
@@ -349,7 +351,7 @@ public final class SqlSchemaUtils {
 
         return switch (dataType) {
             case STRING -> {
-                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size$List")
+                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size" + LIST_ANNOTATION_SUFFIX)
                     .flatMap(v -> {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;
@@ -519,9 +521,9 @@ public final class SqlSchemaUtils {
 
     private static boolean hasConstraint(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
         return annotationMetadata.hasAnnotation(jakartaName)
-            || annotationMetadata.hasAnnotation(jakartaName + "$List")
+            || annotationMetadata.hasAnnotation(jakartaName + LIST_ANNOTATION_SUFFIX)
             || annotationMetadata.hasAnnotation(javaxName)
-            || annotationMetadata.hasAnnotation(javaxName + "$List");
+            || annotationMetadata.hasAnnotation(javaxName + LIST_ANNOTATION_SUFFIX);
     }
 
     private static Optional<String> getFirstLongMemberAsString(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
@@ -534,13 +536,13 @@ public final class SqlSchemaUtils {
         if (annotation.isEmpty()) {
             // Validation constraints are repeatable and Micronaut metadata can expose even a single constraint
             // through the generated container annotation, for example PositiveOrZero.List.
-            annotation = annotationMetadata.findAnnotation(jakartaName + "$List").flatMap(SqlSchemaUtils::firstContained);
+            annotation = annotationMetadata.findAnnotation(jakartaName + LIST_ANNOTATION_SUFFIX).flatMap(SqlSchemaUtils::firstContained);
         }
         if (annotation.isEmpty()) {
             annotation = annotationMetadata.findAnnotation(javaxName);
         }
         if (annotation.isEmpty()) {
-            annotation = annotationMetadata.findAnnotation(javaxName + "$List").flatMap(SqlSchemaUtils::firstContained);
+            annotation = annotationMetadata.findAnnotation(javaxName + LIST_ANNOTATION_SUFFIX).flatMap(SqlSchemaUtils::firstContained);
         }
         return annotation;
     }
