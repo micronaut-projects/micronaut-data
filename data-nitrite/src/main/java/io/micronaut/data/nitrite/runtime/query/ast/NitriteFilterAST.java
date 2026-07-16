@@ -27,6 +27,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Locale;
 
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
+
 /**
  * A structured AST for Nitrite filters.
  *
@@ -110,7 +117,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             Object resolvedValue = valueExpression.resolve(params, namedParameters);
             Object finalValue = preparer.prepare(persistedName, resolvedValue);
-            Filter f = evaluator.evaluate(entity, persistedName, "$eq", finalValue, params, namedParameters);
+            Filter f = evaluator.evaluate(entity, persistedName, EQ, finalValue, params, namedParameters);
             return f != null ? f : Filter.ALL;
         }
     }
@@ -285,7 +292,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         private static boolean compare(String op, @Nullable Object lhs, @Nullable Object rhs) {
             if (lhs == null || rhs == null) {
                 boolean eq = Objects.equals(lhs, rhs);
-                return "$ne".equals(op) ? !eq : "$eq".equals(op) && eq;
+                return NE.equals(op) ? !eq : EQ.equals(op) && eq;
             }
             int cmp;
             if (lhs instanceof Number ln && rhs instanceof Number rn) {
@@ -296,12 +303,12 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                 cmp = lhs.equals(rhs) ? 0 : 1;
             }
             return switch (op) {
-                case "$eq" -> cmp == 0;
-                case "$ne" -> cmp != 0;
-                case "$gt" -> cmp > 0;
-                case "$gte" -> cmp >= 0;
-                case "$lt" -> cmp < 0;
-                case "$lte" -> cmp <= 0;
+                case EQ -> cmp == 0;
+                case NE -> cmp != 0;
+                case GT -> cmp > 0;
+                case GTE -> cmp >= 0;
+                case LT -> cmp < 0;
+                case LTE -> cmp <= 0;
                 default -> false;
             };
         }

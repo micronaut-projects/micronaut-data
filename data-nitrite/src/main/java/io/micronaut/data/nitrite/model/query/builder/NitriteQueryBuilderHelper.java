@@ -37,6 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
+
 /**
  * Helper for Nitrite query building that handles complex structural logic.
  * This class is intended for use by both the Annotation Processor and Runtime,
@@ -160,11 +164,11 @@ public final class NitriteQueryBuilderHelper {
         for (int j = 0; j < localFields.size(); j++) {
             String var = "v" + i++;
             let.put(var, "$" + localFields.get(j));
-            matches.add(Map.of("$eq", List.of("$$" + var, "$" + foreignFields.get(j))));
+            matches.add(Map.of(EQ, List.of("$$" + var, "$" + foreignFields.get(j))));
         }
         // size() is always > 1 here: the single-field case returns above via the
         // localFields.size() == 1 guard, so matches always holds at least two predicates.
-        pipeline.addFirst(Map.of("$match", Map.of("$expr", Map.of("$and", matches))));
+        pipeline.addFirst(Map.of("$match", Map.of(EXPR, Map.of(AND, matches))));
         Map<String, Object> lookupDoc = new LinkedHashMap<>();
         lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
         return Map.of("$lookup", lookupDoc);

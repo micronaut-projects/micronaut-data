@@ -43,6 +43,9 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+
 /**
  * Shared JSON parameter-binding utilities used by both
  * {@link DefaultNitriteRepositoryOperations} and {@link NitriteQueryExecutor}.
@@ -318,7 +321,7 @@ public final class NitriteQueryBinder {
     private void fillMissingParamsFromFilter(Map<String, Object> filterMap, Object[] methodParams, Object[] out) {
         for (Map.Entry<String, Object> entry : filterMap.entrySet()) {
             Object value = entry.getValue();
-            if (("$and".equals(entry.getKey()) || "$or".equals(entry.getKey())) && value instanceof List<?> list) {
+            if ((AND.equals(entry.getKey()) || OR.equals(entry.getKey())) && value instanceof List<?> list) {
                 for (Object item : list) {
                     if (item instanceof Map<?, ?> im) {
                         @SuppressWarnings("unchecked")

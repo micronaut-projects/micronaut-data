@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
@@ -33,6 +34,33 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EMPTY;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.IN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.INTERSECTS;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LIKE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.MULTIPLY;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NEAR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT_NULL;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NULL;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.REGEX;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.STR_LEN_CP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TEXT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_LOWER;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_UPPER;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN;
 
 /**
  * Builder for Nitrite Filters from JSON-like structures.
@@ -100,7 +128,7 @@ public final class NitriteFilterBuilder {
                     || key.equals("$skip") || key.equals("$count") || key.equals("$project"))) {
                 continue;
             }
-            if ("$and".equals(key)) {
+            if (AND.equals(key)) {
                 if (value instanceof List<?> list) {
                     List<NitriteFilterAST> ands = new ArrayList<>();
                     for (Object item : list) {
@@ -110,7 +138,7 @@ public final class NitriteFilterBuilder {
                     }
                     compiledFilters.add(new NitriteFilterAST.AndNode(ands));
                 }
-            } else if ("$or".equals(key)) {
+            } else if (OR.equals(key)) {
                 if (value instanceof List<?> list) {
                     List<NitriteFilterAST> ors = new ArrayList<>();
                     for (Object item : list) {
@@ -120,7 +148,7 @@ public final class NitriteFilterBuilder {
                     }
                     compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                 }
-            } else if ("$expr".equals(key)) {
+            } else if (EXPR.equals(key)) {
                 if (value instanceof Map<?, ?> m && m.size() == 1) {
                     Map.Entry<?, ?> exprEntry = m.entrySet().iterator().next();
                     String op = (String) exprEntry.getKey();
@@ -154,16 +182,16 @@ public final class NitriteFilterBuilder {
         }
         if (node instanceof Map<?, ?> m && m.size() == 1) {
             Map.Entry<?, ?> entry = m.entrySet().iterator().next();
-            if ("$strLenCP".equals(entry.getKey())) {
+            if (STR_LEN_CP.equals(entry.getKey())) {
                 return new NitriteFilterAST.ExprValueNode.StrLen(compileExprValue(entity, entry.getValue()));
             }
-            if ("$toLower".equals(entry.getKey())) {
+            if (TO_LOWER.equals(entry.getKey())) {
                 return new NitriteFilterAST.ExprValueNode.ToLower(compileExprValue(entity, entry.getValue()));
             }
-            if ("$toUpper".equals(entry.getKey())) {
+            if (TO_UPPER.equals(entry.getKey())) {
                 return new NitriteFilterAST.ExprValueNode.ToUpper(compileExprValue(entity, entry.getValue()));
             }
-            if ("$multiply".equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
+            if (MULTIPLY.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
                 List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
                 for (Object operand : operands) {
                     compiled.add(compileExprValue(entity, operand));
@@ -213,8 +241,8 @@ public final class NitriteFilterBuilder {
                 operatorValues.put(entry.getKey(), valueResolver.compileValue(entry.getValue()));
             }
         } else {
-            operators = Collections.singletonMap("$eq", rawValue);
-            operatorValues.put("$eq", valueResolver.compileValue(rawValue));
+            operators = Collections.singletonMap(EQ, rawValue);
+            operatorValues.put(EQ, valueResolver.compileValue(rawValue));
         }
 
         if (resolution.isReference() || rawField.contains(".")) {
@@ -222,7 +250,7 @@ public final class NitriteFilterBuilder {
                 this::buildAssociationOrNestedField, entity, rawField, persistedName, operators);
         }
         if (!isOperatorMap) {
-            CompiledValue eqValue = operatorValues.get("$eq");
+            CompiledValue eqValue = operatorValues.get(EQ);
             if (eqValue == null) {
                 eqValue = new CompiledValue.Literal(null);
             }
@@ -339,17 +367,17 @@ public final class NitriteFilterBuilder {
 
     private Map<String, OperatorHandler> buildOperatorRegistry() {
         Map<String, OperatorHandler> r = new LinkedHashMap<>();
-        r.put("$eq",  (e, f, v, p, n) -> entityMapper.eqWithNumericCoercion(e, f, v, f));
-        r.put("$ne",  (e, f, v, p, n) -> FluentFilter.where(f).notEq(v));
-        r.put("$gt",  (e, f, v, p, n) -> buildRangeFilter(f, "$gt", v));
-        r.put("$gte", (e, f, v, p, n) -> buildRangeFilter(f, "$gte", v));
-        r.put("$lt",  (e, f, v, p, n) -> buildRangeFilter(f, "$lt", v));
-        r.put("$lte", (e, f, v, p, n) -> buildRangeFilter(f, "$lte", v));
-        r.put("$in",  (e, f, v, p, n) -> buildInFilter(e, f, v, p, n));
-        r.put("$nin", (e, f, v, p, n) -> buildNotInFilter(e, f, v, p, n));
-        r.put("$null",    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).eq(null) : Filter.ALL);
-        r.put("$notNull", (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).notEq(null) : Filter.ALL);
-        r.put("$between", (e, f, v, p, n) -> {
+        r.put(EQ,  (e, f, v, p, n) -> entityMapper.eqWithNumericCoercion(e, f, v, f));
+        r.put(NE,  (e, f, v, p, n) -> FluentFilter.where(f).notEq(v));
+        r.put(GT,  (e, f, v, p, n) -> buildRangeFilter(f, GT, v));
+        r.put(GTE, (e, f, v, p, n) -> buildRangeFilter(f, GTE, v));
+        r.put(LT,  (e, f, v, p, n) -> buildRangeFilter(f, LT, v));
+        r.put(LTE, (e, f, v, p, n) -> buildRangeFilter(f, LTE, v));
+        r.put(IN,  (e, f, v, p, n) -> buildInFilter(e, f, v, p, n));
+        r.put(NIN, (e, f, v, p, n) -> buildNotInFilter(e, f, v, p, n));
+        r.put(NULL,    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).eq(null) : Filter.ALL);
+        r.put(NOT_NULL, (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).notEq(null) : Filter.ALL);
+        r.put(BETWEEN, (e, f, v, p, n) -> {
             if (v instanceof List<?> list && list.size() == 2) {
                 Object v1 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(0), p, n)));
                 Object v2 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(1), p, n)));
@@ -357,28 +385,28 @@ public final class NitriteFilterBuilder {
             }
             return Filter.ALL;
         });
-        r.put("$regex", (e, f, v, p, n) -> FluentFilter.where(f).regex(PatternConverter.resolveRegexPattern(valueResolver.resolveValue(v, p, n))));
-        r.put("$like",  (e, f, v, p, n) -> {
+        r.put(REGEX, (e, f, v, p, n) -> FluentFilter.where(f).regex(PatternConverter.resolveRegexPattern(valueResolver.resolveValue(v, p, n))));
+        r.put(LIKE,  (e, f, v, p, n) -> {
             Object resolved = valueResolver.resolveValue(v, p, n);
             return FluentFilter.where(f).regex(resolved != null ? PatternConverter.convertLikeToRegex(resolved.toString()) : "");
         });
-        r.put("$not", (e, f, v, p, n) -> {
+        r.put(NitriteQueryOperators.NOT, (e, f, v, p, n) -> {
             if (v instanceof Map<?, ?> m) {
                 Filter filter = buildFieldFilter(e, f, toStringObjectMap(m), p, n);
                 return filter != null ? filter.not() : Filter.ALL;
             }
             return Filter.ALL;
         });
-        r.put("$exists", (e, f, v, p, n) -> Boolean.TRUE.equals(v)
+        r.put(NitriteQueryOperators.EXISTS, (e, f, v, p, n) -> Boolean.TRUE.equals(v)
             ? FluentFilter.where(f).notEq(null) : FluentFilter.where(f).eq(null));
-        r.put("$empty", (e, f, v, p, n) -> Boolean.TRUE.equals(v)
+        r.put(EMPTY, (e, f, v, p, n) -> Boolean.TRUE.equals(v)
             ? Filter.or(FluentFilter.where(f).eq(""), FluentFilter.where(f).eq(null))
             : Filter.and(FluentFilter.where(f).notEq(""), FluentFilter.where(f).notEq(null)));
-        r.put("$text",       (e, f, v, p, n) -> FluentFilter.where(f).text(v != null ? v.toString() : ""));
-        r.put("$all", (e, f, v, p, n) -> buildArrayContainsFilter(f, v, p, n));
-        r.put("$near",       (e, f, v, p, n) -> spatialFactory.buildNearFilter(f, v, p, n));
-        r.put("$within",     (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "within"));
-        r.put("$intersects", (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "intersects"));
+        r.put(TEXT,       (e, f, v, p, n) -> FluentFilter.where(f).text(v != null ? v.toString() : ""));
+        r.put(ALL, (e, f, v, p, n) -> buildArrayContainsFilter(f, v, p, n));
+        r.put(NEAR,       (e, f, v, p, n) -> spatialFactory.buildNearFilter(f, v, p, n));
+        r.put(WITHIN,     (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "within"));
+        r.put(INTERSECTS, (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "intersects"));
         return Collections.unmodifiableMap(r);
     }
 
@@ -472,8 +500,8 @@ public final class NitriteFilterBuilder {
         if (!(lower instanceof Comparable<?> lowerComparable) || !(upper instanceof Comparable<?> upperComparable)) {
             return Filter.ALL;
         }
-        return pair -> compareValues(pair.getSecond().get(field), lowerComparable, "$gte")
-            && compareValues(pair.getSecond().get(field), upperComparable, "$lte");
+        return pair -> compareValues(pair.getSecond().get(field), lowerComparable, GTE)
+            && compareValues(pair.getSecond().get(field), upperComparable, LTE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -495,10 +523,10 @@ public final class NitriteFilterBuilder {
             return false;
         }
         return switch (op) {
-            case "$gt" -> comparison > 0;
-            case "$gte" -> comparison >= 0;
-            case "$lt" -> comparison < 0;
-            case "$lte" -> comparison <= 0;
+            case GT -> comparison > 0;
+            case GTE -> comparison >= 0;
+            case LT -> comparison < 0;
+            case LTE -> comparison <= 0;
             default -> false;
         };
     }

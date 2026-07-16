@@ -38,6 +38,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
@@ -48,6 +49,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXISTS;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.IN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.INTERSECTS;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.MULTIPLY;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NEAR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.STR_LEN_CP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_LOWER;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_UPPER;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN;
 
 /**
  * Translates JPA Criteria predicates into a NitriteDB JSON filter map.
@@ -66,8 +89,8 @@ import java.util.Objects;
  */
 public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
-    private static final String REGEX = "$regex";
-    private static final String NOT = "$not";
+    private static final String REGEX = NitriteQueryOperators.REGEX;
+    private static final String NOT = NitriteQueryOperators.NOT;
 
     private final PersistentEntity persistentEntity;
     private final NitriteQueryState queryState;
@@ -122,7 +145,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (ignoreCase) {
             handleRegexExpression(leftExpression, true, false, false, false, rightExpression, false);
         } else {
-            appendOperatorExpression(leftExpression, "$eq", rightExpression);
+            appendOperatorExpression(leftExpression, EQ, rightExpression);
         }
     }
 
@@ -134,32 +157,32 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (ignoreCase) {
             handleRegexExpression(leftExpression, true, true, false, false, rightExpression, false);
         } else {
-            appendOperatorExpression(leftExpression, "$ne", rightExpression);
+            appendOperatorExpression(leftExpression, NE, rightExpression);
         }
     }
 
     @Override
     public void visitGreaterThan(
         final Expression<?> leftExpression, final Expression<?> rightExpression) {
-        appendOperatorExpression(leftExpression, "$gt", rightExpression);
+        appendOperatorExpression(leftExpression, GT, rightExpression);
     }
 
     @Override
     public void visitGreaterThanOrEquals(
         final Expression<?> leftExpression, final Expression<?> rightExpression) {
-        appendOperatorExpression(leftExpression, "$gte", rightExpression);
+        appendOperatorExpression(leftExpression, GTE, rightExpression);
     }
 
     @Override
     public void visitLessThan(
         final Expression<?> leftExpression, final Expression<?> rightExpression) {
-        appendOperatorExpression(leftExpression, "$lt", rightExpression);
+        appendOperatorExpression(leftExpression, LT, rightExpression);
     }
 
     @Override
     public void visitLessThanOrEquals(
         final Expression<?> leftExpression, final Expression<?> rightExpression) {
-        appendOperatorExpression(leftExpression, "$lte", rightExpression);
+        appendOperatorExpression(leftExpression, LTE, rightExpression);
     }
 
     @Override
@@ -170,7 +193,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = getFieldNameForNullCheck(associations, property);
-                query.put(path, Collections.singletonMap("$eq", null));
+                query.put(path, Collections.singletonMap(EQ, null));
             });
     }
 
@@ -182,7 +205,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = getFieldNameForNullCheck(associations, property);
-                query.put(path, Collections.singletonMap("$ne", null)); // notEq(null)
+                query.put(path, Collections.singletonMap(NE, null)); // notEq(null)
             });
     }
 
@@ -224,7 +247,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                query.put(path, Collections.singletonMap("$eq", Boolean.TRUE));
+                query.put(path, Collections.singletonMap(EQ, Boolean.TRUE));
             });
     }
 
@@ -236,7 +259,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                query.put(path, Collections.singletonMap("$eq", Boolean.FALSE));
+                query.put(path, Collections.singletonMap(EQ, Boolean.FALSE));
             });
     }
 
@@ -248,9 +271,9 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                query.put("$or", List.of(
-                    Collections.singletonMap(path, Collections.singletonMap("$eq", "")),
-                    Collections.singletonMap(path, Collections.singletonMap("$exists", false))
+                query.put(OR, List.of(
+                    Collections.singletonMap(path, Collections.singletonMap(EQ, "")),
+                    Collections.singletonMap(path, Collections.singletonMap(EXISTS, false))
                 ));
             });
     }
@@ -263,9 +286,9 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                query.put("$and", List.of(
-                    Collections.singletonMap(path, Collections.singletonMap("$ne", "")),
-                    Collections.singletonMap(path, Collections.singletonMap("$exists", true))
+                query.put(AND, List.of(
+                    Collections.singletonMap(path, Collections.singletonMap(NE, "")),
+                    Collections.singletonMap(path, Collections.singletonMap(EXISTS, true))
                 ));
             });
     }
@@ -297,7 +320,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (values == null || values.isEmpty()) {
             if (!negated) {
                 // IN with empty set matches nothing - add impossible condition
-                query.put("_id", Collections.singletonMap("$eq", null));
+                query.put("_id", Collections.singletonMap(EQ, null));
             }
             return;
         }
@@ -322,7 +345,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         query.put(
             fieldName,
             Map.of(
-                negated ? "$nin" : "$in",
+                negated ? NIN : IN,
                 resolvedValues));
     }
 
@@ -337,12 +360,12 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             Object valueExpr = exprOperand(value, ctx);
             Object fromExpr = exprOperand(from, ctx);
             Object toExpr = exprOperand(to, ctx);
-            String lowerOp = negated ? "$lt" : "$gte";
-            String upperOp = negated ? "$gt" : "$lte";
-            String joinOp = negated ? "$or" : "$and";
+            String lowerOp = negated ? LT : GTE;
+            String upperOp = negated ? GT : LTE;
+            String joinOp = negated ? OR : AND;
             query.put(joinOp, List.of(
-                Map.of("$expr", Map.of(lowerOp, List.of(valueExpr, fromExpr))),
-                Map.of("$expr", Map.of(upperOp, List.of(valueExpr, toExpr)))
+                NitriteQueryOperators.expression(lowerOp, List.of(valueExpr, fromExpr)),
+                NitriteQueryOperators.expression(upperOp, List.of(valueExpr, toExpr))
             ));
             return;
         }
@@ -352,7 +375,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             valueRepresentation(queryState, propertyPath, from),
             valueRepresentation(queryState, propertyPath, to)
         );
-        Map<String, Object> betweenOp = Map.of("$between", betweenValues);
+        Map<String, Object> betweenOp = Map.of(BETWEEN, betweenValues);
         // negated is always false: visit(BetweenPredicate) hardcodes it, and a negated
         // between is wrapped externally in a NegatedPredicate ($not) rather than flipped here.
         PersistentEntityUtils.traversePersistentProperties(
@@ -404,7 +427,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
         Object geoValue = valueRepresentation(queryState, propertyPath, expression);
-        query.put(fieldName, Collections.singletonMap("$within", geoValue));
+        query.put(fieldName, Collections.singletonMap(WITHIN, geoValue));
     }
 
     @Override
@@ -413,7 +436,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
         Object geoValue = valueRepresentation(queryState, propertyPath, expression);
-        query.put(fieldName, Collections.singletonMap("$intersects", geoValue));
+        query.put(fieldName, Collections.singletonMap(INTERSECTS, geoValue));
     }
 
     @Override
@@ -429,7 +452,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         Map<String, Object> nearMap = new LinkedHashMap<>();
         nearMap.put("center", geoValue);
         nearMap.put("distance", distValue);
-        query.put(fieldName, Collections.singletonMap("$near", nearMap));
+        query.put(fieldName, Collections.singletonMap(NEAR, nearMap));
     }
 
     @Override
@@ -439,7 +462,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
         List<Object> criteriaValues = expressionHandler.resolveCollectionValue(queryState, propertyPath, expression);
-        query.put(fieldName, Collections.singletonMap("$all", criteriaValues));
+        query.put(fieldName, Collections.singletonMap(ALL, criteriaValues));
     }
 
     private void visitSinglePredicate(final Collection<? extends IExpression<Boolean>> predicates) {
@@ -453,12 +476,12 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     @Override
     public void visit(final ConjunctionPredicate conjunction) {
-        visitLogical(conjunction.getPredicates(), "$and");
+        visitLogical(conjunction.getPredicates(), AND);
     }
 
     @Override
     public void visit(final DisjunctionPredicate disjunction) {
-        visitLogical(disjunction.getPredicates(), "$or");
+        visitLogical(disjunction.getPredicates(), OR);
     }
 
     private void visitLogical(
@@ -499,10 +522,10 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         query = preQuery;
         Object val = propertyPredicate.getValue();
         // Optimize: $not:{$in:[...]} → $nin:[...]
-        if (val instanceof Map<?, ?> m && m.size() == 1 && m.containsKey("$in")) {
-            query.put(propertyPredicate.getKey(), Collections.singletonMap("$nin", m.get("$in")));
+        if (val instanceof Map<?, ?> m && m.size() == 1 && m.containsKey(IN)) {
+            query.put(propertyPredicate.getKey(), Collections.singletonMap(NIN, m.get(IN)));
         } else {
-            query.put(propertyPredicate.getKey(), Collections.singletonMap("$not", val));
+            query.put(propertyPredicate.getKey(), Collections.singletonMap(NOT, val));
         }
     }
 
@@ -547,7 +570,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         final Object leftExprTree, final String op, final Expression<?> value,
         final PersistentPropertyPath bindingContextPath) {
         Object valueExpr = requireExprOperand(value, bindingContextPath);
-        query.put("$expr", Map.of(op, List.of(leftExprTree, valueExpr)));
+        query.put(EXPR, Map.of(op, List.of(leftExprTree, valueExpr)));
     }
 
     /**
@@ -561,16 +584,16 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (expr instanceof UnaryExpression<?> unaryExpression) {
             Object inner = requireExprOperand(unaryExpression.getExpression(), bindingContextPath);
             return switch (unaryExpression.getType()) {
-                case LENGTH -> Map.of("$strLenCP", inner);
-                case LOWER -> Map.of("$toLower", inner);
-                case UPPER -> Map.of("$toUpper", inner);
+                case LENGTH -> Map.of(STR_LEN_CP, inner);
+                case LOWER -> Map.of(TO_LOWER, inner);
+                case UPPER -> Map.of(TO_UPPER, inner);
                 default -> throw new IllegalStateException(
                     "Unsupported unary expression type: " + unaryExpression.getType());
             };
         }
         if (expr instanceof BinaryExpression<?> binaryExpression) {
             if (binaryExpression.getType().name().equals("PROD")) {
-                return Map.of("$multiply", Arrays.asList(
+                return Map.of(MULTIPLY, Arrays.asList(
                     requireExprOperand(binaryExpression.getLeft(), bindingContextPath),
                     requireExprOperand(binaryExpression.getRight(), bindingContextPath)));
             }
@@ -609,7 +632,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             instanceof
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
             PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
-            query.put("$expr", Map.of(op, List.of("$" + propertyPath.getPath(), "$" + p2.getPath())));
+            query.put(EXPR, Map.of(op, List.of("$" + propertyPath.getPath(), "$" + p2.getPath())));
             return;
         }
         PersistentEntityUtils.traversePersistentProperties(

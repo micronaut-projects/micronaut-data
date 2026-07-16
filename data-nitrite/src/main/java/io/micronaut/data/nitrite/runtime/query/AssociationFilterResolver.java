@@ -38,6 +38,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+
 @Internal
 final class AssociationFilterResolver {
 
@@ -69,11 +72,11 @@ final class AssociationFilterResolver {
             Object[] params,
             Map<String, Object> namedParameters) {
 
-        if (!operators.containsKey("$eq")) {
+        if (!operators.containsKey(EQ)) {
             return null;
         }
 
-        Object value = valueResolver.resolveValue(operators.get("$eq"), params, namedParameters);
+        Object value = valueResolver.resolveValue(operators.get(EQ), params, namedParameters);
         if (value == null) {
             return null;
         }
@@ -164,7 +167,7 @@ final class AssociationFilterResolver {
         String backRefPersistedName = backRefProp.getPersistedName();
 
         Map<String, Object> subFilterMap = Collections.singletonMap(
-            targetProperty.getPersistedName(), Collections.singletonMap("$eq", value));
+            targetProperty.getPersistedName(), Collections.singletonMap(EQ, value));
 
         LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
             associatedEntity.getName(), subFilterMap, backRefPersistedName);
@@ -192,14 +195,14 @@ final class AssociationFilterResolver {
         List<Map<String, Object>> orClauses = new ArrayList<>();
         for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
             if (p.getType().isInstance(value)) {
-                orClauses.add(Collections.singletonMap(p.getPersistedName(), Collections.singletonMap("$eq", value)));
+                orClauses.add(Collections.singletonMap(p.getPersistedName(), Collections.singletonMap(EQ, value)));
             }
         }
         if (orClauses.isEmpty()) {
             return null;
         }
 
-        Map<String, Object> subFilterMap = Collections.singletonMap("$or", orClauses);
+        Map<String, Object> subFilterMap = Collections.singletonMap(OR, orClauses);
         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, null, params, namedParameters);
         if (matchingIds.isEmpty()) {
