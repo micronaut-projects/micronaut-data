@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
@@ -152,6 +153,11 @@ public final class NitriteFilterBuilder {
                         }
                     }
                     compiledFilters.add(new NitriteFilterAST.OrNode(ors));
+                }
+            } else if (NitriteQueryOperators.NOT.equals(key)) {
+                if (value instanceof Map<?, ?> m) {
+                    compiledFilters.add(new NitriteFilterAST.NotNode(
+                        (NitriteFilterAST) compile(entity, toStringObjectMap(m))));
                 }
             } else if (EXPR.equals(key)) {
                 if (value instanceof Map<?, ?> m && m.size() == 1) {
@@ -427,7 +433,7 @@ public final class NitriteFilterBuilder {
             }
             return Filter.ALL;
         });
-        r.put(REGEX, (e, f, v, p, n) -> FluentFilter.where(f).regex(PatternConverter.resolveRegexPattern(valueResolver.resolveValue(v, p, n))));
+        r.put(REGEX, (e, f, v, p, n) -> FluentFilter.where(f).regex(resolveRegexValue(v, p, n)));
         r.put(LIKE,  (e, f, v, p, n) -> {
             Object resolved = valueResolver.resolveValue(v, p, n);
             return FluentFilter.where(f).regex(resolved != null ? PatternConverter.convertLikeToRegex(resolved.toString()) : "");
@@ -450,6 +456,27 @@ public final class NitriteFilterBuilder {
         r.put(WITHIN,     (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "within"));
         r.put(INTERSECTS, (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "intersects"));
         return Collections.unmodifiableMap(r);
+    }
+
+    private String resolveRegexValue(@Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
+        if (value instanceof Map<?, ?> map && map.containsKey(NitriteQueryBuilder.LIKE_PATTERN)) {
+            Object resolvedPattern = valueResolver.resolveValue(map.get(NitriteQueryBuilder.LIKE_PATTERN), params, namedParameters);
+            Character escape = resolveLikeEscape(map.get(NitriteQueryBuilder.LIKE_ESCAPE), params, namedParameters);
+            String regex = resolvedPattern != null ? PatternConverter.convertLikeToRegex(resolvedPattern.toString(), escape) : "";
+            return Boolean.TRUE.equals(map.get(NitriteQueryBuilder.LIKE_IGNORE_CASE)) ? "(?i)" + regex : regex;
+        }
+        return PatternConverter.resolveRegexPattern(valueResolver.resolveValue(value, params, namedParameters));
+    }
+
+    private @Nullable Character resolveLikeEscape(@Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
+        Object resolved = valueResolver.resolveValue(value, params, namedParameters);
+        if (resolved instanceof Character character) {
+            return character;
+        }
+        if (resolved instanceof CharSequence sequence && !sequence.isEmpty()) {
+            return sequence.charAt(0);
+        }
+        return null;
     }
 
     private Filter buildInFilter(RuntimePersistentEntity<?> entity, String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {

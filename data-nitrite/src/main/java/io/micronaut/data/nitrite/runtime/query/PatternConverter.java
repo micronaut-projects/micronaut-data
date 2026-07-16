@@ -20,11 +20,11 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.regex.Pattern;
 
 @Internal
-final class PatternConverter {
+public final class PatternConverter {
 
     private PatternConverter() { }
 
-    static String resolveRegexPattern(@Nullable Object resolved) {
+    public static String resolveRegexPattern(@Nullable Object resolved) {
         if (resolved == null) {
             return "";
         }
@@ -46,7 +46,7 @@ final class PatternConverter {
         return flags + value;
     }
 
-    static boolean looksLikeWildcardPattern(String value) {
+    public static boolean looksLikeWildcardPattern(String value) {
         if (value == null || value.isEmpty()) {
             return false;
         }
@@ -57,14 +57,24 @@ final class PatternConverter {
         return value.indexOf('%') >= 0 || value.indexOf('_') >= 0 || value.indexOf('*') >= 0;
     }
 
-    static String convertLikeToRegex(String pattern) {
+    public static String convertLikeToRegex(String pattern) {
+        return convertLikeToRegex(pattern, null);
+    }
+
+    public static String convertLikeToRegex(String pattern, @Nullable Character escapeChar) {
         StringBuilder regex = new StringBuilder(pattern.length() + 6);
         if (pattern.isEmpty() || pattern.charAt(0) != '^') {
             regex.append('^');
         }
+        boolean escaping = false;
         for (int i = 0; i < pattern.length(); i++) {
             char ch = pattern.charAt(i);
-            if (ch == '%') {
+            if (escaping) {
+                appendLiteral(regex, ch);
+                escaping = false;
+            } else if (escapeChar != null && ch == escapeChar) {
+                escaping = true;
+            } else if (ch == '%') {
                 regex.append(".*");
             } else if (ch == '_') {
                 regex.append('.');
@@ -74,10 +84,20 @@ final class PatternConverter {
                 regex.append(ch);
             }
         }
+        if (escaping) {
+            appendLiteral(regex, escapeChar);
+        }
         if (regex.isEmpty() || regex.charAt(regex.length() - 1) != '$') {
             regex.append('$');
         }
         String converted = regex.toString();
         return converted.startsWith("(?s)") ? converted : "(?s)" + converted;
+    }
+
+    private static void appendLiteral(StringBuilder regex, char ch) {
+        if ("\\.[]{}()+-^$?|*".indexOf(ch) >= 0) {
+            regex.append('\\');
+        }
+        regex.append(ch);
     }
 }

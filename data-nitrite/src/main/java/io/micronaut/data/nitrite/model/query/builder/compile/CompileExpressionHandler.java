@@ -22,6 +22,7 @@ import io.micronaut.data.nitrite.model.query.builder.NitriteQueryState;
 import io.micronaut.data.nitrite.model.query.builder.RuntimeExpressionHandler;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.nitrite.runtime.query.PatternConverter;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
         boolean endsWith,
         @Nullable Expression<?> rightExpression,
         boolean isLike,
+        @Nullable Expression<Character> escapeExpression,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath) {
 
@@ -73,7 +75,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
             Object val = unwrapLiteral(literal);
             String pattern = val != null ? val.toString() : "";
             if (isLike) {
-                pattern = convertLikeToRegex(pattern);
+                pattern = PatternConverter.convertLikeToRegex(pattern, resolveEscapeChar(escapeExpression));
             } else if (startsWith) {
                 pattern = "^" + Pattern.quote(pattern) + ".*";
             } else if (endsWith) {
@@ -84,15 +86,20 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
             return ciPrefix + pattern;
         }
 
-        return fallback.handleRegex(fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, queryState, propertyPath);
+        return fallback.handleRegex(fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, escapeExpression, queryState, propertyPath);
     }
 
-    private static String convertLikeToRegex(final String likePattern) {
-        // We do NOT escape standard regex characters because legacy tests (and likely users)
-        // expect 'Like' to support regex patterns in Document stores (e.g. "Jo.n" matching "John").
-        // However, we MUST support SQL LIKE wildcards (% and _) to comply with JPA/Criteria API.
-        String regex = likePattern.replace("%", ".*").replace("_", ".");
-        return "^" + regex + "$";
+    private static @Nullable Character resolveEscapeChar(@Nullable Expression<Character> escapeExpression) {
+        if (escapeExpression instanceof LiteralExpression<?> literal) {
+            Object value = unwrapLiteral(literal);
+            if (value instanceof Character character) {
+                return character;
+            }
+            if (value instanceof CharSequence sequence && !sequence.isEmpty()) {
+                return sequence.charAt(0);
+            }
+        }
+        return null;
     }
 
     @Override

@@ -293,6 +293,36 @@ class NitriteQueryBuilderSpec extends Specification {
         results[0].payload == "line1\nline2"
     }
 
+    void "test like with escaped custom wildcard translation"() {
+        given:
+        eventRepository.save(new Event("E1", "Port-au-Prince"))
+        eventRepository.save(new Event("E2", "Porto-Novo"))
+        eventRepository.save(new Event("E3", "Port Louis"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            cb.like(root.get("payload"), "Port%--_%", '-' as char)
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload.sort() == ["Port-au-Prince", "Porto-Novo"]
+    }
+
+    void "test not like with escaped custom wildcard translation"() {
+        given:
+        eventRepository.save(new Event("E1", "Afghanistan"))
+        eventRepository.save(new Event("E2", "Belgium"))
+        eventRepository.save(new Event("E3", "Canada"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            cb.not(cb.like(root.get("payload"), "%_aa%", 'a' as char))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload.sort() == ["Belgium"]
+    }
+
     void "test query with unicode characters"() {
         given: "Events with unicode in payload"
         eventRepository.save(new Event("E1", "Hello 世界"))

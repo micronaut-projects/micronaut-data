@@ -61,6 +61,18 @@ public final class NitriteQueryBuilder implements QueryBuilder {
      * Query parameter placeholder prefix.
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+    /**
+     * Internal descriptor key for a parameterized LIKE pattern.
+     */
+    public static final String LIKE_PATTERN = "$mn_like_pattern";
+    /**
+     * Internal descriptor key for a parameterized LIKE escape character.
+     */
+    public static final String LIKE_ESCAPE = "$mn_like_escape";
+    /**
+     * Internal descriptor key for a case-insensitive LIKE pattern.
+     */
+    public static final String LIKE_IGNORE_CASE = "$mn_like_ignore_case";
     static final String NEGATE = "$mn_negate";
     static final String RECIPROCATE = "$mn_reciprocate";
     private static final Logger LOG = LoggerFactory.getLogger(NitriteQueryBuilder.class);

@@ -11,8 +11,8 @@ class RuntimeExpressionHandlerUnitSpec extends Specification {
         def queryState = new NitriteQueryState()
 
         expect:
-        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression("4_"), true, queryState, null) == "4_"
-        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression(new LiteralExpression("4_")), true, queryState, null) == "4_"
+        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression("4_"), true, null, queryState, null) == '(?s)^4.$'
+        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression(new LiteralExpression("4_")), true, null, queryState, null) == '(?s)^4.$'
     }
 
     void "resolveValue unwraps literal expressions"() {

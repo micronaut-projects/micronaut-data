@@ -49,6 +49,7 @@ public interface NitriteExpressionHandler {
      * @param endsWith        whether it's an ends-with match
      * @param rightExpression the right-hand side expression
      * @param isLike          whether it's a LIKE expression (handling wildcards)
+     * @param escapeExpression the LIKE escape character expression, if present
      * @param queryState      the current query state
      * @param propertyPath    the property path for the left-hand side
      * @return the generated regex value or filter map
@@ -61,6 +62,7 @@ public interface NitriteExpressionHandler {
         boolean endsWith,
         @Nullable Expression<?> rightExpression,
         boolean isLike,
+        @Nullable Expression<Character> escapeExpression,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath);
 

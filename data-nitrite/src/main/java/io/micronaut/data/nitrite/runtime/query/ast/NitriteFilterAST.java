@@ -97,6 +97,18 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     }
 
     /**
+     * Logical NOT of a filter.
+     *
+     * @param child the child filter AST node
+     */
+    record NotNode(NitriteFilterAST child) implements NitriteFilterAST {
+        @Override
+        public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
+            return child.toFilter(params, namedParameters).not();
+        }
+    }
+
+    /**
      * A highly optimized node for standard property equality.
      * Bypasses all metadata lookups and dynamic strategy detection.
      *
@@ -267,6 +279,16 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
             return Filter.ALL;
+        }
+    }
+
+    /**
+     * A filter that matches nothing.
+     */
+    record NoneNode() implements NitriteFilterAST {
+        @Override
+        public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
+            return element -> false;
         }
     }
 

@@ -155,7 +155,7 @@ class NitriteCriteriaUnitSpec extends Specification {
             "endsWithIgnoreCase"       | { r, cb -> cb.endingWithStringIgnoreCase(r.get("name"), cb.literal("Al")) }    | regex(".*", "\$", true)
             "contains"                 | { r, cb -> cb.containsString(r.get("name"), cb.literal("Al")) }                | regex(".*", ".*", false)
             "containsIgnoreCase"       | { r, cb -> cb.containsStringIgnoreCase(r.get("name"), cb.literal("Al")) }      | regex(".*", ".*", true)
-            "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | '''{name:{$regex:'(?i)$mn_qp:0'}}'''
+            "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | '''{name:{$regex:{$mn_like_pattern:{$mn_qp:0},$mn_like_ignore_case:true}}}'''
             "regex"                    | { r, cb -> cb.regex(r.get("name"), cb.literal("^Al.*")) }                      | '''{name:{$regex:{$mn_qp:0}}}'''
     }
 
@@ -528,14 +528,14 @@ class NitriteCriteriaUnitSpec extends Specification {
             property1 | property2  | predicate              | expectedWhereQuery
             "enabled" | "enabled2" | "equal"                | '''{$expr:{$ne:['$enabled','$enabled2']}}'''
             "enabled" | "enabled2" | "notEqual"             | '''{$expr:{$eq:['$enabled','$enabled2']}}'''
-            "enabled" | "enabled2" | "greaterThan"          | '''{$expr:{$not:{$gt:['$enabled','$enabled2']}}}'''
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '''{$expr:{$not:{$gte:['$enabled','$enabled2']}}}'''
-            "enabled" | "enabled2" | "lessThan"             | '''{$expr:{$not:{$lt:['$enabled','$enabled2']}}}'''
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '''{$expr:{$not:{$lte:['$enabled','$enabled2']}}}'''
-            "amount"  | "budget"   | "gt"                   | '''{$expr:{$not:{$gt:['$amount','$budget']}}}'''
-            "amount"  | "budget"   | "ge"                   | '''{$expr:{$not:{$gte:['$amount','$budget']}}}'''
-            "amount"  | "budget"   | "lt"                   | '''{$expr:{$not:{$lt:['$amount','$budget']}}}'''
-            "amount"  | "budget"   | "le"                   | '''{$expr:{$not:{$lte:['$amount','$budget']}}}'''
+            "enabled" | "enabled2" | "greaterThan"          | '''{$not:{$expr:{$gt:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '''{$not:{$expr:{$gte:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "lessThan"             | '''{$not:{$expr:{$lt:['$enabled','$enabled2']}}}'''
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '''{$not:{$expr:{$lte:['$enabled','$enabled2']}}}'''
+            "amount"  | "budget"   | "gt"                   | '''{$not:{$expr:{$gt:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "ge"                   | '''{$not:{$expr:{$gte:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "lt"                   | '''{$not:{$expr:{$lt:['$amount','$budget']}}}'''
+            "amount"  | "budget"   | "le"                   | '''{$not:{$expr:{$lte:['$amount','$budget']}}}'''
     }
 
     @Unroll

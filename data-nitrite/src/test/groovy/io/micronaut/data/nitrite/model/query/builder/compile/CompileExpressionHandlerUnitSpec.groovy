@@ -28,21 +28,21 @@ class CompileExpressionHandlerUnitSpec extends Specification {
 
         expect:
         // isLike = true
-        handler.handleRegex("name", false, false, false, false, literal, true, queryState, null) == '^John$'
-        handler.handleRegex("name", false, false, false, false, new LiteralExpression('J_hn%'), true, queryState, null) == '^J.hn.*$'
-        handler.handleRegex("name", false, false, false, false, new LiteralExpression(new LiteralExpression('4_')), true, queryState, null) == '^4.$'
+        handler.handleRegex("name", false, false, false, false, literal, true, null, queryState, null) == '(?s)^John$'
+        handler.handleRegex("name", false, false, false, false, new LiteralExpression('J_hn%'), true, null, queryState, null) == '(?s)^J.hn.*$'
+        handler.handleRegex("name", false, false, false, false, new LiteralExpression(new LiteralExpression('4_')), true, null, queryState, null) == '(?s)^4.$'
         
         // startsWith = true
-        handler.handleRegex("name", false, false, true, false, literal, false, queryState, null) == '^\\QJohn\\E.*'
+        handler.handleRegex("name", false, false, true, false, literal, false, null, queryState, null) == '^\\QJohn\\E.*'
         
         // endsWith = true
-        handler.handleRegex("name", false, false, false, true, literal, false, queryState, null) == '.*\\QJohn\\E$'
+        handler.handleRegex("name", false, false, false, true, literal, false, null, queryState, null) == '.*\\QJohn\\E$'
         
         // contains
-        handler.handleRegex("name", false, false, false, false, literal, false, queryState, null) == '.*\\QJohn\\E.*'
+        handler.handleRegex("name", false, false, false, false, literal, false, null, queryState, null) == '.*\\QJohn\\E.*'
         
         // ignoreCase = true
-        handler.handleRegex("name", true, false, false, false, literal, false, queryState, null) == '(?i).*\\QJohn\\E.*'
+        handler.handleRegex("name", true, false, false, false, literal, false, null, queryState, null) == '(?i).*\\QJohn\\E.*'
     }
 
     void "test resolveRegexValue"() {

@@ -20,9 +20,11 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.nitrite.runtime.query.PatternConverter;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +67,7 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         boolean endsWith,
         @Nullable Expression<?> rightExpression,
         boolean isLike,
+        @Nullable Expression<Character> escapeExpression,
         NitriteQueryState queryState,
         PersistentPropertyPath propertyPath) {
 
@@ -85,9 +88,38 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         }
 
         if (isLike) {
-            return ciPrefix + paramStr;
+            Character escapeChar = resolveEscapeChar(queryState, propertyPath, escapeExpression);
+            if (paramPlaceholder instanceof Map<?, ?> m
+                && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
+                Map<String, Object> pattern = new LinkedHashMap<>(2);
+                pattern.put(NitriteQueryBuilder.LIKE_PATTERN, paramPlaceholder);
+                if (escapeChar != null) {
+                    pattern.put(NitriteQueryBuilder.LIKE_ESCAPE, escapeChar);
+                }
+                return pattern;
+            }
+            return ciPrefix + PatternConverter.convertLikeToRegex(paramStr, escapeChar);
         }
         return ciPrefix + prefix + paramStr + suffix;
+    }
+
+    private @Nullable Character resolveEscapeChar(
+        NitriteQueryState queryState,
+        PersistentPropertyPath propertyPath,
+        @Nullable Expression<Character> escapeExpression) {
+        if (escapeExpression == null) {
+            return null;
+        }
+        Object escape = escapeExpression instanceof LiteralExpression<?> literal
+            ? unwrapLiteral(literal)
+            : resolveValue(queryState, propertyPath, escapeExpression);
+        if (escape instanceof Character character) {
+            return character;
+        }
+        if (escape instanceof CharSequence sequence && !sequence.isEmpty()) {
+            return sequence.charAt(0);
+        }
+        return null;
     }
 
     @Override

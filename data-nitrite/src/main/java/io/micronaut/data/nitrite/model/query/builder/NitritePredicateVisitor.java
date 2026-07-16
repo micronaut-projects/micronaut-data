@@ -30,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
@@ -41,6 +42,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
@@ -526,6 +528,11 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         Map<String, Object> preQuery = query;
         query = new LinkedHashMap<>();
         ((IPredicate) negated).visitPredicate(this);
+        if (query.isEmpty()) {
+            query = preQuery;
+            query.put(NOT, Collections.emptyMap());
+            return;
+        }
         // Defensive: a single negated predicate emits exactly one top-level entry; a multi-entry
         // result would mean an unsupported negation shape.
         if (query.size() != 1) {
@@ -537,6 +544,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         // Optimize: $not:{$in:[...]} → $nin:[...]
         if (val instanceof Map<?, ?> m && m.size() == 1 && m.containsKey(IN)) {
             putFieldOperator(propertyPredicate.getKey(), NIN, m.get(IN));
+        } else if (isTopLevelOperator(propertyPredicate.getKey())) {
+            query.put(NOT, Map.of(propertyPredicate.getKey(), val));
         } else {
             putFieldOperator(propertyPredicate.getKey(), NOT, val);
         }
@@ -549,14 +558,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     @Override
     public void visit(final LikePredicate likePredicate) {
-        handleRegexExpression(
-            likePredicate.getExpression(),
-            likePredicate.isCaseInsensitive(),
-            likePredicate.isNegated(),
-            false,
-            false,
-            likePredicate.getPattern(),
-            true);
+        handleLikeExpression(likePredicate);
     }
 
     // -------------------------------------------------------------------------
@@ -570,9 +572,20 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             appendExprComparison(requireExprOperand(leftExpression, ctx), op, value, ctx);
             return;
         }
+        if (!(leftExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>)) {
+            appendPropertylessExprComparison(leftExpression, op, value);
+            return;
+        }
         PersistentPropertyPath propertyPath =
             CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
         appendOperatorExpression(op, value, propertyPath);
+    }
+
+    private void appendPropertylessExprComparison(
+        final Expression<?> leftExpression,
+        final String op,
+        final Expression<?> value) {
+        putExpressionOperator(op, propertylessOperand(leftExpression), propertylessOperand(value));
     }
 
     /**
@@ -656,6 +669,25 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             "Expression operand cannot resolve to null");
     }
 
+    private @Nullable Object propertylessOperand(final Expression<?> expr) {
+        if (expr instanceof LiteralExpression<?> literal) {
+            return ValueConverter.toFilterValueStatic(unwrapLiteral(literal));
+        }
+        if (expr instanceof BindingParameter bindingParameter) {
+            int index = queryState.pushParameter(bindingParameter, BindingParameter.BindingContext.create());
+            return Map.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, index);
+        }
+        return expr;
+    }
+
+    private static @Nullable Object unwrapLiteral(LiteralExpression<?> literal) {
+        Object value = literal.getValue();
+        while (value instanceof LiteralExpression<?> nested) {
+            value = nested.getValue();
+        }
+        return value;
+    }
+
     private PersistentPropertyPath requirePropertyOperand(final Expression<?> expression) {
         if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
             return getRequiredProperty(ppp);
@@ -733,6 +765,18 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         final boolean endsWith,
         final Expression<?> rightExpression,
         final boolean isLike) {
+        handleRegexExpression(leftExpression, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, null);
+    }
+
+    private void handleRegexExpression(
+        final Expression<?> leftExpression,
+        final boolean ignoreCase,
+        final boolean negated,
+        final boolean startsWith,
+        final boolean endsWith,
+        final Expression<?> rightExpression,
+        final boolean isLike,
+        @Nullable final Expression<Character> escapeExpression) {
         if (leftExpression
             instanceof
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpr) {
@@ -740,10 +784,36 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             final String fieldName = getFieldName(propertyPath);
             // Both handler impls (Runtime + Compile) always return a String regex value.
             Object regexValue = expressionHandler.handleRegex(
-                fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, queryState, propertyPath);
+                fieldName, ignoreCase, negated, startsWith, endsWith, rightExpression, isLike, escapeExpression, queryState, propertyPath);
             Map<String, Object> fieldFilter = operator(REGEX, regexValue);
             query.put(fieldName, negated ? Map.of(NOT, fieldFilter) : fieldFilter);
         }
+    }
+
+    private void handleLikeExpression(final LikePredicate likePredicate) {
+        if (likePredicate.getExpression()
+            instanceof
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpr) {
+            PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
+            String fieldName = getFieldName(propertyPath);
+            Map<String, Object> pattern = new LinkedHashMap<>(3);
+            pattern.put(NitriteQueryBuilder.LIKE_PATTERN, valueRepresentation(queryState, propertyPath, likePredicate.getPattern()));
+            Object escape = likePredicate.getEscapeChar() == null
+                ? null
+                : valueRepresentation(queryState, propertyPath, likePredicate.getEscapeChar());
+            if (escape != null) {
+                pattern.put(NitriteQueryBuilder.LIKE_ESCAPE, escape);
+            }
+            if (likePredicate.isCaseInsensitive()) {
+                pattern.put(NitriteQueryBuilder.LIKE_IGNORE_CASE, true);
+            }
+            Map<String, Object> fieldFilter = operator(REGEX, pattern);
+            query.put(fieldName, likePredicate.isNegated() ? Map.of(NOT, fieldFilter) : fieldFilter);
+        }
+    }
+
+    private static boolean isTopLevelOperator(String key) {
+        return AND.equals(key) || OR.equals(key) || EXPR.equals(key) || NOT.equals(key);
     }
 
     private void putFieldOperator(final String fieldName, final String op, @Nullable final Object value) {
@@ -751,7 +821,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
     }
 
     private void putExpressionOperator(final String op, final Object left, final Object right) {
-        query.put(EXPR, operator(op, List.of(left, right)));
+        query.put(EXPR, operator(op, Arrays.asList(left, right)));
     }
 
     private static Map<String, Object> fieldOperator(final String fieldName, final String op, @Nullable final Object value) {
