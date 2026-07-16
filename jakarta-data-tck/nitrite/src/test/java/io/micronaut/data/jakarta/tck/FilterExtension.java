@@ -32,9 +32,6 @@ public class FilterExtension implements ExecutionCondition {
         }
         if (testClass == EntityTests.class) {
             switch (testMethodName) {
-                case "testIgnoreCase" -> {
-                    return DISABLED;
-                }
                 case "testStaticMetamodelDescendingSorts",
                      "testStaticMetamodelDescendingSortsPreGenerated" -> {
                     return DISABLED;
