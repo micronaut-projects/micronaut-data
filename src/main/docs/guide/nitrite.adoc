@@ -7,7 +7,8 @@ It supports common Micronaut Data repository patterns, including:
 - <<nitriteMapping, Entity Mapping>>
 - <<nitriteAssociationFetching, Association Fetching>>
 - <<nitriteCriteriaSpecifications, Criteria API>>
+- Jakarta Data repository query semantics for common document queries
 - <<nitriteTransactions, Transactions>> (via Micronaut Data TX infrastructure)
 - <<nitriteSpatial, Spatial Queries>>
 
-Nitrite is intended for practical embedded use-cases that need Micronaut Data repositories without running an external datastore. It supports the core repository, mapping, association, criteria, transaction, optimistic locking, and optional spatial features described in this chapter. It is not a feature-equivalent MongoDB replacement; see <<nitriteLimitations>>.
+Nitrite is intended for practical embedded use-cases that need Micronaut Data repositories without running an external datastore. It supports the core repository, mapping, association, criteria, projection, sorting, pagination, transaction, optimistic locking, and optional spatial features described in this chapter. It is not a feature-equivalent MongoDB replacement; see <<nitriteLimitations>>.

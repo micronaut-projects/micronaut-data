@@ -15,7 +15,7 @@ It is still a Nitrite-backed embedded store, not a MongoDB compatibility layer. 
 Micronaut Data Nitrite supports the following features for embedded document storage:
 
 * <<nitriteRepositories, Repository patterns>> with derived query methods
-* <<nitriteCriteriaSpecifications, Criteria API>> with sorting and pagination
+* <<nitriteCriteriaSpecifications, Criteria API>> with sorting, pagination, projection, logical predicates, LIKE/regex matching, and common computed expressions
 * <<nitriteAssociationMapping, Association mapping>> with cascade operations
 * <<nitriteAssociationFetching, Association fetching>> with `@Join` annotation
 * <<nitriteOptimisticLocking, Optimistic locking>> with `@Version` annotation
@@ -30,6 +30,7 @@ For details and examples, see the respective sections above.
 The following boundaries remain:
 
 * `@Join` uses Nitrite's default fetch behavior; custom join types such as `LEFT_FETCH` and `INNER_FETCH` are not currently distinguished.
-* Criteria subqueries (`cb.exists(subquery)`), arithmetic transforms such as `sum` and `diff`, and string transforms such as `lower` and `upper` are not supported. These are shared limitations across the Micronaut Data document-family criteria implementation (Mongo included), not something specific to Nitrite. String-length (`cb.length(...)`) and multiplication (`cb.prod(...)`) expressions *are* supported in Nitrite, but evaluated in application code against each candidate document rather than pushed down (Nitrite has no `$strLenCP`/`$multiply` equivalent), so they are unindexed and scan the collection.
+* Criteria subqueries (`cb.exists(subquery)`) are not supported by Nitrite.
+* Criteria `sum`, `diff`, and unsupported string transforms such as `trim` are rejected. Supported computed expressions such as `length`, `lower`, `upper`, `concat`, `right`, and `prod` are evaluated in application code against candidate documents rather than pushed down to Nitrite indexes, so use them with care on large collections.
 * Advanced Mongo-style aggregation pipelines are out of scope. Use repository aggregate methods, including property-scoped distinct counts, and Criteria API support where applicable.
 * Embedded/nested POJO values are persisted and round-trip correctly, but derived nested-property queries against arbitrary embedded object fields depend on annotation processor support.

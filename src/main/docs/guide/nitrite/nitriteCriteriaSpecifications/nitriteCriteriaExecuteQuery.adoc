@@ -25,6 +25,24 @@ The `findAll(Specification, Pageable)` method returns a `Page<T>` with paginatio
 
 snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="sorting-pagination-usage"]
 
+Method-name `OrderBy` clauses, dynamic `Sort`, `Pageable` sorting, `Limit`, and offset pagination are supported for repository and criteria queries. When both a static method sort and a dynamic sort are present, Micronaut Data's standard ordering precedence is preserved.
+
+== Predicate and Expression Support
+
+Nitrite supports the common Micronaut Data and Jakarta Data predicate set for document repositories, including:
+
+* equality and inequality
+* comparison operators (`greaterThan`, `greaterThanOrEqualTo`, `lessThan`, `lessThanOrEqualTo`)
+* `between`
+* `in` and `not in`, including empty collections
+* `isNull`, `isNotNull`, `isTrue`, `isFalse`, empty and not-empty string checks
+* nested `and`, `or`, and `not` predicates
+* property-to-property comparisons
+* `like`, `not like`, case-insensitive like, regex predicates, and custom LIKE escape characters
+* string and computed expressions including `length`, `lower`, `upper`, `concat`, `right`, and multiplication (`prod`)
+
+Computed expression predicates are evaluated by the Nitrite runtime against candidate documents when Nitrite has no equivalent native indexed operator. They are useful for repository correctness and Jakarta Data compatibility, but they should not be treated as indexed predicates for large collections.
+
 == Association Queries
 
 Nitrite supports Criteria queries on associations:

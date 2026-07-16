@@ -64,11 +64,9 @@ The spatial module enables:
 
 See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module documentation] and https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Spatial Filters documentation] for more details.
 
-=== Jackson Mapper
+=== Object Mapping
 
-The Jackson mapper is included by default and provides JSON serialization support. No additional configuration is required.
-
-See the https://nitrite.dizitart.com/java-sdk/modules/jackson/index.html#jackson-mapper[Nitrite Jackson Mapper documentation] for more details.
+Micronaut Data Nitrite uses its own Micronaut Data mapping layer with Nitrite collections. It does not require Nitrite's Jackson mapper module, and a Micronaut Serde `ObjectMapper` bean is optional. If Micronaut Serde is present, the mapper can use it for non-simple nested values; otherwise it relies on Micronaut introspection and the built-in conversion service.
 
 == Batch Operations
 
