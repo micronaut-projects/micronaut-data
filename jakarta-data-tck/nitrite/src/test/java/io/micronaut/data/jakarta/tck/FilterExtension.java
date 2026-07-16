@@ -31,8 +31,7 @@ public class FilterExtension implements ExecutionCondition {
         }
         if (testClass == JakartaQueryTests.class) {
             switch (testMethodName) {
-                case "shouldReturnIdUsingIdFunctionOrderById",
-                     "shouldReturnNameAndQuantity" -> {
+                case "shouldReturnNameAndQuantity" -> {
                     return DISABLED;
                 }
             }

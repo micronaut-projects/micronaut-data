@@ -256,7 +256,10 @@ public final class NitriteQueryExecutor {
 
         // Handle native single-field projection (result type differs from root entity)
         if (!nq.getResultType().equals(nq.getRootEntity())) {
-            String fieldName = nativeProjectionHandler.extractFieldName(nq.getQuery(), methodName);
+            String fieldName = queryParser.extractProjectionField(nq.getQuery());
+            if (fieldName == null) {
+                fieldName = nativeProjectionHandler.extractFieldName(nq.getQuery(), methodName);
+            }
             if (fieldName != null) {
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
                 R result = projectionMapper.mapDocument(doc, List.of(fieldName), entity, nq.getResultType(), false);

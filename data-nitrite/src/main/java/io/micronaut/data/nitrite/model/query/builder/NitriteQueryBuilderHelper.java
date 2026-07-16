@@ -24,6 +24,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.JoinPath;
@@ -210,6 +211,13 @@ public final class NitriteQueryBuilderHelper {
         switch (selection) {
             case io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath ->
                 projectionObj.put(propertyPath.getProperty().getName(), 1);
+            case IdExpression<?, ?> idExpression -> {
+                PersistentEntity persistentEntity = idExpression.getRoot().getPersistentEntity();
+                if (!persistentEntity.hasIdentity() || persistentEntity.hasCompositeIdentity()) {
+                    throw new IllegalStateException("Cannot project id() for entity without a single identity: " + persistentEntity.getName());
+                }
+                projectionObj.put(persistentEntity.getIdentity().getName(), 1);
+            }
             case UnaryExpression<?> unary -> {
                 switch (unary.getType()) {
                     case SUM, AVG, MAX, MIN -> {

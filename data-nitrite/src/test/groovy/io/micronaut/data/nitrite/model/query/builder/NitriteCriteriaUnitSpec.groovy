@@ -364,6 +364,16 @@ class NitriteCriteriaUnitSpec extends Specification {
             predicateQuery == '''[{$count:'result'}]'''
     }
 
+    void "test id projection"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(entityRoot.id())
+            def predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == '''{$project:{id:1}}'''
+    }
+
     @Unroll
     void "test delete"(DeleteSpecification specification) {
         given:
