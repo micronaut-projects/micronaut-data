@@ -24,6 +24,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
@@ -44,6 +45,7 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 
@@ -76,7 +78,7 @@ import java.util.regex.Pattern;
 @Internal
 public final class NitriteQueryExecutor {
 
-    private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d+)");
+    private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d*)");
     private static final String NEGATE = "$mn_negate";
     private static final String RECIPROCATE = "$mn_reciprocate";
 
@@ -232,10 +234,16 @@ public final class NitriteQueryExecutor {
                 sort = Sort.of(merged);
             }
         }
+        Limit limit = resolveTopFirstLimit(q.getName(), nq.getQueryLimit());
         FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), sort, entityFactory.apply(q.getRootEntity()));
-        Document doc = (sort != null && sort.isSorted())
-            ? coll.find(filter, findOptions).firstOrNull()
-            : coll.find(filter).firstOrNull();
+        if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && limit.maxResults() > 0) {
+            findOptions.limit((long) limit.maxResults());
+            findOptions.skip(limit.offset());
+        }
+        boolean hasFindOptions = (sort != null && sort.isSorted()) || limit.maxResults() > 0;
+        Document doc = singleResult(hasFindOptions
+            ? coll.find(filter, findOptions)
+            : coll.find(filter));
         if (doc == null) {
             return null;
         }
@@ -268,6 +276,31 @@ public final class NitriteQueryExecutor {
         }
 
         return entity;
+    }
+
+    private Document singleResult(RecordStream<Document> cursor) {
+        Document result = null;
+        boolean found = false;
+        for (Document doc : cursor) {
+            if (found) {
+                throw new NonUniqueResultException();
+            }
+            result = doc;
+            found = true;
+        }
+        return result;
+    }
+
+    private Limit resolveTopFirstLimit(String methodName, Limit limit) {
+        if (limit.maxResults() > 0) {
+            return limit;
+        }
+        Matcher matcher = TOP_FIRST_PATTERN.matcher(methodName);
+        if (matcher.find()) {
+            String value = matcher.group(1);
+            return Limit.of(value.isEmpty() ? 1 : Integer.parseInt(value), 0);
+        }
+        return limit;
     }
 
     /**
@@ -323,7 +356,8 @@ public final class NitriteQueryExecutor {
             String methodName = q.getName();
             Matcher matcher = TOP_FIRST_PATTERN.matcher(methodName);
             if (matcher.find()) {
-                limit = Limit.of(Integer.parseInt(matcher.group(1)), 0);
+                String value = matcher.group(1);
+                limit = Limit.of(value.isEmpty() ? 1 : Integer.parseInt(value), 0);
             }
         }
 

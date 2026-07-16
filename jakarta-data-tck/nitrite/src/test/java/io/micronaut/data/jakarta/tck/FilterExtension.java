@@ -35,11 +35,7 @@ public class FilterExtension implements ExecutionCondition {
                 case "testIgnoreCase" -> {
                     return DISABLED;
                 }
-                case "testQueryWithOr",
-                     "testBasicRepository",
-                     "testNonUniqueResultException",
-                     "testSelectEntityAttributeAsPage",
-                     "testStaticMetamodelDescendingSorts",
+                case "testStaticMetamodelDescendingSorts",
                      "testStaticMetamodelDescendingSortsPreGenerated" -> {
                     return DISABLED;
                 }
