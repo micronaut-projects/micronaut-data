@@ -44,15 +44,8 @@ public class FilterExtension implements ExecutionCondition {
                      "testCursoredPageWithoutTotalOf9FromCursor",
                      "testBasicRepository",
                      "testNonUniqueResultException",
-                     "testQueryWithSelectReturnsOptionalOfRecord",
                      "testQueryWithSelectReturnsPageOfRecord",
-                     "testRecordComponentsChooseAttributeReturnPage",
-                     "testReturnPageOfRecordThatSelectsAttributes",
                      "testSelectEntityAttributeAsPage",
-                     "testSelectEntityAttributesAsArrayOfRecord",
-                     "testSelectEntityAttributesAsListOfRecord",
-                     "testSelectEntityAttributesAsOptionalOfRecord",
-                     "testSelectEntityAttributesAsPageOfRecord",
                      "testStaticMetamodelDescendingSorts",
                      "testStaticMetamodelDescendingSortsPreGenerated" -> {
                     return DISABLED;

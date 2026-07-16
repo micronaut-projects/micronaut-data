@@ -117,25 +117,37 @@ public final class NitriteQueryParser {
      * @return the field name to project, or null if not using $project syntax
      */
     public @Nullable String extractProjectionField(@Nullable String jsonQuery) {
+        List<String> fields = extractProjectionFields(jsonQuery);
+        return fields.isEmpty() ? null : fields.getFirst();
+    }
+
+    /**
+     * Extract projection fields from a JSON query that uses {@code $project} syntax.
+     * The returned list preserves the order emitted by the query builder.
+     *
+     * @param jsonQuery the JSON query string
+     * @return projected field names, or an empty list if no projection is present
+     */
+    public List<String> extractProjectionFields(@Nullable String jsonQuery) {
         if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
             if (jsonQuery == null || !jsonQuery.trim().startsWith("[")) {
-                return null;
+                return List.of();
             }
         }
         try {
             Object parsed = parseJson(jsonQuery);
             if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
-                String field = extractProjectionFieldFromValue(map.get("$project"));
-                if (field != null) {
-                    return field;
+                List<String> fields = extractProjectionFieldsFromValue(map.get("$project"));
+                if (!fields.isEmpty()) {
+                    return fields;
                 }
             }
             if (parsed instanceof List<?> pipeline) {
                 for (Object stage : pipeline) {
                     if (stage instanceof Map<?, ?> map && map.containsKey("$project")) {
-                        String field = extractProjectionFieldFromValue(map.get("$project"));
-                        if (field != null) {
-                            return field;
+                        List<String> fields = extractProjectionFieldsFromValue(map.get("$project"));
+                        if (!fields.isEmpty()) {
+                            return fields;
                         }
                     }
                 }
@@ -143,13 +155,14 @@ public final class NitriteQueryParser {
         } catch (Exception ignored) {
             // Best-effort JSON parsing; if it fails, assume no projection
         }
-        return null;
+        return List.of();
     }
 
-    private @Nullable String extractProjectionFieldFromValue(@Nullable Object value) {
+    private List<String> extractProjectionFieldsFromValue(@Nullable Object value) {
         if (value instanceof String s) {
-            return s;
+            return List.of(s);
         }
+        List<String> fields = new ArrayList<>();
         if (value instanceof Map<?, ?> projection) {
             for (Map.Entry<?, ?> entry : projection.entrySet()) {
                 if ("_id".equals(entry.getKey())) {
@@ -157,11 +170,11 @@ public final class NitriteQueryParser {
                 }
                 Object projected = entry.getValue();
                 if (Integer.valueOf(1).equals(projected) || Boolean.TRUE.equals(projected)) {
-                    return entry.getKey().toString();
+                    fields.add(entry.getKey().toString());
                 }
             }
         }
-        return null;
+        return fields;
     }
 
     /**

@@ -18,7 +18,10 @@ package io.micronaut.data.nitrite.runtime.read;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.OptimisticLockException;
@@ -240,7 +243,7 @@ public final class NitriteQueryExecutor {
         // Handle DTO projection
         if (nq.isDtoProjection()) {
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
-            return projectionMapper.mapDocument(doc, Collections.emptyList(), entity, nq.getResultType(), true);
+            return projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), Collections.emptyList(), entity, nq.getResultType(), true);
         }
 
         // Handle native single-field projection (result type differs from root entity)
@@ -350,7 +353,14 @@ public final class NitriteQueryExecutor {
         if (nq.isDtoProjection()) {
             var cursor = coll.find(filter, findOptions);
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
-            return projectionMapper.mapResults(cursor, Collections.emptyList(), entity, nq.getResultType(), true);
+            List<R> results = new ArrayList<>();
+            for (Document doc : cursor) {
+                R result = projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), Collections.emptyList(), entity, nq.getResultType(), true);
+                if (result != null) {
+                    results.add(result);
+                }
+            }
+            return results;
         }
 
         // Handle native single-field projection
@@ -582,6 +592,47 @@ public final class NitriteQueryExecutor {
      */
     public long count(@NonNull PreparedQuery<?, ?> q, NitritePreparedQuery<?, ?> nq) {
         return collectionFactory.apply(nq.getRootEntity()).find(nq.getNitriteFilter()).size();
+    }
+
+    private Document remapDtoProjectionDocument(Document doc, NitritePreparedQuery<?, ?> nq) {
+        List<String> projectedFields = getProjectedFields(nq);
+        if (projectedFields.isEmpty()) {
+            return doc;
+        }
+        RuntimePersistentEntity<?> rootEntity = entityFactory.apply(nq.getRootEntity());
+        RuntimePersistentEntity<?> resultEntity = entityFactory.apply(nq.getResultType());
+        Argument<?>[] constructorArguments = resultEntity.getIntrospection().getConstructorArguments();
+        if (constructorArguments.length != projectedFields.size()) {
+            return doc;
+        }
+
+        Document remapped = Document.createDocument();
+        for (int i = 0; i < constructorArguments.length; i++) {
+            String projectedField = projectedFields.get(i);
+            String normalizedField = entityMapper.normalizeFieldName(projectedField, rootEntity);
+            Object value = doc.get(normalizedField);
+            if (value == null && !normalizedField.equals(projectedField)) {
+                value = doc.get(projectedField);
+            }
+            if (value == null && ("id".equals(projectedField) || "id".equals(normalizedField))) {
+                value = doc.get("_id");
+            }
+            remapped.put(constructorArguments[i].getName(), value);
+        }
+        return remapped;
+    }
+
+    private List<String> getProjectedFields(NitritePreparedQuery<?, ?> nq) {
+        List<String> projectedFields = queryParser.extractProjectionFields(nq.getQuery());
+        if (!projectedFields.isEmpty()) {
+            return projectedFields;
+        }
+        return nq.getAnnotationMetadata()
+            .getAnnotationValuesByType(Projection.class)
+            .stream()
+            .map(AnnotationValue::stringValue)
+            .flatMap(Optional::stream)
+            .toList();
     }
 
     boolean isOptimisticLocking(@NonNull PreparedQuery<?, ?> q) {
