@@ -141,7 +141,10 @@ public final class ReservationMethodMatcher implements MethodMatcher {
             String propertyName = NameUtils.decapitalize(matcher.group(2));
             String propertyPath = entity.getPath(propertyName).orElse(propertyName);
             PersistentPropertyPath persistentPropertyPath = entity.getPropertyPath(propertyPath);
-            if (persistentPropertyPath == null || !persistentPropertyPath.getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+            if (persistentPropertyPath == null) {
+                throw new MatchFailedException("Reservation property [" + propertyName + "] does not exist");
+            }
+            if (!persistentPropertyPath.getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                 throw new MatchFailedException("Reservation property [" + propertyName + "] must be annotated with @Reservable");
             }
             if (persistentPropertyPath.getProperty() instanceof Association

@@ -48,15 +48,101 @@ interface NonOracleAccountRepository extends GenericRepository<Account, Long> {
 }
 
 @MappedEntity
-class Account {
-    @Id Long id;
-    @Reservable Long balance;
+record Account(@Id Long id, @Reservable Long balance) {
 }
 """)
 
         then:
         def e = thrown(RuntimeException)
         e.message.contains("Reservation methods require the Oracle dialect")
+    }
+
+    void "test reserve method validates property targets"() {
+        when:
+        buildRepository('test.UnknownReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface UnknownReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementMissing(@Id Long id, Long missing);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Reservation property [missing] does not exist")
+
+        when:
+        buildRepository('test.UnannotatedReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface UnannotatedReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains("Reservation property [balance] must be annotated with @Reservable")
+
+        when:
+        buildRepository('test.NonNumericReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface NonNumericReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private String balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    String getBalance() { return balance; }
+    void setBalance(String balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains("Reservation property [balance] must be numeric")
     }
 
     void "test reserve methods render reservable delta updates"() {
