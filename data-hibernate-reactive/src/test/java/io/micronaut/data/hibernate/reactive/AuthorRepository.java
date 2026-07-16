@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate.reactive.entities.AuthorDto;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import io.micronaut.data.tck.entities.Author;
 import reactor.core.publisher.Flux;
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono;
 import jakarta.validation.constraints.NotNull;
 
 @Repository
-public interface AuthorRepository extends ReactorCrudRepository<Author, Long> {
+public interface AuthorRepository extends ReactorCrudRepository<Author, Long>, ReactorJpaSpecificationExecutor<Author> {
 
     @NonNull
     @EntityGraph(attributePaths = {"books", "books.pages"})

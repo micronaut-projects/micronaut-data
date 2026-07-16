@@ -30,7 +30,7 @@ import org.reactivestreams.Publisher;
  * @author Denis Stepanov
  */
 @Experimental
-public class ExecutorReactiveOperationsSupportingCriteria extends ExecutorReactiveOperations implements ReactiveCriteriaRepositoryOperations {
+public class ExecutorReactiveOperationsSupportingCriteria extends ExecutorReactiveOperations implements ReactiveCriteriaRepositoryOperations, ReactivePageIdCriteriaRepositoryOperations {
 
     private final ExecutorAsyncOperationsSupportingCriteria asyncOperations;
 
@@ -63,6 +63,11 @@ public class ExecutorReactiveOperationsSupportingCriteria extends ExecutorReacti
     @Override
     public <T> Publisher<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return fromCompletableFuture(() -> asyncOperations.findAll(query, offset, limit).toCompletableFuture()).flatMapIterable(list -> list);
+    }
+
+    @Override
+    public <T> Publisher<T> findPageIds(CriteriaQuery<T> query, int offset, int limit) {
+        return fromCompletableFuture(() -> asyncOperations.findPageIds(query, offset, limit).toCompletableFuture()).flatMapIterable(list -> list);
     }
 
     @Override

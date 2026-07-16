@@ -16,6 +16,8 @@ import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.Join
+import jakarta.persistence.criteria.JoinType
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.hibernate.query.criteria.HibernateCriteriaBuilder
@@ -51,7 +53,7 @@ class ProductRepositoryTest : PostgresHibernateReactiveProperties {
                         "iPhone",
                         apple
                 )
-        ))
+        )).toList()
     }
 
     @Test
@@ -60,6 +62,36 @@ class ProductRepositoryTest : PostgresHibernateReactiveProperties {
         assertTrue(
             list.all { it.manufacturer.name == "Apple" }
         )
+    }
+
+    @Test
+    fun testCoroutineSpecificationPaginationWithFetchJoin() = runBlocking {
+        val specification = QuerySpecification<Product> { root, query, criteriaBuilder ->
+            val manufacturer: Join<Product, Manufacturer> = if (query.resultType != Long::class.javaObjectType) {
+                root.fetch<Product, Manufacturer>("manufacturer", JoinType.LEFT) as Join<Product, Manufacturer>
+            } else {
+                root.join<Product, Manufacturer>("manufacturer", JoinType.LEFT)
+            }
+            criteriaBuilder.equal(manufacturer.get<String>("name"), "Apple")
+        }
+
+        val page0 = productSpecificationRepository.findAll(
+            specification,
+            Pageable.from(0, 1, Sort.of(Sort.Order.asc("name")))
+        )
+        val page1 = productSpecificationRepository.findAll(
+            specification,
+            Pageable.from(1, 1, Sort.of(Sort.Order.asc("name")))
+        )
+
+        assertEquals(1, page0.content.size)
+        assertEquals(2, page0.totalSize)
+        assertEquals("iPhone", page0.content.single().name)
+        assertEquals("Apple", page0.content.single().manufacturer.name)
+        assertEquals(1, page1.content.size)
+        assertEquals(2, page1.totalSize)
+        assertEquals("MacBook", page1.content.single().name)
+        assertEquals("Apple", page1.content.single().manufacturer.name)
     }
 
     @Test

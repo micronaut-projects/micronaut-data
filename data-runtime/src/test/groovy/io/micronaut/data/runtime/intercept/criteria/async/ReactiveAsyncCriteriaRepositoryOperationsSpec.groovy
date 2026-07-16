@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.intercept.criteria.async
 
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations
+import io.micronaut.data.runtime.operations.ReactivePageIdCriteriaRepositoryOperations
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaQuery
@@ -89,6 +90,32 @@ class ReactiveAsyncCriteriaRepositoryOperationsSpec extends Specification {
             result == ["alpha", "beta"]
     }
 
+    void "delegates page ID query to reactive page ID operations"() {
+        given:
+            def pageIdOperations = Mock(ReactivePageIdCriteriaOperationsWithCriteria)
+            def operations = new ReactiveAsyncCriteriaRepositoryOperations(pageIdOperations)
+            def query = Mock(CriteriaQuery)
+
+        when:
+            def result = operations.findPageIds(query, 10, 20).toCompletableFuture().join()
+
+        then:
+            1 * pageIdOperations.findPageIds(query, 10, 20) >> Flux.just("alpha", "beta")
+            result == ["alpha", "beta"]
+    }
+
+    void "falls back to paged find all when reactive operations do not support page ID queries"() {
+        given:
+            def query = Mock(CriteriaQuery)
+
+        when:
+            def result = operations.findPageIds(query, 10, 20).toCompletableFuture().join()
+
+        then:
+            1 * reactiveOperations.findAll(query, 10, 20) >> Flux.just("alpha", "beta")
+            result == ["alpha", "beta"]
+    }
+
     void "adapts update publisher to completion stage"() {
         given:
             def query = Mock(CriteriaUpdate)
@@ -111,5 +138,8 @@ class ReactiveAsyncCriteriaRepositoryOperationsSpec extends Specification {
         then:
             1 * reactiveOperations.deleteAll(query) >> Mono.just(4)
             result == 4
+    }
+
+    private interface ReactivePageIdCriteriaOperationsWithCriteria extends ReactiveCriteriaRepositoryOperations, ReactivePageIdCriteriaRepositoryOperations {
     }
 }

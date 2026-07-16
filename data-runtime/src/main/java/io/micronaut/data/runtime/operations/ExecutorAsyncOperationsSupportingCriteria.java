@@ -33,7 +33,7 @@ import java.util.concurrent.Executor;
  * @author Denis Stepanov
  */
 @Internal
-public final class ExecutorAsyncOperationsSupportingCriteria extends ExecutorAsyncOperations implements AsyncCriteriaRepositoryOperations {
+public final class ExecutorAsyncOperationsSupportingCriteria extends ExecutorAsyncOperations implements AsyncCriteriaRepositoryOperations, AsyncPageIdCriteriaRepositoryOperations {
 
     private final CriteriaRepositoryOperations criteriaRepositoryOperations;
 
@@ -74,6 +74,16 @@ public final class ExecutorAsyncOperationsSupportingCriteria extends ExecutorAsy
     @Override
     public <T> CompletionStage<List<T>> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return supplyAsync(() -> criteriaRepositoryOperations.findAll(query, offset, limit));
+    }
+
+    @Override
+    public <T> CompletionStage<List<T>> findPageIds(CriteriaQuery<T> query, int offset, int limit) {
+        return supplyAsync(() -> {
+            if (criteriaRepositoryOperations instanceof PageIdCriteriaRepositoryOperations pageIdOperations) {
+                return pageIdOperations.findPageIds(query, offset, limit);
+            }
+            return criteriaRepositoryOperations.findAll(query, offset, limit);
+        });
     }
 
     @Override

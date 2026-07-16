@@ -24,6 +24,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.operations.ReactivePageIdCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -71,11 +72,11 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
             Root<?> root = criteriaQuery.getRoots().iterator().next();
             Flux<Object> content;
-            if (root.getJoins().isEmpty() || root.getFetches().isEmpty()) {
-                content = findAllReactive(methodKey, context, pageable, criteriaQuery);
+            if (!hasJoinsOrFetches(root)) {
+                content = findAllReactive(methodKey, context, pageable, criteriaQuery, false);
             } else {
                 CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
-                content = findAllReactive(methodKey, context, pageable, criteriaIdsQuery)
+                content = findAllReactive(methodKey, context, pageable, criteriaIdsQuery, true)
                     .collectList().flatMapMany(tupleResult -> {
                         if (tupleResult.isEmpty()) {
                             return Flux.empty();
@@ -86,7 +87,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
                             }
                             Predicate inPredicate = getIdExpression(root).in(ids);
                             criteriaQuery.where(inPredicate);
-                            return findAllReactive(methodKey, context, pageable.withoutPaging(), criteriaQuery);
+                            return findAllReactive(methodKey, context, pageable.withoutPaging(), criteriaQuery, false);
                         }
                     });
             }
@@ -123,18 +124,26 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
 
     private <T> Flux<T> findAllReactive(RepositoryMethodKey methodKey,
                                                       MethodInvocationContext<?, ?> context,
-                                                      Pageable pageable, CriteriaQuery<T> criteriaQuery) {
+                                                      Pageable pageable,
+                                                      CriteriaQuery<T> criteriaQuery,
+                                                      boolean pageIdsQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (reactiveCriteriaOperations != null) {
             if (pageable != null) {
                 if (pageable.getMode() != Pageable.Mode.OFFSET) {
                     throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
+                if (pageIdsQuery && reactiveCriteriaOperations instanceof ReactivePageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return Flux.from(pageIdOperations.findPageIds(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()));
+                }
                 return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()));
             }
             int offset = getOffset(context);
             int limit = getLimit(context);
             if (offset > 0 || limit > 0) {
+                if (pageIdsQuery && reactiveCriteriaOperations instanceof ReactivePageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return Flux.from(pageIdOperations.findPageIds(criteriaQuery, offset, limit));
+                }
                 return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery, offset, limit));
             }
             return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery));

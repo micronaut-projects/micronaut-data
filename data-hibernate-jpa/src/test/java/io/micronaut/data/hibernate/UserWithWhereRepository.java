@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate.entities.UserWithWhere;
+import io.micronaut.data.hibernate.entities.UserWithWhereSummary;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 
@@ -20,6 +21,12 @@ public interface UserWithWhereRepository extends CrudRepository<UserWithWhere, U
 
     @Query(value = "UPDATE users SET email = :email WHERE id = :id RETURNING email", nativeQuery = true)
     String updateAndReturnEmail(String email, UUID id);
+
+    @Query(value = "SELECT id AS \"id\", email AS \"email\", deleted AS \"deleted\" FROM users WHERE id = :id", nativeQuery = true)
+    UserWithWhereSummary findSummaryById(UUID id);
+
+    @Query(value = "UPDATE users SET email = :email WHERE id = :id RETURNING id AS \"id\", email AS \"email\", deleted AS \"deleted\"", nativeQuery = true)
+    UserWithWhereSummary updateReturningSummary(String email, UUID id);
 
     void updateEmailById(UUID id, String email);
 }

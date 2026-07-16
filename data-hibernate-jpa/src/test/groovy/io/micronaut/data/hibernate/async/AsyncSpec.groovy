@@ -19,9 +19,15 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.Join
+import jakarta.persistence.criteria.JoinType
 import org.hibernate.SessionFactory
 import spock.lang.Specification
 
@@ -36,6 +42,9 @@ class AsyncSpec extends Specification {
 
     @Inject
     AsyncUserWithWhereRepository userWithWhereRepository
+
+    @Inject
+    AsyncAuthorRepository authorRepository
 
     @Inject
     SessionFactory sessionFactory
@@ -136,5 +145,50 @@ class AsyncSpec extends Specification {
 
         then:"All are gone"
         asyncCrudRepository.count().get() == 0
+    }
+
+    void "test async specification pagination with fetch join"() {
+        given:
+            String firstAuthorName = "async-fetch-author-a-${UUID.randomUUID()}"
+            String secondAuthorName = "async-fetch-author-b-${UUID.randomUUID()}"
+            String firstBookTitle = "async-fetch-book-a-${UUID.randomUUID()}"
+            String secondBookTitle = "async-fetch-book-b-${UUID.randomUUID()}"
+            def savedAuthors = authorRepository.saveAll([
+                author(firstAuthorName, firstBookTitle),
+                author(secondAuthorName, secondBookTitle)
+            ]).get()
+            QuerySpecification<Author> specification = { root, query, criteriaBuilder ->
+                Join<Author, Book> books = query.resultType != Long
+                    ? root.fetch("books", JoinType.LEFT) as Join<Author, Book>
+                    : root.join("books", JoinType.LEFT)
+                criteriaBuilder.or(
+                    root.get("name").in(firstAuthorName, secondAuthorName),
+                    books.get("title").in(firstBookTitle, secondBookTitle)
+                )
+            } as QuerySpecification<Author>
+
+        when:
+            def page0 = authorRepository.findAll(specification, Pageable.from(0, 1, Sort.of(Sort.Order.asc("name")))).get()
+            def page1 = authorRepository.findAll(specification, Pageable.from(1, 1, Sort.of(Sort.Order.asc("name")))).get()
+
+        then:
+            page0.content*.name == [firstAuthorName]
+            page0.content[0].books*.title == [firstBookTitle]
+            page0.size == 1
+            page0.totalSize == 2
+            page1.content*.name == [secondAuthorName]
+            page1.content[0].books*.title == [secondBookTitle]
+            page1.size == 1
+            page1.totalSize == 2
+
+        cleanup:
+            authorRepository.deleteAll(savedAuthors).get()
+    }
+
+    private static Author author(String name, String bookTitle) {
+        def author = new Author(name: name)
+        def book = new Book(title: bookTitle, author: author)
+        author.books.add(book)
+        return author
     }
 }

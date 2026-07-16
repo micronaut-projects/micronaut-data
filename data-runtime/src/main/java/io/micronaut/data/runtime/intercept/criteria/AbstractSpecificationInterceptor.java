@@ -59,6 +59,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import io.micronaut.data.runtime.operations.PageIdCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -162,6 +163,32 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     protected final <B> List<B> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
+        return findAll(methodKey, context, pageable, criteriaQuery, false);
+    }
+
+    /**
+     * Executes the internal ID prequery for a paged specification that contains joins or fetches.
+     *
+     * Pagination is applied to distinct root IDs before the entity query executes, because a collection join can
+     * otherwise consume a page with multiple rows for the same root. Providers may adapt this dedicated query
+     * without changing normal user criteria queries.
+     *
+     * @param methodKey The repository method
+     * @param context The invocation context
+     * @param pageable The requested page
+     * @param criteriaQuery The ID criteria query
+     * @param <B> The ID query result type
+     * @return The page IDs
+     */
+    protected final <B> List<B> findPageIds(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Pageable pageable, CriteriaQuery<B> criteriaQuery) {
+        return findAll(methodKey, context, pageable, criteriaQuery, true);
+    }
+
+    private <B> List<B> findAll(RepositoryMethodKey methodKey,
+                                MethodInvocationContext<?, ?> context,
+                                Pageable pageable,
+                                CriteriaQuery<B> criteriaQuery,
+                                boolean pageIdsQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (criteriaRepositoryOperations != null) {
             Limit limit = Limit.UNLIMITED;
@@ -186,6 +213,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
             if (limit.isLimited()) {
+                if (pageIdsQuery && criteriaRepositoryOperations instanceof PageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return pageIdOperations.findPageIds(criteriaQuery, (int) limit.offset(), limit.maxResults());
+                }
                 return criteriaRepositoryOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults());
             }
             return criteriaRepositoryOperations.findAll(criteriaQuery);
@@ -330,6 +360,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                                                        MethodInvocationContext<?, ?> context,
                                                        Sort sort) {
         return getIdsCriteriaQueryBuilder(context, getMethodJoinPaths(methodKey, context), sort, getRequiredRootEntity(context)).build(criteriaBuilder);
+    }
+
+    /**
+     * @param root The criteria query root
+     * @return Whether the root contains a join or fetch
+     */
+    protected static boolean hasJoinsOrFetches(Root<?> root) {
+        return !root.getJoins().isEmpty() || !root.getFetches().isEmpty();
     }
 
     /**

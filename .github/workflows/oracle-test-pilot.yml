@@ -55,11 +55,12 @@ jobs:
 
       - name: Create Oracle Test Pilot Databases...
         id: create_database
-        uses: oracle-actions/setup-testpilot@37676e7f43dabdebb120915f2862f6ddd55d28d6 # v1.0.25
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: create
           user: ${{ matrix.native_test_task }}
+          surround-connection-string-with-double-quotes: true
 
       - name: Disable TCP Fast Open for Autonomous databases
         id: disable_tfo
@@ -94,7 +95,7 @@ jobs:
       - name: Delete Oracle Test Pilot Databases...
         id: delete_database
         if: always() && steps.create_database.outcome == 'success'
-        uses: oracle-actions/setup-testpilot@37676e7f43dabdebb120915f2862f6ddd55d28d6 # v1.0.25
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: delete

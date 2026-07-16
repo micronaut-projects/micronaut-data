@@ -20,6 +20,8 @@ import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
+import io.micronaut.data.runtime.operations.AsyncPageIdCriteriaRepositoryOperations;
+import io.micronaut.data.runtime.operations.ReactivePageIdCriteriaRepositoryOperations;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -38,7 +40,7 @@ import java.util.concurrent.CompletionStage;
  * @since 5.0.0
  */
 @Internal
-final class ReactiveAsyncCriteriaRepositoryOperations implements AsyncCriteriaRepositoryOperations {
+final class ReactiveAsyncCriteriaRepositoryOperations implements AsyncCriteriaRepositoryOperations, AsyncPageIdCriteriaRepositoryOperations {
 
     private final ReactiveCriteriaRepositoryOperations reactiveOperations;
 
@@ -69,6 +71,14 @@ final class ReactiveAsyncCriteriaRepositoryOperations implements AsyncCriteriaRe
     @Override
     public <T> CompletionStage<List<T>> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return toListCompletionStage(reactiveOperations.findAll(query, offset, limit));
+    }
+
+    @Override
+    public <T> CompletionStage<List<T>> findPageIds(CriteriaQuery<T> query, int offset, int limit) {
+        if (reactiveOperations instanceof ReactivePageIdCriteriaRepositoryOperations pageIdOperations) {
+            return toListCompletionStage(pageIdOperations.findPageIds(query, offset, limit));
+        }
+        return findAll(query, offset, limit);
     }
 
     @Override
