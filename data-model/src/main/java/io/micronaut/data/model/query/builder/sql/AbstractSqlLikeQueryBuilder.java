@@ -35,6 +35,7 @@ import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
+import io.micronaut.data.annotation.sql.GeneratedETag;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
@@ -1334,7 +1335,39 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private Optional<String> getDataTransformerValue(@Nullable String alias, PersistentProperty prop, String val) {
         return prop.getAnnotationMetadata()
             .stringValue(DataTransformer.class, val)
-            .map(v -> replaceAlias(alias, v));
+            .map(v -> resolveGeneratedETagFunction(prop, replaceAlias(alias, v)));
+    }
+
+    private String resolveGeneratedETagFunction(PersistentProperty prop, String value) {
+        if (!prop.getAnnotationMetadata().hasAnnotation(GeneratedETag.class)) {
+            return value;
+        }
+        String function = prop.getAnnotationMetadata()
+            .stringValue(GeneratedETag.class, "function")
+            .orElse("");
+        if (!function.isEmpty()) {
+            return value;
+        }
+        String defaultFunction = getDefaultEtagFunction();
+        if (defaultFunction == null) {
+            throw new IllegalStateException("@GeneratedETag requires explicit 'function' for dialect " + getDialect());
+        }
+        String markerPrefix = GeneratedETag.DIALECT_DEFAULT_FUNCTION_MARKER + "(";
+        if (value.startsWith(markerPrefix)) {
+            return defaultFunction + value.substring(GeneratedETag.DIALECT_DEFAULT_FUNCTION_MARKER.length());
+        }
+        if (value.startsWith("(")) {
+            return defaultFunction + value;
+        }
+        return value;
+    }
+
+    @Nullable
+    private String getDefaultEtagFunction() {
+        if (getDialect() == Dialect.ORACLE) {
+            return "SYS_ROW_ETAG";
+        }
+        return null;
     }
 
     private String replaceAlias(@Nullable String alias, String v) {
@@ -1467,7 +1500,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         QueryPropertyPath propertyPath = queryState.findProperty(pp);
         String tableAlias = propertyPath.getTableAlias();
-        String readTransformer = isProjection ? getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null) : null;
+        PersistentProperty persistentProperty = propertyPath.getProperty();
+        boolean isVersionProperty = queryState.getEntity().hasVersion()
+            && Objects.equals(queryState.getEntity().getVersion(), persistentProperty);
+        String readTransformer = isProjection || isVersionProperty ? getDataTransformerReadValue(tableAlias, persistentProperty).orElse(null) : null;
         if (readTransformer != null) {
             query.append(readTransformer);
             return;
@@ -1671,7 +1707,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @Internal
     protected final class QueryState implements PropertyParameterCreator {
-        private final AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder;
+        private final QueryBuilder queryBuilder;
         @Nullable
         private final String rootAlias;
         private final Map<String, JoinPath> appliedJoinPaths = new LinkedHashMap<>();
@@ -1681,11 +1717,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
         private List<JoinPath> joinPaths = new ArrayList<>();
 
-        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
+        private QueryState(QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
             this(queryBuilder, query, allowJoins, useAlias, null);
         }
 
-        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, @Nullable String tableAliasPrefix) {
+        private QueryState(QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, @Nullable String tableAliasPrefix) {
             this.queryBuilder = queryBuilder;
             this.allowJoins = allowJoins;
             this.baseQueryDefinition = query;
