@@ -24,7 +24,6 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -70,9 +69,8 @@ public final class ReservationMethodMatcher implements MethodMatcher {
             return null;
         }
         if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder queryBuilder)
-            || queryBuilder.getDialect() != Dialect.ORACLE
-            || !queryBuilder.isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_26_1_VERSION)) {
-            throw new MatchFailedException("Reservation methods require Oracle dialect version 23.26.1 or later");
+            || queryBuilder.getDialect() != Dialect.ORACLE) {
+            throw new MatchFailedException("Reservation methods require the Oracle dialect");
         }
         if (!TypeUtils.isValidBatchUpdateReturnType(method)) {
             throw new MatchFailedException("Reservation methods only support void or number based return types");

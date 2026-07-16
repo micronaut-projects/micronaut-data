@@ -26,7 +26,7 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties + ["datasources.default.dialect-options.version": "26"])
+    ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
     ReservableAccountRepository repository = context.getBean(ReservableAccountRepository)

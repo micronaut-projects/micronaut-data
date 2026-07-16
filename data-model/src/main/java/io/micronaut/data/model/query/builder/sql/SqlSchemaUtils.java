@@ -156,25 +156,6 @@ public final class SqlSchemaUtils {
     public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
                                                             PersistentEntity entity,
                                                             Dialect dialect) {
-        return getSqlTableMappings(definitionProviders, entity, dialect, SqlDialectOptions.defaults(dialect));
-    }
-
-    /**
-     * Returns list of {@link SqlTableMapping} for persistent entity.
-     *
-     * @param definitionProviders the list of DefinitionProvider (column/index DDL providers)
-     * @param entity The entity
-     * @param dialect The SQL dialect used to render vendor-specific definitions.
-     * @param dialectOptions The resolved dialect options
-     * @return The SQL table definitions for the given entity
-     * @since 4.13.0
-     */
-    @Experimental
-    @SuppressWarnings("java:S3776")
-    public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
-                                                            PersistentEntity entity,
-                                                            Dialect dialect,
-                                                            SqlDialectOptions dialectOptions) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = entity.getPersistedName();
@@ -217,15 +198,15 @@ public final class SqlSchemaUtils {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), associatedEntity.getIdentity(), (associations, property)
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
                 List<SqlColumnMapping> joinColumns = new ArrayList<>();
-                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, dialectOptions, joinColumns);
-                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, dialectOptions, joinColumns);
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, joinColumns);
+                addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, joinColumns);
                 SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
                 tables.add(joinTable);
             }
         }
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
-        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, tableName, dialect, dialectOptions);
+        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, tableName, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
 
@@ -233,7 +214,7 @@ public final class SqlSchemaUtils {
             PersistentProperty version = entity.getVersion();
             if (!version.isGenerated()) {
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-                SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, tableName, false, true, false, dialect, dialectOptions);
+                SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, tableName, false, true, false, dialect);
                 columns.add(column);
             }
         }
@@ -241,7 +222,7 @@ public final class SqlSchemaUtils {
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, tableName, false, isRequired(associations, property),
-                !SqlQueryBuilderUtils.isNotForeign(associations), dialect, dialectOptions);
+                !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
             columns.add(column);
         };
 
@@ -276,18 +257,17 @@ public final class SqlSchemaUtils {
                                             List<PersistentPropertyPath> joinProperties,
                                             List<String> joinColumns,
                                             Dialect dialect,
-                                            SqlDialectOptions dialectOptions,
                                             List<SqlColumnMapping> joinTableColumns) {
         if (joinColumns.size() == joinProperties.size()) {
             for (int i = 0; i < joinColumns.size(); i++) {
                 PersistentPropertyPath pp = joinProperties.get(i);
                 String columnName = joinColumns.get(i);
-                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, entity.getPersistedName(), true, true, true, dialect, dialectOptions));
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, entity.getPersistedName(), true, true, true, dialect));
             }
         } else {
             for (PersistentPropertyPath pp : joinProperties) {
                 String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, entity.getPersistedName(), true, true, true, dialect, dialectOptions));
+                joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, entity.getPersistedName(), true, true, true, dialect));
             }
         }
     }
@@ -312,8 +292,7 @@ public final class SqlSchemaUtils {
                                                         boolean primaryKey,
                                                         boolean required,
                                                         boolean isForeign,
-                                                        Dialect dialect,
-                                                        SqlDialectOptions dialectOptions) {
+                                                        Dialect dialect) {
         if (prop instanceof Association) {
             throw new IllegalStateException("Association is not supported here");
         }
@@ -321,7 +300,7 @@ public final class SqlSchemaUtils {
         String definition = getDefinition(prop, dialect, required);
         boolean reservable = annotationMetadata.hasAnnotation(Reservable.class);
         if (reservable) {
-            validateReservableProperty(prop, primaryKey, isForeign, dialect, dialectOptions, definition);
+            validateReservableProperty(prop, primaryKey, isForeign, dialect, definition);
         }
 
         // Resolve Argument for the property (prefer runtime implementation to preserve annotation metadata)
@@ -459,13 +438,9 @@ public final class SqlSchemaUtils {
                                                    boolean primaryKey,
                                                    boolean foreign,
                                                    Dialect dialect,
-                                                   SqlDialectOptions dialectOptions,
                                                    @Nullable String definition) {
         if (dialect != Dialect.ORACLE) {
             throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] is only supported for Oracle");
-        }
-        if (!dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_26_1_VERSION)) {
-            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] requires Oracle Database 23.26.1 or later");
         }
         if (!property.getDataType().isNumeric()) {
             throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] must be numeric");
@@ -845,8 +820,7 @@ public final class SqlSchemaUtils {
                                                                List<PersistentProperty> identities,
                                                                NamingStrategy namingStrategy,
                                                                String tableName,
-                                                               Dialect dialect,
-                                                               SqlDialectOptions dialectOptions) {
+                                                               Dialect dialect) {
         List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>(identities.size());
         for (PersistentProperty identity : identities) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
@@ -855,7 +829,7 @@ public final class SqlSchemaUtils {
             for (PersistentPropertyPath pp : ids) {
                 String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
                 SqlColumnMapping column = getColumnDefinition(columnDefinitionProviders, pp.getProperty(), columnName, tableName, true,
-                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()), dialect, dialectOptions);
+                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()), dialect);
                 primaryKeyColumns.add(column);
             }
         }

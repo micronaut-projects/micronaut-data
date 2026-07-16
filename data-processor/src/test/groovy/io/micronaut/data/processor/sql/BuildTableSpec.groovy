@@ -17,7 +17,6 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
@@ -70,7 +69,7 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
@@ -111,8 +110,8 @@ class SecondAccount {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def firstSql = builder.buildCreateTableStatements(first, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
-        def secondSql = builder.buildCreateTableStatements(second, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def firstSql = builder.buildCreateTableStatements(first).join(System.lineSeparator())
+        def secondSql = builder.buildCreateTableStatements(second).join(System.lineSeparator())
 
         then:
         firstSql.contains('CONSTRAINT "CK_LEDGER_A_BALANCE_GE_0"')
@@ -151,7 +150,7 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE NOT NULL, PRIMARY KEY("ID"))'
@@ -195,7 +194,7 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_LE_100" CHECK ("BALANCE" <= 100) CONSTRAINT "CK_ACCOUNT_BALANCE_GT_0_01" CHECK ("BALANCE" > 0.01) NOT NULL, PRIMARY KEY("ID"))'
@@ -233,13 +232,13 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))'
     }
 
-    void "test build create table rejects reservable column without Oracle 23.26.1 target"() {
+    void "test build create table with Oracle reservable column without target version"() {
         given:
         def entity = buildJpaEntity('test.Account', '''
 import io.micronaut.data.annotation.Reservable;
@@ -271,11 +270,10 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        builder.buildCreateTableStatements(entity)
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
-        def e = thrown(io.micronaut.data.exceptions.MappingException)
-        e.message.contains("requires Oracle Database 23.26.1")
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE NOT NULL, PRIMARY KEY("ID"))'
     }
 
     void "test build create table rejects reservable column for non Oracle dialect"() {
@@ -290,7 +288,7 @@ record Account(@javax.persistence.Id Long id, @Reservable Long balance) {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.POSTGRES)
 
         when:
-        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.POSTGRES, "26"))
+        builder.buildCreateTableStatements(entity)
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
@@ -309,7 +307,7 @@ record Account(@javax.persistence.Id Long id, @Reservable String balance) {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+        builder.buildCreateTableStatements(entity)
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
@@ -328,7 +326,7 @@ record Account(@Reservable Long balance) {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+        builder.buildCreateTableStatements(entity)
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
@@ -360,7 +358,7 @@ record Account(
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+        builder.buildCreateTableStatements(entity)
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
@@ -402,7 +400,7 @@ class Account {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26"))
+        builder.buildCreateTableStatements(entity)
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
@@ -462,7 +460,7 @@ class Stats {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
 
         when:
-        def sql = builder.buildCreateTableStatements(entity, List.of(), SqlDialectOptions.of(Dialect.ORACLE, "26")).join(System.lineSeparator())
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'

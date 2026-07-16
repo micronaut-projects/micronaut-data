@@ -63,7 +63,6 @@ import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
@@ -198,29 +197,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected Dialect getDialect() {
         return Dialect.ANSI;
-    }
-
-    /**
-     * @param requiredVersion the required target dialect version
-     * @return whether the target dialect version meets the requirement
-     */
-    protected boolean isDialectVersionAtLeast(String requiredVersion) {
-        return false;
-    }
-
-    /**
-     * @return the normalized target dialect version, or {@code null} when none is configured
-     */
-    @Nullable
-    protected String getDialectVersion() {
-        return null;
-    }
-
-    /**
-     * @return the resolved dialect options for this builder
-     */
-    protected SqlDialectOptions getDialectOptions() {
-        return SqlDialectOptions.of(getDialect(), getDialectVersion());
     }
 
     /**

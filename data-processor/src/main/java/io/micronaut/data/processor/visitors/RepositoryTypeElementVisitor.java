@@ -66,9 +66,6 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.intercept.annotation.DataMethodQueryOutParameter;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
-import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -134,9 +131,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final String ASYNC_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.async.AsyncJpaSpecificationExecutor";
     private static final String REACTIVE_STREAMS_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor";
     private static final String REACTOR_JPA_SPECIFICATION_EXECUTOR = "io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor";
-    private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
-    private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
-    private static final String DIALECT_ATTR = "dialect";
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -269,7 +263,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 throw new ElementPostponedToNextRoundException(element);
             }
             visitedRepositories.add(interfaceName);
-            configureSqlDialectOptions(element, context);
             QueryBuilder queryEncoder = newQueryBuilder(element.getAnnotationMetadata());
             this.dataTypes = Utils.getConfiguredDataTypes(element);
             AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
@@ -327,102 +320,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private static void configureSqlDialectOptions(ClassElement element, VisitorContext context) {
-        AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
-        // Compile-time metadata can retain a class-valued meta-annotation member as its class name.
-        boolean usesSqlQueryBuilder = annotationMetadata.classValue(
-            RepositoryConfiguration.class,
-            DataMethod.META_MEMBER_QUERY_BUILDER
-        ).map(SqlQueryBuilder.class::equals).orElseGet(() -> annotationMetadata.stringValue(
-            RepositoryConfiguration.class,
-            DataMethod.META_MEMBER_QUERY_BUILDER
-        ).filter(SqlQueryBuilder.class.getName()::equals).isPresent());
-        if (!usesSqlQueryBuilder) {
-            return;
-        }
-        Dialect dialect = annotationMetadata
-            .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
-            .orElseGet(() ->
-                annotationMetadata
-                    .enumValue(R2DBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
-                    .orElseGet(() ->
-                        annotationMetadata
-                            .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
-                            .orElse(Dialect.ANSI)));
-        if (hasExplicitSqlDialectVersion(annotationMetadata, dialect)) {
-            return;
-        }
-        String versionConfiguration = SqlDialectOptions.versionConfiguration(dialect);
-        String version = annotationMetadata
-            .stringValue(JDBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION)
-            .filter(StringUtils::isNotEmpty)
-            .or(() -> annotationMetadata
-                .stringValue(R2DBC_REPO_ANNOTATION, SqlDialectOptions.MEMBER_VERSION)
-                .filter(StringUtils::isNotEmpty))
-            .orElseGet(() -> context.getOptions().get(versionConfiguration));
-        if (StringUtils.isEmpty(version)) {
-            version = System.getProperty(versionConfiguration);
-        }
-        if (StringUtils.isNotEmpty(version)) {
-            if (SqlDialectOptions.of(dialect, version).version().isPresent()) {
-                annotateSqlDialectVersion(element, annotationMetadata, dialect, version);
-            } else {
-                context.warn("Invalid SQL dialect target version '" + version + "' for dialect " + dialect
-                    + ". Expected numeric major[.minor[.patch]] notation.", element);
-            }
-        }
-    }
-
-    private static boolean hasExplicitSqlDialectVersion(AnnotationMetadata annotationMetadata, Dialect dialect) {
-        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
-        if (annotation == null) {
-            return false;
-        }
-        return annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class)
-            .stream()
-            .filter(dialectConfig -> dialectConfig.enumValue(DIALECT_ATTR, Dialect.class)
-                .filter(dialect::equals)
-                .isPresent())
-            .anyMatch(dialectConfig -> dialectConfig.stringValue(SqlDialectOptions.MEMBER_VERSION)
-                .filter(StringUtils::isNotEmpty)
-                .isPresent());
-    }
-
-    private static void annotateSqlDialectVersion(ClassElement element,
-                                                  AnnotationMetadata annotationMetadata,
-                                                  Dialect dialect,
-                                                  String version) {
-        AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
-        // Compiler options are not available at runtime. Preserve existing per-dialect settings while
-        // materializing the target version into repository metadata for runtime query-builder reconstruction.
-        List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation == null
-            ? Collections.emptyList()
-            : annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
-        List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> updatedConfigs = new ArrayList<>(dialectConfigs.size() + 1);
-        boolean updated = false;
-        for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
-            if (dialectConfig.enumValue(DIALECT_ATTR, Dialect.class).filter(dialect::equals).isPresent()) {
-                updatedConfigs.add(AnnotationValue.builder(SqlQueryConfiguration.DialectConfiguration.class)
-                    .members(dialectConfig.getValues())
-                    .member(SqlDialectOptions.MEMBER_VERSION, version)
-                    .build());
-                updated = true;
-            } else {
-                updatedConfigs.add(dialectConfig);
-            }
-        }
-        if (!updated) {
-            updatedConfigs.add(AnnotationValue.builder(SqlQueryConfiguration.DialectConfiguration.class)
-                .member(DIALECT_ATTR, dialect)
-                .member(SqlDialectOptions.MEMBER_VERSION, version)
-                .build());
-        }
-        element.annotate(
-            SqlQueryConfiguration.class,
-            builder -> builder.values(updatedConfigs.toArray(AnnotationValue[]::new))
-        );
-    }
-
     /**
      * Build a query build from the configured annotation metadata.
      * @param annotationMetadata The annotation metadata.
@@ -430,23 +327,23 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      */
     private static QueryBuilder newQueryBuilder(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.stringValue(
-            RepositoryConfiguration.class,
-            DataMethod.META_MEMBER_QUERY_BUILDER
+                RepositoryConfiguration.class,
+                DataMethod.META_MEMBER_QUERY_BUILDER
         ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.isPresent() && ref.getBeanType().getName().equals(type))
-            .stream().findFirst()
-            .map(introspection -> {
-                try {
-                    Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-                    if (constructorArguments.length == 0) {
-                        return (QueryBuilder) introspection.instantiate();
-                    } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
-                        return (QueryBuilder) introspection.instantiate(annotationMetadata);
+                .stream().findFirst()
+                .map(introspection -> {
+                    try {
+                        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+                        if (constructorArguments.length == 0) {
+                            return (QueryBuilder) introspection.instantiate();
+                        } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
+                            return (QueryBuilder) introspection.instantiate(annotationMetadata);
+                        }
+                    } catch (InstantiationException e) {
+                        return new JpaQueryBuilder();
                     }
-                } catch (InstantiationException e) {
                     return new JpaQueryBuilder();
-                }
-                return new JpaQueryBuilder();
-            })).orElse(new JpaQueryBuilder());
+                })).orElse(new JpaQueryBuilder());
     }
 
     private void visitRepositoryMethod(QueryBuilder queryEncoder,
@@ -1148,17 +1045,17 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Nullable
     private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
-                                                                Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                                Class<?> repositoryType,
-                                                                String argName) {
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               Class<?> repositoryType,
+                                                               String argName) {
         return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
     }
 
     @Nullable
     private SourcePersistentEntity resolveEntityForCurrentClass(ClassElement repositoryClass,
-                                                                Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                                String repositoryType,
-                                                                String argName) {
+                                                               Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                               String repositoryType,
+                                                               String argName) {
         return resolveEntityFromTypeArguments(repositoryClass.getTypeArguments(repositoryType), entityResolver, argName);
     }
 

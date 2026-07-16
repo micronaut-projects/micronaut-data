@@ -140,7 +140,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     };
 
     private final Dialect dialect;
-    private final SqlDialectOptions dialectOptions;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
     /**
@@ -157,7 +156,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     annotationMetadata
                         .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                         .orElse(Dialect.ANSI));
-            this.dialectOptions = SqlDialectOptions.of(annotationMetadata, dialect);
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -178,7 +176,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         } else {
             this.dialect = Dialect.ANSI;
-            this.dialectOptions = SqlDialectOptions.defaults(dialect);
         }
     }
 
@@ -187,7 +184,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
-        this.dialectOptions = SqlDialectOptions.defaults(dialect);
     }
 
     /**
@@ -196,18 +192,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public SqlQueryBuilder(Dialect dialect) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
-        this.dialectOptions = SqlDialectOptions.defaults(dialect);
-    }
-
-    /**
-     * @param dialect The dialect
-     * @param dialectOptions The dialect options
-     */
-    public SqlQueryBuilder(Dialect dialect, SqlDialectOptions dialectOptions) {
-        ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
-        ArgumentUtils.requireNonNull("dialectOptions", dialectOptions);
-        this.dialect = dialect;
-        this.dialectOptions = dialectOptions;
     }
 
     /**
@@ -216,31 +200,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     public Dialect getDialect() {
         return dialect;
-    }
-
-    /**
-     * @param requiredVersion The required target dialect version
-     * @return Whether the target dialect version meets the requirement
-     * @since 5.1
-     */
-    @Override
-    public boolean isDialectVersionAtLeast(String requiredVersion) {
-        return dialectOptions.isVersionAtLeast(requiredVersion);
-    }
-
-    /**
-     * @return The normalized target dialect version, or {@code null} when none is configured.
-     * @since 5.1
-     */
-    @Override
-    @Nullable
-    public String getDialectVersion() {
-        return dialectOptions.version().orElse(null);
-    }
-
-    @Override
-    protected SqlDialectOptions getDialectOptions() {
-        return dialectOptions;
     }
 
     @Override
@@ -417,19 +376,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
-        return buildCreateTableStatements(entity, definitionProviders, dialectOptions);
-    }
-
-    /**
-     * Builds a set of {@code CREATE TABLE} statements for the given entity.
-     *
-     * @param entity The entity
-     * @param definitionProviders The definition providers
-     * @param dialectOptions The resolved dialect options
-     * @return The {@code CREATE TABLE} statements
-     */
-    @Experimental
-    public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders, SqlDialectOptions dialectOptions) {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
@@ -439,7 +385,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect(), dialectOptions);
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -472,27 +418,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return buildCreateTableStatements(List.of(), entities, dialect);
     }
 
-    @Experimental
-    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
-                                                     PersistentEntity[] entities,
-                                                     Dialect dialect) {
-        return buildCreateTableStatements(definitionProviders, entities, dialect, dialect == this.dialect ? dialectOptions : SqlDialectOptions.defaults(dialect));
-    }
-
     /**
      * Builds the creation table statement for collection of entities.
      *
      * @param definitionProviders The definition providers
      * @param entities The collection of entities
      * @param dialect The dialect
-     * @param dialectOptions The resolved dialect options
      * @return The tables for the given entities
      */
     @Experimental
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
-                                                     Dialect dialect,
-                                                     SqlDialectOptions dialectOptions) {
+                                                     Dialect dialect) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -508,7 +445,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
-            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect, dialectOptions);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);

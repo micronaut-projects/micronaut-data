@@ -1,70 +1,9 @@
 Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
 
 Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
-Micronaut Data supports schema generation for this feature on Oracle Database 23.26.1 and later.
-
-To generate Oracle 23.26.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=23.26.1`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=23.26.1`.
-If both are present, the annotation processor option takes precedence.
-
-The configured dialect `version` is a SQL generation target.
-It is not runtime database version detection and it does not inspect JDBC or R2DBC connection metadata.
-Use dot-separated numeric notation only, such as `26` or `26.0.0`.
-
-For Gradle Java projects:
-
-[source,groovy]
-----
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.26.1")
-}
-----
-
-For Maven projects:
-
-[source,xml]
-----
-<compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.26.1</arg>
-</compilerArgs>
-----
-
-The target version can also be set on an individual repository:
-
-[source,java]
-----
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-
-@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
-interface AccountRepository {
-}
-----
-
-If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:
-
-[source,yaml]
-----
-datasources:
-  default:
-    dialect: ORACLE
-    dialect-options:
-      version: 26
-----
-
-For R2DBC:
-
-[source,yaml]
-----
-r2dbc:
-  datasources:
-    default:
-      dialect: ORACLE
-      dialect-options:
-        version: 26
-----
-
-IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
+Reservable columns require Oracle Database 23.26.1 or later. Oracle documentation may refer to this capability using the `26` code name.
+Micronaut Data validates only that the configured dialect is Oracle; it does not configure or detect the database version.
+Use ann:data.annotation.Reservable[] only when the target Oracle Database supports reservable columns. Otherwise, Oracle rejects the generated DDL or DML.
 
 The ann:data.annotation.Reservable[] annotation can be used on numeric persistent properties.
 That includes a scalar property inside an embedded component, but not the embedded association property itself.
@@ -123,7 +62,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
+@JdbcRepository(dialect = Dialect.ORACLE)
 interface AccountRepository extends GenericRepository<Account, Long> {
 
     Account insert(Account account);
@@ -135,6 +74,16 @@ interface AccountRepository extends GenericRepository<Account, Long> {
     );
 }
 ----
+
+For reservation updates that cannot be expressed by the derived method grammar, use an explicit ann:data.annotation.Query[] method:
+
+[source,java]
+----
+@Query("UPDATE \"ACCOUNT\" SET \"BALANCE\" = \"BALANCE\" + :amount WHERE \"ID\" = :id")
+int reserveBalance(Long id, Long amount);
+----
+
+Raw queries bypass the derived reservation-method matcher. They can use a different `WHERE` predicate, but Micronaut Data does not validate their lock-free reservation semantics. The query must use only reservable delta assignments in its `SET` clause and must not mix reservable and non-reservable assignments.
 
 Generated entity update operations skip reservable properties.
 For example, `repository.update(account)` updates non-reservable properties but does not assign the reservable column directly.
@@ -167,7 +116,6 @@ Method or entity validation that fails before SQL execution continues to throw `
 Micronaut Data validates reservable mappings during schema generation:
 
 * ann:data.annotation.Reservable[] is supported only for Oracle schema generation.
-* The configured Oracle dialect option version must be 26 or later.
 * The property type must be numeric.
 * The entity must have a primary key.
 * A reservable property cannot be a primary key, generated value, relationship, foreign key, indexed property, or use a custom column definition.

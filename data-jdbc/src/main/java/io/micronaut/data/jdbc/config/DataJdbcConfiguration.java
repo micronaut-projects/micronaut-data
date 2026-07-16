@@ -17,16 +17,13 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.data.annotation.Fetch;
-import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.Toggleable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 
 import java.util.ArrayList;
@@ -48,8 +45,6 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
-    @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
-    private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     @Nullable
@@ -142,29 +137,6 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setDialect(Dialect dialect) {
         this.dialect = dialect;
-    }
-
-    /**
-     * @return resolved SQL dialect options
-     */
-    public SqlDialectOptions resolveDialectOptions() {
-        return dialectOptions.toDialectOptions(dialect);
-    }
-
-    /**
-     * @return The dialect options.
-     */
-    public DialectOptionsConfiguration getDialectOptions() {
-        return dialectOptions;
-    }
-
-    /**
-     * @param dialectOptions The dialect options.
-     */
-    public void setDialectOptions(@Nullable DialectOptionsConfiguration dialectOptions) {
-        if (dialectOptions != null) {
-            this.dialectOptions = dialectOptions;
-        }
     }
 
     @NonNull
@@ -268,27 +240,4 @@ public class DataJdbcConfiguration implements Named, Toggleable {
         this.defaultFetchSize = defaultFetchSize;
     }
 
-    /**
-     * SQL dialect options for JDBC schema generation.
-     */
-    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
-
-        private boolean validateVersion = true;
-
-        /**
-         * @return Whether JDBC should validate generated SQL target versions against the connected server version.
-         * @since 5.1
-         */
-        public boolean isValidateVersion() {
-            return validateVersion;
-        }
-
-        /**
-         * @param validateVersion Whether JDBC should validate generated SQL target versions against the connected server version.
-         * @since 5.1
-         */
-        public void setValidateVersion(boolean validateVersion) {
-            this.validateVersion = validateVersion;
-        }
-    }
 }

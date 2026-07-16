@@ -243,7 +243,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect, configuration.resolveDialectOptions());
+                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {

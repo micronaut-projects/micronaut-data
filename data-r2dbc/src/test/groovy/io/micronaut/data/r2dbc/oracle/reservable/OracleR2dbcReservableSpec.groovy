@@ -26,7 +26,7 @@ class OracleR2dbcReservableSpec extends Specification implements OracleXETestPro
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties + ["r2dbc.datasources.default.dialect-options.version": "26"])
+    ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
     ReservableAccountRepository repository = context.getBean(ReservableAccountRepository)

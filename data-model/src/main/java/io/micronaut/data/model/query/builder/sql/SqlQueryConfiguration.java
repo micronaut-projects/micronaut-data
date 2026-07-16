@@ -62,10 +62,5 @@ public @interface SqlQueryConfiguration {
          */
         boolean escapeQueries() default true;
 
-        /**
-         * @return The target dialect version to use for SQL generation.
-         * @since 5.1
-         */
-        String version() default "";
     }
 }
