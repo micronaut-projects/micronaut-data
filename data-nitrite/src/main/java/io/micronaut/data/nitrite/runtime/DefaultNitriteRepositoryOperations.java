@@ -836,9 +836,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      */
     @Override
     public <R> Page<R> findPage(@NonNull final PagedQuery<R> q) {
-        Iterable<R> results = findAll(q);
-        List<R> list = new ArrayList<>();
-        results.forEach(list::add);
+        List<R> list = toPageContent(findAll(q));
         Pageable pageable = q.getPageable();
         if (pageable.getMode() == Pageable.Mode.CURSOR_NEXT || pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS) {
             RuntimePersistentEntity<?> entity = getEntity(q.getRootEntity());
@@ -852,6 +850,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             );
         }
         return Page.of(list, q.getPageable(), count(q));
+    }
+
+    private <R> List<R> toPageContent(Iterable<R> results) {
+        if (results instanceof List<R> list) {
+            return list;
+        }
+        List<R> list = new ArrayList<>();
+        results.forEach(list::add);
+        return list;
     }
 
     private Sort resolveCursoredSort(PagedQuery<?> query, RuntimePersistentEntity<?> entity) {
