@@ -248,6 +248,12 @@ public final class NitriteQueryExecutor {
             return null;
         }
 
+        List<String> projectedFields = getProjectedFields(nq);
+        if (Object[].class.equals(nq.getResultType()) && !projectedFields.isEmpty()) {
+            RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+            return projectionMapper.mapDocument(doc, projectedFields, entity, nq.getResultType(), false);
+        }
+
         // Handle DTO projection
         if (nq.isDtoProjection()) {
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
@@ -386,6 +392,13 @@ public final class NitriteQueryExecutor {
             }
         }
 
+        List<String> projectedFields = getProjectedFields(nq);
+        if (Object[].class.equals(nq.getResultType()) && !projectedFields.isEmpty()) {
+            var cursor = coll.find(filter, findOptions);
+            RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+            return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
+        }
+
         // Handle DTO projection
         if (nq.isDtoProjection()) {
             var cursor = coll.find(filter, findOptions);
@@ -402,7 +415,7 @@ public final class NitriteQueryExecutor {
 
         // Handle native single-field projection
         if (!nq.getResultType().equals(nq.getRootEntity()) && !nq.isDtoProjection()) {
-            List<String> projectedFields = null;
+            projectedFields = null;
             String projectField = queryParser.extractProjectionField(query);
             if (projectField != null) {
                 projectedFields = Collections.singletonList(projectField);

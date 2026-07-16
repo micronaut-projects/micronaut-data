@@ -200,6 +200,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             entityMapper,
             queryParser,
             filterBuilder,
+            conversionService,
             collectionRegistry::getCollection,
             this::getEntity);
         this.queryExecutor = new NitriteQueryExecutor(

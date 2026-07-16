@@ -22,6 +22,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -159,7 +160,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // or otherwise confirm by checking the collection.
             Object idValue = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
             boolean isUpdate;
-            if (idValue == null) {
+            if (ctx.isStrictInsert() || idValue == null) {
                 isUpdate = false;
             } else if (meta.idProp() != null && meta.idProp().isGenerated()) {
                 isUpdate = true;
@@ -199,6 +200,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                     cascadePost(Relation.Cascade.PERSIST);
                 }
             }
+        } catch (EntityExistsException e) {
+            throw e;
         } catch (Exception e) {
             failed(e, "PERSIST");
         }
@@ -234,6 +237,24 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Object entityId = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
 
             if (entityId != null) {
+                if (ctx.isStrictInsert()) {
+                    Filter filter = entityMapper.idEqualsFilter(meta, entityId);
+                    if (!collection.find(filter).isEmpty()) {
+                        throw new EntityExistsException("Entity already exists with id: " + entityId);
+                    }
+                    RuntimePersistentProperty<T> versionProp = meta.versionProp();
+                    if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
+                        BeanProperty<T, Object> versionProperty = versionProp.getProperty();
+                        entity = helper.updateEntityId(versionProperty, entity, 0L);
+                    }
+                    Document doc = repositoryWriter.toDocument(entity);
+                    if (doc != null) {
+                        helper.logInsert(collection.getName(), doc);
+                        collection.insert(doc);
+                    }
+                    ctx.persisted.add(entity);
+                    return;
+                }
                 // Entity has ID - use upsert (update with insert-if-absent)
                 // Initialize version to 0 if not set (for optimistic locking)
                 RuntimePersistentProperty<T> versionProp = meta.versionProp();

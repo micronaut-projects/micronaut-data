@@ -22,6 +22,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
@@ -142,7 +143,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
             for (T entity : entities) {
-                if (meta.idAccessor() != null && meta.idAccessor().get(entity) != null) {
+                if (!ctx.isStrictInsert() && meta.idAccessor() != null && meta.idAccessor().get(entity) != null) {
                     existingEntities.add(entity);
                 } else {
                     newEntities.add(entity);
@@ -191,6 +192,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
             this.entities = combined;
 
+        } catch (EntityExistsException e) {
+            throw e;
         } catch (OptimisticLockException e) {
             throw e;
         } catch (Exception e) {
@@ -280,6 +283,22 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
                 Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
                 if (id != null) {
+                    if (ctx.isStrictInsert()) {
+                        Filter filter = entityMapper.idEqualsFilter(meta, id);
+                        if (!collection.find(filter).isEmpty()) {
+                            throw new EntityExistsException("Entity already exists with id: " + id);
+                        }
+                        if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
+                            BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
+                            entity = helper.updateEntityId(versionProperty, entity, 0L);
+                            entities.set(i, entity);
+                        }
+                        Document doc = repositoryWriter.toDocument(entity);
+                        if (doc != null) {
+                            docsToInsert.add(doc);
+                        }
+                        continue;
+                    }
                     if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
                         BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                         entity = helper.updateEntityId(versionProperty, entity, 0L);

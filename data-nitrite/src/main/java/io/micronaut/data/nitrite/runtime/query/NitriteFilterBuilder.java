@@ -223,6 +223,7 @@ public final class NitriteFilterBuilder {
             try {
                 RuntimePersistentProperty<?> identity = entity.getIdentity();
                 if (identity != null && (identity.getName().equals(rawField)
+                        || identity.getPersistedName().equals(rawField)
                         || "id".equals(rawField) || "_id".equals(rawField))) {
                     persistedName = entityMapper.normalizeFieldName(rawField, entity);
                 }
@@ -312,7 +313,10 @@ public final class NitriteFilterBuilder {
         String persistedName = rawField;
         if (entity != null) {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity.getName().equals(rawField) || "id".equals(rawField) || "_id".equals(rawField)) {
+            if (identity.getName().equals(rawField)
+                    || identity.getPersistedName().equals(rawField)
+                    || "id".equals(rawField)
+                    || "_id".equals(rawField)) {
                 persistedName = entityMapper.normalizeFieldName(rawField, entity);
             } else {
                 RuntimePersistentProperty<?> prop = entity.getPropertyByName(rawField);

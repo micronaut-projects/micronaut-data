@@ -245,7 +245,10 @@ public final class NitriteEntityMapper {
   public String normalizeFieldName(final String field, @Nullable final RuntimePersistentEntity<?> entity) {
     if (entity != null) {
       RuntimePersistentProperty<?> idProperty = safeGetIdentity(entity);
-      if (idProperty != null && (idProperty.getName().equals(field) || "_id".equals(field) || "id".equals(field))) {
+      if (idProperty != null && (idProperty.getName().equals(field)
+          || idProperty.getPersistedName().equals(field)
+          || "_id".equals(field)
+          || "id".equals(field))) {
         return ID_FIELD;
       }
       RuntimePersistentProperty<?> prop = entity.getPropertyByName(field);

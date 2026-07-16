@@ -59,6 +59,7 @@ final class PathResolver {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
             if (identity != null && (
                     identity.getName().equals(rawField) ||
+                    identity.getPersistedName().equals(rawField) ||
                     "id".equals(rawField) ||
                     "_id".equals(rawField))) {
                 return plain(identity.getPersistedName());

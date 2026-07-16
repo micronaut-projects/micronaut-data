@@ -27,6 +27,11 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 @Internal
 public final class NitriteOperationContext extends OperationContext {
 
+    private static final String MICRONAUT_INSERT = "io.micronaut.data.annotation.Insert";
+    private static final String JAKARTA_INSERT = "jakarta.data.repository.Insert";
+
+    private final boolean strictInsert;
+
     /**
      * Creates a new NitriteOperationContext.
      *
@@ -35,5 +40,14 @@ public final class NitriteOperationContext extends OperationContext {
      */
     public NitriteOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType) {
         super(annotationMetadata, repositoryType);
+        this.strictInsert = annotationMetadata.hasAnnotation(MICRONAUT_INSERT)
+            || annotationMetadata.hasAnnotation(JAKARTA_INSERT);
+    }
+
+    /**
+     * @return Whether this operation came from an explicit insert method.
+     */
+    public boolean isStrictInsert() {
+        return strictInsert;
     }
 }

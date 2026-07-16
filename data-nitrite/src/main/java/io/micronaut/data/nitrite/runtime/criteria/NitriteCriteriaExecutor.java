@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
@@ -30,9 +31,11 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
+import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
@@ -66,6 +69,7 @@ public final class NitriteCriteriaExecutor {
     private final NitriteFilterBuilder filterBuilder;
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
+    private final CollectionProjectionMapper projectionMapper;
 
     /**
      * Creates a new NitriteCriteriaExecutor.
@@ -74,6 +78,7 @@ public final class NitriteCriteriaExecutor {
      * @param entityMapper the entity mapper
      * @param queryParser the query parser
      * @param filterBuilder the filter builder
+     * @param conversionService the conversion service
      * @param collectionFactory the collection factory function
      * @param entityFactory the entity factory function
      */
@@ -81,6 +86,7 @@ public final class NitriteCriteriaExecutor {
                                    NitriteEntityMapper entityMapper,
                                    NitriteQueryParser queryParser,
                                    NitriteFilterBuilder filterBuilder,
+                                   ConversionService conversionService,
                                    Function<Class<?>, NitriteCollection> collectionFactory,
                                    Function<Class<?>, RuntimePersistentEntity<?>> entityFactory) {
         this.queryBuilder = queryBuilder;
@@ -89,6 +95,7 @@ public final class NitriteCriteriaExecutor {
         this.filterBuilder = filterBuilder;
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
+        this.projectionMapper = new CollectionProjectionMapper(new ValueConverter(conversionService), entityMapper);
     }
 
     /**
@@ -139,7 +146,14 @@ public final class NitriteCriteriaExecutor {
         }
 
         Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
-        return doc == null ? null : entityMapper.fromDocument(doc, resultType);
+        if (doc == null) {
+            return null;
+        }
+        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
+        if (!projectedFields.isEmpty()) {
+            return projectionMapper.mapDocument(doc, projectedFields, persistentEntity, resultType, false);
+        }
+        return entityMapper.fromDocument(doc, resultType);
     }
 
     /**
@@ -158,8 +172,14 @@ public final class NitriteCriteriaExecutor {
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
         FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
         List<T> results = new ArrayList<>();
+        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
-            results.add(entityMapper.fromDocument(doc, type));
+            T result = projectedFields.isEmpty()
+                ? entityMapper.fromDocument(doc, type)
+                : projectionMapper.mapDocument(doc, projectedFields, persistentEntity, type, false);
+            if (result != null) {
+                results.add(result);
+            }
         }
         return results;
     }
@@ -182,8 +202,14 @@ public final class NitriteCriteriaExecutor {
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
         FindOptions options = buildFindOptions(queryResult, persistentEntity, offset, limit);
         List<T> results = new ArrayList<>();
+        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
-            results.add(entityMapper.fromDocument(doc, type));
+            T result = projectedFields.isEmpty()
+                ? entityMapper.fromDocument(doc, type)
+                : projectionMapper.mapDocument(doc, projectedFields, persistentEntity, type, false);
+            if (result != null) {
+                results.add(result);
+            }
         }
         return results;
     }
