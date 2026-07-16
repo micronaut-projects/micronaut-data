@@ -1,7 +1,6 @@
 package io.micronaut.data.jakarta.tck;
 
 import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
-import ee.jakarta.tck.data.standalone.entity.EntityTests;
 import ee.jakarta.tck.data.standalone.entity.ExpressionTests;
 import ee.jakarta.tck.data.standalone.entity.JakartaQueryTests;
 import ee.jakarta.tck.data.standalone.entity.RestrictionTests;
@@ -26,14 +25,6 @@ public class FilterExtension implements ExecutionCondition {
             switch (testMethodName) {
                 case "testInsertEntityThatAlreadyExists",
                      "testIdAttributeWithDifferentName" -> {
-                    return DISABLED;
-                }
-            }
-        }
-        if (testClass == EntityTests.class) {
-            switch (testMethodName) {
-                case "testStaticMetamodelDescendingSorts",
-                     "testStaticMetamodelDescendingSortsPreGenerated" -> {
                     return DISABLED;
                 }
             }
