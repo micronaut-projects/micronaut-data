@@ -328,7 +328,7 @@ public final class NitriteQueryExecutor {
         }
 
         FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), s, entityFactory.apply(q.getRootEntity()));
-        if (limit.maxResults() > 0) {
+        if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && limit.maxResults() > 0) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
         }

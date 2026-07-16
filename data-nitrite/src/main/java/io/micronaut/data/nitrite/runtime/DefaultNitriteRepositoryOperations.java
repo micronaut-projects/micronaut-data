@@ -21,9 +21,11 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -540,14 +542,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      */
     private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable final Limit limit, @Nullable RuntimePersistentEntity<?> entity) {
         FindOptions options = new FindOptions();
-        if (pageable.getOffset() > 0) {
+        boolean cursored = pageable.getMode() == Pageable.Mode.CURSOR_NEXT || pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS;
+        if (!cursored && pageable.getOffset() > 0) {
             options.skip(pageable.getOffset());
         }
         // Apply limit from pageable first, then from explicit Limit (for methods like listTop10)
         int effectiveLimit = -1;
-        if (pageable.getSize() > 0) {
+        if (!cursored && pageable.getSize() > 0) {
             effectiveLimit = pageable.getSize();
-        } else if (limit != null && limit.maxResults() > 0) {
+        } else if (!cursored && limit != null && limit.maxResults() > 0) {
             effectiveLimit = limit.maxResults();
         }
         if (effectiveLimit > 0) {
@@ -642,7 +645,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         Class<T> type = query.getRootEntity();
         Filter filter = Filter.ALL;
         Sort sort = query.getPageable().getSort();
-        Limit limit = query.getQueryLimit();
+        Limit limit = query.getPageable().getMode() == Pageable.Mode.OFFSET ? query.getQueryLimit() : Limit.UNLIMITED;
 
         var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit, getEntity(type)));
         List<T> results = new ArrayList<>();
@@ -836,7 +839,151 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         Iterable<R> results = findAll(q);
         List<R> list = new ArrayList<>();
         results.forEach(list::add);
+        Pageable pageable = q.getPageable();
+        if (pageable.getMode() == Pageable.Mode.CURSOR_NEXT || pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS) {
+            RuntimePersistentEntity<?> entity = getEntity(q.getRootEntity());
+            Sort sort = resolveCursoredSort(q, entity);
+            List<R> pageContent = applyCursorWindow(list, pageable, sort, entity);
+            return CursoredPage.of(
+                pageContent,
+                pageable,
+                createCursors(pageContent, sort, entity),
+                pageable.requestTotal() ? count(q) : null
+            );
+        }
         return Page.of(list, q.getPageable(), count(q));
+    }
+
+    private Sort resolveCursoredSort(PagedQuery<?> query, RuntimePersistentEntity<?> entity) {
+        Sort sort = query.getPageable().getSort();
+        if (query instanceof NitritePreparedQuery<?, ?> nitriteQuery) {
+            Sort parsedSort = parseSortFromJsonQuery(nitriteQuery.getQuery());
+            if ((parsedSort == null || !parsedSort.isSorted()) && nitriteQuery.getQueryHints() != null) {
+                parsedSort = parseSortFromHints(nitriteQuery.getQueryHints());
+            }
+            if (parsedSort != null && parsedSort.isSorted()) {
+                if (sort == null || !sort.isSorted()) {
+                    sort = parsedSort;
+                } else {
+                    List<Sort.Order> merged = new ArrayList<>(parsedSort.getOrderBy());
+                    merged.addAll(sort.getOrderBy());
+                    sort = Sort.of(merged);
+                }
+            }
+        }
+        if (sort == null || !sort.isSorted()) {
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity == null) {
+                throw new IllegalStateException("Cursored pagination requires a sort or identity property for " + entity);
+            }
+            return Sort.of(Sort.Order.asc(identity.getName()));
+        }
+        return sort;
+    }
+
+    private <R> List<R> applyCursorWindow(List<R> results,
+                                          Pageable pageable,
+                                          Sort sort,
+                                          RuntimePersistentEntity<?> entity) {
+        if (results.isEmpty()) {
+            return List.of();
+        }
+        List<R> matching = pageable.cursor()
+            .map(cursor -> results.stream()
+                .filter(result -> compareToCursor(result, cursor, sort, entity) * cursorDirection(pageable) > 0)
+                .toList())
+            .orElse(results);
+        int size = pageable.getSize();
+        if (size < 0 || matching.size() <= size) {
+            return matching;
+        }
+        if (pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS && pageable.cursor().isPresent()) {
+            return new ArrayList<>(matching.subList(matching.size() - size, matching.size()));
+        }
+        return new ArrayList<>(matching.subList(0, size));
+    }
+
+    private int cursorDirection(Pageable pageable) {
+        return pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS ? -1 : 1;
+    }
+
+    private int compareToCursor(Object result,
+                                Pageable.Cursor cursor,
+                                Sort sort,
+                                RuntimePersistentEntity<?> entity) {
+        List<Sort.Order> orders = sort.getOrderBy();
+        if (orders.size() != cursor.size()) {
+            throw new IllegalArgumentException("The cursor must match the sorting size");
+        }
+        for (int i = 0; i < orders.size(); i++) {
+            Sort.Order order = orders.get(i);
+            Object propertyValue = getPropertyValue(result, order.getProperty(), entity);
+            int comparison = compareNullable(propertyValue, cursor.get(i));
+            if (comparison != 0) {
+                return order.isAscending() ? comparison : -comparison;
+            }
+        }
+        return 0;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private int compareNullable(@Nullable Object left, @Nullable Object right) {
+        if (left == right) {
+            return 0;
+        }
+        if (left == null) {
+            return -1;
+        }
+        if (right == null) {
+            return 1;
+        }
+        if (left instanceof Comparable comparable) {
+            return comparable.compareTo(right);
+        }
+        throw new IllegalArgumentException("Cursor property value must be comparable: " + left);
+    }
+
+    private List<Pageable.Cursor> createCursors(List<?> results,
+                                                Sort sort,
+                                                RuntimePersistentEntity<?> entity) {
+        if (results.isEmpty()) {
+            return List.of();
+        }
+        List<Sort.Order> orders = sort.getOrderBy();
+        List<Pageable.Cursor> cursors = new ArrayList<>(results.size());
+        for (Object result : results) {
+            List<Object> elements = new ArrayList<>(orders.size());
+            for (Sort.Order order : orders) {
+                elements.add(getPropertyValue(result, order.getProperty(), entity));
+            }
+            cursors.add(Pageable.Cursor.of(elements));
+        }
+        return cursors;
+    }
+
+    private Object getPropertyValue(Object result, String property, RuntimePersistentEntity<?> entity) {
+        String propertyName = property.contains(".") ? property.substring(property.lastIndexOf('.') + 1) : property;
+        PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
+        if (propertyPath == null) {
+            propertyPath = findPersistedPropertyPath(propertyName, entity);
+        }
+        if (propertyPath == null) {
+            throw new IllegalArgumentException("Unknown cursor sort property [" + property + "] for " + entity);
+        }
+        return propertyPath.getPropertyValue(result);
+    }
+
+    private @Nullable PersistentPropertyPath findPersistedPropertyPath(String persistedName, RuntimePersistentEntity<?> entity) {
+        RuntimePersistentProperty<?> identity = entity.getIdentity();
+        if (identity != null && (identity.getPersistedName().equals(persistedName) || "_id".equals(persistedName))) {
+            return entity.getPropertyPath(identity.getName());
+        }
+        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+            if (property.getPersistedName().equals(persistedName)) {
+                return entity.getPropertyPath(property.getName());
+            }
+        }
+        return null;
     }
 
     @Override

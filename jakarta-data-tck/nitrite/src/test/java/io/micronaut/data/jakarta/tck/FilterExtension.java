@@ -35,13 +35,7 @@ public class FilterExtension implements ExecutionCondition {
                 case "testIgnoreCase" -> {
                     return DISABLED;
                 }
-                case "testCursoredPageOfNothing",
-                     "testCursoredPageOf7FromCursor",
-                     "testQueryWithOr",
-                     "testFirstCursoredPageOf8AndNextPages",
-                     "testCursoredPageWithoutTotalOfNothing",
-                     "testFirstCursoredPageWithoutTotalOf6AndNextPages",
-                     "testCursoredPageWithoutTotalOf9FromCursor",
+                case "testQueryWithOr",
                      "testBasicRepository",
                      "testNonUniqueResultException",
                      "testSelectEntityAttributeAsPage",
