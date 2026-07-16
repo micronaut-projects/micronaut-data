@@ -239,5 +239,4 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
     }
-
 }

@@ -61,6 +61,5 @@ public @interface SqlQueryConfiguration {
          * @return Whether automatically escape queries.
          */
         boolean escapeQueries() default true;
-
     }
 }

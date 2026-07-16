@@ -85,5 +85,4 @@ public @interface R2dbcRepository {
      */
     @AliasFor(annotation = Repository.class, member = "dialect")
     Dialect dialect();
-
 }

@@ -208,5 +208,4 @@ public class DataR2dbcConfiguration implements Named {
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
     }
-
 }
