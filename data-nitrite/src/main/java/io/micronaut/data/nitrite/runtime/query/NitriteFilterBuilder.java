@@ -126,7 +126,7 @@ public final class NitriteFilterBuilder {
                     String op = (String) exprEntry.getKey();
                     if (exprEntry.getValue() instanceof List<?> operands && operands.size() == 2) {
                         compiledFilters.add(new NitriteFilterAST.ExprNode(
-                            op, compileExprValue(operands.get(0)), compileExprValue(operands.get(1))));
+                            op, compileExprValue(entity, operands.get(0)), compileExprValue(entity, operands.get(1))));
                     }
                 }
             } else {
@@ -148,30 +148,38 @@ public final class NitriteFilterBuilder {
      * a computed operator, or a literal/bound-parameter value.
      */
     @SuppressWarnings("unchecked")
-    private NitriteFilterAST.ExprValueNode compileExprValue(Object node) {
+    private NitriteFilterAST.ExprValueNode compileExprValue(RuntimePersistentEntity<?> entity, Object node) {
         if (node instanceof String s && s.startsWith("$") && !isPlaceholder(s)) {
-            return new NitriteFilterAST.ExprValueNode.FieldRef(s.substring(1));
+            return new NitriteFilterAST.ExprValueNode.FieldRef(normalizeExprField(entity, s.substring(1)));
         }
         if (node instanceof Map<?, ?> m && m.size() == 1) {
             Map.Entry<?, ?> entry = m.entrySet().iterator().next();
             if ("$strLenCP".equals(entry.getKey())) {
-                return new NitriteFilterAST.ExprValueNode.StrLen(compileExprValue(entry.getValue()));
+                return new NitriteFilterAST.ExprValueNode.StrLen(compileExprValue(entity, entry.getValue()));
             }
             if ("$toLower".equals(entry.getKey())) {
-                return new NitriteFilterAST.ExprValueNode.ToLower(compileExprValue(entry.getValue()));
+                return new NitriteFilterAST.ExprValueNode.ToLower(compileExprValue(entity, entry.getValue()));
             }
             if ("$toUpper".equals(entry.getKey())) {
-                return new NitriteFilterAST.ExprValueNode.ToUpper(compileExprValue(entry.getValue()));
+                return new NitriteFilterAST.ExprValueNode.ToUpper(compileExprValue(entity, entry.getValue()));
             }
             if ("$multiply".equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
                 List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
                 for (Object operand : operands) {
-                    compiled.add(compileExprValue(operand));
+                    compiled.add(compileExprValue(entity, operand));
                 }
                 return new NitriteFilterAST.ExprValueNode.Multiply(compiled);
             }
         }
         return new NitriteFilterAST.ExprValueNode.Literal(valueResolver.compileValue(node));
+    }
+
+    private String normalizeExprField(RuntimePersistentEntity<?> entity, String field) {
+        PathResolver.PathResolution resolution = PathResolver.resolve(entity, field);
+        if (!resolution.isReference()) {
+            return entityMapper.normalizeFieldName(field, entity);
+        }
+        return resolution.persistedField();
     }
 
     private NitriteFilterAST compileFieldFilter(
