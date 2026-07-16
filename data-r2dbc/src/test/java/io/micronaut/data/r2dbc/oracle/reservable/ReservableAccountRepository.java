@@ -20,7 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.CrudRepository;
 
-@R2dbcRepository(dialect = Dialect.ORACLE, version = "26")
+@R2dbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 public interface ReservableAccountRepository extends CrudRepository<ReservableAccount, Long> {
 
     int reserveDecrementBalance(@Id Long id, Long balance);

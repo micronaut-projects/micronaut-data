@@ -32,7 +32,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
-    void "test reserve method requires Oracle 26 or later"() {
+    void "test reserve method requires Oracle 23.26.1 or later"() {
         when:
         buildRepository('test.NonOracleAccountRepository', """
 import io.micronaut.data.annotation.Id;
@@ -56,7 +56,7 @@ class Account {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains("Reservation methods require Oracle dialect version 26 or later")
+        e.message.contains("Reservation methods require Oracle dialect version 23.26.1 or later")
 
         when:
         buildRepository('test.LegacyOracleAccountRepository', """
@@ -81,7 +81,7 @@ class Account {
 
         then:
         e = thrown(RuntimeException)
-        e.message.contains("Reservation methods require Oracle dialect version 26 or later")
+        e.message.contains("Reservation methods require Oracle dialect version 23.26.1 or later")
     }
 
     void "test reserve methods render reservable delta updates"() {
@@ -94,7 +94,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 @io.micronaut.context.annotation.Executable
 interface AccountRepository extends GenericRepository<Account, Long> {
     long reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amount, Long balance);
@@ -135,7 +135,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 @io.micronaut.context.annotation.Executable
 interface OrderLineRepository extends GenericRepository<Project, ProjectId> {
     long reserveDecrementLimitsAvailableBalance(@Id ProjectId id, Long limitsAvailableBalance);
@@ -191,7 +191,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 @io.micronaut.context.annotation.Executable
 interface InvoiceRepository extends GenericRepository<Invoice, Long> {
     long reserveIncrementAccountBalance(@Id Long id, Long accountBalance);

@@ -72,7 +72,7 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder queryBuilder)
             || queryBuilder.getDialect() != Dialect.ORACLE
             || !queryBuilder.isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_26_1_VERSION)) {
-            throw new MatchFailedException("Reservation methods require Oracle dialect version 26 or later");
+            throw new MatchFailedException("Reservation methods require Oracle dialect version 23.26.1 or later");
         }
         if (!TypeUtils.isValidBatchUpdateReturnType(method)) {
             throw new MatchFailedException("Reservation methods only support void or number based return types");

@@ -465,7 +465,7 @@ public final class SqlSchemaUtils {
             throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] is only supported for Oracle");
         }
         if (!dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_26_1_VERSION)) {
-            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] requires Oracle Database 26 or later");
+            throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] requires Oracle Database 23.26.1 or later");
         }
         if (!property.getDataType().isNumeric()) {
             throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] must be numeric");

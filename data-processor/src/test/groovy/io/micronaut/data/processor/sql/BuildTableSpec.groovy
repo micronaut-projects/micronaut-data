@@ -239,7 +239,7 @@ class Account {
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))'
     }
 
-    void "test build create table rejects reservable column without Oracle 26 target"() {
+    void "test build create table rejects reservable column without Oracle 23.26.1 target"() {
         given:
         def entity = buildJpaEntity('test.Account', '''
 import io.micronaut.data.annotation.Reservable;
@@ -275,7 +275,7 @@ class Account {
 
         then:
         def e = thrown(io.micronaut.data.exceptions.MappingException)
-        e.message.contains("requires Oracle Database 26")
+        e.message.contains("requires Oracle Database 23.26.1")
     }
 
     void "test build create table rejects reservable column for non Oracle dialect"() {

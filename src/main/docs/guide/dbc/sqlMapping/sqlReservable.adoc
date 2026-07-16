@@ -1,10 +1,10 @@
 Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
 
 Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
-Micronaut Data supports schema generation for this feature on Oracle Database 26 and later.
+Micronaut Data supports schema generation for this feature on Oracle Database 23.26.1 and later.
 
-To generate Oracle 26-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=26`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=26`.
+To generate Oracle 23.26.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=23.26.1`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=23.26.1`.
 If both are present, the annotation processor option takes precedence.
 
 The configured dialect `version` is a SQL generation target.
@@ -16,7 +16,7 @@ For Gradle Java projects:
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=26")
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.26.1")
 }
 ----
 
@@ -25,7 +25,7 @@ For Maven projects:
 [source,xml]
 ----
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=26</arg>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.26.1</arg>
 </compilerArgs>
 ----
 
@@ -36,7 +36,7 @@ The target version can also be set on an individual repository:
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 interface AccountRepository {
 }
 ----
@@ -123,7 +123,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 
-@JdbcRepository(dialect = Dialect.ORACLE, version = "26")
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.26.1")
 interface AccountRepository extends GenericRepository<Account, Long> {
 
     Account insert(Account account);
@@ -141,8 +141,8 @@ For example, `repository.update(account)` updates non-reservable properties but 
 If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
 The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
 If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
-Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable.
-For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods.
+Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable and directs the user to api:data.repository.GenericRepository[].
+For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
 Use `insert(...)` for new rows and an explicit derived reservation method for existing rows.
 
 This restriction is specific to reservable-only update shapes.
