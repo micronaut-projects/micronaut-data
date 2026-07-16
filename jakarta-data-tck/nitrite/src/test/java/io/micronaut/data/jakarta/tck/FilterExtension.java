@@ -79,14 +79,19 @@ public class FilterExtension implements ExecutionCondition {
             }
         }
         if (testClass == ConstraintTests.class) {
-            return DISABLED;
+            switch (testMethodName) {
+                case "testAtMostConstraint",
+                     "testLikeConstraintCustomWildcardsAndEscape",
+                     "testNotLikeConstraintCustomWildcardsAndEscape" -> {
+                    return DISABLED;
+                }
+            }
         }
         if (testClass == RestrictionTests.class) {
             switch (testMethodName) {
                 case "testUnmatchable",
                      "testNotAllRestrictions",
-                     "testNotAnyRestriction",
-                     "testTemporalGreaterThan" -> {
+                     "testNotAnyRestriction" -> {
                     return DISABLED;
                 }
             }
