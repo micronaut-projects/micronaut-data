@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.UserWithWhere
+import io.micronaut.data.hibernate.entities.UserWithWhereSummary
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 
@@ -52,5 +53,22 @@ class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
         def updatedEmail = userWithWhereRepository.updateAndReturnEmail("test3@email.com", saved.id)
         then:"Updated email value is returned"
         updatedEmail == "test3@email.com"
+    }
+
+    void "test updateReturning dto projection"() {
+        given:
+        def saved = new UserWithWhere(id: UUID.randomUUID(), email: "dto@email.com", deleted: false)
+        userWithWhereRepository.insert(saved)
+        when:
+        UserWithWhereSummary selected = userWithWhereRepository.findSummaryById(saved.id)
+        UserWithWhereSummary updated = userWithWhereRepository.updateReturningSummary("dto-updated@email.com", saved.id)
+        then:
+        selected.id == saved.id
+        selected.email == "dto@email.com"
+        selected.deleted == false
+        updated.id == saved.id
+        updated.email == "dto-updated@email.com"
+        updated.deleted == false
+        userWithWhereRepository.findById(saved.id).get().email == "dto-updated@email.com"
     }
 }

@@ -66,7 +66,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -1099,6 +1098,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " AUTO_INCREMENT";
                 }
                 break;
+            case SQLITE:
+                if (type == UUID) {
+                    column += " NOT NULL DEFAULT (lower(hex(randomblob(4))||'-'||hex(randomblob(2))||'-'||'4'||substr(hex(randomblob(2)),2)||'-'||substr('89ab',abs(random())%4+1,1)||substr(hex(randomblob(2)),2)||'-'||hex(randomblob(6))))";
+                }
+                break;
             default:
                 if (type == UUID) {
                     column += " NOT NULL DEFAULT random_uuid()";
@@ -1383,9 +1387,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 });
             }
 
-            builder = INSERT_INTO + getTableName(entity) +
-                " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
-                "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            if (columns.isEmpty()) {
+                // MySQL/MariaDB do not support DEFAULT VALUES syntax
+                if (dialect == Dialect.MYSQL) {
+                    builder = INSERT_INTO + getTableName(entity) + " () VALUES ()";
+                } else if (dialect == Dialect.ORACLE) {
+                    builder = INSERT_INTO + getTableName(entity) + " VALUES (DEFAULT)";
+                } else {
+                    builder = INSERT_INTO + getTableName(entity) + " DEFAULT VALUES";
+                }
+            } else {
+                builder = INSERT_INTO + getTableName(entity) +
+                    " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
+                    "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            }
 
             if (definition.returning()) {
                 if (dialect == Dialect.ORACLE) {
