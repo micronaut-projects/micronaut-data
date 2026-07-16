@@ -118,18 +118,48 @@ public final class NitriteQueryParser {
      */
     public @Nullable String extractProjectionField(@Nullable String jsonQuery) {
         if (jsonQuery == null || !jsonQuery.trim().startsWith("{")) {
-            return null;
+            if (jsonQuery == null || !jsonQuery.trim().startsWith("[")) {
+                return null;
+            }
         }
         try {
             Object parsed = parseJson(jsonQuery);
             if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
-                Object val = map.get("$project");
-                if (val instanceof String s) {
-                    return s;
+                String field = extractProjectionFieldFromValue(map.get("$project"));
+                if (field != null) {
+                    return field;
+                }
+            }
+            if (parsed instanceof List<?> pipeline) {
+                for (Object stage : pipeline) {
+                    if (stage instanceof Map<?, ?> map && map.containsKey("$project")) {
+                        String field = extractProjectionFieldFromValue(map.get("$project"));
+                        if (field != null) {
+                            return field;
+                        }
+                    }
                 }
             }
         } catch (Exception ignored) {
             // Best-effort JSON parsing; if it fails, assume no projection
+        }
+        return null;
+    }
+
+    private @Nullable String extractProjectionFieldFromValue(@Nullable Object value) {
+        if (value instanceof String s) {
+            return s;
+        }
+        if (value instanceof Map<?, ?> projection) {
+            for (Map.Entry<?, ?> entry : projection.entrySet()) {
+                if ("_id".equals(entry.getKey())) {
+                    continue;
+                }
+                Object projected = entry.getValue();
+                if (Integer.valueOf(1).equals(projected) || Boolean.TRUE.equals(projected)) {
+                    return entry.getKey().toString();
+                }
+            }
         }
         return null;
     }
@@ -163,9 +193,10 @@ public final class NitriteQueryParser {
                 filterMap = extracted != null ? new LinkedHashMap<>(extracted) : null;
                 if (filterMap != null && parsed instanceof Map<?, ?> m) {
                     filterMap.remove("$project");
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> setMap = m.get("$set") instanceof Map<?, ?> s ? (Map<String, Object>) s : null;
-                    updateMap = setMap != null ? new LinkedHashMap<>(setMap) : parseUpdateAnnotation(storedQuery);
+                    updateMap = extractUpdateMap(m);
+                    if (updateMap == null) {
+                        updateMap = parseUpdateAnnotation(storedQuery);
+                    }
                 }
             } catch (Exception ignored) {
                 // Best-effort JSON parsing for stored queries
@@ -181,15 +212,24 @@ public final class NitriteQueryParser {
                 return null;
             }
             Object parsed = parseJson(updateStr);
-            if (parsed instanceof Map<?, ?> m && m.get("$set") instanceof Map<?, ?> s) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> setMap = (Map<String, Object>) s;
-                return new LinkedHashMap<>(setMap);
+            if (parsed instanceof Map<?, ?> m) {
+                return extractUpdateMap(m);
             }
         } catch (Exception ignored) {
             // Best-effort parsing of @Query(update=...) annotation
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private @Nullable Map<String, Object> extractUpdateMap(Map<?, ?> source) {
+        Map<String, Object> updateMap = new LinkedHashMap<>();
+        for (String operator : List.of("$set", "$inc", "$mul")) {
+            if (source.get(operator) instanceof Map<?, ?> values) {
+                updateMap.put(operator, new LinkedHashMap<>((Map<String, Object>) values));
+            }
+        }
+        return updateMap.isEmpty() ? null : updateMap;
     }
 
     // ─── Private recursive-descent parser ────────────────────────────────────────

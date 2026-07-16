@@ -53,6 +53,7 @@ class PatternConverterUnitSpec extends Specification {
         "Pattern object"           | ~/J.*/            | "J.*"
         "slash notation stripped"  | "/foo.*/"         | "foo.*"
         "wildcard string converted"| "foo%"            | PatternConverter.convertLikeToRegex("foo%")
+        "case-insensitive wildcard"| "(?i)foo_"        | "(?i)" + PatternConverter.convertLikeToRegex("foo_")
         "plain regex passthrough"  | "^foo\$"          | "^foo\$"
         "plain string passthrough" | "foo"             | "foo"
     }

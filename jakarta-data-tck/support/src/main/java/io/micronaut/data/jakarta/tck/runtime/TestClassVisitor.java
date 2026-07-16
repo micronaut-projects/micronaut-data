@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -47,6 +48,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     private final boolean isJdbcImplementation;
     private final boolean isMongoDBImplementation;
+    private final boolean isNitriteImplementation;
 
     private boolean introspected;
 
@@ -72,6 +74,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         Object implementation = prop.getOrDefault("implementation", "");
         isJdbcImplementation = implementation.equals("jdbc");
         isMongoDBImplementation = implementation.equals("mongodb");
+        isNitriteImplementation = implementation.equals("nitrite");
     }
 
     @Override
@@ -97,6 +100,9 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         }
         if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
             element.annotate(MongoRepository.class);
+        }
+        if (element.hasStereotype(Repository.class) && isNitriteImplementation) {
+            element.annotate(NitriteRepository.class);
         }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
             if (element.hasStereotype(Introspected.class)) {
@@ -125,7 +131,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitField(FieldElement element, VisitorContext context) {
-        if (isJdbcImplementation || isMongoDBImplementation) {
+        if (isJdbcImplementation || isMongoDBImplementation || isNitriteImplementation) {
             if (element.getOwningType().hasStereotype(Entity.class)) {
                 element.annotate(Nullable.class);
             }

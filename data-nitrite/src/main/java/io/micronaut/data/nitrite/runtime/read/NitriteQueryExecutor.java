@@ -42,6 +42,7 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,6 +75,8 @@ import java.util.regex.Pattern;
 public final class NitriteQueryExecutor {
 
     private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d+)");
+    private static final String NEGATE = "$mn_negate";
+    private static final String RECIPROCATE = "$mn_reciprocate";
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -386,17 +389,9 @@ public final class NitriteQueryExecutor {
         Object[] jsonParams = buildJsonParameterValues(nq);
         Map<String, Object> namedParameters = buildNamedParameterValues(nq);
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> rawSetFields = (Map<String, Object>) nq.getFilterMap().get("$set");
-        if (rawSetFields == null) {
-            rawSetFields = nq.getUpdateMap();
-        }
-        if (rawSetFields == null || rawSetFields.isEmpty()) {
+        Map<String, Object> updateOperations = buildUpdateOperations(nq);
+        if (updateOperations.isEmpty()) {
             return Optional.of(0);
-        }
-        Map<String, Object> setFields = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> entry : rawSetFields.entrySet()) {
-            setFields.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
         }
 
         Filter filter;
@@ -406,18 +401,139 @@ public final class NitriteQueryExecutor {
             filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
         }
 
-        Document updateDoc = Document.createDocument();
-        setFields.forEach(updateDoc::put);
-        if (isOptimisticLocking(q)) {
-            applyVersionIncrement(updateDoc, entityFactory.apply(nq.getRootEntity()), namedParameters);
-        }
         Filter finalFilter = filter != null ? filter : nq.getNitriteFilter();
-        helper.logUpdate(collectionFactory.apply(nq.getRootEntity()).getName(), finalFilter, updateDoc);
-        long count = collectionFactory.apply(nq.getRootEntity()).update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
+        NitriteCollection collection = collectionFactory.apply(nq.getRootEntity());
+        RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+        long count;
+        if (requiresDocumentUpdate(updateOperations)) {
+            count = 0;
+            for (Document doc : collection.find(finalFilter).toList()) {
+                Document updateDoc = buildUpdateDocument(updateOperations, doc, jsonParams, namedParameters);
+                if (isOptimisticLocking(q)) {
+                    applyVersionIncrement(updateDoc, entity, namedParameters);
+                }
+                Object id = doc.get("id");
+                Filter idFilter = id == null ? finalFilter : FluentFilter.where("id").eq(id);
+                helper.logUpdate(collection.getName(), idFilter, updateDoc);
+                count += collection.update(idFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
+            }
+        } else {
+            Document updateDoc = buildUpdateDocument(updateOperations, null, jsonParams, namedParameters);
+            if (isOptimisticLocking(q)) {
+                applyVersionIncrement(updateDoc, entity, namedParameters);
+            }
+            helper.logUpdate(collection.getName(), finalFilter, updateDoc);
+            count = collection.update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
+        }
         if (count == 0 && !Filter.ALL.equals(finalFilter) && isOptimisticLocking(q)) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
         }
         return Optional.of(count);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> buildUpdateOperations(NitritePreparedQuery<?, Number> nq) {
+        Map<String, Object> updateOperations = new LinkedHashMap<>();
+        if (nq.getUpdateMap() != null) {
+            updateOperations.putAll(nq.getUpdateMap());
+        }
+        Map<String, Object> filterMap = nq.getFilterMap();
+        if (filterMap != null) {
+            for (String operator : List.of("$set", "$inc", "$mul")) {
+                Object value = filterMap.get(operator);
+                if (value instanceof Map<?, ?> map) {
+                    updateOperations.put(operator, new LinkedHashMap<>((Map<String, Object>) map));
+                }
+            }
+        }
+        if (updateOperations.keySet().stream().noneMatch(key -> key.startsWith("$"))) {
+            return Map.of("$set", updateOperations);
+        }
+        return updateOperations;
+    }
+
+    private boolean requiresDocumentUpdate(Map<String, Object> updateOperations) {
+        return updateOperations.containsKey("$inc") || updateOperations.containsKey("$mul");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Document buildUpdateDocument(Map<String, Object> updateOperations,
+                                         @Nullable Document currentDocument,
+                                         Object[] jsonParams,
+                                         Map<String, Object> namedParameters) {
+        Document updateDoc = Document.createDocument();
+        Object set = updateOperations.get("$set");
+        if (set instanceof Map<?, ?> setFields) {
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) setFields).entrySet()) {
+                updateDoc.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
+            }
+        }
+        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get("$inc"), jsonParams, namedParameters, "$inc");
+        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get("$mul"), jsonParams, namedParameters, "$mul");
+        return updateDoc;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void applyNumericUpdate(Document updateDoc,
+                                    @Nullable Document currentDocument,
+                                    @Nullable Object operation,
+                                    Object[] jsonParams,
+                                    Map<String, Object> namedParameters,
+                                    String operator) {
+        if (!(operation instanceof Map<?, ?> fields) || currentDocument == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : ((Map<String, Object>) fields).entrySet()) {
+            Object currentValue = currentDocument.get(entry.getKey());
+            Object operand = resolveUpdateOperand(entry.getValue(), jsonParams, namedParameters);
+            Object nextValue = applyNumericOperator(currentValue, operand, operator);
+            updateDoc.put(entry.getKey(), nextValue);
+        }
+    }
+
+    private @Nullable Object resolveUpdateOperand(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
+        Object resolved = resolveParameterValue(value, jsonParams, namedParameters);
+        if (value instanceof Map<?, ?> map) {
+            if (map.containsKey("$value")) {
+                resolved = resolveParameterValue(map.get("$value"), jsonParams, namedParameters);
+            }
+            if (Boolean.TRUE.equals(map.get(NEGATE)) && resolved instanceof Number number) {
+                resolved = -number.doubleValue();
+            }
+            if (Boolean.TRUE.equals(map.get(RECIPROCATE)) && resolved instanceof Number number) {
+                resolved = 1d / number.doubleValue();
+            }
+        }
+        return resolved;
+    }
+
+    private @Nullable Object applyNumericOperator(@Nullable Object currentValue, @Nullable Object operand, String operator) {
+        if (!(currentValue instanceof Number currentNumber) || !(operand instanceof Number operandNumber)) {
+            return currentValue;
+        }
+        double current = currentNumber.doubleValue();
+        double delta = operandNumber.doubleValue();
+        double result = "$mul".equals(operator) ? current * delta : current + delta;
+        return convertNumber(result, currentValue);
+    }
+
+    private Object convertNumber(double value, Object currentValue) {
+        if (currentValue instanceof Integer) {
+            return (int) value;
+        }
+        if (currentValue instanceof Long) {
+            return (long) value;
+        }
+        if (currentValue instanceof Float) {
+            return (float) value;
+        }
+        if (currentValue instanceof Short) {
+            return (short) value;
+        }
+        if (currentValue instanceof Byte) {
+            return (byte) value;
+        }
+        return value;
     }
 
     /**

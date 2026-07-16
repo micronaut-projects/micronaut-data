@@ -26,6 +26,7 @@ import io.micronaut.data.nitrite.runtime.query.ast.NitriteFilterAST;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -144,7 +145,7 @@ public final class NitriteFilterBuilder {
 
     /**
      * Compile a {@code $expr} value tree node: a field reference ({@code "$fieldName"}),
-     * a {@code $strLenCP}/{@code $multiply} operator, or a literal/bound-parameter value.
+     * a computed operator, or a literal/bound-parameter value.
      */
     @SuppressWarnings("unchecked")
     private NitriteFilterAST.ExprValueNode compileExprValue(Object node) {
@@ -155,6 +156,12 @@ public final class NitriteFilterBuilder {
             Map.Entry<?, ?> entry = m.entrySet().iterator().next();
             if ("$strLenCP".equals(entry.getKey())) {
                 return new NitriteFilterAST.ExprValueNode.StrLen(compileExprValue(entry.getValue()));
+            }
+            if ("$toLower".equals(entry.getKey())) {
+                return new NitriteFilterAST.ExprValueNode.ToLower(compileExprValue(entry.getValue()));
+            }
+            if ("$toUpper".equals(entry.getKey())) {
+                return new NitriteFilterAST.ExprValueNode.ToUpper(compileExprValue(entry.getValue()));
             }
             if ("$multiply".equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
                 List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
@@ -326,19 +333,19 @@ public final class NitriteFilterBuilder {
         Map<String, OperatorHandler> r = new LinkedHashMap<>();
         r.put("$eq",  (e, f, v, p, n) -> entityMapper.eqWithNumericCoercion(e, f, v, f));
         r.put("$ne",  (e, f, v, p, n) -> FluentFilter.where(f).notEq(v));
-        r.put("$gt",  (e, f, v, p, n) -> v instanceof Comparable<?> c ? FluentFilter.where(f).gt(c) : Filter.ALL);
-        r.put("$gte", (e, f, v, p, n) -> v instanceof Comparable<?> c ? FluentFilter.where(f).gte(c) : Filter.ALL);
-        r.put("$lt",  (e, f, v, p, n) -> v instanceof Comparable<?> c ? FluentFilter.where(f).lt(c) : Filter.ALL);
-        r.put("$lte", (e, f, v, p, n) -> v instanceof Comparable<?> c ? FluentFilter.where(f).lte(c) : Filter.ALL);
-        r.put("$in",  (e, f, v, p, n) -> buildInFilter(f, v, p, n));
-        r.put("$nin", (e, f, v, p, n) -> buildNotInFilter(f, v, p, n));
+        r.put("$gt",  (e, f, v, p, n) -> buildRangeFilter(f, "$gt", v));
+        r.put("$gte", (e, f, v, p, n) -> buildRangeFilter(f, "$gte", v));
+        r.put("$lt",  (e, f, v, p, n) -> buildRangeFilter(f, "$lt", v));
+        r.put("$lte", (e, f, v, p, n) -> buildRangeFilter(f, "$lte", v));
+        r.put("$in",  (e, f, v, p, n) -> buildInFilter(e, f, v, p, n));
+        r.put("$nin", (e, f, v, p, n) -> buildNotInFilter(e, f, v, p, n));
         r.put("$null",    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).eq(null) : Filter.ALL);
         r.put("$notNull", (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).notEq(null) : Filter.ALL);
         r.put("$between", (e, f, v, p, n) -> {
             if (v instanceof List<?> list && list.size() == 2) {
                 Object v1 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(0), p, n)));
                 Object v2 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(1), p, n)));
-                return FluentFilter.where(f).between((Comparable<?>) v1, (Comparable<?>) v2);
+                return buildBetweenFilter(f, v1, v2);
             }
             return Filter.ALL;
         });
@@ -367,11 +374,11 @@ public final class NitriteFilterBuilder {
         return Collections.unmodifiableMap(r);
     }
 
-    private Filter buildInFilter(String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
+    private Filter buildInFilter(RuntimePersistentEntity<?> entity, String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
         if (finalValue == null) {
             return NONE;
         }
-        List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
+        List<Comparable<?>> values = coerceCollectionValues(entity, field, valueResolver.resolveCollection(finalValue, params, namedParameters));
         return values.isEmpty() ? NONE : FluentFilter.where(field).in(values.toArray(new Comparable[0]));
     }
 
@@ -399,12 +406,106 @@ public final class NitriteFilterBuilder {
         return Filter.and(filters);
     }
 
-    private Filter buildNotInFilter(String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
+    private Filter buildNotInFilter(RuntimePersistentEntity<?> entity, String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
         if (finalValue == null) {
             return Filter.ALL;
         }
-        List<Comparable<?>> values = valueResolver.resolveCollection(finalValue, params, namedParameters);
+        List<Comparable<?>> values = coerceCollectionValues(entity, field, valueResolver.resolveCollection(finalValue, params, namedParameters));
         return values.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(values.toArray(new Comparable[0]));
+    }
+
+    private List<Comparable<?>> coerceCollectionValues(RuntimePersistentEntity<?> entity, String field, List<Comparable<?>> values) {
+        if (values.isEmpty()) {
+            return values;
+        }
+        RuntimePersistentProperty<?> property = findProperty(entity, field);
+        if (property == null || (property.getType() != char.class && property.getType() != Character.class)) {
+            return values;
+        }
+        List<Comparable<?>> coerced = new ArrayList<>(values.size());
+        for (Comparable<?> value : values) {
+            if (value instanceof String string && string.length() == 1) {
+                coerced.add(string.charAt(0));
+            } else {
+                coerced.add(value);
+            }
+        }
+        return coerced;
+    }
+
+    private @Nullable RuntimePersistentProperty<?> findProperty(@Nullable RuntimePersistentEntity<?> entity, String field) {
+        if (entity == null) {
+            return null;
+        }
+        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+            if (property.getName().equals(field) || property.getPersistedName().equals(field)) {
+                return property;
+            }
+        }
+        try {
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity != null && (identity.getName().equals(field) || identity.getPersistedName().equals(field) || "_id".equals(field))) {
+                return identity;
+            }
+        } catch (IllegalStateException ignored) {
+            // Entity has no identity.
+        }
+        return null;
+    }
+
+    private Filter buildRangeFilter(String field, String op, @Nullable Object value) {
+        if (!(value instanceof Comparable<?> comparable)) {
+            return Filter.ALL;
+        }
+        return pair -> compareValues(pair.getSecond().get(field), comparable, op);
+    }
+
+    private Filter buildBetweenFilter(String field, @Nullable Object lower, @Nullable Object upper) {
+        if (!(lower instanceof Comparable<?> lowerComparable) || !(upper instanceof Comparable<?> upperComparable)) {
+            return Filter.ALL;
+        }
+        return pair -> compareValues(pair.getSecond().get(field), lowerComparable, "$gte")
+            && compareValues(pair.getSecond().get(field), upperComparable, "$lte");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static boolean compareValues(@Nullable Object left, Object right, String op) {
+        if (left == null || right == null) {
+            return false;
+        }
+        int comparison;
+        if (left instanceof Number || right instanceof Number) {
+            BigDecimal leftNumber = toBigDecimal(left);
+            BigDecimal rightNumber = toBigDecimal(right);
+            if (leftNumber == null || rightNumber == null) {
+                return false;
+            }
+            comparison = leftNumber.compareTo(rightNumber);
+        } else if (left instanceof Comparable comparable && left.getClass().isInstance(right)) {
+            comparison = comparable.compareTo(right);
+        } else {
+            return false;
+        }
+        return switch (op) {
+            case "$gt" -> comparison > 0;
+            case "$gte" -> comparison >= 0;
+            case "$lt" -> comparison < 0;
+            case "$lte" -> comparison <= 0;
+            default -> false;
+        };
+    }
+
+    private static @Nullable BigDecimal toBigDecimal(Object value) {
+        try {
+            return switch (value) {
+                case BigDecimal bigDecimal -> bigDecimal;
+                case Number number -> new BigDecimal(number.toString());
+                case String string -> new BigDecimal(string);
+                default -> null;
+            };
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private @Nullable Filter buildOperatorFiltersForPath(

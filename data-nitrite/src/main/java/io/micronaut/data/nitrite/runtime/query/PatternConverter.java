@@ -32,13 +32,18 @@ final class PatternConverter {
             return pattern.pattern();
         }
         String value = resolved.toString();
+        String flags = "";
+        if (value.startsWith("(?i)")) {
+            flags = "(?i)";
+            value = value.substring(4);
+        }
         if (value.length() >= 2 && value.startsWith("/") && value.endsWith("/")) {
-            return value.substring(1, value.length() - 1);
+            return flags + value.substring(1, value.length() - 1);
         }
         if (looksLikeWildcardPattern(value)) {
-            return convertLikeToRegex(value);
+            return flags + convertLikeToRegex(value);
         }
-        return value;
+        return flags + value;
     }
 
     static boolean looksLikeWildcardPattern(String value) {

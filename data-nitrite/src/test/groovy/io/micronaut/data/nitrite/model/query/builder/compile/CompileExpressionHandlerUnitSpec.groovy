@@ -13,6 +13,7 @@ class CompileExpressionHandlerUnitSpec extends Specification {
 
         expect:
         handler.resolveValue(queryState, null, new LiteralExpression("test")) == "test"
+        handler.resolveValue(queryState, null, new LiteralExpression(new LiteralExpression("test"))) == "test"
         handler.resolveValue(queryState, null, new LiteralExpression(new RegexPattern(".*"))) == ".*"
         
         // fallback to RuntimeExpressionHandler for non-literals
@@ -29,6 +30,7 @@ class CompileExpressionHandlerUnitSpec extends Specification {
         // isLike = true
         handler.handleRegex("name", false, false, false, false, literal, true, queryState, null) == '^John$'
         handler.handleRegex("name", false, false, false, false, new LiteralExpression('J_hn%'), true, queryState, null) == '^J.hn.*$'
+        handler.handleRegex("name", false, false, false, false, new LiteralExpression(new LiteralExpression('4_')), true, queryState, null) == '^4.$'
         
         // startsWith = true
         handler.handleRegex("name", false, false, true, false, literal, false, queryState, null) == '^\\QJohn\\E.*'
@@ -50,6 +52,7 @@ class CompileExpressionHandlerUnitSpec extends Specification {
 
         expect:
         handler.resolveRegexValue(queryState, null, new LiteralExpression("pattern")) == "pattern"
+        handler.resolveRegexValue(queryState, null, new LiteralExpression(new LiteralExpression("pattern"))) == "pattern"
         
         // fallback to resolveValue for non-string literals
         handler.resolveRegexValue(queryState, null, new LiteralExpression(123)) == 123

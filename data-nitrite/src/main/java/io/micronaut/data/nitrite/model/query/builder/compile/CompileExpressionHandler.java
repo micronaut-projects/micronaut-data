@@ -47,7 +47,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
     @Override
     public @Nullable Object resolveValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Object value) {
         if (value instanceof LiteralExpression<?> literal) {
-            Object val = literal.getValue();
+            Object val = unwrapLiteral(literal);
             if (val instanceof RegexPattern regex) {
                 return regex.value();
             }
@@ -70,7 +70,7 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
 
         if (rightExpression instanceof LiteralExpression<?> literal) {
             String ciPrefix = ignoreCase ? "(?i)" : "";
-            Object val = literal.getValue();
+            Object val = unwrapLiteral(literal);
             String pattern = val != null ? val.toString() : "";
             if (isLike) {
                 pattern = convertLikeToRegex(pattern);
@@ -97,8 +97,11 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
 
     @Override
     public @Nullable Object resolveRegexValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
-        if (expression instanceof LiteralExpression<?> literal && literal.getValue() instanceof String pattern) {
-            return new RegexPattern(pattern).value();
+        if (expression instanceof LiteralExpression<?> literal) {
+            Object value = unwrapLiteral(literal);
+            if (value instanceof String pattern) {
+                return new RegexPattern(pattern).value();
+            }
         }
         return resolveValue(queryState, propertyPath, expression);
     }
@@ -115,5 +118,13 @@ public final class CompileExpressionHandler implements NitriteExpressionHandler 
             return criteriaValues;
         }
         return fallback.resolveCollectionValue(queryState, propertyPath, expression);
+    }
+
+    private static @Nullable Object unwrapLiteral(LiteralExpression<?> literal) {
+        Object value = literal.getValue();
+        while (value instanceof LiteralExpression<?> nested) {
+            value = nested.getValue();
+        }
+        return value;
     }
 }

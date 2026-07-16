@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -60,6 +61,8 @@ public final class NitriteQueryBuilder implements QueryBuilder {
      * Query parameter placeholder prefix.
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+    static final String NEGATE = "$mn_negate";
+    static final String RECIPROCATE = "$mn_reciprocate";
     private static final Logger LOG = LoggerFactory.getLogger(NitriteQueryBuilder.class);
     private final AnnotationMetadata queryBuilderMetadata;
 
@@ -97,6 +100,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         Map<String, Object> predicateObj = new LinkedHashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
+        Map<String, Object> projectionObj = new LinkedHashMap<>();
         Map<String, Object> sortObj = new LinkedHashMap<>();
 
         Predicate predicate = query.predicate();
@@ -104,7 +108,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClauseFromCriteria(predicate, queryState);
         }
 
-        NitriteQueryBuilderHelper.buildProjection(query.selection(), group, countObj);
+        NitriteQueryBuilderHelper.buildProjection(query.selection(), group, projectionObj, countObj);
 
         List<Order> orders = query.order();
         if (!orders.isEmpty()) {
@@ -135,6 +139,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             if (!sortObj.isEmpty()) {
                 pipeline.add(Map.of("$sort", sortObj));
             }
+            if (!projectionObj.isEmpty()) {
+                pipeline.add(Map.of("$project", projectionObj));
+            }
             if (query.offset() > 0) {
                 pipeline.add(Map.of("$skip", query.offset()));
             }
@@ -151,6 +158,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         }
         if (!sortObj.isEmpty()) {
             topLevel.put("$sort", sortObj);
+        }
+        if (!projectionObj.isEmpty()) {
+            topLevel.put("$project", projectionObj);
         }
         if (query.offset() > 0) {
             topLevel.put("$skip", query.offset());
@@ -176,27 +186,55 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         }
 
         Map<String, Object> setObj = new LinkedHashMap<>();
+        Map<String, Object> incObj = new LinkedHashMap<>();
+        Map<String, Object> mulObj = new LinkedHashMap<>();
         Map<String, Object> propertiesToUpdate = definition.propertiesToUpdate();
         if (propertiesToUpdate != null) {
             for (Map.Entry<String, Object> entry : propertiesToUpdate.entrySet()) {
                 String fieldName = entry.getKey();
                 Object value = entry.getValue();
+                PersistentProperty property = definition.persistentEntity().getPropertyByName(fieldName);
+                String persistedName = property != null ? property.getPersistedName() : fieldName;
                 if (value instanceof BindingParameter bindingParameter) {
-                    PersistentProperty property = definition.persistentEntity().getPropertyByName(fieldName);
                     io.micronaut.data.model.PersistentPropertyPath propertyPath =
                         property != null ? io.micronaut.data.model.PersistentPropertyPath.of(Collections.emptyList(), property, property.getName()) : null;
                     int index =
                         queryState.pushParameter(
                             bindingParameter, NitritePredicateVisitor.newBindingContext(propertyPath));
-                    setObj.put(fieldName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                    setObj.put(persistedName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                } else if (value instanceof BinaryExpression<?> binaryExpression) {
+                    io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> leftProperty = CriteriaUtils.requireProperty(binaryExpression.getLeft());
+                    if (property != null && !leftProperty.getProperty().getName().equals(property.getName())) {
+                        throw new IllegalStateException("Left property path does not match property path");
+                    }
+                    Object updateValue = updateExpressionValue(queryState, property, binaryExpression.getRight());
+                    switch (binaryExpression.getType()) {
+                        case CONCAT -> {
+                        }
+                        case SUM -> incObj.put(persistedName, updateValue);
+                        case PROD -> mulObj.put(persistedName, updateValue);
+                        case QUOT -> mulObj.put(persistedName, withFlag(updateValue, RECIPROCATE));
+                        case DIFF -> incObj.put(persistedName, withFlag(updateValue, NEGATE));
+                        default -> throw new IllegalStateException("Unsupported binary expression type: " + binaryExpression.getType());
+                    }
                 } else {
-                    setObj.put(fieldName, value);
+                    setObj.put(persistedName, value);
                 }
             }
         }
 
         String predicateString = predicateObj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(predicateObj);
-        String updateString = setObj.isEmpty() ? null : NitriteQuerySerializer.toJsonString(Collections.singletonMap("$set", setObj));
+        Map<String, Object> updateObj = new LinkedHashMap<>();
+        if (!setObj.isEmpty()) {
+            updateObj.put("$set", setObj);
+        }
+        if (!incObj.isEmpty()) {
+            updateObj.put("$inc", incObj);
+        }
+        if (!mulObj.isEmpty()) {
+            updateObj.put("$mul", mulObj);
+        }
+        String updateString = updateObj.isEmpty() ? null : NitriteQuerySerializer.toJsonString(updateObj);
         List<QueryParameterBinding> parameterBindings = queryState.getParameterBindings();
         return new QueryResult() {
             @Override
@@ -219,6 +257,26 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 return parameterBindings;
             }
         };
+    }
+
+    private Object updateExpressionValue(NitriteQueryState queryState, @Nullable PersistentProperty property, Object value) {
+        if (value instanceof BindingParameter bindingParameter) {
+            io.micronaut.data.model.PersistentPropertyPath propertyPath =
+                property != null ? io.micronaut.data.model.PersistentPropertyPath.of(Collections.emptyList(), property, property.getName()) : null;
+            int index = queryState.pushParameter(bindingParameter, NitritePredicateVisitor.newBindingContext(propertyPath));
+            return Map.of(QUERY_PARAMETER_PLACEHOLDER, index);
+        }
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object withFlag(Object value, String flag) {
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> flagged = new LinkedHashMap<>((Map<String, Object>) map);
+            flagged.put(flag, true);
+            return flagged;
+        }
+        return Map.of("$value", value, flag, true);
     }
 
     @Override

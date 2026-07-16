@@ -6,6 +6,9 @@ import io.micronaut.data.nitrite.model.Event
 import io.micronaut.data.nitrite.repository.CriteriaAuthorRepository
 import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.EventRepository
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -69,6 +72,38 @@ class NitriteQueryBuilderSpec extends Specification {
 
         then: "getQueryParts returns empty list"
         result.getQueryParts() == Collections.emptyList()
+    }
+
+    void "test NitriteQueryBuilder buildUpdate emits arithmetic update operators"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "priority": new BinaryExpression(root.get("priority"), criteriaBuilder.parameter(Integer), BinaryExpressionType.SUM, null),
+        ]
+        def definition = new io.micronaut.data.model.query.builder.QueryBuilder.UpdateQueryDefinition() {
+            @Override
+            io.micronaut.data.model.PersistentEntity persistentEntity() { return entity }
+            @Override
+            java.util.Map<String, Object> propertiesToUpdate() { return propertiesToUpdate }
+            @Override
+            jakarta.persistence.criteria.Predicate predicate() { return null }
+            @Override
+            java.util.Collection getJoinPaths() { return [] }
+            @Override
+            java.util.Optional getJoinPath(String s) { return java.util.Optional.empty() }
+            @Override
+            jakarta.persistence.criteria.Selection returningSelection() { return null }
+        }
+
+        when:
+        def result = builder.buildUpdate(io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '''{$inc:{priority:{$mn_qp:0}}}'''
     }
 
     // ========== Bug #1: buildInsert returns null ==========
@@ -364,24 +399,60 @@ class NitriteQueryBuilderSpec extends Specification {
         e.message.contains("DIFF")
     }
 
-    void "test criteria with LOWER expression throws"() {
+    void "test criteria with LOWER expression evaluates via Criteria API"() {
+        given:
+        eventRepository.save(new Event("ABC", "upper"))
+        eventRepository.save(new Event("DEF", "other"))
+
         when:
-        eventRepository.findAll({ root, cb ->
+        def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.lower(root.get("type")), cb.literal("abc"))
         } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
         then:
-        def e = thrown(IllegalStateException)
-        e.message.contains("LOWER")
+        results*.payload == ["upper"]
     }
 
-    void "test criteria with UPPER expression throws"() {
+    void "test criteria with UPPER expression evaluates via Criteria API"() {
+        given:
+        eventRepository.save(new Event("abc", "lower"))
+        eventRepository.save(new Event("def", "other"))
+
         when:
-        eventRepository.findAll({ root, cb ->
+        def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.upper(root.get("type")), cb.literal("ABC"))
         } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
         then:
-        def e = thrown(IllegalStateException)
-        e.message.contains("UPPER")
+        results*.payload == ["lower"]
+    }
+
+    void "test criteria with nested LOWER UPPER expression evaluates via Criteria API"() {
+        given:
+        eventRepository.save(new Event("AbC", "mixed"))
+        eventRepository.save(new Event("DEF", "other"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            cb.equal(cb.lower(cb.upper(root.get("type"))), cb.literal("abc"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload == ["mixed"]
+    }
+
+    void "test criteria with LOWER between expression evaluates via Criteria API"() {
+        given:
+        eventRepository.save(new Event("B", "middle"))
+        eventRepository.save(new Event("D", "outside"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            cb.between(cb.lower(root.get("type")), cb.literal("a"), cb.literal("c"))
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload == ["middle"]
     }
 
     void "test findOne via criteria id equals covers visitIdEquals"() {

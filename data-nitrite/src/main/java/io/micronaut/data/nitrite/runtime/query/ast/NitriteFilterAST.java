@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Locale;
 
 /**
  * A structured AST for Nitrite filters.
@@ -307,8 +308,7 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     }
 
     /**
-     * A node in a small computed-value tree used by {@link ExprNode} (field reference, literal,
-     * string length, or multiplication), evaluated directly against a document.
+     * A node in a small computed-value tree used by {@link ExprNode}, evaluated directly against a document.
      */
     sealed interface ExprValueNode {
 
@@ -356,6 +356,32 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 Object v = inner.evaluate(doc, params, namedParameters);
                 return v == null ? null : v.toString().length();
+            }
+        }
+
+        /**
+         * Lowercase string conversion, mirroring Mongo's {@code $toLower}.
+         *
+         * @param inner the value to convert
+         */
+        record ToLower(ExprValueNode inner) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = inner.evaluate(doc, params, namedParameters);
+                return v == null ? null : v.toString().toLowerCase(Locale.ROOT);
+            }
+        }
+
+        /**
+         * Uppercase string conversion, mirroring Mongo's {@code $toUpper}.
+         *
+         * @param inner the value to convert
+         */
+        record ToUpper(ExprValueNode inner) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = inner.evaluate(doc, params, namedParameters);
+                return v == null ? null : v.toString().toUpperCase(Locale.ROOT);
             }
         }
 

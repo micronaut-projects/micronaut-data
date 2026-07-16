@@ -155,7 +155,7 @@ class NitriteCriteriaUnitSpec extends Specification {
             "endsWithIgnoreCase"       | { r, cb -> cb.endingWithStringIgnoreCase(r.get("name"), cb.literal("Al")) }    | regex(".*", "\$", true)
             "contains"                 | { r, cb -> cb.containsString(r.get("name"), cb.literal("Al")) }                | regex(".*", ".*", false)
             "containsIgnoreCase"       | { r, cb -> cb.containsStringIgnoreCase(r.get("name"), cb.literal("Al")) }      | regex(".*", ".*", true)
-            "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | regex(".*", ".*", true)
+            "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | '''{name:{$regex:'(?i)$mn_qp:0'}}'''
             "regex"                    | { r, cb -> cb.regex(r.get("name"), cb.literal("^Al.*")) }                      | '''{name:{$regex:{$mn_qp:0}}}'''
     }
 

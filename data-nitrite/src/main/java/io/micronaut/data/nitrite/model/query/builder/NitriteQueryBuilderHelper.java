@@ -193,13 +193,19 @@ public final class NitriteQueryBuilderHelper {
      *
      * @param selection the generic selection criteria (e.g., SUM, AVG, COUNT)
      * @param group the group map to populate with aggregation operations
+     * @param projectionObj the projection map to populate if a scalar property projection is present
      * @param countObj the count map to populate if a count projection is present
      */
-    public static void buildProjection(Selection<?> selection, Map<String, Object> group, Map<String, Object> countObj) {
+    public static void buildProjection(Selection<?> selection,
+                                       Map<String, Object> group,
+                                       Map<String, Object> projectionObj,
+                                       Map<String, Object> countObj) {
         if (selection == null) {
             return;
         }
         switch (selection) {
+            case io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath ->
+                projectionObj.put(propertyPath.getProperty().getName(), 1);
             case UnaryExpression<?> unary -> {
                 switch (unary.getType()) {
                     case SUM, AVG, MAX, MIN -> {
@@ -229,7 +235,7 @@ public final class NitriteQueryBuilderHelper {
             }
             case CompoundSelection<?> compound -> {
                 for (Selection<?> item : compound.getCompoundSelectionItems()) {
-                    buildProjection(item, group, countObj);
+                    buildProjection(item, group, projectionObj, countObj);
                 }
             }
             default -> {

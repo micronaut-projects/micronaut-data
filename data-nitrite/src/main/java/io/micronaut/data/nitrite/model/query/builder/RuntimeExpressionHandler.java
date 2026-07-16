@@ -17,11 +17,12 @@ package io.micronaut.data.nitrite.model.query.builder;
 
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.criteria.Expression;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +45,9 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
             BindingParameter.BindingContext context = NitritePredicateVisitor.newBindingContext(propertyPath, propertyPath);
             int index = queryState.pushParameter(bindingParameter, context);
             return Map.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, index);
+        }
+        if (value instanceof LiteralExpression<?> literal) {
+            return ValueConverter.toFilterValueStatic(unwrapLiteral(literal));
         }
         if (value instanceof Expression<?> expr) {
             // Recurse or return as-is for runtime handling
@@ -68,7 +72,9 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         String prefix = startsWith ? "^" : ".*";
         String suffix = endsWith ? "$" : ".*";
 
-        Object paramPlaceholder = resolveValue(queryState, propertyPath, rightExpression);
+        Object paramPlaceholder = rightExpression instanceof LiteralExpression<?> literal
+            ? ValueConverter.toFilterValueStatic(unwrapLiteral(literal))
+            : resolveValue(queryState, propertyPath, rightExpression);
         String paramStr;
         if (paramPlaceholder instanceof Map<?, ?> m
             && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
@@ -78,6 +84,9 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
             paramStr = paramPlaceholder != null ? paramPlaceholder.toString() : "";
         }
 
+        if (isLike) {
+            return ciPrefix + paramStr;
+        }
         return ciPrefix + prefix + paramStr + suffix;
     }
 
@@ -88,7 +97,26 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
 
     @Override
     public List<Object> resolveCollectionValue(NitriteQueryState queryState, PersistentPropertyPath propertyPath, @Nullable Expression<?> expression) {
+        Object rawValue = expression instanceof LiteralExpression<?> lit ? unwrapLiteral(lit) : expression;
+        if (rawValue instanceof Iterable<?> iterable) {
+            List<Object> criteriaValues = new ArrayList<>();
+            for (Object item : iterable) {
+                Object itemVal = item instanceof Expression<?> ? item : new LiteralExpression<>(item);
+                criteriaValues.add(resolveValue(queryState, propertyPath, itemVal));
+            }
+            return criteriaValues;
+        }
         Object resolved = resolveValue(queryState, propertyPath, expression);
-        return Collections.singletonList(resolved);
+        List<Object> criteriaValues = new ArrayList<>(1);
+        criteriaValues.add(resolved);
+        return criteriaValues;
+    }
+
+    private static @Nullable Object unwrapLiteral(LiteralExpression<?> literal) {
+        Object value = literal.getValue();
+        while (value instanceof LiteralExpression<?> nested) {
+            value = nested.getValue();
+        }
+        return value;
     }
 }

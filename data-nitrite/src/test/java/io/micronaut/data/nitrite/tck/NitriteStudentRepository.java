@@ -15,12 +15,9 @@
  */
 package io.micronaut.data.nitrite.tck;
 
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.document.tck.repositories.StudentRepository;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 
 @NitriteRepository
-@RepositoryConfiguration(queryBuilder = NitriteQueryBuilder.class)
 public interface NitriteStudentRepository extends StudentRepository {
 }

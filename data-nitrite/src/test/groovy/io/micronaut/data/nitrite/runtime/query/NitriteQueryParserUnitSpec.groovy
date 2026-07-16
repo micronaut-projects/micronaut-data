@@ -375,8 +375,10 @@ class NitriteQueryParserUnitSpec extends Specification {
 
         where:
         desc                                    | input                                       | expected
-        "array input → null"                    | '[{"$project": "name"}]'                    | null
+        "array input project string"            | '[{"$project": "name"}]'                    | "name"
+        "array input project map"               | '[{"$project": {"name": 1}}]'               | "name"
         "\$project string → field name"         | '{"$project": "name", "active": true}'      | "name"
+        "\$project map → field name"            | '{"$project": {"name": 1}}'                 | "name"
         "\$project non-string → null"           | '{"$project": 42}'                          | null
         "no \$project key → null"              | '{"active": true}'                          | null
         "null input → null"                     | null                                        | null
