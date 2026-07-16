@@ -28,6 +28,8 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
@@ -53,6 +55,8 @@ import java.util.Objects;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.CONCAT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.DIVIDE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXISTS;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
@@ -67,7 +71,10 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NEAR;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.RIGHT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.STR_LEN_CP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SUBSTR_CP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_DOUBLE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_LOWER;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_UPPER;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN;
@@ -312,6 +319,17 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
     @Override
     public void visitIn(
         final Expression<?> expression, final Collection<?> values, final boolean negated) {
+        if (isComputedExpression(expression)) {
+            PersistentPropertyPath ctx = requirePropertyOperand(expression);
+            Object valueExpr = requireExprOperand(expression, ctx);
+            List<Object> resolvedValues = values == null ? Collections.emptyList() : values.stream()
+                .map(val -> val instanceof Expression<?> valueExpression
+                    ? requireExprOperand(valueExpression, ctx)
+                    : valueRepresentation(queryState, ctx, val))
+                .toList();
+            putExpressionOperator(negated ? NIN : IN, valueExpr, resolvedValues);
+            return;
+        }
         PersistentPropertyPath propertyPath =
             CriteriaUtils.requireProperty(expression).getPropertyPath();
         String fieldName = getFieldName(propertyPath);
@@ -547,7 +565,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     private void appendOperatorExpression(
         final Expression<?> leftExpression, final String op, final Expression<?> value) {
-        if (leftExpression instanceof BinaryExpression<?> || leftExpression instanceof UnaryExpression<?>) {
+        if (isComputedExpression(leftExpression)) {
             PersistentPropertyPath ctx = requirePropertyOperand(leftExpression);
             appendExprComparison(requireExprOperand(leftExpression, ctx), op, value, ctx);
             return;
@@ -558,8 +576,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
     }
 
     /**
-     * Appends a {@code $expr} comparison of a computed left-hand value tree ({@code $strLenCP},
-     * {@code $multiply}) against the right-hand value expression.
+     * Appends a {@code $expr} comparison of a computed left-hand value tree against the
+     * right-hand value expression.
      */
     private void appendExprComparison(
         final Object leftExprTree, final String op, final Expression<?> value,
@@ -569,8 +587,8 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
     }
 
     /**
-     * Resolves a {@code $multiply} operand to either a field reference ({@code "$fieldName"}) or
-     * a literal/bound-parameter value, using the same resolution as ordinary comparison values.
+     * Resolves a computed operand to either a field reference ({@code "$fieldName"}), another
+     * expression tree, or a literal/bound-parameter value.
      */
     private @Nullable Object exprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
         if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> ppp) {
@@ -587,15 +605,49 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             };
         }
         if (expr instanceof BinaryExpression<?> binaryExpression) {
-            if (binaryExpression.getType().name().equals("PROD")) {
-                return Map.of(MULTIPLY, Arrays.asList(
-                    requireExprOperand(binaryExpression.getLeft(), bindingContextPath),
-                    requireExprOperand(binaryExpression.getRight(), bindingContextPath)));
+            List<Object> operands = Arrays.asList(
+                requireExprOperand(binaryExpression.getLeft(), bindingContextPath),
+                requireExprOperand(binaryExpression.getRight(), bindingContextPath));
+            return switch (binaryExpression.getType()) {
+                case CONCAT -> Map.of(CONCAT, operands);
+                case PROD -> Map.of(MULTIPLY, operands);
+                case QUOT -> Map.of(DIVIDE, operands);
+                default -> throw new IllegalStateException(
+                    "Unsupported binary expression type: " + binaryExpression.getType());
+            };
+        }
+        if (expr instanceof FunctionExpression<?> functionExpression) {
+            return functionOperand(functionExpression, bindingContextPath);
+        }
+        if (expr instanceof CastExpression<?> castExpression) {
+            Object inner = requireExprOperand(castExpression.getExpression(), bindingContextPath);
+            if (Number.class.isAssignableFrom(castExpression.getJavaType()) || castExpression.getJavaType().isPrimitive()) {
+                return Map.of(TO_DOUBLE, inner);
             }
-            throw new IllegalStateException(
-                "Unsupported binary expression type: " + binaryExpression.getType());
+            return inner;
         }
         return valueRepresentation(queryState, bindingContextPath, expr);
+    }
+
+    private Object functionOperand(final FunctionExpression<?> functionExpression, final PersistentPropertyPath bindingContextPath) {
+        List<Expression<?>> expressions = functionExpression.getExpressions();
+        return switch (functionExpression.getName().toUpperCase()) {
+            case "CONCAT" -> Map.of(CONCAT, expressions.stream()
+                .map(expression -> requireExprOperand(expression, bindingContextPath))
+                .toList());
+            case "LENGTH" -> Map.of(STR_LEN_CP, requireExprOperand(expressions.get(0), bindingContextPath));
+            case "LOWER" -> Map.of(TO_LOWER, requireExprOperand(expressions.get(0), bindingContextPath));
+            case "UPPER" -> Map.of(TO_UPPER, requireExprOperand(expressions.get(0), bindingContextPath));
+            case "LEFT" -> Map.of(SUBSTR_CP, List.of(
+                requireExprOperand(expressions.get(0), bindingContextPath),
+                0,
+                requireExprOperand(expressions.get(1), bindingContextPath)));
+            case "RIGHT" -> Map.of(RIGHT, List.of(
+                requireExprOperand(expressions.get(0), bindingContextPath),
+                requireExprOperand(expressions.get(1), bindingContextPath)));
+            default -> throw new IllegalStateException(
+                "Unsupported function expression: " + functionExpression.getName());
+        };
     }
 
     private Object requireExprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
@@ -611,6 +663,18 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (expression instanceof UnaryExpression<?> unaryExpression) {
             return requirePropertyOperand(unaryExpression.getExpression());
         }
+        if (expression instanceof FunctionExpression<?> functionExpression) {
+            for (Expression<?> nestedExpression : functionExpression.getExpressions()) {
+                try {
+                    return requirePropertyOperand(nestedExpression);
+                } catch (IllegalStateException e) {
+                    // Try the next operand.
+                }
+            }
+        }
+        if (expression instanceof CastExpression<?> castExpression) {
+            return requirePropertyOperand(castExpression.getExpression());
+        }
         if (expression instanceof BinaryExpression<?> binaryExpression) {
             try {
                 return requirePropertyOperand(binaryExpression.getLeft());
@@ -619,6 +683,13 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             }
         }
         throw new IllegalStateException("Computed expressions require at least one property-path operand.");
+    }
+
+    private static boolean isComputedExpression(final Expression<?> expression) {
+        return expression instanceof BinaryExpression<?>
+            || expression instanceof UnaryExpression<?>
+            || expression instanceof FunctionExpression<?>
+            || expression instanceof CastExpression<?>;
     }
 
     private void appendOperatorExpression(

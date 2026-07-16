@@ -38,6 +38,8 @@ import java.util.Objects;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.CONCAT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.DIVIDE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EMPTY;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
@@ -56,8 +58,11 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT_NU
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NULL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.REGEX;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.RIGHT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.STR_LEN_CP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SUBSTR_CP;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TEXT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_DOUBLE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_LOWER;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TO_UPPER;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN;
@@ -180,6 +185,13 @@ public final class NitriteFilterBuilder {
         if (node instanceof String s && s.startsWith("$") && !isPlaceholder(s)) {
             return new NitriteFilterAST.ExprValueNode.FieldRef(normalizeExprField(entity, s.substring(1)));
         }
+        if (node instanceof List<?> list) {
+            List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(list.size());
+            for (Object item : list) {
+                compiled.add(compileExprValue(entity, item));
+            }
+            return new NitriteFilterAST.ExprValueNode.ListValue(compiled);
+        }
         if (node instanceof Map<?, ?> m && m.size() == 1) {
             Map.Entry<?, ?> entry = m.entrySet().iterator().next();
             if (STR_LEN_CP.equals(entry.getKey())) {
@@ -197,6 +209,32 @@ public final class NitriteFilterBuilder {
                     compiled.add(compileExprValue(entity, operand));
                 }
                 return new NitriteFilterAST.ExprValueNode.Multiply(compiled);
+            }
+            if (CONCAT.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
+                List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
+                for (Object operand : operands) {
+                    compiled.add(compileExprValue(entity, operand));
+                }
+                return new NitriteFilterAST.ExprValueNode.Concat(compiled);
+            }
+            if (SUBSTR_CP.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 3) {
+                return new NitriteFilterAST.ExprValueNode.Substr(
+                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.get(1)),
+                    compileExprValue(entity, operands.get(2)));
+            }
+            if (RIGHT.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 2) {
+                return new NitriteFilterAST.ExprValueNode.Right(
+                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.get(1)));
+            }
+            if (DIVIDE.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 2) {
+                return new NitriteFilterAST.ExprValueNode.Divide(
+                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.get(1)));
+            }
+            if (TO_DOUBLE.equals(entry.getKey())) {
+                return new NitriteFilterAST.ExprValueNode.ToDouble(compileExprValue(entity, entry.getValue()));
             }
         }
         return new NitriteFilterAST.ExprValueNode.Literal(valueResolver.compileValue(node));

@@ -30,9 +30,11 @@ import java.util.Locale;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.IN;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
 
 /**
  * A structured AST for Nitrite filters.
@@ -290,6 +292,10 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         private static boolean compare(String op, @Nullable Object lhs, @Nullable Object rhs) {
+            if (IN.equals(op) || NIN.equals(op)) {
+                boolean contains = rhs instanceof Iterable<?> iterable && contains(iterable, lhs);
+                return IN.equals(op) == contains;
+            }
             if (lhs == null || rhs == null) {
                 boolean eq = Objects.equals(lhs, rhs);
                 return NE.equals(op) ? !eq : EQ.equals(op) && eq;
@@ -311,6 +317,15 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                 case LTE -> cmp <= 0;
                 default -> false;
             };
+        }
+
+        private static boolean contains(Iterable<?> iterable, @Nullable Object value) {
+            for (Object item : iterable) {
+                if (Objects.equals(item, value)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -350,6 +365,22 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             @Override
             public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
                 return value.resolve(params, namedParameters);
+            }
+        }
+
+        /**
+         * A list of expression values, used for computed {@code IN} comparisons.
+         *
+         * @param values the list element expressions
+         */
+        record ListValue(List<ExprValueNode> values) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                List<@Nullable Object> resolved = new ArrayList<>(values.size());
+                for (ExprValueNode value : values) {
+                    resolved.add(value.evaluate(doc, params, namedParameters));
+                }
+                return resolved;
             }
         }
 
@@ -409,6 +440,126 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                     result *= num.doubleValue();
                 }
                 return result;
+            }
+        }
+
+        /**
+         * String concatenation, mirroring Mongo's {@code $concat}.
+         *
+         * @param operands the values to concatenate
+         */
+        record Concat(List<ExprValueNode> operands) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                StringBuilder result = new StringBuilder();
+                for (ExprValueNode operand : operands) {
+                    Object v = operand.evaluate(doc, params, namedParameters);
+                    if (v == null) {
+                        return null;
+                    }
+                    result.append(v);
+                }
+                return result.toString();
+            }
+        }
+
+        /**
+         * Code-point substring, mirroring Mongo's {@code $substrCP}.
+         *
+         * @param value the source string
+         * @param start the start offset
+         * @param length the length
+         */
+        record Substr(ExprValueNode value, ExprValueNode start, ExprValueNode length) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = value.evaluate(doc, params, namedParameters);
+                Integer startValue = toInt(start.evaluate(doc, params, namedParameters));
+                Integer lengthValue = toInt(length.evaluate(doc, params, namedParameters));
+                if (v == null || startValue == null || lengthValue == null) {
+                    return null;
+                }
+                String s = v.toString();
+                int codePoints = s.codePointCount(0, s.length());
+                int from = Math.max(0, Math.min(startValue, codePoints));
+                int to = Math.max(from, Math.min(from + Math.max(0, lengthValue), codePoints));
+                return s.substring(s.offsetByCodePoints(0, from), s.offsetByCodePoints(0, to));
+            }
+        }
+
+        /**
+         * Rightmost code points of a string.
+         *
+         * @param value the source string
+         * @param length the length
+         */
+        record Right(ExprValueNode value, ExprValueNode length) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = value.evaluate(doc, params, namedParameters);
+                Integer lengthValue = toInt(length.evaluate(doc, params, namedParameters));
+                if (v == null || lengthValue == null) {
+                    return null;
+                }
+                String s = v.toString();
+                int codePoints = s.codePointCount(0, s.length());
+                int from = Math.max(0, codePoints - Math.max(0, lengthValue));
+                return s.substring(s.offsetByCodePoints(0, from));
+            }
+        }
+
+        /**
+         * Numeric division, mirroring Mongo's {@code $divide}.
+         *
+         * @param left the dividend
+         * @param right the divisor
+         */
+        record Divide(ExprValueNode left, ExprValueNode right) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object lhs = left.evaluate(doc, params, namedParameters);
+                Object rhs = right.evaluate(doc, params, namedParameters);
+                if (!(lhs instanceof Number ln) || !(rhs instanceof Number rn) || rn.doubleValue() == 0) {
+                    return null;
+                }
+                return ln.doubleValue() / rn.doubleValue();
+            }
+        }
+
+        /**
+         * Numeric conversion, mirroring Mongo's {@code $toDouble}.
+         *
+         * @param inner the value to convert
+         */
+        record ToDouble(ExprValueNode inner) implements ExprValueNode {
+            @Override
+            public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
+                Object v = inner.evaluate(doc, params, namedParameters);
+                if (v instanceof Number number) {
+                    return number.doubleValue();
+                }
+                if (v == null) {
+                    return null;
+                }
+                try {
+                    return Double.parseDouble(v.toString());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+
+        private static @Nullable Integer toInt(@Nullable Object value) {
+            if (value instanceof Number number) {
+                return number.intValue();
+            }
+            if (value == null) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(value.toString());
+            } catch (NumberFormatException e) {
+                return null;
             }
         }
     }

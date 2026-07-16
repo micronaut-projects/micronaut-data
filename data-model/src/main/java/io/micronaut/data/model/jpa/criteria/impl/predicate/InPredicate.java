@@ -17,6 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 
@@ -60,7 +61,7 @@ public final class InPredicate<T> extends AbstractPredicate implements CriteriaB
 
     @Override
     public InPredicate<T> value(T value) {
-        values.add(criteriaBuilder.literal(value));
+        values.add(criteriaBuilder == null ? new LiteralExpression<>(value) : criteriaBuilder.literal(value));
         return this;
     }
 

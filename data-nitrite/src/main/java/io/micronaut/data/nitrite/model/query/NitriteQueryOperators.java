@@ -57,6 +57,11 @@ public final class NitriteQueryOperators {
     public static final String TO_LOWER = "$toLower";
     public static final String TO_UPPER = "$toUpper";
     public static final String MULTIPLY = "$multiply";
+    public static final String CONCAT = "$concat";
+    public static final String SUBSTR_CP = "$substrCP";
+    public static final String RIGHT = "$right";
+    public static final String DIVIDE = "$divide";
+    public static final String TO_DOUBLE = "$toDouble";
 
     public static final String NEAR = "$near";
     public static final String WITHIN = "$within";

@@ -1,7 +1,6 @@
 package io.micronaut.data.jakarta.tck;
 
 import ee.jakarta.tck.data.standalone.entity.ConstraintTests;
-import ee.jakarta.tck.data.standalone.entity.ExpressionTests;
 import ee.jakarta.tck.data.standalone.entity.RestrictionTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
@@ -19,25 +18,6 @@ public class FilterExtension implements ExecutionCondition {
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
         Class<?> testClass = context.getTestClass().orElse(null);
         String testMethodName = context.getTestMethod().map(Method::getName).orElse("");
-        if (testClass == ExpressionTests.class) {
-            switch (testMethodName) {
-                case "testPrependValue",
-                     "testLeft1",
-                     "testLeft3",
-                     "testLower",
-                     "testUpper",
-                     "testLength2",
-                     "testLength5",
-                     "testAppendExpression",
-                     "testCastToDouble",
-                     "testPrependExpression",
-                     "testRight1",
-                     "testRight3",
-                     "testAppendValue" -> {
-                    return DISABLED;
-                }
-            }
-        }
         if (testClass == ConstraintTests.class) {
             switch (testMethodName) {
                 case "testLikeConstraintCustomWildcardsAndEscape",

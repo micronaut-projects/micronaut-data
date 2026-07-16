@@ -455,6 +455,44 @@ class NitriteQueryBuilderSpec extends Specification {
         results*.payload == ["middle"]
     }
 
+    void "test criteria with computed CONCAT IN expression evaluates via Criteria API"() {
+        given:
+        eventRepository.save(new Event("CA", "Canada"))
+        eventRepository.save(new Event("LB", "Lebanon"))
+        eventRepository.save(new Event("EG", "Egypt"))
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            def suffix = cb.function("RIGHT", String, root.get("type"), cb.literal(1))
+            def computed = cb.function("CONCAT", String, suffix, root.get("payload"))
+            computed.in(["ACanada", "BLebanon", "EEgypt"])
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload.sort() == ["Canada", "Lebanon"]
+    }
+
+    void "test criteria with computed CONCAT IN expression can read identity field"() {
+        given:
+        def canada = new Event("country", "Canada")
+        canada.id = "CA"
+        def lebanon = new Event("country", "Lebanon")
+        lebanon.id = "LB"
+        def egypt = new Event("country", "Egypt")
+        egypt.id = "EG"
+        eventRepository.saveAll([canada, lebanon, egypt])
+
+        when:
+        def results = eventRepository.findAll({ root, cb ->
+            def suffix = cb.function("RIGHT", String, root.get("id"), cb.literal(1))
+            def computed = cb.function("CONCAT", String, suffix, root.get("payload"))
+            computed.in(["ACanada", "BLebanon", "EEgypt"])
+        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+
+        then:
+        results*.payload.sort() == ["Canada", "Lebanon"]
+    }
+
     void "test findOne via criteria id equals covers visitIdEquals"() {
         given:
         def saved = eventRepository.save(new Event("ID_EQUALS_TEST", "payload"))
