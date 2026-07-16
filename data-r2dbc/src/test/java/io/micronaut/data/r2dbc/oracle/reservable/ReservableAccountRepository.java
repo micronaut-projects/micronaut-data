@@ -16,7 +16,6 @@
 package io.micronaut.data.r2dbc.oracle.reservable;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Reserve;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.CrudRepository;
@@ -24,9 +23,7 @@ import io.micronaut.data.repository.CrudRepository;
 @R2dbcRepository(dialect = Dialect.ORACLE, version = "26")
 public interface ReservableAccountRepository extends CrudRepository<ReservableAccount, Long> {
 
-    @Reserve(property = "balance", operation = Reserve.Operation.DECREMENT)
-    int reserve(@Id Long id, Long amount);
+    int reserveDecrementBalance(@Id Long id, Long balance);
 
-    @Reserve(property = "balance", operation = Reserve.Operation.INCREMENT)
-    int release(@Id Long id, Long amount);
+    int reserveIncrementBalance(@Id Long id, Long balance);
 }

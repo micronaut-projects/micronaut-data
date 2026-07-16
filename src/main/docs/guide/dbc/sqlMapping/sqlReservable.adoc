@@ -111,7 +111,7 @@ In that case Micronaut Data generates a reservable column without a `CHECK` cons
 
 Oracle reservable column updates must be expressed as delta operations, for example `balance = balance + ?` or `balance = balance - ?`, and must identify the primary key in the `WHERE` clause.
 Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
-Use ann:data.annotation.Reserve[] to generate reservation-delta update methods:
+Use derived reservation methods to generate reservation-delta updates. A method name starts with `reserve` and declares one or more `Increment<Property>` or `Decrement<Property>` operations joined by `And`.
 
 This `Account` example has no non-reservable mutable properties, so it extends api:data.repository.GenericRepository[] and explicitly declares only the operations it supports.
 Entities with at least one non-reservable updatable property can continue to extend api:data.repository.CrudRepository[].
@@ -119,7 +119,6 @@ Entities with at least one non-reservable updatable property can continue to ext
 [source,java]
 ----
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Reserve;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
@@ -129,11 +128,11 @@ interface AccountRepository extends GenericRepository<Account, Long> {
 
     Account insert(Account account);
 
-    @Reserve(property = "balance", operation = Reserve.Operation.DECREMENT)
-    int reserve(@Id Long id, Long amount);
-
-    @Reserve(property = "balance", operation = Reserve.Operation.INCREMENT)
-    int release(@Id Long id, Long amount);
+    int reserveIncrementAmountAndDecrementBalance(
+        @Id Long id,
+        Long amount,
+        Long balance
+    );
 }
 ----
 
@@ -143,15 +142,17 @@ If an entity has no non-reservable update properties, Micronaut Data fails query
 The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
 If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
 Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable.
-For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and ann:data.annotation.Reserve[] methods.
-Use `insert(...)` for new rows and an explicit `@Reserve` delta method for existing rows.
+For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods.
+Use `insert(...)` for new rows and an explicit derived reservation method for existing rows.
 
 This restriction is specific to reservable-only update shapes.
 If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
-Each `@Reserve` method updates one reservable property by the supplied delta and identifies the row with one `@Id` parameter. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
+Each reservation method identifies the row with exactly one `@Id` parameter whose type matches the entity identity. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
+Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
+Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but `reserveIncrementAccountBalance(...)` is rejected when `account` is a relationship.
 Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML `RETURNING`.
-Criteria API updates of reservable properties are not supported. Use `@Reserve` methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.
+Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.
 
 == Runtime Errors
 

@@ -45,21 +45,21 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
         def account = repository.save(new ReservableAccount(name: "primary", balance: 100L))
 
         when:
-        repository.reserve(account.id, 40L)
+        repository.reserveDecrementBalance(account.id, 40L)
         def updated = repository.findById(account.id).orElseThrow()
 
         then:
         updated.balance == 60L
 
         when:
-        repository.release(account.id, 10L)
+        repository.reserveIncrementBalance(account.id, 10L)
         updated = repository.findById(account.id).orElseThrow()
 
         then:
         updated.balance == 70L
 
         when:
-        repository.reserve(account.id, 100L)
+        repository.reserveDecrementBalance(account.id, 100L)
 
         then:
         thrown(DataIntegrityViolationException)
