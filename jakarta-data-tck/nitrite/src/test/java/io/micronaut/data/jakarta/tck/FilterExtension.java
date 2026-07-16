@@ -43,17 +43,7 @@ public class FilterExtension implements ExecutionCondition {
                      "testFirstCursoredPageWithoutTotalOf6AndNextPages",
                      "testCursoredPageWithoutTotalOf9FromCursor",
                      "testBasicRepository",
-                     "testFindAllWithPagination",
-                     "testFindEntityAsRecordReturnPage",
-                     "testFindEntitySelectAsRecordReturnList",
-                     "testFindList",
-                     "testLimit",
-                     "testLimitedRange",
-                     "testLiteralTrue",
-                     "testMixedSort",
                      "testNonUniqueResultException",
-                     "testOrderByHasPrecedenceOverPageRequestSorts",
-                     "testOrderByHasPrecedenceOverSorts",
                      "testQueryWithSelectReturnsOptionalOfRecord",
                      "testQueryWithSelectReturnsPageOfRecord",
                      "testRecordComponentsChooseAttributeReturnPage",
@@ -64,8 +54,7 @@ public class FilterExtension implements ExecutionCondition {
                      "testSelectEntityAttributesAsOptionalOfRecord",
                      "testSelectEntityAttributesAsPageOfRecord",
                      "testStaticMetamodelDescendingSorts",
-                     "testStaticMetamodelDescendingSortsPreGenerated",
-                     "testVarargsSort" -> {
+                     "testStaticMetamodelDescendingSortsPreGenerated" -> {
                     return DISABLED;
                 }
             }

@@ -531,14 +531,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     /**
      * Build FindOptions with pagination and sorting, merging additional sort from QueryModel.
      */
-    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort) {
-        return buildFindOptions(pageable, additionalSort, null);
+    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable RuntimePersistentEntity<?> entity) {
+        return buildFindOptions(pageable, additionalSort, null, entity);
     }
 
     /**
      * Build FindOptions with pagination, limit, and sorting.
      */
-    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable final Limit limit) {
+    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable final Limit limit, @Nullable RuntimePersistentEntity<?> entity) {
         FindOptions options = new FindOptions();
         if (pageable.getOffset() > 0) {
             options.skip(pageable.getOffset());
@@ -573,7 +573,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 if (property.contains(".")) {
                     property = property.substring(property.lastIndexOf('.') + 1);
                 }
-                options.thenOrderBy(entityMapper.normalizeFieldName(property, null), sortOrder);
+                options.thenOrderBy(entityMapper.normalizeFieldName(property, entity), sortOrder);
             }
         }
         return options;
@@ -644,12 +644,26 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             NitritePreparedQuery<?, ?> nq = getNitritePreparedQuery(pq);
             filter = nq.getNitriteFilter();
             sort = nq.getSort();
-            if (sort == null || !sort.isSorted()) {
-                sort = parseSortFromHints(nq.getQueryHints());
+            Sort parsedSort = null;
+            String jsonQuery = nq.getQuery();
+            if (jsonQuery != null) {
+                parsedSort = parseSortFromJsonQuery(jsonQuery);
+            }
+            if ((parsedSort == null || !parsedSort.isSorted()) && nq.getQueryHints() != null) {
+                parsedSort = parseSortFromHints(nq.getQueryHints());
+            }
+            if (parsedSort != null && parsedSort.isSorted()) {
+                if (sort == null || !sort.isSorted()) {
+                    sort = parsedSort;
+                } else {
+                    List<Sort.Order> merged = new ArrayList<>(parsedSort.getOrderBy());
+                    merged.addAll(sort.getOrderBy());
+                    sort = Sort.of(merged);
+                }
             }
         }
 
-        var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit));
+        var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit, getEntity(query.getRootEntity())));
         List<T> results = new ArrayList<>();
         for (Document doc : cursor) {
             results.add(entityMapper.fromDocument(doc, type));

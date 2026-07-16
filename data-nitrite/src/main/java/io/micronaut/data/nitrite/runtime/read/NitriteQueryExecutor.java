@@ -54,7 +54,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,9 +82,8 @@ public final class NitriteQueryExecutor {
     private final NitriteFilterBuilder filterBuilder;
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
-    private final BiFunction<Pageable, Sort, FindOptions> findOptionsFactory;
+    private final FindOptionsBuilder findOptionsFactory;
     private final NitriteOperationsHelper helper;
-
     // Centralized strategy classes for result handling
     private final ObjectRepositoryMapper entityMapperHandler;
     private final ValueConverter valueConverter;
@@ -113,7 +111,7 @@ public final class NitriteQueryExecutor {
                                 ConversionService conversionService,
                                 Function<Class<?>, NitriteCollection> collectionFactory,
                                 Function<Class<?>, RuntimePersistentEntity<?>> entityFactory,
-                                BiFunction<Pageable, Sort, FindOptions> findOptionsFactory,
+                                FindOptionsBuilder findOptionsFactory,
                                 NitriteOperationsHelper helper,
                                 EntityEventListener<Object> entityEventListener) {
         this.entityMapper = entityMapper;
@@ -214,17 +212,26 @@ public final class NitriteQueryExecutor {
         }
 
         Sort sort = nq.getSort();
-        if (sort == null || !sort.isSorted()) {
-            String query = nq.getQuery();
-            if (query != null) {
-                sort = helper.parseSortFromJsonQuery(query);
-            }
-            if ((sort == null || !sort.isSorted()) && nq.getQueryHints() != null) {
-                sort = helper.parseSortFromHints(nq.getQueryHints());
+        Sort parsedSort = null;
+        String jsonQuery = nq.getQuery();
+        if (jsonQuery != null) {
+            parsedSort = helper.parseSortFromJsonQuery(jsonQuery);
+        }
+        if ((parsedSort == null || !parsedSort.isSorted()) && nq.getQueryHints() != null) {
+            parsedSort = helper.parseSortFromHints(nq.getQueryHints());
+        }
+        if (parsedSort != null && parsedSort.isSorted()) {
+            if (sort == null || !sort.isSorted()) {
+                sort = parsedSort;
+            } else {
+                List<Sort.Order> merged = new ArrayList<>(parsedSort.getOrderBy());
+                merged.addAll(sort.getOrderBy());
+                sort = Sort.of(merged);
             }
         }
+        FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), sort, entityFactory.apply(q.getRootEntity()));
         Document doc = (sort != null && sort.isSorted())
-            ? coll.find(filter, findOptionsFactory.apply(nq.getPageable(), sort)).firstOrNull()
+            ? coll.find(filter, findOptions).firstOrNull()
             : coll.find(filter).firstOrNull();
         if (doc == null) {
             return null;
@@ -291,13 +298,21 @@ public final class NitriteQueryExecutor {
 
         // Setup sort and limit
         Sort s = nq.getSort();
-        if (s == null || !s.isSorted()) {
-            String query = nq.getQuery();
-            if (query != null) {
-                s = helper.parseSortFromJsonQuery(query);
-            }
-            if ((s == null || !s.isSorted()) && nq.getQueryHints() != null) {
-                s = helper.parseSortFromHints(nq.getQueryHints());
+        Sort parsedS = null;
+        String jsonQuery = nq.getQuery();
+        if (jsonQuery != null) {
+            parsedS = helper.parseSortFromJsonQuery(jsonQuery);
+        }
+        if ((parsedS == null || !parsedS.isSorted()) && nq.getQueryHints() != null) {
+            parsedS = helper.parseSortFromHints(nq.getQueryHints());
+        }
+        if (parsedS != null && parsedS.isSorted()) {
+            if (s == null || !s.isSorted()) {
+                s = parsedS;
+            } else {
+                List<Sort.Order> merged = new ArrayList<>(parsedS.getOrderBy());
+                merged.addAll(s.getOrderBy());
+                s = Sort.of(merged);
             }
         }
         Limit limit = nq.getQueryLimit();
@@ -309,7 +324,7 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        FindOptions findOptions = findOptionsFactory.apply(nq.getPageable(), s);
+        FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), s, entityFactory.apply(q.getRootEntity()));
         if (limit.maxResults() > 0) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
@@ -624,4 +639,19 @@ public final class NitriteQueryExecutor {
         return NitriteQueryBinder.resolveParameterValue(value, jsonParams, namedParameters, this::toFilterValue);
     }
 
+    /**
+     * Interface to build FindOptions from pageable, sort, and entity context.
+     */
+    @FunctionalInterface
+    public interface FindOptionsBuilder {
+        /**
+         * Build the find options.
+         *
+         * @param pageable the pageable
+         * @param sort the sort
+         * @param entity the entity
+         * @return the options
+         */
+        FindOptions build(Pageable pageable, Sort sort, RuntimePersistentEntity<?> entity);
+    }
 }
