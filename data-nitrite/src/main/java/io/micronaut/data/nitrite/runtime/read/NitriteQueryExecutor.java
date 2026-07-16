@@ -287,7 +287,7 @@ public final class NitriteQueryExecutor {
         return entity;
     }
 
-    private Document singleResult(RecordStream<Document> cursor) {
+    private @Nullable Document singleResult(RecordStream<Document> cursor) {
         Document result = null;
         boolean found = false;
         for (Document doc : cursor) {

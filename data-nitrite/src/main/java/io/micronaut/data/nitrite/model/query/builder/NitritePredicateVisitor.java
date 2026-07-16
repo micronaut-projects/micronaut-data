@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -258,7 +259,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                putFieldOperator(path, EQ, Boolean.TRUE);
+                putFieldOperator(path, EQ, true);
             });
     }
 
@@ -270,7 +271,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             propertyPath,
             (associations, property) -> {
                 String path = asPath(associations, property);
-                putFieldOperator(path, EQ, Boolean.FALSE);
+                putFieldOperator(path, EQ, false);
             });
     }
 
@@ -644,7 +645,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     private Object functionOperand(final FunctionExpression<?> functionExpression, final PersistentPropertyPath bindingContextPath) {
         List<Expression<?>> expressions = functionExpression.getExpressions();
-        return switch (functionExpression.getName().toUpperCase()) {
+        return switch (functionExpression.getName().toUpperCase(Locale.ROOT)) {
             case "CONCAT" -> Map.of(CONCAT, expressions.stream()
                 .map(expression -> requireExprOperand(expression, bindingContextPath))
                 .toList());
@@ -820,7 +821,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         query.put(fieldName, operator(op, value));
     }
 
-    private void putExpressionOperator(final String op, final Object left, final Object right) {
+    private void putExpressionOperator(final String op, @Nullable final Object left, @Nullable final Object right) {
         query.put(EXPR, operator(op, Arrays.asList(left, right)));
     }
 

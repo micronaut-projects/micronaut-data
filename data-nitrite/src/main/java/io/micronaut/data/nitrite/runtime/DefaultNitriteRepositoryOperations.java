@@ -91,6 +91,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -936,7 +937,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private int compareNullable(@Nullable Object left, @Nullable Object right) {
-        if (left == right) {
+        if (Objects.equals(left, right)) {
             return 0;
         }
         if (left == null) {
@@ -969,7 +970,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         return cursors;
     }
 
-    private Object getPropertyValue(Object result, String property, RuntimePersistentEntity<?> entity) {
+    private @Nullable Object getPropertyValue(Object result, String property, RuntimePersistentEntity<?> entity) {
         String propertyName = property.contains(".") ? property.substring(property.lastIndexOf('.') + 1) : property;
         PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
         if (propertyPath == null) {

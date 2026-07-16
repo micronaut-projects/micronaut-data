@@ -84,7 +84,7 @@ public final class PatternConverter {
                 regex.append(ch);
             }
         }
-        if (escaping) {
+        if (escaping && escapeChar != null) {
             appendLiteral(regex, escapeChar);
         }
         if (regex.isEmpty() || regex.charAt(regex.length() - 1) != '$') {
