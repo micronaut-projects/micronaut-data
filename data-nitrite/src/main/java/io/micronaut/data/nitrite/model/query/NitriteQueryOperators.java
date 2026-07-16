@@ -16,7 +16,9 @@
 package io.micronaut.data.nitrite.model.query;
 
 import io.micronaut.core.annotation.Internal;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -63,8 +65,8 @@ public final class NitriteQueryOperators {
     private NitriteQueryOperators() {
     }
 
-    public static Map<String, Object> operator(String operator, Object value) {
-        return Map.of(operator, value);
+    public static Map<String, @Nullable Object> operator(String operator, @Nullable Object value) {
+        return Collections.singletonMap(operator, value);
     }
 
     public static Map<String, Object> expression(String operator, List<?> operands) {
