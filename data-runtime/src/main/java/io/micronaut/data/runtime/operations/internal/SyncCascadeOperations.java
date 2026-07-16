@@ -139,13 +139,13 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                         entities = helper.persistBatch(ctx, sourceChildren, childPersistentEntity, veto);
                     } else {
                         entities = CollectionUtils.iterableToList(cascadeManyOp.children);
+                        RuntimeAssociation<Object> association = (RuntimeAssociation<Object>) cascadeManyOp.ctx.getAssociation();
                         for (ListIterator<Object> iterator = entities.listIterator(); iterator.hasNext(); ) {
                             Object child = iterator.next();
                             if (ctx.persisted.contains(child)) {
                                 continue;
                             }
-                            RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                            if (identity.getProperty().get(child) != null) {
+                            if (!shouldPersistChildOnPersist(childPersistentEntity, association, child)) {
                                 continue;
                             }
                             Object persisted = helper.persistOne(ctx, child, childPersistentEntity);

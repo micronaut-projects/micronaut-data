@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '8.0.0'
+    id 'io.micronaut.build.shared.settings' version '8.0.1'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -149,6 +149,8 @@ include 'doc-examples:data-jpa-metamodel-entities-example-groovy'
 include 'doc-examples:jooq-r2dbc-postgres'
 
 include 'test-annotation-processor-java'
+
+include 'test-suite-data-jdbc-sqlite'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

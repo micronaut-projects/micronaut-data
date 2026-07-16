@@ -57,11 +57,11 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         Iterable<?> iterable;
-        if (root.getJoins().isEmpty() && root.getFetches().isEmpty()) {
+        if (!hasJoinsOrFetches(root)) {
             iterable = findAll(methodKey, context, pageable, criteriaQuery);
         } else {
             CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
-            List<Tuple> tupleResult = findAll(methodKey, context, pageable, criteriaIdsQuery);
+            List<Tuple> tupleResult = findPageIds(methodKey, context, pageable, criteriaIdsQuery);
             if (tupleResult.isEmpty()) {
                 iterable = List.of();
             } else {

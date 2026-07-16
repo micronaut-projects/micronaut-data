@@ -42,7 +42,7 @@ jobs:
           unset JAVA_HOME
           export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Pre-Build Steps
         uses: micronaut-projects/github-actions/graalvm/pre-build@master
@@ -55,11 +55,12 @@ jobs:
 
       - name: Create Oracle Test Pilot Databases...
         id: create_database
-        uses: oracle-actions/setup-testpilot@aec84678697e1648ddb8e8a480cf3ceda746ce5c # v1.0.24
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: create
           user: ${{ matrix.native_test_task }}
+          surround-connection-string-with-double-quotes: true
 
       - name: Disable TCP Fast Open for Autonomous databases
         id: disable_tfo
@@ -94,7 +95,7 @@ jobs:
       - name: Delete Oracle Test Pilot Databases...
         id: delete_database
         if: always() && steps.create_database.outcome == 'success'
-        uses: oracle-actions/setup-testpilot@aec84678697e1648ddb8e8a480cf3ceda746ce5c # v1.0.24
+        uses: oracle-actions/setup-testpilot@0e9d9b877bb35f65e3f1f1c54c6a425329dd7ece # v1.0.27
         with:
           oci-service: ${{ matrix.db }}
           action: delete
