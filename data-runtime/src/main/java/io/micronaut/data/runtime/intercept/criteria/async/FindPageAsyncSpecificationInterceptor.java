@@ -22,6 +22,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.operations.AsyncPageIdCriteriaRepositoryOperations;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -71,11 +72,11 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         CompletionStage<List<Object>> content;
-        if (root.getJoins().isEmpty()) {
-            content = findAllAsync(methodKey, context, pageable, criteriaQuery);
+        if (!hasJoinsOrFetches(root)) {
+            content = findAllAsync(methodKey, context, pageable, criteriaQuery, false);
         } else {
             CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
-            content = findAllAsync(methodKey, context, pageable, criteriaIdsQuery)
+            content = findAllAsync(methodKey, context, pageable, criteriaIdsQuery, true)
                 .thenCompose(tupleResult -> {
                     if (tupleResult.isEmpty()) {
                         return CompletableFuture.completedFuture(List.of());
@@ -86,7 +87,7 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
                         }
                         Predicate inPredicate = getIdExpression(root).in(ids);
                         criteriaQuery.where(inPredicate);
-                        return findAllAsync(methodKey, context, pageable.withoutPaging(), criteriaQuery);
+                        return findAllAsync(methodKey, context, pageable.withoutPaging(), criteriaQuery, false);
                     }
                 });
         }
@@ -106,18 +107,26 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
     private <T> CompletionStage<List<T>> findAllAsync(RepositoryMethodKey methodKey,
                                                       MethodInvocationContext<?, ?> context,
-                                                      Pageable pageable, CriteriaQuery<T> criteriaQuery) {
+                                                      Pageable pageable,
+                                                      CriteriaQuery<T> criteriaQuery,
+                                                      boolean pageIdsQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (asyncCriteriaOperations != null) {
             if (pageable != null) {
                 if (pageable.getMode() != Pageable.Mode.OFFSET) {
                     throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
+                if (pageIdsQuery && asyncCriteriaOperations instanceof AsyncPageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return pageIdOperations.findPageIds(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
+                }
                 return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
             }
             int offset = getOffset(context);
             int limit = getLimit(context);
             if (offset > 0 || limit > 0) {
+                if (pageIdsQuery && asyncCriteriaOperations instanceof AsyncPageIdCriteriaRepositoryOperations pageIdOperations) {
+                    return pageIdOperations.findPageIds(criteriaQuery, offset, limit);
+                }
                 return asyncCriteriaOperations.findAll(criteriaQuery, offset, limit);
             }
             return asyncCriteriaOperations.findAll(criteriaQuery);
