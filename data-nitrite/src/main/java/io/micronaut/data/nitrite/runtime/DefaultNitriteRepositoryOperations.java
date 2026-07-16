@@ -633,37 +633,18 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Iterable<T> findAll(@NonNull final PagedQuery<T> query) {
-        Class<T> type = query.getRootEntity();
-        Filter filter = Filter.ALL;
-        Sort sort = null;
-        Limit limit = query.getQueryLimit();
-
-        // If PagedQuery is actually a PreparedQuery, extract the filter and sort
         if (query instanceof PreparedQuery<?, ?> pq) {
-            NitritePreparedQuery<?, ?> nq = getNitritePreparedQuery(pq);
-            filter = nq.getNitriteFilter();
-            sort = nq.getSort();
-            Sort parsedSort = null;
-            String jsonQuery = nq.getQuery();
-            if (jsonQuery != null) {
-                parsedSort = parseSortFromJsonQuery(jsonQuery);
-            }
-            if ((parsedSort == null || !parsedSort.isSorted()) && nq.getQueryHints() != null) {
-                parsedSort = parseSortFromHints(nq.getQueryHints());
-            }
-            if (parsedSort != null && parsedSort.isSorted()) {
-                if (sort == null || !sort.isSorted()) {
-                    sort = parsedSort;
-                } else {
-                    List<Sort.Order> merged = new ArrayList<>(parsedSort.getOrderBy());
-                    merged.addAll(sort.getOrderBy());
-                    sort = Sort.of(merged);
-                }
-            }
+            return queryExecutor.findAll((PreparedQuery) pq, (NitritePreparedQuery) getNitritePreparedQuery(pq));
         }
 
-        var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit, getEntity(query.getRootEntity())));
+        Class<T> type = query.getRootEntity();
+        Filter filter = Filter.ALL;
+        Sort sort = query.getPageable().getSort();
+        Limit limit = query.getQueryLimit();
+
+        var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit, getEntity(type)));
         List<T> results = new ArrayList<>();
         for (Document doc : cursor) {
             results.add(entityMapper.fromDocument(doc, type));
