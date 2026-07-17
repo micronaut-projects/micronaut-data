@@ -116,7 +116,7 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             book.id = UUID.randomUUID().toString()
             book.title = "Book1"
             book.totalPages = 500
-            bookRepository.save(book)
+            bookRepository.insert(book)
         when:
             def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
         then:
