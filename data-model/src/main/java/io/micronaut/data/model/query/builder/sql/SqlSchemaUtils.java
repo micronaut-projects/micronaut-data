@@ -111,6 +111,25 @@ public final class SqlSchemaUtils {
     static final int SRID_WEB_MERCATOR = 3857;
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
+
+    private static final String JAKARTA_SIZE = "jakarta.validation.constraints.Size";
+    private static final String JAKARTA_POSITIVE = "jakarta.validation.constraints.Positive";
+    private static final String JAVAX_POSITIVE = "javax.validation.constraints.Positive";
+    private static final String JAKARTA_POSITIVE_OR_ZERO = "jakarta.validation.constraints.PositiveOrZero";
+    private static final String JAVAX_POSITIVE_OR_ZERO = "javax.validation.constraints.PositiveOrZero";
+    private static final String JAKARTA_NEGATIVE = "jakarta.validation.constraints.Negative";
+    private static final String JAVAX_NEGATIVE = "javax.validation.constraints.Negative";
+    private static final String JAKARTA_NEGATIVE_OR_ZERO = "jakarta.validation.constraints.NegativeOrZero";
+    private static final String JAVAX_NEGATIVE_OR_ZERO = "javax.validation.constraints.NegativeOrZero";
+    private static final String JAKARTA_MIN = "jakarta.validation.constraints.Min";
+    private static final String JAVAX_MIN = "javax.validation.constraints.Min";
+    private static final String JAKARTA_MAX = "jakarta.validation.constraints.Max";
+    private static final String JAVAX_MAX = "javax.validation.constraints.Max";
+    private static final String JAKARTA_DECIMAL_MIN = "jakarta.validation.constraints.DecimalMin";
+    private static final String JAVAX_DECIMAL_MIN = "javax.validation.constraints.DecimalMin";
+    private static final String JAKARTA_DECIMAL_MAX = "jakarta.validation.constraints.DecimalMax";
+    private static final String JAVAX_DECIMAL_MAX = "javax.validation.constraints.DecimalMax";
+
     private static final String ORACLE_GEOM_METADATA_STATEMENT = """
         INSERT INTO USER_SDO_GEOM_METADATA (TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)
         VALUES (
@@ -351,7 +370,7 @@ public final class SqlSchemaUtils {
 
         return switch (dataType) {
             case STRING -> {
-                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size" + LIST_ANNOTATION_SUFFIX)
+                int stringLength = annotationMetadata.findAnnotation(JAKARTA_SIZE + LIST_ANNOTATION_SUFFIX)
                     .flatMap(v -> {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;
@@ -495,26 +514,26 @@ public final class SqlSchemaUtils {
     private static List<SqlCheckConstraint> deriveNumericChecks(PersistentProperty property, String tableName) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         List<SqlCheckConstraint> constraints = new ArrayList<>();
-        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.Positive", "javax.validation.constraints.Positive")) {
+        if (hasConstraint(annotationMetadata, JAKARTA_POSITIVE, JAVAX_POSITIVE)) {
             addCheck(constraints, property, tableName, ">", "0");
         }
-        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.PositiveOrZero", "javax.validation.constraints.PositiveOrZero")) {
+        if (hasConstraint(annotationMetadata, JAKARTA_POSITIVE_OR_ZERO, JAVAX_POSITIVE_OR_ZERO)) {
             addCheck(constraints, property, tableName, ">=", "0");
         }
-        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.Negative", "javax.validation.constraints.Negative")) {
+        if (hasConstraint(annotationMetadata, JAKARTA_NEGATIVE, JAVAX_NEGATIVE)) {
             addCheck(constraints, property, tableName, "<", "0");
         }
-        if (hasConstraint(annotationMetadata, "jakarta.validation.constraints.NegativeOrZero", "javax.validation.constraints.NegativeOrZero")) {
+        if (hasConstraint(annotationMetadata, JAKARTA_NEGATIVE_OR_ZERO, JAVAX_NEGATIVE_OR_ZERO)) {
             addCheck(constraints, property, tableName, "<=", "0");
         }
-        getFirstLongMemberAsString(annotationMetadata, "jakarta.validation.constraints.Min", "javax.validation.constraints.Min")
+        getFirstLongMemberAsString(annotationMetadata, JAKARTA_MIN, JAVAX_MIN)
             .ifPresent(value -> addCheck(constraints, property, tableName, ">=", value));
-        getFirstLongMemberAsString(annotationMetadata, "jakarta.validation.constraints.Max", "javax.validation.constraints.Max")
+        getFirstLongMemberAsString(annotationMetadata, JAKARTA_MAX, JAVAX_MAX)
             .ifPresent(value -> addCheck(constraints, property, tableName, "<=", value));
-        getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMin", "javax.validation.constraints.DecimalMin")
+        getFirstAnnotation(annotationMetadata, JAKARTA_DECIMAL_MIN, JAVAX_DECIMAL_MIN)
             .ifPresent(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? ">=" : ">",
                 annotation.stringValue(VALUE_MEMBER).orElse("0")));
-        getFirstAnnotation(annotationMetadata, "jakarta.validation.constraints.DecimalMax", "javax.validation.constraints.DecimalMax")
+        getFirstAnnotation(annotationMetadata, JAKARTA_DECIMAL_MAX, JAVAX_DECIMAL_MAX)
             .ifPresent(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? "<=" : "<",
                 annotation.stringValue(VALUE_MEMBER).orElse("0")));
         return constraints;

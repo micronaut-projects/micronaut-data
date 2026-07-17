@@ -10,27 +10,7 @@ That includes a scalar property inside an embedded component, but not the embedd
 It can also be combined with validation annotations to generate Oracle `CHECK` constraints for the reservable column.
 Validation annotations without ann:data.annotation.Reservable[] do not create database constraints.
 
-[source,java]
-----
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Reservable;
-import jakarta.validation.constraints.PositiveOrZero;
-
-@MappedEntity("account")
-public class Account {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    @Reservable
-    @PositiveOrZero
-    private Long balance;
-
-    // getters and setters
-}
-----
+snippet::example.Account[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable"]
 
 The generated Oracle DDL includes the `RESERVABLE` column modifier and, when supported validation annotations are present, a column `CHECK` constraint:
 
@@ -38,6 +18,7 @@ The generated Oracle DDL includes the `RESERVABLE` column modifier and, when sup
 ----
 CREATE TABLE "ACCOUNT" (
     "ID" NUMBER(19) NOT NULL,
+    "NAME" VARCHAR(255) NOT NULL,
     "BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL,
     PRIMARY KEY("ID")
 )
@@ -52,36 +33,13 @@ Oracle reservable column updates must be expressed as delta operations, for exam
 Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
 Use derived reservation methods to generate reservation-delta updates. A method name starts with `reserve` and declares one or more `Increment<Property>` or `Decrement<Property>` operations joined by `And`.
 
-This `Account` example has no non-reservable mutable properties, so it extends api:data.repository.GenericRepository[] and explicitly declares only the operations it supports.
-Entities with at least one non-reservable updatable property can continue to extend api:data.repository.CrudRepository[].
+This `Account` example has a non-reservable mutable `name` property, so it can extend api:data.repository.CrudRepository[].
 
-[source,java]
-----
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface AccountRepository extends GenericRepository<Account, Long> {
-
-    Account insert(Account account);
-
-    int reserveIncrementAmountAndDecrementBalance(
-        @Id Long id,
-        Long amount,
-        Long balance
-    );
-}
-----
+snippet::example.AccountRepository[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable"]
 
 For reservation updates that cannot be expressed by the derived method grammar, use an explicit ann:data.annotation.Query[] method:
 
-[source,java]
-----
-@Query("UPDATE \"ACCOUNT\" SET \"BALANCE\" = \"BALANCE\" + :amount WHERE \"ID\" = :id")
-int reserveBalance(Long id, Long amount);
-----
+snippet::example.AccountRepository[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable-raw-query"]
 
 Raw queries bypass the derived reservation-method matcher. They can use a different `WHERE` predicate, but Micronaut Data does not validate their lock-free reservation semantics. The query must use only reservable delta assignments in its `SET` clause and must not mix reservable and non-reservable assignments.
 
@@ -91,7 +49,7 @@ If an entity has no non-reservable update properties, Micronaut Data fails query
 The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
 If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
 Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable and directs the user to api:data.repository.GenericRepository[].
-For those entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
+For those reservable-only entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
 Use `insert(...)` for new rows and an explicit derived reservation method for existing rows.
 
 This restriction is specific to reservable-only update shapes.
