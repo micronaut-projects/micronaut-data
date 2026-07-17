@@ -124,6 +124,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
+    private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
+
     private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     // Shared, stateless no-op predicate to avoid per-call allocations in createQueryState().predicate()
@@ -876,11 +878,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
+        StringBuilder result = new StringBuilder(column);
         if (tableColumn.isReservable()) {
             if (dialect != Dialect.ORACLE) {
                 throw new IllegalStateException("Reservable columns are only supported for Oracle");
             }
-            column += " RESERVABLE";
+            result.append(" RESERVABLE");
         }
         for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {
             String columnName = tableColumn.getName();
@@ -891,9 +894,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (escape) {
                 constraintName = quote(constraintName);
             }
-            column += " CONSTRAINT " + constraintName + " CHECK (" + columnName + " " + checkConstraint.operator() + " " + checkConstraint.value() + ")";
+            result.append(String.format(CONSTRAINT_CHECK_TEMPLATE, constraintName, columnName, checkConstraint.operator(), checkConstraint.value()));
         }
-        return column;
+        return result.toString();
     }
 
     private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {

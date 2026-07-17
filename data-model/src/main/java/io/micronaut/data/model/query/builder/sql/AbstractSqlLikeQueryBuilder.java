@@ -920,7 +920,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
             .filter(e -> !e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class)
                 || e.getValue() instanceof BinaryExpression<?>)
-            .collect(Collectors.toList());
+            .toList();
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))) {
             throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable");

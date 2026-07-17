@@ -421,6 +421,7 @@ public final class SqlSchemaUtils {
         return null;
     }
 
+    @SuppressWarnings("java:S107")
     private static SqlColumnMapping columnMapping(String column,
                                                   String tableName,
                                                   DataType dataType,
