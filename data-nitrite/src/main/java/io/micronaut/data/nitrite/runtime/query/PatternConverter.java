@@ -19,11 +19,23 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import java.util.regex.Pattern;
 
+/**
+ * Converts LIKE patterns and wildcards to regular expressions for Nitrite queries.
+ *
+ * @since 5.0.0
+ */
 @Internal
 public final class PatternConverter {
 
     private PatternConverter() { }
 
+    /**
+     * Resolves a regex pattern from the given value. Handles {@link Pattern} instances,
+     * slash-delimited patterns, and wildcard (LIKE) patterns.
+     *
+     * @param resolved the raw pattern value
+     * @return the resolved regex pattern string
+     */
     public static String resolveRegexPattern(@Nullable Object resolved) {
         if (resolved == null) {
             return "";
@@ -46,6 +58,13 @@ public final class PatternConverter {
         return flags + value;
     }
 
+    /**
+     * Returns {@code true} if the value looks like a wildcard pattern
+     * containing {@code %}, {@code _}, or {@code *} characters.
+     *
+     * @param value the value to inspect
+     * @return {@code true} if the value contains wildcard characters
+     */
     public static boolean looksLikeWildcardPattern(String value) {
         if (value == null || value.isEmpty()) {
             return false;
@@ -57,10 +76,23 @@ public final class PatternConverter {
         return value.indexOf('%') >= 0 || value.indexOf('_') >= 0 || value.indexOf('*') >= 0;
     }
 
+    /**
+     * Converts a LIKE pattern to a regex string using no escape character.
+     *
+     * @param pattern the LIKE pattern
+     * @return the equivalent regex string
+     */
     public static String convertLikeToRegex(String pattern) {
         return convertLikeToRegex(pattern, null);
     }
 
+    /**
+     * Converts a LIKE pattern to a regex string with an optional escape character.
+     *
+     * @param pattern the LIKE pattern
+     * @param escapeChar the escape character, or {@code null} for none
+     * @return the equivalent regex string
+     */
     public static String convertLikeToRegex(String pattern, @Nullable Character escapeChar) {
         StringBuilder regex = new StringBuilder(pattern.length() + 6);
         if (pattern.isEmpty() || pattern.charAt(0) != '^') {

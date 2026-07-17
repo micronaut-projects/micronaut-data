@@ -30,50 +30,97 @@ import java.util.Map;
 @Internal
 public final class NitriteQueryOperators {
 
+    /** Logical AND operator. */
     public static final String AND = "$and";
+    /** Logical OR operator. */
     public static final String OR = "$or";
+    /** Logical NOT operator. */
     public static final String NOT = "$not";
+    /** Expression operator. */
     public static final String EXPR = "$expr";
+    /** Exists operator. */
     public static final String EXISTS = "$exists";
+    /** Empty operator. */
     public static final String EMPTY = "$empty";
+    /** Text search operator. */
     public static final String TEXT = "$text";
+    /** All operator for array matching. */
     public static final String ALL = "$all";
 
+    /** Equals operator. */
     public static final String EQ = "$eq";
+    /** Not-equals operator. */
     public static final String NE = "$ne";
+    /** Greater-than operator. */
     public static final String GT = "$gt";
+    /** Greater-than-or-equal operator. */
     public static final String GTE = "$gte";
+    /** Less-than operator. */
     public static final String LT = "$lt";
+    /** Less-than-or-equal operator. */
     public static final String LTE = "$lte";
+    /** In operator. */
     public static final String IN = "$in";
+    /** Not-in operator. */
     public static final String NIN = "$nin";
+    /** Between operator. */
     public static final String BETWEEN = "$between";
+    /** Regex operator. */
     public static final String REGEX = "$regex";
+    /** Like operator. */
     public static final String LIKE = "$like";
+    /** Null operator. */
     public static final String NULL = "$null";
+    /** Not-null operator. */
     public static final String NOT_NULL = "$notNull";
 
+    /** String length operator. */
     public static final String STR_LEN_CP = "$strLenCP";
+    /** To-lower operator. */
     public static final String TO_LOWER = "$toLower";
+    /** To-upper operator. */
     public static final String TO_UPPER = "$toUpper";
+    /** Multiply operator. */
     public static final String MULTIPLY = "$multiply";
+    /** Concatenate operator. */
     public static final String CONCAT = "$concat";
+    /** Substring operator. */
     public static final String SUBSTR_CP = "$substrCP";
+    /** Right substring operator. */
     public static final String RIGHT = "$right";
+    /** Divide operator. */
     public static final String DIVIDE = "$divide";
+    /** To-double operator. */
     public static final String TO_DOUBLE = "$toDouble";
 
+    /** Near geospatial operator. */
     public static final String NEAR = "$near";
+    /** Within geospatial operator. */
     public static final String WITHIN = "$within";
+    /** Intersects geospatial operator. */
     public static final String INTERSECTS = "$intersects";
 
     private NitriteQueryOperators() {
     }
 
+    /**
+     * Creates a single-operator query map entry.
+     *
+     * @param operator the operator name
+     * @param value the value to match
+     * @return a singleton map containing the operator and value
+     */
     public static Map<String, @Nullable Object> operator(String operator, @Nullable Object value) {
         return Collections.singletonMap(operator, value);
     }
 
+    /**
+     * Creates an expression query wrapping the given operator and operands.
+     *
+     * @param operator the operator name
+     * @param operands the list of operands
+     * @return a map containing the {@code $expr} expression
+     */
     public static Map<String, Object> expression(String operator, List<?> operands) {
         return Map.of(EXPR, operator(operator, operands));
     }

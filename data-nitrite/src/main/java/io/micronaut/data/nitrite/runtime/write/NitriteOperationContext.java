@@ -45,7 +45,9 @@ public final class NitriteOperationContext extends OperationContext {
     }
 
     /**
-     * @return Whether this operation came from an explicit insert method.
+     * Returns whether this operation came from an explicit insert method.
+     *
+     * @return {@code true} if the operation originated from an explicit insert method
      */
     public boolean isStrictInsert() {
         return strictInsert;
