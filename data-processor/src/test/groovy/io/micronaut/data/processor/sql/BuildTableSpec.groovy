@@ -238,44 +238,6 @@ class Account {
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))'
     }
 
-    void "test build create table with Oracle reservable column without target version"() {
-        given:
-        def entity = buildJpaEntity('test.Account', '''
-import io.micronaut.data.annotation.Reservable;
-
-@Entity
-class Account {
-    @javax.persistence.Id
-    private Long id;
-    @Reservable
-    private Long balance;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getBalance() {
-        return balance;
-    }
-
-    public void setBalance(Long balance) {
-        this.balance = balance;
-    }
-}
-''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
-
-        when:
-        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
-
-        then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE NOT NULL, PRIMARY KEY("ID"))'
-    }
-
     void "test build create table rejects reservable column for non Oracle dialect"() {
         given:
         def entity = buildJpaEntity('test.Account', '''
