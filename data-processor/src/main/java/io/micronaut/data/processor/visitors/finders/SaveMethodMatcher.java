@@ -128,7 +128,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         }
         boolean saveOperation = isSaveOperation(methodElement, matches);
         if (matchContext.getParametersNotInRole().stream().allMatch(p -> TypeUtils.isIterableOfEntity(p.getGenericType()) || TypeUtils.isEntity(p.getGenericType()))) {
-            return saveEntity(matchContext, isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT, saveOperation);
+            return saveEntity(isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT, saveOperation);
         }
         return saveProperties(saveOperation);
     }
@@ -144,7 +144,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             .anyMatch(match -> match.id() == QueryMatchId.PREFIX && match.part().equals("save"));
     }
 
-    public static MethodMatch saveEntity(MethodMatchContext matchContext, DataMethod.OperationType operationType, boolean saveOperation) {
+    private static MethodMatch saveEntity(DataMethod.OperationType operationType, boolean saveOperation) {
         return mc -> buildSaveEntityMatchInfo(mc, operationType, saveOperation);
     }
 
