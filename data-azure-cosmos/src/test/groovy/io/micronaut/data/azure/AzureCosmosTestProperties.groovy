@@ -19,8 +19,10 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
 
     @Shared
     @AutoCleanup("stop")
-    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
-            .waitingFor(Wait.forHttps("/_explorer/emulator.pem").forStatusCode(200).allowInsecure().withStartupTimeout(STARTUP_TIMEOUT))
+    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+        .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+        .withEnv("PROTOCOL", "https")
+        .waitingFor(Wait.forHttps("/_explorer/emulator.pem").forStatusCode(200).allowInsecure().withStartupTimeout(STARTUP_TIMEOUT))
 
     @Override
     Map<String, String> getProperties() {

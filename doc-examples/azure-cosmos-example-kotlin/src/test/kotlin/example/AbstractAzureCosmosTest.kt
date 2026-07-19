@@ -14,7 +14,9 @@ abstract class AbstractAzureCosmosTest : TestPropertyProvider {
 
     companion object {
         @JvmStatic
-        val emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+        val emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+            .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+            .withEnv("PROTOCOL", "https")
 
         @AfterAll
         @JvmStatic

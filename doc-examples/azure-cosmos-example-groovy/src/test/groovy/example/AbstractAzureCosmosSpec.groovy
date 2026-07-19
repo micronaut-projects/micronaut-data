@@ -16,7 +16,8 @@ abstract class AbstractAzureCosmosSpec extends Specification implements TestProp
 
     @Shared
     @AutoCleanup("stop")
-    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview").asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator"))
+        .withEnv("PROTOCOL", "https")
 
     @Override
     Map<String, String> getProperties() {

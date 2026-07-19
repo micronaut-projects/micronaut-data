@@ -17,7 +17,9 @@ import java.util.Map;
 
 public abstract class AbstractAzureCosmosTest implements TestPropertyProvider {
 
-    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"));
+    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+        .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator"))
+        .withEnv("PROTOCOL", "https");
 
     @BeforeAll
     public static void startContainer() {
