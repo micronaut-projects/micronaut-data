@@ -81,10 +81,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
         when:
             def name = repository.findNameById(entity1.id)
             def tags1 = repository.getTagsById(entity1.id)
-            // TODO: New container throws error
-            // java.lang.IllegalStateException: Failed to get POJO of type 'java.lang.String' for json '{"_value":"entity2"}'.
-            //    at com.azure.cosmos.implementation.JsonSerializable.toObjectFromObjectNode(JsonSerializable.java:764)
-            // def tags2 = repository.getTagsById(entity2.id)
+            def tags2 = repository.getTagsById(entity2.id)
             def notEmptyNameEntities = repository.findByNameIsNotEmpty()
             def emptyCustomNameEntities = repository.findByCustomNameIsEmpty()
             def nullRatingEntities = repository.findByRatingIsNull()
@@ -94,7 +91,7 @@ class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTes
         then:
             name == entity1.name
             !tags1 || tags1.length == 0
-            // tags2.length == 4
+            tags2.length == 4
             notEmptyNameEntities.size() == 2
             emptyCustomNameEntities.size() == 1
             emptyCustomNameEntities[0].id == entity2.id
