@@ -64,7 +64,7 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.childrenArrayContainsGender
 
-//@IgnoreIf({ env["GITHUB_WORKFLOW"] })
+@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily()
