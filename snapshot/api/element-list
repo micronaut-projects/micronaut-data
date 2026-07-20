@@ -176,6 +176,7 @@ io.micronaut.transaction.interceptor.annotation
 io.micronaut.transaction.jdbc
 io.micronaut.transaction.jdbc.exceptions
 io.micronaut.transaction.reactive
+io.micronaut.transaction.recovery
 io.micronaut.transaction.support
 io.micronaut.transaction.sync
 io.micronaut.transaction.test
