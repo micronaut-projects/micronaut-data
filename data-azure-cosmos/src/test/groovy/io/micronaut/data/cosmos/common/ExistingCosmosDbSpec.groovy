@@ -1,6 +1,5 @@
 package io.micronaut.data.cosmos.common
 
-import com.azure.cosmos.CosmosAsyncClient
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.ExcludedPath
@@ -18,7 +17,6 @@ import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -26,7 +24,6 @@ import spock.lang.Specification
  * This test does not run db and containers initialization on context load (StorageUpdatePolicy = NONE)
  * so we simulate database pre-existence in setupSpec method and let tests run with db created this way.
  */
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestProperties {
 
     private static final int BOOK_TIME_TO_LIVE = 30 * 24 * 60 * 60
