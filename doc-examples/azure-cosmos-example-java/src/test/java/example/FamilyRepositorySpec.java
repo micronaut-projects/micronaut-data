@@ -49,7 +49,7 @@ import static example.FamilyRepository.Specifications.tagsContain;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
+//@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily();
