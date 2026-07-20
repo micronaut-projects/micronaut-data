@@ -5,17 +5,23 @@ import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
 import org.junit.jupiter.api.AfterAll
 import org.testcontainers.containers.CosmosDBEmulatorContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Duration
 
 abstract class AbstractAzureCosmosTest : TestPropertyProvider {
 
     companion object {
+
+        private val STARTUP_TIMEOUT: Duration = Duration.ofMinutes(3)
+
         @JvmStatic
         val emulator = CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
             .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+            .waitingFor(Wait.forLogMessage(".*PostgreSQL=OK, Gateway=OK, Explorer=OK.*", 1).withStartupTimeout(STARTUP_TIMEOUT))
             .withEnv("PROTOCOL", "https")
 
         @AfterAll
