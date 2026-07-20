@@ -52,7 +52,6 @@ import jakarta.persistence.criteria.Root
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 import tools.jackson.core.ObjectReadContext
@@ -64,7 +63,6 @@ import static io.micronaut.data.azure.repositories.FamilyRepository.Specificatio
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.registeredEquals
 import static io.micronaut.data.azure.repositories.FamilyRepository.Specifications.childrenArrayContainsGender
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily()
