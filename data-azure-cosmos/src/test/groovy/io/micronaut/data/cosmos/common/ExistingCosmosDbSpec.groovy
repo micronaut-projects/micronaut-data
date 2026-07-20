@@ -96,6 +96,7 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             bookContainerProperties.defaultTimeToLiveInSeconds == BOOK_TIME_TO_LIVE
             bookContainerProperties.indexingPolicy.indexingMode == IndexingMode.CONSISTENT
             // TODO: New container does not treat these as unique keys?
+            // reported issue: https://github.com/Azure/azure-cosmos-db-emulator-docker/issues/337
             // bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
             // bookContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/title", "/totalPages")
             // bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/title/*"))
@@ -108,7 +109,7 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             familyThroughput.properties.autoscaleMaxThroughput == 0
             familyThroughput.properties.manualThroughput == 1100
             familyContainerProperties.defaultTimeToLiveInSeconds == FAMILY_TIME_TO_LIVE
-            // TODO: New container does not treat these as unique keys?
+            // TODO: New container does not return expected unique keys values?
             // familyContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
             // familyContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/lastName", "/registered")
             // familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/lastName/*"))
