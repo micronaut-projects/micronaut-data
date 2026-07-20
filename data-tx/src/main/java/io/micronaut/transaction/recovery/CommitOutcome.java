@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Internal;
 /**
  * Commit outcome reported by a database recovery facility.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 public enum CommitOutcome {

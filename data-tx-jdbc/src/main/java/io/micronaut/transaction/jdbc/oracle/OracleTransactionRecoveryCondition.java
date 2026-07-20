@@ -26,7 +26,7 @@ import io.micronaut.inject.BeanDefinition;
 /**
  * Enables Oracle transaction recovery when the datasource is Oracle and the feature is configured.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 final class OracleTransactionRecoveryCondition implements Condition {

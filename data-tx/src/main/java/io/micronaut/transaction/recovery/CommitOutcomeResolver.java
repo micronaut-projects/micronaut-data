@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Resolves a transaction recovery outcome for a transaction using a vendor-specific mechanism.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 public interface CommitOutcomeResolver {

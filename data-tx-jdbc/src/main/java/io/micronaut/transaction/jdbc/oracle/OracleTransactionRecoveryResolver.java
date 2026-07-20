@@ -38,7 +38,7 @@ import java.sql.Types;
 /**
  * Oracle transaction recovery resolver backed by Oracle Transaction Guard.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 @EachBean(DataSource.class)

@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Internal helper for synchronous recoverable transaction execution.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 final class RecoverableTransactionExecutor {

@@ -141,7 +141,7 @@ public @interface OracleTransactional {
      * Recovery is attempted only for the intercepted synchronous execution that
      * starts and owns the transaction commit boundary.</p>
      *
-     * @since 5.1
+     * @since 5.2
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
