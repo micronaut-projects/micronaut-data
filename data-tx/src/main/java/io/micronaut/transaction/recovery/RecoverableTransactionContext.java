@@ -33,6 +33,8 @@ import java.util.Optional;
 public final class RecoverableTransactionContext implements PropagatedContextElement {
 
     @Nullable
+    private TransactionStatus<?> transactionStatus;
+    @Nullable
     private CommitOutcomeResolver resolver;
     @Nullable
     private Object token;
@@ -48,11 +50,14 @@ public final class RecoverableTransactionContext implements PropagatedContextEle
     }
 
     /**
-     * Enables recovery after the intercepted invocation has started a new transaction.
+     * Enables recovery for the transaction started by the intercepted invocation.
      *
+     * @param transactionStatus The transaction that owns the commit boundary
      * @param resolver The datasource-specific outcome resolver
      */
-    public void configure(@NonNull CommitOutcomeResolver resolver) {
+    public void configure(@NonNull TransactionStatus<?> transactionStatus,
+                          @NonNull CommitOutcomeResolver resolver) {
+        this.transactionStatus = transactionStatus;
         this.resolver = resolver;
     }
 
@@ -61,8 +66,9 @@ public final class RecoverableTransactionContext implements PropagatedContextEle
      *
      * @param status The transaction about to commit
      */
+    @SuppressWarnings("ReferenceEquality") // Transaction ownership is identity-based.
     public void captureLtxid(@NonNull TransactionStatus<?> status) {
-        CommitOutcomeResolver currentResolver = resolver;
+        CommitOutcomeResolver currentResolver = status == transactionStatus ? resolver : null;
         if (currentResolver != null) {
             token = currentResolver.captureLtxid(status);
         }

@@ -42,7 +42,7 @@ class RecoverableTransactionCommitSpec extends Specification {
         )
         def transactionStatus = DefaultTransactionStatus.newTx(connectionStatus, io.micronaut.transaction.TransactionDefinition.DEFAULT, transactionManager)
         def recoveryContext = new RecoverableTransactionContext()
-        recoveryContext.configure(new CommitOutcomeResolver() {
+        recoveryContext.configure(transactionStatus, new CommitOutcomeResolver() {
             @Override
             Object captureLtxid(TransactionStatus<?> status) {
                 assert status.is(transactionStatus)

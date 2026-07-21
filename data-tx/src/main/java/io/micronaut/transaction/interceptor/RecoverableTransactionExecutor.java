@@ -106,7 +106,9 @@ final class RecoverableTransactionExecutor {
         if (resolver == null) {
             return context.proceed();
         }
-        recoveryContext.configure(resolver);
+        // The propagated context can span nested transactions. Bind it to this
+        // status so only this invocation's own JDBC commit can capture an LTXID.
+        recoveryContext.configure(status, resolver);
         @Nullable Object result = context.proceed();
         recoveryContext.setResult(result);
         return result;

@@ -23,6 +23,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
@@ -190,7 +191,7 @@ class RecoverableSpec {
 
     @Test
     void recoverableExceptionFromBeforeCommitSynchronizationDoesNotTriggerOutcomeResolution() {
-        try (ApplicationContext context = ApplicationContext.run()) {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("spec.commit.failure.count", 0))) {
             OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
             resolver.outcome.set(CommitOutcome.NOT_COMMITTED);
 
@@ -198,8 +199,8 @@ class RecoverableSpec {
 
             assertThrows(CustomRecoverableCommitException.class, service::work);
             assertEquals(1, service.invocations.get());
-            assertEquals(1, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
-            assertEquals(0, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
+            assertEquals(2, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
+            assertEquals(1, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
             assertEquals(1, context.getBean(RecordingTransactionManager.class).rollbackAttempts.get());
             assertEquals(0, resolver.captureCount.get());
             assertEquals(0, resolver.resolveCount.get());
@@ -362,6 +363,10 @@ class RecoverableSpec {
             transactionManager.findTransactionStatus().orElseThrow().registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void beforeCommit(boolean readOnly) {
+                    transactionManager.execute(
+                        TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW),
+                        status -> null
+                    );
                     throw new CustomRecoverableCommitException("before-commit failure");
                 }
             });
