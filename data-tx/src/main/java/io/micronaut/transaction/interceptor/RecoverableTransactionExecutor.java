@@ -33,9 +33,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Internal helper for synchronous recoverable transaction execution.
  *
@@ -58,79 +55,108 @@ final class RecoverableTransactionExecutor {
                        MethodInvocationContext<Object, Object> context,
                        @Nullable String dataSourceName) {
         RecoveryConfiguration configuration = resolveConfiguration(context);
-
         int attempt = 0;
         while (true) {
-            // Each retry re-enters the transaction manager and therefore gets a fresh
-            // transaction boundary with a fresh connection/session.
-            AtomicBoolean ownsCommitBoundary = new AtomicBoolean(false);
-            AtomicReference<CommitOutcomeResolver> resolverRef = new AtomicReference<>();
-            AtomicReference<Object> tokenRef = new AtomicReference<>();
-            AtomicReference<Object> resultRef = new AtomicReference<>();
+            AttemptState attemptState = new AttemptState();
             try {
-                return transactionManager.execute(definition, new TransactionCallback<C, @Nullable Object>() {
-                    @Override
-                    @SuppressWarnings("NullAway")
-                    public @Nullable Object call(TransactionStatus<C> status) throws Exception {
-                        // Recovery only makes sense for the execution that will actually commit.
-                        // If this method joined an existing transaction, the outer boundary owns
-                        // commit and must observe any ambiguous commit failure itself.
-                        if (!status.isNewTransaction()) {
-                            return context.proceed();
-                        }
-                        ownsCommitBoundary.set(true);
-                        CommitOutcomeResolver resolver = findOutcomeResolver(dataSourceName);
-                        if (resolver == null) {
-                            return context.proceed();
-                        }
-                        resolverRef.set(resolver);
-                        status.registerSynchronization(new TransactionSynchronization() {
-                            @Override
-                            public void beforeCompletion() {
-                                tokenRef.set(resolver.captureLtxid(status));
-                            }
-                        });
-                        @Nullable Object result = context.proceed();
-                        resultRef.set(result);
-                        return result;
-                    }
-                });
+                return executeAttempt(transactionManager, definition, context, dataSourceName, attemptState);
             } catch (Throwable e) {
-                if (!ownsCommitBoundary.get() || !matchesRecoverable(e, configuration.on())) {
-                    return ExceptionUtil.sneakyThrow(e);
+                FailureResolution failureResolution = resolveFailure(e, configuration, attemptState, attempt);
+                switch (failureResolution.decision()) {
+                    case RETURN_RESULT:
+                        return failureResolution.result();
+                    case RETRY:
+                        attempt++;
+                        applyBackoff(configuration.backoff());
+                        continue;
+                    case RETHROW:
+                    default:
+                        return ExceptionUtil.sneakyThrow(e);
                 }
-                CommitOutcomeResolver resolver = resolverRef.get();
-                if (resolver == null) {
-                    return ExceptionUtil.sneakyThrow(e);
-                }
-                Object token = tokenRef.get();
-                if (token == null) {
-                    return ExceptionUtil.sneakyThrow(e);
-                }
-
-                CommitOutcome outcome = resolver.resolve(token);
-                if (outcome == CommitOutcome.COMMITTED) {
-                    return resultRef.get();
-                }
-                if (outcome == CommitOutcome.COMMITTED_CALL_INCOMPLETE) {
-                    LOG.warn("Recoverable transaction committed, but Oracle reported USER_CALL_COMPLETED=FALSE. Returning the original result without replay; call-level details may be incomplete.");
-                    return resultRef.get();
-                }
-                boolean retry = outcome == CommitOutcome.NOT_COMMITTED
-                    || (outcome == CommitOutcome.UNKNOWN && configuration.unknownOutcomePolicy() == UnknownOutcomePolicy.RETRY);
-                if (retry && attempt++ < configuration.maxAttempts()) {
-                    if (configuration.backoff() > 0) {
-                        try {
-                            Thread.sleep(configuration.backoff());
-                        } catch (InterruptedException interruptedException) {
-                            Thread.currentThread().interrupt();
-                            throw new IllegalStateException("Interrupted while retrying recoverable transaction", interruptedException);
-                        }
-                    }
-                    continue;
-                }
-                return ExceptionUtil.sneakyThrow(e);
             }
+        }
+    }
+
+    @SuppressWarnings("NullAway")
+    private <C> @Nullable Object executeAttempt(TransactionOperations<C> transactionManager,
+                                                TransactionDefinition definition,
+                                                MethodInvocationContext<Object, Object> context,
+                                                @Nullable String dataSourceName,
+                                                AttemptState attemptState) {
+        return transactionManager.execute(definition, new TransactionCallback<C, @Nullable Object>() {
+            @Override
+            public @Nullable Object call(TransactionStatus<C> status) throws Exception {
+                return executeTransactionCallback(context, dataSourceName, attemptState, status);
+            }
+        });
+    }
+
+    @Nullable
+    private <C> Object executeTransactionCallback(MethodInvocationContext<Object, Object> context,
+                                                  @Nullable String dataSourceName,
+                                                  AttemptState attemptState,
+                                                  TransactionStatus<C> status) {
+        if (!status.isNewTransaction()) {
+            return context.proceed();
+        }
+        CommitOutcomeResolver resolver = findOutcomeResolver(dataSourceName);
+        if (resolver == null) {
+            return context.proceed();
+        }
+        @Nullable Object result = context.proceed();
+        attemptState.result(result);
+        attemptState.resolver(resolver);
+        status.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void beforeCompletion() {
+                attemptState.token(resolver.captureLtxid(status));
+            }
+        });
+        attemptState.armRecovery();
+        return result;
+    }
+
+    private FailureResolution resolveFailure(Throwable throwable,
+                                             RecoveryConfiguration configuration,
+                                             AttemptState attemptState,
+                                             int attempt) {
+        if (!attemptState.recoveryArmed() || !matchesRecoverable(throwable, configuration.on())) {
+            return FailureResolution.rethrow();
+        }
+        CommitOutcomeResolver resolver = attemptState.resolver();
+        Object token = attemptState.token();
+        if (resolver == null || token == null) {
+            return FailureResolution.rethrow();
+        }
+        CommitOutcome outcome = resolver.resolve(token);
+        if (outcome == CommitOutcome.COMMITTED) {
+            return FailureResolution.returnResult(attemptState.result());
+        }
+        if (outcome == CommitOutcome.COMMITTED_CALL_INCOMPLETE) {
+            LOG.warn("Recoverable transaction committed, but Oracle reported USER_CALL_COMPLETED=FALSE. Returning the original result without replay; call-level details may be incomplete.");
+            return FailureResolution.returnResult(attemptState.result());
+        }
+        if (shouldRetry(outcome, configuration, attempt)) {
+            return FailureResolution.retry();
+        }
+        return FailureResolution.rethrow();
+    }
+
+    private boolean shouldRetry(CommitOutcome outcome, RecoveryConfiguration configuration, int attempt) {
+        boolean retryableOutcome = outcome == CommitOutcome.NOT_COMMITTED
+            || (outcome == CommitOutcome.UNKNOWN && configuration.unknownOutcomePolicy() == UnknownOutcomePolicy.RETRY);
+        return retryableOutcome && attempt < configuration.maxAttempts();
+    }
+
+    private void applyBackoff(long backoff) {
+        if (backoff <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(backoff);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while retrying recoverable transaction", interruptedException);
         }
     }
 
@@ -214,5 +240,88 @@ final class RecoverableTransactionExecutor {
     private enum UnknownOutcomePolicy {
         RETRY,
         FAIL
+    }
+
+    private enum Decision {
+        RETURN_RESULT,
+        RETRY,
+        RETHROW
+    }
+
+    private static final class FailureResolution {
+        private final Decision decision;
+        @Nullable
+        private final Object result;
+
+        private FailureResolution(Decision decision, @Nullable Object result) {
+            this.decision = decision;
+            this.result = result;
+        }
+
+        private static FailureResolution returnResult(@Nullable Object result) {
+            return new FailureResolution(Decision.RETURN_RESULT, result);
+        }
+
+        private static FailureResolution retry() {
+            return new FailureResolution(Decision.RETRY, null);
+        }
+
+        private static FailureResolution rethrow() {
+            return new FailureResolution(Decision.RETHROW, null);
+        }
+
+        private Decision decision() {
+            return decision;
+        }
+
+        @Nullable
+        private Object result() {
+            return result;
+        }
+    }
+
+    private static final class AttemptState {
+        private boolean recoveryArmed;
+        @Nullable
+        private CommitOutcomeResolver resolver;
+        @Nullable
+        private Object token;
+        @Nullable
+        private Object result;
+
+        private void armRecovery() {
+            recoveryArmed = true;
+        }
+
+        private boolean recoveryArmed() {
+            return recoveryArmed;
+        }
+
+        private void resolver(CommitOutcomeResolver resolver) {
+            this.resolver = resolver;
+        }
+
+        @Nullable
+        private CommitOutcomeResolver resolver() {
+            return resolver;
+        }
+
+        private void token(@Nullable Object token) {
+            this.token = token;
+        }
+
+        @Nullable
+        private Object token() {
+            return token;
+        }
+
+        private void result(@Nullable Object result) {
+            this.result = result;
+        }
+
+        @Nullable
+        private Object result() {
+            return result;
+        }
     }
 }

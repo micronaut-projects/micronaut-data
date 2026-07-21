@@ -168,6 +168,24 @@ class RecoverableSpec {
     }
 
     @Test
+    void recoverableExceptionFromUserCodeDoesNotTriggerOutcomeResolution() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
+            resolver.outcome.set(CommitOutcome.NOT_COMMITTED);
+
+            PreCommitRecoverableFailureService service = context.getBean(PreCommitRecoverableFailureService.class);
+
+            assertThrows(CustomRecoverableCommitException.class, service::work);
+            assertEquals(1, service.invocations.get());
+            assertEquals(1, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
+            assertEquals(0, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
+            assertEquals(1, context.getBean(RecordingTransactionManager.class).rollbackAttempts.get());
+            assertEquals(0, resolver.captureCount.get());
+            assertEquals(0, resolver.resolveCount.get());
+        }
+    }
+
+    @Test
     void recoverableMethodJoiningExistingTransactionDoesNotRunRecovery() {
         try (ApplicationContext context = ApplicationContext.run()) {
             OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
@@ -292,6 +310,18 @@ class RecoverableSpec {
         @OracleTransactional.Recoverable
         String work() {
             return "other-ok-" + invocations.incrementAndGet();
+        }
+    }
+
+    @Singleton
+    static class PreCommitRecoverableFailureService {
+        private final AtomicInteger invocations = new AtomicInteger();
+
+        @Transactional
+        @OracleTransactional.Recoverable(on = CustomRecoverableCommitException.class)
+        String work() {
+            invocations.incrementAndGet();
+            throw new CustomRecoverableCommitException("user-code failure");
         }
     }
 
@@ -455,6 +485,8 @@ class RecoverableSpec {
 
         @Override
         public void registerSynchronization(@NonNull ConnectionSynchronization synchronization) {
+            // This test connection status never drives connection lifecycle callbacks.
+            // Recoverable transaction synchronization is exercised through TransactionStatus instead.
         }
     }
 
