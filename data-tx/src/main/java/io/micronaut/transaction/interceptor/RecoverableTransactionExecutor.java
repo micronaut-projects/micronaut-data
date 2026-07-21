@@ -18,15 +18,16 @@ package io.micronaut.transaction.interceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
-import io.micronaut.transaction.impl.CommitAttemptSynchronization;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
+import io.micronaut.transaction.recovery.RecoverableTransactionContext;
 import io.micronaut.transaction.support.ExceptionUtil;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -57,11 +58,11 @@ final class RecoverableTransactionExecutor {
         RecoveryConfiguration configuration = resolveConfiguration(context);
         int attempt = 0;
         while (true) {
-            AttemptState attemptState = new AttemptState();
+            RecoverableTransactionContext recoveryContext = new RecoverableTransactionContext();
             try {
-                return executeAttempt(transactionManager, definition, context, dataSourceName, attemptState);
+                return executeAttempt(transactionManager, definition, context, dataSourceName, recoveryContext);
             } catch (Throwable e) {
-                FailureResolution failureResolution = resolveFailure(e, configuration, attemptState, attempt);
+                FailureResolution failureResolution = resolveFailure(e, configuration, recoveryContext, attempt);
                 switch (failureResolution.decision()) {
                     case RETURN_RESULT:
                         return failureResolution.result();
@@ -82,19 +83,21 @@ final class RecoverableTransactionExecutor {
                                                 TransactionDefinition definition,
                                                 MethodInvocationContext<Object, Object> context,
                                                 @Nullable String dataSourceName,
-                                                AttemptState attemptState) {
-        return transactionManager.execute(definition, new TransactionCallback<C, @Nullable Object>() {
-            @Override
-            public @Nullable Object call(TransactionStatus<C> status) throws Exception {
-                return executeTransactionCallback(context, dataSourceName, attemptState, status);
-            }
-        });
+                                                RecoverableTransactionContext recoveryContext) {
+        return PropagatedContext.getOrEmpty().plus(recoveryContext).propagate(() ->
+            transactionManager.execute(definition, new TransactionCallback<C, @Nullable Object>() {
+                @Override
+                public @Nullable Object call(TransactionStatus<C> status) throws Exception {
+                    return executeTransactionCallback(context, dataSourceName, recoveryContext, status);
+                }
+            })
+        );
     }
 
     @Nullable
     private <C> Object executeTransactionCallback(MethodInvocationContext<Object, Object> context,
                                                   @Nullable String dataSourceName,
-                                                  AttemptState attemptState,
+                                                  RecoverableTransactionContext recoveryContext,
                                                   TransactionStatus<C> status) {
         if (!status.isNewTransaction()) {
             return context.proceed();
@@ -103,41 +106,31 @@ final class RecoverableTransactionExecutor {
         if (resolver == null) {
             return context.proceed();
         }
+        recoveryContext.configure(resolver);
         @Nullable Object result = context.proceed();
-        attemptState.result(result);
-        status.registerSynchronization(new CommitAttemptSynchronization() {
-            @Override
-            public void beforeCommitAttempt() {
-                // Oracle outcome handling must stay disabled for user-code failures and
-                // for user synchronizations that fail before the real commit call.
-                // Capture the LTXID and arm recovery only at the actual commit boundary.
-                attemptState.resolver(resolver);
-                attemptState.token(resolver.captureLtxid(status));
-                attemptState.armRecovery();
-            }
-        });
+        recoveryContext.setResult(result);
         return result;
     }
 
     private FailureResolution resolveFailure(Throwable throwable,
                                              RecoveryConfiguration configuration,
-                                             AttemptState attemptState,
+                                             RecoverableTransactionContext recoveryContext,
                                              int attempt) {
-        if (!attemptState.recoveryArmed() || !matchesRecoverable(throwable, configuration.on())) {
+        if (!matchesRecoverable(throwable, configuration.on())) {
             return FailureResolution.rethrow();
         }
-        CommitOutcomeResolver resolver = attemptState.resolver();
-        Object token = attemptState.token();
+        CommitOutcomeResolver resolver = recoveryContext.getResolver();
+        Object token = recoveryContext.getToken();
         if (resolver == null || token == null) {
             return FailureResolution.rethrow();
         }
         CommitOutcome outcome = resolver.resolve(token);
         if (outcome == CommitOutcome.COMMITTED) {
-            return FailureResolution.returnResult(attemptState.result());
+            return FailureResolution.returnResult(recoveryContext.getResult());
         }
         if (outcome == CommitOutcome.COMMITTED_CALL_INCOMPLETE) {
             LOG.warn("Recoverable transaction committed, but Oracle reported USER_CALL_COMPLETED=FALSE. Returning the original result without replay; call-level details may be incomplete.");
-            return FailureResolution.returnResult(attemptState.result());
+            return FailureResolution.returnResult(recoveryContext.getResult());
         }
         if (shouldRetry(outcome, configuration, attempt)) {
             return FailureResolution.retry();
@@ -283,48 +276,4 @@ final class RecoverableTransactionExecutor {
         }
     }
 
-    private static final class AttemptState {
-        private boolean recoveryArmed;
-        @Nullable
-        private CommitOutcomeResolver resolver;
-        @Nullable
-        private Object token;
-        @Nullable
-        private Object result;
-
-        private void armRecovery() {
-            recoveryArmed = true;
-        }
-
-        private boolean recoveryArmed() {
-            return recoveryArmed;
-        }
-
-        private void resolver(CommitOutcomeResolver resolver) {
-            this.resolver = resolver;
-        }
-
-        @Nullable
-        private CommitOutcomeResolver resolver() {
-            return resolver;
-        }
-
-        private void token(@Nullable Object token) {
-            this.token = token;
-        }
-
-        @Nullable
-        private Object token() {
-            return token;
-        }
-
-        private void result(@Nullable Object result) {
-            this.result = result;
-        }
-
-        @Nullable
-        private Object result() {
-            return result;
-        }
-    }
 }

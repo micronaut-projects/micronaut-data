@@ -23,7 +23,6 @@ import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
-import io.micronaut.transaction.impl.CommitAttemptSynchronization;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.impl.InternalTransaction;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,27 +95,6 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
-    void nestedBeforeCommitAttemptFailureDispatchesToDoNestedRollbackWithoutRepeatingBeforeCompletion() {
-        txManager.executeWrite(outerStatus -> {
-            try {
-                txManager.execute(
-                    NESTED_DEFINITION, nestedStatus -> {
-                        registerThrowingBeforeCommitAttempt(nestedStatus, txManager, true);
-                        return null;
-                    });
-            } catch (RuntimeException ignored) {
-            }
-            return null;
-        });
-
-        assertEquals(
-            List.of("doBegin", "doNestedBegin", "doNestedRollback", "doCommit"),
-            txManager.calls
-        );
-        assertEquals(1, txManager.beforeCompletionCount);
-    }
-
-    @Test
     void rollbackFailureDoesNotOverrideCommitFailure() {
         txManager.failCommit = true;
         txManager.failRollback = true;
@@ -146,34 +124,6 @@ class DoRollbackOnCommitExceptionTest {
         }
 
         assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
-    }
-
-    @Test
-    void newTransactionBeforeCommitAttemptFailureDispatchesToDoRollbackWithoutRepeatingBeforeCompletion() {
-        try {
-            txManager.executeWrite(status -> {
-                registerThrowingBeforeCommitAttempt(status, txManager, true);
-                return null;
-            });
-        } catch (RuntimeException ignored) {
-        }
-
-        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
-        assertEquals(1, txManager.beforeCompletionCount);
-    }
-
-    @Test
-    void newTransactionRuntimeBeforeCommitAttemptFailureDispatchesToDoRollbackWithoutRepeatingBeforeCompletion() {
-        try {
-            txManager.executeWrite(status -> {
-                registerThrowingBeforeCommitAttempt(status, txManager, false);
-                return null;
-            });
-        } catch (RuntimeException ignored) {
-        }
-
-        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
-        assertEquals(1, txManager.beforeCompletionCount);
     }
 
     @Test
@@ -217,27 +167,6 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
-    private static void registerThrowingBeforeCommitAttempt(Object status,
-                                                            RecordingTransactionManager txManager,
-                                                            boolean asTransactionException) {
-        ((InternalTransaction<?>) status).registerInvocationSynchronization(
-            new CommitAttemptSynchronization() {
-                @Override
-                public void beforeCompletion() {
-                    txManager.beforeCompletionCount++;
-                }
-
-                @Override
-                public void beforeCommitAttempt() {
-                    if (asTransactionException) {
-                        throw new TransactionSystemException("simulated beforeCommitAttempt failure");
-                    }
-                    throw new RuntimeException("simulated runtime beforeCommitAttempt failure");
-                }
-            }
-        );
-    }
-
     /**
      * Transaction manager that records which doXxx methods are called.
      */
@@ -248,7 +177,6 @@ class DoRollbackOnCommitExceptionTest {
         boolean failCommit;
         boolean failRollback;
         RuntimeException rollbackFailure;
-        int beforeCompletionCount;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);

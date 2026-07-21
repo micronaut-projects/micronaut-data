@@ -32,6 +32,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.recovery.RecoverableTransactionContext;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import jakarta.inject.Inject;
@@ -185,6 +186,10 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         if (logger.isDebugEnabled()) {
             logger.debug("Committing JDBC transaction on Connection [{}]", connection);
         }
+        // The recovery context is configured only for a new recoverable transaction.
+        // Capture the LTXID directly before JDBC commit, after application
+        // synchronizations have completed successfully.
+        RecoverableTransactionContext.find().ifPresent(context -> context.captureLtxid(status));
         try {
             connection.commit();
         } catch (SQLException ex) {

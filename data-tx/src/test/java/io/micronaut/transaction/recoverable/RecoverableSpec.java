@@ -29,6 +29,7 @@ import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
+import io.micronaut.transaction.recovery.RecoverableTransactionContext;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import jakarta.inject.Named;
@@ -459,6 +460,8 @@ class RecoverableSpec {
 
         @Override
         protected void doCommit(@NonNull io.micronaut.transaction.impl.DefaultTransactionStatus<String> tx) {
+            // Mirror the JDBC manager: capture only at the resource commit boundary.
+            RecoverableTransactionContext.find().ifPresent(context -> context.captureLtxid(tx));
             commitAttempts.incrementAndGet();
             if (commitFailures.getAndIncrement() < failureCount) {
                 if ("custom".equals(failureMode)) {

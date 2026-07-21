@@ -357,22 +357,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             try {
                 tx.triggerBeforeCommit();
                 tx.triggerBeforeCompletion();
-                beforeCompletionInvoked = true;
-                // Only after user synchronizations have completed successfully are we
-                // at the actual commit boundary for the underlying resource.
-                tx.triggerBeforeCommitAttempt();
-            } catch (RuntimeException | Error ex) {
-                if (!beforeCompletionInvoked) {
-                    tx.triggerBeforeCompletion();
-                }
-                // Failures from beforeCommit/beforeCompletion/beforeCommitAttempt happen
-                // before the underlying commit call has started and therefore must be
-                // treated like ordinary pre-commit rollback paths, not commit failures.
-                doRollbackOnCommitPreparationException(tx, ex);
-                throw ex;
-            }
 
-            try {
+                beforeCompletionInvoked = true;
+
                 if (tx.isNewTransaction()) {
                     doCommit(tx);
                 } else if (tx.isNestedTransaction()) {
@@ -384,7 +371,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
                 throw ex;
             } catch (TransactionException ex) {
-                // Only actual doCommit/doNestedCommit failures belong here.
+                // can only be caused by doCommit or doNestedCommit
                 if (isRollbackOnCommitFailure()) {
                     doRollbackOnCommitException(tx, ex);
                 } else {
@@ -392,6 +379,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 }
                 throw ex;
             } catch (RuntimeException | Error ex) {
+                if (!beforeCompletionInvoked) {
+                    tx.triggerBeforeCompletion();
+                }
                 doRollbackOnCommitException(tx, ex);
                 throw ex;
             }
@@ -435,20 +425,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return true;
     }
 
-    private void doRollbackOnCommitPreparationException(@NonNull T tx, @NonNull Throwable ex) throws TransactionException {
-        rollbackAfterFailure(tx, ex, "Initiating transaction rollback after pre-commit failure");
-    }
-
     private void doRollbackOnCommitException(@NonNull T tx, @NonNull Throwable ex) throws TransactionException {
-        rollbackAfterFailure(tx, ex, "Initiating transaction rollback after commit exception");
-    }
-
-    private void rollbackAfterFailure(@NonNull T tx,
-                                      @NonNull Throwable ex,
-                                      @NonNull String debugMessage) throws TransactionException {
         try {
             if (logger.isDebugEnabled()) {
-                logger.debug(debugMessage, ex);
+                logger.debug("Initiating transaction rollback after commit exception", ex);
             }
             // Mirror rollbackInternal's dispatch: nested transactions must roll back
             // to their savepoint (not the entire connection), and non-new/non-nested

@@ -82,20 +82,6 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     }
 
     @Override
-    public void triggerBeforeCommitAttempt() {
-        if (synchronizations != null) {
-            for (TransactionSynchronization synchronization : synchronizations) {
-                if (synchronization instanceof CommitAttemptSynchronization commitAttemptSynchronization) {
-                    // This hook is intentionally narrower than beforeCommit/beforeCompletion:
-                    // implementations here run only once the transaction manager is about
-                    // to invoke the real commit operation.
-                    commitAttemptSynchronization.beforeCommitAttempt();
-                }
-            }
-        }
-    }
-
-    @Override
     public void triggerAfterCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
