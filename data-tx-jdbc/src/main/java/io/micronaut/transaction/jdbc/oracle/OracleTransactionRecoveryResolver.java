@@ -133,13 +133,10 @@ final class OracleTransactionRecoveryResolver implements CommitOutcomeResolver {
             return CommitOutcome.NOT_COMMITTED;
         }
         Boolean userCallCompletedValue = toBoolean(userCallCompleted);
-        if (Boolean.TRUE.equals(userCallCompletedValue)) {
-            return CommitOutcome.COMMITTED;
+        if (userCallCompletedValue == null) {
+            return CommitOutcome.UNKNOWN;
         }
-        if (Boolean.FALSE.equals(userCallCompletedValue)) {
-            return CommitOutcome.COMMITTED_CALL_INCOMPLETE;
-        }
-        return CommitOutcome.UNKNOWN;
+        return userCallCompletedValue ? CommitOutcome.COMMITTED : CommitOutcome.COMMITTED_CALL_INCOMPLETE;
     }
 
     @Nullable

@@ -96,6 +96,27 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
+    void nestedBeforeCommitAttemptFailureDispatchesToDoNestedRollbackWithoutRepeatingBeforeCompletion() {
+        txManager.executeWrite(outerStatus -> {
+            try {
+                txManager.execute(
+                    NESTED_DEFINITION, nestedStatus -> {
+                        registerThrowingBeforeCommitAttempt(nestedStatus, txManager, true);
+                        return null;
+                    });
+            } catch (RuntimeException ignored) {
+            }
+            return null;
+        });
+
+        assertEquals(
+            List.of("doBegin", "doNestedBegin", "doNestedRollback", "doCommit"),
+            txManager.calls
+        );
+        assertEquals(1, txManager.beforeCompletionCount);
+    }
+
+    @Test
     void rollbackFailureDoesNotOverrideCommitFailure() {
         txManager.failCommit = true;
         txManager.failRollback = true;
@@ -131,7 +152,21 @@ class DoRollbackOnCommitExceptionTest {
     void newTransactionBeforeCommitAttemptFailureDispatchesToDoRollbackWithoutRepeatingBeforeCompletion() {
         try {
             txManager.executeWrite(status -> {
-                registerThrowingBeforeCommitAttempt(status, txManager);
+                registerThrowingBeforeCommitAttempt(status, txManager, true);
+                return null;
+            });
+        } catch (RuntimeException ignored) {
+        }
+
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
+        assertEquals(1, txManager.beforeCompletionCount);
+    }
+
+    @Test
+    void newTransactionRuntimeBeforeCommitAttemptFailureDispatchesToDoRollbackWithoutRepeatingBeforeCompletion() {
+        try {
+            txManager.executeWrite(status -> {
+                registerThrowingBeforeCommitAttempt(status, txManager, false);
                 return null;
             });
         } catch (RuntimeException ignored) {
@@ -182,7 +217,9 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
-    private static void registerThrowingBeforeCommitAttempt(Object status, RecordingTransactionManager txManager) {
+    private static void registerThrowingBeforeCommitAttempt(Object status,
+                                                            RecordingTransactionManager txManager,
+                                                            boolean asTransactionException) {
         ((InternalTransaction<?>) status).registerInvocationSynchronization(
             new CommitAttemptSynchronization() {
                 @Override
@@ -192,7 +229,10 @@ class DoRollbackOnCommitExceptionTest {
 
                 @Override
                 public void beforeCommitAttempt() {
-                    throw new TransactionSystemException("simulated beforeCommitAttempt failure");
+                    if (asTransactionException) {
+                        throw new TransactionSystemException("simulated beforeCommitAttempt failure");
+                    }
+                    throw new RuntimeException("simulated runtime beforeCommitAttempt failure");
                 }
             }
         );
