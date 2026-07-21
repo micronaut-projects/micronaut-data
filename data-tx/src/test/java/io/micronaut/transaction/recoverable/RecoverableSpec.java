@@ -30,6 +30,7 @@ import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
+import io.micronaut.transaction.support.TransactionSynchronization;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
@@ -187,6 +188,24 @@ class RecoverableSpec {
     }
 
     @Test
+    void recoverableExceptionFromBeforeCommitSynchronizationDoesNotTriggerOutcomeResolution() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
+            resolver.outcome.set(CommitOutcome.NOT_COMMITTED);
+
+            BeforeCommitRecoverableFailureService service = context.getBean(BeforeCommitRecoverableFailureService.class);
+
+            assertThrows(CustomRecoverableCommitException.class, service::work);
+            assertEquals(1, service.invocations.get());
+            assertEquals(1, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
+            assertEquals(0, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
+            assertEquals(1, context.getBean(RecordingTransactionManager.class).rollbackAttempts.get());
+            assertEquals(0, resolver.captureCount.get());
+            assertEquals(0, resolver.resolveCount.get());
+        }
+    }
+
+    @Test
     void recoverableMethodJoiningExistingTransactionDoesNotRunRecovery() {
         try (ApplicationContext context = ApplicationContext.run()) {
             OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
@@ -323,6 +342,29 @@ class RecoverableSpec {
         String work() {
             invocations.incrementAndGet();
             throw new CustomRecoverableCommitException("user-code failure");
+        }
+    }
+
+    @Singleton
+    static class BeforeCommitRecoverableFailureService {
+        private final AtomicInteger invocations = new AtomicInteger();
+        private final RecordingTransactionManager transactionManager;
+
+        BeforeCommitRecoverableFailureService(RecordingTransactionManager transactionManager) {
+            this.transactionManager = transactionManager;
+        }
+
+        @Transactional
+        @OracleTransactional.Recoverable(on = CustomRecoverableCommitException.class)
+        String work() {
+            invocations.incrementAndGet();
+            transactionManager.findTransactionStatus().orElseThrow().registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void beforeCommit(boolean readOnly) {
+                    throw new CustomRecoverableCommitException("before-commit failure");
+                }
+            });
+            return "ok";
         }
     }
 

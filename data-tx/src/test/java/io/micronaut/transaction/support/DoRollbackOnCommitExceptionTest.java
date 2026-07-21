@@ -23,6 +23,7 @@ import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
+import io.micronaut.transaction.impl.CommitAttemptSynchronization;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.impl.InternalTransaction;
 import org.junit.jupiter.api.BeforeEach;
@@ -127,6 +128,20 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
+    void newTransactionBeforeCommitAttemptFailureDispatchesToDoRollbackWithoutRepeatingBeforeCompletion() {
+        try {
+            txManager.executeWrite(status -> {
+                registerThrowingBeforeCommitAttempt(status, txManager);
+                return null;
+            });
+        } catch (RuntimeException ignored) {
+        }
+
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
+        assertEquals(1, txManager.beforeCompletionCount);
+    }
+
+    @Test
     void existingNonNestedBeforeCommitFailureDispatchesToSetRollbackOnly() {
         try {
             txManager.executeWrite(outerStatus -> {
@@ -167,6 +182,22 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
+    private static void registerThrowingBeforeCommitAttempt(Object status, RecordingTransactionManager txManager) {
+        ((InternalTransaction<?>) status).registerInvocationSynchronization(
+            new CommitAttemptSynchronization() {
+                @Override
+                public void beforeCompletion() {
+                    txManager.beforeCompletionCount++;
+                }
+
+                @Override
+                public void beforeCommitAttempt() {
+                    throw new TransactionSystemException("simulated beforeCommitAttempt failure");
+                }
+            }
+        );
+    }
+
     /**
      * Transaction manager that records which doXxx methods are called.
      */
@@ -177,6 +208,7 @@ class DoRollbackOnCommitExceptionTest {
         boolean failCommit;
         boolean failRollback;
         RuntimeException rollbackFailure;
+        int beforeCompletionCount;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);

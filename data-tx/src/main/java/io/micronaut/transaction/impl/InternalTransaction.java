@@ -68,6 +68,8 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
 
     void triggerBeforeCommit();
 
+    void triggerBeforeCommitAttempt();
+
     void triggerAfterCommit();
 
     void triggerBeforeCompletion();

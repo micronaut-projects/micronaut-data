@@ -24,10 +24,10 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.impl.CommitAttemptSynchronization;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
 import io.micronaut.transaction.support.ExceptionUtil;
-import io.micronaut.transaction.support.TransactionSynchronization;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -105,14 +105,17 @@ final class RecoverableTransactionExecutor {
         }
         @Nullable Object result = context.proceed();
         attemptState.result(result);
-        attemptState.resolver(resolver);
-        status.registerSynchronization(new TransactionSynchronization() {
+        status.registerSynchronization(new CommitAttemptSynchronization() {
             @Override
-            public void beforeCompletion() {
+            public void beforeCommitAttempt() {
+                // Oracle outcome handling must stay disabled for user-code failures and
+                // for user synchronizations that fail before the real commit call.
+                // Capture the LTXID and arm recovery only at the actual commit boundary.
+                attemptState.resolver(resolver);
                 attemptState.token(resolver.captureLtxid(status));
+                attemptState.armRecovery();
             }
         });
-        attemptState.armRecovery();
         return result;
     }
 
