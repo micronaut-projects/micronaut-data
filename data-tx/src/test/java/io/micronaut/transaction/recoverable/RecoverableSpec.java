@@ -177,9 +177,10 @@ class RecoverableSpec {
 
             assertThrows(CustomRecoverableCommitException.class, service::work);
             assertEquals(1, service.invocations.get());
-            assertEquals(1, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
-            assertEquals(0, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
-            assertEquals(1, context.getBean(RecordingTransactionManager.class).rollbackAttempts.get());
+            RecordingTransactionManager recordingTransactionManager = context.getBean(RecordingTransactionManager.class);
+            assertEquals(1, recordingTransactionManager.beginAttempts.get());
+            assertEquals(0, recordingTransactionManager.commitAttempts.get());
+            assertEquals(1, recordingTransactionManager.rollbackAttempts.get());
             assertEquals(0, resolver.captureCount.get());
             assertEquals(0, resolver.resolveCount.get());
         }
