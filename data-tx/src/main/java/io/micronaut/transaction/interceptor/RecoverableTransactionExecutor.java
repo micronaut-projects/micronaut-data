@@ -34,6 +34,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 /**
  * Internal helper for synchronous recoverable transaction execution.
  *
@@ -160,7 +162,7 @@ final class RecoverableTransactionExecutor {
 
     private RecoveryConfiguration resolveConfiguration(MethodInvocationContext<Object, Object> context) {
         Class<?>[] on = context.classValues(OracleTransactional.Recoverable.class, "on");
-        if (on == null || on.length == 0) {
+        if (on.length == 0) {
             on = new Class[]{java.sql.SQLRecoverableException.class};
         }
         int maxAttempts = Math.max(context.intValue(OracleTransactional.Recoverable.class, "maxAttempts").orElse(1), 0);
@@ -184,7 +186,7 @@ final class RecoverableTransactionExecutor {
     private CommitOutcomeResolver findQualifiedOutcomeResolver(@NonNull String dataSourceName) {
         try {
             return beanLocator.findBean(CommitOutcomeResolver.class, Qualifiers.byName(dataSourceName)).orElse(null);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return null;
         }
     }
@@ -202,36 +204,38 @@ final class RecoverableTransactionExecutor {
         return false;
     }
 
-    private static final class RecoveryConfiguration {
-        private final Class<?>[] on;
-        private final int maxAttempts;
-        private final long backoff;
-        private final UnknownOutcomePolicy unknownOutcomePolicy;
+    private record RecoveryConfiguration(Class<?>[] on, int maxAttempts, long backoff,
+                                         UnknownOutcomePolicy unknownOutcomePolicy) {
 
-        private RecoveryConfiguration(Class<?>[] on,
-                                      int maxAttempts,
-                                      long backoff,
-                                      UnknownOutcomePolicy unknownOutcomePolicy) {
-            this.on = on;
-            this.maxAttempts = maxAttempts;
-            this.backoff = backoff;
-            this.unknownOutcomePolicy = unknownOutcomePolicy;
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof RecoveryConfiguration other)) {
+                return false;
+            }
+            return maxAttempts == other.maxAttempts
+                && backoff == other.backoff
+                && unknownOutcomePolicy == other.unknownOutcomePolicy
+                && Arrays.equals(on, other.on);
         }
 
-        private Class<?>[] on() {
-            return on;
+        @Override
+        public int hashCode() {
+            int result = Arrays.hashCode(on);
+            result = 31 * result + Integer.hashCode(maxAttempts);
+            result = 31 * result + Long.hashCode(backoff);
+            result = 31 * result + unknownOutcomePolicy.hashCode();
+            return result;
         }
 
-        private int maxAttempts() {
-            return maxAttempts;
-        }
-
-        private long backoff() {
-            return backoff;
-        }
-
-        private UnknownOutcomePolicy unknownOutcomePolicy() {
-            return unknownOutcomePolicy;
+        @Override
+        public String toString() {
+            return "RecoveryConfiguration[on=" + Arrays.toString(on)
+                + ", maxAttempts=" + maxAttempts
+                + ", backoff=" + backoff
+                + ", unknownOutcomePolicy=" + unknownOutcomePolicy + ']';
         }
     }
 
@@ -246,36 +250,19 @@ final class RecoverableTransactionExecutor {
         RETHROW
     }
 
-    private static final class FailureResolution {
-        private final Decision decision;
-        @Nullable
-        private final Object result;
-
-        private FailureResolution(Decision decision, @Nullable Object result) {
-            this.decision = decision;
-            this.result = result;
-        }
+    private record FailureResolution(Decision decision, @Nullable Object result) {
 
         private static FailureResolution returnResult(@Nullable Object result) {
-            return new FailureResolution(Decision.RETURN_RESULT, result);
-        }
+                return new FailureResolution(Decision.RETURN_RESULT, result);
+            }
 
-        private static FailureResolution retry() {
-            return new FailureResolution(Decision.RETRY, null);
-        }
+            private static FailureResolution retry() {
+                return new FailureResolution(Decision.RETRY, null);
+            }
 
-        private static FailureResolution rethrow() {
-            return new FailureResolution(Decision.RETHROW, null);
+            private static FailureResolution rethrow() {
+                return new FailureResolution(Decision.RETHROW, null);
+            }
         }
-
-        private Decision decision() {
-            return decision;
-        }
-
-        @Nullable
-        private Object result() {
-            return result;
-        }
-    }
 
 }
