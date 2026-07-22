@@ -41,6 +41,23 @@ import java.util.stream.Collectors;
 import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 import static io.micronaut.data.annotation.GeneratedValue.Type.SEQUENCE;
 
+/**
+ * Builds dialect-specific SQL and binding metadata for explicitly declared upsert operations.
+ *
+ * <p>This builder resolves the conflict columns from the entity identity or the upsert definition's
+ * configured conflict properties, then derives the insertable and mutable columns from persistent
+ * entity metadata. It renders the appropriate native form for each supported SQL dialect, such as
+ * {@code MERGE}, {@code ON CONFLICT}, or {@code ON DUPLICATE KEY UPDATE}.</p>
+ *
+ * <p>The resulting {@link QueryResult} contains both input bindings and, where supported, generated
+ * identity returning metadata. Runtime repository operations consume that metadata to bind values,
+ * execute the statement, and apply returned generated values; this class does not execute SQL.</p>
+ *
+ * <p>Keep dialect-specific syntax and bind-order decisions here so that compile-time query generation
+ * remains consistent for JDBC and R2DBC repositories. Validation that depends on repository method
+ * shape belongs in the method matcher, while driver-specific execution behavior belongs in the
+ * corresponding repository operations implementation.</p>
+ */
 final class SqlUpsertQueryBuilder {
 
     private static final char COMMA = ',';
