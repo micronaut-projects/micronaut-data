@@ -154,10 +154,10 @@ final class OracleTransactionRecoveryResolver implements CommitOutcomeResolver {
             return value.intValue() != 0;
         }
         String value = outcome.toString().trim();
-        if ("COMMITTED".equalsIgnoreCase(value) || StringUtils.TRUE.equalsIgnoreCase(value) || "1".equals(value)) {
+        if (CommitOutcome.COMMITTED.name().equalsIgnoreCase(value) || StringUtils.TRUE.equalsIgnoreCase(value) || "1".equals(value)) {
             return Boolean.TRUE;
         }
-        if ("NOT_COMMITTED".equalsIgnoreCase(value) || StringUtils.FALSE.equalsIgnoreCase(value) || "0".equals(value)) {
+        if (CommitOutcome.NOT_COMMITTED.name().equalsIgnoreCase(value) || StringUtils.FALSE.equalsIgnoreCase(value) || "0".equals(value)) {
             return Boolean.FALSE;
         }
         return null;
