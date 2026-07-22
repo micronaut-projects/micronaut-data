@@ -21,6 +21,7 @@ import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.Named;
+import io.micronaut.data.connection.jdbc.DataSourceConstants;
 import io.micronaut.inject.BeanDefinition;
 
 /**
@@ -31,9 +32,6 @@ import io.micronaut.inject.BeanDefinition;
 @Internal
 final class OracleTransactionRecoveryCondition implements Condition {
 
-    private static final String DATASOURCES = "datasources";
-    private static final String DIALECT = "dialect";
-    private static final String ORACLE_DIALECT = "ORACLE";
     private static final String ENABLE_RECOVERY = "enable-oracle-transaction-recovery";
 
     @Override
@@ -53,13 +51,13 @@ final class OracleTransactionRecoveryCondition implements Condition {
             dataSourceName = "default";
         }
 
-        String dialectProperty = DATASOURCES + '.' + dataSourceName + '.' + DIALECT;
+        String dialectProperty = DataSourceConstants.DATASOURCES + '.' + dataSourceName + '.' + DataSourceConstants.DIALECT;
         String dialect = context.getProperty(dialectProperty, String.class).orElse(null);
-        if (!ORACLE_DIALECT.equalsIgnoreCase(dialect)) {
+        if (!DataSourceConstants.ORACLE_DIALECT.equalsIgnoreCase(dialect)) {
             return false;
         }
 
-        String property = DATASOURCES + '.' + dataSourceName + '.' + ENABLE_RECOVERY;
+        String property = DataSourceConstants.DATASOURCES + '.' + dataSourceName + '.' + ENABLE_RECOVERY;
         return context.getProperty(property, Boolean.class, false);
     }
 }

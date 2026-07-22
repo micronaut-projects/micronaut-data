@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.recovery.CommitOutcome;
@@ -47,18 +48,20 @@ import java.sql.Types;
 final class OracleTransactionRecoveryResolver implements CommitOutcomeResolver {
 
     private static final String GET_LTXID_OUTCOME =
-        "DECLARE " +
-            "  PROCEDURE get_ltxid_outcome_wrapper(p_ltxid IN RAW, p_committed OUT NUMBER, p_user_call_completed OUT NUMBER) IS " +
-            "    committed BOOLEAN; " +
-            "    user_call_completed BOOLEAN; " +
-            "  BEGIN " +
-            "    sys.dbms_app_cont.get_ltxid_outcome(p_ltxid, committed, user_call_completed); " +
-            "    IF committed THEN p_committed := 1; ELSE p_committed := 0; END IF; " +
-            "    IF user_call_completed THEN p_user_call_completed := 1; ELSE p_user_call_completed := 0; END IF; " +
-            "  END; " +
-            "BEGIN " +
-            "  get_ltxid_outcome_wrapper(?, ?, ?); " +
-            "END;";
+        """
+        DECLARE
+              PROCEDURE get_ltxid_outcome_wrapper(p_ltxid IN RAW, p_committed OUT NUMBER, p_user_call_completed OUT NUMBER) IS
+                committed BOOLEAN;
+                user_call_completed BOOLEAN;
+              BEGIN
+                sys.dbms_app_cont.get_ltxid_outcome(p_ltxid, committed, user_call_completed);
+                IF committed THEN p_committed := 1; ELSE p_committed := 0; END IF;
+                IF user_call_completed THEN p_user_call_completed := 1; ELSE p_user_call_completed := 0; END IF;
+              END;
+        BEGIN
+            get_ltxid_outcome_wrapper(?, ?, ?);
+        END;
+        """;
 
     private final DataSource dataSource;
 
@@ -151,10 +154,10 @@ final class OracleTransactionRecoveryResolver implements CommitOutcomeResolver {
             return value.intValue() != 0;
         }
         String value = outcome.toString().trim();
-        if ("COMMITTED".equalsIgnoreCase(value) || "TRUE".equalsIgnoreCase(value) || "1".equals(value)) {
+        if ("COMMITTED".equalsIgnoreCase(value) || StringUtils.TRUE.equalsIgnoreCase(value) || "1".equals(value)) {
             return Boolean.TRUE;
         }
-        if ("NOT_COMMITTED".equalsIgnoreCase(value) || "FALSE".equalsIgnoreCase(value) || "0".equals(value)) {
+        if ("NOT_COMMITTED".equalsIgnoreCase(value) || StringUtils.FALSE.equalsIgnoreCase(value) || "0".equals(value)) {
             return Boolean.FALSE;
         }
         return null;

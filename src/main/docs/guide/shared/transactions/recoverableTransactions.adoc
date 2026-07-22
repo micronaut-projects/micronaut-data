@@ -54,7 +54,7 @@ In practice, this means:
 
 Oracle transaction recovery activates only when Oracle JDBC is in use and the feature is enabled for the datasource:
 
-[source,yaml]
+[configuration]
 ----
 datasources:
   default:

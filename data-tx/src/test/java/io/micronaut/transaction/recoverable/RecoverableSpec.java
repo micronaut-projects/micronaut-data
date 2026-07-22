@@ -153,6 +153,23 @@ class RecoverableSpec {
     }
 
     @Test
+    void repeatedNotCommittedOutcomesStopAtAttemptLimit() {
+        try (ApplicationContext context = ApplicationContext.run(Map.of("spec.commit.failure.count", 2))) {
+            OutcomeResolver resolver = context.getBean(OutcomeResolver.class);
+            resolver.outcome.set(CommitOutcome.NOT_COMMITTED);
+
+            RecoverableService service = context.getBean(RecoverableService.class);
+
+            assertThrows(TransactionSystemException.class, service::work);
+            assertEquals(2, service.invocations.get());
+            assertEquals(2, context.getBean(RecordingTransactionManager.class).beginAttempts.get());
+            assertEquals(2, context.getBean(RecordingTransactionManager.class).commitAttempts.get());
+            assertEquals(2, resolver.captureCount.get());
+            assertEquals(2, resolver.resolveCount.get());
+        }
+    }
+
+    @Test
     void customRecoverableExceptionTypeTriggersRecovery() {
         try (ApplicationContext context = ApplicationContext.run(Map.of("spec.commit.failure.mode", "custom"))) {
             OutcomeResolver resolver = context.getBean(OutcomeResolver.class);

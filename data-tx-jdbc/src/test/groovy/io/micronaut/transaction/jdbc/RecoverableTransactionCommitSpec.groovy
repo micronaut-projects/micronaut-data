@@ -27,6 +27,7 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.SQLException
 
 class RecoverableTransactionCommitSpec extends Specification {
 
@@ -65,5 +66,43 @@ class RecoverableTransactionCommitSpec extends Specification {
         1 * connection.commit() >> { events << 'commit' }
         recoveryContext.token == 'ltxid'
         events == ['capture', 'commit']
+    }
+
+    def "suppresses state restore failure after a recoverable commit attempt"() {
+        given:
+        def connection = Mock(Connection)
+        def connectionStatus = new DefaultConnectionStatus<>(connection, new DefaultConnectionDefinition('test'), true, null)
+        def transactionManager = new DataSourceTransactionManager(
+            Mock(DataSource),
+            Mock(io.micronaut.data.connection.ConnectionOperations),
+            Mock(io.micronaut.data.connection.SynchronousConnectionManager)
+        )
+        def transactionStatus = DefaultTransactionStatus.newTx(connectionStatus, io.micronaut.transaction.TransactionDefinition.DEFAULT, transactionManager)
+        def recoveryContext = new RecoverableTransactionContext()
+        recoveryContext.configure(transactionStatus, new CommitOutcomeResolver() {
+            @Override
+            Object captureLtxid(TransactionStatus<?> status) {
+                'ltxid'
+            }
+
+            @Override
+            CommitOutcome resolve(Object token) {
+                throw new UnsupportedOperationException('Outcome resolution is not part of commit')
+            }
+        })
+        connection.getAutoCommit() >> true
+
+        when:
+        PropagatedContext.getOrEmpty().plus(recoveryContext).propagate {
+            transactionManager.doBegin(transactionStatus)
+            transactionManager.doCommit(transactionStatus)
+            connectionStatus.complete()
+        }
+
+        then:
+        1 * connection.setAutoCommit(false)
+        1 * connection.commit()
+        1 * connection.setAutoCommit(true) >> { throw new SQLException('Connection is closed') }
+        noExceptionThrown()
     }
 }

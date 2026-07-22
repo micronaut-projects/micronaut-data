@@ -1,6 +1,7 @@
 package io.micronaut.data.connection.support;
 
 import org.junit.jupiter.api.Test;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,15 +14,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JdbcConnectionUtilsTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(JdbcConnectionUtilsTest.class);
 
     @Test
-    void restoreAutoCommitIgnoresClosedConnection() {
+    void restoreAutoCommitFailsForClosedConnection() {
         TestConnectionState state = new TestConnectionState();
         Connection connection = connection(state);
         List<Runnable> onComplete = new ArrayList<>();
@@ -29,7 +30,7 @@ class JdbcConnectionUtilsTest {
         JdbcConnectionUtils.applyAutoCommit(LOG, connection, false, onComplete);
         state.closed.set(true);
 
-        assertDoesNotThrow(() -> onComplete.forEach(Runnable::run));
+        assertThrows(ConnectionException.class, () -> onComplete.forEach(Runnable::run));
         assertEquals(1, onComplete.size());
     }
 
@@ -50,7 +51,7 @@ class JdbcConnectionUtilsTest {
     }
 
     @Test
-    void restoreReadOnlyIgnoresClosedConnection() {
+    void restoreReadOnlyFailsForClosedConnection() {
         TestConnectionState state = new TestConnectionState();
         Connection connection = connection(state);
         List<Runnable> onComplete = new ArrayList<>();
@@ -58,7 +59,7 @@ class JdbcConnectionUtilsTest {
         JdbcConnectionUtils.applyReadOnly(LOG, connection, true, onComplete);
         state.closed.set(true);
 
-        assertDoesNotThrow(() -> onComplete.forEach(Runnable::run));
+        assertThrows(ConnectionException.class, () -> onComplete.forEach(Runnable::run));
     }
 
     @Test
@@ -78,7 +79,7 @@ class JdbcConnectionUtilsTest {
     }
 
     @Test
-    void restoreTransactionIsolationIgnoresClosedConnection() {
+    void restoreTransactionIsolationFailsForClosedConnection() {
         TestConnectionState state = new TestConnectionState();
         Connection connection = connection(state);
         List<Runnable> onComplete = new ArrayList<>();
@@ -86,7 +87,7 @@ class JdbcConnectionUtilsTest {
         JdbcConnectionUtils.applyTransactionIsolation(LOG, connection, Connection.TRANSACTION_SERIALIZABLE, onComplete);
         state.closed.set(true);
 
-        assertDoesNotThrow(() -> onComplete.forEach(Runnable::run));
+        assertThrows(ConnectionException.class, () -> onComplete.forEach(Runnable::run));
     }
 
     @Test
@@ -106,7 +107,7 @@ class JdbcConnectionUtilsTest {
     }
 
     @Test
-    void restoreHoldabilityIgnoresClosedConnection() {
+    void restoreHoldabilityFailsForClosedConnection() {
         TestConnectionState state = new TestConnectionState();
         Connection connection = connection(state);
         List<Runnable> onComplete = new ArrayList<>();
@@ -114,7 +115,7 @@ class JdbcConnectionUtilsTest {
         JdbcConnectionUtils.applyHoldability(LOG, connection, ResultSet.CLOSE_CURSORS_AT_COMMIT, onComplete);
         state.closed.set(true);
 
-        assertDoesNotThrow(() -> onComplete.forEach(Runnable::run));
+        assertThrows(ConnectionException.class, () -> onComplete.forEach(Runnable::run));
     }
 
     @Test

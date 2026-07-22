@@ -35,6 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Internal helper for synchronous recoverable transaction execution.
@@ -45,8 +48,15 @@ import java.util.Arrays;
 final class RecoverableTransactionExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecoverableTransactionExecutor.class);
+    private static final String ON_MEMBER = "on";
+    private static final String MAX_ATTEMPTS_MEMBER = "maxAttempts";
+    private static final String BACKOFF_MEMBER = "backoff";
+    private static final String UNKNOWN_OUTCOME_POLICY_MEMBER = "unknownOutcomePolicy";
+    private static final int DEFAULT_MAX_ATTEMPTS = 1;
+    private static final long DEFAULT_BACKOFF = 100L;
 
     private final BeanLocator beanLocator;
+    private final ConcurrentMap<String, Optional<CommitOutcomeResolver>> outcomeResolvers = new ConcurrentHashMap<>();
 
     RecoverableTransactionExecutor(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
@@ -143,9 +153,12 @@ final class RecoverableTransactionExecutor {
     }
 
     private boolean shouldRetry(CommitOutcome outcome, RecoveryConfiguration configuration, int attempt) {
+        if (attempt >= configuration.maxAttempts()) {
+            return false;
+        }
         boolean retryableOutcome = outcome == CommitOutcome.NOT_COMMITTED
             || (outcome == CommitOutcome.UNKNOWN && configuration.unknownOutcomePolicy() == UnknownOutcomePolicy.RETRY);
-        return retryableOutcome && attempt < configuration.maxAttempts();
+        return retryableOutcome;
     }
 
     private void applyBackoff(long backoff) {
@@ -161,14 +174,14 @@ final class RecoverableTransactionExecutor {
     }
 
     private RecoveryConfiguration resolveConfiguration(MethodInvocationContext<Object, Object> context) {
-        Class<?>[] on = context.classValues(OracleTransactional.Recoverable.class, "on");
+        Class<?>[] on = context.classValues(OracleTransactional.Recoverable.class, ON_MEMBER);
         if (on.length == 0) {
             on = new Class[]{java.sql.SQLRecoverableException.class};
         }
-        int maxAttempts = Math.max(context.intValue(OracleTransactional.Recoverable.class, "maxAttempts").orElse(1), 0);
-        long backoff = Math.max(context.longValue(OracleTransactional.Recoverable.class, "backoff").orElse(100L), 0L);
+        int maxAttempts = Math.max(context.intValue(OracleTransactional.Recoverable.class, MAX_ATTEMPTS_MEMBER).orElse(DEFAULT_MAX_ATTEMPTS), 0);
+        long backoff = Math.max(context.longValue(OracleTransactional.Recoverable.class, BACKOFF_MEMBER).orElse(DEFAULT_BACKOFF), 0L);
         UnknownOutcomePolicy unknownOutcomePolicy = context
-            .enumValue(OracleTransactional.Recoverable.class, "unknownOutcomePolicy", OracleTransactional.Recoverable.OutcomePolicy.class)
+            .enumValue(OracleTransactional.Recoverable.class, UNKNOWN_OUTCOME_POLICY_MEMBER, OracleTransactional.Recoverable.OutcomePolicy.class)
             .map(policy -> policy == OracleTransactional.Recoverable.OutcomePolicy.RETRY ? UnknownOutcomePolicy.RETRY : UnknownOutcomePolicy.FAIL)
             .orElse(UnknownOutcomePolicy.FAIL);
         return new RecoveryConfiguration(on, maxAttempts, backoff, unknownOutcomePolicy);
@@ -184,10 +197,15 @@ final class RecoverableTransactionExecutor {
 
     @Nullable
     private CommitOutcomeResolver findQualifiedOutcomeResolver(@NonNull String dataSourceName) {
+        return outcomeResolvers.computeIfAbsent(dataSourceName, this::resolveOutcomeResolver).orElse(null);
+    }
+
+    @NonNull
+    private Optional<CommitOutcomeResolver> resolveOutcomeResolver(@NonNull String dataSourceName) {
         try {
-            return beanLocator.findBean(CommitOutcomeResolver.class, Qualifiers.byName(dataSourceName)).orElse(null);
+            return beanLocator.findBean(CommitOutcomeResolver.class, Qualifiers.byName(dataSourceName));
         } catch (Exception ignored) {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -204,6 +222,14 @@ final class RecoverableTransactionExecutor {
         return false;
     }
 
+    /**
+     * Immutable recovery settings derived from the intercepted annotation.
+     *
+     * @param on Exception types eligible for outcome resolution
+     * @param maxAttempts Maximum replays after the initial transaction attempt
+     * @param backoff Delay in milliseconds between replay attempts
+     * @param unknownOutcomePolicy Handling for an indeterminate commit outcome
+     */
     private record RecoveryConfiguration(Class<?>[] on, int maxAttempts, long backoff,
                                          UnknownOutcomePolicy unknownOutcomePolicy) {
 
@@ -239,30 +265,41 @@ final class RecoverableTransactionExecutor {
         }
     }
 
+    /**
+     * Specifies whether an indeterminate Oracle commit outcome may be replayed.
+     */
     private enum UnknownOutcomePolicy {
         RETRY,
         FAIL
     }
 
+    /**
+     * Describes the action to take after resolving a failed commit attempt.
+     */
     private enum Decision {
         RETURN_RESULT,
         RETRY,
         RETHROW
     }
 
+    /**
+     * Carries the post-resolution action and, for committed outcomes, the original method result.
+     *
+     * @param decision The action selected after outcome resolution
+     * @param result The original method result when the decision returns it
+     */
     private record FailureResolution(Decision decision, @Nullable Object result) {
 
         private static FailureResolution returnResult(@Nullable Object result) {
-                return new FailureResolution(Decision.RETURN_RESULT, result);
-            }
-
-            private static FailureResolution retry() {
-                return new FailureResolution(Decision.RETRY, null);
-            }
-
-            private static FailureResolution rethrow() {
-                return new FailureResolution(Decision.RETHROW, null);
-            }
+            return new FailureResolution(Decision.RETURN_RESULT, result);
         }
 
+        private static FailureResolution retry() {
+            return new FailureResolution(Decision.RETRY, null);
+        }
+
+        private static FailureResolution rethrow() {
+            return new FailureResolution(Decision.RETHROW, null);
+        }
+    }
 }

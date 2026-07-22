@@ -26,6 +26,7 @@ import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
@@ -170,7 +171,15 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                 @Override
                 public void executionComplete() {
                     for (Runnable runnable : onComplete) {
-                        runnable.run();
+                        try {
+                            runnable.run();
+                        } catch (ConnectionException e) {
+                            if (isRecoveryCommitAttempt(status)) {
+                                logger.debug("Skipping JDBC Connection [{}] state restore after a recoverable commit attempt", connection, e);
+                                continue;
+                            }
+                            throw e;
+                        }
                     }
                 }
             });
@@ -195,6 +204,12 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not commit JDBC transaction", ex);
         }
+    }
+
+    private static boolean isRecoveryCommitAttempt(DefaultTransactionStatus<Connection> status) {
+        return RecoverableTransactionContext.find()
+            .map(context -> context.hasCapturedToken(status))
+            .orElse(false);
     }
 
     @Override

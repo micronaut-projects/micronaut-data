@@ -91,6 +91,15 @@ public final class RecoverableTransactionContext implements PropagatedContextEle
     }
 
     /**
+     * @param status The transaction whose completion is restoring connection state
+     * @return Whether this transaction has reached its commit boundary
+     */
+    @SuppressWarnings("ReferenceEquality") // Transaction ownership is identity-based.
+    public boolean hasCapturedToken(@NonNull TransactionStatus<?> status) {
+        return transactionStatus == status && token != null;
+    }
+
+    /**
      * @param result The intercepted method result
      */
     public void setResult(@Nullable Object result) {
