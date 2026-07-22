@@ -18,7 +18,9 @@ dependencies {
     annotationProcessor projects.micronautDataNitrite
 
     implementation projects.micronautDataNitrite
-    implementation libs.nitrite.spatial
+    implementation(libs.nitrite.spatial) {
+        exclude group: "tools.jackson.core", module: "jackson-databind"
+    }
     implementation mnSql.jakarta.persistence.api
 
     runtimeOnly mnLogging.logback.classic

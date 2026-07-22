@@ -6,6 +6,8 @@ dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
     implementation projects.micronautDataNitrite
     implementation libs.nitrite.rocksdb.adapter
-    implementation libs.nitrite.spatial
+    implementation(libs.nitrite.spatial) {
+        exclude group: "tools.jackson.core", module: "jackson-databind"
+    }
     runtimeOnly mn.snakeyaml
 }
