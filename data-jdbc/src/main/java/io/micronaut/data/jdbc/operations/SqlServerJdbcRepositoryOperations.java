@@ -19,7 +19,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -63,8 +62,7 @@ import java.util.concurrent.ExecutorService;
  */
 @EachBean(DataSource.class)
 @Requires(condition = SqlServerJdbcRepositoryOperationsCondition.class)
-@Internal
-public final class SqlServerJdbcRepositoryOperations extends DefaultJdbcRepositoryOperations {
+final class SqlServerJdbcRepositoryOperations extends DefaultJdbcRepositoryOperations {
 
     /**
      * Default constructor.
@@ -87,7 +85,6 @@ public final class SqlServerJdbcRepositoryOperations extends DefaultJdbcReposito
      * @param conversionContextFactory    The conversion context factory
      * @param sqlExceptionMapperList      The SQL exception mapper list
      */
-    @Internal
     @SuppressWarnings("ParameterNumber")
     SqlServerJdbcRepositoryOperations(@Parameter String dataSourceName,
                                       @Parameter DataJdbcConfiguration jdbcConfiguration,
