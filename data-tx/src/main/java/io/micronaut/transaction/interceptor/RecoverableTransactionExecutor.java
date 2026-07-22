@@ -156,9 +156,8 @@ final class RecoverableTransactionExecutor {
         if (attempt >= configuration.maxAttempts()) {
             return false;
         }
-        boolean retryableOutcome = outcome == CommitOutcome.NOT_COMMITTED
+        return outcome == CommitOutcome.NOT_COMMITTED
             || (outcome == CommitOutcome.UNKNOWN && configuration.unknownOutcomePolicy() == UnknownOutcomePolicy.RETRY);
-        return retryableOutcome;
     }
 
     private void applyBackoff(long backoff) {
