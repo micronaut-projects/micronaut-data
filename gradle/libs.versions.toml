@@ -22,7 +22,6 @@ micronaut-flyway = "8.1.0"
 micronaut-coherence = "7.0.1"
 micronaut-sourcegen = "2.1.0"
 nitrite = "4.4.2"
-jackson-datatype-jts = "2.21.0"
 
 groovy = "5.0.7"
 
@@ -107,11 +106,8 @@ micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos",
 # Nitrite
 nitrite = { module = "org.dizitart:nitrite", version.ref = "nitrite" }
 nitrite-mvstore-adapter = { module = "org.dizitart:nitrite-mvstore-adapter", version.ref = "nitrite" }
-nitrite-jackson-mapper = { module = "org.dizitart:nitrite-jackson-mapper", version.ref = "nitrite" }
 nitrite-rocksdb-adapter = { module = "org.dizitart:nitrite-rocksdb-adapter", version.ref = "nitrite" }
 nitrite-spatial = { module = "org.dizitart:nitrite-spatial", version.ref = "nitrite" }
-jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
-jackson-datatype-jts = { module = "com.graphhopper.external:jackson-datatype-jts", version.ref = "jackson-datatype-jts" }
 
 # Antlr
 

@@ -366,6 +366,20 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
          */
         @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters);
 
+        private static @Nullable Integer toInt(@Nullable Object value) {
+            if (value instanceof Number number) {
+                return number.intValue();
+            }
+            if (value == null) {
+                return null;
+            }
+            try {
+                return Integer.parseInt(value.toString());
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
         /**
          * A reference to a persisted document field.
          *
@@ -571,18 +585,5 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             }
         }
 
-        private static @Nullable Integer toInt(@Nullable Object value) {
-            if (value instanceof Number number) {
-                return number.intValue();
-            }
-            if (value == null) {
-                return null;
-            }
-            try {
-                return Integer.parseInt(value.toString());
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
     }
 }

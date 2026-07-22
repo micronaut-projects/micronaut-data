@@ -9,11 +9,7 @@ Add the following dependencies to your project:
 
 dependency:org.dizitart:nitrite-spatial[scope="runtime"]
 
-And the Jackson JTS library:
-
-dependency:com.graphhopper.external:jackson-datatype-jts[version="2.21.0", scope="runtime"]
-
-The `nitrite-spatial` module provides spatial indexing and filtering capabilities. The `jackson-datatype-jts` library handles JSON serialization of JTS Geometry objects.
+The `nitrite-spatial` module provides spatial indexing and filtering capabilities. Micronaut Data Nitrite serializes JTS Geometry objects with its built-in Micronaut Serde codec, so no Jackson JTS module is required.
 
 === Spatial Indexes
 

@@ -21,7 +21,6 @@ dependencies {
 
     implementation projects.micronautDataNitrite
     implementation libs.nitrite.spatial
-    implementation libs.jackson.datatype.jts
     implementation mnSql.jakarta.persistence.api
 
     testCompileOnly mn.micronaut.inject.groovy

@@ -22,9 +22,7 @@ dependencies {
     implementation projects.micronautDataNitrite
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation libs.nitrite.spatial
-    implementation libs.jackson.datatype.jts
     implementation mnSql.jakarta.persistence.api
 
     runtimeOnly mnLogging.logback.classic
 }
-

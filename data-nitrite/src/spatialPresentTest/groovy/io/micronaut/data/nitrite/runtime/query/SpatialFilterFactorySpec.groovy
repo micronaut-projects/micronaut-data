@@ -9,6 +9,7 @@ import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
 import org.dizitart.no2.filters.Filter
 import org.locationtech.jts.geom.Coordinate
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import spock.lang.Specification
 
@@ -36,6 +37,11 @@ class SpatialFilterFactorySpec extends Specification {
             new Coordinate(5.0, 0.0),
             new Coordinate(0.0, 0.0)
         ] as Coordinate[])
+
+        and: "JTS Geometry values round-trip through Micronaut Serde without Jackson"
+        def serializedGeometry = objectMapper.writeValueAsString(jtsPolygon)
+        Geometry deserializedGeometry = objectMapper.readValue(serializedGeometry, Geometry)
+        deserializedGeometry.equalsExact(jtsPolygon)
 
         def geoPoint = null
         try {
