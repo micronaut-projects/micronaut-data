@@ -29,10 +29,8 @@ import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import jakarta.persistence.criteria.CriteriaBuilder
-import jakarta.persistence.criteria.CriteriaQuery
-import jakarta.persistence.criteria.Predicate
-import jakarta.persistence.criteria.Root
+import jakarta.persistence.criteria.Join
+import jakarta.persistence.criteria.JoinType
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.PendingFeature
@@ -645,6 +643,34 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             value.totalSize == 2
             value.content.size() == 2
             value.content[0].title == "Pet Cemetery"
+    }
+
+    void "test fetch join specification and pageable"() {
+        given:
+            QuerySpecification<Author> specification = (root, query, criteriaBuilder) -> {
+                Join<Author, Book> books = query.resultType != Long
+                        ? root.fetch("books", JoinType.LEFT) as Join<Author, Book>
+                        : root.join("books", JoinType.LEFT)
+                return criteriaBuilder.or(
+                        root.get("name").in("Stephen King", "James Patterson"),
+                        books.get("title").in("The Stand", "Along Came a Spider")
+                )
+            }
+            def sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+            def page0 = authorRepository.findAll(specification, Pageable.from(0, 1, sort)).block()
+            def page1 = authorRepository.findAll(specification, Pageable.from(1, 1, sort)).block()
+
+        then:
+            page0.size == 1
+            page0.totalSize == 2
+            page0.content*.name == ["James Patterson"]
+            (page0.content[0].books*.title as Set) == (["Along Came a Spider", "Double Cross"] as Set)
+            page1.size == 1
+            page1.totalSize == 2
+            page1.content*.name == ["Stephen King"]
+            (page1.content[0].books*.title as Set) == (["The Stand", "Pet Cemetery"] as Set)
     }
 
     private static QuerySpecification<Book> testJoin(String value) {

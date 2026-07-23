@@ -41,6 +41,7 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.reactive.ReactorCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.operations.ReactivePageIdCriteriaRepositoryOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
@@ -73,7 +74,7 @@ import java.util.function.Function;
 @EachBean(SessionFactory.class)
 @Internal
 final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
-        implements HibernateReactorRepositoryOperations, ReactorCriteriaRepositoryOperations {
+        implements HibernateReactorRepositoryOperations, ReactorCriteriaRepositoryOperations, ReactivePageIdCriteriaRepositoryOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveRepositoryOperations.class);
 
@@ -474,6 +475,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             }
             return sessionQuery.getResultList();
         })).flatMapIterable(res -> res);
+    }
+
+    @Override
+    public <T> Flux<T> findPageIds(CriteriaQuery<T> query, int offset, int limit) {
+        convertFetchesToJoinsForIdQuery(query);
+        return findAll(query, offset, limit);
     }
 
     @Override

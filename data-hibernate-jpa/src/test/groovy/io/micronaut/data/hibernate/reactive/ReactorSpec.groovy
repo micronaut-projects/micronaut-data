@@ -19,11 +19,18 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.hibernate.reactive.ReactorPersonRepo
+import io.micronaut.data.hibernate.reactive.ReactorAuthorRepository
 import io.micronaut.data.hibernate.reactive.ReactorUserWithWhereRepository
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.Join
+import jakarta.persistence.criteria.JoinType
 import org.hibernate.SessionFactory
 import spock.lang.Specification
 
@@ -37,6 +44,9 @@ class ReactorSpec extends Specification{
 
     @Inject
     ReactorUserWithWhereRepository userWithWhereRepository
+
+    @Inject
+    ReactorAuthorRepository authorRepository
 
     @Inject
     SessionFactory sessionFactory
@@ -124,5 +134,53 @@ class ReactorSpec extends Specification{
 
         then:"All are gone"
         reactiveRepo.count().block() == 0
+    }
+
+    void "test reactor specification pagination with fetch join"() {
+        given:
+            def prefix = UUID.randomUUID().toString()
+            String firstAuthorName = "${prefix}-a"
+            String secondAuthorName = "${prefix}-b"
+            String firstBookTitle = "${prefix}-first"
+            String secondBookTitle = "${prefix}-second"
+            def firstAuthor = author(firstAuthorName, firstBookTitle)
+            def secondAuthor = author(secondAuthorName, secondBookTitle)
+            def savedAuthors = authorRepository.saveAll([firstAuthor, secondAuthor]).collectList().block()
+            QuerySpecification<Author> specification = { root, query, criteriaBuilder ->
+                Join<Author, Book> books = query.resultType != Long
+                        ? root.fetch("books", JoinType.LEFT) as Join<Author, Book>
+                        : root.join("books", JoinType.LEFT)
+                criteriaBuilder.or(
+                        root.get("name").in(firstAuthorName, secondAuthorName),
+                        books.get("title").in(firstBookTitle, secondBookTitle)
+                )
+            } as QuerySpecification<Author>
+
+        when:
+            def page0 = authorRepository.findAll(specification, Pageable.from(0, 1, Sort.of(Sort.Order.asc("name")))).block()
+            def page1 = authorRepository.findAll(specification, Pageable.from(1, 1, Sort.of(Sort.Order.asc("name")))).block()
+
+        then:
+            page0.size == 1
+            page0.totalSize == 2
+            page0.content*.name == [firstAuthorName]
+            page0.content[0].books*.title == [firstBookTitle]
+            page1.size == 1
+            page1.totalSize == 2
+            page1.content*.name == [secondAuthorName]
+            page1.content[0].books*.title == [secondBookTitle]
+
+        cleanup:
+            authorRepository.deleteAll(savedAuthors).block()
+    }
+
+    private static Author author(String name, String bookTitle) {
+        def author = new Author()
+        author.name = name
+        def book = new Book()
+        book.title = bookTitle
+        book.author = author
+        author.books.add(book)
+        return author
     }
 }
