@@ -6,40 +6,27 @@ They are not inherited from api:data.repository.CrudRepository[].
 Declare an upsert method only on repositories that need this behavior.
 
 The default conflict target is the entity identity.
-Use ann:data.annotation.Upsert[] with `conflictsOn` to use another persistent property, or a set of persistent properties, as the conflict target.
+The following JDBC example uses the caller-provided flight number as the identity:
 
-[source,java]
-----
-Contact upsert(Contact contact);
+snippet::example.Flight[project-base="doc-examples/jdbc-example", source="main", tags="upsert-entity"]
 
-List<Contact> upsertAll(Iterable<Contact> contacts);
+Its repository declares single and iterable upsert methods by name, uses ann:data.annotation.Upsert[] with another method name, and includes asynchronous variants:
 
-@Upsert
-Contact put(Contact contact);
+snippet::example.FlightRepository[project-base="doc-examples/jdbc-example", source="main", tags="upsert-repository"]
 
-@Upsert(conflictsOn = "email")
-Contact putByEmail(Contact contact);
+Use `conflictsOn` to use another persistent property, or a set of persistent properties, as the conflict target.
+The following JDBC example has a generated identity and a unique email address:
 
-@Upsert(conflictsOn = {"provider", "email"})
-Contact putByProviderAndEmail(Contact contact);
-----
+snippet::example.Passenger[project-base="doc-examples/jdbc-example", source="main", tags="upsert-entity"]
 
-The same repository method shapes are supported for asynchronous and reactive repositories where the repository type supports those return types:
+Its repository uses `email` as the conflict target and returns the persisted passenger for single-item operations:
 
-[source,java]
-----
-@Upsert(conflictsOn = "email")
-Mono<Contact> upsertMono(Contact contact);
+snippet::example.PassengerRepository[project-base="doc-examples/jdbc-example", source="main", tags="upsert-repository"]
 
-@Upsert(conflictsOn = "email")
-CompletableFuture<Contact> upsertFuture(Contact contact);
+The same repository method shapes are supported for reactive repositories where the repository type supports those return types.
+The following R2DBC example returns a `Mono` for one flight and a `Flux` for an iterable of flights:
 
-@Upsert(conflictsOn = "email")
-Flux<Contact> upsertAllFlux(Iterable<Contact> contacts);
-
-@Upsert(conflictsOn = "email")
-CompletableFuture<List<Contact>> upsertAllFuture(Iterable<Contact> contacts);
-----
+snippet::example.FlightRepository[project-base="doc-examples/r2dbc-example", source="main", tags="upsert-repository"]
 
 Upsert methods must accept exactly one entity parameter or one iterable entity parameter.
 A method cannot mix a single entity parameter and an iterable entity parameter.
@@ -52,16 +39,8 @@ It is not implemented for repositories that rely on implicit query execution, su
 
 When `conflictsOn` is not specified, Micronaut Data uses the entity identity properties to decide whether the upsert should update an existing row.
 
-When `conflictsOn` is specified, those properties define the conflict target:
-
-[source,java]
-----
-@Upsert(conflictsOn = "email")
-Contact putByEmail(Contact contact);
-
-@Upsert(conflictsOn = {"provider", "email"})
-Contact putByProviderAndEmail(Contact contact);
-----
+When `conflictsOn` is specified, those properties define the conflict target.
+For example, the `PassengerRepository` methods above use the unique `email` property.
 
 Conflict properties must resolve to persistent, non-generated properties.
 Micronaut Data does not infer the conflict target from every unique constraint on the table.
@@ -111,19 +90,9 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 
 == Single and Batch Upsert
 
-A single-entity upsert method executes the generated upsert statement for one entity.
+A single-entity upsert method, such as `FlightRepository.upsert(Flight)`, executes the generated upsert statement for one entity.
 
-[source,java]
-----
-Contact upsert(Contact contact);
-----
-
-An iterable upsert method applies the same upsert operation to each entity.
-
-[source,java]
-----
-List<Contact> upsertAll(Iterable<Contact> contacts);
-----
+An iterable upsert method, such as `FlightRepository.upsertAll(Iterable<Flight>)`, applies the same upsert operation to each entity.
 
 `upsertAll` is a batch operation at the repository API level, but it should not be understood as a portable multi-row SQL statement.
 Depending on the dialect, driver, and repository implementation, Micronaut Data may use JDBC batching, driver-specific batching, or execute one statement per entity.
