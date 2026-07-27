@@ -21,7 +21,6 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
@@ -44,10 +43,16 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     ApplicationContext context
 
     @Shared
-    QueryNotificationBookRepository repository
+    ObjectChangeNotificationBookRepository objectChangeRepository
 
     @Shared
-    QueryNotificationBookListener listener
+    QueryChangeNotificationBookRepository queryChangeRepository
+
+    @Shared
+    ObjectChangeNotificationBookListener objectChangeListener
+
+    @Shared
+    QueryChangeNotificationBookListener queryChangeListener
 
     @Override
     List<String> packages() {
@@ -55,6 +60,20 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     }
 
     def setupSpec() {
+        grantChangeNotificationPrivilege()
+        context = ApplicationContext.run(properties + ["query-notification.enabled": "true"])
+        objectChangeRepository = context.getBean(ObjectChangeNotificationBookRepository)
+        queryChangeRepository = context.getBean(QueryChangeNotificationBookRepository)
+        objectChangeListener = context.getBean(ObjectChangeNotificationBookListener)
+        queryChangeListener = context.getBean(QueryChangeNotificationBookListener)
+    }
+
+    void cleanup() {
+        objectChangeRepository.deleteAll()
+        queryChangeRepository.deleteAll()
+    }
+
+    private void grantChangeNotificationPrivilege() {
         // Test Resources creates the regular test user without this Oracle-specific privilege.
         // Bootstrap once as SYSTEM to grant it, then run the actual listener as the test user.
         def administratorProperties = properties + [
@@ -73,15 +92,12 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         } finally {
             administratorContext.close()
         }
-        context = ApplicationContext.run(properties + ["query-notification.enabled": "true"])
-        repository = context.getBean(QueryNotificationBookRepository)
-        listener = context.getBean(QueryNotificationBookListener)
     }
 
     void "change listener receives an entity after an Oracle row is inserted"() {
         when:
-        def saved = repository.save(new QueryNotificationBook(title: "Continuous Query Notification"))
-        def notification = listener.poll()
+        def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Continuous Query Notification"))
+        def notification = objectChangeListener.poll()
 
         then:
         notification
@@ -91,13 +107,13 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
 
     void "change listener receives every entity affected by a bulk update"() {
         given:
-        def firstBook = new QueryNotificationBook(title: "First book")
-        def secondBook = new QueryNotificationBook(title: "Second book")
-        def thirdBook = new QueryNotificationBook(title: "Third book")
+        def firstBook = new ObjectChangeNotificationBook(title: "First book")
+        def secondBook = new ObjectChangeNotificationBook(title: "Second book")
+        def thirdBook = new ObjectChangeNotificationBook(title: "Third book")
 
         when:
-        repository.saveAll([firstBook, secondBook, thirdBook])
-        def insertNotifications = [listener.poll(), listener.poll(), listener.poll()]
+        objectChangeRepository.saveAll([firstBook, secondBook, thirdBook])
+        def insertNotifications = [objectChangeListener.poll(), objectChangeListener.poll(), objectChangeListener.poll()]
 
         then:
         insertNotifications.every { it }
@@ -105,8 +121,8 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         (insertNotifications*.title as Set) == (["First book", "Second book", "Third book"] as Set)
 
         when:
-        def updated = repository.updateTitleByIds("Bulk updated", [firstBook.id, secondBook.id])
-        def updateNotifications = [listener.poll(), listener.poll()]
+        def updated = objectChangeRepository.updateTitleByIds("Bulk updated", [firstBook.id, secondBook.id])
+        def updateNotifications = [objectChangeListener.poll(), objectChangeListener.poll()]
 
         then:
         updated == 2
@@ -114,10 +130,30 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         (updateNotifications*.id as Set) == ([firstBook.id, secondBook.id] as Set)
         (updateNotifications*.title as Set) == (["Bulk updated"] as Set)
     }
+
+    void "query change listener receives an entity after an Oracle row is inserted"() {
+        when:
+        def saved = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
+        def notification = queryChangeListener.poll()
+
+        then:
+        notification
+        notification.id == saved.id
+        notification.title == "Query Change Notification"
+    }
 }
 
-@MappedEntity("query_notification_book")
-class QueryNotificationBook {
+@MappedEntity("object_change_notification_book")
+class ObjectChangeNotificationBook {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String title
+}
+
+@MappedEntity("query_change_notification_book")
+class QueryChangeNotificationBook {
     @Id
     @GeneratedValue
     Long id
@@ -126,24 +162,46 @@ class QueryNotificationBook {
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-interface QueryNotificationBookRepository extends CrudRepository<QueryNotificationBook, Long> {
-    @Query("UPDATE query_notification_book SET title = :title WHERE id IN (:ids)")
+interface ObjectChangeNotificationBookRepository extends CrudRepository<ObjectChangeNotificationBook, Long> {
+    @Query("UPDATE object_change_notification_book SET title = :title WHERE id IN (:ids)")
     long updateTitleByIds(String title, List<Long> ids)
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface QueryChangeNotificationBookRepository extends CrudRepository<QueryChangeNotificationBook, Long> {
 }
 
 @Singleton
 @Requires(property = "query-notification.enabled")
-class QueryNotificationBookListener {
-    private final LinkedBlockingQueue<QueryNotificationBook> notifications = new LinkedBlockingQueue<>()
-
+class ObjectChangeNotificationBookListener extends AbstractQueryNotificationBookListener<ObjectChangeNotificationBook> {
     @ChangeListener(properties = [
         @ChangeListener.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true")
     ])
-    void onBookChanged(QueryNotificationBook book) {
+    void onBookChanged(ObjectChangeNotificationBook book) {
+        add(book)
+    }
+}
+
+@Singleton
+@Requires(property = "query-notification.enabled")
+class QueryChangeNotificationBookListener extends AbstractQueryNotificationBookListener<QueryChangeNotificationBook> {
+    @ChangeListener(properties = [
+        @ChangeListener.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true"),
+        @ChangeListener.Property(name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value = "true")
+    ])
+    void onBookChanged(QueryChangeNotificationBook book) {
+        add(book)
+    }
+}
+
+abstract class AbstractQueryNotificationBookListener<T> {
+    private final LinkedBlockingQueue<T> notifications = new LinkedBlockingQueue<>()
+
+    protected void add(T book) {
         notifications.offer(book)
     }
 
-    QueryNotificationBook poll() {
+    T poll() {
         notifications.poll(10, TimeUnit.SECONDS)
     }
 }

@@ -36,6 +36,7 @@ import oracle.jdbc.OracleStatement;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeListener;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
+import oracle.jdbc.dcn.QueryChangeDescription;
 import oracle.jdbc.dcn.RowChangeDescription;
 import oracle.jdbc.dcn.TableChangeDescription;
 import org.slf4j.Logger;
@@ -197,6 +198,20 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
 
         private void dispatch(DatabaseChangeEvent event) {
             TableChangeDescription[] tables = event.getTableChangeDescription();
+            if (tables == null) {
+                QueryChangeDescription[] queries = event.getQueryChangeDescription();
+                if (queries == null) {
+                    return;
+                }
+                for (QueryChangeDescription query : queries) {
+                    dispatchTables(query.getTableChangeDescription());
+                }
+                return;
+            }
+            dispatchTables(tables);
+        }
+
+        private void dispatchTables(TableChangeDescription[] tables) {
             if (tables == null) {
                 return;
             }
