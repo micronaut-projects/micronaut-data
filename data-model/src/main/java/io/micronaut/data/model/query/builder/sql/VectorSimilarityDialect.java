@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
@@ -98,6 +99,9 @@ interface VectorSimilarityDialect {
         }
         if (property.isAssignable(ByteVector.class)) {
             return new OracleVectorConfig(dimensions, ORACLE_INT8, sparse);
+        }
+        if (property.isAssignable(Vector.class)) {
+            return new OracleVectorConfig(dimensions, sparse ? ORACLE_FLOAT32 : ORACLE_FLOAT64, sparse);
         }
         return null;
     }

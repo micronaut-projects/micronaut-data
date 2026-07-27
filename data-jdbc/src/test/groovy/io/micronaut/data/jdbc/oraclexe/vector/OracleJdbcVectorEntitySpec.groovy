@@ -12,8 +12,10 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.SparseDoubleVector
 import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.transaction.SynchronousTransactionManager
@@ -40,6 +42,9 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
     SparseVectorDocRepository sparseVectorRepository = context.getBean(SparseVectorDocRepository)
 
     @Shared
+    GenericVectorSearchRepository genericVectorSearchRepository = context.getBean(GenericVectorSearchRepository)
+
+    @Shared
     DataSource dataSource = context.getBean(DataSource)
 
     @Override
@@ -52,6 +57,7 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
         // Clean table between tests
         executeSilently "DELETE FROM vector_doc"
         executeSilently "DELETE FROM vector_sparse_doc"
+        executeSilently "DELETE FROM generic_vector_search_doc"
         // no-op transaction boundary to flush
         context.getBean(SynchronousTransactionManager).executeWrite { status -> null }
     }
@@ -176,6 +182,23 @@ class OracleJdbcVectorEntitySpec extends Specification implements OracleTestProp
         }
     }
 
+    void "test similarity search converts float query to generic vector format"() {
+        given:
+        genericVectorSearchRepository.save(
+            new GenericVectorSearchDoc(embedding: Vector.of([1d, 0d, 0d] as double[]))
+        )
+
+        when:
+        def results = genericVectorSearchRepository.searchByEmbeddingNear(
+            Vector.of([1f, 0f, 0f] as float[]),
+            2d
+        ).results()
+
+        then:
+        results.size() == 1
+        results.first().entity().embedding.toDoubleArray().toList() == [1d, 0d, 0d]
+    }
+
     void "test top2 derived queries with explicit ORDER BY"() {
         given:
         vectorRepository.saveCustom(Vector.of([1d, 0d, 0d] as double[]))
@@ -251,6 +274,21 @@ interface VectorDocRepository extends PageableRepository<VectorDoc, Long> {
 
     List<VectorDoc> findTop2OrderByIdAsc()
 
+}
+
+@MappedEntity("generic_vector_search_doc")
+class GenericVectorSearchDoc {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    Long id
+
+    Vector embedding
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface GenericVectorSearchRepository extends PageableRepository<GenericVectorSearchDoc, Long> {
+
+    SearchResults<GenericVectorSearchDoc> searchByEmbeddingNear(FloatVector vector, Double maxDistance)
 }
 
 @MappedEntity("vector_sparse_doc")
