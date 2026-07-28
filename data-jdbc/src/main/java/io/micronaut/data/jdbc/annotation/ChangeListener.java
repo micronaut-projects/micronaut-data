@@ -54,6 +54,24 @@ public @interface ChangeListener {
     String dataSource() default "default";
 
     /**
+     * The select list to register for Oracle Query Result Change Notification. It is valid only
+     * when {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is set to
+     * {@code true} in {@link #properties()}.
+     *
+     * @return The select list, or {@code *} to select all columns.
+     */
+    String select() default "*";
+
+    /**
+     * The predicate to register for Oracle Query Result Change Notification. It is valid only
+     * when {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is set to
+     * {@code true} in {@link #properties()}.
+     *
+     * @return The predicate, or an empty string to omit the {@code WHERE} clause.
+     */
+    String where() default "";
+
+    /**
      * Oracle Continuous Query Notification registration properties. Row IDs are always enabled
      * because they are required to reload the changed entity. For example, use
      * {@code @Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true")} to
@@ -65,8 +83,6 @@ public @interface ChangeListener {
 
     /**
      * An Oracle Continuous Query Notification registration property.
-     *
-     * @since 5.2.0
      */
     @interface Property {
 

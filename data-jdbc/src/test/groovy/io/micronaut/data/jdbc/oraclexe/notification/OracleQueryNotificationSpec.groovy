@@ -16,25 +16,11 @@
 package io.micronaut.data.jdbc.oraclexe.notification
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.annotation.Requires
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.Query
-import io.micronaut.data.jdbc.annotation.ChangeListener
-import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
-import jakarta.inject.Singleton
-import oracle.jdbc.OracleConnection
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 
 class OracleQueryNotificationSpec extends Specification implements OracleTestPropertyProvider {
 
@@ -133,6 +119,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
 
     void "query change listener receives an entity after an Oracle row is inserted"() {
         when:
+        queryChangeRepository.save(new QueryChangeNotificationBook(title: "Ignored by query notification"))
         def saved = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
         def notification = queryChangeListener.poll()
 
@@ -140,68 +127,5 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification
         notification.id == saved.id
         notification.title == "Query Change Notification"
-    }
-}
-
-@MappedEntity("object_change_notification_book")
-class ObjectChangeNotificationBook {
-    @Id
-    @GeneratedValue
-    Long id
-
-    String title
-}
-
-@MappedEntity("query_change_notification_book")
-class QueryChangeNotificationBook {
-    @Id
-    @GeneratedValue
-    Long id
-
-    String title
-}
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface ObjectChangeNotificationBookRepository extends CrudRepository<ObjectChangeNotificationBook, Long> {
-    @Query("UPDATE object_change_notification_book SET title = :title WHERE id IN (:ids)")
-    long updateTitleByIds(String title, List<Long> ids)
-}
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface QueryChangeNotificationBookRepository extends CrudRepository<QueryChangeNotificationBook, Long> {
-}
-
-@Singleton
-@Requires(property = "query-notification.enabled")
-class ObjectChangeNotificationBookListener extends AbstractQueryNotificationBookListener<ObjectChangeNotificationBook> {
-    @ChangeListener(properties = [
-        @ChangeListener.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true")
-    ])
-    void onBookChanged(ObjectChangeNotificationBook book) {
-        add(book)
-    }
-}
-
-@Singleton
-@Requires(property = "query-notification.enabled")
-class QueryChangeNotificationBookListener extends AbstractQueryNotificationBookListener<QueryChangeNotificationBook> {
-    @ChangeListener(properties = [
-        @ChangeListener.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true"),
-        @ChangeListener.Property(name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value = "true")
-    ])
-    void onBookChanged(QueryChangeNotificationBook book) {
-        add(book)
-    }
-}
-
-abstract class AbstractQueryNotificationBookListener<T> {
-    private final LinkedBlockingQueue<T> notifications = new LinkedBlockingQueue<>()
-
-    protected void add(T book) {
-        notifications.offer(book)
-    }
-
-    T poll() {
-        notifications.poll(10, TimeUnit.SECONDS)
     }
 }

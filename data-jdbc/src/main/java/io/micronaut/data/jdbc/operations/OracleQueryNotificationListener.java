@@ -83,17 +83,23 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
 
     @Override
     public <B> void process(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
-        if (!dataSourceName.equals(method.stringValue(ChangeListener.class, "dataSource").orElse("default"))) {
+        AnnotationValue<ChangeListener> changeListener = Objects.requireNonNull(method.getAnnotation(ChangeListener.class));
+
+        String dataSource = changeListener.stringValue("dataSource").orElse("default");
+        if (!dataSourceName.equals(dataSource)) {
             return;
         }
+
         Argument<?>[] arguments = method.getArguments();
         if (arguments.length != 1) {
-            throw new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] must have exactly one entity argument");
+            throw invalidChangeListener(method, "must have exactly one entity argument");
         }
-        AnnotationValue<ChangeListener> changeListener = Objects.requireNonNull(method.getAnnotation(ChangeListener.class));
-        List<AnnotationValue<ChangeListener.Property>> registrationProperties = changeListener
-            .getAnnotations("properties", ChangeListener.Property.class);
-        listeners.add(new ChangeListenerDefinition(beanDefinition, method, arguments[0].getType(), registrationProperties));
+
+        String tableName = operations.getEntity(arguments[0].getType()).getPersistedName();
+        Properties properties = getRegistrationProperties(changeListener, method);
+        String query = getRegistrationQuery(changeListener, method, tableName, properties);
+
+        listeners.add(new ChangeListenerDefinition(beanDefinition, method, arguments[0].getType(), tableName, query, properties));
     }
 
     @Override
@@ -106,43 +112,81 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
     }
 
     private void register(ChangeListenerDefinition listenerDefinition) {
-        Class<?> entityType = listenerDefinition.entityType();
-        String tableName = operations.getEntity(entityType).getPersistedName();
-        DatabaseChangeRegistration registration = operations.execute(connection -> {
+        operations.execute(connection -> {
             OracleConnection oracleConnection = oracleConnection(connection);
-            Properties properties = getRegistrationProperties(listenerDefinition);
+            Properties properties = new Properties();
+            properties.putAll(listenerDefinition.registrationProperties());
+            boolean purgeOnNotification = Boolean.parseBoolean(properties.getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
             DatabaseChangeRegistration newRegistration = oracleConnection.registerDatabaseChangeNotification(properties);
             try {
-                newRegistration.addListener(new EntityChangeListener(listenerDefinition, tableName));
+                newRegistration.addListener(new EntityChangeListener(listenerDefinition, newRegistration, purgeOnNotification));
+                registrations.add(newRegistration);
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(newRegistration);
-                    try (ResultSet ignored = statement.executeQuery("SELECT * FROM " + tableName)) {
+                    try (ResultSet ignored = statement.executeQuery(listenerDefinition.registrationQuery())) {
                         // Executing the statement associates its query and tables with the registration.
                     }
                 }
                 return newRegistration;
             } catch (SQLException | RuntimeException e) {
-                oracleConnection.unregisterDatabaseChangeNotification(newRegistration);
+                registrations.remove(newRegistration);
+                try {
+                    oracleConnection.unregisterDatabaseChangeNotification(newRegistration);
+                } catch (SQLException | RuntimeException cleanupException) {
+                    e.addSuppressed(cleanupException);
+                }
                 throw e;
             }
         });
-        registrations.add(registration);
     }
 
-    static Properties getRegistrationProperties(ChangeListenerDefinition listenerDefinition) {
+    private static Properties getRegistrationProperties(AnnotationValue<ChangeListener> changeListener,
+                                                        ExecutableMethod<?, ?> method) {
         Properties properties = new Properties();
-        for (AnnotationValue<ChangeListener.Property> property : listenerDefinition.registrationProperties()) {
+        List<AnnotationValue<ChangeListener.Property>> propertyValues = changeListener
+            .getAnnotations("properties", ChangeListener.Property.class);
+        for (AnnotationValue<ChangeListener.Property> property : propertyValues) {
             String name = property.stringValue("name").orElse("");
             if (name.isBlank()) {
-                throw new IllegalStateException(
-                    "@ChangeListener method [" + listenerDefinition.method().getDescription(true)
-                        + "] has a property with a blank name"
-                );
+                throw invalidChangeListener(method, "has a property with a blank name");
             }
             properties.setProperty(name, property.stringValue("value").orElse(""));
         }
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
         return properties;
+    }
+
+    private static IllegalStateException invalidChangeListener(ExecutableMethod<?, ?> method, String message) {
+        return new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + message);
+    }
+
+    private static String getRegistrationQuery(AnnotationValue<ChangeListener> changeListener,
+                                               ExecutableMethod<?, ?> method,
+                                               String tableName,
+                                               Properties properties) {
+        boolean isObjectChange = !Boolean.parseBoolean(properties.getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
+
+        String select = changeListener.stringValue("select").orElse("*").trim();
+        String where = changeListener.stringValue("where").orElse("").trim();
+
+        boolean hasCustomQueryPart = !select.equals("*") || !where.isEmpty();
+        if (hasCustomQueryPart && isObjectChange) {
+            throw invalidChangeListener(method, "may specify select or where only when " + OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION + " is true");
+        }
+
+        if (select.isEmpty()) {
+            throw invalidChangeListener(method, "must have a non-blank select value");
+        }
+
+        return "SELECT " + select + " FROM " + tableName + (where.isEmpty() ? "" : " WHERE " + where);
+    }
+
+    static boolean matchesTable(String tableName, String changedTableName) {
+        String normalizedTableName = changedTableName.replace("\"", "");
+        return tableName.equalsIgnoreCase(normalizedTableName)
+            || (normalizedTableName.length() > tableName.length()
+            && normalizedTableName.charAt(normalizedTableName.length() - tableName.length() - 1) == '.'
+            && normalizedTableName.regionMatches(true, normalizedTableName.length() - tableName.length(), tableName, 0, tableName.length()));
     }
 
     /**
@@ -158,7 +202,9 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
     private record ChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                             ExecutableMethod<?, ?> method,
                                             Class<?> entityType,
-                                            List<AnnotationValue<ChangeListener.Property>> registrationProperties) {
+                                            String tableName,
+                                            String registrationQuery,
+                                            Properties registrationProperties) {
     }
 
     @PreDestroy
@@ -177,22 +223,26 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
     }
 
     private final class EntityChangeListener implements DatabaseChangeListener {
-        private final BeanDefinition<?> beanDefinition;
-        private final ExecutableMethod<?, ?> method;
-        private final Class<?> entityType;
-        private final String tableName;
+        private final ChangeListenerDefinition listenerDefinition;
+        private final DatabaseChangeRegistration registration;
+        private final boolean purgeOnNotification;
 
-        EntityChangeListener(ChangeListenerDefinition listener, String tableName) {
-            this.beanDefinition = listener.beanDefinition();
-            this.method = listener.method();
-            this.entityType = listener.entityType();
-            this.tableName = tableName;
+        EntityChangeListener(ChangeListenerDefinition listener,
+                             DatabaseChangeRegistration registration,
+                             boolean purgeOnNotification) {
+            this.listenerDefinition = listener;
+            this.registration = registration;
+            this.purgeOnNotification = purgeOnNotification;
         }
 
         @Override
         public void onDatabaseChangeNotification(DatabaseChangeEvent event) {
             // Oracle invokes this callback on its notification thread. Reloading and invoking user
             // code must happen elsewhere so a slow listener cannot block notification delivery.
+            if (purgeOnNotification) {
+                // Oracle has already deleted the registration before sending this one-shot event.
+                registrations.remove(registration);
+            }
             blockingExecutor.execute(() -> dispatch(event));
         }
 
@@ -216,7 +266,7 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
                 return;
             }
             for (TableChangeDescription table : tables) {
-                if (!matchesTable(table.getTableName())) {
+                if (!matchesTable(listenerDefinition.tableName(), table.getTableName())) {
                     continue;
                 }
                 RowChangeDescription[] rows = table.getRowChangeDescription();
@@ -231,26 +281,19 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
             }
         }
 
-        private boolean matchesTable(String changedTableName) {
-            String normalizedTableName = changedTableName.replace("\"", "");
-            return tableName.equalsIgnoreCase(normalizedTableName)
-                || (normalizedTableName.length() > tableName.length()
-                && normalizedTableName.charAt(normalizedTableName.length() - tableName.length() - 1) == '.'
-                && normalizedTableName.regionMatches(true, normalizedTableName.length() - tableName.length(), tableName, 0, tableName.length()));
-        }
-
         @SuppressWarnings({"unchecked", "rawtypes"})
         private void reloadAndInvoke(String rowId) {
+            String tableName = listenerDefinition.tableName();
             try {
                 Optional<Object> entity = operations.execute(connection -> {
                     try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE ROWID = ?")) {
                         statement.setString(1, rowId);
                         try (ResultSet resultSet = statement.executeQuery()) {
-                            return resultSet.next() ? Optional.of(operations.readEntity("", resultSet, (Class) entityType)) : Optional.empty();
+                            return resultSet.next() ? Optional.of(operations.readEntity("", resultSet, (Class) listenerDefinition.entityType())) : Optional.empty();
                         }
                     }
                 });
-                entity.ifPresent(o -> ((ExecutableMethod) method).invoke(beanContext.getBean(beanDefinition), o));
+                entity.ifPresent(o -> ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), o));
             } catch (Exception e) {
                 LOG.error("Error handling Oracle query notification for table [{}]", tableName, e);
             }
