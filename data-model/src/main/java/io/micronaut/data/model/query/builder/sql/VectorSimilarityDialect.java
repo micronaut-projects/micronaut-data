@@ -100,7 +100,7 @@ interface VectorSimilarityDialect {
         if (property.isAssignable(ByteVector.class)) {
             return new OracleVectorConfig(dimensions, ORACLE_INT8, sparse);
         }
-        if (property.isAssignable(Vector.class)) {
+        if (Vector.class.getName().equals(property.getTypeName())) {
             return new OracleVectorConfig(dimensions, sparse ? ORACLE_FLOAT32 : ORACLE_FLOAT64, sparse);
         }
         return null;
