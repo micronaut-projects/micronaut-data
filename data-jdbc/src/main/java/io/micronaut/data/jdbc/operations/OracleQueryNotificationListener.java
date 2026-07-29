@@ -116,10 +116,9 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
             OracleConnection oracleConnection = oracleConnection(connection);
             Properties properties = new Properties();
             properties.putAll(listenerDefinition.registrationProperties());
-            boolean purgeOnNotification = Boolean.parseBoolean(properties.getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
             DatabaseChangeRegistration newRegistration = oracleConnection.registerDatabaseChangeNotification(properties);
             try {
-                newRegistration.addListener(new EntityChangeListener(listenerDefinition, newRegistration, purgeOnNotification));
+                newRegistration.addListener(new EntityChangeListener(listenerDefinition, newRegistration));
                 registrations.add(newRegistration);
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(newRegistration);
@@ -228,11 +227,14 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
         private final boolean purgeOnNotification;
 
         EntityChangeListener(ChangeListenerDefinition listener,
-                             DatabaseChangeRegistration registration,
-                             boolean purgeOnNotification) {
+                             DatabaseChangeRegistration registration) {
             this.listenerDefinition = listener;
             this.registration = registration;
-            this.purgeOnNotification = purgeOnNotification;
+            this.purgeOnNotification = Boolean.parseBoolean(
+                listener.registrationProperties().getProperty(
+                    OracleConnection.NTF_QOS_PURGE_ON_NTFN
+                )
+            );
         }
 
         @Override
