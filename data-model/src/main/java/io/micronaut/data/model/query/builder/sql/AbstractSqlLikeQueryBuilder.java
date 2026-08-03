@@ -1221,9 +1221,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                        String query,
                                        PersistentEntity entity,
                                        AnnotationMetadata annotationMetadata,
-                                      boolean nativeQuery,
+                                       boolean nativeQuery,
                                       @Nullable
-                                      String tableAlias) {
+        String tableAlias) {
+        if (nativeQuery) {
+            if (!isNativeSortProperty(propertyName)) {
+                throw new IllegalArgumentException("Cannot sort on invalid native query property: " + propertyName);
+            }
+            return propertyName;
+        }
+
         PersistentPropertyPath path;
         if (By.ID.equals(propertyName)) {
             path = new PersistentPropertyPath(entity.getIdentity());
@@ -1232,9 +1239,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         if (path == null) {
             throw new IllegalArgumentException("Cannot sort on non-existent property path: " + propertyName);
-        }
-        if (nativeQuery) {
-            return propertyName;
         }
         List<Association> associations = new ArrayList<>(path.getAssociations());
         int assocCount = associations.size();
@@ -1290,6 +1294,42 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         return buff.toString();
+    }
+
+    /**
+     * Validates an unquoted ASCII SQL identifier or a dot-separated sequence of identifiers.
+     * Native query sorting can refer to selected-column aliases, so it cannot use persistent entity paths.
+     *
+     * @param propertyName The native query sort property
+     * @return Whether the property is safe to append to native SQL
+     */
+    private static boolean isNativeSortProperty(String propertyName) {
+        boolean expectsIdentifierStart = true;
+        for (int i = 0; i < propertyName.length(); i++) {
+            char character = propertyName.charAt(i);
+            if (expectsIdentifierStart) {
+                if (!isAsciiIdentifierStart(character)) {
+                    return false;
+                }
+                expectsIdentifierStart = false;
+            } else if (character == '.') {
+                expectsIdentifierStart = true;
+            } else if (!isAsciiIdentifierPart(character)) {
+                return false;
+            }
+        }
+        return !expectsIdentifierStart;
+    }
+
+    private static boolean isAsciiIdentifierStart(char character) {
+        return character >= 'A' && character <= 'Z'
+            || character >= 'a' && character <= 'z'
+            || character == '_';
+    }
+
+    private static boolean isAsciiIdentifierPart(char character) {
+        return isAsciiIdentifierStart(character)
+            || character >= '0' && character <= '9';
     }
 
     /**

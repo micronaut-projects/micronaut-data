@@ -360,6 +360,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         authors[1].authorName >= authors[2].authorName
     }
 
+    void "author dto result from native query sorted by column name"() {
+        when:
+        def authors = authorRepository.getAuthorsByNativeQuery(Sort.of(Sort.Order.desc("name")))
+
+        then:
+        authors.size() == 3
+        authors[0].authorName >= authors[1].authorName
+        authors[1].authorName >= authors[2].authorName
+    }
+
     void "entity with id class"() {
         given:
         EntityWithIdClass e = new EntityWithIdClass()
