@@ -480,6 +480,32 @@ interface MyRepository {
         query == ' ORDER BY owner_."OWNER_NAME" ASC'
     }
 
+    @Unroll
+    void "test native order by rejects non-persistent properties"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Cannot sort on non-existent property path: ${property}"
+
+        where:
+        property << ["(SELECT 1)", "name DESC", "name;SELECT 1", "name--comment"]
+    }
+
+    void "test native order by accepts persistent property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        expect:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null) == " ORDER BY name ASC"
+    }
+
     void "test encode insert statement"() {
         given:
         def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder())

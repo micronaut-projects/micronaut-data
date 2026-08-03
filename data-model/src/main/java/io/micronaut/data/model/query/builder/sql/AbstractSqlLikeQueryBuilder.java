@@ -1163,7 +1163,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
      * @param sort               The sort
-     * @param nativeQuery        Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @param nativeQuery        Whether the query is native query
      * @param tableAlias         The table alias
      * @return The encoded query
      */
@@ -1213,7 +1213,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param query              The query
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
-     * @param nativeQuery        Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @param nativeQuery        Whether the query is native query
      * @param tableAlias         The table alias
      * @return The encoded query
      */
@@ -1224,10 +1224,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                       boolean nativeQuery,
                                       @Nullable
                                       String tableAlias) {
-        if (nativeQuery) {
-            return propertyName;
-        }
-
         PersistentPropertyPath path;
         if (By.ID.equals(propertyName)) {
             path = new PersistentPropertyPath(entity.getIdentity());
@@ -1236,6 +1232,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         if (path == null) {
             throw new IllegalArgumentException("Cannot sort on non-existent property path: " + propertyName);
+        }
+        if (nativeQuery) {
+            return propertyName;
         }
         List<Association> associations = new ArrayList<>(path.getAssociations());
         int assocCount = associations.size();
