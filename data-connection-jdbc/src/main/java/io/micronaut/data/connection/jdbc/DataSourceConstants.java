@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.connection.jdbc;
 
+import io.micronaut.core.annotation.Internal;
+
 /**
  * Utility class that defines constant keys and values used when working with
  * data source configuration.
@@ -22,6 +24,7 @@ package io.micronaut.data.connection.jdbc;
  * This class is not intended to be instantiated or extended.
  * All members are {@code public static final} constants.
  */
+@Internal
 public final class DataSourceConstants {
 
     /**

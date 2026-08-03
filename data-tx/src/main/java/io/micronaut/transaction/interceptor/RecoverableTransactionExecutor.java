@@ -201,11 +201,7 @@ final class RecoverableTransactionExecutor {
 
     @NonNull
     private Optional<CommitOutcomeResolver> resolveOutcomeResolver(@NonNull String dataSourceName) {
-        try {
-            return beanLocator.findBean(CommitOutcomeResolver.class, Qualifiers.byName(dataSourceName));
-        } catch (Exception ignored) {
-            return Optional.empty();
-        }
+        return beanLocator.findBean(CommitOutcomeResolver.class, Qualifiers.byName(dataSourceName));
     }
 
     private boolean matchesRecoverable(Throwable throwable, Class<?>[] candidates) {

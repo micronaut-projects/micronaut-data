@@ -1,7 +1,7 @@
 package io.micronaut.data.connection.support;
 
-import org.junit.jupiter.api.Test;
 import io.micronaut.data.connection.exceptions.ConnectionException;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
