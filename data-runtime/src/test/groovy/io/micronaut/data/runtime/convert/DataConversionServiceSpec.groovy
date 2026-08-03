@@ -49,8 +49,8 @@ class DataConversionServiceSpec extends Specification {
             DATE_FORMAT.parse("1970-01-02")              || LocalDate      || LocalDate.parse("1970-01-02")
             DATE_FORMAT.parse("1970-01-02")              || LocalDateTime  || LocalDate.parse("1970-01-02").atStartOfDay()
             DATE_FORMAT.parse("1970-01-02")              || OffsetDateTime || LocalDate.parse("1970-01-02").atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime()
-            LocalDate.parse("1970-01-02")                || Date           || new Date(24 * 60 * 60 * 1000)
-            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || new Date(24 * 60 * 60 * 1000)
+            LocalDate.parse("1970-01-02")                || Date           || Date.from(LocalDate.parse("1970-01-02").atStartOfDay(ZoneId.systemDefault()).toInstant())
+            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || Date.from(LocalDate.parse("1970-01-02").atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
             new Date(now.getTime())                      || Instant        || Instant.ofEpochMilli(now.getTime())
             Instant.ofEpochMilli(now.getTime())          || Date           || new Date(now.getTime())
 

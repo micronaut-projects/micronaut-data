@@ -58,8 +58,8 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPro
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        if (runtimePersistentProperty instanceof RuntimeAssociation<?> association) {
-            AbstractPersistentEntityFrom<?, ?> from = (AbstractPersistentEntityFrom<?, ?>) parentPath;
+        if (runtimePersistentProperty instanceof RuntimeAssociation<?> association
+            && parentPath instanceof AbstractPersistentEntityFrom<?, ?> from) {
             PersistentAssociationPath<?, ?> join = from.join(association.getName());
             return join.get(attributeName);
         }
