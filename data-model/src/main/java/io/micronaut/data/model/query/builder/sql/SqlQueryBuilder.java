@@ -200,7 +200,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     /**
      * @param dialect The dialect
      * @param dialectVersion The target dialect version
-     * @since 5.1
+     * @since 5.2
      */
     public SqlQueryBuilder(Dialect dialect, @Nullable String dialectVersion) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
@@ -219,7 +219,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     /**
      * @param requiredVersion The required target dialect version
      * @return Whether the target dialect version meets the requirement
-     * @since 5.1
+     * @since 5.2
      */
     @Override
     public boolean isDialectVersionAtLeast(String requiredVersion) {
@@ -228,7 +228,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     /**
      * @return The normalized target dialect version, or {@code null} when none is configured.
-     * @since 5.1
+     * @since 5.2
      */
     @Override
     @Nullable

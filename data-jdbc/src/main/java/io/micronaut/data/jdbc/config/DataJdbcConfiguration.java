@@ -269,7 +269,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
 
         /**
          * @return Whether JDBC should validate generated SQL target versions against the connected server version.
-         * @since 5.1
+         * @since 5.2
          */
         public boolean isValidateVersion() {
             return validateVersion;
@@ -277,7 +277,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
 
         /**
          * @param validateVersion Whether JDBC should validate generated SQL target versions against the connected server version.
-         * @since 5.1
+         * @since 5.2
          */
         public void setValidateVersion(boolean validateVersion) {
             this.validateVersion = validateVersion;

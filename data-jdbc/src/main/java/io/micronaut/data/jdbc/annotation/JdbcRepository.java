@@ -73,7 +73,7 @@ public @interface JdbcRepository {
 
     /**
      * @return The target dialect version to use for SQL generation.
-     * @since 5.1
+     * @since 5.2
      */
     String version() default "";
 

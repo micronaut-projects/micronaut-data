@@ -425,7 +425,7 @@ public final class SqlColumnMapping {
      * @param dialect the SQL dialect to generate the type for
      * @param dialectVersion the target dialect version
      * @return the SQL type representation of this column
-     * @since 5.1
+     * @since 5.2
      */
     public String getSqlType(Dialect dialect, @Nullable String dialectVersion) {
         return getSqlType(SqlDialectOptions.of(dialect, dialectVersion));

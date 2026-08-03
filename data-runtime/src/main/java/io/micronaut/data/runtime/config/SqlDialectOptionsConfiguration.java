@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Common SQL dialect option configuration shared by JDBC and R2DBC datasource configuration.
  *
- * @since 5.1
+ * @since 5.2
  */
 public class SqlDialectOptionsConfiguration {
 
@@ -29,7 +29,7 @@ public class SqlDialectOptionsConfiguration {
 
     /**
      * @return The target dialect version.
-     * @since 5.1
+     * @since 5.2
      */
     @Nullable
     public String getVersion() {
@@ -38,7 +38,7 @@ public class SqlDialectOptionsConfiguration {
 
     /**
      * @param version The target dialect version.
-     * @since 5.1
+     * @since 5.2
      */
     public void setVersion(@Nullable String version) {
         this.version = version;

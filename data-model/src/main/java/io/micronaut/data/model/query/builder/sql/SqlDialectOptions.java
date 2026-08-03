@@ -32,7 +32,7 @@ import java.util.Optional;
  * @param dialect The dialect these options apply to.
  * @param version The target dialect version.
  *
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 public record SqlDialectOptions(
