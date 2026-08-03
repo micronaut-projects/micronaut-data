@@ -1308,7 +1308,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 appendJsonProjection(buff, path.getProperty().getDataType());
             }
         } else {
-            buff.append(getColumnName(path.getProperty()));
+            String columnName = getColumnName(path.getProperty());
+            PersistentEntity propertyOwner = path.findPropertyOwner().orElse(path.getProperty().getOwner());
+            buff.append(escapeColumnIfNeeded(columnName, shouldEscape(propertyOwner)));
         }
 
         return buff.toString();
