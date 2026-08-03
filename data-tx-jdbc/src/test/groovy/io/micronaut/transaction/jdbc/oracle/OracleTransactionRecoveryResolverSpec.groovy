@@ -105,7 +105,7 @@ class OracleTransactionRecoveryResolverSpec extends Specification {
         }
 
         expect:
-        resolver.captureLtxid(status) == logicalTransactionId
+        resolver.captureRecoveryToken(status) == logicalTransactionId
     }
 
     void "capture ltxid accepts direct oracle connection"() {
@@ -117,7 +117,7 @@ class OracleTransactionRecoveryResolverSpec extends Specification {
         }
 
         expect:
-        resolver.captureLtxid(status) == logicalTransactionId
+        resolver.captureRecoveryToken(status) == logicalTransactionId
     }
 
     void "capture ltxid fails when jdbc connection cannot unwrap oracle connection"() {
@@ -142,7 +142,7 @@ class OracleTransactionRecoveryResolverSpec extends Specification {
         }
 
         when:
-        resolver.captureLtxid(status)
+        resolver.captureRecoveryToken(status)
 
         then:
         def ex = thrown(IllegalStateException)
@@ -157,7 +157,7 @@ class OracleTransactionRecoveryResolverSpec extends Specification {
         }
 
         when:
-        resolver.captureLtxid(status)
+        resolver.captureRecoveryToken(status)
 
         then:
         def ex = thrown(IllegalStateException)

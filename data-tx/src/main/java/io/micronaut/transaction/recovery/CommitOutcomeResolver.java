@@ -35,12 +35,12 @@ public interface CommitOutcomeResolver {
      * @return A vendor-specific token, or {@code null} if capture is not supported
      */
     @Nullable
-    Object captureLtxid(@NonNull TransactionStatus<?> status);
+    Object captureRecoveryToken(@NonNull TransactionStatus<?> status);
 
     /**
      * Resolve the outcome for the previously captured token.
      *
-     * @param token The token captured by {@link #captureLtxid(TransactionStatus)}
+     * @param token The token captured by {@link #captureRecoveryToken(TransactionStatus)}
      * @return The recovery outcome
      */
     @NonNull

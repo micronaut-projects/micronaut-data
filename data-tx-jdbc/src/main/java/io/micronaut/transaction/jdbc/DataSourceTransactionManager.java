@@ -198,7 +198,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         // The recovery context is configured only for a new recoverable transaction.
         // Capture the LTXID directly before JDBC commit, after application
         // synchronizations have completed successfully.
-        RecoverableTransactionContext.find().ifPresent(context -> context.captureLtxid(status));
+        RecoverableTransactionContext.find().ifPresent(context -> context.captureRecoveryToken(status));
         try {
             connection.commit();
         } catch (SQLException ex) {

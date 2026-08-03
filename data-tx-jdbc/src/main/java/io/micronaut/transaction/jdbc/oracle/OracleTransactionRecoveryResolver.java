@@ -70,7 +70,7 @@ final class OracleTransactionRecoveryResolver implements CommitOutcomeResolver {
     }
 
     @Override
-    public @Nullable Object captureLtxid(@NonNull TransactionStatus<?> status) {
+    public @Nullable Object captureRecoveryToken(@NonNull TransactionStatus<?> status) {
         OracleConnection oracleConnection = unwrapRequiredOracleConnection(status.getConnection());
         try {
             return oracleConnection.getLogicalTransactionId();

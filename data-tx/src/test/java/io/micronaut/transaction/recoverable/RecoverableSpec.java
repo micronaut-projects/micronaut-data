@@ -419,7 +419,7 @@ class RecoverableSpec {
         }
 
         @Override
-        public Object captureLtxid(TransactionStatus<?> status) {
+        public Object captureRecoveryToken(TransactionStatus<?> status) {
             captureCount.incrementAndGet();
             return "ltxid-" + captureCount.get();
         }
@@ -441,7 +441,7 @@ class RecoverableSpec {
         final AtomicInteger resolveCount = new AtomicInteger();
 
         @Override
-        public Object captureLtxid(TransactionStatus<?> status) {
+        public Object captureRecoveryToken(TransactionStatus<?> status) {
             captureCount.incrementAndGet();
             return "secondary";
         }
@@ -483,7 +483,7 @@ class RecoverableSpec {
         @Override
         protected void doCommit(@NonNull io.micronaut.transaction.impl.DefaultTransactionStatus<String> tx) {
             // Mirror the JDBC manager: capture only at the resource commit boundary.
-            RecoverableTransactionContext.find().ifPresent(context -> context.captureLtxid(tx));
+            RecoverableTransactionContext.find().ifPresent(context -> context.captureRecoveryToken(tx));
             commitAttempts.incrementAndGet();
             if (commitFailures.getAndIncrement() < failureCount) {
                 if ("custom".equals(failureMode)) {

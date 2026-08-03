@@ -45,7 +45,7 @@ class RecoverableTransactionCommitSpec extends Specification {
         def recoveryContext = new RecoverableTransactionContext()
         recoveryContext.configure(transactionStatus, new CommitOutcomeResolver() {
             @Override
-            Object captureLtxid(TransactionStatus<?> status) {
+            Object captureRecoveryToken(TransactionStatus<?> status) {
                 assert status.is(transactionStatus)
                 events << 'capture'
                 'ltxid'
@@ -81,7 +81,7 @@ class RecoverableTransactionCommitSpec extends Specification {
         def recoveryContext = new RecoverableTransactionContext()
         recoveryContext.configure(transactionStatus, new CommitOutcomeResolver() {
             @Override
-            Object captureLtxid(TransactionStatus<?> status) {
+            Object captureRecoveryToken(TransactionStatus<?> status) {
                 'ltxid'
             }
 

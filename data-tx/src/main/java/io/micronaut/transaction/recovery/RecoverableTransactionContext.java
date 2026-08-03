@@ -67,10 +67,10 @@ public final class RecoverableTransactionContext implements PropagatedContextEle
      * @param status The transaction about to commit
      */
     @SuppressWarnings("ReferenceEquality") // Transaction ownership is identity-based.
-    public void captureLtxid(@NonNull TransactionStatus<?> status) {
+    public void captureRecoveryToken(@NonNull TransactionStatus<?> status) {
         CommitOutcomeResolver currentResolver = status == transactionStatus ? resolver : null;
         if (currentResolver != null) {
-            token = currentResolver.captureLtxid(status);
+            token = currentResolver.captureRecoveryToken(status);
         }
     }
 
