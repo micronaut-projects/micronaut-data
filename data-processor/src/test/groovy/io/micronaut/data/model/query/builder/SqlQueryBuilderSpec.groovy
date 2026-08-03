@@ -42,6 +42,7 @@ import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
+import io.micronaut.data.tck.entities.Owner
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
@@ -461,10 +462,22 @@ interface MyRepository {
 
         where:
         type   | direction | props              | statement
-        Person | 'asc'     | ["name"]           | 'person_.name ASC'
-        Person | 'asc'     | ["name", "someId"] | 'person_.name ASC,person_.some_id ASC'
-        Person | 'desc'    | ["name"]           | 'person_.name DESC'
-        Person | 'desc'    | ["name", "someId"] | 'person_.name DESC,person_.some_id DESC'
+        Person | 'asc'     | ["name"]           | 'person_.`name` ASC'
+        Person | 'asc'     | ["name", "someId"] | 'person_.`name` ASC,person_.`some_id` ASC'
+        Person | 'desc'    | ["name"]           | 'person_.`name` DESC'
+        Person | 'desc'    | ["name", "someId"] | 'person_.`name` DESC,person_.`some_id` DESC'
+    }
+
+    void 'test encode order by uppercase mapped column'() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Owner)
+        Sort sort = Sort.of(Sort.Order.asc('name'))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == ' ORDER BY owner_."OWNER_NAME" ASC'
     }
 
     void "test encode insert statement"() {
