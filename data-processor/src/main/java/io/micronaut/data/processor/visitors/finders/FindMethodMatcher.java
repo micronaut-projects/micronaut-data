@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.FindByIdInterceptor;
@@ -27,11 +28,16 @@ import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -45,6 +51,8 @@ import java.util.Optional;
  */
 @Internal
 public final class FindMethodMatcher extends AbstractMethodMatcher {
+
+    private static final String ORACLE_CRUD_REPOSITORY = "io.micronaut.data.repository.OracleCrudRepository";
 
     public FindMethodMatcher() {
         super(MethodNameParser.builder()
@@ -86,16 +94,29 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
         return new QueryCriteriaMethodMatch(matches) {
 
             boolean hasIdMatch;
+            boolean oracleRowIdQuery;
 
             @Override
             protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
                                                                         PersistentEntityCriteriaBuilder cb,
                                                                         List<AnnotationValue<Join>> joinSpecs) {
+                oracleRowIdQuery = "findByRowId".equals(matchContext.getMethodElement().getName())
+                    && matchContext.getRepositoryClass().isAssignable(ORACLE_CRUD_REPOSITORY)
+                    && matchContext.getQueryBuilder() instanceof SqlQueryBuilder sqlQueryBuilder
+                    && sqlQueryBuilder.getDialect() == Dialect.ORACLE;
                 PersistentEntityCriteriaQuery<Object> query = super.createQuery(matchContext, cb, joinSpecs);
                 if (query instanceof AbstractPersistentEntityCriteriaQuery<?> criteriaQuery) {
                     hasIdMatch = criteriaQuery.hasOnlyIdRestriction();
                 }
                 return query;
+            }
+
+            @Override
+            protected <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
+                if (oracleRowIdQuery && "rowId".equals(NameUtils.decapitalize(propertyName))) {
+                    return new FunctionExpression<>("ROWID", List.of(), Object.class);
+                }
+                return super.getProperty(root, propertyName);
             }
 
             @Override
