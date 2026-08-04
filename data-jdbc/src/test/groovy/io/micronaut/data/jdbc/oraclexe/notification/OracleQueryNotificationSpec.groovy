@@ -91,6 +91,21 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification.title == "Continuous Query Notification"
     }
 
+    void "repository finds an entity by Oracle row id"() {
+        given:
+        def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Find by row id"))
+        objectChangeListener.poll()
+        def rowId = objectChangeRepository.findRowIdById(saved.id).orElseThrow()
+
+        when:
+        def found = objectChangeRepository.findByRowId(rowId)
+
+        then:
+        found.present
+        found.get().id == saved.id
+        found.get().title == "Find by row id"
+    }
+
     void "change listener receives every entity affected by a bulk update"() {
         given:
         def firstBook = new ObjectChangeNotificationBook(title: "First book")
