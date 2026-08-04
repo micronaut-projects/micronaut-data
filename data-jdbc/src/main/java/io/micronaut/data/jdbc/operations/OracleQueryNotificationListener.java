@@ -25,7 +25,9 @@ import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.repository.OracleCrudRepository;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.scheduling.TaskExecutors;
@@ -44,13 +46,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -98,8 +98,28 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
         String tableName = operations.getEntity(arguments[0].getType()).getPersistedName();
         Properties properties = getRegistrationProperties(changeListener, method);
         String query = getRegistrationQuery(changeListener, method, tableName, properties);
+        BeanDefinition<OracleCrudRepository> repositoryDefinition = findRepositoryDefinition(method, arguments[0].getType());
 
-        listeners.add(new ChangeListenerDefinition(beanDefinition, method, arguments[0].getType(), tableName, query, properties));
+        listeners.add(new ChangeListenerDefinition(beanDefinition, method, repositoryDefinition, tableName, query, properties));
+    }
+
+    private BeanDefinition<OracleCrudRepository> findRepositoryDefinition(ExecutableMethod<?, ?> method, Class<?> entityType) {
+        List<BeanDefinition<OracleCrudRepository>> repositoryDefinitions = beanContext
+            .getBeanDefinitions(OracleCrudRepository.class)
+            .stream()
+            .filter(repositoryDefinition -> dataSourceName.equals(repositoryDefinition.stringValue(Repository.class).orElse("default")))
+            .filter(repositoryDefinition -> repositoryDefinition.getTypeArguments(OracleCrudRepository.class)
+                .stream()
+                .findFirst()
+                .map(Argument::getType)
+                .filter(entityType::equals)
+                .isPresent())
+            .toList();
+        if (repositoryDefinitions.size() != 1) {
+            throw invalidChangeListener(method, "must have exactly one OracleCrudRepository for entity [" + entityType.getName()
+                + "] and datasource [" + dataSourceName + "]");
+        }
+        return repositoryDefinitions.getFirst();
     }
 
     @Override
@@ -200,7 +220,7 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
 
     private record ChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                             ExecutableMethod<?, ?> method,
-                                            Class<?> entityType,
+                                            BeanDefinition<OracleCrudRepository> repositoryDefinition,
                                             String tableName,
                                             String registrationQuery,
                                             Properties registrationProperties) {
@@ -283,22 +303,23 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
             }
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
         private void reloadAndInvoke(String rowId) {
             String tableName = listenerDefinition.tableName();
             try {
-                Optional<Object> entity = operations.execute(connection -> {
-                    try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + tableName + " WHERE ROWID = ?")) {
-                        statement.setString(1, rowId);
-                        try (ResultSet resultSet = statement.executeQuery()) {
-                            return resultSet.next() ? Optional.of(operations.readEntity("", resultSet, (Class) listenerDefinition.entityType())) : Optional.empty();
-                        }
-                    }
-                });
-                entity.ifPresent(o -> ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), o));
+                findRepository().findByRowId(rowId).ifPresent(this::invokeListener);
             } catch (Exception e) {
                 LOG.error("Error handling Oracle query notification for table [{}]", tableName, e);
             }
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        private OracleCrudRepository<Object, ?> findRepository() {
+            return (OracleCrudRepository) beanContext.getBean(listenerDefinition.repositoryDefinition());
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        private void invokeListener(Object entity) {
+            ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), entity);
         }
     }
 }
