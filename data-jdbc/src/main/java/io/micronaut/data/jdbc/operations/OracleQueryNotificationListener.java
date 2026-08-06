@@ -30,6 +30,7 @@ import io.micronaut.data.jdbc.annotation.ChangeListener;
 import io.micronaut.data.repository.OracleCrudRepository;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.runtime.graceful.GracefulShutdownCapable;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
@@ -51,9 +52,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalLong;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Registers and dispatches Oracle Continuous Query Notifications for one datasource.
@@ -61,7 +66,9 @@ import java.util.concurrent.Executor;
 @Context
 @EachBean(DataSource.class)
 @Requires(classes = OracleConnection.class)
-final class OracleQueryNotificationListener implements ExecutableMethodProcessor<ChangeListener>, ApplicationEventListener<StartupEvent> {
+final class OracleQueryNotificationListener implements ExecutableMethodProcessor<ChangeListener>,
+    ApplicationEventListener<StartupEvent>, GracefulShutdownCapable {
+
     private static final Logger LOG = LoggerFactory.getLogger(OracleQueryNotificationListener.class);
 
     private final String dataSourceName;
@@ -70,6 +77,8 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
     private final Executor blockingExecutor;
     private final List<ChangeListenerDefinition> listeners = new CopyOnWriteArrayList<>();
     private final List<DatabaseChangeRegistration> registrations = new CopyOnWriteArrayList<>();
+    private final GracefulShutdownTracker gracefulShutdownTracker = new GracefulShutdownTracker();
+    private final AtomicBoolean registrationsClosed = new AtomicBoolean();
 
     OracleQueryNotificationListener(@Parameter String dataSourceName,
                                     DefaultJdbcRepositoryOperations operations,
@@ -103,6 +112,32 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
         listeners.add(new ChangeListenerDefinition(beanDefinition, method, repositoryDefinition, tableName, query, properties));
     }
 
+    @Override
+    public void onApplicationEvent(StartupEvent event) {
+        // Schema generation is complete before StartupEvent. Registering here ensures the query
+        // that associates the table with CQN can run for applications using generated schemas.
+        if (!gracefulShutdownTracker.isShutdownStarted()) {
+            for (ChangeListenerDefinition listener : listeners) {
+                register(listener);
+            }
+        }
+    }
+
+    @Override
+    public CompletionStage<?> shutdownGracefully() {
+        return beginShutdown();
+    }
+
+    @PreDestroy
+    void close() {
+        beginShutdown();
+    }
+
+    @Override
+    public OptionalLong reportActiveTasks() {
+        return gracefulShutdownTracker.reportActiveTasks();
+    }
+
     private BeanDefinition<OracleCrudRepository> findRepositoryDefinition(ExecutableMethod<?, ?> method, Class<?> entityType) {
         List<BeanDefinition<OracleCrudRepository>> repositoryDefinitions = beanContext
             .getBeanDefinitions(OracleCrudRepository.class)
@@ -120,15 +155,6 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
                 + "] and datasource [" + dataSourceName + "]");
         }
         return repositoryDefinitions.getFirst();
-    }
-
-    @Override
-    public void onApplicationEvent(StartupEvent event) {
-        // Schema generation is complete before StartupEvent. Registering here ensures the query
-        // that associates the table with CQN can run for applications using generated schemas.
-        for (ChangeListenerDefinition listener : listeners) {
-            register(listener);
-        }
     }
 
     private void register(ChangeListenerDefinition listenerDefinition) {
@@ -218,16 +244,16 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
         return connection.unwrap(OracleConnection.class);
     }
 
-    private record ChangeListenerDefinition(BeanDefinition<?> beanDefinition,
-                                            ExecutableMethod<?, ?> method,
-                                            BeanDefinition<OracleCrudRepository> repositoryDefinition,
-                                            String tableName,
-                                            String registrationQuery,
-                                            Properties registrationProperties) {
+    private CompletionStage<?> beginShutdown() {
+        CompletionStage<?> completion = gracefulShutdownTracker.shutdownGracefully();
+        unregisterRegistrations();
+        return completion;
     }
 
-    @PreDestroy
-    void close() {
+    private void unregisterRegistrations() {
+        if (!registrationsClosed.compareAndSet(false, true)) {
+            return;
+        }
         for (DatabaseChangeRegistration registration : registrations) {
             try {
                 operations.execute(connection -> {
@@ -239,6 +265,14 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
             }
         }
         registrations.clear();
+    }
+
+    private record ChangeListenerDefinition(BeanDefinition<?> beanDefinition,
+                                            ExecutableMethod<?, ?> method,
+                                            BeanDefinition<OracleCrudRepository> repositoryDefinition,
+                                            String tableName,
+                                            String registrationQuery,
+                                            Properties registrationProperties) {
     }
 
     private final class EntityChangeListener implements DatabaseChangeListener {
@@ -265,7 +299,21 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
                 // Oracle has already deleted the registration before sending this one-shot event.
                 registrations.remove(registration);
             }
-            blockingExecutor.execute(() -> dispatch(event));
+            if (!gracefulShutdownTracker.tryStartTask()) {
+                return;
+            }
+            try {
+                blockingExecutor.execute(() -> {
+                    try {
+                        dispatch(event);
+                    } finally {
+                        gracefulShutdownTracker.completeTask();
+                    }
+                });
+            } catch (RuntimeException e) {
+                gracefulShutdownTracker.completeTask();
+                LOG.warn("Unable to dispatch Oracle query notification", e);
+            }
         }
 
         private void dispatch(DatabaseChangeEvent event) {
@@ -320,6 +368,49 @@ final class OracleQueryNotificationListener implements ExecutableMethodProcessor
         @SuppressWarnings({"unchecked", "rawtypes"})
         private void invokeListener(Object entity) {
             ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), entity);
+        }
+    }
+
+    /**
+     * Coordinates notification dispatch with graceful shutdown. A task is registered before it is
+     * submitted to the executor so shutdown cannot complete while the task is waiting to run.
+     */
+    private static final class GracefulShutdownTracker {
+        private final CompletableFuture<Void> completion = new CompletableFuture<>();
+        private boolean shutdownStarted;
+        private long activeTasks;
+
+        synchronized boolean tryStartTask() {
+            if (shutdownStarted) {
+                return false;
+            }
+            activeTasks++;
+            return true;
+        }
+
+        synchronized void completeTask() {
+            activeTasks--;
+            completeIfIdle();
+        }
+
+        synchronized CompletionStage<?> shutdownGracefully() {
+            shutdownStarted = true;
+            completeIfIdle();
+            return completion;
+        }
+
+        synchronized OptionalLong reportActiveTasks() {
+            return shutdownStarted ? OptionalLong.of(activeTasks) : OptionalLong.empty();
+        }
+
+        synchronized boolean isShutdownStarted() {
+            return shutdownStarted;
+        }
+
+        private void completeIfIdle() {
+            if (shutdownStarted && activeTasks == 0) {
+                completion.complete(null);
+            }
         }
     }
 }
