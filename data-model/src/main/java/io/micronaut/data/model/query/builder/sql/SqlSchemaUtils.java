@@ -595,7 +595,7 @@ public final class SqlSchemaUtils {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(name.getBytes(StandardCharsets.UTF_8));
             StringBuilder hash = new StringBuilder(CONSTRAINT_NAME_HASH_LENGTH);
             for (byte value : digest) {
-                hash.append(String.format("%02x", value));
+                hash.append(String.format("%02x", value & 0xff));
                 if (hash.length() >= CONSTRAINT_NAME_HASH_LENGTH) {
                     return hash.substring(0, CONSTRAINT_NAME_HASH_LENGTH);
                 }

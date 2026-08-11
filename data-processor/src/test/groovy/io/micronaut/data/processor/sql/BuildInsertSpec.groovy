@@ -377,7 +377,7 @@ class Account {
         then:
         def e = thrown(RuntimeException)
         e.message.contains("Cannot generate save/update for entity [test.Account]")
-        e.message.contains("all updateable properties are reservable")
+        e.message.contains("all updatable properties are reservable")
         e.message.contains("reserveIncrement.../reserveDecrement... methods")
     }
 

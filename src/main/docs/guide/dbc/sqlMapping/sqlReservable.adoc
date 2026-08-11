@@ -47,8 +47,8 @@ Generated entity update operations skip reservable properties.
 For example, `repository.update(account)` updates non-reservable properties but does not assign the reservable column directly.
 If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
 The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
-If an entity's only updateable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
-Micronaut Data reports this at compilation time with a message that explains that all updateable properties are reservable and directs the user to api:data.repository.GenericRepository[].
+If an entity's only updatable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
+Micronaut Data reports this at compilation time with a message that explains that all updatable properties are reservable and directs the user to api:data.repository.GenericRepository[].
 For those reservable-only entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
 Use `insert(...)` for new rows and an explicit derived reservation method for existing rows.
 
