@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.connection.jdbc.oracle;
+package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.context.BeanResolutionContext;
 import io.micronaut.context.Qualifier;
@@ -25,18 +25,14 @@ import io.micronaut.data.connection.jdbc.DataSourceConstants;
 import io.micronaut.inject.BeanDefinition;
 
 /**
- * A condition that determines whether to customize Oracle client information based on configuration properties.
+ * Enables Oracle transaction recovery when the datasource is Oracle and the feature is configured.
  *
- * This condition checks if the data source dialect is set to Oracle and if the 'customize-oracle-client-info' property is enabled.
- *
- * @author radovanradic
- * @since 4.11
+ * @since 5.2
  */
 @Internal
-final class OracleClientInfoCondition implements Condition {
+final class OracleTransactionRecoveryCondition implements Condition {
 
-    private static final Character DOT = '.';
-    private static final String ORACLE_CLIENT_INFO_ENABLED = "enable-oracle-client-info";
+    private static final String ENABLE_RECOVERY = "enable-oracle-transaction-recovery";
 
     @Override
     public boolean matches(ConditionContext context) {
@@ -44,25 +40,24 @@ final class OracleClientInfoCondition implements Condition {
         String dataSourceName;
         if (beanResolutionContext == null) {
             return true;
+        }
+        Qualifier<?> currentQualifier = beanResolutionContext.getCurrentQualifier();
+        if (currentQualifier == null && context.getComponent() instanceof BeanDefinition<?> definition) {
+            currentQualifier = definition.getDeclaredQualifier();
+        }
+        if (currentQualifier instanceof Named named) {
+            dataSourceName = named.getName();
         } else {
-            Qualifier<?> currentQualifier = beanResolutionContext.getCurrentQualifier();
-            if (currentQualifier == null && context.getComponent() instanceof BeanDefinition<?> definition) {
-                currentQualifier = definition.getDeclaredQualifier();
-            }
-            if (currentQualifier instanceof Named named) {
-                dataSourceName = named.getName();
-            } else {
-                dataSourceName = "default";
-            }
+            dataSourceName = "default";
         }
 
-        String dialectProperty = DataSourceConstants.DATASOURCES + DOT + dataSourceName + DOT + DataSourceConstants.DIALECT;
+        String dialectProperty = DataSourceConstants.DATASOURCES + '.' + dataSourceName + '.' + DataSourceConstants.DIALECT;
         String dialect = context.getProperty(dialectProperty, String.class).orElse(null);
         if (!DataSourceConstants.ORACLE_DIALECT.equalsIgnoreCase(dialect)) {
             return false;
         }
 
-        String property = DataSourceConstants.DATASOURCES + DOT + dataSourceName + DOT + ORACLE_CLIENT_INFO_ENABLED;
+        String property = DataSourceConstants.DATASOURCES + '.' + dataSourceName + '.' + ENABLE_RECOVERY;
         return context.getProperty(property, Boolean.class, false);
     }
 }
