@@ -1561,6 +1561,10 @@ is issues.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/DoubleImplement3_.html#B" class="member-name-link">B</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/DoubleImplement3_.html" title="class in io.micronaut.data.tck.entities">DoubleImplement3_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html#backoff()" class="member-name-link">backoff()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional.Recoverable</a></dt>
+<dd>
+<div class="block">Backoff in milliseconds between retry attempts.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/BankPayment.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">BankPayment</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/BankPayment.html#%3Cinit%3E()" class="member-name-link">BankPayment()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BankPayment.html" title="class in io.micronaut.data.tck.entities">BankPayment</a></dt>
@@ -2502,6 +2506,14 @@ underlying transaction API such as JTA.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/TrainRepository.Specification.html#capacityBiggerThan(int)" class="member-name-link">capacityBiggerThan(int)</a> - Static method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/TrainRepository.Specification.html" title="class in io.micronaut.data.tck.repositories">TrainRepository.Specification</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcomeResolver.html#captureRecoveryToken(io.micronaut.transaction.TransactionStatus)" class="member-name-link">captureRecoveryToken(TransactionStatus)</a> - Method in interface io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcomeResolver.html" title="interface in io.micronaut.transaction.recovery">CommitOutcomeResolver</a></dt>
+<dd>
+<div class="block">Capture a vendor-specific token from the active transaction before commit.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#captureRecoveryToken(io.micronaut.transaction.TransactionStatus)" class="member-name-link">captureRecoveryToken(TransactionStatus)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>
+<div class="block">Captures the vendor transaction token at the resource manager's commit boundary.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/CarPart_.html#car" class="member-name-link">car</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/CarPart_.html" title="class in io.micronaut.data.tck.entities">CarPart_</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Car.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Car</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
@@ -3522,13 +3534,29 @@ including Oracle OUT parameters.</div>
 <dd>
 <div class="block">Commit the given transaction, with regard to its status.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html" class="type-name-link" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a> - Enum Class in <a href="io/micronaut/transaction/recovery/package-summary.html">io.micronaut.transaction.recovery</a></dt>
+<dd>
+<div class="block">Commit outcome reported by a database recovery facility.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcomeResolver.html" class="type-name-link" title="interface in io.micronaut.transaction.recovery">CommitOutcomeResolver</a> - Interface in <a href="io/micronaut/transaction/recovery/package-summary.html">io.micronaut.transaction.recovery</a></dt>
+<dd>
+<div class="block">Resolves a transaction recovery outcome for a transaction using a vendor-specific mechanism.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html#COMMITTED" class="member-name-link">COMMITTED</a> - Enum constant in enum class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html" title="enum class in io.micronaut.transaction.exceptions">HeuristicCompletionException.State</a></dt>
 <dd>
 <div class="block">Committed outcome state.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#COMMITTED" class="member-name-link">COMMITTED</a> - Enum constant in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
+<dd>
+<div class="block">The transaction committed successfully and the user call completed.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html#COMMITTED" class="member-name-link">COMMITTED</a> - Enum constant in enum class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a></dt>
 <dd>
 <div class="block">Completion status in case of proper commit.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#COMMITTED_CALL_INCOMPLETE" class="member-name-link">COMMITTED_CALL_INCOMPLETE</a> - Enum constant in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
+<dd>
+<div class="block">The transaction committed successfully, but Oracle reports that the user call did not complete.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html#commitTransaction(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">commitTransaction(ConnectionStatus, TransactionDefinition)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -3606,6 +3634,10 @@ including Oracle OUT parameters.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQParser.Conditional_expressionContext.html#%3Cinit%3E(org.antlr.v4.runtime.ParserRuleContext,int)" class="member-name-link">Conditional_expressionContext(ParserRuleContext, int)</a> - Constructor for class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQParser.Conditional_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Conditional_expressionContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#configure(io.micronaut.transaction.TransactionStatus,io.micronaut.transaction.recovery.CommitOutcomeResolver)" class="member-name-link">configure(TransactionStatus, CommitOutcomeResolver)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>
+<div class="block">Enables recovery for the transaction started by the intercepted invocation.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#conjunction()" class="member-name-link">conjunction()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a> - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/predicate/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.predicate</a></dt>
@@ -4955,6 +4987,11 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 <dd>
 <div class="block">The <a href="io/micronaut/data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> for <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html" class="type-name-link" title="class in io.micronaut.data.connection.jdbc">DataSourceConstants</a> - Class in <a href="io/micronaut/data/connection/jdbc/package-summary.html">io.micronaut.data.connection.jdbc</a></dt>
+<dd>
+<div class="block">Utility class that defines constant keys and values used when working with
+data source configuration.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/multitenancy/conf/DataSourceMultiTenancyEnabledCondition.html" class="type-name-link" title="class in io.micronaut.data.runtime.multitenancy.conf">DataSourceMultiTenancyEnabledCondition</a> - Class in <a href="io/micronaut/data/runtime/multitenancy/conf/package-summary.html">io.micronaut.data.runtime.multitenancy.conf</a></dt>
 <dd>
 <div class="block">Multi-tenancy mode <a href="io/micronaut/data/runtime/multitenancy/MultiTenancyMode.html#DATASOURCE"><code>MultiTenancyMode.DATASOURCE</code></a> condition.</div>
@@ -4963,6 +5000,10 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#dataSourceName" class="member-name-link">dataSourceName</a> - Variable in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html#DATASOURCES" class="member-name-link">DATASOURCES</a> - Static variable in class io.micronaut.data.connection.jdbc.<a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html" title="class in io.micronaut.data.connection.jdbc">DataSourceConstants</a></dt>
+<dd>
+<div class="block">Configuration key representing the collection of configured data sources.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/multitenancy/DataSourceTenantResolver.html" class="type-name-link" title="interface in io.micronaut.data.runtime.multitenancy">DataSourceTenantResolver</a> - Interface in <a href="io/micronaut/data/runtime/multitenancy/package-summary.html">io.micronaut.data.runtime.multitenancy</a></dt>
 <dd>
 <div class="block">The tenant resolver for multi-tenancy mode DATASOURCE.</div>
@@ -6774,6 +6815,10 @@ when sorting by this attribute.</div>
 <dt><a href="io/micronaut/data/model/query/builder/sql/Dialect.html" class="type-name-link" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a> - Enum Class in <a href="io/micronaut/data/model/query/builder/sql/package-summary.html">io.micronaut.data.model.query.builder.sql</a></dt>
 <dd>
 <div class="block">The SQL dialect to use.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html#DIALECT" class="member-name-link">DIALECT</a> - Static variable in class io.micronaut.data.connection.jdbc.<a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html" title="class in io.micronaut.data.connection.jdbc">DataSourceConstants</a></dt>
+<dd>
+<div class="block">Configuration key representing the database dialect.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/sql/GeneratedETag.html#DIALECT_DEFAULT_FUNCTION_MARKER" class="member-name-link">DIALECT_DEFAULT_FUNCTION_MARKER</a> - Static variable in annotation interface io.micronaut.data.annotation.sql.<a href="io/micronaut/data/annotation/sql/GeneratedETag.html" title="annotation interface in io.micronaut.data.annotation.sql">GeneratedETag</a></dt>
 <dd>
@@ -9616,6 +9661,10 @@ in the computation of an entity <a href="io/micronaut/data/annotation/sql/Genera
 <dd>
 <div class="block">Fail compilation with the given message for the current method.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html#FAIL" class="member-name-link">FAIL</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a></dt>
+<dd>
+<div class="block">Fail fast and rethrow the original exception.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#failed(java.lang.Exception,java.lang.String)" class="member-name-link">failed(Exception, String)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html#failed(java.lang.Exception,java.lang.String)" class="member-name-link">failed(Exception, String)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntityOperations</a></dt>
@@ -9727,6 +9776,8 @@ in the computation of an entity <a href="io/micronaut/data/annotation/sql/Genera
 <dt><a href="io/micronaut/data/document/mongo/MongoAnnotations.html#FILTER_ROLE" class="member-name-link">FILTER_ROLE</a> - Static variable in interface io.micronaut.data.document.mongo.<a href="io/micronaut/data/document/mongo/MongoAnnotations.html" title="interface in io.micronaut.data.document.mongo">MongoAnnotations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/MongoRoles.html#FILTER_ROLE" class="member-name-link">FILTER_ROLE</a> - Static variable in interface io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoRoles.html" title="interface in io.micronaut.data.mongodb.operations">MongoRoles</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#find()" class="member-name-link">find()</a> - Static method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyWithin.html#find(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,jakarta.persistence.criteria.Expression,java.util.List)" class="member-name-link">find(PersistentEntityRoot, PersistentEntityCriteriaBuilder, Expression, List)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyWithin.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyWithin</a></dt>
 <dd>&nbsp;</dd>
@@ -15497,6 +15548,8 @@ i.e.</div>
 <dd>
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#getResolver()" class="member-name-link">getResolver()</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#getRestriction()" class="member-name-link">getRestriction()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#getRestriction()" class="member-name-link">getRestriction()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
@@ -15507,6 +15560,8 @@ i.e.</div>
 <dd>
 <div class="block">The result created by pushed rows.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#getResult()" class="member-name-link">getResult()</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getResultArgument()" class="member-name-link">getResultArgument()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#getResultArgument()" class="member-name-link">getResultArgument()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
@@ -16123,6 +16178,8 @@ i.e.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Challenge.html#getToken()" class="member-name-link">getToken()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Challenge.html" title="class in io.micronaut.data.tck.entities">Challenge</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#getToken()" class="member-name-link">getToken()</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#getTokenNames()" class="member-name-link">getTokenNames()</a> - Method in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
@@ -16579,6 +16636,8 @@ without dialect-specific quoting applied.</div>
 <div class="block">H2 database engine.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#hasAutoPopulatedProperties()" class="member-name-link">hasAutoPopulatedProperties()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#hasCapturedToken(io.micronaut.transaction.TransactionStatus)" class="member-name-link">hasCapturedToken(TransactionStatus)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/BookSpecifications.html#hasChapter(java.lang.String)" class="member-name-link">hasChapter(String)</a> - Static method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookSpecifications.html" title="class in io.micronaut.data.tck.repositories">BookSpecifications</a></dt>
 <dd>&nbsp;</dd>
@@ -18968,6 +19027,10 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <dt><a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a> - package io.micronaut.transaction.reactive</dt>
 <dd>
 <div class="block">Interfaces for reactive transaction management.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/package-summary.html">io.micronaut.transaction.recovery</a> - package io.micronaut.transaction.recovery</dt>
+<dd>
+<div class="block">Commit outcome recovery contracts.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/support/package-summary.html">io.micronaut.transaction.support</a> - package io.micronaut.transaction.support</dt>
 <dd>&nbsp;</dd>
@@ -21835,6 +21898,10 @@ exists.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Truck_.html#MAX_LOAD" class="member-name-link">MAX_LOAD</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Truck_.html" title="class in io.micronaut.data.tck.entities">Truck_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html#maxAttempts()" class="member-name-link">maxAttempts()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional.Recoverable</a></dt>
+<dd>
+<div class="block">Maximum number of retry attempts after the initial attempt.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoAggregateOptions.html#maxAwaitTimeMS()" class="member-name-link">maxAwaitTimeMS()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoAggregateOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoAggregateOptions</a></dt>
 <dd>
 <div class="block">The maxAwaitTimeMS.</div>
@@ -23399,6 +23466,10 @@ exists.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQParser.Null_comparison_expressionContext.html#NOT()" class="member-name-link">NOT()</a> - Method in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQParser.Null_comparison_expressionContext.html" title="class in io.micronaut.data.jq">JQParser.Null_comparison_expressionContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#NOT_COMMITTED" class="member-name-link">NOT_COMMITTED</a> - Enum constant in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
+<dd>
+<div class="block">The transaction did not commit.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html#NOT_EQUALS" class="member-name-link">NOT_EQUALS</a> - Enum constant in enum class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.predicate">PredicateBinaryOp</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html#NOT_EQUALS_IGNORE_CASE" class="member-name-link">NOT_EQUALS_IGNORE_CASE</a> - Enum constant in enum class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.predicate">PredicateBinaryOp</a></dt>
@@ -23748,6 +23819,10 @@ exists.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/TimezoneBasicTypes_.html#offsetDateTimeWithTimezone" class="member-name-link">offsetDateTimeWithTimezone</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/TimezoneBasicTypes_.html" title="class in io.micronaut.data.tck.entities">TimezoneBasicTypes_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html#on()" class="member-name-link">on()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional.Recoverable</a></dt>
+<dd>
+<div class="block">Exception types that should trigger recovery handling.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#on(jakarta.persistence.criteria.Expression)" class="member-name-link">on(Expression)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html#on(jakarta.persistence.criteria.Expression)" class="member-name-link">on(Expression)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentCollectionAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentCollectionAssociationPath</a></dt>
@@ -23978,6 +24053,10 @@ exists.</div>
 <dd>
 <div class="block">Oracle version that enables native SQL boolean generation.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html#ORACLE_DIALECT" class="member-name-link">ORACLE_DIALECT</a> - Static variable in class io.micronaut.data.connection.jdbc.<a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html" title="class in io.micronaut.data.connection.jdbc">DataSourceConstants</a></dt>
+<dd>
+<div class="block">Constant value representing the Oracle database dialect.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#ORACLE_PRIORITY" class="member-name-link">ORACLE_PRIORITY</a> - Static variable in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
 <dd>
 <div class="block">Transaction definition property used to store Oracle transaction priority.</div>
@@ -23997,6 +24076,14 @@ exists.</div>
 <dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a> - Enum Class in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
 <dd>
 <div class="block">Priority level for Oracle priority transactions.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html" class="type-name-link" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional.Recoverable</a> - Annotation Interface in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
+<dd>
+<div class="block">Oracle-specific companion annotation for ambiguous commit recovery.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a> - Enum Class in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
+<dd>
+<div class="block">Policy used when the outcome cannot be determined.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)" class="member-name-link">OracleVectorFactory(AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)</a> - Constructor for class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorFactory</a></dt>
 <dd>&nbsp;</dd>
@@ -27092,6 +27179,12 @@ can occur.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/coherence/data/util/EventRecorder.html#record(io.micronaut.coherence.data.util.EventType,T)" class="member-name-link">record(EventType, T)</a> - Method in class io.micronaut.coherence.data.util.<a href="io/micronaut/coherence/data/util/EventRecorder.html" title="class in io.micronaut.coherence.data.util">EventRecorder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" class="type-name-link" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a> - Class in <a href="io/micronaut/transaction/recovery/package-summary.html">io.micronaut.transaction.recovery</a></dt>
+<dd>
+<div class="block">Transaction-recovery state scoped to a single transactional invocation.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#%3Cinit%3E()" class="member-name-link">RecoverableTransactionContext()</a> - Constructor for class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/GeneratedValue.html#ref()" class="member-name-link">ref()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/GeneratedValue.html" title="annotation interface in io.micronaut.data.annotation">GeneratedValue</a></dt>
 <dd>
 <div class="block">In the case of sequence generators if you wish to alter the name of the sequence generator do so with this member.</div>
@@ -27343,6 +27436,10 @@ can be produced by this query.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Book.html#resetEventCounters()" class="member-name-link">resetEventCounters()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcomeResolver.html#resolve(java.lang.Object)" class="member-name-link">resolve(Object)</a> - Method in interface io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcomeResolver.html" title="interface in io.micronaut.transaction.recovery">CommitOutcomeResolver</a></dt>
+<dd>
+<div class="block">Resolve the outcome for the previously captured token.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/jdbc/DelegatingDataSourceResolver.html#resolve(javax.sql.DataSource)" class="member-name-link">resolve(DataSource)</a> - Method in class io.micronaut.data.connection.jdbc.<a href="io/micronaut/data/connection/jdbc/DelegatingDataSourceResolver.html" title="class in io.micronaut.data.connection.jdbc">DelegatingDataSourceResolver</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#resolveAssociationInsert(java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation)" class="member-name-link">resolveAssociationInsert(Class, RuntimePersistentEntity, RuntimeAssociation)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
@@ -27785,6 +27882,10 @@ can be produced by this query.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/AuthorRepository.html#retrieveByName(java.lang.String)" class="member-name-link">retrieveByName(String)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/AuthorRepository.html" title="interface in io.micronaut.data.tck.repositories">AuthorRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html#RETRY" class="member-name-link">RETRY</a> - Enum constant in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a></dt>
+<dd>
+<div class="block">Retry the entire transactional method.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html#returnDocument()" class="member-name-link">returnDocument()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoUpdateReturningQuery.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoUpdateReturningQuery</a></dt>
 <dd>
 <div class="block">Controls whether MongoDB returns the document state before or after the update.</div>
@@ -29979,6 +30080,8 @@ after a participating transaction failed.</div>
 <dd>
 <div class="block">Sets the request units.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#setResult(java.lang.Object)" class="member-name-link">setResult(Object)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaInsert.html#setReturning()" class="member-name-link">setReturning()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaInsert.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaInsert</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaInsert.html#setReturning()" class="member-name-link">setReturning()</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a></dt>
@@ -33059,7 +33162,7 @@ allows the interception of methods and binding the event consumer to the running
 <dd>
 <div class="block">Default implementation of <a href="io/micronaut/transaction/annotation/Transactional.html" title="annotation interface in io.micronaut.transaction.annotation"><code>Transactional</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#%3Cinit%3E(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver,io.micronaut.core.convert.ConversionService)" class="member-name-link">TransactionalInterceptor(TransactionOperationsRegistry, TransactionDataSourceTenantResolver, ConversionService)</a> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
+<dt><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#%3Cinit%3E(io.micronaut.transaction.TransactionOperationsRegistry,io.micronaut.transaction.interceptor.TransactionDataSourceTenantResolver,io.micronaut.core.convert.ConversionService,io.micronaut.context.BeanLocator)" class="member-name-link">TransactionalInterceptor(TransactionOperationsRegistry, TransactionDataSourceTenantResolver, ConversionService, BeanLocator)</a> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -33823,9 +33926,17 @@ in an unexpected rollback.</div>
 <dd>
 <div class="block">Unknown outcome state.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#UNKNOWN" class="member-name-link">UNKNOWN</a> - Enum constant in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
+<dd>
+<div class="block">The outcome could not be determined.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html#UNKNOWN" class="member-name-link">UNKNOWN</a> - Enum constant in enum class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a></dt>
 <dd>
 <div class="block">Completion status in case of heuristic mixed completion or system errors.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html#unknownOutcomePolicy()" class="member-name-link">unknownOutcomePolicy()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional.Recoverable</a></dt>
+<dd>
+<div class="block">Policy to apply when the commit outcome cannot be determined.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/Limit.html#UNLIMITED" class="member-name-link">UNLIMITED</a> - Static variable in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></dt>
 <dd>&nbsp;</dd>
@@ -35021,11 +35132,19 @@ followed by the second, and so forth.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html" title="enum class in io.micronaut.transaction.exceptions">HeuristicCompletionException.State</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
@@ -35310,12 +35429,22 @@ the order they are declared.</div>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.State.html" title="enum class in io.micronaut.transaction.exceptions">HeuristicCompletionException.State</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/recovery/CommitOutcome.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/CommitOutcome.html" title="enum class in io.micronaut.transaction.recovery">CommitOutcome</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>

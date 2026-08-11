@@ -57,7 +57,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
-<li><a href="#captureLtxid(io.micronaut.transaction.TransactionStatus)" tabindex="0">captureLtxid(TransactionStatus)</a></li>
+<li><a href="#captureRecoveryToken(io.micronaut.transaction.TransactionStatus)" tabindex="0">captureRecoveryToken(TransactionStatus)</a></li>
 <li><a href="#resolve(java.lang.Object)" tabindex="0">resolve(Object)</a></li>
 </ol>
 </li>
@@ -94,7 +94,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#captureLtxid(io.micronaut.transaction.TransactionStatus)" class="member-name-link">captureLtxid</a><wbr>(@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&nbsp;status)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#captureRecoveryToken(io.micronaut.transaction.TransactionStatus)" class="member-name-link">captureRecoveryToken</a><wbr>(@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Capture a vendor-specific token from the active transaction before commit.</div>
 </div>
@@ -118,10 +118,10 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="captureLtxid(io.micronaut.transaction.TransactionStatus)">
-<h3>captureLtxid</h3>
+<section class="detail" id="captureRecoveryToken(io.micronaut.transaction.TransactionStatus)">
+<h3>captureRecoveryToken</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">captureLtxid</span><wbr><span class="parameters">(@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&nbsp;status)</span></div>
+<div class="member-signature"><span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">captureRecoveryToken</span><wbr><span class="parameters">(@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&nbsp;status)</span></div>
 <div class="block">Capture a vendor-specific token from the active transaction before commit.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -140,7 +140,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Resolve the outcome for the previously captured token.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>token</code> - The token captured by <a href="#captureLtxid(io.micronaut.transaction.TransactionStatus)"><code>captureLtxid(TransactionStatus)</code></a></dd>
+<dd><code>token</code> - The token captured by <a href="#captureRecoveryToken(io.micronaut.transaction.TransactionStatus)"><code>captureRecoveryToken(TransactionStatus)</code></a></dd>
 <dt>Returns:</dt>
 <dd>The recovery outcome</dd>
 </dl>

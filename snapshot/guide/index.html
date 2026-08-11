@@ -171,6 +171,8 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>3.7.2</strong><span>Transactional Events</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-recoverableTransactions"><a href="#recoverableTransactions"><strong>3.7.3</strong><span>Oracle Transaction Recovery</span></a></div>
+        
         <div class="toc-item" style="margin-left:10px" id="toc-item-kotlinCriteria"><a href="#kotlinCriteria"><strong>3.8</strong><span>Kotlin Criteria API extensions</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-multitenancy"><a href="#multitenancy"><strong>3.9</strong><span>Multi-tenancy</span></a></div>
@@ -5661,6 +5663,13 @@ Older Oracle versions that reject <code>txn_priority</code> continue without app
 </table>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_oracle_transaction_recovery">Oracle Transaction Recovery</h3>
+<div class="paragraph">
+<p>For Oracle JDBC transactions, Micronaut Data supports ambiguous commit recovery with <code>@OracleTransactional.Recoverable</code>.
+See <a href="#recoverableTransactions">Oracle Transaction Recovery</a> for configuration, scope, and usage details.</p>
+</div>
+</div>
 
 <h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>3.7.1 Programmatic Transactions</h2>
 
@@ -6235,6 +6244,260 @@ Using <a href="../api/io/micronaut/transaction/annotation/TransactionalEventList
 </td>
 </tr>
 </table>
+</div>
+
+<h2 id="recoverableTransactions"><a class="anchor" href="#recoverableTransactions"></a>3.7.3 Oracle Transaction Recovery</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/recoverableTransactions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports Oracle transaction recovery for ambiguous commit failures with <code>@OracleTransactional.Recoverable</code>.</p>
+</div>
+<div class="paragraph">
+<p>This feature is Oracle-only, opt-in, and currently applies only to synchronous JDBC transactions.
+It is intended for the case where the database may have committed, but the client lost the commit acknowledgement and needs a deterministic commit outcome before retrying.</p>
+</div>
+<div class="paragraph">
+<p><code>@OracleTransactional.Recoverable</code> is a companion to <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> and <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
+Use it on a method or type whose intercepted invocation owns the transaction commit boundary:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.annotation.Transactional;
+
+@Transactional
+@OracleTransactional.Recoverable
+void updateInventory() {
+    // repository or JDBC work
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The recovery flow is:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>execute the method in a normal synchronous transaction</p>
+</li>
+<li>
+<p>capture the Oracle logical transaction identifier (LTXID) before commit</p>
+</li>
+<li>
+<p>if a configured recoverable exception is raised during commit handling or commit acknowledgement, open a fresh connection and resolve the outcome with Oracle transaction recovery</p>
+</li>
+<li>
+<p>if Oracle reports <code>COMMITTED</code>, return the original result</p>
+</li>
+<li>
+<p>if Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE</code>, treat the transaction as committed, return the already produced result without replay, and log a warning that Oracle call-completion details may be incomplete</p>
+</li>
+<li>
+<p>if Oracle reports <code>NOT_COMMITTED</code>, retry the transaction on a fresh connection up to the configured limit</p>
+</li>
+<li>
+<p>if Oracle reports <code>UNKNOWN</code>, apply the configured unknown-outcome policy</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>@OracleTransactional.Recoverable</code> attributes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>on</code>: exception types that trigger recovery handling. Default: <code>java.sql.SQLRecoverableException</code></p>
+</li>
+<li>
+<p><code>maxAttempts</code>: retry attempts after the initial attempt. Default: <code>1</code></p>
+</li>
+<li>
+<p><code>backoff</code>: delay between retries in milliseconds. Default: <code>100</code></p>
+</li>
+<li>
+<p><code>unknownOutcomePolicy</code>: behavior when the outcome cannot be determined. Default: <code>FAIL</code></p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_usage_constraints">Usage Constraints</h3>
+<div class="paragraph">
+<p><code>@OracleTransactional.Recoverable</code> must be used together with <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> or <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
+It does not create a transaction by itself.</p>
+</div>
+<div class="paragraph">
+<p>Recovery runs only for the synchronous invocation that starts and owns the final commit boundary.
+If the annotated method joins an existing transaction, Micronaut does not run recovery for that method because the outer transaction boundary owns commit.</p>
+</div>
+<div class="paragraph">
+<p>In practice, this means:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>apply <code>@OracleTransactional.Recoverable</code> together with <code>@Transactional</code> or <code>@OracleTransactional</code></p>
+</li>
+<li>
+<p>place it on a top-level synchronous transactional entry point that owns commit</p>
+</li>
+<li>
+<p>do not expect recovery to run when the method is invoked inside an outer <code>@Transactional</code> method</p>
+</li>
+<li>
+<p>do not expect recovery to run when the method is wrapped in programmatic transaction execution such as <code>transactionOperations.execute(&#8230;&#8203;)</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuration">Configuration</h3>
+<div class="paragraph">
+<p>Oracle transaction recovery activates only when Oracle JDBC is in use and the feature is enabled for the datasource:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.dialect=ORACLE
+datasources.default.enable-oracle-transaction-recovery=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    dialect: ORACLE
+    enable-oracle-transaction-recovery: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">datasources = {default = {dialect = "ORACLE", enable-oracle-transaction-recovery = true}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    dialect = "ORACLE"
+    enableOracleTransactionRecovery = true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      dialect = "ORACLE"
+      enable-oracle-transaction-recovery = true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "dialect": "ORACLE",
+      "enable-oracle-transaction-recovery": true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_oracle_requirements">Oracle Requirements</h3>
+<div class="paragraph">
+<p>The database and service must be configured correctly for Oracle transaction recovery:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>use an Oracle Database version that supports Oracle Transaction Guard</p>
+</li>
+<li>
+<p>configure the datasource JDBC URL to connect through the Oracle service that your DBA set up for this application and enabled for Oracle Transaction Guard, rather than the database&#8217;s default service name</p>
+</li>
+<li>
+<p>enable <code>COMMIT_OUTCOME=TRUE</code> on that service</p>
+</li>
+<li>
+<p>set an appropriate <code>RETENTION_TIMEOUT</code></p>
+</li>
+<li>
+<p>grant <code>EXECUTE</code> on <code>DBMS_APP_CONT</code> to the application user</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Micronaut Data does not automatically detect whether Transparent Application Failover (TAF) or Application Continuity is already handling Oracle Transaction Guard for the connection.
+If that Oracle failover path is enabled, do not use <code>@OracleTransactional.Recoverable</code> on the same execution path.</p>
+</div>
+<div class="paragraph">
+<p>If the database, service, or client are out of sync for outcome resolution, Micronaut Data fails fast instead of treating the failure as an <code>UNKNOWN</code> outcome.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scope_and_limitations">Scope and Limitations</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Recovery applies only to synchronous JDBC transactions</p>
+</li>
+<li>
+<p>Recovery applies only when the intercepted execution owns the transaction commit boundary</p>
+</li>
+<li>
+<p>If a method joins an existing transaction, the outer transaction boundary owns commit and therefore owns recovery</p>
+</li>
+<li>
+<p>R2DBC is not supported by this feature</p>
+</li>
+<li>
+<p>Micronaut does not expose Oracle&#8217;s <code>USER_CALL_COMPLETED</code> flag through the method return type or another public API</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Oracle Transaction Guard can also report whether the user call completed after a committed transaction.
+Micronaut Data uses <code>USER_CALL_COMPLETED</code> internally to avoid replaying committed work.
+If Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE</code>, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result instead of replaying the call or exposing a separate structured recovery result.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_operational_notes">Operational Notes</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Replayed work must be safe to execute again when Oracle reports <code>NOT_COMMITTED</code></p>
+</li>
+<li>
+<p>Outcome resolution always uses a fresh connection</p>
+</li>
+<li>
+<p>Retry attempts also run on a fresh transaction/connection</p>
+</li>
+<li>
+<p>If Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE</code>, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result without replay</p>
+</li>
+<li>
+<p>If you are already relying on TAF or Application Continuity to own the replay flow, do not add explicit transaction recovery on top of that path</p>
+</li>
+</ul>
+</div>
 </div>
 
 <h2 id="kotlinCriteria"><a class="anchor" href="#kotlinCriteria"></a>3.8 Kotlin Criteria API extensions</h2>

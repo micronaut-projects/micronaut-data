@@ -63,7 +63,11 @@ loadScripts(document, 'script');</script>
 </div>
 <hr>
 <div class="horizontal-scroll">
-<div class="package-signature">package <span class="element-name">io.micronaut.transaction.recovery</span></div>
+<div class="package-signature"><span class="annotations">@NullMarked
+</span>package <span class="element-name">io.micronaut.transaction.recovery</span></div>
+<section class="package-description" id="package-description">
+<div class="block">Commit outcome recovery contracts.</div>
+</section>
 </div>
 <section class="summary">
 <ul class="summary-list">
@@ -83,7 +87,7 @@ to use enums, SLF4J and decoupling from Spring.</div>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
@@ -95,6 +99,10 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="CommitOutcomeResolver.html" title="interface in io.micronaut.transaction.recovery">CommitOutcomeResolver</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Resolves a transaction recovery outcome for a transaction using a vendor-specific mechanism.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Transaction-recovery state scoped to a single transactional invocation.</div>
 </div>
 </div>
 </div>
