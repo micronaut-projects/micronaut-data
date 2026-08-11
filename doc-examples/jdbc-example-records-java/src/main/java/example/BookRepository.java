@@ -25,8 +25,6 @@ public interface BookRepository extends CrudRepository<Book, Long> {
     List<Book> findByPagesGreaterThan(int pageCount);
     // end::greaterthan[]
 
-    List<Book> findByPagesGreaterThanEquals(int pageCount);
-
     // tag::logical[]
     List<Book> findByPagesGreaterThanOrTitleLike(int pageCount, String title);
     // end::logical[]
@@ -69,11 +67,7 @@ public interface BookRepository extends CrudRepository<Book, Long> {
     // end::save[]
 
     // tag::save2[]
-    Book persist(String title, int pages, BookGenre genre);
-
-    default Book persist(String title, int pages) {
-        return persist(title, pages, BookGenre.OTHER);
-    }
+    Book persist(String title, int pages);
     // end::save2[]
 
     // tag::update[]
