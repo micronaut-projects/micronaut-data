@@ -946,7 +946,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             .toList();
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))) {
-            throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable");
+            throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable. "
+                + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
         }
 
         boolean[] needsTrimming = {false};

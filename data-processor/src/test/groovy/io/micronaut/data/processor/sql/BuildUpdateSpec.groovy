@@ -392,6 +392,7 @@ class Account {
         then:
         def e = thrown(RuntimeException)
         e.message.contains("all update properties are reservable")
+        e.message.contains("reserveIncrement.../reserveDecrement... methods")
     }
 
     void "test entity update falls back to identity update when no updateable properties remain"() {

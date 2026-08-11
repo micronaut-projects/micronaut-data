@@ -253,8 +253,8 @@ public final class SqlSchemaUtils {
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
         List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
-        validateReservableColumns(entity, primaryKeyColumns, columns);
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
+        validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
             indexes, auxiliaryStatements);
@@ -481,7 +481,10 @@ public final class SqlSchemaUtils {
         }
     }
 
-    private static void validateReservableColumns(PersistentEntity entity, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+    private static void validateReservableColumns(PersistentEntity entity,
+                                                  List<SqlColumnMapping> primaryKeyColumns,
+                                                  List<SqlColumnMapping> columns,
+                                                  List<SqlIndexMapping> indexes) {
         List<SqlColumnMapping> reservableColumns = columns.stream().filter(SqlColumnMapping::isReservable).toList();
         if (reservableColumns.isEmpty()) {
             return;
@@ -494,20 +497,19 @@ public final class SqlSchemaUtils {
         }
         Set<String> reservableNames = reservableColumns.stream().map(SqlColumnMapping::getName).collect(Collectors.toSet());
         for (PersistentProperty property : entity.getPersistentProperties()) {
-            if (property.getAnnotationMetadata().hasAnnotation(Reservable.class) && property.getAnnotationMetadata().hasAnnotation(Index.class)) {
-                throw new MappingException("@Reservable property [" + entity.getName() + "." + property.getName() + "] cannot be indexed");
-            }
-        }
-        entity.findAnnotation(Indexes.class)
-            .map(indexes -> indexes.getAnnotations(VALUE_MEMBER, Index.class))
-            .stream()
-            .flatMap(Collection::stream)
-            .forEach(index -> {
-                for (String column : index.stringValues("columns")) {
-                    if (reservableNames.contains(column)) {
-                        throw new MappingException("@Reservable column [" + column + "] of entity [" + entity.getName() + "] cannot be indexed");
-                    }
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (associations, persistentProperty) -> {
+                if (persistentProperty.getAnnotationMetadata().hasAnnotation(Reservable.class)
+                    && persistentProperty.getAnnotationMetadata().hasAnnotation(Index.class)) {
+                    throw new MappingException("@Reservable property [" + persistentProperty.getOwner().getName() + "." + persistentProperty.getName() + "] cannot be indexed");
                 }
+            });
+        }
+        indexes.stream()
+            .flatMap(index -> Arrays.stream(index.columns()))
+            .filter(reservableNames::contains)
+            .findFirst()
+            .ifPresent(column -> {
+                throw new MappingException("@Reservable column [" + column + "] of entity [" + entity.getName() + "] cannot be indexed");
             });
     }
 

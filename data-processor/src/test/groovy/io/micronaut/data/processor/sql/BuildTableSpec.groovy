@@ -429,6 +429,65 @@ class Stats {
         sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
     }
 
+    void "test build create table rejects indexed reservable scalar inside embeddable"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+class Account {
+    @javax.persistence.Id
+    private Long id;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Stats getStats() {
+        return stats;
+    }
+
+    public void setStats(Stats stats) {
+        this.stats = stats;
+    }
+}
+
+@Embeddable
+@Indexes(@Index(name = "idx_stats_balance", columns = "balance"))
+class Stats {
+    @Reservable
+    private Long balance;
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("@Reservable column [balance] of entity [test.Account] cannot be indexed")
+    }
+
 
     void "test build create table table statement for nullable embeddable"() {
         given:

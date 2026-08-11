@@ -227,7 +227,8 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         SecondaryUpdateProperties secondaryUpdateProperties = resolveSecondaryUpdateProperties(rootEntity, matchContext.getAnnotationMetadata());
         if (secondaryUpdateProperties.hasOnlyReservableUpdateProperties()) {
             throw new MatchFailedException("Cannot generate save/update for entity [" + rootEntity.getName()
-                + "]: all updateable properties are reservable. Use insert(...) for new rows and an explicit @Query delta update for reservable columns.");
+                + "]: all updateable properties are reservable. Use insert(...) for new rows and derived "
+                + "reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
         }
         boolean updateReturning = operationType == DataMethod.OperationType.INSERT_RETURNING;
         MethodMatchInfo updateInfo = UpdateMethodMatcher.entityUpdate(
