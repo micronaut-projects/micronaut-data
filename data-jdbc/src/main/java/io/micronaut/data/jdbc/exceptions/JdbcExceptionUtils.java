@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Locale;
 
 /**
@@ -42,6 +43,21 @@ public final class JdbcExceptionUtils {
         SQLException exception = sqlException;
         while (exception != null) {
             if (isUniqueConstraintViolation(exception.getSQLState(), exception.getErrorCode(), exception.getMessage())) {
+                return true;
+            }
+            exception = exception.getNextException();
+        }
+        return false;
+    }
+
+    /**
+     * @param sqlException The SQL exception
+     * @return Whether the exception or one of its chained exceptions represents an integrity constraint violation
+     */
+    public static boolean isIntegrityConstraintViolation(SQLException sqlException) {
+        SQLException exception = sqlException;
+        while (exception != null) {
+            if (exception instanceof SQLIntegrityConstraintViolationException) {
                 return true;
             }
             exception = exception.getNextException();

@@ -30,7 +30,6 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 
 /**
  * Converts JDBC exceptions to Micronaut Data exceptions before Jakarta Data conversion.
@@ -56,7 +55,7 @@ final class JdbcJakartaDataExceptionConverter implements JakartaDataExceptionCon
         if (JdbcExceptionUtils.isUniqueConstraintViolation(sqlException)) {
             return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), exception);
         }
-        if (sqlException instanceof SQLIntegrityConstraintViolationException) {
+        if (JdbcExceptionUtils.isIntegrityConstraintViolation(sqlException)) {
             return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), exception);
         }
         if (exception instanceof DataAccessException) {

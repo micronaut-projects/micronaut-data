@@ -63,6 +63,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.ArrayList;
@@ -111,6 +114,9 @@ public final class SqlSchemaUtils {
     static final int SRID_WEB_MERCATOR = 3857;
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
+
+    private static final int MAX_CONSTRAINT_NAME_LENGTH = 128;
+    private static final int CONSTRAINT_NAME_HASH_LENGTH = 12;
 
     private static final String JAKARTA_SIZE = "jakarta.validation.constraints.Size";
     private static final String JAKARTA_POSITIVE = "jakarta.validation.constraints.Positive";
@@ -577,7 +583,27 @@ public final class SqlSchemaUtils {
 
     private static String constraintName(String columnName, String tableName, String operator, String value) {
         String name = "CK_" + sanitize(tableName) + "_" + sanitize(columnName) + "_" + opToken(operator) + "_" + sanitize(value);
-        return name.length() > 128 ? name.substring(0, 128) : name;
+        if (name.length() <= MAX_CONSTRAINT_NAME_LENGTH) {
+            return name;
+        }
+        String hash = constraintNameHash(name);
+        return name.substring(0, MAX_CONSTRAINT_NAME_LENGTH - hash.length() - 1) + "_" + hash;
+    }
+
+    private static String constraintNameHash(String name) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(name.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hash = new StringBuilder(CONSTRAINT_NAME_HASH_LENGTH);
+            for (byte value : digest) {
+                hash.append(String.format("%02x", value));
+                if (hash.length() >= CONSTRAINT_NAME_HASH_LENGTH) {
+                    return hash.substring(0, CONSTRAINT_NAME_HASH_LENGTH);
+                }
+            }
+            throw new IllegalStateException("SHA-256 digest is shorter than expected");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 
     private static String sanitize(String value) {

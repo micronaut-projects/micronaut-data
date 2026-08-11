@@ -119,7 +119,6 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Readable;
@@ -494,7 +493,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (R2dbcExceptionUtils.isUniqueConstraintViolation(r2dbcException)) {
             return new EntityExistsException("Entity already exists: " + r2dbcException.getMessage(), r2dbcException);
         }
-        if (r2dbcException instanceof R2dbcDataIntegrityViolationException) {
+        if (R2dbcExceptionUtils.isIntegrityConstraintViolation(r2dbcException)) {
             return new DataIntegrityViolationException("Data integrity violation: " + r2dbcException.getMessage(), r2dbcException);
         }
         return null;

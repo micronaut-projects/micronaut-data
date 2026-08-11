@@ -124,7 +124,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -1170,7 +1169,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (JdbcExceptionUtils.isUniqueConstraintViolation(sqlException)) {
             return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), sqlException);
         }
-        if (sqlException instanceof SQLIntegrityConstraintViolationException) {
+        if (JdbcExceptionUtils.isIntegrityConstraintViolation(sqlException)) {
             return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), sqlException);
         }
         return fallbackMapper.apply(sqlException);

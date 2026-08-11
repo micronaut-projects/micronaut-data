@@ -16,7 +16,9 @@
 package io.micronaut.data.r2dbc.exceptions;
 
 import io.micronaut.core.annotation.Internal;
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -35,17 +37,41 @@ public final class R2dbcExceptionUtils {
 
     /**
      * @param exception The R2DBC exception
-     * @return Whether the exception represents a duplicate-key violation
+     * @return Whether the exception or one of its causes represents a duplicate-key violation
      */
     public static boolean isUniqueConstraintViolation(R2dbcException exception) {
-        if (UNIQUE_VIOLATION_SQL_STATE.equals(exception.getSqlState())) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof R2dbcException r2dbcException && isUniqueConstraintViolation(r2dbcException.getSqlState(), r2dbcException.getErrorCode(), r2dbcException.getMessage())) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * @param exception The R2DBC exception
+     * @return Whether the exception or one of its causes represents an integrity constraint violation
+     */
+    public static boolean isIntegrityConstraintViolation(R2dbcException exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof R2dbcDataIntegrityViolationException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isUniqueConstraintViolation(@Nullable String sqlState, int errorCode, @Nullable String message) {
+        if (UNIQUE_VIOLATION_SQL_STATE.equals(sqlState)) {
             return true;
         }
-        int errorCode = exception.getErrorCode();
         if (errorCode == 1 || errorCode == 1062 || errorCode == 23505 || errorCode == 2601 || errorCode == 2627) {
             return true;
         }
-        String message = exception.getMessage();
         if (message != null) {
             String normalized = message.toLowerCase(Locale.ENGLISH);
             return normalized.contains("unique index")

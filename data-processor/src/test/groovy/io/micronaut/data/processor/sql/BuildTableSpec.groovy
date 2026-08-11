@@ -444,19 +444,43 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 @Entity
 class Account {
-    @javax.persistence.Id Long id;
-    @MappedProperty("stats_") @Relation(Relation.Kind.EMBEDDED) Stats stats;
-    @MappedProperty("limits_") @Relation(Relation.Kind.EMBEDDED) Limits limits;
+    @javax.persistence.Id
+    private Long id;
+
+    @MappedProperty("stats_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    @MappedProperty("limits_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Limits limits;
+
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Stats getStats() { return stats; }
+    void setStats(Stats stats) { this.stats = stats; }
+    Limits getLimits() { return limits; }
+    void setLimits(Limits limits) { this.limits = limits; }
 }
 
 @Embeddable
 class Stats {
-    @Reservable @PositiveOrZero Long balance;
+    @Reservable
+    @PositiveOrZero
+    private Long balance;
+
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
 }
 
 @Embeddable
 class Limits {
-    @Reservable @PositiveOrZero Long balance;
+    @Reservable
+    @PositiveOrZero
+    private Long balance;
+
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
 }
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
@@ -467,6 +491,34 @@ class Limits {
         then:
         sql.contains('CONSTRAINT "CK_ACCOUNT_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0)')
         sql.contains('CONSTRAINT "CK_ACCOUNT_LIMITS_BALANCE_GE_0" CHECK ("LIMITS_BALANCE" >= 0)')
+    }
+
+    void "test build create table shortens long reservable check names without collisions"() {
+        given:
+        def tableName = 'account_' + ('x' * 120)
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@MappedEntity("''' + tableName + '''")
+record Account(
+    @javax.persistence.Id Long id,
+    @Reservable @PositiveOrZero Long balance,
+    @Reservable @PositiveOrZero Long availableBalance
+) {
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
+        def constraintNames = (sql =~ /CONSTRAINT "([^"]+)"/).collect { it[1] }
+
+        then:
+        constraintNames.size() == 2
+        constraintNames.toSet().size() == 2
+        constraintNames.every { it.length() <= 128 }
     }
 
     void "test build create table rejects indexed reservable scalar inside embeddable"() {

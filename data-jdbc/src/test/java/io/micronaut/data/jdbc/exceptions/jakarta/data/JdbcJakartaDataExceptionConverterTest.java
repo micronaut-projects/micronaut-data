@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
 import org.junit.jupiter.api.Test;
 
+import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
@@ -60,6 +61,16 @@ class JdbcJakartaDataExceptionConverterTest {
     @Test
     void convertsNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
         Exception converted = converter.convert(new SQLIntegrityConstraintViolationException("not null violation", "23502", 0));
+
+        assertInstanceOf(DataIntegrityViolationException.class, converted);
+    }
+
+    @Test
+    void convertsChainedNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
+        BatchUpdateException batchException = new BatchUpdateException("batch update failed", "HY000", 0, new int[0]);
+        batchException.setNextException(new SQLIntegrityConstraintViolationException("not null violation", "23502", 0));
+
+        Exception converted = converter.convert(batchException);
 
         assertInstanceOf(DataIntegrityViolationException.class, converted);
     }

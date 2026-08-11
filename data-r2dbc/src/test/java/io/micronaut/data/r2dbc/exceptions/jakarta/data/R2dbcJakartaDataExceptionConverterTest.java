@@ -21,6 +21,7 @@ import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
+import io.r2dbc.spi.R2dbcException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -53,6 +54,19 @@ class R2dbcJakartaDataExceptionConverterTest {
     @Test
     void convertsNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
         Exception converted = converter.convert(new R2dbcDataIntegrityViolationException("not null violation", "23502", 0));
+
+        assertInstanceOf(DataIntegrityViolationException.class, converted);
+    }
+
+    @Test
+    void convertsCausedNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
+        R2dbcException exception = new R2dbcException(
+            "batch update failed", "HY000", 0,
+            new R2dbcDataIntegrityViolationException("not null violation", "23502", 0)
+        ) {
+        };
+
+        Exception converted = converter.convert(exception);
 
         assertInstanceOf(DataIntegrityViolationException.class, converted);
     }
