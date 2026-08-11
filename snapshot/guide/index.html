@@ -259,11 +259,13 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.13</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>6.5.14</strong><span>SQL Vector Type Mapping</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlOracleBoolean"><a href="#sqlOracleBoolean"><strong>6.5.14</strong><span>Oracle BOOLEAN Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.15</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>6.5.15</strong><span>SQL Vector Type Mapping</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.16</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.16</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.17</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -13872,7 +13874,321 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>6.5.14 SQL Vector Type Mapping</h2>
+<h2 id="sqlOracleBoolean"><a class="anchor" href="#sqlOracleBoolean"></a>6.5.14 Oracle BOOLEAN Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlOracleBoolean.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Oracle Database 23.1 and later support native SQL <code>BOOLEAN</code> columns and boolean predicates.</p>
+</div>
+<div class="paragraph">
+<p>By default, Micronaut Data keeps the legacy Oracle mapping so applications targeting Oracle 19c or Oracle 21c continue to work:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Boolean</code> properties are mapped to <code>NUMBER(1)</code> for schema generation.</p>
+</li>
+<li>
+<p>Boolean literals and predicates are generated using numeric values such as <code>1</code> and <code>0</code>.</p>
+</li>
+<li>
+<p>JDBC binding uses the legacy Oracle boolean type mapping.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using <a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE">ORACLE</a> and set the annotation processor option <code>micronaut.data.sql.dialect-options.oracle.version=23.1</code>.
+The same value can also be provided as a JVM system property, for example <code>-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</code>.
+If both are present, the annotation processor option takes precedence.</p>
+</div>
+<div class="paragraph">
+<p>The configured dialect <code>version</code> is a SQL generation target.
+It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
+It is not runtime database version detection and it is not a general datasource capability check.
+Use numeric major[.minor[.patch]] notation, such as <code>23.1</code> or <code>23.1.0</code>. Major-only values such as <code>23</code> are treated as <code>23.0.0</code> and do not enable features that require <code>23.1</code>.
+Micronaut Data compares semantic version values, so a later configured version such as <code>23.4</code> also satisfies SQL features that require <code>23.1</code>.</p>
+</div>
+<div class="paragraph">
+<p>For Gradle Java projects:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For Maven projects:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;compilerArgs&gt;
+    &lt;arg&gt;-Amicronaut.data.sql.dialect-options.oracle.version=23.1&lt;/arg&gt;
+&lt;/compilerArgs&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The target version can also be set on an individual repository:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
+interface ProductRepository {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this target version, Micronaut Data can generate native Oracle boolean SQL such as <code>BOOLEAN</code>, <code>TRUE</code>, <code>FALSE</code>, <code>IS TRUE</code>, and <code>IS FALSE</code>.</p>
+</div>
+<div class="paragraph">
+<p>When a JDBC repository has a target version, Micronaut Data reads the JDBC server major and minor version on first use and caches a successful result for the datasource.
+If that metadata lookup fails, a later operation retries it.
+It logs one warning for each dialect and target-version pair when the reported server major/minor version is lower than the SQL target major/minor version or has a different major version.
+The warning does not prevent execution; the database remains responsible for accepting or rejecting generated SQL.
+JDBC exposes only server major and minor versions. If a SQL feature requires a specific patch version within the same major and minor release, this diagnostic cannot verify that requirement and does not warn based on the patch number alone.
+This diagnostic is enabled by default. Disable it for a datasource when necessary, for example for a heterogeneous routing datasource or to avoid the JDBC metadata lookup:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.dialect-options.validate-version=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    dialect-options:
+      validate-version: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">datasources = {default = {dialect-options = {validate-version = false}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    dialectOptions {
+      validateVersion = false
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      dialect-options {
+        validate-version = false
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "dialect-options": {
+        "validate-version": false
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>R2DBC does not perform this diagnostic because it does not expose a reliable structured server version.</p>
+</div>
+<div class="paragraph">
+<p>If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:</p>
+</div>
+<div class="openblock">
+<div class="title">JDBC Oracle 23.1-compatible schema generation</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.dialect=ORACLE
+datasources.default.dialect-options.version=23.1</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    dialect: ORACLE
+    dialect-options:
+      version: 23.1</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">datasources = {default = {dialect = "ORACLE", dialect-options = {version = 23.1}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    dialect = "ORACLE"
+    dialectOptions {
+      version = 23.1
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      dialect = "ORACLE"
+      dialect-options {
+        version = 23.1
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "dialect": "ORACLE",
+      "dialect-options": {
+        "version": 23.1
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="openblock">
+<div class="title">R2DBC Oracle 23.1-compatible schema generation</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">r2dbc.datasources.default.dialect=ORACLE
+r2dbc.datasources.default.dialect-options.version=23.1</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">r2dbc:
+  datasources:
+    default:
+      dialect: ORACLE
+      dialect-options:
+        version: 23.1</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">r2dbc = {datasources = {default = {dialect = "ORACLE", dialect-options = {version = 23.1}}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">r2dbc {
+  datasources {
+    'default' {
+      dialect = "ORACLE"
+      dialectOptions {
+        version = 23.1
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  r2dbc {
+    datasources {
+      default {
+        dialect = "ORACLE"
+        dialect-options {
+          version = 23.1
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "r2dbc": {
+    "datasources": {
+      "default": {
+        "dialect": "ORACLE",
+        "dialect-options": {
+          "version": 23.1
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository <code>version</code> option aligned with datasource <code>dialect-options</code> when using Micronaut Data schema generation.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Mixed Oracle schemas where some boolean columns use native <code>BOOLEAN</code> and other boolean columns still use <code>NUMBER(1)</code> are not fully represented by this global version option. Keep the repository in legacy mode until the schema is migrated, configure the target version on individual repositories, or use explicit queries for columns that do not match the selected repository version.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>6.5.15 SQL Vector Type Mapping</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlVectorType.adoc"'>
@@ -14695,7 +15011,7 @@ FETCH FIRST APPROX 2 ROWS ONLY;</code></pre>
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.15 Support for Java 16 Records</h2>
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.16 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -14747,7 +15063,7 @@ record Book(
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.16 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.17 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/kotlinData.adoc"'>
