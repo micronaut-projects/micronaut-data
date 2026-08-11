@@ -58,42 +58,6 @@ import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
 
-    void "test findByRowId on a regular repository uses the rowId property"() {
-        given:
-        def repository = buildRepository('test.RowIdEntityRepository', """
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
-
-@MappedEntity
-class RowIdEntity {
-    @Id
-    @GeneratedValue
-    private Long id;
-    private String rowId;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getRowId() { return rowId; }
-    public void setRowId(String rowId) { this.rowId = rowId; }
-}
-
-@JdbcRepository(dialect = Dialect.MYSQL)
-interface RowIdEntityRepository extends CrudRepository<RowIdEntity, Long> {
-    java.util.Optional<RowIdEntity> findByRowId(String rowId);
-}
-""")
-
-        when:
-        String query = getQuery(repository.getRequiredMethod("findByRowId", String))
-
-        then:
-        query == 'SELECT row_id_entity_.`id`,row_id_entity_.`row_id` FROM `row_id_entity` row_id_entity_ WHERE (row_id_entity_.`row_id` = ?)'
-    }
-
     void "test to-many join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """

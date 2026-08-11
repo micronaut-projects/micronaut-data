@@ -167,7 +167,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_DATE = "CURRENT_DATE";
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
-    private static final String ROWID = "ROWID";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
     private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
 
@@ -175,8 +174,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
         CURRENT_DATE,
         CURRENT_TIME,
-        CURRENT_TIMESTAMP,
-        ROWID
+        CURRENT_TIMESTAMP
     );
     private static final Set<String> DISTINCT_AGGREGATE_FUNCTIONS = Set.of(
         "AVG",

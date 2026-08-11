@@ -614,7 +614,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             || type.isAssignable("com.mongodb.client.model.geojson.Geometry");
     }
 
-    protected <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
+    protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
         }
