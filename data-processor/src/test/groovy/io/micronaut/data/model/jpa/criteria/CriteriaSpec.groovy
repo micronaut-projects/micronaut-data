@@ -319,10 +319,11 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             ]
     }
 
-    void "criteria update rejects arithmetic assignment to reservable property"() {
+    void "criteria update rejects mixed direct assignments to reservable property"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
             Path<Number> budget = entityRoot.get("budget")
+            criteriaUpdate.set("name", "updated")
             criteriaUpdate.set("budget", criteriaBuilder.sum(budget, 1))
 
         when:
@@ -330,7 +331,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
         then:
             def e = thrown(IllegalArgumentException)
-            e.message.contains("all update properties are reservable")
+            e.message.contains("direct assignments to @Reservable properties")
     }
 
     @Unroll

@@ -32,6 +32,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
+import io.micronaut.data.model.query.builder.sql.GeneratedEntityUpdate;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -143,7 +144,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
 
                 Stream.concat(rootEntity.getPersistentProperties().stream(), rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.of())
                         .filter(p -> !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
-                        .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
+                        .forEach(p -> query.set(p.getName(), new GeneratedEntityUpdate(cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p)))));
 
                 if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
                     // Workaround for only ID entities

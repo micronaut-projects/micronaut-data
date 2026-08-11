@@ -940,6 +940,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return !generated;
             })
             .collect(Collectors.toList());
+        boolean hasDirectReservableAssignment = updateProperties.stream()
+            .anyMatch(e -> !isPermittedReservableAssignment(e.getValue()) && hasReservableUpdateProperty(e.getKey()));
+        if (hasDirectReservableAssignment) {
+            throw new IllegalArgumentException("Cannot generate update statement with direct assignments to @Reservable properties. "
+                + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
+        }
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
             .filter(e -> e.getValue() instanceof ReservationDelta || hasNonReservableUpdateProperty(e.getKey()))
             .toList();
@@ -967,7 +973,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     queryString.append(propertyPath.getPath()).append('=');
                 }
-                Object value = unwrapReservationDelta(entry.getValue());
+                Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
                         queryState.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
@@ -990,7 +996,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
-                Object value = unwrapReservationDelta(entry.getValue());
+                Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
@@ -1036,8 +1042,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private static Object unwrapReservationDelta(Object value) {
-        return value instanceof ReservationDelta reservationDelta ? reservationDelta.expression() : value;
+    private static Object unwrapUpdateValue(Object value) {
+        if (value instanceof ReservationDelta reservationDelta) {
+            return reservationDelta.expression();
+        }
+        return value instanceof GeneratedEntityUpdate generatedEntityUpdate ? generatedEntityUpdate.parameter() : value;
+    }
+
+    private static boolean isPermittedReservableAssignment(Object value) {
+        return value instanceof ReservationDelta || value instanceof GeneratedEntityUpdate;
     }
 
     private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath) {
