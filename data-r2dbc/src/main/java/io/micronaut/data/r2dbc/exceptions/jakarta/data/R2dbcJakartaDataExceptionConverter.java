@@ -21,6 +21,7 @@ import io.micronaut.core.order.Ordered;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
+import io.micronaut.data.r2dbc.exceptions.R2dbcExceptionUtils;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataDeleteExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
@@ -30,7 +31,6 @@ import io.r2dbc.spi.R2dbcException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Locale;
 
 /**
  * Converts R2DBC exceptions to Micronaut Data exceptions before Jakarta Data conversion.
@@ -44,8 +44,6 @@ import java.util.Locale;
 final class R2dbcJakartaDataExceptionConverter implements JakartaDataExceptionConverter, JakartaDataUpdateExceptionConverter,
     JakartaDataDeleteExceptionConverter, JakartaDataInsertExceptionConverter {
 
-    private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
-
     @Override
     public Exception convert(Exception exception) {
         if (exception instanceof EntityExistsException) {
@@ -55,7 +53,7 @@ final class R2dbcJakartaDataExceptionConverter implements JakartaDataExceptionCo
         if (r2dbcException == null) {
             return exception;
         }
-        if (isUniqueConstraintViolation(r2dbcException)) {
+        if (R2dbcExceptionUtils.isUniqueConstraintViolation(r2dbcException)) {
             return new EntityExistsException("Entity already exists: " + r2dbcException.getMessage(), exception);
         }
         if (r2dbcException instanceof R2dbcDataIntegrityViolationException) {
@@ -79,24 +77,4 @@ final class R2dbcJakartaDataExceptionConverter implements JakartaDataExceptionCo
         return null;
     }
 
-    private boolean isUniqueConstraintViolation(R2dbcException exception) {
-        String sqlState = exception.getSqlState();
-        if (UNIQUE_VIOLATION_SQL_STATE.equals(sqlState)) {
-            return true;
-        }
-        int errorCode = exception.getErrorCode();
-        if (errorCode == 1 || errorCode == 1062 || errorCode == 23505 || errorCode == 2601 || errorCode == 2627) {
-            return true;
-        }
-        String message = exception.getMessage();
-        if (message != null) {
-            String normalized = message.toLowerCase(Locale.ENGLISH);
-            return normalized.contains("unique index")
-                || normalized.contains("unique constraint")
-                || normalized.contains("primary key violation")
-                || normalized.contains("duplicate key")
-                || normalized.contains("duplicate entry");
-        }
-        return false;
-    }
 }

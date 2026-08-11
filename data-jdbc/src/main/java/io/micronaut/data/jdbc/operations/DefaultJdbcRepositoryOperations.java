@@ -37,9 +37,11 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
+import io.micronaut.data.jdbc.exceptions.JdbcExceptionUtils;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
@@ -1164,6 +1166,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
         if (dataAccessException != null) {
             return dataAccessException;
+        }
+        if (JdbcExceptionUtils.isUniqueConstraintViolation(sqlException)) {
+            return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), sqlException);
         }
         if (sqlException instanceof SQLIntegrityConstraintViolationException) {
             return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), sqlException);

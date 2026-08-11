@@ -161,8 +161,8 @@ class Account {
         given:
         def entity = buildJpaEntity('test.Account', '''
 import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
 
 @Entity
 class Account {
@@ -170,9 +170,13 @@ class Account {
     private Long id;
     @Reservable
     @DecimalMin.List({
-        @DecimalMin(value = "0.01", inclusive = false)
+        @DecimalMin(value = "0.01", inclusive = false),
+        @DecimalMin("10")
     })
-    @Max(100)
+    @DecimalMax.List({
+        @DecimalMax(value = "100", inclusive = false),
+        @DecimalMax("200")
+    })
     private Long balance;
 
     public Long getId() {
@@ -198,7 +202,7 @@ class Account {
         def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_LE_100" CHECK ("BALANCE" <= 100) CONSTRAINT "CK_ACCOUNT_BALANCE_GT_0_01" CHECK ("BALANCE" > 0.01) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GT_0_01" CHECK ("BALANCE" > 0.01) CONSTRAINT "CK_ACCOUNT_BALANCE_GE_10" CHECK ("BALANCE" >= 10) CONSTRAINT "CK_ACCOUNT_BALANCE_LT_100" CHECK ("BALANCE" < 100) CONSTRAINT "CK_ACCOUNT_BALANCE_LE_200" CHECK ("BALANCE" <= 200) NOT NULL, PRIMARY KEY("ID"))'
     }
 
     void "test build create table does not derive checks without reservable"() {

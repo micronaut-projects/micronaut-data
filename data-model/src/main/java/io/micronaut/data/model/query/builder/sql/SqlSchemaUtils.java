@@ -528,53 +528,40 @@ public final class SqlSchemaUtils {
         if (hasConstraint(annotationMetadata, JAKARTA_NEGATIVE_OR_ZERO, JAVAX_NEGATIVE_OR_ZERO)) {
             addCheck(constraints, property, tableName, "<=", "0");
         }
-        getFirstLongMemberAsString(annotationMetadata, JAKARTA_MIN, JAVAX_MIN)
-            .ifPresent(value -> addCheck(constraints, property, tableName, ">=", value));
-        getFirstLongMemberAsString(annotationMetadata, JAKARTA_MAX, JAVAX_MAX)
-            .ifPresent(value -> addCheck(constraints, property, tableName, "<=", value));
-        getFirstAnnotation(annotationMetadata, JAKARTA_DECIMAL_MIN, JAVAX_DECIMAL_MIN)
-            .ifPresent(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? ">=" : ">",
+        getConstraintAnnotations(annotationMetadata, JAKARTA_MIN, JAVAX_MIN).stream()
+            .flatMap(annotation -> annotation.longValue(VALUE_MEMBER).stream().mapToObj(String::valueOf))
+            .forEach(value -> addCheck(constraints, property, tableName, ">=", value));
+        getConstraintAnnotations(annotationMetadata, JAKARTA_MAX, JAVAX_MAX).stream()
+            .flatMap(annotation -> annotation.longValue(VALUE_MEMBER).stream().mapToObj(String::valueOf))
+            .forEach(value -> addCheck(constraints, property, tableName, "<=", value));
+        getConstraintAnnotations(annotationMetadata, JAKARTA_DECIMAL_MIN, JAVAX_DECIMAL_MIN)
+            .forEach(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? ">=" : ">",
                 annotation.stringValue(VALUE_MEMBER).orElse("0")));
-        getFirstAnnotation(annotationMetadata, JAKARTA_DECIMAL_MAX, JAVAX_DECIMAL_MAX)
-            .ifPresent(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? "<=" : "<",
+        getConstraintAnnotations(annotationMetadata, JAKARTA_DECIMAL_MAX, JAVAX_DECIMAL_MAX)
+            .forEach(annotation -> addCheck(constraints, property, tableName, annotation.booleanValue("inclusive").orElse(true) ? "<=" : "<",
                 annotation.stringValue(VALUE_MEMBER).orElse("0")));
         return constraints;
     }
 
     private static boolean hasConstraint(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
-        return annotationMetadata.hasAnnotation(jakartaName)
-            || annotationMetadata.hasAnnotation(jakartaName + LIST_ANNOTATION_SUFFIX)
-            || annotationMetadata.hasAnnotation(javaxName)
-            || annotationMetadata.hasAnnotation(javaxName + LIST_ANNOTATION_SUFFIX);
+        return !getConstraintAnnotations(annotationMetadata, jakartaName, javaxName).isEmpty();
     }
 
-    private static Optional<String> getFirstLongMemberAsString(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
-        return getFirstAnnotation(annotationMetadata, jakartaName, javaxName)
-            .flatMap(annotation -> annotation.longValue(VALUE_MEMBER).stream().mapToObj(String::valueOf).findFirst());
+    private static List<AnnotationValue<Annotation>> getConstraintAnnotations(AnnotationMetadata annotationMetadata,
+                                                                                String jakartaName,
+                                                                                String javaxName) {
+        List<AnnotationValue<Annotation>> annotations = new ArrayList<>();
+        addConstraintAnnotations(annotations, annotationMetadata, jakartaName);
+        addConstraintAnnotations(annotations, annotationMetadata, javaxName);
+        return annotations;
     }
 
-    private static Optional<AnnotationValue<Annotation>> getFirstAnnotation(AnnotationMetadata annotationMetadata, String jakartaName, String javaxName) {
-        Optional<AnnotationValue<Annotation>> annotation = annotationMetadata.findAnnotation(jakartaName);
-        if (annotation.isEmpty()) {
-            // Validation constraints are repeatable and Micronaut metadata can expose even a single constraint
-            // through the generated container annotation, for example PositiveOrZero.List.
-            annotation = annotationMetadata.findAnnotation(jakartaName + LIST_ANNOTATION_SUFFIX).flatMap(SqlSchemaUtils::firstContained);
-        }
-        if (annotation.isEmpty()) {
-            annotation = annotationMetadata.findAnnotation(javaxName);
-        }
-        if (annotation.isEmpty()) {
-            annotation = annotationMetadata.findAnnotation(javaxName + LIST_ANNOTATION_SUFFIX).flatMap(SqlSchemaUtils::firstContained);
-        }
-        return annotation;
-    }
-
-    private static Optional<AnnotationValue<Annotation>> firstContained(AnnotationValue<Annotation> annotation) {
-        List<AnnotationValue<Annotation>> values = annotation.getAnnotations(VALUE_MEMBER);
-        if (values.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(values.get(0));
+    private static void addConstraintAnnotations(List<AnnotationValue<Annotation>> annotations,
+                                                 AnnotationMetadata annotationMetadata,
+                                                 String annotationName) {
+        annotationMetadata.findAnnotation(annotationName).ifPresent(annotations::add);
+        annotationMetadata.findAnnotation(annotationName + LIST_ANNOTATION_SUFFIX)
+            .ifPresent(container -> annotations.addAll(container.getAnnotations(VALUE_MEMBER)));
     }
 
     private static void addCheck(List<SqlCheckConstraint> constraints, PersistentProperty property, String tableName, String operator, String value) {
