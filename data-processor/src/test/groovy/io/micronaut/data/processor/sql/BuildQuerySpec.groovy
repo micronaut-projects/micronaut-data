@@ -58,26 +58,6 @@ import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
 
-    void "test findByRowId on OracleCrudRepository uses the ROWID pseudocolumn"() {
-        given:
-        def repository = buildRepository('test.OraclePersonRepository', """
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.OracleCrudRepository;
-import io.micronaut.data.tck.entities.Person;
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-interface OraclePersonRepository extends OracleCrudRepository<Person, Long> {
-}
-""")
-
-        when:
-        String query = getQuery(repository.getRequiredMethod("findByRowId", String))
-
-        then:
-        query == 'SELECT person_."ID",person_."NAME",person_."AGE",person_."ENABLED",person_."INCOME" FROM "PERSON" person_ WHERE (ROWID = ?)'
-    }
-
     void "test findByRowId on a regular repository uses the rowId property"() {
         given:
         def repository = buildRepository('test.RowIdEntityRepository', """

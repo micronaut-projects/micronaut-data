@@ -7,12 +7,12 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.OracleCrudRepository;
+import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-public interface BookRepository extends OracleCrudRepository<Book, Long> {
+public interface BookRepository extends CrudRepository<Book, Long> {
     // tag::simple[]
     Book findByTitle(String title);
 
