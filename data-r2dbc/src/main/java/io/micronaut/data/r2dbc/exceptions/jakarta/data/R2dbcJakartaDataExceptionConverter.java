@@ -45,7 +45,7 @@ final class R2dbcJakartaDataExceptionConverter implements JakartaDataExceptionCo
 
     @Override
     public Exception convert(Exception exception) {
-        if (exception instanceof EntityExistsException) {
+        if (exception instanceof EntityExistsException || exception instanceof DataIntegrityViolationException) {
             return exception;
         }
         R2dbcException r2dbcException = findR2dbcException(exception);

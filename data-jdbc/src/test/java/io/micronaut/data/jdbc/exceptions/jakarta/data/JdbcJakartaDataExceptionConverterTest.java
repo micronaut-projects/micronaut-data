@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class JdbcJakartaDataExceptionConverterTest {
 
@@ -63,6 +64,16 @@ class JdbcJakartaDataExceptionConverterTest {
         Exception converted = converter.convert(new SQLIntegrityConstraintViolationException("not null violation", "23502", 0));
 
         assertInstanceOf(DataIntegrityViolationException.class, converted);
+    }
+
+    @Test
+    void doesNotWrapExistingDataIntegrityViolationException() {
+        DataIntegrityViolationException exception = new DataIntegrityViolationException(
+            "Data integrity violation",
+            new SQLIntegrityConstraintViolationException("not null violation", "23502", 0)
+        );
+
+        assertSame(exception, converter.convert(exception));
     }
 
     @Test

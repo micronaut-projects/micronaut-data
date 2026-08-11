@@ -432,7 +432,7 @@ class Stats {
         e.message.contains("all updatable properties are reservable")
     }
 
-    void "test save adds fallback update when entity has no updateable properties"() {
+    void "test save adds fallback update when entity has no updatable properties"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.AuditAccountRepository', """
 import io.micronaut.data.annotation.DateCreated;

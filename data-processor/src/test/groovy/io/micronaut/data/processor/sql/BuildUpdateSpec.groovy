@@ -562,7 +562,7 @@ class Stats {
         getParameterPropertyPaths(method) == ['stats.name', 'id'] as String[]
     }
 
-    void "test entity update falls back to identity update when no updateable properties remain"() {
+    void "test entity update falls back to identity update when no updatable properties remain"() {
         given:
         def repository = buildRepository('test.AuditAccountRepository', """
 import io.micronaut.data.annotation.DateCreated;

@@ -1441,12 +1441,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     checkOptimisticLocking(1, rowsUpdated);
                 }
             } catch (SQLException e) {
-                DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
-                if (dataAccessException != null) {
-                    throw dataAccessException;
-                }
-                throw e;
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException("Error executing SQL: " + sqlException.getMessage(), sqlException));
             }
+        }
+
+        @Override
+        protected void failed(Exception e, String operation) throws DataAccessException {
+            if (e instanceof DataIntegrityViolationException dataIntegrityViolationException) {
+                throw dataIntegrityViolationException;
+            }
+            super.failed(e, operation);
         }
 
         private void executeReturning() {

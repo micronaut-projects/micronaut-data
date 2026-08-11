@@ -45,7 +45,7 @@ final class JdbcJakartaDataExceptionConverter implements JakartaDataExceptionCon
 
     @Override
     public Exception convert(Exception exception) {
-        if (exception instanceof EntityExistsException) {
+        if (exception instanceof EntityExistsException || exception instanceof DataIntegrityViolationException) {
             return exception;
         }
         SQLException sqlException = findSqlException(exception);

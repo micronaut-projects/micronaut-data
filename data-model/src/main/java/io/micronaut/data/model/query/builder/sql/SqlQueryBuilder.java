@@ -448,7 +448,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
+     * Builds the create table statements for a collection of entities. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities The collection of entities
@@ -465,7 +465,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the creation table statement for collection of entities.
+     * Builds the create table statements for a collection of entities.
      *
      * @param definitionProviders The definition providers
      * @param entities The collection of entities
