@@ -41,7 +41,7 @@ class BookRepositorySpec {
                 .orElse(null);
 
         assertEquals( // <4>
-                "SELECT book_.\"ID\",book_.\"DATE_CREATED\",book_.\"TITLE\",book_.\"PAGES\" FROM \"BOOK\" book_ WHERE (book_.\"TITLE\" = ?)",
+                "SELECT book_.\"ID\",book_.\"DATE_CREATED\",book_.\"TITLE\",book_.\"PAGES\",book_.\"GENRE\" FROM \"BOOK\" book_ WHERE (book_.\"TITLE\" = ?)",
                 query
         );
 

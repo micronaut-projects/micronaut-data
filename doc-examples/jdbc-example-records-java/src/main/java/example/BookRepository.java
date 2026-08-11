@@ -7,12 +7,12 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.OracleCrudRepository;
 
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
-public interface BookRepository extends CrudRepository<Book, Long> {
+public interface BookRepository extends OracleCrudRepository<Book, Long> {
     // tag::simple[]
     Book findByTitle(String title);
 
@@ -24,6 +24,8 @@ public interface BookRepository extends CrudRepository<Book, Long> {
     // tag::greaterthan[]
     List<Book> findByPagesGreaterThan(int pageCount);
     // end::greaterthan[]
+
+    List<Book> findByPagesGreaterThanEquals(int pageCount);
 
     // tag::logical[]
     List<Book> findByPagesGreaterThanOrTitleLike(int pageCount, String title);
@@ -67,7 +69,11 @@ public interface BookRepository extends CrudRepository<Book, Long> {
     // end::save[]
 
     // tag::save2[]
-    Book persist(String title, int pages);
+    Book persist(String title, int pages, BookGenre genre);
+
+    default Book persist(String title, int pages) {
+        return persist(title, pages, BookGenre.OTHER);
+    }
     // end::save2[]
 
     // tag::update[]
