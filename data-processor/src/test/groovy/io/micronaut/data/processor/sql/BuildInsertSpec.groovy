@@ -594,6 +594,52 @@ class Account {
         saveQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
     }
 
+    void "test implicit save secondary update omits reservable properties instead of mixing assignments"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.ImplicitAccountRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, operations = JdbcRepositoryOperations.class, implicitQueries = true)
+interface ImplicitAccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+        def saveQueries = method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+
+        expect:
+        getQuery(method) == 'INSERT INTO "ACCOUNT" ("NAME","BALANCE","ID") VALUES (?,?,"ACCOUNT_SEQ".nextval)'
+        saveQueries.size() == 1
+        saveQueries[0].stringValue().get() == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !saveQueries[0].stringValue().get().contains('"BALANCE"')
+    }
+
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
     void "test build SQL insert statement for repo with no super interface"() {
         given:

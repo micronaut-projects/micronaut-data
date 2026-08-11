@@ -385,6 +385,48 @@ class Account {
         getParameterPropertyPaths(method) == ['name', 'id'] as String[]
     }
 
+    void "test implicit entity update omits reservable properties instead of mixing assignments"() {
+        given:
+        def repository = buildRepository('test.ImplicitAccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, operations = JdbcRepositoryOperations.class, implicitQueries = true)
+interface ImplicitAccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('"BALANCE"')
+    }
+
     void "test entity update fails if only update properties are reservable"() {
         when:
         buildRepository('test.AccountRepository', """
