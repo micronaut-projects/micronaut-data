@@ -491,6 +491,11 @@ public final class SqlSchemaUtils {
                                                   List<SqlColumnMapping> primaryKeyColumns,
                                                   List<SqlColumnMapping> columns,
                                                   List<SqlIndexMapping> indexes) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association && property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                throw new MappingException("@Reservable property [" + property.getOwner().getName() + "." + property.getName() + "] cannot be a relationship property");
+            }
+        }
         List<SqlColumnMapping> reservableColumns = columns.stream().filter(SqlColumnMapping::isReservable).toList();
         if (reservableColumns.isEmpty()) {
             return;

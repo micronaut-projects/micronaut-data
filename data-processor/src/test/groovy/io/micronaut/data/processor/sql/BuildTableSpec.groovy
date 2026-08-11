@@ -580,6 +580,62 @@ class Stats {
         e.message.contains("@Reservable column [balance] of entity [test.Account] cannot be indexed")
     }
 
+    void "test build create table rejects reservable relationship property"() {
+        given:
+        def entity = buildJpaEntity('test.Invoice', '''
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+
+@Entity
+class Invoice {
+    @javax.persistence.Id
+    private Long id;
+
+    @Reservable
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Account account;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+}
+
+@Entity
+class Account {
+    @javax.persistence.Id
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        builder.buildCreateTableStatements(entity)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message.contains("@Reservable property [test.Invoice.account] cannot be a relationship property")
+    }
+
 
     void "test build create table table statement for nullable embeddable"() {
         given:
