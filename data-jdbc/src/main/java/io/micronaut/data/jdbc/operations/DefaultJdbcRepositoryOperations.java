@@ -1448,8 +1448,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         @Override
         protected void failed(Exception e, String operation) throws DataAccessException {
-            if (e instanceof DataIntegrityViolationException dataIntegrityViolationException) {
-                throw dataIntegrityViolationException;
+            if (e instanceof DataAccessException dataAccessException) {
+                throw dataAccessException;
             }
             super.failed(e, operation);
         }
