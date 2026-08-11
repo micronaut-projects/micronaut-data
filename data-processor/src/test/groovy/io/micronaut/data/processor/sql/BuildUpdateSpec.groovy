@@ -57,6 +57,40 @@ record Account(@Id Long id, @Reservable Long balance) {
         e.message.contains("Reservation methods require the Oracle dialect")
     }
 
+    void "test entity update with reservable property requires Oracle dialect"() {
+        when:
+        buildRepository('test.NonOracleEntityUpdateRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface NonOracleEntityUpdateRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    private String name;
+    @Reservable private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    String getName() { return name; }
+    void setName(String name) { this.name = name; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("@Reservable properties require the Oracle dialect")
+    }
+
     void "test reserve method validates property targets"() {
         when:
         buildRepository('test.UnknownReservationPropertyRepository', """

@@ -322,12 +322,11 @@ class CriteriaSpec extends AbstractCriteriaSpec {
     void "criteria update rejects mixed direct assignments to reservable property"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
-            Path<Number> budget = entityRoot.get("budget")
             criteriaUpdate.set("name", "updated")
-            criteriaUpdate.set("budget", criteriaBuilder.sum(budget, 1))
+            criteriaUpdate.set("budget", criteriaBuilder.parameter(BigDecimal))
 
         when:
-            getSqlQuery(criteriaUpdate)
+            getSqlQuery(criteriaUpdate, Dialect.ORACLE)
 
         then:
             def e = thrown(IllegalArgumentException)

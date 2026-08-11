@@ -942,6 +942,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return !generated;
             })
             .collect(Collectors.toList());
+        boolean hasReservableUpdateProperty = updateProperties.stream()
+            .anyMatch(e -> hasReservableUpdateProperty(e.getKey()));
+        if (hasReservableUpdateProperty && getDialect() != Dialect.ORACLE) {
+            throw new IllegalArgumentException("Cannot generate update statement for @Reservable properties with dialect ["
+                + getDialect() + "]. @Reservable properties require the Oracle dialect.");
+        }
         boolean hasDirectReservableAssignment = !generatedEntityUpdate && updateProperties.stream()
             .anyMatch(e -> !isPermittedReservableAssignment(e.getValue()) && hasReservableUpdateProperty(e.getKey()));
         if (hasDirectReservableAssignment) {
