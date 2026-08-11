@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Update;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -48,6 +49,7 @@ import jakarta.persistence.criteria.Path;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -161,6 +163,28 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             @Override
             protected boolean supportedByImplicitQueries() {
                 return true;
+            }
+
+            @Override
+            protected boolean supportedByImplicitQueries(MethodMatchContext matchContext) {
+                return !hasReservableUpdateProperty(matchContext.getRootEntity()) && super.supportedByImplicitQueries(matchContext);
+            }
+
+            private boolean hasReservableUpdateProperty(SourcePersistentEntity entity) {
+                boolean[] found = {false};
+                Stream.concat(entity.getPersistentProperties().stream(), entity.hasVersion() ? Stream.of(entity.getVersion()) : Stream.empty())
+                    .filter(p -> !(p instanceof Association association && association.isForeignKey())
+                        && !p.isGenerated()
+                        && p.findAnnotation(AutoPopulated.class)
+                        .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
+                    .forEach(property -> PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (associations, persistentProperty) -> {
+                        if (!(persistentProperty instanceof Association)
+                            && !persistentProperty.isGenerated()
+                            && persistentProperty.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                            found[0] = true;
+                        }
+                    }));
+                return found[0];
             }
 
             @Override

@@ -165,9 +165,20 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             interceptorMatch.returnType(),
             interceptorMatch.interceptor()
         );
-        if (!matchContext.supportsImplicitQueries()) {
-            SourcePersistentEntity rootEntity = addInsertQuery(methodMatchInfo, matchContext, operationType);
-            addSecondaryUpdateQuery(methodMatchInfo, matchContext, entityParameters, rootEntity, operationType, saveOperation);
+        SourcePersistentEntity rootEntity = Objects.requireNonNull(matchContext.getRootEntity(), "Root entity is required for save method");
+        SecondaryUpdateProperties secondaryUpdateProperties = saveOperation
+            && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())
+            ? resolveSecondaryUpdateProperties(rootEntity, matchContext.getAnnotationMetadata())
+            : null;
+        if (secondaryUpdateProperties != null && secondaryUpdateProperties.hasOnlyReservableUpdateProperties()) {
+            throw new MatchFailedException("Cannot generate save/update for entity [" + rootEntity.getName()
+                + "]: all updatable properties are reservable. Use insert(...) for new rows and derived "
+                + "reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
+        }
+        boolean requiresExplicitQueries = secondaryUpdateProperties != null && secondaryUpdateProperties.hasReservableUpdateProperty();
+        if (!matchContext.supportsImplicitQueries() || requiresExplicitQueries) {
+            SourcePersistentEntity resolvedRootEntity = addInsertQuery(methodMatchInfo, matchContext, operationType);
+            addSecondaryUpdateQuery(methodMatchInfo, matchContext, entityParameters, resolvedRootEntity, operationType, saveOperation);
         }
         addEntityParameterRoles(methodMatchInfo, entityParameters);
         return methodMatchInfo;
