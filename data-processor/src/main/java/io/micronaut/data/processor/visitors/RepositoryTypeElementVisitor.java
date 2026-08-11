@@ -280,24 +280,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
 
-            Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
-
-            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
-
-                @Override
-                public SourcePersistentEntity apply(ClassElement classElement) {
-                    String classNameKey = getClassNameKey(classElement);
-                    return entityMap.computeIfAbsent(classNameKey, s -> {
-                        if (classElement.hasAnnotation("io.micronaut.data.annotation.Embeddable")) {
-                            embeddedMappedEntityVisitor.visitClass(classElement, context);
-                        } else {
-                            mappedEntityVisitor.visitClass(classElement, context);
-                        }
-                        return new SourcePersistentEntity(classElement, this);
-                    });
-                }
-            };
+            Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
             Function<String, SourcePersistentEntity> entityBySimplyNameResolver = new Function<>() {
                 @Override
                 @Nullable
@@ -1111,31 +1094,4 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    /**
-     * Generates key for the entityMap using {@link ClassElement}.
-     * If class element has generic types then will use all bound generic types in the key like
-     * for example {@code Entity<CustomKeyType, CustomValueType>} and for non-generic class element
-     * will just return class name.
-     * This is needed when there are for example multiple embedded fields with the same type
-     * but different generic type argument.
-     *
-     * @param classElement The class element
-     * @return The key for entityMap created from the class element
-     */
-    private String getClassNameKey(ClassElement classElement) {
-        List<? extends ClassElement> boundGenericTypes = classElement.getBoundGenericTypes();
-        if (CollectionUtils.isNotEmpty(boundGenericTypes)) {
-            StringBuilder keyBuff = new StringBuilder(classElement.getName());
-            keyBuff.append("<");
-            for (ClassElement boundGenericType : boundGenericTypes) {
-                keyBuff.append(boundGenericType.getName());
-                keyBuff.append(",");
-            }
-            keyBuff.deleteCharAt(keyBuff.length() - 1);
-            keyBuff.append(">");
-            return keyBuff.toString();
-        } else {
-            return classElement.getName();
-        }
-    }
 }

@@ -30,8 +30,10 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Generates the ROWID reload query metadata for Oracle change listeners.
@@ -39,12 +41,7 @@ import java.util.Objects;
 public final class ChangeListenerVisitor implements TypeElementVisitor<Object, Object> {
     private static final String CHANGE_LISTENER = "io.micronaut.data.jdbc.annotation.ChangeListener";
 
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
-        @Override
-        public SourcePersistentEntity apply(ClassElement classElement) {
-            return new SourcePersistentEntity(classElement, this);
-        }
-    };
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
 
     @Override
     public int getOrder() {
@@ -61,12 +58,16 @@ public final class ChangeListenerVisitor implements TypeElementVisitor<Object, O
         if (!element.hasAnnotation(CHANGE_LISTENER)) {
             return;
         }
+
         ParameterElement[] parameters = element.getParameters();
         if (parameters.length != 1) {
             return;
         }
+
+        Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
+
         SourcePersistentEntityCriteriaQuery<Object> query = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver).createQuery();
-        query.select(query.from(parameters[0].getType()));
+        query.select(query.from(entityResolver.apply(parameters[0].getType())));
         QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE)));
         element.annotate(ChangeListenerQuery.class, builder -> builder
             .value(queryResult.getQuery() + " WHERE ROWID = ?")

@@ -1,7 +1,5 @@
 package example.notification;
 
-import example.Book;
-import example.BookRepository;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
@@ -14,31 +12,31 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Context
 @Requires(property = "query-notification.object.enabled")
-final class BookCache implements ApplicationEventListener<StartupEvent> {
+final class LibraryCache implements ApplicationEventListener<StartupEvent> {
 
-    private final BookRepository repository;
-    private final Map<Long, Book> books = new ConcurrentHashMap<>();
+    private final LibraryRepository repository;
+    private final Map<Long, Library> libraries = new ConcurrentHashMap<>();
 
-    BookCache(BookRepository repository) {
+    LibraryCache(LibraryRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public void onApplicationEvent(StartupEvent event) {
-        repository.findAll().forEach(book -> books.put(book.id(), book));
+        repository.findAll().forEach(library -> libraries.put(library.id(), library));
     }
 
-    public Optional<Book> find(String title) {
-        return books.values()
+    public Optional<Library> find(String name) {
+        return libraries.values()
             .stream()
-            .filter(book -> book.title().equals(title))
+            .filter(library -> library.name().equals(name))
             .findFirst();
     }
 
     @ChangeListener(properties = @ChangeListener.Property(
         name = "DCN_CLIENT_INIT_CONNECTION", value = "true"
     ))
-    void onBookChanged(Book book) {
-        books.put(book.id(), book);
+    void onLibraryChanged(Library library) {
+        libraries.put(library.id(), library);
     }
 }

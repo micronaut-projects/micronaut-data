@@ -1,7 +1,5 @@
 package example.notification;
 
-import example.Book;
-import example.BookRepository;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
@@ -14,40 +12,40 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Context
 @Requires(property = "query-notification.query.enabled")
-final class PageThresholdBookCache implements ApplicationEventListener<StartupEvent> {
+final class CustomLibraryCache implements ApplicationEventListener<StartupEvent> {
 
-    private final BookRepository repository;
-    private final Map<Long, Book> books = new ConcurrentHashMap<>();
+    private final LibraryRepository repository;
+    private final Map<Long, Library> libraries = new ConcurrentHashMap<>();
 
-    PageThresholdBookCache(BookRepository repository) {
+    CustomLibraryCache(LibraryRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public void onApplicationEvent(StartupEvent event) {
-        repository.findByPagesGreaterThanEquals(200).forEach(book -> books.put(book.id(), book));
+        repository.findByCapacityGreaterThanEquals(10000).forEach(library -> libraries.put(library.id(), library));
     }
 
-    public Optional<Book> find(String title) {
-        return books.values()
+    public Optional<Library> find(String name) {
+        return libraries.values()
             .stream()
-            .filter(book -> book.title().equals(title))
+            .filter(library -> library.name().equals(name))
             .findFirst();
     }
 
     @ChangeListener(
-        select = "title",
-        where = "pages >= 200",
+        select = "name",
+        where = "capacity >= 10000",
         properties = {
             @ChangeListener.Property(name = "DCN_CLIENT_INIT_CONNECTION", value = "true"),
             @ChangeListener.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
         }
     )
-    void onBookChanged(Book book) {
-        if (book.pages() >= 200) {
-            books.put(book.id(), book);
+    void onLibraryChanged(Library library) {
+        if (library.capacity() >= 10000) {
+            libraries.put(library.id(), library);
         } else {
-            books.remove(book.id());
+            libraries.remove(library.id());
         }
     }
 }
