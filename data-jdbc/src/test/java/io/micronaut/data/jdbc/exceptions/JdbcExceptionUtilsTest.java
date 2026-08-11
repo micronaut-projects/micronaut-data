@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.exceptions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.BatchUpdateException;
+import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,5 +42,11 @@ class JdbcExceptionUtilsTest {
 
         assertFalse(JdbcExceptionUtils.isUniqueConstraintViolation(batchException));
         assertTrue(JdbcExceptionUtils.isIntegrityConstraintViolation(batchException));
+    }
+
+    @Test
+    void recognizesSqlStateOnlyIntegrityConstraintViolation() {
+        assertTrue(JdbcExceptionUtils.isIntegrityConstraintViolation(new SQLException("foreign key violation", "23503", 0)));
+        assertTrue(JdbcExceptionUtils.isIntegrityConstraintViolation(new SQLException("integrity violation", "23000", 0)));
     }
 }

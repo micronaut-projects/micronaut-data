@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.query.builder.sql;
+package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
 
 /**
- * A generated entity-update assignment that may omit reservable properties.
+ * Internal marker for an update generated from a repository entity method such as
+ * {@code update(entity)} or the update branch of {@code save(entity)}.
  *
- * @param parameter The entity property parameter expression
+ * @author radovanradic
  * @since 5.2.0
  */
 @Internal
-public record GeneratedEntityUpdate(Object parameter) {
+public interface GeneratedEntityUpdateQueryDefinition extends QueryBuilder.UpdateQueryDefinition {
+
+    /**
+     * @return Whether the update was generated from a repository entity update method
+     */
+    boolean isGeneratedEntityUpdate();
 }

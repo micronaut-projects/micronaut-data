@@ -47,4 +47,12 @@ class R2dbcExceptionUtilsTest {
         assertFalse(R2dbcExceptionUtils.isUniqueConstraintViolation(exception));
         assertTrue(R2dbcExceptionUtils.isIntegrityConstraintViolation(exception));
     }
+
+    @Test
+    void recognizesSqlStateOnlyIntegrityConstraintViolation() {
+        R2dbcException exception = new R2dbcException("foreign key violation", "23503", 0) {
+        };
+
+        assertTrue(R2dbcExceptionUtils.isIntegrityConstraintViolation(exception));
+    }
 }

@@ -32,10 +32,10 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.query.builder.sql.GeneratedEntityUpdate;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMethodMatch;
@@ -131,6 +131,12 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                                                      PersistentEntityCriteriaUpdate<T> query,
                                                      SourcePersistentEntityCriteriaBuilder cb) {
                 final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                // Repository entity updates are internally represented as criteria updates.
+                // Mark them so the SQL builder can omit direct @Reservable assignments;
+                // explicit Criteria API updates are intentionally left unmarked.
+                if (query instanceof SourcePersistentEntityCriteriaUpdate<?> sourceUpdate) {
+                    sourceUpdate.markGeneratedEntityUpdate();
+                }
 
                 // for JSON entity representation we don't update all entity fields but all fields at once via JSON update
                 if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
@@ -144,7 +150,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
 
                 Stream.concat(rootEntity.getPersistentProperties().stream(), rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.of())
                         .filter(p -> !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
-                        .forEach(p -> query.set(p.getName(), new GeneratedEntityUpdate(cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p)))));
+                        .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
 
                 if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
                     // Workaround for only ID entities

@@ -85,6 +85,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -869,7 +870,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return null;
     }
 
-    private void buildUpdateStatement(AnnotationMetadata annotationMetadata, QueryState queryState, Map<String, Object> propertiesToUpdate) {
+    private void buildUpdateStatement(AnnotationMetadata annotationMetadata, QueryState queryState,
+                                      Map<String, Object> propertiesToUpdate, boolean generatedEntityUpdate) {
         StringBuilder queryString = queryState.getQuery();
         queryString.append(SPACE).append("SET").append(SPACE);
 
@@ -940,14 +942,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return !generated;
             })
             .collect(Collectors.toList());
-        boolean hasDirectReservableAssignment = updateProperties.stream()
+        boolean hasDirectReservableAssignment = !generatedEntityUpdate && updateProperties.stream()
             .anyMatch(e -> !isPermittedReservableAssignment(e.getValue()) && hasReservableUpdateProperty(e.getKey()));
         if (hasDirectReservableAssignment) {
             throw new IllegalArgumentException("Cannot generate update statement with direct assignments to @Reservable properties. "
                 + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
         }
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
-            .filter(e -> e.getValue() instanceof ReservationDelta || hasNonReservableUpdateProperty(e.getKey()))
+            .filter(e -> e.getValue() instanceof ReservationDelta || !generatedEntityUpdate || hasNonReservableUpdateProperty(e.getKey()))
             .toList();
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> hasReservableUpdateProperty(e.getKey()))) {
@@ -1043,14 +1045,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private static Object unwrapUpdateValue(Object value) {
-        if (value instanceof ReservationDelta reservationDelta) {
-            return reservationDelta.expression();
-        }
-        return value instanceof GeneratedEntityUpdate generatedEntityUpdate ? generatedEntityUpdate.parameter() : value;
+        return value instanceof ReservationDelta reservationDelta ? reservationDelta.expression() : value;
     }
 
     private static boolean isPermittedReservableAssignment(Object value) {
-        return value instanceof ReservationDelta || value instanceof GeneratedEntityUpdate;
+        return value instanceof ReservationDelta;
     }
 
     private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath) {
@@ -1152,7 +1151,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (tableAlias != null) {
             queryString.append(SPACE).append(tableAlias);
         }
-        buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate);
+        // Only repository-generated entity assignments may omit @Reservable properties.
+        // Explicit Criteria API updates must be validated as direct assignments.
+        boolean generatedEntityUpdate = definition instanceof GeneratedEntityUpdateQueryDefinition generated
+            && generated.isGeneratedEntityUpdate();
+        buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate, generatedEntityUpdate);
         buildWhereClause(annotationMetadata, definition.predicate(), queryState);
 
         Selection<?> returningSelection = definition.returningSelection();

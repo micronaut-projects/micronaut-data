@@ -31,6 +31,7 @@ import java.util.Locale;
 public final class JdbcExceptionUtils {
 
     private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
+    private static final String INTEGRITY_VIOLATION_SQL_STATE_PREFIX = "23";
 
     private JdbcExceptionUtils() {
     }
@@ -57,12 +58,17 @@ public final class JdbcExceptionUtils {
     public static boolean isIntegrityConstraintViolation(SQLException sqlException) {
         SQLException exception = sqlException;
         while (exception != null) {
-            if (exception instanceof SQLIntegrityConstraintViolationException) {
+            if (exception instanceof SQLIntegrityConstraintViolationException
+                || isIntegrityConstraintSqlState(exception.getSQLState())) {
                 return true;
             }
             exception = exception.getNextException();
         }
         return false;
+    }
+
+    private static boolean isIntegrityConstraintSqlState(@Nullable String sqlState) {
+        return sqlState != null && sqlState.startsWith(INTEGRITY_VIOLATION_SQL_STATE_PREFIX);
     }
 
     private static boolean isUniqueConstraintViolation(@Nullable String sqlState, int errorCode, @Nullable String message) {

@@ -31,6 +31,7 @@ import java.util.Locale;
 public final class R2dbcExceptionUtils {
 
     private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
+    private static final String INTEGRITY_VIOLATION_SQL_STATE_PREFIX = "23";
 
     private R2dbcExceptionUtils() {
     }
@@ -57,12 +58,17 @@ public final class R2dbcExceptionUtils {
     public static boolean isIntegrityConstraintViolation(R2dbcException exception) {
         Throwable cause = exception;
         while (cause != null) {
-            if (cause instanceof R2dbcDataIntegrityViolationException) {
+            if (cause instanceof R2dbcDataIntegrityViolationException
+                || cause instanceof R2dbcException r2dbcException && isIntegrityConstraintSqlState(r2dbcException.getSqlState())) {
                 return true;
             }
             cause = cause.getCause();
         }
         return false;
+    }
+
+    private static boolean isIntegrityConstraintSqlState(@Nullable String sqlState) {
+        return sqlState != null && sqlState.startsWith(INTEGRITY_VIOLATION_SQL_STATE_PREFIX);
     }
 
     private static boolean isUniqueConstraintViolation(@Nullable String sqlState, int errorCode, @Nullable String message) {

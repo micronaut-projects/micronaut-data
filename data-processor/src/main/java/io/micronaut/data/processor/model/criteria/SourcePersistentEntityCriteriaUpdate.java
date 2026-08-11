@@ -32,6 +32,14 @@ import io.micronaut.inject.ast.ClassElement;
 public interface SourcePersistentEntityCriteriaUpdate<T> extends PersistentEntityCriteriaUpdate<T> {
 
     /**
+     * Marks this internal criteria representation as generated from a repository entity update
+     * such as {@code update(entity)} or the update branch of {@code save(entity)}.
+     *
+     * <p>Explicit Criteria API updates must remain unmarked.</p>
+     */
+    void markGeneratedEntityUpdate();
+
+    /**
      * Creates a {@link PersistentEntityRoot} from class element representing the entity.
      *
      * @param entityClassElement The entity class element
