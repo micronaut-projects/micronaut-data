@@ -582,7 +582,15 @@ public final class SqlSchemaUtils {
     }
 
     private static String constraintName(String columnName, String tableName, String operator, String value) {
-        String name = "CK_" + sanitize(tableName) + "_" + sanitize(columnName) + "_" + opToken(operator) + "_" + sanitize(value);
+        String sanitizedValue;
+        if (value.startsWith("-")) {
+            sanitizedValue = "NEG_" + sanitize(value.substring(1));
+        } else if (value.startsWith("+")) {
+            sanitizedValue = "POS_" + sanitize(value.substring(1));
+        } else {
+            sanitizedValue = sanitize(value);
+        }
+        String name = "CK_" + sanitize(tableName) + "_" + sanitize(columnName) + "_" + opToken(operator) + "_" + sanitizedValue;
         if (name.length() <= MAX_CONSTRAINT_NAME_LENGTH) {
             return name;
         }
