@@ -183,6 +183,43 @@ class Account {
         getQuery(repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
     }
 
+    void "test reserve methods omit automatic audit assignments"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.time.Instant;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveDecrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private Long balance;
+    @DateUpdated private Instant updatedAt;
+
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+    Instant getUpdatedAt() { return updatedAt; }
+    void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserveDecrementBalance").findFirst().get()) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+    }
+
     void "test reserve method expands an embedded composite ID"() {
         given:
         def repository = buildRepository('test.OrderLineRepository', """

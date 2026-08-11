@@ -148,6 +148,11 @@ public final class ReservationMethodMatcher implements MethodMatcher {
                     query.set(delta.propertyPath().getPath(), new ReservationDelta(expression));
                 }
             }
+
+            @Override
+            protected boolean shouldAddAutomaticUpdateAssignments() {
+                return false;
+            }
         };
     }
 

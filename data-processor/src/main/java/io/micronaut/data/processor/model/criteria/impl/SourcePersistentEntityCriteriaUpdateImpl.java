@@ -20,6 +20,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.query.builder.sql.GeneratedEntityUpdate;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
@@ -73,7 +74,8 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
 
     @Override
     protected void setValue(String attributeName, @Nullable Object value) {
-        if (value instanceof SourceParameterExpressionImpl sourceParameterExpression) {
+        Object parameterValue = value instanceof GeneratedEntityUpdate generatedEntityUpdate ? generatedEntityUpdate.parameter() : value;
+        if (parameterValue instanceof SourceParameterExpressionImpl sourceParameterExpression) {
             sourceParameterExpression.setUpdate(true);
         }
         super.setValue(attributeName, value);
