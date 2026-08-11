@@ -341,7 +341,7 @@ public final class SqlSchemaUtils {
                     if (provider.supports(argument)) {
                         String def = provider.getColumnDefinition(argument, DatabaseType.from(dialect));
                         if (def != null) {
-                            definition = def;
+                            definition = required ? def + " NOT NULL" : def;
                             break;
                         }
                     }

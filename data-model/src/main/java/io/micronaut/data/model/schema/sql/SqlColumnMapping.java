@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 
 import java.util.List;
 
@@ -459,6 +460,33 @@ public final class SqlColumnMapping {
             }
         };
         return this.sqlType;
+    }
+
+    /**
+     * Returns the SQL type representation of this column for the given dialect and target version.
+     *
+     * @param dialect the SQL dialect to generate the type for
+     * @param dialectVersion the target dialect version
+     * @return the SQL type representation of this column
+     * @since 5.2
+     */
+    public String getSqlType(Dialect dialect, @Nullable String dialectVersion) {
+        return getSqlType(SqlDialectOptions.of(dialect, dialectVersion));
+    }
+
+    /**
+     * Returns the SQL type representation of this column for the given dialect options.
+     *
+     * @param dialectOptions the resolved dialect options to generate the type for
+     * @return the SQL type representation of this column
+     */
+    public String getSqlType(SqlDialectOptions dialectOptions) {
+        if (dataType == DataType.BOOLEAN
+            && dialectOptions.dialect() == Dialect.ORACLE
+            && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
+            return "BOOLEAN";
+        }
+        return getSqlType(dialectOptions.dialect());
     }
 
     /**
