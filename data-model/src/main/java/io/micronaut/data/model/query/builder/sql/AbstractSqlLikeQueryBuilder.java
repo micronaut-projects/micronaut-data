@@ -199,6 +199,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * @param requiredVersion the required target dialect version
+     * @return whether the target dialect version meets the requirement
+     */
+    protected boolean isDialectVersionAtLeast(String requiredVersion) {
+        return false;
+    }
+
+    /**
+     * @return the normalized target dialect version, or {@code null} when none is configured
+     */
+    @Nullable
+    protected String getDialectVersion() {
+        return null;
+    }
+
+    /**
+     * @return the resolved dialect options for this builder
+     */
+    protected SqlDialectOptions getDialectOptions() {
+        return SqlDialectOptions.of(getDialect(), getDialectVersion());
+    }
+
+    /**
      * @return True if embedded properties should be traversed
      */
     protected boolean traverseEmbedded() {
@@ -2622,7 +2645,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsFalse(Expression<?> expression) {
-            appendUnaryCondition(" = FALSE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                if (isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
+                    appendUnaryCondition(" IS FALSE", expression);
+                } else {
+                    appendUnaryCondition(" = " + asLiteral(false), expression);
+                }
+            } else {
+                appendUnaryCondition(" = FALSE", expression);
+            }
         }
 
         @Override
@@ -2637,7 +2668,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsTrue(Expression<?> expression) {
-            appendUnaryCondition(" = TRUE", expression);
+            if (getDialect() == Dialect.ORACLE) {
+                if (isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
+                    appendUnaryCondition(" IS TRUE", expression);
+                } else {
+                    appendUnaryCondition(" = " + asLiteral(true), expression);
+                }
+            } else {
+                appendUnaryCondition(" = TRUE", expression);
+            }
         }
 
         @Override
@@ -3503,6 +3542,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
+            return getCastDbType(type, SqlDialectOptions.defaults(dialect));
+        }
+
+        static String getCastDbType(@Nullable ExpressionType<?> type,
+                                    SqlDialectOptions dialectOptions) {
             if (type == null) {
                 throw new IllegalStateException("CAST type is expected");
             }
@@ -3514,14 +3558,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dataType == DataType.OBJECT) {
                 throw new IllegalStateException("Unknown data type for CAST type: " + javaType);
             }
-            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialect);
+            return new SqlColumnMapping("unknown", dataType, SqlDbType.BLOB).getSqlType(dialectOptions);
         }
 
         private void appendCast(ExpressionType<?> type, Expression<?> expression) {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect()));
+            query.append(getCastDbType(type, getDialectOptions()));
             query.append(CLOSE_BRACKET);
         }
 

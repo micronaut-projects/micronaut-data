@@ -140,6 +140,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     };
 
     private final Dialect dialect;
+    private final SqlDialectOptions dialectOptions;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
     /**
@@ -156,6 +157,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     annotationMetadata
                         .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                         .orElse(Dialect.ANSI));
+            this.dialectOptions = SqlDialectOptions.of(annotationMetadata, dialect);
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -176,6 +178,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         } else {
             this.dialect = Dialect.ANSI;
+            this.dialectOptions = SqlDialectOptions.defaults(dialect);
         }
     }
 
@@ -184,14 +187,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
+        this.dialectOptions = SqlDialectOptions.defaults(dialect);
     }
 
     /**
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
+        this(dialect, null);
+    }
+
+    /**
+     * @param dialect The dialect
+     * @param dialectVersion The target dialect version
+     * @since 5.2
+     */
+    public SqlQueryBuilder(Dialect dialect, @Nullable String dialectVersion) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
+        this.dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
     }
 
     /**
@@ -200,6 +214,31 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     public Dialect getDialect() {
         return dialect;
+    }
+
+    /**
+     * @param requiredVersion The required target dialect version
+     * @return Whether the target dialect version meets the requirement
+     * @since 5.2
+     */
+    @Override
+    public boolean isDialectVersionAtLeast(String requiredVersion) {
+        return dialectOptions.isVersionAtLeast(requiredVersion);
+    }
+
+    /**
+     * @return The normalized target dialect version, or {@code null} when none is configured.
+     * @since 5.2
+     */
+    @Override
+    @Nullable
+    public String getDialectVersion() {
+        return dialectOptions.version().orElse(null);
+    }
+
+    @Override
+    protected SqlDialectOptions getDialectOptions() {
+        return dialectOptions;
     }
 
     @Override
@@ -218,7 +257,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String asLiteral(@Nullable Object value) {
-        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean vBoolean) {
+        if (dialect == Dialect.SQL_SERVER && value instanceof Boolean vBoolean) {
+            return Boolean.TRUE.equals(vBoolean) ? "1" : "0";
+        }
+        if (dialect == Dialect.ORACLE
+            && value instanceof Boolean vBoolean
+            && !dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
             return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);
@@ -817,7 +861,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
                     column += " " + tableIdentity.getDefinition();
                 } else {
-                    column += " " + tableIdentity.getSqlType(dialect);
+                    column += " " + tableIdentity.getSqlType(dialectOptions);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -837,7 +881,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
             } else {
-                column += " " + tableColumn.getSqlType(dialect);
+                column += " " + tableColumn.getSqlType(dialectOptions);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }

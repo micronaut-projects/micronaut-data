@@ -55,6 +55,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -110,10 +111,13 @@ import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.persistence.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -132,6 +136,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -157,6 +162,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     AutoCloseable,
     SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
+
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
@@ -169,6 +176,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
+    // This @EachBean(DataSource.class) instance caches the successfully resolved version per datasource.
+    private final SynchronizedLazyValue<DatabaseVersion> databaseVersion = new SynchronizedLazyValue<>();
 
     private final Integer defaultFetchSize;
 
@@ -657,7 +667,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
                 DataType resultDataType = preparedQuery.getResultDataType();
-                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, jdbcConfiguration.getDialect());
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType,
+                    SqlDialectOptions.of(preparedQuery.getDialect(), preparedQuery.getDialectVersion()));
                 int outIndex = preparedQuery.getQueryBindings().size() + 1;
                 callableStatement.registerOutParameter(outIndex, sqlType);
             }
@@ -1206,6 +1217,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             this.connection = connection;
             this.ps = ps;
             this.sqlStoredQuery = sqlStoredQuery;
+            // Binders are created for every metadata-aware statement, including queries with no parameters.
+            // Keep target-version validation here to run it once per statement execution.
+            validateTargetVersion(connection, sqlStoredQuery);
         }
 
         @Override
@@ -1271,6 +1285,86 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return index;
         }
 
+        private void validateTargetVersion(Connection connection, SqlStoredQuery<?, ?> storedQuery) {
+            if (!jdbcConfiguration.getDialectOptions().isValidateVersion()) {
+                return;
+            }
+            String target = storedQuery.getDialectVersion();
+            if (target == null) {
+                return;
+            }
+            Dialect dialect = storedQuery.getDialect();
+            Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
+            String targetVersion = normalizedTarget.orElse(target);
+            DialectTargetVersion targetVersionKey = new DialectTargetVersion(dialect, targetVersion);
+            // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
+            // without waiting because this diagnostic does not affect query execution.
+            if (!checkedTargetVersions.add(targetVersionKey)) {
+                return;
+            }
+            try {
+                if (normalizedTarget.isEmpty()) {
+                    LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                        target, dialect);
+                    return;
+                }
+                DatabaseVersion targetDatabaseVersion = parseTargetDatabaseVersion(targetVersion, targetVersionKey);
+                if (targetDatabaseVersion == null) {
+                    return;
+                }
+                Optional<DatabaseVersion> serverVersion = resolveDatabaseVersion(connection);
+                if (serverVersion.isEmpty()) {
+                    // Do not cache a failed metadata lookup. A later operation can retry the diagnostic.
+                    checkedTargetVersions.remove(targetVersionKey);
+                    return;
+                }
+                DatabaseVersion server = serverVersion.get();
+                // JDBC only exposes server major/minor values. Do not infer a patch value of zero,
+                // because a patch-only target version cannot be validated reliably from this metadata.
+                boolean serverIsOlder = server.major() < targetDatabaseVersion.major()
+                    || (server.major() == targetDatabaseVersion.major() && server.minor() < targetDatabaseVersion.minor());
+                if (server.major() != targetDatabaseVersion.major() || serverIsOlder) {
+                    LOG.warn("Database version {} reported by datasource '{}' does not match the SQL target version {} for dialect {}. Generated SQL may not be supported by the connected server.",
+                        server, dataSourceName, targetVersion, dialect);
+                }
+            } catch (RuntimeException e) {
+                checkedTargetVersions.remove(targetVersionKey);
+                throw e;
+            }
+        }
+
+        @Nullable
+        private DatabaseVersion parseTargetDatabaseVersion(String target, DialectTargetVersion targetVersionKey) {
+            try {
+                String[] targetParts = target.split("\\.", -1);
+                return new DatabaseVersion(Integer.parseInt(targetParts[0]), Integer.parseInt(targetParts[1]));
+            } catch (NumberFormatException ignored) {
+                LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
+                    target, targetVersionKey.dialect());
+                return null;
+            }
+        }
+
+        private Optional<DatabaseVersion> resolveDatabaseVersion(Connection connection) {
+            try {
+                return Optional.of(databaseVersion.get(() -> {
+                    try {
+                        DatabaseMetaData metadata = connection.getMetaData();
+                        int major = metadata.getDatabaseMajorVersion();
+                        int minor = metadata.getDatabaseMinorVersion();
+                        if (major < 1 || minor < 0) {
+                            throw new SQLException("JDBC metadata returned an invalid database version: " + major + "." + minor);
+                        }
+                        return new DatabaseVersion(major, minor);
+                    } catch (SQLException e) {
+                        throw new DatabaseVersionLookupException(e);
+                    }
+                }));
+            } catch (DatabaseVersionLookupException e) {
+                LOG.warn("Unable to read the JDBC database version for datasource '{}'. SQL target-version diagnostics will be retried.", dataSourceName, e.getCause());
+                return Optional.empty();
+            }
+        }
     }
 
     private final class JdbcEntityOperations<T> extends AbstractSyncEntityOperations<JdbcOperationContext, T, SQLException> {
@@ -1617,5 +1711,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private record ConnectionContext(Connection connection, boolean needsToBeClosed) {
+    }
+
+    private record DatabaseVersion(int major, int minor) {
+        @Override
+        public String toString() {
+            return major + "." + minor;
+        }
+    }
+
+    private record DialectTargetVersion(Dialect dialect, String version) {
+    }
+
+    private static final class DatabaseVersionLookupException extends RuntimeException {
+        private DatabaseVersionLookupException(SQLException cause) {
+            super(cause);
+        }
     }
 }

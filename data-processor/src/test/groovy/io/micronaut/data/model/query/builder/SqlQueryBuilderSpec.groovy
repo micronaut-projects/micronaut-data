@@ -35,12 +35,14 @@ import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
+import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Owner
 import io.micronaut.data.tck.entities.Product
@@ -211,6 +213,39 @@ interface MyRepository {
         insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
+    void 'test configure dialect options version'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.ORACLE)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = Dialect.ORACLE, version = "23.1"))
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        when:
+        SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(annotationMetadata)
+
+        then:
+        sqlQueryBuilder.dialect == Dialect.ORACLE
+        sqlQueryBuilder.dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)
+    }
+
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"
         def query = builder.createCriteriaUpdate(Sale)
@@ -221,6 +256,52 @@ interface MyRepository {
 
         then:"The update query is correct"
         encoded.query == 'UPDATE `sale` SET `data`=CONVERT(? USING UTF8MB4)'
+    }
+
+    void "test oracle native boolean predicate rendering"() {
+        given:
+        def legacyDeleteQuery = builder.createCriteriaDelete(Contact)
+        def legacyDeleteRoot = legacyDeleteQuery.from(Contact)
+
+        when:
+        def legacyResult = legacyDeleteQuery
+            .where(builder.isTrue(legacyDeleteRoot.get("active")))
+            .build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        then:
+        legacyResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" = 1)'
+
+        and:
+        def nativeDeleteQuery = builder.createCriteriaDelete(Contact)
+        def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
+        def nativeBuilder = new SqlQueryBuilder(
+            Dialect.ORACLE,
+            SqlDialectOptions.ORACLE_23_1_0_VERSION
+        )
+
+        when:
+        def nativeResult = nativeDeleteQuery
+            .where(builder.isTrue(nativeDeleteRoot.get("active")))
+            .build(nativeBuilder)
+
+        then:
+        nativeResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
+
+        and:
+        def laterBaselineDeleteQuery = builder.createCriteriaDelete(Contact)
+        def laterBaselineDeleteRoot = laterBaselineDeleteQuery.from(Contact)
+        def laterBaselineBuilder = new SqlQueryBuilder(
+            Dialect.ORACLE,
+            "23.4"
+        )
+
+        when:
+        def laterBaselineResult = laterBaselineDeleteQuery
+            .where(builder.isTrue(laterBaselineDeleteRoot.get("active")))
+            .build(laterBaselineBuilder)
+
+        then:
+        laterBaselineResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
     }
 
     void "test build queries with schema"() {
