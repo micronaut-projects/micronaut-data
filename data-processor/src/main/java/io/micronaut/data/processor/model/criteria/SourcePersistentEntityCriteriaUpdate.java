@@ -37,7 +37,9 @@ public interface SourcePersistentEntityCriteriaUpdate<T> extends PersistentEntit
      *
      * <p>Explicit Criteria API updates must remain unmarked.</p>
      */
-    void markGeneratedEntityUpdate();
+    default void markGeneratedEntityUpdate() {
+        // Custom criteria implementations may not expose the internal update marker.
+    }
 
     /**
      * Creates a {@link PersistentEntityRoot} from class element representing the entity.
