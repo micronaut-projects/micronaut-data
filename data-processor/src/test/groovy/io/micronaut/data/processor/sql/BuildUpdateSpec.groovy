@@ -395,6 +395,60 @@ class Account {
         e.message.contains("reserveIncrement.../reserveDecrement... methods")
     }
 
+    void "test entity update omits reservable properties inside an embeddable"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+
+    @MappedProperty("stats_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stats getStats() { return stats; }
+    public void setStats(Stats stats) { this.stats = stats; }
+}
+
+@Embeddable
+class Stats {
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "STATS_NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('BALANCE')
+        getParameterPropertyPaths(method) == ['stats.name', 'id'] as String[]
+    }
+
     void "test entity update falls back to identity update when no updateable properties remain"() {
         given:
         def repository = buildRepository('test.AuditAccountRepository', """

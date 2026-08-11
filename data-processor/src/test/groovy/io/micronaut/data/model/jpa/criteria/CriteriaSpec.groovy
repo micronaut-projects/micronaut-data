@@ -319,6 +319,20 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             ]
     }
 
+    void "criteria update rejects arithmetic assignment to reservable property"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
+            Path<Number> budget = entityRoot.get("budget")
+            criteriaUpdate.set("budget", criteriaBuilder.sum(budget, 1))
+
+        when:
+            getSqlQuery(criteriaUpdate)
+
+        then:
+            def e = thrown(IllegalArgumentException)
+            e.message.contains("all update properties are reservable")
+    }
+
     @Unroll
     void "test property value #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
@@ -384,6 +398,7 @@ class Test {
     private Boolean enabled2;
     private Long age;
     private BigDecimal amount;
+    @Reservable
     private BigDecimal budget;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")

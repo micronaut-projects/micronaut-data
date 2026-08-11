@@ -430,7 +430,43 @@ class Stats {
         def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
 
         then:
-        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+        sql == 'CREATE TABLE "ACCOUNT" ("ID" NUMBER(19) NOT NULL,"STATS_BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0) NOT NULL, PRIMARY KEY("ID"))'
+    }
+
+    void "test build create table gives embedded reservable checks distinct names"() {
+        given:
+        def entity = buildJpaEntity('test.Account', '''
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import jakarta.validation.constraints.PositiveOrZero;
+
+@Entity
+class Account {
+    @javax.persistence.Id Long id;
+    @MappedProperty("stats_") @Relation(Relation.Kind.EMBEDDED) Stats stats;
+    @MappedProperty("limits_") @Relation(Relation.Kind.EMBEDDED) Limits limits;
+}
+
+@Embeddable
+class Stats {
+    @Reservable @PositiveOrZero Long balance;
+}
+
+@Embeddable
+class Limits {
+    @Reservable @PositiveOrZero Long balance;
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def sql = builder.buildCreateTableStatements(entity).join(System.lineSeparator())
+
+        then:
+        sql.contains('CONSTRAINT "CK_ACCOUNT_STATS_BALANCE_GE_0" CHECK ("STATS_BALANCE" >= 0)')
+        sql.contains('CONSTRAINT "CK_ACCOUNT_LIMITS_BALANCE_GE_0" CHECK ("LIMITS_BALANCE" >= 0)')
     }
 
     void "test build create table rejects indexed reservable scalar inside embeddable"() {

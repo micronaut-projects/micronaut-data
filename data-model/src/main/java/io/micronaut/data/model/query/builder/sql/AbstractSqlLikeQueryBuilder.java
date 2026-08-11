@@ -50,7 +50,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.geo.Geometry;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
-import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -63,6 +62,7 @@ import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
@@ -941,11 +941,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             })
             .collect(Collectors.toList());
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
-            .filter(e -> !e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class)
-                || e.getValue() instanceof BinaryExpression<?>)
+            .filter(e -> e.getValue() instanceof ReservationDelta || hasNonReservableUpdateProperty(e.getKey()))
             .toList();
         if (update.isEmpty() && updateProperties.stream()
-            .anyMatch(e -> e.getKey().getProperty().getAnnotationMetadata().hasAnnotation(Reservable.class))) {
+            .anyMatch(e -> hasReservableUpdateProperty(e.getKey()))) {
             throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable. "
                 + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
         }
@@ -968,7 +967,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     queryString.append(propertyPath.getPath()).append('=');
                 }
-                Object value = entry.getValue();
+                Object value = unwrapReservationDelta(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
                         queryState.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
@@ -991,10 +990,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
-                if (entry.getValue() instanceof BindingParameter bindingParameter) {
+                Object value = unwrapReservationDelta(entry.getValue());
+                if (value instanceof BindingParameter bindingParameter) {
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
-                        if (generated) {
+                        if (generated || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                             return;
                         }
                         String tableAlias = propertyPath.getTableAlias();
@@ -1020,7 +1020,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         queryString.append(tableAlias).append(DOT);
                     }
                     queryString.append(propertyPath.getColumnName()).append('=');
-                    Object value = entry.getValue();
                     if (value instanceof IExpression<?> expression) {
                         new ExpressionAppender(queryState, annotationMetadata)
                             .appendExpression(expression, new DefaultPersistentPropertyPath<>(propertyPath.propertyPath));
@@ -1035,6 +1034,32 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
         }
+    }
+
+    private static Object unwrapReservationDelta(Object value) {
+        return value instanceof ReservationDelta reservationDelta ? reservationDelta.expression() : value;
+    }
+
+    private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath) {
+        boolean[] found = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                && !property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
+    }
+
+    private boolean hasReservableUpdateProperty(QueryPropertyPath propertyPath) {
+        boolean[] found = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                && property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
     }
 
     /**

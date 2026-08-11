@@ -24,6 +24,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.ReservationDelta;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -51,7 +52,7 @@ import java.util.regex.Pattern;
  * Matches explicit Oracle lock-free reservation delta methods.
  *
  * @author radovanradic
- * @since 5.1
+ * @since 5.2
  */
 @Internal
 public final class ReservationMethodMatcher implements MethodMatcher {
@@ -144,7 +145,7 @@ public final class ReservationMethodMatcher implements MethodMatcher {
                     Expression<? extends Number> expression = delta.increment()
                         ? cb.sum(column, amount)
                         : cb.diff(column, amount);
-                    query.set(delta.propertyPath().getPath(), expression);
+                    query.set(delta.propertyPath().getPath(), new ReservationDelta(expression));
                 }
             }
         };
