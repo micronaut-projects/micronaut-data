@@ -26,3 +26,8 @@ Non-Oracle databases ignore this property.
 
 NOTE: Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
 Older Oracle versions that reject `txn_priority` continue without applying priority.
+
+=== Oracle Transaction Recovery
+
+For Oracle JDBC transactions, Micronaut Data supports ambiguous commit recovery with `@OracleTransactional.Recoverable`.
+See <<recoverableTransactions, Oracle Transaction Recovery>> for configuration, scope, and usage details.
