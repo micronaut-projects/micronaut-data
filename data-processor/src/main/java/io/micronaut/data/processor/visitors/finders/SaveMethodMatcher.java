@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Save;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
@@ -52,6 +53,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -260,8 +262,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         // numeric aggregate columns that accept inserted initial values, but updates must use reservation
         // deltas like col = col + ? or col = col - ?. Generated entity updates are direct assignments
         // like col = ?, so reservable properties are filtered from the SET clause.
-        boolean hasReservableUpdateProperty = false;
-        boolean hasNonReservableUpdateProperty = false;
+        boolean[] updatePropertyTypes = {false, false};
         List<? extends PersistentProperty> updateProperties = Stream.concat(
             rootEntity.getPersistentProperties().stream(),
             rootEntity.hasVersion() ? Stream.of(rootEntity.getVersion()) : Stream.empty()
@@ -270,16 +271,21 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             if (property instanceof Association association && association.isForeignKey()) {
                 continue;
             }
-            if (property.isGenerated() || !property.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true)) {
-                continue;
-            }
-            if (property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
-                hasReservableUpdateProperty = true;
-            } else {
-                hasNonReservableUpdateProperty = true;
-            }
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (associations, persistentProperty) -> {
+                if (persistentProperty instanceof Association
+                    || persistentProperty.isGenerated()
+                    || !persistentProperty.findAnnotation(AutoPopulated.class)
+                    .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true)) {
+                    return;
+                }
+                if (persistentProperty.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                    updatePropertyTypes[0] = true;
+                } else {
+                    updatePropertyTypes[1] = true;
+                }
+            });
         }
-        return new SecondaryUpdateProperties(hasReservableUpdateProperty, hasNonReservableUpdateProperty);
+        return new SecondaryUpdateProperties(updatePropertyTypes[0], updatePropertyTypes[1]);
     }
 
     private MethodMatch saveProperties(boolean saveOperation) {

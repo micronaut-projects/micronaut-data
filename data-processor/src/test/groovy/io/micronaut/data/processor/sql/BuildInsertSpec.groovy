@@ -381,6 +381,57 @@ class Account {
         e.message.contains("reserveIncrement.../reserveDecrement... methods")
     }
 
+    void "test save fails when all embedded update properties are reservable"() {
+        when:
+        buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @MappedProperty("stats_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stats getStats() { return stats; }
+    public void setStats(Stats stats) { this.stats = stats; }
+}
+
+@Embeddable
+class Stats {
+    @Reservable
+    private Long balance;
+
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Cannot generate save/update for entity [test.Account]")
+        e.message.contains("all updatable properties are reservable")
+    }
+
     void "test save adds fallback update when entity has no updateable properties"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.AuditAccountRepository', """
