@@ -46,7 +46,7 @@ public @interface OracleTransactional {
     /**
      * Transaction definition property used to store Oracle sessionless transaction mode.
      *
-     * @since 5.1.0
+     * @since 5.2.0
      */
     String ORACLE_SESSIONLESS_MODE = "oracleSessionlessMode";
 
@@ -62,7 +62,7 @@ public @interface OracleTransactional {
     /**
      * Sessionless transaction mode for Oracle JDBC transactions.
      *
-     * @since 5.1.0
+     * @since 5.2.0
      */
     enum Sessionless {
         /**
@@ -171,7 +171,7 @@ public @interface OracleTransactional {
      * The desired Oracle sessionless transaction mode.
      *
      * @return The sessionless transaction mode
-     * @since 5.1.0
+     * @since 5.2.0
      */
     Sessionless sessionless() default Sessionless.NONE;
 
