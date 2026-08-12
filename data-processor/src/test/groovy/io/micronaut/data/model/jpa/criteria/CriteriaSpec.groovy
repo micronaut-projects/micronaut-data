@@ -319,6 +319,20 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             ]
     }
 
+    void "criteria update rejects mixed direct assignments to reservable property"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
+            criteriaUpdate.set("name", "updated")
+            criteriaUpdate.set("budget", criteriaBuilder.parameter(BigDecimal))
+
+        when:
+            getSqlQuery(criteriaUpdate, Dialect.ORACLE)
+
+        then:
+            def e = thrown(IllegalArgumentException)
+            e.message.contains("direct assignments to @Reservable properties")
+    }
+
     @Unroll
     void "test property value #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
@@ -384,6 +398,7 @@ class Test {
     private Boolean enabled2;
     private Long age;
     private BigDecimal amount;
+    @Reservable
     private BigDecimal budget;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "test")

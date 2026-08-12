@@ -19,7 +19,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
+import io.micronaut.data.jdbc.exceptions.JdbcExceptionUtils;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataDeleteExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataExceptionConverter;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
@@ -28,7 +30,6 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.SQLException;
-import java.util.Locale;
 
 /**
  * Converts JDBC exceptions to Micronaut Data exceptions before Jakarta Data conversion.
@@ -42,19 +43,20 @@ import java.util.Locale;
 final class JdbcJakartaDataExceptionConverter implements JakartaDataExceptionConverter, JakartaDataUpdateExceptionConverter,
     JakartaDataDeleteExceptionConverter, JakartaDataInsertExceptionConverter {
 
-    private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
-
     @Override
     public Exception convert(Exception exception) {
-        if (exception instanceof EntityExistsException) {
+        if (exception instanceof EntityExistsException || exception instanceof DataIntegrityViolationException) {
             return exception;
         }
         SQLException sqlException = findSqlException(exception);
         if (sqlException == null) {
             return exception;
         }
-        if (isUniqueConstraintViolation(sqlException)) {
+        if (JdbcExceptionUtils.isUniqueConstraintViolation(sqlException)) {
             return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), exception);
+        }
+        if (JdbcExceptionUtils.isIntegrityConstraintViolation(sqlException)) {
+            return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), exception);
         }
         if (exception instanceof DataAccessException) {
             return exception;
@@ -74,32 +76,4 @@ final class JdbcJakartaDataExceptionConverter implements JakartaDataExceptionCon
         return null;
     }
 
-    private boolean isUniqueConstraintViolation(SQLException sqlException) {
-        SQLException exception = sqlException;
-        while (exception != null) {
-            if (isUniqueConstraintViolation(exception.getSQLState(), exception.getErrorCode(), exception.getMessage())) {
-                return true;
-            }
-            exception = exception.getNextException();
-        }
-        return false;
-    }
-
-    private boolean isUniqueConstraintViolation(@Nullable String sqlState, int errorCode, @Nullable String message) {
-        if (UNIQUE_VIOLATION_SQL_STATE.equals(sqlState)) {
-            return true;
-        }
-        if (errorCode == 1 || errorCode == 1062 || errorCode == 23505 || errorCode == 2601 || errorCode == 2627) {
-            return true;
-        }
-        if (message != null) {
-            String normalized = message.toLowerCase(Locale.ENGLISH);
-            return normalized.contains("unique index")
-                || normalized.contains("unique constraint")
-                || normalized.contains("primary key violation")
-                || normalized.contains("duplicate key")
-                || normalized.contains("duplicate entry");
-        }
-        return false;
-    }
 }

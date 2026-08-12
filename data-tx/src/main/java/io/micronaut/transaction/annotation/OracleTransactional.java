@@ -174,4 +174,67 @@ public @interface OracleTransactional {
      * @since 5.1.0
      */
     Sessionless sessionless() default Sessionless.NONE;
+
+    /**
+     * Oracle-specific companion annotation for ambiguous commit recovery.
+     *
+     * <p>Use this annotation together with {@link Transactional} or
+     * {@link OracleTransactional}. It does not start a transaction by itself.
+     * Recovery is attempted only for the intercepted synchronous execution that
+     * starts and owns the transaction commit boundary.</p>
+     *
+     * @since 5.2
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.TYPE})
+    @Experimental
+    @interface Recoverable {
+
+        /**
+         * Exception types that should trigger recovery handling.
+         *
+         * <p>The default is {@link java.sql.SQLRecoverableException}. Custom types
+         * should be used only for wrapper exceptions that still represent the same
+         * ambiguous commit / lost acknowledgement failure semantics.</p>
+         *
+         * @return The exception types that should trigger recovery handling.
+         */
+        Class<? extends Throwable>[] on() default {java.sql.SQLRecoverableException.class};
+
+        /**
+         * Maximum number of retry attempts after the initial attempt.
+         *
+         * @return The maximum number of retry attempts.
+         */
+        int maxAttempts() default 1;
+
+        /**
+         * Backoff in milliseconds between retry attempts.
+         *
+         * @return The backoff in milliseconds.
+         */
+        long backoff() default 100L;
+
+        /**
+         * Policy to apply when the commit outcome cannot be determined.
+         *
+         * @return The policy to apply for unknown commit outcomes.
+         */
+        OutcomePolicy unknownOutcomePolicy() default OutcomePolicy.FAIL;
+
+        /**
+         * Policy used when the outcome cannot be determined.
+         */
+        enum OutcomePolicy {
+            /**
+             * Retry the entire transactional method.
+             */
+            RETRY,
+            /**
+             * Fail fast and rethrow the original exception.
+             */
+            FAIL
+        }
+    }
 }

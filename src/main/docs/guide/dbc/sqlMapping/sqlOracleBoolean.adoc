@@ -1,0 +1,95 @@
+Oracle Database 23.1 and later support native SQL `BOOLEAN` columns and boolean predicates.
+
+By default, Micronaut Data keeps the legacy Oracle mapping so applications targeting Oracle 19c or Oracle 21c continue to work:
+
+* `Boolean` properties are mapped to `NUMBER(1)` for schema generation.
+* Boolean literals and predicates are generated using numeric values such as `1` and `0`.
+* JDBC binding uses the legacy Oracle boolean type mapping.
+
+To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=23.1`.
+The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=23.1`.
+If both are present, the annotation processor option takes precedence.
+
+The configured dialect `version` is a SQL generation target.
+It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
+It is not runtime database version detection and it is not a general datasource capability check.
+Use numeric major[.minor[.patch]] notation, such as `23.1` or `23.1.0`. Major-only values such as `23` are treated as `23.0.0` and do not enable features that require `23.1`.
+Micronaut Data compares semantic version values, so a later configured version such as `23.4` also satisfies SQL features that require `23.1`.
+
+For Gradle Java projects:
+
+[source,groovy]
+----
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
+}
+----
+
+For Maven projects:
+
+[source,xml]
+----
+<compilerArgs>
+    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
+</compilerArgs>
+----
+
+The target version can also be set on an individual repository:
+
+[source,java]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
+interface ProductRepository {
+}
+----
+
+With this target version, Micronaut Data can generate native Oracle boolean SQL such as `BOOLEAN`, `TRUE`, `FALSE`, `IS TRUE`, and `IS FALSE`.
+
+When a JDBC repository has a target version, Micronaut Data reads the JDBC server major and minor version on first use and caches a successful result for the datasource.
+If that metadata lookup fails, a later operation retries it.
+It logs one warning for each dialect and target-version pair when the reported server major/minor version is lower than the SQL target major/minor version or has a different major version.
+The warning does not prevent execution; the database remains responsible for accepting or rejecting generated SQL.
+JDBC exposes only server major and minor versions. If a SQL feature requires a specific patch version within the same major and minor release, this diagnostic cannot verify that requirement and does not warn based on the patch number alone.
+This diagnostic is enabled by default. Disable it for a datasource when necessary, for example for a heterogeneous routing datasource or to avoid the JDBC metadata lookup:
+
+[configuration]
+----
+datasources:
+  default:
+    dialect-options:
+      validate-version: false
+----
+
+R2DBC does not perform this diagnostic because it does not expose a reliable structured server version.
+
+If Micronaut Data schema generation is enabled, configure the same target version on the datasource as well:
+
+.JDBC Oracle 23.1-compatible schema generation
+[configuration]
+----
+datasources:
+  default:
+    dialect: ORACLE
+    dialect-options:
+      version: 23.1
+----
+
+.R2DBC Oracle 23.1-compatible schema generation
+[configuration]
+----
+r2dbc:
+  datasources:
+    default:
+      dialect: ORACLE
+      dialect-options:
+        version: 23.1
+----
+
+IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
+
+Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
+
+NOTE: Mixed Oracle schemas where some boolean columns use native `BOOLEAN` and other boolean columns still use `NUMBER(1)` are not fully represented by this global version option. Keep the repository in legacy mode until the schema is migrated, configure the target version on individual repositories, or use explicit queries for columns that do not match the selected repository version.

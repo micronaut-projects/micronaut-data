@@ -442,9 +442,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.setRollbackOnly();
             }
         } catch (RuntimeException | Error rbex) {
-            logger.error("Commit exception overridden by rollback exception", ex);
+            logger.error("Rollback after commit exception also failed", rbex);
+            // Keep the original commit failure as the primary signal and treat the
+            // rollback failure as secondary; otherwise later cleanup on a broken
+            // connection can hide the error that callers need to see.
+            ex.addSuppressed(rbex);
             tx.triggerAfterCompletion(TransactionSynchronization.Status.UNKNOWN);
-            throw rbex;
+            return;
         }
         tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
     }

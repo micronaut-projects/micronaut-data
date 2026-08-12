@@ -92,32 +92,21 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             bookThroughPut.properties.manualThroughput == 500
             bookContainerProperties.defaultTimeToLiveInSeconds == BOOK_TIME_TO_LIVE
             bookContainerProperties.indexingPolicy.indexingMode == IndexingMode.CONSISTENT
-            // TODO: New container does not treat these as unique keys?
-            // reported issue: https://github.com/Azure/azure-cosmos-db-emulator-docker/issues/337
-            // bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
-            // bookContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/title", "/totalPages")
-            // bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/title/*"))
-            // In new container, unique keys are empty and included path is only /*
-            bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 0
-            bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"))
+            bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
+            bookContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/title", "/totalPages")
+            bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/title/*"))
 
             // by default _etag is excluded
             bookContainerProperties.indexingPolicy.excludedPaths.size() == 1
             familyThroughput.properties.autoscaleMaxThroughput == 0
             familyThroughput.properties.manualThroughput == 1100
             familyContainerProperties.defaultTimeToLiveInSeconds == FAMILY_TIME_TO_LIVE
-            // TODO: New container does not return expected unique keys values?
-            // familyContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
-            // familyContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/lastName", "/registered")
-            // familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/lastName/*"))
-            // In new container, unique keys are empty and included path is only /*
-            familyContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 0
-            familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"))
+            familyContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
+            familyContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/lastName", "/registered")
+            familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/lastName/*"))
 
-            // TODO: In new container excluded paths is empty
-            // familyContainerProperties.indexingPolicy.excludedPaths.size() == 2
-            // familyContainerProperties.indexingPolicy.excludedPaths.contains(new ExcludedPath("/address/*"))
-            familyContainerProperties.indexingPolicy.excludedPaths.size() == 0
+            familyContainerProperties.indexingPolicy.excludedPaths.size() == 1
+            familyContainerProperties.indexingPolicy.excludedPaths.contains(new ExcludedPath("/address/*"))
     }
 
     def "test save and find book"() {
