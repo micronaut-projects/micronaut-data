@@ -148,10 +148,18 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         return false;
     }
 
+    /**
+     * @param matchContext The method match context
+     * @return Whether the operation is supported by implicit queries for this entity
+     */
+    protected boolean supportedByImplicitQueries(MethodMatchContext matchContext) {
+        return supportedByImplicitQueries();
+    }
+
     @Override
     public final MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
         MethodMatchInfo methodMatchInfo;
-        if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
+        if (supportedByImplicitQueries(matchContext) && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
             FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
             methodMatchInfo = new MethodMatchInfo(
                 getOperationType(),

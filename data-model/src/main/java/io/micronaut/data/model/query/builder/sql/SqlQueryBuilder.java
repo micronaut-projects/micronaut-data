@@ -124,6 +124,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
+    private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
+
     private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     // Shared, stateless no-op predicate to avoid per-call allocations in createQueryState().predicate()
@@ -446,7 +448,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
+     * Builds the create table statements for a collection of entities. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities The collection of entities
@@ -462,6 +464,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return buildCreateTableStatements(List.of(), entities, dialect);
     }
 
+    /**
+     * Builds the create table statements for a collection of entities.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The collection of entities
+     * @param dialect The dialect
+     * @return The tables for the given entities
+     */
     @Experimental
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
@@ -862,6 +872,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " " + tableIdentity.getDefinition();
                 } else {
                     column += " " + tableIdentity.getSqlType(dialectOptions);
+                    column = appendReservableAndCheckConstraints(column, tableIdentity, escape);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -882,6 +893,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 column += " " + tableColumn.getDefinition();
             } else {
                 column += " " + tableColumn.getSqlType(dialectOptions);
+                column = appendReservableAndCheckConstraints(column, tableColumn, escape);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }
@@ -907,6 +919,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createSequenceStatements(table, escape, createStatements);
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
+        StringBuilder result = new StringBuilder(column);
+        if (tableColumn.isReservable()) {
+            if (dialect != Dialect.ORACLE) {
+                throw new IllegalStateException("Reservable columns are only supported for Oracle");
+            }
+            result.append(" RESERVABLE");
+        }
+        for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {
+            String columnName = tableColumn.getName();
+            if (escape) {
+                columnName = quote(columnName);
+            }
+            String constraintName = checkConstraint.name();
+            if (escape) {
+                constraintName = quote(constraintName);
+            }
+            result.append(String.format(CONSTRAINT_CHECK_TEMPLATE, constraintName, columnName, checkConstraint.operator(), checkConstraint.value()));
+        }
+        return result.toString();
     }
 
     private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
