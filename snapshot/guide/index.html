@@ -259,15 +259,17 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>6.5.12</strong><span>JSON Column Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.13</strong><span>JSON View</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlReservable"><a href="#sqlReservable"><strong>6.5.13</strong><span>Oracle Reservable Columns</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlOracleBoolean"><a href="#sqlOracleBoolean"><strong>6.5.14</strong><span>Oracle BOOLEAN Support</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>6.5.14</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>6.5.15</strong><span>SQL Vector Type Mapping</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlOracleBoolean"><a href="#sqlOracleBoolean"><strong>6.5.15</strong><span>Oracle BOOLEAN Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.16</strong><span>Support for Java 16 Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>6.5.16</strong><span>SQL Vector Type Mapping</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.17</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>6.5.17</strong><span>Support for Java 16 Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>6.5.18</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>6.6</strong><span>Data Types</span></a></div>
         
@@ -13154,8 +13156,9 @@ for planar and spherical distance checks:</p>
 </table>
 <div class="paragraph">
 <p>For the other supported SQL dialects, <code>Srid.CrsType</code> does not currently change the generated <code>Near</code> predicate function.
-It also does not change the database column type. Use <code>@MappedProperty(definition = "geography")</code> when a dialect such as
-PostgreSQL / PostGIS or SQL Server should use a native <code>GEOGRAPHY</code> column.</p>
+For PostgreSQL / PostGIS and SQL Server, <code>Srid.CrsType.GEOGRAPHIC</code> selects the native <code>GEOGRAPHY</code> column type and matching
+read and write conversions. Other dialects retain their native geometry column type. An explicit
+<code>@MappedProperty(definition = "&#8230;&#8203;")</code> always takes precedence over the inferred column type.</p>
 </div>
 </div>
 <div class="sect2">
@@ -13880,7 +13883,167 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.13 JSON View</h2>
+<h2 id="sqlReservable"><a class="anchor" href="#sqlReservable"></a>6.5.13 Oracle Reservable Columns</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlReservable.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a>.</p>
+</div>
+<div class="paragraph">
+<p>Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
+Reservable columns require Oracle Database 23.26.1 or later. Oracle documentation may refer to this capability using the <code>26</code> code name.
+Micronaut Data validates only that the configured dialect is Oracle; it does not configure or detect the database version.
+Use <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> only when the target Oracle Database supports reservable columns. Otherwise, Oracle rejects the generated DDL or DML.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> annotation can be used on numeric persistent properties.
+That includes a scalar property inside an embedded component, but not the embedded association property itself.
+It can also be combined with validation annotations to generate Oracle <code>CHECK</code> constraints for the reservable column.
+Validation annotations without <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> do not create database constraints.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity("account")
+public record Account(
+    @Id @GeneratedValue @Nullable Long id,
+    String name,
+    @Reservable @PositiveOrZero Long balance) {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The generated Oracle DDL includes the <code>RESERVABLE</code> column modifier and, when supported validation annotations are present, a column <code>CHECK</code> constraint:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE "ACCOUNT" (
+    "ID" NUMBER(19) NOT NULL,
+    "NAME" VARCHAR(255) NOT NULL,
+    "BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" &gt;= 0) NOT NULL,
+    PRIMARY KEY("ID")
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Reservable columns can also be declared without validation annotations.
+In that case Micronaut Data generates a reservable column without a <code>CHECK</code> constraint.</p>
+</div>
+<div class="sect1">
+<h2 id="_updates">Updates</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Oracle reservable column updates must be expressed as delta operations, for example <code>balance = balance + ?</code> or <code>balance = balance - ?</code>, and must identify the primary key in the <code>WHERE</code> clause.
+Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
+Use derived reservation methods to generate reservation-delta updates. A method name starts with <code>reserve</code> and declares one or more <code>Increment&lt;Property&gt;</code> or <code>Decrement&lt;Property&gt;</code> operations joined by <code>And</code>.</p>
+</div>
+<div class="paragraph">
+<p>This <code>Account</code> example has a non-reservable mutable <code>name</code> property, so it can extend <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.ORACLE)
+public interface AccountRepository extends CrudRepository&lt;Account, Long&gt; {
+
+    int reserveIncrementBalance(@Id Long id, Long balance);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For reservation updates that cannot be expressed by the derived method grammar, use an explicit <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.ORACLE)
+interface AccountRawQueryRepository extends CrudRepository&lt;Account, Long&gt; {
+
+    @Query("UPDATE \"ACCOUNT\" SET \"BALANCE\" = \"BALANCE\" + :amount WHERE \"ID\" = :id")
+    int reserveBalance(Long id, Long amount);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Raw queries bypass the derived reservation-method matcher. They can use a different <code>WHERE</code> predicate, but Micronaut Data does not validate their lock-free reservation semantics. The query must use only reservable delta assignments in its <code>SET</code> clause and must not mix reservable and non-reservable assignments.</p>
+</div>
+<div class="paragraph">
+<p>Generated entity update operations skip reservable properties.
+For example, <code>repository.update(account)</code> updates non-reservable properties but does not assign the reservable column directly.
+If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
+The same restriction applies to <code>save(&#8230;&#8203;)</code> because save can resolve to an update path at runtime.
+If an entity&#8217;s only updatable properties are reservable, generated <code>save(&#8230;&#8203;)</code> and <code>update(&#8230;&#8203;)</code> methods are unsupported, including inherited methods from <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a>.
+Micronaut Data reports this at compilation time with a message that explains that all updatable properties are reservable and directs the user to <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a>.
+For those reservable-only entities, extend <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and explicitly declare the supported operations, such as <code>insert(&#8230;&#8203;)</code>, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
+Use <code>insert(&#8230;&#8203;)</code> for new rows and an explicit derived reservation method for existing rows.</p>
+</div>
+<div class="paragraph">
+<p>This restriction is specific to reservable-only update shapes.
+If an entity has at least one non-reservable updatable property, generated <code>save(&#8230;&#8203;)</code> and <code>update(&#8230;&#8203;)</code> methods remain supported and Micronaut Data simply omits reservable properties from the generated <code>SET</code> clause.</p>
+</div>
+<div class="paragraph">
+<p>Each reservation method identifies the row with exactly one <code>@Id</code> parameter whose type matches the entity identity. For a composite primary key, use the entity&#8217;s <code>@EmbeddedId</code> value object as that parameter; Micronaut Data expands it into all primary-key columns.
+Each operation target must be a numeric <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example <code>reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)</code>.
+Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but <code>reserveIncrementAccountBalance(&#8230;&#8203;)</code> is rejected when <code>account</code> is a relationship.
+Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML <code>RETURNING</code>.
+Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_runtime_errors">Runtime Errors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Reservation updates that fail because of a database integrity constraint, such as a generated reservable <code>CHECK</code> constraint, throw <a href="../api/io/micronaut/data/exceptions/DataIntegrityViolationException.html">DataIntegrityViolationException</a>.
+This applies to JDBC and R2DBC and is not limited to reservable columns. Micronaut Data maps broad SQL integrity failures to that exception type while preserving existing <a href="../api/io/micronaut/data/exceptions/EntityExistsException.html">EntityExistsException</a> behavior for unique and duplicate-key cases.</p>
+</div>
+<div class="paragraph">
+<p>This database exception is distinct from Bean Validation failures.
+Method or entity validation that fails before SQL execution continues to throw <code>jakarta.validation.ConstraintViolationException</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_restrictions">Restrictions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Micronaut Data validates reservable mappings during schema generation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> is supported only for Oracle schema generation.</p>
+</li>
+<li>
+<p>The property type must be numeric.</p>
+</li>
+<li>
+<p>The entity must have a primary key.</p>
+</li>
+<li>
+<p>A reservable property cannot be a primary key, generated value, relationship, foreign key, indexed property, or use a custom column definition.</p>
+</li>
+<li>
+<p>An entity can declare at most 10 reservable properties.</p>
+</li>
+<li>
+<p>Only column-level check constraints derived from supported validation annotations are generated. Table-level check constraints are not generated.</p>
+</li>
+<li>
+<p>Oracle applies additional table-level restrictions, for example on partition keys and some table types such as index-organized, external, temporary, blockchain, and sharded tables. Micronaut Data does not try to detect every database-side table restriction during compile-time schema generation.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Supported validation annotations include <code>jakarta.validation</code> and <code>javax.validation</code> variants of <code>Positive</code>, <code>PositiveOrZero</code>, <code>Negative</code>, <code>NegativeOrZero</code>, <code>Min</code>, <code>Max</code>, <code>DecimalMin</code>, and <code>DecimalMax</code>.</p>
+</div>
+</div>
+</div>
+
+<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>6.5.14 JSON View</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
@@ -14137,7 +14300,7 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="sqlOracleBoolean"><a class="anchor" href="#sqlOracleBoolean"></a>6.5.14 Oracle BOOLEAN Support</h2>
+<h2 id="sqlOracleBoolean"><a class="anchor" href="#sqlOracleBoolean"></a>6.5.15 Oracle BOOLEAN Support</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlOracleBoolean.adoc"'>
@@ -14451,7 +14614,7 @@ Mixed Oracle schemas where some boolean columns use native <code>BOOLEAN</code> 
 </table>
 </div>
 
-<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>6.5.15 SQL Vector Type Mapping</h2>
+<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>6.5.16 SQL Vector Type Mapping</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/sqlMapping/sqlVectorType.adoc"'>
@@ -15274,7 +15437,7 @@ FETCH FIRST APPROX 2 ROWS ONLY;</code></pre>
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.16 Support for Java 16 Records</h2>
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>6.5.17 Support for Java 16 Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -15326,7 +15489,7 @@ record Book(
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.17 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>6.5.18 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/dbc/kotlinData.adoc"'>

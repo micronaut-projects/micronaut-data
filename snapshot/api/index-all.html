@@ -2217,7 +2217,7 @@ is issues.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildCreateTableStatements(PersistentEntity...)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>
-<div class="block">Builds the creation table statement for collection of entities.</div>
+<div class="block">Builds the create table statements for a collection of entities.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements(PersistentEntity[], Dialect)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
@@ -2226,7 +2226,9 @@ is issues.</div>
 <div class="block">Builds a set of <code>CREATE TABLE</code> statements for the given entity.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildCreateTableStatements(java.util.List,io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements(List, PersistentEntity[], Dialect)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Builds the create table statements for a collection of entities.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.DeleteQueryDefinition)" class="member-name-link">buildDelete(AnnotationMetadata, QueryBuilder.DeleteQueryDefinition)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">MongoQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder.DeleteQueryDefinition)" class="member-name-link">buildDelete(AnnotationMetadata, QueryBuilder.DeleteQueryDefinition)</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></dt>
@@ -2770,6 +2772,10 @@ underlying transaction API such as JTA.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/BasicTypes_.html#CHARSET" class="member-name-link">CHARSET</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BasicTypes_.html" title="class in io.micronaut.data.tck.entities">BasicTypes_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#checkConstraints()" class="member-name-link">checkConstraints()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#param-checkConstraints"><code>checkConstraints</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#checkDialectSupportsJsonEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">checkDialectSupportsJsonEntity(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">If and when <a href="io/micronaut/data/annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation"><code>EntityRepresentation</code></a> annotation with JSON type is used for the repository method but dialect does not support
@@ -4899,6 +4905,14 @@ pagination operations with cursors.</div>
 <dd>
 <div class="block">The type of <code>ConversionService</code> that also include the Data project only registered converters.</div>
 </dd>
+<dt><a href="io/micronaut/data/exceptions/DataIntegrityViolationException.html" class="type-name-link" title="class in io.micronaut.data.exceptions">DataIntegrityViolationException</a> - Exception Class in <a href="io/micronaut/data/exceptions/package-summary.html">io.micronaut.data.exceptions</a></dt>
+<dd>
+<div class="block">Exception thrown when a database operation fails due to a data integrity constraint.</div>
+</dd>
+<dt><a href="io/micronaut/data/exceptions/DataIntegrityViolationException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">DataIntegrityViolationException(String)</a> - Constructor for exception class io.micronaut.data.exceptions.<a href="io/micronaut/data/exceptions/DataIntegrityViolationException.html" title="class in io.micronaut.data.exceptions">DataIntegrityViolationException</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/exceptions/DataIntegrityViolationException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">DataIntegrityViolationException(String, Throwable)</a> - Constructor for exception class io.micronaut.data.exceptions.<a href="io/micronaut/data/exceptions/DataIntegrityViolationException.html" title="class in io.micronaut.data.exceptions">DataIntegrityViolationException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/DataInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">DataInterceptor&lt;T,<wbr>R&gt;</a> - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
 <div class="block">Marker interface for all Data related interceptors.</div>
@@ -8338,6 +8352,10 @@ definition.</div>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -8351,6 +8369,14 @@ definition.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -9604,6 +9630,10 @@ in the computation of an entity <a href="io/micronaut/data/annotation/sql/Genera
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/ParameterExpression.html#expression()" class="member-name-link">expression()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/query/builder/sql/ReservationDelta.html#param-expression"><code>expression</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/model/criteria/impl/MethodMatchSourcePersistentEntityCriteriaBuilderImpl.html#expression(io.micronaut.data.model.PersistentProperty,java.lang.String)" class="member-name-link">expression(PersistentProperty, String)</a> - Method in class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/MethodMatchSourcePersistentEntityCriteriaBuilderImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">MethodMatchSourcePersistentEntityCriteriaBuilderImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/criteria/impl/SourcePersistentEntityCriteriaBuilderImpl.html#expression(io.micronaut.data.model.PersistentProperty,java.lang.String)" class="member-name-link">expression(PersistentProperty, String)</a> - Method in class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourcePersistentEntityCriteriaBuilderImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">SourcePersistentEntityCriteriaBuilderImpl</a></dt>
@@ -11746,6 +11776,11 @@ as a RxJava Single or a Reactor Mono.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#ge(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">ge(Expression, Number)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/GeneratedEntityUpdateQueryDefinition.html" class="type-name-link" title="interface in io.micronaut.data.model.query.builder">GeneratedEntityUpdateQueryDefinition</a> - Interface in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dd>
+<div class="block">Internal marker for an update generated from a repository entity method such as
+<code>update(entity)</code> or the update branch of <code>save(entity)</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/sql/GeneratedETag.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation.sql">GeneratedETag</a> - Annotation Interface in <a href="io/micronaut/data/annotation/sql/package-summary.html">io.micronaut.data.annotation.sql</a></dt>
 <dd>
 <div class="block">Marks a mapped property as holding a generated ETag value for optimistic locking.</div>
@@ -12342,6 +12377,8 @@ if any.</div>
 <dt><a href="io/micronaut/data/tck/entities/BasicTypes.html#getCharset()" class="member-name-link">getCharset()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BasicTypes.html" title="class in io.micronaut.data.tck.entities">BasicTypes</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/BasicTypesProjection.html#getCharset()" class="member-name-link">getCharset()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BasicTypesProjection.html" title="class in io.micronaut.data.tck.entities">BasicTypesProjection</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html#getCheckConstraints()" class="member-name-link">getCheckConstraints()</a> - Method in class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/UuidEntity.html#getChild()" class="member-name-link">getChild()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a></dt>
 <dd>&nbsp;</dd>
@@ -14620,6 +14657,8 @@ pagination.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ReservationMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/VectorSearchMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/VectorSearchMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">VectorSearchMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html" title="class in io.micronaut.data.processor.visitors">GenerateJakartaDataMetamodelVisitor</a></dt>
@@ -16757,6 +16796,10 @@ without dialect-specific quoting applied.</div>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -16770,6 +16813,14 @@ without dialect-specific quoting applied.</div>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -18668,6 +18719,8 @@ transaction manager implementation doesn't support timeouts.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/convert/package-summary.html">io.micronaut.data.jdbc.convert</a> - package io.micronaut.data.jdbc.convert</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/exceptions/package-summary.html">io.micronaut.data.jdbc.exceptions</a> - package io.micronaut.data.jdbc.exceptions</dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/package-summary.html">io.micronaut.data.jdbc.mapper</a> - package io.micronaut.data.jdbc.mapper</dt>
 <dd>
 <div class="block">Classes specific to SQL mapping.</div>
@@ -18868,6 +18921,8 @@ candidate methods and return queries and interceptors.</div>
 <dt><a href="io/micronaut/data/r2dbc/connection/package-summary.html">io.micronaut.data.r2dbc.connection</a> - package io.micronaut.data.r2dbc.connection</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/convert/package-summary.html">io.micronaut.data.r2dbc.convert</a> - package io.micronaut.data.r2dbc.convert</dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/r2dbc/exceptions/package-summary.html">io.micronaut.data.r2dbc.exceptions</a> - package io.micronaut.data.r2dbc.exceptions</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/package-summary.html">io.micronaut.data.r2dbc.mapper</a> - package io.micronaut.data.r2dbc.mapper</dt>
 <dd>&nbsp;</dd>
@@ -19407,6 +19462,8 @@ whether it has already been committed or rolled back.</div>
 <dd>
 <div class="block">Whether the property is generated.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/GeneratedEntityUpdateQueryDefinition.html#isGeneratedEntityUpdate()" class="member-name-link">isGeneratedEntityUpdate()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/GeneratedEntityUpdateQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">GeneratedEntityUpdateQueryDefinition</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#isGlobalRollbackOnly()" class="member-name-link">isGlobalRollbackOnly()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/InternalTransaction.html#isGlobalRollbackOnly()" class="member-name-link">isGlobalRollbackOnly()</a> - Method in interface io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a></dt>
@@ -19421,6 +19478,10 @@ underlying transaction, if any.</div>
 <dt><a href="io/micronaut/data/model/Sort.Order.html#isIgnoreCase()" class="member-name-link">isIgnoreCase()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#isIgnoreJsonViews()" class="member-name-link">isIgnoreJsonViews()</a> - Method in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/r2dbc/exceptions/R2dbcExceptionUtils.html#isIntegrityConstraintViolation(io.r2dbc.spi.R2dbcException)" class="member-name-link">isIntegrityConstraintViolation(R2dbcException)</a> - Static method in class io.micronaut.data.r2dbc.exceptions.<a href="io/micronaut/data/r2dbc/exceptions/R2dbcExceptionUtils.html" title="class in io.micronaut.data.r2dbc.exceptions">R2dbcExceptionUtils</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/exceptions/JdbcExceptionUtils.html#isIntegrityConstraintViolation(java.sql.SQLException)" class="member-name-link">isIntegrityConstraintViolation(SQLException)</a> - Static method in class io.micronaut.data.jdbc.exceptions.<a href="io/micronaut/data/jdbc/exceptions/JdbcExceptionUtils.html" title="class in io.micronaut.data.jdbc.exceptions">JdbcExceptionUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isIterableOfDto(io.micronaut.inject.ast.ClassElement)" class="member-name-link">isIterableOfDto(ClassElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
@@ -19759,6 +19820,8 @@ entity.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html#isRequiresPreviousPopulatedValue()" class="member-name-link">isRequiresPreviousPopulatedValue()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal">StoredQueryParameter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html#isReservable()" class="member-name-link">isReservable()</a> - Method in class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html#isRollbackOnCommitFailure()" class="member-name-link">isRollbackOnCommitFailure()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">TransactionManagerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#isRollbackOnly()" class="member-name-link">isRollbackOnly()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
@@ -19874,6 +19937,10 @@ entity.</div>
 <dd>
 <div class="block">Check whether the given type performs the given role.</div>
 </dd>
+<dt><a href="io/micronaut/data/r2dbc/exceptions/R2dbcExceptionUtils.html#isUniqueConstraintViolation(io.r2dbc.spi.R2dbcException)" class="member-name-link">isUniqueConstraintViolation(R2dbcException)</a> - Static method in class io.micronaut.data.r2dbc.exceptions.<a href="io/micronaut/data/r2dbc/exceptions/R2dbcExceptionUtils.html" title="class in io.micronaut.data.r2dbc.exceptions">R2dbcExceptionUtils</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/exceptions/JdbcExceptionUtils.html#isUniqueConstraintViolation(java.sql.SQLException)" class="member-name-link">isUniqueConstraintViolation(SQLException)</a> - Static method in class io.micronaut.data.jdbc.exceptions.<a href="io/micronaut/data/jdbc/exceptions/JdbcExceptionUtils.html" title="class in io.micronaut.data.jdbc.exceptions">JdbcExceptionUtils</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isUniqueResultOnFindOne()" class="member-name-link">isUniqueResultOnFindOne()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Pageable.html#isUnpaged()" class="member-name-link">isUnpaged()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
@@ -20263,6 +20330,10 @@ in them.</div>
 <dt><a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a> - Interface in <a href="io/micronaut/data/jdbc/convert/package-summary.html">io.micronaut.data.jdbc.convert</a></dt>
 <dd>
 <div class="block">Conversion context for JDBC implementation.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/exceptions/JdbcExceptionUtils.html" class="type-name-link" title="class in io.micronaut.data.jdbc.exceptions">JdbcExceptionUtils</a> - Class in <a href="io/micronaut/data/jdbc/exceptions/package-summary.html">io.micronaut.data.jdbc.exceptions</a></dt>
+<dd>
+<div class="block">JDBC exception classification utilities.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html#%3Cinit%3E(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.aop.InvocationContext,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,java.sql.Connection)" class="member-name-link">JdbcOperationContext(AnnotationMetadata, InvocationContext, Class, Dialect, Connection)</a> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a></dt>
 <dd>
@@ -21771,6 +21842,16 @@ exists.</div>
 <dd>
 <div class="block">Converts an object to JSON using json mapper.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#markGeneratedEntityUpdate()" class="member-name-link">markGeneratedEntityUpdate()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
+<dd>
+<div class="block">Mark this internal criteria representation as generated from a repository entity update
+such as <code>update(entity)</code> or the update branch of <code>save(entity)</code>.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaUpdate.html#markGeneratedEntityUpdate()" class="member-name-link">markGeneratedEntityUpdate()</a> - Method in interface io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a></dt>
+<dd>
+<div class="block">Marks this internal criteria representation as generated from a repository entity update
+such as <code>update(entity)</code> or the update branch of <code>save(entity)</code>.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html#match(io.micronaut.data.processor.visitors.finders.MethodNameParser.MatchId,java.lang.String...)" class="member-name-link">match(MethodNameParser.MatchId, String...)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Builder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.document.processor.matchers.<a href="io/micronaut/data/document/processor/matchers/MongoExecutorQueryMethodMatcher.html" title="class in io.micronaut.data.document.processor.matchers">MongoExecutorQueryMethodMatcher</a></dt>
@@ -21796,6 +21877,8 @@ exists.</div>
 <dt><a href="io/micronaut/data/processor/visitors/finders/ProcedureMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProcedureMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ProcedureMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ReservationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
@@ -22937,6 +23020,10 @@ that delegates to <a href="io/micronaut/data/connection/ConnectionOperations.htm
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html#param-name"><code>name</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#param-name"><code>name</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlIndexMapping.html#param-name"><code>name</code></a> record component.</div>
@@ -23385,6 +23472,10 @@ exists.</div>
 <dt><a href="io/micronaut/data/runtime/config/SchemaGenerate.html#NONE" class="member-name-link">NONE</a> - Enum constant in enum class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SchemaGenerate.html" title="enum class in io.micronaut.data.runtime.config">SchemaGenerate</a></dt>
 <dd>
 <div class="block">Do nothing.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#NONE" class="member-name-link">NONE</a> - Static variable in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Default non-reservable column options.</div>
 </dd>
 <dt><a href="io/micronaut/data/exceptions/NonUniqueResultException.html" class="type-name-link" title="class in io.micronaut.data.exceptions">NonUniqueResultException</a> - Exception Class in <a href="io/micronaut/data/exceptions/package-summary.html">io.micronaut.data.exceptions</a></dt>
 <dd>
@@ -23982,6 +24073,10 @@ exists.</div>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.QueryDefinition.html#operationType()" class="member-name-link">operationType()</a> - Method in record class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.QueryDefinition.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.QueryDefinition</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>operationType</code> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#operator()" class="member-name-link">operator()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#param-operator"><code>operator</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.QueryDefinition.html#optimisticLock()" class="member-name-link">optimisticLock()</a> - Method in record class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.QueryDefinition.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.QueryDefinition</a></dt>
 <dd>
@@ -26412,6 +26507,10 @@ this interface is used as a marker to decide on the primary operations to lookup
 <dd>
 <div class="block">The <code>R2dbcException</code> mapper interface.</div>
 </dd>
+<dt><a href="io/micronaut/data/r2dbc/exceptions/R2dbcExceptionUtils.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.exceptions">R2dbcExceptionUtils</a> - Class in <a href="io/micronaut/data/r2dbc/exceptions/package-summary.html">io.micronaut.data.r2dbc.exceptions</a></dt>
+<dd>
+<div class="block">R2DBC exception classification utilities.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/operations/R2dbcOperations.html" class="type-name-link" title="interface in io.micronaut.data.r2dbc.operations">R2dbcOperations</a> - Interface in <a href="io/micronaut/data/r2dbc/operations/package-summary.html">io.micronaut.data.r2dbc.operations</a></dt>
 <dd>
 <div class="block">Operations for R2DBC.</div>
@@ -27430,6 +27529,32 @@ can be produced by this query.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireStringExpression(jakarta.persistence.criteria.Expression)" class="member-name-link">requireStringExpression(Expression)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#reservable()" class="member-name-link">reservable()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#param-reservable"><code>reservable</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/annotation/Reservable.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Reservable</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">Marks a numeric property as an Oracle reservable column.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#%3Cinit%3E(boolean,java.util.List)" class="member-name-link">ReservableOptions(boolean, List)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ReservableOptions</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" class="type-name-link" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a> - Record Class in <a href="io/micronaut/data/model/query/builder/sql/package-summary.html">io.micronaut.data.model.query.builder.sql</a></dt>
+<dd>
+<div class="block">A validated Oracle reservation delta expression generated by a repository method matcher.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html#%3Cinit%3E(jakarta.persistence.criteria.Expression)" class="member-name-link">ReservationDelta(Expression)</a> - Constructor for record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ReservationDelta</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">ReservationMethodMatcher</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
+<dd>
+<div class="block">Matches explicit Oracle lock-free reservation delta methods.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html#%3Cinit%3E()" class="member-name-link">ReservationMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ReservationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ReservationMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/coherence/data/util/EventRecorder.html#reset()" class="member-name-link">reset()</a> - Method in class io.micronaut.coherence.data.util.<a href="io/micronaut/coherence/data/util/EventRecorder.html" title="class in io.micronaut.coherence.data.util">EventRecorder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Book.html#resetEventCounters()" class="member-name-link">resetEventCounters()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Book.html" title="class in io.micronaut.data.document.tck.entities">Book</a></dt>
@@ -28419,8 +28544,6 @@ that an entity with an assigned identity already exists.</div>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#saveCustomSingleExpression(io.micronaut.data.tck.entities.Person)" class="member-name-link">saveCustomSingleExpression(Person)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonRepository.html#saveCustomSingleExpression2(java.lang.String,java.lang.String)" class="member-name-link">saveCustomSingleExpression2(String, String)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html#saveEntity(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.data.intercept.annotation.DataMethod.OperationType,boolean)" class="member-name-link">saveEntity(MethodMatchContext, DataMethod.OperationType, boolean)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/async/SaveEntityAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">SaveEntityAsyncInterceptor&lt;T&gt;</a> - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
@@ -30711,6 +30834,8 @@ in them.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/ArraysEntity_.html#shortPrimitiveArray" class="member-name-link">shortPrimitiveArray</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ArraysEntity_.html" title="class in io.micronaut.data.tck.entities">ArraysEntity_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html#shouldAddAutomaticUpdateAssignments()" class="member-name-link">shouldAddAutomaticUpdateAssignments()</a> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#shouldAppendOrder(io.micronaut.data.model.query.builder.QueryBuilder.SelectQueryDefinition)" class="member-name-link">shouldAppendOrder(QueryBuilder.SelectQueryDefinition)</a> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#shouldAppendOrder(io.micronaut.data.model.query.builder.QueryBuilder.SelectQueryDefinition)" class="member-name-link">shouldAppendOrder(QueryBuilder.SelectQueryDefinition)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
@@ -31227,6 +31352,10 @@ pagination operations.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#SQL_SERVER_FOR_UPDATE_CLAUSE" class="member-name-link">SQL_SERVER_FOR_UPDATE_CLAUSE</a> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">SqlCheckConstraint(String, String, String)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>SqlCheckConstraint</code> record class.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a> - Interface in <a href="io/micronaut/data/model/runtime/convert/package-summary.html">io.micronaut.data.model.runtime.convert</a></dt>
 <dd>
 <div class="block">Extension interface to provide vendor-specific SQL column definitions during schema generation.</div>
@@ -31250,6 +31379,18 @@ pagination operations.</div>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.DataType,io.micronaut.data.model.schema.sql.SqlDbType,java.lang.Integer,java.lang.Integer,java.lang.Integer,boolean,boolean,io.micronaut.data.annotation.GeneratedValue.Type,java.lang.String,io.micronaut.data.model.JsonDataType)" class="member-name-link">SqlColumnMapping(String, DataType, SqlDbType, Integer, Integer, Integer, boolean, boolean, GeneratedValue.Type, String, JsonDataType)</a> - Constructor for class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a></dt>
 <dd>
 <div class="block">Constructs a new Column instance.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.DataType,io.micronaut.data.model.schema.sql.SqlDbType,java.lang.Integer,java.lang.Integer,java.lang.Integer,boolean,boolean,io.micronaut.data.annotation.GeneratedValue.Type,java.lang.String,io.micronaut.data.model.JsonDataType,io.micronaut.data.model.schema.sql.SqlColumnMapping.ReservableOptions)" class="member-name-link">SqlColumnMapping(String, DataType, SqlDbType, Integer, Integer, Integer, boolean, boolean, GeneratedValue.Type, String, JsonDataType, SqlColumnMapping.ReservableOptions)</a> - Constructor for class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a></dt>
+<dd>
+<div class="block">Constructs a new Column instance.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
+<dd>
+<div class="block">Oracle reservable column options.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
+<dd>
+<div class="block">SQL check constraint metadata.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/metadata/package-summary.html">io.micronaut.data.model.schema.sql.metadata</a></dt>
 <dd>
@@ -31754,6 +31895,8 @@ and materialize an instance using column naming conventions mapped by the entity
 <div class="block">Supported annotations for generating Jakarta Static metamodel classes.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#supportedByImplicitQueries()" class="member-name-link">supportedByImplicitQueries()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#supportedByImplicitQueries(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">supportedByImplicitQueries(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html#supportedClass(io.micronaut.data.processor.model.SourcePersistentEntity)" class="member-name-link">supportedClass(SourcePersistentEntity)</a> - Static method in class io.micronaut.data.processor.jpa.metamodel.<a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html" title="class in io.micronaut.data.processor.jpa.metamodel">JpaMetamodelProcessor</a></dt>
 <dd>
@@ -32803,6 +32946,10 @@ or none if timeouts are not supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/RenderablePredicate.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/RenderablePredicate.html" title="class in io.micronaut.data.model.query.builder.sql">RenderablePredicate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/ReservationDelta.html" title="class in io.micronaut.data.model.query.builder.sql">ReservationDelta</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -32820,6 +32967,14 @@ or none if timeouts are not supported.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.ReservableOptions.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.ReservableOptions</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -34863,6 +35018,10 @@ followed by the second, and so forth.</div>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.html" title="annotation interface in io.micronaut.data.model.query.builder.sql">SqlQueryConfiguration</a></dt>
 <dd>
 <div class="block">Allow formatting of parameters for different dialects.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#value()" class="member-name-link">value()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping.SqlCheckConstraint</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlColumnMapping.SqlCheckConstraint.html#param-value"><code>value</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/vector/search/Score.html#value()" class="member-name-link">value()</a> - Method in record class io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/Score.html" title="class in io.micronaut.data.model.vector.search">Score</a></dt>
 <dd>

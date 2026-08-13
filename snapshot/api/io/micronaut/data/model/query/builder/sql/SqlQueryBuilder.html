@@ -288,7 +288,7 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Builds the creation table statement for collection of entities.</div>
+<div class="block">Builds the create table statements for a collection of entities.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
@@ -304,7 +304,9 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(java.util.List,io.micronaut.data.model.PersistentEntity%5B%5D,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">buildCreateTableStatements</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
  <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Builds the create table statements for a collection of entities.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDropTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildDropTableStatements</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -805,7 +807,7 @@ If you override it, ensure you preserve the following behavior expected by calle
 <h3>buildCreateTableStatements</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>...&nbsp;entities)</span></div>
-<div class="block">Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
+<div class="block">Builds the create table statements for a collection of entities. Designed for testing and not production usage. For production a
 SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -832,6 +834,15 @@ SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../runtime/convert/DefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">DefinitionProvider</a>&gt;&nbsp;definitionProviders,
  <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities,
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+<div class="block">Builds the create table statements for a collection of entities.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definitionProviders</code> - The definition providers</dd>
+<dd><code>entities</code> - The collection of entities</dd>
+<dd><code>dialect</code> - The dialect</dd>
+<dt>Returns:</dt>
+<dd>The tables for the given entities</dd>
+</dl>
 </div>
 </section>
 </li>
