@@ -7,7 +7,7 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
 To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the build-time dialect target `micronaut.data.sql.dialect-options.oracle.version=23.1`.
-The target is consumed by the annotation processor. In Maven and Gradle builds, pass it as a JVM system property to the forked Java compiler, as shown below.
+The target is consumed by the annotation processor. Make the value available as a JVM system property to the compiler process. The examples below use compiler forking to scope the property to compilation, but forking is not required when the property is already present in the compiler JVM.
 If both processor-context configuration and the JVM system property are available, processor-context configuration takes precedence.
 
 The configured dialect `version` is a SQL generation target.
@@ -18,7 +18,7 @@ Micronaut Data compares semantic version values, so a later configured version s
 
 For Gradle Java projects:
 
-The dialect-scoped key contains hyphens, so it is passed as a JVM system property to the forked Java compiler rather than as a direct `-A` annotation processor option. Forking is required for the compiler JVM to receive the property.
+The dialect-scoped key contains hyphens, so it cannot be passed directly as a `-A` annotation processor option. This example uses a per-task JVM argument, which requires a forked compiler; alternatively, the property can be supplied to the Gradle daemon JVM.
 
 [source,groovy]
 ----
@@ -30,7 +30,7 @@ tasks.withType(JavaCompile).configureEach {
 
 For Maven projects:
 
-As with Gradle, Maven passes the value as a JVM system property to a forked Java compiler. The `-J` prefix forwards the `-D` property to that compiler JVM; `<fork>true</fork>` is required.
+This example uses Maven's `-J` prefix to forward the `-D` property to the compiler JVM, so `<fork>true</fork>` is required for this form. A system property supplied to the Maven/compiler process does not inherently require forking.
 
 [source,xml]
 ----
