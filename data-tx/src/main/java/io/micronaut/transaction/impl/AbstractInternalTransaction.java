@@ -76,7 +76,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerBeforeCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false));
+                propagate(() -> synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false)));
             }
         }
     }
@@ -85,7 +85,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerAfterCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.afterCommit();
+                propagate(synchronization::afterCommit);
             }
         }
     }
@@ -94,7 +94,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerBeforeCompletion() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.beforeCompletion();
+                propagate(synchronization::beforeCompletion);
             }
         }
     }
@@ -104,7 +104,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         completed = true;
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.afterCompletion(status);
+                propagate(() -> synchronization.afterCompletion(status));
             }
         }
     }
