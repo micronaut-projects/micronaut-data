@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.operations;
+package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -30,11 +31,15 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Cached query infrastructure for reloading a changed entity by Oracle ROWID.
+ * Reloads a changed entity by its Oracle {@code ROWID}.
+ *
+ * <p>Oracle notifications identify changed rows by ROWID rather than supplying entity state. This
+ * class caches the entity metadata and generated query infrastructure needed to bind that ROWID
+ * and load the current entity before the listener method is invoked.</p>
  *
  * @param <E> The entity type.
  */
-final class OracleChangeListenerReloadQuery<E> {
+final class OracleChangeListenerEntityLoader<E> {
     private final DefaultJdbcRepositoryOperations operations;
     private final Class<E> entityType;
     private final RuntimePersistentEntity<E> entity;
@@ -42,7 +47,7 @@ final class OracleChangeListenerReloadQuery<E> {
     private final SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
 
     @SuppressWarnings("unchecked")
-    OracleChangeListenerReloadQuery(DefaultJdbcRepositoryOperations operations, Class<?> entityType, String query) {
+    OracleChangeListenerEntityLoader(DefaultJdbcRepositoryOperations operations, Class<?> entityType, String query) {
         this.operations = operations;
         this.entityType = (Class<E>) entityType;
         this.entity = operations.getEntity(this.entityType);

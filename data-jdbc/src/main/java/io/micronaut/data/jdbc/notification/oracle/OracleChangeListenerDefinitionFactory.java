@@ -13,38 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.operations;
+package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.annotation.ChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Creates the validated runtime definition of an Oracle change listener.
+ * Converts a discovered listener method into a validated Oracle notification definition.
+ *
+ * <p>The generic processor has already selected the datasource. This factory therefore focuses on
+ * Oracle concerns: listener signature validation, generated ROWID reload-query metadata,
+ * registration properties, and the SQL used to associate an Oracle CQN registration with a
+ * table or query.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
-    private final String dataSourceName;
     private final DefaultJdbcRepositoryOperations operations;
 
-    OracleChangeListenerDefinitionFactory(String dataSourceName, DefaultJdbcRepositoryOperations operations) {
-        this.dataSourceName = dataSourceName;
+    OracleChangeListenerDefinitionFactory(DefaultJdbcRepositoryOperations operations) {
         this.operations = operations;
     }
 
-    <B> @Nullable OracleChangeListenerDefinition create(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
+    OracleChangeListenerDefinition create(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         AnnotationValue<ChangeListener> changeListener = Objects.requireNonNull(method.getAnnotation(ChangeListener.class));
-        if (!dataSourceName.equals(changeListener.stringValue("dataSource").orElse("default"))) {
-            return null;
-        }
         Argument<?>[] arguments = method.getArguments();
         if (arguments.length != 1) {
             throw invalidChangeListener(method, "must have exactly one entity argument");
@@ -58,7 +58,7 @@ final class OracleChangeListenerDefinitionFactory {
             method,
             tableName,
             registrationQuery(changeListener, method, tableName, properties),
-            new OracleChangeListenerReloadQuery<>(operations, arguments[0].getType(), reloadQuery),
+            new OracleChangeListenerEntityLoader<>(operations, arguments[0].getType(), reloadQuery),
             properties
         );
     }

@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.operations;
+package io.micronaut.data.jdbc.notification;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 
-import java.util.Properties;
-
 /**
- * Runtime configuration for one {@code ChangeListener} method.
+ * Compile-time-discovered method annotated with {@code @ChangeListener}.
+ *
+ * <p>This value preserves the executable method and the bean definition that owns it until the
+ * datasource-specific notification provider is resolved at application startup. It deliberately
+ * contains no database-specific state; providers translate it to their own listener definition.</p>
  */
-record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
-                                      ExecutableMethod<?, ?> method,
-                                      String tableName,
-                                      String registrationQuery,
-                                      OracleChangeListenerReloadQuery<?> reloadQuery,
-                                      Properties registrationProperties) {
+@Internal
+public record ChangeListenerMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
 }

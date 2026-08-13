@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.operations;
+package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.inject.ExecutableMethod;
@@ -31,7 +31,13 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
- * Dispatches Oracle database change events to one {@code ChangeListener} method.
+ * Dispatches Oracle database change events for one listener definition.
+ *
+ * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
+ * thread, the dispatcher submits row reload and listener invocation to the blocking executor. It
+ * tracks accepted tasks so graceful shutdown can reject new work and wait for work already
+ * submitted. Deleted rows are not dispatched because their entity state cannot be reloaded by
+ * ROWID.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -40,7 +46,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final DatabaseChangeRegistration registration;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
-    private final TaskTracker taskTracker;
+    private final OracleChangeNotificationShutdownTracker shutdownTracker;
     private final Consumer<DatabaseChangeRegistration> registrationRemover;
     private final boolean purgeOnNotification;
 
@@ -48,13 +54,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        DatabaseChangeRegistration registration,
                                        BeanContext beanContext,
                                        Executor blockingExecutor,
-                                       TaskTracker taskTracker,
+                                       OracleChangeNotificationShutdownTracker shutdownTracker,
                                        Consumer<DatabaseChangeRegistration> registrationRemover) {
         this.listenerDefinition = listenerDefinition;
         this.registration = registration;
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
-        this.taskTracker = taskTracker;
+        this.shutdownTracker = shutdownTracker;
         this.registrationRemover = registrationRemover;
         this.purgeOnNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
             .getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
@@ -65,7 +71,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (purgeOnNotification) {
             registrationRemover.accept(registration);
         }
-        if (!taskTracker.tryStartTask()) {
+        if (!shutdownTracker.tryStartTask()) {
             return;
         }
         try {
@@ -73,11 +79,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 try {
                     dispatch(event);
                 } finally {
-                    taskTracker.completeTask();
+                    shutdownTracker.completeTask();
                 }
             });
         } catch (RuntimeException e) {
-            taskTracker.completeTask();
+            shutdownTracker.completeTask();
             LOG.warn("Unable to dispatch Oracle query notification", e);
         }
     }
@@ -118,7 +124,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void reloadAndInvoke(String rowId) {
         try {
-            Object entity = listenerDefinition.reloadQuery().reload(rowId);
+            Object entity = listenerDefinition.entityLoader().reload(rowId);
             if (entity != null) {
                 invokeListener(entity);
             }
@@ -140,9 +146,4 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             && normalizedTableName.regionMatches(true, normalizedTableName.length() - tableName.length(), tableName, 0, tableName.length()));
     }
 
-    interface TaskTracker {
-        boolean tryStartTask();
-
-        void completeTask();
-    }
 }
