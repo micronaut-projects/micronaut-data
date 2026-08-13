@@ -21,7 +21,8 @@ For Gradle Java projects:
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
+    options.fork = true
+    options.forkOptions.jvmArgs.add("-Dmicronaut.data.sql.dialect-options.oracle.version=23.1")
 }
 ----
 
@@ -29,8 +30,9 @@ For Maven projects:
 
 [source,xml]
 ----
+<fork>true</fork>
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
+    <arg>-J-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
 </compilerArgs>
 ----
 
