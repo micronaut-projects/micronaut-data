@@ -7,7 +7,7 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
 To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the build-time dialect target `micronaut.data.sql.dialect-options.oracle.version=23.1`.
-The target is consumed by the annotation processor. Make the value available as a JVM system property to the compiler process. The examples below use compiler forking to scope the property to compilation, but forking is not required when the property is already present in the compiler JVM.
+The target is consumed by the annotation processor from its processor-context options. Build integrations that can populate those options directly may provide this key there. For standard `javac`-based Maven and Gradle builds, make the value available as a JVM system property to the compiler process, as shown below. The examples use compiler forking to scope the property to compilation, but forking is not required when the property is already present in the compiler JVM.
 If both processor-context configuration and the JVM system property are available, processor-context configuration takes precedence.
 
 The configured dialect `version` is a SQL generation target.
@@ -18,7 +18,7 @@ Micronaut Data compares semantic version values, so a later configured version s
 
 For Gradle Java projects:
 
-The dialect-scoped key contains hyphens, so it cannot be passed directly as a `-A` annotation processor option. This example uses a per-task JVM argument, which requires a forked compiler; alternatively, the property can be supplied to the Gradle daemon JVM.
+The dialect-scoped key is read from the processor context, but raw `javac -A` options require dot-separated identifiers and therefore reject this key because it contains hyphens. Use the JVM-property fallback for a standard Gradle compiler invocation. This example uses a per-task JVM argument, which requires a forked compiler; alternatively, the property can be supplied to the Gradle daemon JVM.
 
 [source,groovy]
 ----
