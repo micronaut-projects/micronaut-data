@@ -3551,10 +3551,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
-            Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             function = function + column;
-            if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
                 // convert value from geography to geometry since ST_AsText and ST_AsGeoJSON requires geometry
                 function = function + "::geometry";
             }
