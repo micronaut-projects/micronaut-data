@@ -6493,6 +6493,18 @@ If Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE<
 <p>Retry attempts also run on a fresh transaction/connection</p>
 </li>
 <li>
+<p>Recovery is attempted only when commit handling or the commit acknowledgement
+produces an exception whose type matches the exception types configured by
+<code>on</code> (by default <code>java.sql.SQLRecoverableException</code>; a configured exception
+type matches if it appears anywhere in the exception cause chain). If a
+particular network and driver setup can leave JDBC operations waiting
+indefinitely before an exception is surfaced, users may configure an
+appropriate Oracle JDBC or infrastructure read timeout.
+Micronaut Data does not set this timeout. It applies to JDBC reads generally
+and must be tuned for the deployment; an immediate connection reset may not
+require one. The timeout does not determine the Oracle commit outcome.</p>
+</li>
+<li>
 <p>If Oracle reports <code>COMMITTED</code> with <code>USER_CALL_COMPLETED = FALSE</code>, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result without replay</p>
 </li>
 <li>
