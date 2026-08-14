@@ -20,7 +20,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
-import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 
@@ -36,9 +36,9 @@ import java.util.Properties;
  * Oracle registration configuration.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
-    private final DefaultJdbcRepositoryOperations operations;
+    private final JdbcRepositoryOperations operations;
 
-    OracleChangeListenerDefinitionFactory(DefaultJdbcRepositoryOperations operations) {
+    OracleChangeListenerDefinitionFactory(JdbcRepositoryOperations operations) {
         this.operations = operations;
     }
 

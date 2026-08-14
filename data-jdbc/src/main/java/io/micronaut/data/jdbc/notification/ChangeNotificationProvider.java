@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.notification;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -48,6 +48,6 @@ public interface ChangeNotificationProvider {
      * @param listenerMethods The listener methods collected before application startup.
      */
     void register(String dataSourceName,
-                  DefaultJdbcRepositoryOperations operations,
+                  JdbcRepositoryOperations operations,
                   List<ChangeListenerMethod> listenerMethods);
 }

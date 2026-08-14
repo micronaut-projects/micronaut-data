@@ -24,7 +24,7 @@ import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -48,12 +48,12 @@ final class ChangeNotificationMethodProcessor implements ExecutableMethodProcess
     ApplicationEventListener<StartupEvent> {
 
     private final String dataSourceName;
-    private final DefaultJdbcRepositoryOperations operations;
+    private final JdbcRepositoryOperations operations;
     private final ChangeNotificationProviderResolver providerResolver;
     private final List<ChangeListenerMethod> listenerMethods = new CopyOnWriteArrayList<>();
 
     ChangeNotificationMethodProcessor(@Parameter String dataSourceName,
-                                      DefaultJdbcRepositoryOperations operations,
+                                      JdbcRepositoryOperations operations,
                                       ChangeNotificationProviderResolver providerResolver) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;

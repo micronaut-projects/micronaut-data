@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
+import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleStatement;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.Properties;
@@ -43,14 +44,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * instances rather than representing a single Oracle registration.</p>
  *
  * <p>It registers definitions after application startup, keeps the live registrations available
- * for cleanup, and coordinates their dispatch tasks with graceful shutdown. Stopping first
- * rejects new tasks, unregisters every live Oracle registration once, then completes after any
- * already-submitted dispatch task finishes.</p>
+ * for cleanup, and coordinates their dispatch tasks with graceful shutdown. Registration startup
+ * is atomic: if one definition fails, registrations completed during that start attempt are
+ * unregistered before the original failure is propagated. Stopping first rejects new tasks,
+ * unregisters every live Oracle registration once, then completes after any already-submitted
+ * dispatch task finishes.</p>
  */
 final class OracleChangeNotificationManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationManager.class);
 
-    private final DefaultJdbcRepositoryOperations operations;
+    private final JdbcOperations operations;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final List<OracleChangeListenerDefinition> definitions = new CopyOnWriteArrayList<>();
@@ -58,7 +61,7 @@ final class OracleChangeNotificationManager {
     private final OracleChangeNotificationShutdownTracker shutdownTracker = new OracleChangeNotificationShutdownTracker();
     private final AtomicBoolean registrationsClosed = new AtomicBoolean();
 
-    OracleChangeNotificationManager(DefaultJdbcRepositoryOperations operations,
+    OracleChangeNotificationManager(JdbcOperations operations,
                                     BeanContext beanContext,
                                     Executor blockingExecutor) {
         this.operations = operations;
@@ -74,14 +77,20 @@ final class OracleChangeNotificationManager {
         if (shutdownTracker.isShutdownStarted()) {
             return;
         }
-        for (OracleChangeListenerDefinition definition : definitions) {
-            register(definition);
+        List<DatabaseChangeRegistration> startedRegistrations = new ArrayList<>(definitions.size());
+        try {
+            for (OracleChangeListenerDefinition definition : definitions) {
+                startedRegistrations.add(register(definition));
+            }
+        } catch (RuntimeException | Error registrationFailure) {
+            rollback(startedRegistrations, registrationFailure);
+            throw registrationFailure;
         }
     }
 
     CompletionStage<?> stop() {
         CompletionStage<?> completion = shutdownTracker.shutdownGracefully();
-        unregister();
+        unregisterAll();
         return completion;
     }
 
@@ -89,8 +98,8 @@ final class OracleChangeNotificationManager {
         return shutdownTracker.reportActiveTasks();
     }
 
-    private void register(OracleChangeListenerDefinition definition) {
-        operations.execute(connection -> {
+    private DatabaseChangeRegistration register(OracleChangeListenerDefinition definition) {
+        return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
             Properties properties = new Properties();
             properties.putAll(definition.registrationProperties());
@@ -122,21 +131,37 @@ final class OracleChangeNotificationManager {
         });
     }
 
-    private void unregister() {
+    private void rollback(List<DatabaseChangeRegistration> startedRegistrations, Throwable registrationFailure) {
+        for (int i = startedRegistrations.size() - 1; i >= 0; i--) {
+            DatabaseChangeRegistration registration = startedRegistrations.get(i);
+            try {
+                unregister(registration);
+                registrations.remove(registration);
+            } catch (RuntimeException | Error cleanupFailure) {
+                registrationFailure.addSuppressed(cleanupFailure);
+            }
+        }
+    }
+
+    private void unregisterAll() {
         if (!registrationsClosed.compareAndSet(false, true)) {
             return;
         }
         for (DatabaseChangeRegistration registration : registrations) {
             try {
-                operations.execute(connection -> {
-                    connection.unwrap(OracleConnection.class).unregisterDatabaseChangeNotification(registration);
-                    return registration;
-                });
+                unregister(registration);
             } catch (RuntimeException e) {
                 LOG.warn("Unable to unregister Oracle query notification [{}]", registration.getRegId(), e);
             }
         }
         registrations.clear();
+    }
+
+    private void unregister(DatabaseChangeRegistration registration) {
+        operations.execute(connection -> {
+            connection.unwrap(OracleConnection.class).unregisterDatabaseChangeNotification(registration);
+            return registration;
+        });
     }
 
 }

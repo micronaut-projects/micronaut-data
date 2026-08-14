@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
-import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.annotation.PreDestroy;
@@ -70,7 +70,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     @Override
     public void register(String dataSourceName,
-                         DefaultJdbcRepositoryOperations operations,
+                         JdbcRepositoryOperations operations,
                          List<ChangeListenerMethod> listenerMethods) {
         OracleChangeNotificationManager manager = managers.computeIfAbsent(
             dataSourceName,
