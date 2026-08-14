@@ -75,6 +75,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
         OracleChangeNotificationManager manager = managers.computeIfAbsent(
             dataSourceName,
             ignored -> new OracleChangeNotificationManager(
+                dataSourceName,
                 operations,
                 beanContext,
                 blockingExecutor

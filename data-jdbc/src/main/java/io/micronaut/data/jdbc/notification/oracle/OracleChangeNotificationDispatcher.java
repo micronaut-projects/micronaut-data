@@ -81,6 +81,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             blockingExecutor.execute(() -> {
                 try {
                     dispatch(event);
+                } catch (RuntimeException e) {
+                    LOG.error("Unexpected error dispatching Oracle query notification to listener method [{}]",
+                        listenerDefinition.method().getDescription(true), e);
                 } finally {
                     shutdownTracker.completeTask();
                 }
@@ -143,7 +146,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 : null;
             invokeListener(new DefaultChangeEvent<>(operation, entity, new OracleChangeEventMetadata(rowId)));
         } catch (Exception e) {
-            LOG.error("Error handling Oracle query notification for table [{}]", listenerDefinition.tableName(), e);
+            LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
+                listenerDefinition.method().getDescription(true), operation, listenerDefinition.tableName(), rowId, e);
         }
     }
 

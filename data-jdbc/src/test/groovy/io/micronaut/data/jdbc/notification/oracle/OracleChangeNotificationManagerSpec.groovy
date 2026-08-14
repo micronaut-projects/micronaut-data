@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
+import io.micronaut.inject.ExecutableMethod
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.OracleStatement
 import oracle.jdbc.dcn.DatabaseChangeRegistration
@@ -44,10 +45,14 @@ class OracleChangeNotificationManagerSpec extends Specification {
         def firstOracleStatement = Mock(OracleStatement)
         def secondOracleStatement = Mock(OracleStatement)
         def resultSet = Mock(ResultSet)
+        def firstMethod = Mock(ExecutableMethod)
+        def secondMethod = Mock(ExecutableMethod)
+        firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
+        secondMethod.getDescription(true) >> "void failingListener(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationManager(operations, Mock(BeanContext), executor)
-        manager.addDefinition(definition("SELECT * FROM BOOK"))
-        manager.addDefinition(definition("INVALID SQL"))
+        def manager = new OracleChangeNotificationManager("inventory", operations, Mock(BeanContext), executor)
+        manager.addDefinition(definition("SELECT * FROM BOOK", firstMethod))
+        manager.addDefinition(definition("INVALID SQL", secondMethod))
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
             try {
@@ -69,13 +74,15 @@ class OracleChangeNotificationManagerSpec extends Specification {
 
         then:
         def exception = thrown(DataAccessException)
-        exception.cause instanceof SQLException
-        exception.cause.message == "Invalid registration query"
+        exception.message == "Unable to register Oracle query notification for datasource [inventory] and listener method [void failingListener(ChangeEvent<Book>)]"
+        exception.cause instanceof DataAccessException
+        exception.cause.cause instanceof SQLException
+        exception.cause.cause.message == "Invalid registration query"
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
         1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration)
     }
 
-    private static OracleChangeListenerDefinition definition(String query) {
-        return new OracleChangeListenerDefinition(null, null, "BOOK", query, null, new Properties())
+    private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {
+        return new OracleChangeListenerDefinition(null, method, "BOOK", query, null, new Properties())
     }
 }

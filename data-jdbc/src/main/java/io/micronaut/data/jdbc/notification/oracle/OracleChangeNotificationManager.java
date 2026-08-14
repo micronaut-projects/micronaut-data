@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleStatement;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class OracleChangeNotificationManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationManager.class);
 
+    private final String dataSourceName;
     private final JdbcOperations operations;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
@@ -61,9 +63,11 @@ final class OracleChangeNotificationManager {
     private final OracleChangeNotificationShutdownTracker shutdownTracker = new OracleChangeNotificationShutdownTracker();
     private final AtomicBoolean registrationsClosed = new AtomicBoolean();
 
-    OracleChangeNotificationManager(JdbcOperations operations,
+    OracleChangeNotificationManager(String dataSourceName,
+                                    JdbcOperations operations,
                                     BeanContext beanContext,
                                     Executor blockingExecutor) {
+        this.dataSourceName = dataSourceName;
         this.operations = operations;
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
@@ -80,7 +84,12 @@ final class OracleChangeNotificationManager {
         List<DatabaseChangeRegistration> startedRegistrations = new ArrayList<>(definitions.size());
         try {
             for (OracleChangeListenerDefinition definition : definitions) {
-                startedRegistrations.add(register(definition));
+                try {
+                    startedRegistrations.add(register(definition));
+                } catch (RuntimeException e) {
+                    throw new DataAccessException("Unable to register Oracle query notification for datasource ["
+                        + dataSourceName + "] and listener method [" + definition.method().getDescription(true) + "]", e);
+                }
             }
         } catch (RuntimeException | Error registrationFailure) {
             rollback(startedRegistrations, registrationFailure);
