@@ -23,6 +23,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
 import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
@@ -33,45 +34,58 @@ import java.util.List;
 /**
  * Reloads a changed entity by its Oracle {@code ROWID}.
  *
- * <p>Oracle notifications identify changed rows by ROWID rather than supplying entity state. This
- * class caches the entity metadata and generated query infrastructure needed to bind that ROWID
- * and load the current entity before the listener method is invoked.</p>
+ * <p>Oracle notifications identify changed rows by ROWID rather than supplying entity state. The
+ * loader creates one immutable SQL query template containing the entity metadata and query
+ * binding descriptor. Each reload creates a short-lived prepared query that supplies only the
+ * notification-specific ROWID, allowing the template to be safely shared by concurrent dispatch
+ * tasks.</p>
  *
  * @param <E> The entity type.
  */
 final class OracleChangeListenerEntityLoader<E> {
+    private static final String[] EMPTY_EXPANDABLE_QUERY_PARTS = new String[0];
+    private static final QueryParameterBinding ROW_ID_BINDING = new RowIdQueryParameterBinding();
+
     private final DefaultJdbcRepositoryOperations operations;
-    private final Class<E> entityType;
-    private final RuntimePersistentEntity<E> entity;
-    private final String query;
     private final SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
+    private final DefaultSqlStoredQuery<E, E> sqlStoredQuery;
 
     @SuppressWarnings("unchecked")
     OracleChangeListenerEntityLoader(DefaultJdbcRepositoryOperations operations, Class<?> entityType, String query) {
         this.operations = operations;
-        this.entityType = (Class<E>) entityType;
-        this.entity = operations.getEntity(this.entityType);
-        this.query = query;
+        Class<E> resolvedEntityType = (Class<E>) entityType;
+        RuntimePersistentEntity<E> entity = operations.getEntity(resolvedEntityType);
+        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, EMPTY_EXPANDABLE_QUERY_PARTS,
+            List.of(ROW_ID_BINDING), resolvedEntityType, resolvedEntityType, StoredQuery.OperationType.QUERY);
+        this.sqlStoredQuery = new DefaultSqlStoredQuery<>(storedQuery, entity, queryBuilder,
+            operations.getConversionService());
     }
 
     @Nullable E reload(String rowId) {
-        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, new String[0],
-            List.of(new RowIdQueryParameterBinding(rowId)), entityType, entityType, StoredQuery.OperationType.QUERY);
-        DefaultSqlStoredQuery<E, E> sqlStoredQuery = new DefaultSqlStoredQuery<>(storedQuery, entity, queryBuilder,
-            operations.getConversionService());
-        PreparedQuery<E, E> preparedQuery = new DefaultSqlPreparedQuery<>(sqlStoredQuery);
-        return operations.findOne(preparedQuery);
+        return operations.findOne(new RowIdPreparedQuery(rowId));
     }
 
-    private record RowIdQueryParameterBinding(String rowId) implements QueryParameterBinding {
-        @Override
-        public DataType getDataType() {
-            return DataType.STRING;
+    /**
+     * Supplies the notification-specific ROWID to an otherwise immutable SQL query template.
+     */
+    private final class RowIdPreparedQuery extends DefaultSqlPreparedQuery<E, E> {
+        private final String rowId;
+
+        RowIdPreparedQuery(String rowId) {
+            super(OracleChangeListenerEntityLoader.this.sqlStoredQuery);
+            this.rowId = rowId;
         }
 
         @Override
-        public Object getValue() {
-            return rowId;
+        public void bindParameters(BindableParametersStoredQuery.Binder binder) {
+            binder.bindOne(ROW_ID_BINDING, rowId);
+        }
+    }
+
+    private static final class RowIdQueryParameterBinding implements QueryParameterBinding {
+        @Override
+        public DataType getDataType() {
+            return DataType.STRING;
         }
     }
 }
