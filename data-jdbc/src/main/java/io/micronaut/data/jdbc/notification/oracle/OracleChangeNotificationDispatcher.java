@@ -94,61 +94,50 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void dispatch(DatabaseChangeEvent event) {
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            if (tables.length == 0) {
-                dispatchInvalidation();
-            } else {
-                dispatchTables(tables);
-            }
+            dispatchTables(tables);
             return;
         }
         QueryChangeDescription[] queries = event.getQueryChangeDescription();
-        if (queries == null || queries.length == 0) {
-            dispatchInvalidation();
+        if (queries == null) {
             return;
         }
         for (QueryChangeDescription query : queries) {
             TableChangeDescription[] queryTables = query.getTableChangeDescription();
-            if (queryTables == null || queryTables.length == 0) {
-                dispatchInvalidation();
-            } else {
+            if (queryTables != null) {
                 dispatchTables(queryTables);
             }
         }
     }
 
     private void dispatchTables(TableChangeDescription[] tables) {
-        if (tables == null) {
-            return;
-        }
         for (TableChangeDescription table : tables) {
             if (!matchesTable(listenerDefinition.tableName(), table.getTableName())) {
                 continue;
             }
             RowChangeDescription[] rows = table.getRowChangeDescription();
             if (rows == null) {
-                dispatchInvalidation();
                 continue;
             }
             for (RowChangeDescription row : rows) {
                 if (row.getRowid() == null) {
-                    dispatchInvalidation();
                     continue;
                 }
                 String rowId = row.getRowid().stringValue();
                 for (RowChangeDescription.RowOperation operation : row.getRowOperations()) {
-                    dispatchRow(operation, rowId);
+                    if (operation == RowChangeDescription.RowOperation.INSERT) {
+                        dispatchRow(ChangeOperation.INSERT, rowId);
+                    } else if (operation == RowChangeDescription.RowOperation.UPDATE) {
+                        dispatchRow(ChangeOperation.UPDATE, rowId);
+                    } else if (operation == RowChangeDescription.RowOperation.DELETE) {
+                        dispatchRow(ChangeOperation.DELETE, rowId);
+                    }
                 }
             }
         }
     }
 
-    private void dispatchInvalidation() {
-        invokeListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
-    }
-
-    private void dispatchRow(RowChangeDescription.RowOperation rowOperation, String rowId) {
+    private void dispatchRow(ChangeOperation operation, String rowId) {
         try {
-            ChangeOperation operation = toChangeOperation(rowOperation);
             Object entity = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
                 ? listenerDefinition.entityLoader().reload(rowId)
                 : null;
@@ -156,19 +145,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         } catch (Exception e) {
             LOG.error("Error handling Oracle query notification for table [{}]", listenerDefinition.tableName(), e);
         }
-    }
-
-    private static ChangeOperation toChangeOperation(RowChangeDescription.RowOperation operation) {
-        if (operation == RowChangeDescription.RowOperation.INSERT) {
-            return ChangeOperation.INSERT;
-        }
-        if (operation == RowChangeDescription.RowOperation.UPDATE) {
-            return ChangeOperation.UPDATE;
-        }
-        if (operation == RowChangeDescription.RowOperation.DELETE) {
-            return ChangeOperation.DELETE;
-        }
-        return ChangeOperation.INVALIDATE;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

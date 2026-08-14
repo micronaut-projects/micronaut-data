@@ -20,9 +20,9 @@ import java.util.Optional;
 /**
  * A database change notification for a persistent entity type.
  *
- * <p>Providers may report a row-level operation, or only that a registered result was invalidated.
- * Entity state is therefore optional. When present, it is the state reloaded while processing the
- * notification and is not guaranteed to be a historical snapshot from the exact change instant.</p>
+ * <p>Entity state is optional. When present, it is the state reloaded while processing the
+ * notification and is not guaranteed to be a historical snapshot from the exact change instant.
+ * For example, a deleted row cannot be reloaded.</p>
  *
  * @param <E> The persistent entity type.
  * @since 5.2.0

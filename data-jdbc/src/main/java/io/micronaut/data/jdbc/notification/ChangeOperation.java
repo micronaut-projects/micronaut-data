@@ -26,7 +26,5 @@ public enum ChangeOperation {
     /** A row was updated. */
     UPDATE,
     /** A row was deleted. */
-    DELETE,
-    /** A registered result changed without portable row-level details. */
-    INVALIDATE
+    DELETE
 }
