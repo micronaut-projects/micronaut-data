@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
+import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
@@ -141,10 +142,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void dispatchRow(ChangeOperation operation, String rowId) {
         try {
-            Object entity = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
-                ? listenerDefinition.entityLoader().reload(rowId)
-                : null;
-            invokeListener(new DefaultChangeEvent<>(operation, entity, new OracleChangeEventMetadata(rowId)));
+            OracleChangeEventMetadata metadata = new OracleChangeEventMetadata(rowId);
+            ChangeEvent<?> event = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
+                ? new DeferredChangeEvent<>(operation, metadata, () -> listenerDefinition.entityLoader().reload(rowId))
+                : new DefaultChangeEvent<>(operation, null, metadata);
+            invokeListener(event);
         } catch (Exception e) {
             LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
                 listenerDefinition.method().getDescription(true), operation, listenerDefinition.tableName(), rowId, e);

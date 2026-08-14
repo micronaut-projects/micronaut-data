@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.annotation;
 
+import io.micronaut.aop.InterceptorBinding;
+import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Executable;
 
@@ -32,10 +34,14 @@ import java.lang.annotation.Target;
  * {@code E} is a {@code @MappedEntity}. The available operation, entity state, metadata, ordering,
  * and delivery guarantees depend on the notification provider selected for the datasource.</p>
  *
+ * <p>When retry advice is also applied to the method, provider-deferred entity loading executes
+ * within the same retry boundary as the listener invocation.</p>
+ *
  * @since 5.2.0
  */
 @Documented
 @Executable(processOnStartup = true)
+@InterceptorBinding(kind = InterceptorKind.AROUND)
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 public @interface ChangeListener {

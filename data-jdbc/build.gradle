@@ -42,6 +42,7 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
     testImplementation mn.micronaut.http.client
+    testImplementation mn.micronaut.retry
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)

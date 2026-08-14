@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Context
 @Requires(property = "query-notification.object.enabled")
-final class LibraryCache implements ApplicationEventListener<StartupEvent> {
+class LibraryCache implements ApplicationEventListener<StartupEvent> {
 
     private final LibraryRepository repository;
     private final Map<Long, Library> libraries = new ConcurrentHashMap<>();
