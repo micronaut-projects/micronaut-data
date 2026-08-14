@@ -35,7 +35,7 @@ import org.dizitart.no2.transaction.Session;
  * PropagatedContext. This ensures consistent session state across propagated or nested
  * transactions.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Singleton
 @Primary

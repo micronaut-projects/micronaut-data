@@ -22,7 +22,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 /**
  * Context for Nitrite operations tracking state during entity operations.
  *
- * @since 4.14.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteOperationContext extends OperationContext {

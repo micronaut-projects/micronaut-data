@@ -25,7 +25,7 @@ import java.util.List;
  * Strategy interface for handling expression resolution in Nitrite queries.
  * Differentiates between compile-time literal inlining and runtime parameter binding.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 public interface NitriteExpressionHandler {
 

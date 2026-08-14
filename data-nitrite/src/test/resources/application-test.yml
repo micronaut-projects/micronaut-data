@@ -9,5 +9,6 @@ micronaut:
     levels:
       io.micronaut.data: DEBUG
 
-nitrite:
-  db-path: memory
+  nitrite:
+    default:
+      db-path: memory

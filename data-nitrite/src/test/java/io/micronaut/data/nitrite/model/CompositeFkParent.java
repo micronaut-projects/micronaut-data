@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 
 @MappedEntity
 public class CompositeFkParent {
@@ -27,8 +28,10 @@ public class CompositeFkParent {
     @GeneratedValue
     private String id;
 
+    @MappedProperty("tenant_id")
     private String tenantId;
 
+    @MappedProperty("ref_id")
     private Long refId;
 
     public CompositeFkParent() {

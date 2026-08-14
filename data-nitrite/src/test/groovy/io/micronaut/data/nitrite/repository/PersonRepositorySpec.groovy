@@ -928,6 +928,20 @@ class PersonRepositorySpec extends Specification {
         personRepository.findById(p3.id).empty
     }
 
+    void "deleting a transient entity does not remove or report an existing entity"() {
+        given:
+        personRepository.save(new Person("Persisted", 40))
+        def transientPerson = new Person("Transient", 20)
+
+        when:
+        personRepository.delete(transientPerson)
+
+        then:
+        personRepository.count() == 1
+        personRepository.findByName("Persisted").present
+        personRepository.findByName("Transient").empty
+    }
+
     // Gap 3: countByAgeGreaterThan - untested
     // Gap 4: Multi-criteria derived queries (AND) - untested
     void "test find by name and age"() {
@@ -1076,6 +1090,18 @@ class PersonRepositorySpec extends Specification {
         then:
         results.size() == 2
         results*.name.containsAll(["Alice", "Albert"])
+    }
+
+    void "derived startsWith quotes metacharacters in a bound parameter"() {
+        given:
+        personRepository.saveAll([
+                new Person("a.b literal", 20),
+                new Person("aXb wildcard", 30),
+                new Person("other", 40)
+        ])
+
+        expect:
+        personRepository.findByNameStartsWith("a.b")*.name == ["a.b literal"]
     }
 
     void "test criteria startsWith ignore case hits visitStartsWith ignoreCase branch"() {

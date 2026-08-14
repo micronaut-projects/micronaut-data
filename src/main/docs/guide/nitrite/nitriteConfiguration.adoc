@@ -1,30 +1,59 @@
 [[nitriteConfiguration]]
 == Configuration
 
-Nitrite configuration is bound from `nitrite.*` properties.
+Nitrite datasources are bound from `micronaut.nitrite.*` properties. Each datasource has a name, which forms part of the property path: settings for a datasource named `default` are bound from `micronaut.nitrite.default.*`.
 
-The following settings are supported:
+The following settings are supported for each datasource:
 
-- `nitrite.db-path`: Path to the database file. If not provided, an in-memory database is created.
-- `nitrite.storage-mode`: The storage engine to use. Supported values are:
+- `db-path`: Path to the database file. If not provided, an in-memory database is created.
+- `storage-mode`: The storage engine to use. Supported values are:
     * `MVSTORE`: (Default) MVStore-backed persistent database.
     * `IN_MEMORY`: Pure in-memory database (equivalent to leaving `db-path` empty).
     * `ROCKSDB`: RocksDB-backed persistent database.
-- `nitrite.field-separator`: The character used to separate nested fields in query strings (default: `.`).
-- `nitrite.create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
-- `nitrite.username`: Optional username (for authenticated databases).
-- `nitrite.password`: Optional password.
+- `field-separator`: The character used to separate nested fields in query strings (default: `.`).
+- `create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
+- `username`: Optional username (for authenticated databases).
+- `password`: Optional password.
 
 Example (Persistent):
 
 [source,yaml]
 ----
-nitrite:
-  db-path: /data/myapp.db
-  create-indexes: true
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      create-indexes: true
 ----
 
-If no `db-path` is provided, an in-memory database is created by default.
+If no `micronaut.nitrite` configuration is present at all, an in-memory datasource named `default` is created implicitly, so a repository works without any configuration. If a datasource is configured but supplies no `db-path`, an in-memory database is used for it.
+
+== Multiple Datasources
+
+More than one datasource can be configured by giving each one its own name under `micronaut.nitrite`. Each datasource is opened independently, with its own storage mode and its own documents:
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+    audit:
+      storage-mode: IN_MEMORY
+----
+
+A repository selects its datasource by passing the name to ann:data.nitrite.annotation.NitriteRepository[]:
+
+[source,java]
+----
+@NitriteRepository("audit")
+public interface AuditRepository extends CrudRepository<AuditRecord, String> {
+}
+----
+
+A repository that names no datasource uses the primary one, which is the datasource named `default`.
+
+Datasources are isolated from each other: an entity written through a repository bound to one datasource is not visible through a repository bound to another, even when both repositories map the same entity type.
 
 == Optional Modules
 
@@ -40,10 +69,14 @@ Then configure the storage mode:
 
 [source,yaml]
 ----
-nitrite:
-  db-path: /data/myapp.db
-  storage-mode: ROCKSDB
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      storage-mode: ROCKSDB
 ----
+
+`ROCKSDB` requires a `db-path`; unlike `MVSTORE` it cannot fall back to in-memory storage, so a missing path fails at startup. Configuring `ROCKSDB` without the adapter on the classpath also fails at startup, naming the missing adapter class.
 
 See the https://nitrite.dizitart.com/java-sdk/modules/store-modules/rocksdb/index.html[Nitrite ROCKSDB Adapter documentation] for more details.
 
@@ -59,6 +92,8 @@ The spatial module enables:
 
 - <<nitriteSpatial, Spatial indexes>> on Geometry fields
 - <<nitriteSpatial, Spatial filters>> (`$near`, `$within`, `$intersects`)
+
+The module is loaded automatically when it is on the classpath and is simply absent when it is not. A module that is present but cannot be initialized fails at startup rather than being skipped, so spatial indexes and filters are never silently unavailable.
 
 See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module documentation] and https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Spatial Filters documentation] for more details.
 

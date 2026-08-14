@@ -19,8 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
-import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
@@ -75,7 +76,7 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN
  * Association names are matched using the associated entity's class name, which correctly handles
  * both regular and irregular plural forms (for example, {@code books} → {@code book}, {@code cities} → {@code city}).
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteFilterBuilder {
@@ -130,46 +131,52 @@ public final class NitriteFilterBuilder {
         for (Map.Entry<String, Object> entry : filterObj.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (key != null && (key.equals("$sort") || key.equals("$set") || key.equals("$limit")
-                    || key.equals("$skip") || key.equals("$count") || key.equals("$project"))) {
+            if (key != null && (key.equals(NitriteQueryOperators.SORT) || key.equals(NitriteQueryOperators.SET)
+                    || key.equals(NitriteQueryOperators.INC) || key.equals(NitriteQueryOperators.MUL)
+                    || key.equals(NitriteQueryOperators.LIMIT) || key.equals(NitriteQueryOperators.SKIP)
+                    || key.equals(NitriteQueryOperators.COUNT) || key.equals(NitriteQueryOperators.PROJECT))) {
                 continue;
             }
-            if (AND.equals(key)) {
-                if (value instanceof List<?> list) {
-                    List<NitriteFilterAST> ands = new ArrayList<>();
-                    for (Object item : list) {
-                        if (item instanceof Map<?, ?> m) {
-                            ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+            switch (key) {
+                case AND -> {
+                    if (value instanceof List<?> list) {
+                        List<NitriteFilterAST> ands = new ArrayList<>();
+                        for (Object item : list) {
+                            if (item instanceof Map<?, ?> m) {
+                                ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                            }
+                        }
+                        compiledFilters.add(new NitriteFilterAST.AndNode(ands));
+                    }
+                }
+                case OR -> {
+                    if (value instanceof List<?> list) {
+                        List<NitriteFilterAST> ors = new ArrayList<>();
+                        for (Object item : list) {
+                            if (item instanceof Map<?, ?> m) {
+                                ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
+                            }
+                        }
+                        compiledFilters.add(new NitriteFilterAST.OrNode(ors));
+                    }
+                }
+                case NitriteQueryOperators.NOT -> {
+                    if (value instanceof Map<?, ?> m) {
+                        compiledFilters.add(new NitriteFilterAST.NotNode(
+                            (NitriteFilterAST) compile(entity, toStringObjectMap(m))));
+                    }
+                }
+                case EXPR -> {
+                    if (value instanceof Map<?, ?> m && m.size() == 1) {
+                        Map.Entry<?, ?> exprEntry = m.entrySet().iterator().next();
+                        String op = (String) exprEntry.getKey();
+                        if (exprEntry.getValue() instanceof List<?> operands && operands.size() == 2) {
+                            compiledFilters.add(new NitriteFilterAST.ExprNode(
+                                op, compileExprValue(entity, operands.get(0)), compileExprValue(entity, operands.get(1))));
                         }
                     }
-                    compiledFilters.add(new NitriteFilterAST.AndNode(ands));
                 }
-            } else if (OR.equals(key)) {
-                if (value instanceof List<?> list) {
-                    List<NitriteFilterAST> ors = new ArrayList<>();
-                    for (Object item : list) {
-                        if (item instanceof Map<?, ?> m) {
-                            ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
-                        }
-                    }
-                    compiledFilters.add(new NitriteFilterAST.OrNode(ors));
-                }
-            } else if (NitriteQueryOperators.NOT.equals(key)) {
-                if (value instanceof Map<?, ?> m) {
-                    compiledFilters.add(new NitriteFilterAST.NotNode(
-                        (NitriteFilterAST) compile(entity, toStringObjectMap(m))));
-                }
-            } else if (EXPR.equals(key)) {
-                if (value instanceof Map<?, ?> m && m.size() == 1) {
-                    Map.Entry<?, ?> exprEntry = m.entrySet().iterator().next();
-                    String op = (String) exprEntry.getKey();
-                    if (exprEntry.getValue() instanceof List<?> operands && operands.size() == 2) {
-                        compiledFilters.add(new NitriteFilterAST.ExprNode(
-                            op, compileExprValue(entity, operands.get(0)), compileExprValue(entity, operands.get(1))));
-                    }
-                }
-            } else {
-                compiledFilters.add(compileFieldFilter(entity, key, value));
+                case null, default -> compiledFilters.add(compileFieldFilter(entity, key, value));
             }
         }
 
@@ -421,8 +428,8 @@ public final class NitriteFilterBuilder {
         r.put(GTE, (e, f, v, p, n) -> buildRangeFilter(f, GTE, v));
         r.put(LT,  (e, f, v, p, n) -> buildRangeFilter(f, LT, v));
         r.put(LTE, (e, f, v, p, n) -> buildRangeFilter(f, LTE, v));
-        r.put(IN,  (e, f, v, p, n) -> buildInFilter(e, f, v, p, n));
-        r.put(NIN, (e, f, v, p, n) -> buildNotInFilter(e, f, v, p, n));
+        r.put(IN, this::buildInFilter);
+        r.put(NIN, this::buildNotInFilter);
         r.put(NULL,    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).eq(null) : Filter.ALL);
         r.put(NOT_NULL, (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).notEq(null) : Filter.ALL);
         r.put(BETWEEN, (e, f, v, p, n) -> {
@@ -459,11 +466,18 @@ public final class NitriteFilterBuilder {
     }
 
     private String resolveRegexValue(@Nullable Object value, Object[] params, Map<String, Object> namedParameters) {
-        if (value instanceof Map<?, ?> map && map.containsKey(NitriteQueryBuilder.LIKE_PATTERN)) {
-            Object resolvedPattern = valueResolver.resolveValue(map.get(NitriteQueryBuilder.LIKE_PATTERN), params, namedParameters);
-            Character escape = resolveLikeEscape(map.get(NitriteQueryBuilder.LIKE_ESCAPE), params, namedParameters);
+        if (value instanceof Map<?, ?> map && map.containsKey(NitriteInternalKeys.REGEX_PATTERN)) {
+            Object resolvedPattern = valueResolver.resolveValue(map.get(NitriteInternalKeys.REGEX_PATTERN), params, namedParameters);
+            String prefix = Boolean.TRUE.equals(map.get(NitriteInternalKeys.REGEX_STARTS_WITH)) ? "^" : ".*";
+            String suffix = Boolean.TRUE.equals(map.get(NitriteInternalKeys.REGEX_ENDS_WITH)) ? "$" : ".*";
+            String ignoreCase = Boolean.TRUE.equals(map.get(NitriteInternalKeys.REGEX_IGNORE_CASE)) ? "(?i)" : "";
+            return ignoreCase + prefix + Pattern.quote(resolvedPattern != null ? resolvedPattern.toString() : "") + suffix;
+        }
+        if (value instanceof Map<?, ?> map && map.containsKey(NitriteInternalKeys.LIKE_PATTERN)) {
+            Object resolvedPattern = valueResolver.resolveValue(map.get(NitriteInternalKeys.LIKE_PATTERN), params, namedParameters);
+            Character escape = resolveLikeEscape(map.get(NitriteInternalKeys.LIKE_ESCAPE), params, namedParameters);
             String regex = resolvedPattern != null ? PatternConverter.convertLikeToRegex(resolvedPattern.toString(), escape) : "";
-            return Boolean.TRUE.equals(map.get(NitriteQueryBuilder.LIKE_IGNORE_CASE)) ? "(?i)" + regex : regex;
+            return Boolean.TRUE.equals(map.get(NitriteInternalKeys.LIKE_IGNORE_CASE)) ? "(?i)" + regex : regex;
         }
         return PatternConverter.resolveRegexPattern(valueResolver.resolveValue(value, params, namedParameters));
     }
@@ -635,10 +649,11 @@ public final class NitriteFilterBuilder {
     }
 
     private boolean isPlaceholder(Object value) {
-        if (value instanceof String s && (s.startsWith("$mn_qp:") || s.startsWith(":"))) {
+        if (value instanceof String s && (s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX) || s.startsWith(":"))) {
             return true;
         }
-        return value instanceof Map<?, ?> vm && vm.size() == 1 && vm.containsKey("$mn_qp");
+        return value instanceof Map<?, ?> vm && vm.size() == 1
+            && vm.containsKey(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER);
     }
 
     @SuppressWarnings("unchecked")

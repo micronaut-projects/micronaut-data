@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @param <E> The entity type
  * @param <R> The result type
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public class DefaultNitritePreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements NitritePreparedQuery<E, R> {

@@ -18,8 +18,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test default configuration values"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         expect:
         config.getDbPath() == null
@@ -32,8 +31,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setDbPath"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setDbPath("/data/test.db")
@@ -50,8 +48,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setUsername"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setUsername("admin")
@@ -68,8 +65,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setPassword"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setPassword("secret")
@@ -86,8 +82,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setStorageMode MVSTORE"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setStorageMode(NitriteConfiguration.StorageMode.MVSTORE)
@@ -98,8 +93,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setStorageMode IN_MEMORY"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setStorageMode(NitriteConfiguration.StorageMode.IN_MEMORY)
@@ -110,8 +104,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setStorageMode ROCKSDB"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setStorageMode(NitriteConfiguration.StorageMode.ROCKSDB)
@@ -122,8 +115,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setFieldSeparator"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setFieldSeparator("_")
@@ -140,8 +132,7 @@ class NitriteConfigurationSpec extends Specification {
 
     void "test setCreateIndexes"() {
         given:
-        ctx = ApplicationContext.run()
-        def config = ctx.getBean(NitriteConfiguration)
+        def config = new NitriteConfiguration("default")
 
         when:
         config.setCreateIndexes(false)
@@ -159,10 +150,10 @@ class NitriteConfigurationSpec extends Specification {
     void "test configuration binding from properties - MVSTORE with db-path"() {
         given:
         def props = [
-            "nitrite.storage-mode": "MVSTORE",
-            "nitrite.db-path": "/data/myapp.db",
-            "nitrite.username": "admin",
-            "nitrite.password": "secret"
+            "micronaut.nitrite.default.storage-mode": "MVSTORE",
+            "micronaut.nitrite.default.db-path": "/data/myapp.db",
+            "micronaut.nitrite.default.username": "admin",
+            "micronaut.nitrite.default.password": "secret"
         ]
         ctx = ApplicationContext.run(props)
         def config = ctx.getBean(NitriteConfiguration)
@@ -177,7 +168,7 @@ class NitriteConfigurationSpec extends Specification {
     void "test configuration binding from properties - IN_MEMORY"() {
         given:
         def props = [
-            "nitrite.storage-mode": "IN_MEMORY"
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
         ]
         ctx = ApplicationContext.run(props)
         def config = ctx.getBean(NitriteConfiguration)
@@ -190,8 +181,8 @@ class NitriteConfigurationSpec extends Specification {
     void "test configuration binding from properties - custom field separator"() {
         given:
         def props = [
-            "nitrite.field-separator": "_",
-            "nitrite.create-indexes": "false"
+            "micronaut.nitrite.default.field-separator": "_",
+            "micronaut.nitrite.default.create-indexes": "false"
         ]
         ctx = ApplicationContext.run(props)
         def config = ctx.getBean(NitriteConfiguration)
@@ -213,5 +204,16 @@ class NitriteConfigurationSpec extends Specification {
         NitriteConfiguration.StorageMode.valueOf("MVSTORE") == NitriteConfiguration.StorageMode.MVSTORE
         NitriteConfiguration.StorageMode.valueOf("IN_MEMORY") == NitriteConfiguration.StorageMode.IN_MEMORY
         NitriteConfiguration.StorageMode.valueOf("ROCKSDB") == NitriteConfiguration.StorageMode.ROCKSDB
+    }
+
+    void "named datasource configuration creates an isolated Nitrite configuration"() {
+        given:
+        ctx = ApplicationContext.run([
+                "micronaut.nitrite.primary.storage-mode": "IN_MEMORY",
+                "micronaut.nitrite.audit.storage-mode": "IN_MEMORY"
+        ])
+
+        expect:
+        ctx.getBeansOfType(NitriteConfiguration)*.name.findAll { it in ["primary", "audit"] }.sort() == ["audit", "primary"]
     }
 }

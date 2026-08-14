@@ -38,7 +38,9 @@ final class NitriteFieldNameResolver {
 
     static String getFieldName(PersistentPropertyPath propertyPath) {
         String result = resolve(propertyPath);
-        LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getFieldName: path={}, result={}", propertyPath.getPath(), result);
+        }
         return result;
     }
 
@@ -109,7 +111,7 @@ final class NitriteFieldNameResolver {
                     sb.append(association.getPersistedName()).append(".");
                 } else {
                     List<Association> assocs = propertyPath.getAssociations();
-                    boolean isLast = association.equals(assocs.get(assocs.size() - 1));
+                    boolean isLast = association.equals(assocs.getLast());
                     boolean isIdentityAccess = false;
                     if (isLast) {
                         try {

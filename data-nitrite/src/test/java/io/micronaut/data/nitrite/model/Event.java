@@ -19,6 +19,8 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -52,6 +54,7 @@ public class Event {
   private byte[] data;
   private Map<String, String> metadata;
   private Optional<String> optionalDescription;
+  @Relation(Relation.Kind.EMBEDDED)
   private EventLocation location;
 
   public Event() {}
@@ -205,6 +208,7 @@ public class Event {
 
   @Embeddable
   public static class EventLocation implements Serializable {
+    @MappedProperty("region_name")
     private String region;
     private String zone;
 

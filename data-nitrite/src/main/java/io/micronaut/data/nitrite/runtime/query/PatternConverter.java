@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * Converts LIKE patterns and wildcards to regular expressions for Nitrite queries.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class PatternConverter {

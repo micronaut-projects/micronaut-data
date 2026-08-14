@@ -22,6 +22,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.runtime.DefaultNitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -73,14 +74,15 @@ public final class NitriteQueryBinder {
      * @return the placeholder index, or {@code null} if the value is not a placeholder
      */
     public static @Nullable Integer extractPlaceholderIndex(@Nullable Object value) {
-        if (value instanceof String s && s.startsWith("$mn_qp:")) {
+        if (value instanceof String s && s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
             try {
-                return Integer.parseInt(s.substring(7));
+                return Integer.parseInt(s.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()));
             } catch (NumberFormatException ignored) {
                 // Fall back if the suffix is not a valid integer placeholder
             }
         }
-        if (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) {
+        if (value instanceof Map<?, ?> vm && vm.size() == 1
+            && vm.get(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER) instanceof Integer idx) {
             return idx;
         }
         return null;
@@ -104,10 +106,10 @@ public final class NitriteQueryBinder {
         if (value instanceof String s) {
             Object resolved = null;
             boolean isPlaceholder = false;
-            if (s.startsWith("$mn_qp:")) {
+            if (s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
                 isPlaceholder = true;
                 try {
-                    int idx = Integer.parseInt(s.substring(7));
+                    int idx = Integer.parseInt(s.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()));
                     if (jsonParams != null && idx >= 0 && idx < jsonParams.length) {
                         resolved = jsonParams[idx];
                     }
@@ -125,7 +127,7 @@ public final class NitriteQueryBinder {
                 return toFilterValue.apply(resolved);
             }
         }
-        if (value instanceof Map vm && vm.get("$mn_qp") instanceof Integer idx
+        if (value instanceof Map vm && vm.get(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER) instanceof Integer idx
                 && idx >= 0 && jsonParams != null && idx < jsonParams.length) {
             return toFilterValue.apply(jsonParams[idx]);
         }
@@ -216,7 +218,7 @@ public final class NitriteQueryBinder {
                 }
             }
         }
-        Argument[] args = q.getArguments();
+        Argument<?>[] args = q.getArguments();
         if (args != null) {
             int len = Math.min(args.length, params.length);
             for (int i = 0; i < len; i++) {
@@ -410,8 +412,10 @@ public final class NitriteQueryBinder {
         } catch (RuntimeException e) {
             // Expected when segment traversal reaches a scalar value (e.g. a String or
             // Number) that cannot be converted to a Document; treat as "no such segment".
-            LOG.debug("Could not resolve segment '{}' on value of type {}: {}",
-                segment, current.getClass(), e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not resolve segment '{}' on value of type {}: {}",
+                    segment, current.getClass(), e.getMessage());
+            }
             return null;
         }
     }

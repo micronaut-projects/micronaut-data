@@ -18,8 +18,8 @@ class NitriteInMemoryVerificationSpec extends Specification {
         and: "Config set to IN_MEMORY but providing a path in that deleted dir"
         File dbFile = new File(nonExistentDir, "should-not-exist.db")
         Map<String, Object> props = [
-            "nitrite.storage-mode": "IN_MEMORY",
-            "nitrite.db-path": dbFile.absolutePath
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY",
+            "micronaut.nitrite.default.db-path": dbFile.absolutePath
         ]
 
         def ctx = ApplicationContext.run(props)
@@ -41,8 +41,8 @@ class NitriteInMemoryVerificationSpec extends Specification {
         File tempDir = Files.createTempDirectory("nitrite-mvstore-verify").toFile()
         File dbFile = new File(tempDir, "must-exist.db")
         Map<String, Object> props = [
-            "nitrite.storage-mode": "MVSTORE",
-            "nitrite.db-path": dbFile.absolutePath
+            "micronaut.nitrite.default.storage-mode": "MVSTORE",
+            "micronaut.nitrite.default.db-path": dbFile.absolutePath
         ]
 
         def ctx = ApplicationContext.run(props)

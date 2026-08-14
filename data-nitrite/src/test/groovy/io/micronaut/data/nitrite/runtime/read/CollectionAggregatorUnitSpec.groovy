@@ -3,6 +3,7 @@ package io.micronaut.data.nitrite.runtime.read
 import org.dizitart.no2.collection.Document
 import spock.lang.Specification
 
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -35,6 +36,19 @@ class CollectionAggregatorUnitSpec extends Specification {
         aggregator.aggregate(docs, "score", "Sum") == 60.0
         aggregator.aggregate(docs, "score", "Avg") == 20.0
         aggregator.aggregate(docs, "score", "Unknown") == 0 // Default branch
+    }
+
+    def "test numeric aggregation preserves BigDecimal precision"() {
+        given:
+        def aggregator = new CollectionAggregator()
+        def docs = [
+                Document.createDocument("amount", new BigDecimal("0.10")),
+                Document.createDocument("amount", new BigDecimal("0.20"))
+        ]
+
+        expect:
+        aggregator.aggregate(docs, "amount", "Sum") == new BigDecimal("0.30")
+        aggregator.aggregate(docs, "amount", "Avg") == new BigDecimal("0.15")
     }
 
     def "test LocalDate aggregation"() {

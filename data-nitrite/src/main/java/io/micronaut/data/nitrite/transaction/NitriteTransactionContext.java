@@ -21,7 +21,7 @@ import org.dizitart.no2.transaction.Transaction;
 /**
  * Transaction context holder that provides transaction-aware collection and repository access.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 public class NitriteTransactionContext {
 

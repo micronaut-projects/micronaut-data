@@ -41,4 +41,4 @@ Spatial indexes are covered in <<nitriteSpatial>>.
 
 === Configuration
 
-Automatic index creation can be disabled by setting `nitrite.create-indexes` to `false` in your application configuration.
+Automatic index creation can be disabled by setting `create-indexes` to `false` for the datasource, for example `micronaut.nitrite.default.create-indexes`.

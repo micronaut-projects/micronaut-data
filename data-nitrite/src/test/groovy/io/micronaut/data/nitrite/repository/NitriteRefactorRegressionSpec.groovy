@@ -2,6 +2,7 @@ package io.micronaut.data.nitrite.repository
 
 import io.micronaut.data.nitrite.model.CriteriaPerson
 import io.micronaut.data.nitrite.model.Person
+import io.micronaut.data.nitrite.model.SnakeEntity
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -17,9 +18,13 @@ class NitriteRefactorRegressionSpec extends Specification {
     @Inject
     CriteriaPersonRepository criteriaRepository
 
+    @Inject
+    SnakeEntityRepository snakeEntityRepository
+
     def setup() {
         repository.deleteAll()
         criteriaRepository.deleteAll()
+        snakeEntityRepository.deleteAll()
     }
 
     void "JSON update must ignore \$set in filter building"() {
@@ -94,5 +99,24 @@ class NitriteRefactorRegressionSpec extends Specification {
         def person = criteriaRepository.findAll().find { it.age == 13 }
         person.name == "Steven"
         // If it failed, person.name might be "ParameterExpressionImpl{...}"
+    }
+
+    void "Criteria update uses the persisted name for a mapped property"() {
+        given:
+        def entity = new SnakeEntity(sessionId: "before", level: 7)
+        snakeEntityRepository.save(entity)
+
+        when:
+        UpdateSpecification<SnakeEntity> setSessionId = (root, query, cb) -> {
+            query.set(root.get("sessionId"), "after")
+            return null
+        }
+        PredicateSpecification<SnakeEntity> bySessionId = (root, cb) ->
+            cb.equal(root.get("sessionId"), "before")
+        def updated = snakeEntityRepository.updateAll(setSessionId.where(bySessionId))
+
+        then:
+        updated == 1
+        snakeEntityRepository.findSessionIdByLevel(7) == ["after"]
     }
 }

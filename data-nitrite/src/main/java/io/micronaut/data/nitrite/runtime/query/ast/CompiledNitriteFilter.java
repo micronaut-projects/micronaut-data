@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * A pre-compiled Nitrite filter that can be bound to actual parameter values.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 @FunctionalInterface

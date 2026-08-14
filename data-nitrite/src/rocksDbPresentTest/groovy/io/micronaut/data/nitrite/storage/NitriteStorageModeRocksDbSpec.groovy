@@ -24,8 +24,8 @@ class NitriteStorageModeRocksDbSpec extends Specification {
     void "test storage mode: ROCKSDB"() {
         given:
         def ctx = ApplicationContext.run([
-            "nitrite.storage-mode": "ROCKSDB",
-            "nitrite.db-path": new File(tempDir, "rocksdb.db").absolutePath
+            "micronaut.nitrite.default.storage-mode": "ROCKSDB",
+            "micronaut.nitrite.default.db-path": new File(tempDir, "rocksdb.db").absolutePath
         ])
         def repository = ctx.getBean(BookRepository)
 

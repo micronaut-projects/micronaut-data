@@ -26,13 +26,13 @@ class NitriteStorageModeSpec extends Specification {
     void "test storage mode: #mode"() {
         given:
         Map<String, Object> props = [
-            "nitrite.storage-mode": mode
+            "micronaut.nitrite.default.storage-mode": mode
         ]
         if (mode != "IN_MEMORY" && mode != "DEFAULT_IN_MEMORY") {
-            props["nitrite.db-path"] = new File(tempDir, "${mode.toLowerCase()}.db").absolutePath
+            props["micronaut.nitrite.default.db-path"] = new File(tempDir, "${mode.toLowerCase()}.db").absolutePath
         }
         if (mode == "DEFAULT_IN_MEMORY") {
-            props["nitrite.storage-mode"] = "MVSTORE"
+            props["micronaut.nitrite.default.storage-mode"] = "MVSTORE"
             // No db-path
         }
 

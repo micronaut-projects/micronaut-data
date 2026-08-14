@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * A pre-compiled value that can be resolved with parameters.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 @FunctionalInterface

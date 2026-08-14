@@ -1,7 +1,7 @@
 [[nitriteTransactions]]
 == Transactions
 
-Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.micronaut.data.nitrite.transaction.NitriteTransactionOperations` and the `NitriteTransactionHolder`. When a transaction is active, repository calls use the bound `org.dizitart.no2.transaction.Transaction`, so all reads/writes participate in the same MVStore transaction and are committed or rolled back together. Keep units of work short to avoid blocking other threads that need to mutate the store.
+Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.micronaut.data.nitrite.transaction.NitriteTransactionOperations` and the `NitriteTransactionHolder`. When a transaction is active, repository calls use the bound `org.dizitart.no2.transaction.Transaction`, so all reads/writes participate in the same Nitrite transaction and are committed or rolled back together, whichever storage engine backs the datasource. Keep units of work short to avoid blocking other threads that need to mutate the store.
 
 === Examples
 

@@ -8,6 +8,7 @@ import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType
+import io.micronaut.data.model.Sort
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -675,6 +676,94 @@ class NitriteQueryBuilderSpec extends Specification {
 
         then:
         distinctPayloadCount == 2
+    }
+
+    void "test max via criteria query builder returns the aggregate value"() {
+        given:
+        def first = new Event("A", "p1")
+        first.priority = 10
+        def second = new Event("B", "p2")
+        second.priority = 30
+        def third = new Event("C", "p3")
+        third.priority = 20
+        eventRepository.saveAll([first, second, third])
+
+        when:
+        Long maximumPriority = eventRepository.findOne({ cb ->
+            def q = cb.createQuery(Long)
+            def root = q.from(Event)
+            q.select(cb.max(root.get("priority")))
+            q
+        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+
+        then:
+        maximumPriority == 30L
+    }
+
+    void "test primitive long count via repository query"() {
+        given:
+        eventRepository.saveAll([
+            new Event("A", "p1", Event.Status.ACTIVE, null, null, null, null, null, null, null, null, null),
+            new Event("B", "p2", Event.Status.ACTIVE, null, null, null, null, null, null, null, null, null),
+            new Event("C", "p3", Event.Status.INACTIVE, null, null, null, null, null, null, null, null, null),
+        ])
+
+        expect:
+        eventRepository.countByStatus(Event.Status.ACTIVE) == 2L
+    }
+
+    /**
+     * This currently fails before the precision assertion because the update
+     * operators are also compiled as filter fields. Once that filter blocker
+     * is fixed, the same test reaches the BigDecimal arithmetic assertion.
+     */
+    void "test numeric JSON updates preserve BigDecimal precision"() {
+        given:
+        def event = new Event("MONEY", "payload")
+        event.amount = new BigDecimal("0.10")
+        eventRepository.save(event)
+
+        when:
+        def incremented = eventRepository.incrementAmount("MONEY", new BigDecimal("0.20"))
+        def multiplied = eventRepository.multiplyAmount("MONEY", new BigDecimal("3"))
+
+        then:
+        incremented == 1
+        multiplied == 1
+        eventRepository.findByType("MONEY")[0].amount == new BigDecimal("0.90")
+    }
+
+    void "nested criteria projection preserves the complete property path"() {
+        given:
+        def event = new Event("NESTED", "payload")
+        event.location = new Event.EventLocation("EU", "west")
+        eventRepository.save(event)
+
+        when:
+        Object[] projection = eventRepository.findOne({ cb ->
+            def q = cb.createQuery(Object[])
+            def root = q.from(Event)
+            q.multiselect(root.get("location").get("region"))
+            q
+        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+
+        then:
+        projection == ["EU"] as Object[]
+    }
+
+    void "nested sort uses the complete association property path"() {
+        given:
+        def first = new Event("SORT_FIRST", "payload")
+        first.location = new Event.EventLocation("EU", "west")
+        def second = new Event("SORT_SECOND", "payload")
+        second.location = new Event.EventLocation("US", "east")
+        eventRepository.saveAll([second, first])
+
+        when:
+        def values = eventRepository.findAll(Sort.of(Sort.Order.asc("location.region"))).toList()
+
+        then:
+        values*.location*.region == ["EU", "US"]
     }
 
     void "test compound selection via criteria query builder"() {

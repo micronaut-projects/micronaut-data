@@ -61,7 +61,7 @@ public interface IndexedBookRepository extends CrudRepository<IndexedBook, Strin
     /**
      * Find books near the given geographic point, with the distance always interpreted
      * geodesically (meters) regardless of latitude. A derived-query method can't take a
-     * {@link GeoPoint} parameter directly here because {@link IndexedBook#location} is typed
+     * {@link GeoPoint} parameter directly here because {@link IndexedBook#getLocation()} is typed
      * as {@link Geometry}, so this goes through an explicit Nitrite {@code $near} query instead.
      *
      * @param point the reference geographic point

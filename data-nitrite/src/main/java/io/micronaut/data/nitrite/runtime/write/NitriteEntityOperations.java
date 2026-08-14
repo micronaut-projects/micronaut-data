@@ -61,7 +61,7 @@ import java.util.function.Function;
  * Requires the entity to have an ID; throws {@link OptimisticLockException} if version mismatch occurs.
  *
  * @param <T> The entity type
- * @since 4.14.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperations<NitriteOperationContext, T, RuntimeException> {
@@ -74,6 +74,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private final NitriteOperationsHelper helper;
     private final OperationType operationType;
     private @Nullable Object preVersionValue;
+    private long affectedCount;
 
     /**
      * Supported entity operation types.
@@ -137,6 +138,16 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     @Override
     public void delete() {
         super.delete();
+    }
+
+    /**
+     * The number of documents the executed operation actually affected. A vetoed operation, or an
+     * update or delete of an entity without an identity, affects nothing.
+     *
+     * @return the affected document count
+     */
+    public long getAffectedCount() {
+        return affectedCount;
     }
 
     /**
@@ -284,6 +295,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (doc != null) {
                     helper.logInsert(collection.getName(), doc);
                     collection.insert(doc);
+                    affectedCount = 1;
                     Object generatedId = doc.get("_id");
                     if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
                         entity = helper.updateEntityId(meta.idAccessor(), entity, generatedId);
@@ -295,9 +307,15 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Update operation: replace existing document by ID
             // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
-            persistNewCascadeChildren(meta);
             // Use cached idAccessor from meta - eliminates chained lookups
             Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            // A transient entity has nothing to update: an "id == null" filter combined with upsert
+            // would insert it instead. Report zero affected rows rather than silently inserting.
+            if (id == null) {
+                affectedCount = 0;
+                return;
+            }
+            persistNewCascadeChildren(meta);
             Filter filter = entityMapper.idEqualsFilter(meta, id);
             if (meta.versionProp() != null) {
                 Object versionValue = preVersionValue;
@@ -311,12 +329,19 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 helper.logUpdate(collection.getName(), filter, update);
                 boolean upsert = meta.versionProp() == null;
                 long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
+                affectedCount = rows;
                 checkOptimisticLocking(rows);
             }
         } else {
             // Delete operation
             // Use cached idAccessor from meta - eliminates chained lookups
             Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            if (id == null) {
+                // Without an identity there is no document to remove; an "id == null" filter would
+                // match every identity-less document in the collection.
+                affectedCount = 0;
+                return;
+            }
             Filter filter = entityMapper.idEqualsFilter(meta, id);
             if (meta.versionProp() != null) {
                 Object versionValue = preVersionValue;
@@ -327,6 +352,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             }
             helper.logFind(collection.getName(), filter);
             long rows = collection.remove(filter, false).getAffectedCount();
+            affectedCount = rows;
             checkOptimisticLocking(rows);
         }
     }
@@ -336,12 +362,10 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         for (RuntimeAssociation<T> assoc : meta.cascadeProps()) {
             RuntimePersistentEntity<Object> associatedEntity =
                 (RuntimePersistentEntity<Object>) assoc.getAssociatedEntity();
-            RuntimePersistentProperty<Object> associatedId;
-            try {
-                associatedId = associatedEntity.getIdentity();
-            } catch (IllegalStateException e) {
+            if (!associatedEntity.hasIdentity() || associatedEntity.hasCompositeIdentity()) {
                 continue;
             }
+            RuntimePersistentProperty<Object> associatedId = associatedEntity.getIdentity();
             BeanProperty<Object, Object> backRefProperty = null;
             String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
             if (mappedBy != null) {

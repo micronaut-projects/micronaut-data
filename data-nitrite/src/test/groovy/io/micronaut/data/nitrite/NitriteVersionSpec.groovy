@@ -40,6 +40,25 @@ class NitriteVersionSpec extends Specification {
         thrown(io.micronaut.data.exceptions.OptimisticLockException)
     }
 
+    void "optimistic locking uses the version parameter even when the method name has no version text"() {
+        given:
+        def book = repository.save(new VersionedBook("v1"))
+
+        when:
+        def updated = repository.update(book.id, book.version, "v2")
+
+        then:
+        updated == 1
+        repository.findById(book.id).get().title == "v2"
+        repository.findById(book.id).get().version == 1
+
+        when:
+        repository.update(book.id, 0L, "stale")
+
+        then:
+        thrown(io.micronaut.data.exceptions.OptimisticLockException)
+    }
+
     void "test operations.execute no-op"() {
         expect:
         operations != null

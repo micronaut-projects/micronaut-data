@@ -7,6 +7,7 @@ import io.micronaut.data.document.tck.entities.SettlementPk
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.nitrite.model.CompositeFkChild
 import io.micronaut.data.nitrite.model.CompositeIdEntity
+import io.micronaut.data.nitrite.model.R1Book
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder
 import io.micronaut.data.nitrite.model.NitriteTestEntity
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -239,7 +240,7 @@ class NitriteCriteriaUnitSpec extends Specification {
             criteriaQuery.where(builder.equalStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
 
         expect:
-            getQuery(criteriaQuery) == '''{name:{$regex:'(?i).*$mn_qp:0.*'}}'''
+            getQuery(criteriaQuery) == '''{name:{$regex:{$mn_regex_pattern:{$mn_qp:0},$mn_regex_ignore_case:true}}}'''
     }
 
     void "test notEqualStringIgnoreCase covers visitNotEquals ignoreCase branch"() {
@@ -249,7 +250,7 @@ class NitriteCriteriaUnitSpec extends Specification {
             criteriaQuery.where(builder.notEqualStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
 
         expect:
-            getQuery(criteriaQuery) == '''{name:{$not:{$regex:'(?i).*$mn_qp:0.*'}}}'''
+            getQuery(criteriaQuery) == '''{name:{$not:{$regex:{$mn_regex_pattern:{$mn_qp:0},$mn_regex_ignore_case:true}}}}'''
     }
 
     void "test in with collection parameter covers visitIn BindingParameter branch"() {
@@ -282,8 +283,17 @@ class NitriteCriteriaUnitSpec extends Specification {
     // cb.literal(...) is bound as a parameter ($mn_qp:N) by RuntimeCriteriaBuilder, so these
     // exercise handleRegexExpression's parameter branch (the literal branch is compile-time only).
     private static String regex(String prefix, String suffix, boolean ignoreCase) {
-        String ci = ignoreCase ? "(?i)" : ""
-        return "{name:{\$regex:'" + ci + prefix + "\$mn_qp:0" + suffix + "'}}"
+        def attributes = ["\$mn_regex_pattern:{\$mn_qp:0}"]
+        if (prefix == "^") {
+            attributes << "\$mn_regex_starts_with:true"
+        }
+        if (suffix == "\$") {
+            attributes << "\$mn_regex_ends_with:true"
+        }
+        if (ignoreCase) {
+            attributes << "\$mn_regex_ignore_case:true"
+        }
+        return "{name:{\$regex:{" + attributes.join(",") + "}}}"
     }
 
     @Unroll
@@ -442,6 +452,29 @@ class NitriteCriteriaUnitSpec extends Specification {
             ]
     }
 
+    void "criteria update keeps predicate and update parameters addressable separately"() {
+        given:
+        PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
+        def nameParameter = criteriaBuilder.parameter(String)
+        def amountParameter = criteriaBuilder.parameter(Integer)
+        criteriaUpdate.set("name", nameParameter)
+        criteriaUpdate.set(entityRoot.get("amount"), amountParameter)
+        criteriaUpdate.where(criteriaBuilder.and(
+                criteriaBuilder.equal(entityRoot.get("name"), nameParameter),
+                criteriaBuilder.ge(entityRoot.get("amount"), amountParameter)
+        ))
+
+        when:
+        def predicateQuery = getQuery(criteriaUpdate)
+        def updateQuery = getUpdateQuery(criteriaUpdate)
+
+        then:
+        predicateQuery.contains('$mn_qp')
+        updateQuery.contains('name:{')
+        updateQuery.contains('amount:{')
+        updateQuery.count('$mn_qp') == 2
+    }
+
     @Unroll
     void "test #predicate predicate produces where query: #expectedWhereQuery"() {
         given:
@@ -512,6 +545,16 @@ class NitriteCriteriaUnitSpec extends Specification {
             "amount"  | "budget"   | "ge"                   | '''{$expr:{$gte:['$amount','$budget']}}'''
             "amount"  | "budget"   | "lt"                   | '''{$expr:{$lt:['$amount','$budget']}}'''
             "amount"  | "budget"   | "le"                   | '''{$expr:{$lte:['$amount','$budget']}}'''
+    }
+
+    void "mapped property-to-property comparison uses persisted field names"() {
+        given:
+            PersistentEntityCriteriaQuery query = criteriaBuilder.createQuery()
+            PersistentEntityRoot entityRoot = query.from(R1Book)
+            query.where(criteriaBuilder.equal(entityRoot.get("title"), entityRoot.get("title")))
+
+        expect:
+            getQuery(query) == '''{$expr:{$eq:['$book_title','$book_title']}}'''
     }
 
     @Unroll

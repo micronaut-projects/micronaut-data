@@ -41,6 +41,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.criteria.Expression;
@@ -97,7 +98,7 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.operat
  *       are not supported by Nitrite and will intentionally throw {@link IllegalStateException}.</li>
  * </ul>
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
@@ -355,7 +356,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             if (singleValue instanceof BindingParameter bp) {
                 // Bind the collection parameter and use its elements
                 int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
-                resolvedValues = List.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + index);
+                resolvedValues = List.of(NitriteInternalKeys.QUERY_PARAMETER_PREFIX + index);
             } else {
                 resolvedValues = Collections.singletonList(valueRepresentation(queryState, propertyPath, singleValue));
             }
@@ -486,7 +487,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (single instanceof IPredicate iPredicate) {
             iPredicate.visitPredicate(this);
         } else if (single != null) {
-            visitIsTrue((Expression<?>) single);
+            visitIsTrue(single);
         }
     }
 
@@ -649,7 +650,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             case "CONCAT" -> Map.of(CONCAT, expressions.stream()
                 .map(expression -> requireExprOperand(expression, bindingContextPath))
                 .toList());
-            case "LENGTH" -> Map.of(STR_LEN_CP, requireExprOperand(expressions.get(0), bindingContextPath));
+            case "LENGTH" -> Map.of(STR_LEN_CP, requireExprOperand(expressions.getFirst(), bindingContextPath));
             case "LOWER" -> Map.of(TO_LOWER, requireExprOperand(expressions.get(0), bindingContextPath));
             case "UPPER" -> Map.of(TO_UPPER, requireExprOperand(expressions.get(0), bindingContextPath));
             case "LEFT" -> Map.of(SUBSTR_CP, List.of(
@@ -676,7 +677,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         }
         if (expr instanceof BindingParameter bindingParameter) {
             int index = queryState.pushParameter(bindingParameter, BindingParameter.BindingContext.create());
-            return Map.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, index);
+            return Map.of(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER, index);
         }
         return expr;
     }
@@ -731,7 +732,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             instanceof
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
             PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
-            putExpressionOperator(op, "$" + propertyPath.getPath(), "$" + p2.getPath());
+            putExpressionOperator(op, "$" + getExpressionFieldName(propertyPath), "$" + getExpressionFieldName(p2));
             return;
         }
         PersistentEntityUtils.traversePersistentProperties(
@@ -798,15 +799,15 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
             PersistentPropertyPath propertyPath = propertyPathExpr.getPropertyPath();
             String fieldName = getFieldName(propertyPath);
             Map<String, Object> pattern = new LinkedHashMap<>(3);
-            pattern.put(NitriteQueryBuilder.LIKE_PATTERN, valueRepresentation(queryState, propertyPath, likePredicate.getPattern()));
+            pattern.put(NitriteInternalKeys.LIKE_PATTERN, valueRepresentation(queryState, propertyPath, likePredicate.getPattern()));
             Object escape = likePredicate.getEscapeChar() == null
                 ? null
                 : valueRepresentation(queryState, propertyPath, likePredicate.getEscapeChar());
             if (escape != null) {
-                pattern.put(NitriteQueryBuilder.LIKE_ESCAPE, escape);
+                pattern.put(NitriteInternalKeys.LIKE_ESCAPE, escape);
             }
             if (likePredicate.isCaseInsensitive()) {
-                pattern.put(NitriteQueryBuilder.LIKE_IGNORE_CASE, true);
+                pattern.put(NitriteInternalKeys.LIKE_IGNORE_CASE, true);
             }
             Map<String, Object> fieldFilter = operator(REGEX, pattern);
             query.put(fieldName, likePredicate.isNegated() ? Map.of(NOT, fieldFilter) : fieldFilter);
@@ -849,6 +850,25 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
 
     static String getFieldName(final PersistentPropertyPath propertyPath) {
         return NitriteFieldNameResolver.getFieldName(propertyPath);
+    }
+
+    /**
+     * Resolves the field name used inside an {@code $expr} comparison. Association segments keep
+     * their logical names because those are the aliases the lookup stages produce, while the
+     * terminal property is mapped to its persisted name so that {@code @MappedProperty} fields
+     * reference a field that exists in the stored document.
+     *
+     * @param propertyPath the property path
+     * @return the field name to compare against
+     */
+    private static String getExpressionFieldName(final PersistentPropertyPath propertyPath) {
+        if (propertyPath.getAssociations().stream().allMatch(Association::isEmbedded)) {
+            return getFieldName(propertyPath);
+        }
+        String logicalPath = propertyPath.getPath();
+        String propertyName = propertyPath.getProperty().getName();
+        return logicalPath.substring(0, logicalPath.length() - propertyName.length())
+            + propertyPath.getProperty().getPersistedName();
     }
 
     static BindingParameter.BindingContext newBindingContext(

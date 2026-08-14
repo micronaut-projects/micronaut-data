@@ -21,7 +21,7 @@ class NitriteSpatialSpec extends Specification {
     void "test JTS Geometry spatial queries with index verification"() {
         given:
         def ctx = ApplicationContext.run([
-            "nitrite.storage-mode": "IN_MEMORY"
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
         ])
         def repository = ctx.getBean(IndexedBookRepository)
         def db = ctx.getBean(Nitrite)
@@ -88,7 +88,7 @@ class NitriteSpatialSpec extends Specification {
     void "test spatial index is delegated to Nitrite's SpatialIndexer"() {
         given:
         def ctx = ApplicationContext.run([
-            "nitrite.storage-mode": "IN_MEMORY"
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
         ])
         def repository = ctx.getBean(IndexedBookRepository)
         def db = ctx.getBean(Nitrite)
@@ -118,7 +118,7 @@ class NitriteSpatialSpec extends Specification {
     void "test spatial index with null geometry"() {
         given:
         def ctx = ApplicationContext.run([
-            "nitrite.storage-mode": "IN_MEMORY"
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
         ])
         def repository = ctx.getBean(IndexedBookRepository)
 

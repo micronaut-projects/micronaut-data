@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * Resolves the projected field name for native single-field projections
  * (e.g. findAgeByName()) from the query string or repository method name.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class CollectionFieldMapper {

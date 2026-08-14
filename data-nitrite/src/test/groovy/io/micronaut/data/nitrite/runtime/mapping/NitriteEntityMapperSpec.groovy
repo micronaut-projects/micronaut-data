@@ -2,6 +2,11 @@ package io.micronaut.data.nitrite.runtime.mapping
 
 import io.micronaut.data.nitrite.model.MapEntity
 import io.micronaut.data.nitrite.model.NestedPojo
+import io.micronaut.data.nitrite.model.CompositeFkChild
+import io.micronaut.data.nitrite.model.CompositeFkParent
+import io.micronaut.data.nitrite.model.CompositeIdEntity
+import io.micronaut.data.nitrite.model.NitriteComplexValue
+import io.micronaut.data.nitrite.runtime.CountingOperationsHelper
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
@@ -9,6 +14,7 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
+import io.micronaut.core.annotation.Creator
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.serde.ObjectMapper
@@ -45,6 +51,28 @@ class NitriteEntityMapperSpec extends Specification {
         def childDoc = doc.get("parent", Document)
         childDoc.get("name") == "Child"
         childDoc.get("parent") == 1L // ID of parent
+    }
+
+    def "constructor-based bidirectional associations are cycle-safe during hydration"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def parentCollection = nitrite.getCollection("ConstructorCycleParent")
+        def childCollection = nitrite.getCollection("ConstructorCycleChild")
+        parentCollection.insert(Document.createDocument("id", "parent-1").put("child", "child-1"))
+        childCollection.insert(Document.createDocument("id", "child-1").put("parent", "parent-1"))
+        def helper = new CountingOperationsHelper()
+                .register(ConstructorCycleParent, parentCollection)
+                .register(ConstructorCycleChild, childCollection)
+        mapper.setHelper(helper)
+
+        when:
+        def parent = mapper.fromDocument(
+                Document.createDocument("id", "parent-1").put("child", "child-1"),
+                ConstructorCycleParent)
+
+        then:
+        noExceptionThrown()
+        parent.child.parent.is(parent)
     }
 
     def "test nested POJO mapping and naming strategies"() {
@@ -200,6 +228,72 @@ class NitriteEntityMapperSpec extends Specification {
         res3.is(entityNoId)
     }
 
+    def "composite identity values are not treated as a scalar identity"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def composite = new CompositeIdEntity(tenantId: "tenant-a", refId: "ref-1", name: "record")
+
+        expect:
+        mapper.toFilterValue(composite).is(composite)
+        mapper.toNitriteFilterValue(composite).is(composite)
+    }
+
+    def "a core mapped value without identity remains a filter value"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def value = new NitriteComplexValue("key", "data")
+
+        expect:
+        mapper.toFilterValue(value).is(value)
+        mapper.toNitriteFilterValue(value).is(value)
+    }
+
+    def "constructor association hydration performs one lookup per association"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def parentCollection = nitrite.getCollection("CompositeFkParent")
+        parentCollection.insert(Document.createDocument("id", "parent-1")
+                .put("tenant_id", "tenant-a")
+                .put("ref_id", 42L))
+        def helper = new CountingOperationsHelper().register(CompositeFkParent, parentCollection)
+        mapper.setHelper(helper)
+        def childDocument = Document.createDocument("id", "child-1")
+                .put("name", "child-a")
+                .put("parent", "parent-1")
+
+        when:
+        def child = mapper.fromDocument(childDocument, CompositeFkChild)
+
+        then:
+        helper.lookupCount(CompositeFkParent) == 1
+        child.parent.tenantId == "tenant-a"
+        child.parent.refId == 42L
+    }
+
+    def "mapping multiple roots eagerly resolves each to-one association independently"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def parentCollection = nitrite.getCollection("CompositeFkParent")
+        parentCollection.insert(Document.createDocument("id", "parent-1")
+                .put("tenant_id", "tenant-a")
+                .put("ref_id", 42L))
+        def helper = new CountingOperationsHelper().register(CompositeFkParent, parentCollection)
+        mapper.setHelper(helper)
+
+        when:
+        def first = mapper.fromDocument(
+                Document.createDocument("id", "child-1").put("name", "child-a").put("parent", "parent-1"),
+                CompositeFkChild)
+        def second = mapper.fromDocument(
+                Document.createDocument("id", "child-2").put("name", "child-b").put("parent", "parent-1"),
+                CompositeFkChild)
+
+        then:
+        helper.lookupCount(CompositeFkParent) == 2
+        first.parent.is(second.parent) == false
+        first.parent.id == second.parent.id
+    }
+
     def "test NitriteTypeRegistry get missing entry"() {
         expect:
         NitriteTypeRegistry.get(Object) == null
@@ -214,6 +308,34 @@ class CyclicEntity {
     
     @Relation(Relation.Kind.EMBEDDED)
     CyclicEntity parent
+}
+
+@MappedEntity
+class ConstructorCycleParent {
+    @Id String id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    ConstructorCycleChild child
+
+    @Creator
+    ConstructorCycleParent(String id, ConstructorCycleChild child) {
+        this.id = id
+        this.child = child
+    }
+}
+
+@MappedEntity
+class ConstructorCycleChild {
+    @Id String id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    ConstructorCycleParent parent
+
+    @Creator
+    ConstructorCycleChild(String id, ConstructorCycleParent parent) {
+        this.id = id
+        this.parent = parent
+    }
 }
 
 @MappedEntity

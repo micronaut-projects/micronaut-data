@@ -23,8 +23,8 @@ class NitriteDuplicateResultsBugSpec extends Specification {
         given: "MVSTORE configuration with db in target folder"
             Files.createDirectories(Paths.get("build/test-db"))
             def props = [
-                "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "build/test-db/duplicate-test.db"
+                "micronaut.nitrite.default.storage-mode": "MVSTORE",
+                "micronaut.nitrite.default.db-path": "build/test-db/duplicate-test.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)
@@ -51,8 +51,8 @@ class NitriteDuplicateResultsBugSpec extends Specification {
         given: "MVSTORE configuration"
             Files.createDirectories(Paths.get("build/test-db"))
             def props = [
-                "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "build/test-db/duplicate-test2.db"
+                "micronaut.nitrite.default.storage-mode": "MVSTORE",
+                "micronaut.nitrite.default.db-path": "build/test-db/duplicate-test2.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)
@@ -77,8 +77,8 @@ class NitriteDuplicateResultsBugSpec extends Specification {
         given: "MVSTORE configuration"
             Files.createDirectories(Paths.get("build/test-db"))
             def props = [
-                "nitrite.storage-mode": "MVSTORE",
-                "nitrite.db-path": "build/test-db/duplicate-test3.db"
+                "micronaut.nitrite.default.storage-mode": "MVSTORE",
+                "micronaut.nitrite.default.db-path": "build/test-db/duplicate-test3.db"
             ]
             def ctx = ApplicationContext.run(props)
             def repo = ctx.getBean(DuplicateTestRepository)

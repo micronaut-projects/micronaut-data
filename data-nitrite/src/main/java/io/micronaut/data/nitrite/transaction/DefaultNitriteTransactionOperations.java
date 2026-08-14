@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * {@link NitriteConnectionOperations} must remain stateless and let the framework handle connection
  * tracking to avoid inconsistent session states in nested or propagated transactions.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Singleton
 @Primary
@@ -77,7 +77,9 @@ public class DefaultNitriteTransactionOperations extends AbstractDefaultTransact
       final NitriteTransactionHolder holder) {
     super(connectionOperations, synchronousConnectionManager);
     this.holder = holder;
-    LOG.trace("DefaultNitriteTransactionOperations initialized: {}", System.identityHashCode(this));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("DefaultNitriteTransactionOperations initialized: {}", System.identityHashCode(this));
+    }
   }
 
   @Override
@@ -90,10 +92,12 @@ public class DefaultNitriteTransactionOperations extends AbstractDefaultTransact
 
   @Override
   protected void doBegin(final DefaultTransactionStatus<Session> tx) {
-    LOG.trace(
-        "DefaultNitriteTransactionOperations[{}] doBegin for {}",
-        System.identityHashCode(this),
-        System.identityHashCode(tx));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+          "DefaultNitriteTransactionOperations[{}] doBegin for {}",
+          System.identityHashCode(this),
+          System.identityHashCode(tx));
+    }
     Session session = tx.getConnection();
     Transaction transaction = session.beginTransaction();
     tx.setTransaction(transaction);

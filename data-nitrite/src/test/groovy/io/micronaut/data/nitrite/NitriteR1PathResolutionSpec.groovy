@@ -12,6 +12,7 @@ import io.micronaut.data.nitrite.repository.R1ReviewRepository
 import io.micronaut.data.nitrite.repository.StateRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import spock.lang.Specification
 
 /**
@@ -132,6 +133,19 @@ class NitriteR1PathResolutionSpec extends Specification {
         herbertBooks*.title as Set == ["Dune", "Dune Messiah"] as Set
     }
 
+    void "mapped terminal property participates in countDistinct"() {
+        given:
+        def author = authorRepository.save(new R1Author("Herbert"))
+        bookRepository.saveAll([
+                new R1Book("Dune", author),
+                new R1Book("Dune", author),
+                new R1Book("Foundation", author)
+        ])
+
+        expect:
+        bookRepository.countDistinctTitle() == 2L
+    }
+
     // G6: plain field is not mis-classified as an association path (regression).
     //     findByTitle must resolve "book_title" directly without routing through association logic.
     void "G6 - plain field lookup is not mis-classified as an association path"() {
@@ -146,5 +160,20 @@ class NitriteR1PathResolutionSpec extends Specification {
         then:
         book != null
         book.title == "Dune"
+    }
+
+    void "mapped property criteria comparison uses the persisted field"() {
+        given:
+        def author = authorRepository.save(new R1Author("Herbert"))
+        bookRepository.save(new R1Book("Dune", author))
+        bookRepository.save(new R1Book("Foundation", author))
+
+        when:
+        def books = bookRepository.findAll({ root, cb ->
+            cb.equal(root.get("title"), "Dune")
+        } as PredicateSpecification<R1Book>)
+
+        then:
+        books*.title == ["Dune"]
     }
 }

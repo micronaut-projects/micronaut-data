@@ -75,13 +75,18 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Mapper for converting entities to Nitrite Documents and back.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteEntityMapper {
 
+  /**
+   * Canonical identity field name. Nitrite documents always store the identity under this name,
+   * regardless of the entity's mapped identity name.
+   */
+  public static final String ID_FIELD = "id";
+
   private static final Logger LOG = LoggerFactory.getLogger(NitriteEntityMapper.class);
-  private static final String ID_FIELD = "id";
   private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
 
   private final ConversionService conversionService;
@@ -151,16 +156,20 @@ public final class NitriteEntityMapper {
     try {
         RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity(castClass(clazz));
         if (entity != null) {
-            RuntimePersistentProperty<Object> idProp = entity.getIdentity();
-            Object idValue = idProp.getProperty().get(value);
-            if (idValue != null) {
-                return toFilterValue(idValue);
+            RuntimePersistentProperty<Object> idProp = safeGetIdentity(entity);
+            if (idProp != null) {
+                Object idValue = idProp.getProperty().get(value);
+                if (idValue != null) {
+                    return toFilterValue(idValue);
+                }
             }
         }
     } catch (RuntimeException e) {
         // Expected for values whose class isn't a registered entity (the common case for
         // this method); fall through and return the value itself.
-        LOG.debug("Best-effort entity ID extraction skipped for type {}: {}", clazz, e.getMessage());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Best-effort entity ID extraction skipped for type {}: {}", clazz, e.getMessage());
+        }
     }
 
     return value;
@@ -197,10 +206,12 @@ public final class NitriteEntityMapper {
       if (intro.isPresent()) {
         if (intro.get().hasAnnotation(MappedEntity.class)) {
           RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity(castClass(clazz));
-          RuntimePersistentProperty<Object> idProp = entity.getIdentity();
-          Object idValue = idProp.getProperty().get(val);
-          if (idValue != null) {
-            return normalizeIdentityValue(idProp, idValue);
+          RuntimePersistentProperty<Object> idProp = safeGetIdentity(entity);
+          if (idProp != null) {
+            Object idValue = idProp.getProperty().get(val);
+            if (idValue != null) {
+              return normalizeIdentityValue(idProp, idValue);
+            }
           }
         } else {
           return toDocumentValue(val);
@@ -227,12 +238,11 @@ public final class NitriteEntityMapper {
     return null;
   }
 
-  private <E> @Nullable RuntimePersistentProperty<E> safeGetIdentity(RuntimePersistentEntity<E> persistentEntity) {
-    try {
-      return persistentEntity.getIdentity();
-    } catch (IllegalStateException e) {
+  private static <E> @Nullable RuntimePersistentProperty<E> safeGetIdentity(RuntimePersistentEntity<E> persistentEntity) {
+    if (!persistentEntity.hasIdentity() || persistentEntity.hasCompositeIdentity()) {
       return null;
     }
+    return persistentEntity.getIdentity();
   }
 
     /**
@@ -243,20 +253,53 @@ public final class NitriteEntityMapper {
    * @return the normalized field name
    */
   public String normalizeFieldName(final String field, @Nullable final RuntimePersistentEntity<?> entity) {
-    if (entity != null) {
+    return persistedPath(field, entity);
+  }
+
+  /**
+   * Resolve a property path to the path the document is stored under. Every segment of a dotted
+   * path is mapped through its own {@code @MappedProperty}, so a nested value is addressed by the
+   * same path the mapper writes. A segment that is not a known property is kept verbatim.
+   *
+   * @param field the property name or dotted property path
+   * @param entity the entity metadata, may be null
+   * @return the persisted document path
+   */
+  public static String persistedPath(final String field, @Nullable final RuntimePersistentEntity<?> entity) {
+    if (entity == null) {
+      return "_id".equals(field) ? ID_FIELD : field;
+    }
+    if (field.indexOf('.') < 0) {
       RuntimePersistentProperty<?> idProperty = safeGetIdentity(entity);
       if (idProperty != null && (idProperty.getName().equals(field)
           || idProperty.getPersistedName().equals(field)
           || "_id".equals(field)
-          || "id".equals(field))) {
+          || ID_FIELD.equals(field))) {
         return ID_FIELD;
       }
       RuntimePersistentProperty<?> prop = entity.getPropertyByName(field);
       if (prop != null) {
         return prop.getPersistedName();
       }
+      return "_id".equals(field) ? ID_FIELD : field;
     }
-    return "_id".equals(field) ? ID_FIELD : field;
+
+    StringBuilder path = new StringBuilder();
+    RuntimePersistentEntity<?> current = entity;
+    for (String segment : field.split("\\.", -1)) {
+      if (!path.isEmpty()) {
+        path.append('.');
+      }
+      RuntimePersistentProperty<?> property = current == null ? null : current.getPropertyByName(segment);
+      if (property == null) {
+        path.append(segment);
+        current = null;
+        continue;
+      }
+      path.append(property.getPersistedName());
+      current = property instanceof RuntimeAssociation<?> association ? association.getAssociatedEntity() : null;
+    }
+    return path.toString();
   }
 
   /**
@@ -314,7 +357,9 @@ public final class NitriteEntityMapper {
    * @return the Nitrite Filter
    */
   public <E> Filter eqWithNumericCoercion(final RuntimePersistentEntity<E> entity, final String field, final @Nullable Object value, final String dottedPath) {
-    LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
+    }
 
     Filter base = FluentFilter.where(dottedPath).eq(value);
     if (!(value instanceof Number n)) {
@@ -398,7 +443,7 @@ public final class NitriteEntityMapper {
     if (reservedId != null && !(reservedId instanceof NitriteId)) {
       doc.remove("_id");
       RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
-      String idField = idProp != null ? idProp.getName() : "id";
+      String idField = idProp != null ? idProp.getName() : ID_FIELD;
       doc.put(idField, toFilterValue(reservedId));
     }
 
@@ -455,8 +500,9 @@ public final class NitriteEntityMapper {
     boolean hasBackRefs = false;
 
     for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
-      if (prop.isReadOnly()
-          || prop.isAnnotationPresent(Transient.class)
+      // Read-only (constructor-only) properties are still persisted: writing reads through the
+      // getter, and skipping them would drop the state of an immutable entity from the document.
+      if (prop.isAnnotationPresent(Transient.class)
           || prop.getProperty().isAnnotationPresent(Transient.class)) {
         continue;
       }
@@ -480,12 +526,7 @@ public final class NitriteEntityMapper {
         } else if (assoc.isEmbedded()) {
           strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
         } else {
-          RuntimePersistentProperty<?> idPropRaw;
-          try {
-            idPropRaw = assoc.getAssociatedEntity().getIdentity();
-          } catch (IllegalStateException e) {
-            idPropRaw = null;
-          }
+          RuntimePersistentProperty<?> idPropRaw = safeGetIdentity(assoc.getAssociatedEntity());
           if (idPropRaw == null) {
             strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
           } else {
@@ -520,8 +561,10 @@ public final class NitriteEntityMapper {
           try {
             RuntimePersistentEntity<Object> refEntity = runtimeEntityRegistry.getEntity(castClass(prop.getType()));
             if (refEntity != null) {
-                refEntity.getIdentity();
-                associatedIdProp = refEntity.getIdentity().getProperty();
+                RuntimePersistentProperty<Object> refIdentity = safeGetIdentity(refEntity);
+                if (refIdentity != null) {
+                    associatedIdProp = refIdentity.getProperty();
+                }
             }
           } catch (Exception ignored) {
               // Best-effort identity lookup for ID-ref strategy
@@ -540,12 +583,7 @@ public final class NitriteEntityMapper {
 
     // Cache ID accessor for fast ID property access
     BeanProperty<T, Object> idAccessor = null;
-    RuntimePersistentProperty<T> idProp = null;
-    try {
-      idProp = persistentEntity.getIdentity();
-    } catch (IllegalStateException e) {
-      // entity has no identity (e.g. embedded) – leave null
-    }
+    RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
     if (idProp != null) {
       idAccessor = idProp.getProperty();
     }
@@ -621,8 +659,7 @@ public final class NitriteEntityMapper {
         case ENUM                                -> ((Enum<?>) value).name();
         case OPTIONAL                            -> ((Optional<?>) value).map(this::toFilterValue).orElse(null);
         case ENTITY_ID_REF, ASSOCIATION_ID_REF   -> wpm.associatedIdProp() != null ? toFilterValue(wpm.associatedIdProp().get(value)) : null;
-        case MAP                                 -> toDocumentValue(value);
-        case INTROSPECTED_POJO                   -> pojoToMap(value);
+        case MAP, INTROSPECTED_POJO              -> toDocumentValue(value);
         case SERDE                               -> {
           if (serdeObjectMapper == null) {
             yield value;
@@ -873,6 +910,9 @@ public final class NitriteEntityMapper {
       return null;
     }
     Class<?> t = target.getType();
+    if (value instanceof Document document && !Document.class.isAssignableFrom(t)) {
+      value = documentToMap(document);
+    }
     if ((value instanceof Number || value instanceof String) && NitriteTypeRegistry.hasEntry(t)) {
       return valueConverter.convertWithTemporalHandling(value, t);
     }
@@ -927,6 +967,31 @@ public final class NitriteEntityMapper {
     }
 
     return conversionService.convert(value, target).orElse(null);
+  }
+
+  private Map<String, Object> documentToMap(Document document) {
+    return documentFieldsToMap(document, "", document.getFields());
+  }
+
+  private Map<String, Object> documentFieldsToMap(Document document, String prefix, Set<String> fields) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    Set<String> nestedRoots = new LinkedHashSet<>();
+    for (String field : fields) {
+      if (!field.startsWith(prefix)) {
+        continue;
+      }
+      String relativeField = field.substring(prefix.length());
+      int separator = relativeField.indexOf('.');
+      if (separator < 0) {
+        map.put(relativeField, document.get(field));
+      } else {
+        nestedRoots.add(relativeField.substring(0, separator));
+      }
+    }
+    for (String nestedRoot : nestedRoots) {
+      map.put(nestedRoot, documentFieldsToMap(document, prefix + nestedRoot + ".", fields));
+    }
+    return map;
   }
 
   /**
@@ -1031,6 +1096,13 @@ public final class NitriteEntityMapper {
   /**
    * Hydrate an entity from a Nitrite Document.
    *
+   * <p>Non-embedded single-valued associations stored as foreign keys are eagerly resolved while
+   * the document is mapped, including when the repository query does not declare {@code @Join}.
+   * Each root document has an independent hydration cache, so loading multiple roots can issue one
+   * additional collection lookup per to-one association per root and can recursively hydrate the
+   * referenced graph. Explicit join fetching is currently batched only for inverse
+   * {@code ONE_TO_MANY}/{@code MANY_TO_MANY} associations.
+   *
    * @param doc the Nitrite document
    * @param type the entity type
    * @param <T> the entity type
@@ -1059,7 +1131,9 @@ public final class NitriteEntityMapper {
         }
     }
 
-    LOG.debug("fromDocumentInternal: type={}, doc={}", type.getName(), doc);
+    if (LOG.isDebugEnabled()) {
+        LOG.debug("fromDocumentInternal: type={}, doc={}", type.getName(), doc);
+    }
     RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
     BeanIntrospection<T> introspection = persistentEntity.getIntrospection();
 
@@ -1082,19 +1156,27 @@ public final class NitriteEntityMapper {
                 : docGet(doc, storedName, name);
             if (val == null) {
                 args[i] = null;
-            } else if (prop instanceof RuntimeAssociation) {
+            } else if (prop instanceof RuntimeAssociation && (prop.isReadOnly() || arg.isNonNull())) {
+                // The association has to be supplied at construction time: either there is no
+                // writable property to populate afterwards, or the constructor parameter rejects
+                // null (a Kotlin non-nullable parameter).
                 args[i] = resolveAssociationValue(prop, val, visited);
+            } else if (prop instanceof RuntimeAssociation) {
+                // Writable associations are populated after instantiation. Deferring them lets the
+                // current entity enter the visited cache before a bidirectional association is
+                // hydrated and avoids resolving the same association twice.
+                args[i] = null;
             } else {
                 args[i] = convertFromDocumentValue(val, arg);
             }
         }
-        entity = introspection.instantiate(args);
+        entity = introspection.instantiate(false, args);
     } else {
         entity = introspection.instantiate();
     }
 
-    // Add to visited BEFORE populating properties to handle back-references
     if (cacheKey != null) {
+        // Cache before populating properties so that a back-reference resolves to this instance.
         visited.put(cacheKey, entity);
     }
 
@@ -1126,15 +1208,15 @@ public final class NitriteEntityMapper {
 
         if (value != null) {
             boolean associationStoredEmbedded = isAssociationStoredEmbedded(prop);
-            if (prop instanceof RuntimeAssociation association && !associationStoredEmbedded) {
-                Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+            if (prop instanceof RuntimeAssociation<?> association && !associationStoredEmbedded) {
+                Class<Object> associatedType = castClass(association.getAssociatedEntity().getIntrospection().getBeanType());
                 // A @Join fetch replaces the raw foreign-key scalar with the full joined
                 // sub-document (or array of them) via $lookup — hydrate directly from what's
                 // already there rather than treating it as an id to re-query.
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, associatedType, visited));
                     continue;
-                } else if (value instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Document) {
+                } else if (value instanceof List<?> list && !list.isEmpty() && list.getFirst() instanceof Document) {
                     List<Object> associatedEntities = new ArrayList<>();
                     for (Object item : list) {
                         if (item instanceof Document d) {
@@ -1163,7 +1245,7 @@ public final class NitriteEntityMapper {
                         }
                     }
                 }
-            } else if (prop instanceof RuntimeAssociation association) {
+            } else if (prop instanceof RuntimeAssociation<?> association) {
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, castClass(association.getAssociatedEntity().getIntrospection().getBeanType()), visited));
                     continue;
@@ -1216,9 +1298,9 @@ public final class NitriteEntityMapper {
      * type, yielding {@code null} and (for a non-nullable constructor parameter) an instantiation
      * failure.
      *
-     * <p>Only single-valued {@code MANY_TO_ONE}/{@code ONE_TO_ONE} associations reach this path and
-     * they are resolved eagerly on every read (with or without {@code @Join}): the raw value is the
-     * foreign-key id, so the associated document is re-queried and hydrated.
+     * <p>Only read-only, single-valued {@code MANY_TO_ONE}/{@code ONE_TO_ONE} constructor
+     * associations reach this path. Writable constructor associations are populated after the
+     * current entity is instantiated and entered into the hydration cache.
      * {@link #fromDocumentInternal} returns {@code null} for a missing (dangling) reference.
      *
      * @param prop      the association property being resolved (guaranteed a {@link RuntimeAssociation} by the caller)
@@ -1230,8 +1312,12 @@ public final class NitriteEntityMapper {
         if (helper == null) {
             return null;
         }
-        RuntimeAssociation association = (RuntimeAssociation) prop;
-        Class<Object> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+        RuntimeAssociation<?> association = (RuntimeAssociation<?>) prop;
+        Class<Object> associatedType = castClass(association.getAssociatedEntity().getIntrospection().getBeanType());
+        if (rawValue instanceof Document joinedDoc) {
+            // A @Join fetch already replaced the foreign key with the joined sub-document.
+            return fromDocumentInternal(joinedDoc, associatedType, visited);
+        }
         Document associatedDoc = helper.getCollection(associatedType).find(idEqualsFilter(associatedType, rawValue)).firstOrNull();
         return fromDocumentInternal(associatedDoc, associatedType, visited);
     }
@@ -1239,12 +1325,7 @@ public final class NitriteEntityMapper {
     private static <T> boolean isAssociationStoredEmbedded(RuntimePersistentProperty<T> prop) {
         boolean associationStoredEmbedded;
         if (prop instanceof RuntimeAssociation<T> association && !association.isEmbedded()) {
-            try {
-                association.getAssociatedEntity().getIdentity();
-                associationStoredEmbedded = false;
-            } catch (IllegalStateException e) {
-                associationStoredEmbedded = true;
-            }
+            associationStoredEmbedded = safeGetIdentity(association.getAssociatedEntity()) == null;
         } else {
             associationStoredEmbedded = prop instanceof RuntimeAssociation<T> association && association.isEmbedded();
         }

@@ -30,7 +30,7 @@ import java.util.Optional;
  * Handles conversion of document values to target types including
  * temporal types and custom conversions via ConversionService.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class ValueConverter {

@@ -103,15 +103,15 @@ final class PathResolver {
                     }
                     return plain(found.getPersistedName());
                 }
-                if (chain.get(0).isEmbedded()) {
+                if (chain.getFirst().isEmbedded()) {
                     // Embedded chain: rawField is the compile-time dotted persisted path.
                     return new PathResolution(PathResolution.Kind.EMBEDDED, chain, found, rawField);
                 }
-                return reference(chain, found, chain.get(0).getPersistedName());
+                return reference(chain, found, chain.getFirst().getPersistedName());
             } else {
                 if (found instanceof RuntimeAssociation<?> assoc) {
                     chain.add(assoc);
-                    currentEntity = (RuntimePersistentEntity<?>) assoc.getAssociatedEntity();
+                    currentEntity = assoc.getAssociatedEntity();
                 } else {
                     // Non-association in a non-terminal position → plain fallback.
                     return plain(rawField);

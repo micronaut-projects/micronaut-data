@@ -126,6 +126,23 @@ class NitriteUpsertSpec extends Specification {
         idType << ["UUID", "String", "Long", "UUID", "String", "Long"]
     }
 
+    def "update with a null ID does not insert a transient entity"() {
+        given:
+        def ctx = createContext("IN_MEMORY", "null-id-update")
+        def repo = getRepository(ctx, "String")
+        repo.deleteAll()
+        def entity = createEntity("String", null, "transient")
+
+        when:
+        repo.update(entity)
+
+        then:
+        repo.findAll().isEmpty()
+
+        cleanup:
+        ctx.close()
+    }
+
     @Unroll
     def "test save after delete with #idType ID in #mode mode"() {
         given: "Configuration for storage mode"
@@ -315,11 +332,11 @@ class NitriteUpsertSpec extends Specification {
     private ApplicationContext createContext(String mode, String testName) {
         Files.createDirectories(Paths.get("build/test-db"))
         def props = [
-            "nitrite.storage-mode": mode,
-            "nitrite.db-path": "build/test-db/${testName}.db"
+            "micronaut.nitrite.default.storage-mode": mode,
+            "micronaut.nitrite.default.db-path": "build/test-db/${testName}.db"
         ]
         if (mode == "IN_MEMORY") {
-            props.remove("nitrite.db-path")
+            props.remove("micronaut.nitrite.default.db-path")
         }
         return ApplicationContext.run(props)
     }

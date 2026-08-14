@@ -240,31 +240,12 @@ class CriteriaPersonRepositorySpec extends Specification {
         repository.save(new CriteriaPerson("Ben", 41))
 
         when: "testing findStream(PagedQuery)"
-        def pagedQuery = Mock(io.micronaut.data.model.runtime.PagedQuery)
-        pagedQuery.getRootEntity() >> CriteriaPerson
-        pagedQuery.getPageable() >> Pageable.from(0, 1)
-        pagedQuery.getQueryLimit() >> io.micronaut.data.model.Limit.of(100, 0)
+        def pagedQuery = new CriteriaPersonPagedQuery(Pageable.from(0, 1))
         def stream = operations.findStream(pagedQuery)
         def streamResults = stream.toList()
 
         then:
         streamResults.size() == 1
-
-        /*
-        when: "testing execute(PreparedQuery)"
-        def pq = Mock(io.micronaut.data.model.runtime.PreparedQuery)
-        pq.getRootEntity() >> CriteriaPerson
-        pq.getResultType() >> CriteriaPerson
-        pq.getQuery() >> "{}"
-        pq.getIndexedParameterBinding() >> []
-        pq.getParameterArray() >> new Object[0]
-        pq.getPageable() >> Pageable.UNPAGED
-        def execResults = operations.execute(pq)
-
-        then:
-        execResults != null
-        execResults.size() == 2 // Amy, Ben
-        */
 
         when: "testing persistManyAssociation"
         operations.persistManyAssociation(null, null, null, null, null, null)

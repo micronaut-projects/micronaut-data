@@ -20,6 +20,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import org.dizitart.no2.collection.Document;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +34,7 @@ import java.util.regex.Pattern;
  * Strategy for aggregation operations (Max, Min, Sum, Avg) on Nitrite documents.
  * Used for methods like findMaxAgeByName() or findMinDateOfBirthByNameRegex().
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class CollectionAggregator {
@@ -40,7 +43,10 @@ public final class CollectionAggregator {
     private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^(?:find|get|read)(Max|Min|Sum|Avg)([A-Z][a-zA-Z0-9]*)By");
     private static final Pattern IS_AGG_PATTERN = Pattern.compile("^(find|get|read)(Max|Min|Sum|Avg)[A-Z][a-zA-Z0-9]*By.*");
 
-    CollectionAggregator() {
+    /**
+     * Create a new aggregator.
+     */
+    public CollectionAggregator() {
     }
 
     /**
@@ -95,12 +101,13 @@ public final class CollectionAggregator {
 
         // Handle numeric aggregation
         if (first instanceof Number) {
+            // Exact numeric inputs stay exact rather than being coerced through double.
             List<Number> numValues = values.stream().map(v -> (Number) v).toList();
             return switch (aggFunc) {
-                case "Max" -> numValues.stream().mapToDouble(Number::doubleValue).max().orElse(0);
-                case "Min" -> numValues.stream().mapToDouble(Number::doubleValue).min().orElse(0);
-                case "Sum" -> numValues.stream().mapToDouble(Number::doubleValue).sum();
-                case "Avg" -> numValues.stream().mapToDouble(Number::doubleValue).average().orElse(0);
+                case "Max" -> numValues.stream().max(CollectionAggregator::compareNumbers).orElse(null);
+                case "Min" -> numValues.stream().min(CollectionAggregator::compareNumbers).orElse(null);
+                case "Sum" -> aggregateNumbers(numValues, false);
+                case "Avg" -> aggregateNumbers(numValues, true);
                 default -> 0;
             };
         }
@@ -144,13 +151,61 @@ public final class CollectionAggregator {
         // Generic fallback for other Comparable types
         if (first instanceof Comparable) {
             if (aggFunc.equals("Max")) {
-                return values.stream().max((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
+                return values.stream().max((a, b) -> ((Comparable<Object>) a).compareTo(b)).orElse(null);
             } else if (aggFunc.equals("Min")) {
-                return values.stream().min((a, b) -> ((Comparable) a).compareTo(b)).orElse(null);
+                return values.stream().min((a, b) -> ((Comparable<Object>) a).compareTo(b)).orElse(null);
             }
         }
 
         return null;
+    }
+
+    private static int compareNumbers(Number left, Number right) {
+        return toBigDecimal(left).compareTo(toBigDecimal(right));
+    }
+
+    /**
+     * Sums or averages the given values. The result type follows the category of the inputs rather
+     * than the numeric type they happened to be stored as: floating-point inputs produce a
+     * {@link Double}, decimal inputs a {@link BigDecimal}, and integral inputs an exact integral
+     * sum ({@link Long}, widened to {@link BigInteger} when it no longer fits). An average over
+     * exact inputs is a {@link BigDecimal} because it is rarely integral.
+     *
+     * @param values  the values to aggregate, never empty
+     * @param average true to average, false to sum
+     * @return the aggregated value
+     */
+    private static Number aggregateNumbers(List<Number> values, boolean average) {
+        boolean decimal = values.stream().anyMatch(value -> value instanceof BigDecimal);
+        boolean floating = values.stream()
+            .anyMatch(value -> value instanceof Double || value instanceof Float);
+        if (floating && !decimal) {
+            double sum = values.stream().mapToDouble(Number::doubleValue).sum();
+            return average ? sum / values.size() : sum;
+        }
+        BigDecimal sum = values.stream()
+            .map(CollectionAggregator::toBigDecimal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (average) {
+            return sum.divide(BigDecimal.valueOf(values.size()), MathContext.DECIMAL128);
+        }
+        if (decimal) {
+            return sum;
+        }
+        BigInteger integral = sum.toBigIntegerExact();
+        return integral.bitLength() < Long.SIZE ? integral.longValue() : integral;
+    }
+
+    private static BigDecimal toBigDecimal(Number value) {
+        return switch (value) {
+            case BigDecimal decimal -> decimal;
+            case BigInteger integer -> new BigDecimal(integer);
+            case Byte ignored -> BigDecimal.valueOf(value.longValue());
+            case Short ignored -> BigDecimal.valueOf(value.longValue());
+            case Integer ignored -> BigDecimal.valueOf(value.longValue());
+            case Long ignored -> BigDecimal.valueOf(value.longValue());
+            default -> BigDecimal.valueOf(value.doubleValue());
+        };
     }
 
     /**

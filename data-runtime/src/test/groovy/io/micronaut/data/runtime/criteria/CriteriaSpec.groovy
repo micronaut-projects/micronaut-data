@@ -412,7 +412,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             query.contains('INNER JOIN "test"')
             query.contains('test_."name"')
 
-        when: "Navigate using static metamodel"
+        when: "Navigate using string property paths"
             criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
             otherEntityRoot = criteriaQuery.from(OtherEntity)
             criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
@@ -440,7 +440,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         when: "nested association path via static metamodel"
             criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
             root = criteriaQuery.from(OtherEntity)
-            def nestedPath = root.get("test").get("name")
+            def nestedPath = root.get(OtherEntity_.test).get(Test_.name)
             criteriaQuery.where(criteriaBuilder.equal(nestedPath, "value"))
             String query2 = getSqlQuery(criteriaQuery)
 

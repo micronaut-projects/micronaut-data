@@ -15,10 +15,13 @@
  */
 package io.micronaut.data.nitrite.runtime;
 
+import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
@@ -26,12 +29,10 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
-import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.serde.ObjectMapper;
-import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
@@ -46,7 +47,7 @@ import java.util.Optional;
 /**
  * Factory for Nitrite repository operations.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Factory
 @Internal
@@ -73,20 +74,21 @@ public final class NitriteOperationsFactory {
    * @return the Nitrite database instance
    */
   @Bean(preDestroy = "close")
-  @Singleton
-  public Nitrite nitrite(@NonNull final NitriteConfiguration config) {
+  @EachBean(NitriteConfiguration.class)
+  public Nitrite nitrite(@Parameter @NonNull final NitriteConfiguration config) {
     NitriteBuilder builder = Nitrite.builder();
 
     NitriteConfiguration.StorageMode mode = config.getStorageMode();
     String dbPath = config.getDbPath();
 
+    String dbPathProperty = NitriteConfiguration.PREFIX + "." + config.getName() + ".db-path";
     if (mode == NitriteConfiguration.StorageMode.IN_MEMORY) {
       LOG.info("Nitrite configured for pure in-memory storage.");
     } else if (StringUtils.isEmpty(dbPath)) {
       if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
-        throw new IllegalStateException("RocksDB storage mode requires a valid nitrite.db-path.");
+        throw new IllegalStateException("RocksDB storage mode requires a valid " + dbPathProperty + ".");
       }
-      LOG.info("No nitrite.db-path provided, falling back to Nitrite pure in-memory storage.");
+      LOG.info("No {} provided, falling back to Nitrite pure in-memory storage.", dbPathProperty);
     } else {
       File file = prepareDbFile(dbPath);
       NitriteModule storeModule;
@@ -110,30 +112,41 @@ public final class NitriteOperationsFactory {
     return builder.openOrCreate();
   }
 
-  private @Nullable NitriteModule loadRocksDbModule(File file) {
-    if (ClassUtils.isPresent(ROCKSDB_MODULE_CLASS, null)) {
-      try {
-        Class<?> rocksDbModuleClass = Class.forName(ROCKSDB_MODULE_CLASS);
-        Object builderObj = rocksDbModuleClass.getMethod("withConfig").invoke(null);
-        builderObj = builderObj.getClass().getMethod("filePath", File.class).invoke(builderObj, file);
-        return (NitriteModule) builderObj.getClass().getMethod("build").invoke(builderObj);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to initialize RocksDB module even though it is on the classpath", e);
-      }
+  private NitriteModule loadRocksDbModule(File file) {
+    if (!ClassUtils.isPresent(ROCKSDB_MODULE_CLASS, null)) {
+      throw new IllegalStateException(
+          "RocksDB storage mode requires the optional RocksDB adapter on the classpath: "
+              + ROCKSDB_MODULE_CLASS + " could not be found.");
     }
-    return null;
+    try {
+      Class<?> rocksDbModuleClass = Class.forName(ROCKSDB_MODULE_CLASS);
+      Object builderObj = rocksDbModuleClass.getMethod("withConfig").invoke(null);
+      builderObj = builderObj.getClass().getMethod("filePath", File.class).invoke(builderObj, file);
+      return (NitriteModule) builderObj.getClass().getMethod("build").invoke(builderObj);
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to initialize RocksDB module even though it is on the classpath", e);
+    }
   }
 
+  /**
+   * Loads the optional spatial module. Its absence is a supported configuration and yields an
+   * empty result, but a module that is present and fails to initialize is an error, in the same
+   * way as the RocksDB adapter: silently continuing would leave spatial indexes and filters
+   * missing at query time with no indication why.
+   *
+   * @return the spatial module, or empty when the optional adapter is not on the classpath
+   */
   private Optional<NitriteModule> loadSpatialModule() {
-    if (ClassUtils.isPresent(SPATIAL_MODULE_CLASS, null)) {
-      try {
-        Class<?> spatialModuleClass = Class.forName(SPATIAL_MODULE_CLASS);
-        return Optional.of((NitriteModule) spatialModuleClass.getDeclaredConstructor().newInstance());
-      } catch (Exception e) {
-        LOG.warn("Spatial module found on classpath but could not be initialized: {}", e.getMessage());
-      }
+    if (!ClassUtils.isPresent(SPATIAL_MODULE_CLASS, null)) {
+      return Optional.empty();
     }
-    return Optional.empty();
+    try {
+      Class<?> spatialModuleClass = Class.forName(SPATIAL_MODULE_CLASS);
+      return Optional.of((NitriteModule) spatialModuleClass.getDeclaredConstructor().newInstance());
+    } catch (Exception e) {
+      throw new IllegalStateException(
+          "Failed to initialize the Nitrite spatial module even though it is on the classpath", e);
+    }
   }
 
   private File prepareDbFile(String dbPath) {
@@ -146,30 +159,36 @@ public final class NitriteOperationsFactory {
   }
 
   /**
-   * Creates {@link NitriteRepositoryOperations}.
+   * Creates repository operations for a named Nitrite datasource.
    *
-   * @param database the database
-   * @param configuration the configuration
+   * <p>The database is looked up by the datasource name rather than injected directly: both beans
+   * are created per {@link NitriteConfiguration}, so with more than one datasource configured an
+   * unqualified {@link Nitrite} parameter matches every database bean at once.
+   *
+   * @param beanLocator the bean locator used to resolve the matching database
+   * @param configuration the matching datasource configuration
    * @param dateTimeProvider the date time provider
    * @param runtimeEntityRegistry the runtime entity registry
-   * @param conversionService the conversion service (for field-level conversions)
+   * @param conversionService the conversion service
    * @param attributeConverterRegistry the attribute converter registry
    * @param transactionHolder the transaction holder
-   * @param serdeObjectMapper the optional Micronaut Serde ObjectMapper
+   * @param serdeObjectMapper the optional Serde object mapper
    * @return the repository operations
    */
-  @Bean
-  @Primary
-  @Singleton
-  public NitriteRepositoryOperations nitriteRepositoryOperations(
-      Nitrite database,
-      NitriteConfiguration configuration,
+  @EachBean(NitriteConfiguration.class)
+  public DefaultNitriteRepositoryOperations nitriteRepositoryOperations(
+      BeanLocator beanLocator,
+      @Parameter NitriteConfiguration configuration,
       DateTimeProvider<Object> dateTimeProvider,
       RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
       AttributeConverterRegistry attributeConverterRegistry,
       NitriteTransactionHolder transactionHolder,
       @Nullable ObjectMapper serdeObjectMapper) {
+    // The implicit default configuration is a primary bean rather than a named one, so it has no
+    // name qualifier to match on and its database is resolved as the primary instead.
+    Nitrite database = beanLocator.findBean(Nitrite.class, Qualifiers.byName(configuration.getName()))
+        .orElseGet(() -> beanLocator.getBean(Nitrite.class));
     return new DefaultNitriteRepositoryOperations(
         database,
         configuration,
@@ -180,4 +199,5 @@ public final class NitriteOperationsFactory {
         transactionHolder,
         serdeObjectMapper);
   }
+
 }

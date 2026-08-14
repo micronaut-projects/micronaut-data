@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
 /**
  * Holder for the current Nitrite transaction context.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Singleton
 public class NitriteTransactionHolder {

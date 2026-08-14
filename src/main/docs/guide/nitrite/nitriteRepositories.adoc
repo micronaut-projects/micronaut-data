@@ -5,6 +5,8 @@ snippet::example.BookRepository[project-base="doc-examples/nitrite-example", sou
 
 Micronaut Data generates an implementation at compile time and executes queries via the Nitrite runtime implementation.
 
+A repository that names no datasource uses the primary one. To bind a repository to a particular datasource, pass its name to the annotation, for example `@NitriteRepository("audit")`. See <<nitriteConfiguration, Configuration>> for configuring more than one datasource.
+
 You can use standard repository method patterns:
 
 - CRUD methods from `CrudRepository`

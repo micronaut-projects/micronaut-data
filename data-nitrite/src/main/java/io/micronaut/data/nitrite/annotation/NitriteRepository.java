@@ -49,7 +49,7 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @RepositoryConfiguration(
     queryBuilder = NitriteQueryBuilder.class,

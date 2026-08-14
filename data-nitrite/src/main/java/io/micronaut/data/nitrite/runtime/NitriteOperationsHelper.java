@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Interface for callbacks to DefaultNitriteRepositoryOperations.
  *
- * @since 4.14.0
+ * @since 5.2.0
  */
 @Internal
 public interface NitriteOperationsHelper {

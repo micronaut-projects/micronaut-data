@@ -19,7 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +32,7 @@ import java.util.Map;
 /**
  * Parser for Nitrite JSON and SQL-like query strings.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteQueryParser {
@@ -68,8 +72,8 @@ public final class NitriteQueryParser {
     public @Nullable Map<String, Object> extractFilterMap(@Nullable Object parsed) {
         if (parsed instanceof List<?> pipeline) {
             for (Object stage : pipeline) {
-                if (stage instanceof Map<?, ?> m && m.containsKey("$match")) {
-                    return (Map<String, Object>) m.get("$match");
+                if (stage instanceof Map<?, ?> m && m.containsKey(NitriteQueryOperators.MATCH)) {
+                    return (Map<String, Object>) m.get(NitriteQueryOperators.MATCH);
                 }
             }
             return Map.of();
@@ -92,7 +96,7 @@ public final class NitriteQueryParser {
             Object parsed = parseJson(jsonQuery);
             if (parsed instanceof List<?> pipeline) {
                 for (Object stage : pipeline) {
-                    if (stage instanceof Map<?, ?> m && m.get("$group") instanceof Map<?, ?> groupMap
+                    if (stage instanceof Map<?, ?> m && m.get(NitriteQueryOperators.GROUP) instanceof Map<?, ?> groupMap
                         && groupMap.get("_id") instanceof String s && s.startsWith("$")) {
                         return s.substring(1);
                     }
@@ -136,16 +140,16 @@ public final class NitriteQueryParser {
         }
         try {
             Object parsed = parseJson(jsonQuery);
-            if (parsed instanceof Map<?, ?> map && map.containsKey("$project")) {
-                List<String> fields = extractProjectionFieldsFromValue(map.get("$project"));
+            if (parsed instanceof Map<?, ?> map && map.containsKey(NitriteQueryOperators.PROJECT)) {
+                List<String> fields = extractProjectionFieldsFromValue(map.get(NitriteQueryOperators.PROJECT));
                 if (!fields.isEmpty()) {
                     return fields;
                 }
             }
             if (parsed instanceof List<?> pipeline) {
                 for (Object stage : pipeline) {
-                    if (stage instanceof Map<?, ?> map && map.containsKey("$project")) {
-                        List<String> fields = extractProjectionFieldsFromValue(map.get("$project"));
+                    if (stage instanceof Map<?, ?> map && map.containsKey(NitriteQueryOperators.PROJECT)) {
+                        List<String> fields = extractProjectionFieldsFromValue(map.get(NitriteQueryOperators.PROJECT));
                         if (!fields.isEmpty()) {
                             return fields;
                         }
@@ -205,8 +209,11 @@ public final class NitriteQueryParser {
                 Map<String, Object> extracted = extractFilterMap(parsed);
                 filterMap = extracted != null ? new LinkedHashMap<>(extracted) : null;
                 if (filterMap != null && parsed instanceof Map<?, ?> m) {
-                    filterMap.remove("$project");
+                    filterMap.remove(NitriteQueryOperators.PROJECT);
                     updateMap = extractUpdateMap(m);
+                    if (updateMap != null) {
+                        updateMap.keySet().forEach(filterMap::remove);
+                    }
                     if (updateMap == null) {
                         updateMap = parseUpdateAnnotation(storedQuery);
                     }
@@ -237,7 +244,7 @@ public final class NitriteQueryParser {
     @SuppressWarnings("unchecked")
     private @Nullable Map<String, Object> extractUpdateMap(Map<?, ?> source) {
         Map<String, Object> updateMap = new LinkedHashMap<>();
-        for (String operator : List.of("$set", "$inc", "$mul")) {
+        for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL)) {
             if (source.get(operator) instanceof Map<?, ?> values) {
                 updateMap.put(operator, new LinkedHashMap<>((Map<String, Object>) values));
             }
@@ -394,15 +401,31 @@ public final class NitriteQueryParser {
         }
 
         private static Object parseNumber(String s) {
+            // Integral values widen through int/long/BigInteger and decimals fall back to
+            // BigDecimal when a double cannot represent the literal exactly.
             // Named parameters and positional placeholders are returned as-is
-            if (s.startsWith(":") || s.startsWith("$mn_qp:")) {
+            if (s.startsWith(":") || s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
                 return s;
             }
             try {
-                if (s.contains(".")) {
-                    return Double.parseDouble(s);
+                if (s.contains(".") || s.indexOf('e') >= 0 || s.indexOf('E') >= 0) {
+                    BigDecimal decimal = new BigDecimal(s);
+                    double doubleValue = Double.parseDouble(s);
+                    if (Double.isFinite(doubleValue)
+                        && decimal.compareTo(BigDecimal.valueOf(doubleValue)) == 0) {
+                        return doubleValue;
+                    }
+                    return decimal;
                 }
-                return Integer.parseInt(s);
+                try {
+                    return Integer.parseInt(s);
+                } catch (NumberFormatException ignored) {
+                    try {
+                        return Long.parseLong(s);
+                    } catch (NumberFormatException ignoredLong) {
+                        return new BigInteger(s);
+                    }
+                }
             } catch (NumberFormatException ignored) {
                 return s;
             }

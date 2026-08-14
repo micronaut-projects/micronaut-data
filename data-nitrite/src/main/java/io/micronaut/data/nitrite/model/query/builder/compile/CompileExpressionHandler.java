@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * Compile-time implementation of {@link NitriteExpressionHandler} that handles literal inlining.
  * This class is intended for use by the Annotation Processor and is excluded from runtime coverage.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 public final class CompileExpressionHandler implements NitriteExpressionHandler {
 

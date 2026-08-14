@@ -25,7 +25,7 @@ import org.dizitart.no2.filters.Filter;
  *
  * @param <E> The entity type
  * @param <R> The result type
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public interface NitritePreparedQuery<E, R> extends PreparedQuery<E, R>, NitriteStoredQuery<E, R> {

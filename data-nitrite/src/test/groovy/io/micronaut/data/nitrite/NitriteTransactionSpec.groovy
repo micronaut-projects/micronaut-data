@@ -8,7 +8,7 @@ import spock.lang.Specification
 import jakarta.transaction.Transactional
 
 @MicronautTest(transactional = false)
-@io.micronaut.context.annotation.Property(name = "nitrite.db-path", value = "build/nitrite-tx-test.db")
+@io.micronaut.context.annotation.Property(name = "micronaut.nitrite.default.db-path", value = "build/nitrite-tx-test.db")
 class NitriteTransactionSpec extends Specification {
 
     @Inject

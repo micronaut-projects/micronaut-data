@@ -15,6 +15,15 @@ class RuntimeExpressionHandlerUnitSpec extends Specification {
         handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression(new LiteralExpression("4_")), true, null, queryState, null) == '(?s)^4.$'
     }
 
+    void "handleRegex quotes regex metacharacters in literal values"() {
+        given:
+        def handler = new RuntimeExpressionHandler()
+        def queryState = new NitriteQueryState()
+
+        expect:
+        handler.handleRegex("field", false, false, true, true, new LiteralExpression("a.b[0]"), false, null, queryState, null) == '^\\Qa.b[0]\\E$'
+    }
+
     void "resolveValue unwraps literal expressions"() {
         given:
         def handler = new RuntimeExpressionHandler()

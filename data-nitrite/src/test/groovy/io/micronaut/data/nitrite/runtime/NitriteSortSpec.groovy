@@ -1,6 +1,8 @@
 package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.CursoredPage
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.nitrite.model.NitriteMpPerson
@@ -62,5 +64,27 @@ class NitriteSortSpec extends Specification implements NitriteTestPropertyProvid
             page.content.size() == 2
             page.content[0].name == "Alice"
             page.content[1].name == "Bob"
+
+    }
+
+    void 'cursor pagination does not skip records with equal sort values'() {
+        given:
+        personRepository.deleteAll()
+        personRepository.saveAll([
+                new NitriteMpPerson(name: "Same", age: 1),
+                new NitriteMpPerson(name: "Same", age: 2),
+                new NitriteMpPerson(name: "Same", age: 3),
+                new NitriteMpPerson(name: "Same", age: 4)
+        ])
+        def pageable = CursoredPageable.from(2, Sort.of(Sort.Order.asc("name")))
+
+        when:
+        CursoredPage<NitriteMpPerson> first = (CursoredPage<NitriteMpPerson>) personRepository.findAll(pageable)
+        CursoredPage<NitriteMpPerson> second = (CursoredPage<NitriteMpPerson>) personRepository.findAll(first.nextPageable())
+
+        then:
+        first.content.size() == 2
+        second.content.size() == 2
+        (first.content + second.content)*.age.sort() == [1, 2, 3, 4]
     }
 }

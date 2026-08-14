@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
@@ -41,13 +42,16 @@ import java.util.StringJoiner;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LOOKUP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.MATCH;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.UNWIND;
 
 /**
  * Helper for Nitrite query building that handles complex structural logic.
  * This class is intended for use by both the Annotation Processor and Runtime,
  * but its complexity is primarily validated by the AP's static analysis.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteQueryBuilderHelper {
@@ -169,10 +173,10 @@ public final class NitriteQueryBuilderHelper {
         }
         // size() is always > 1 here: the single-field case returns above via the
         // localFields.size() == 1 guard, so matches always holds at least two predicates.
-        pipeline.addFirst(Map.of("$match", Map.of(EXPR, Map.of(AND, matches))));
+        pipeline.addFirst(Map.of(MATCH, Map.of(EXPR, Map.of(AND, matches))));
         Map<String, Object> lookupDoc = new LinkedHashMap<>();
         lookupDoc.put("from", from); lookupDoc.put("let", let); lookupDoc.put("pipeline", pipeline); lookupDoc.put("as", as);
-        return Map.of("$lookup", lookupDoc);
+        return Map.of(LOOKUP, lookupDoc);
     }
 
     private static Map<String, Object> lookup(String from, String localField, String foreignField,
@@ -182,13 +186,13 @@ public final class NitriteQueryBuilderHelper {
         lookupDoc.put("foreignField", foreignField);
         lookupDoc.put("pipeline", pipeline);  // always include so nested lookups added later are reflected
         lookupDoc.put("as", as);
-        return Map.of("$lookup", lookupDoc);
+        return Map.of(LOOKUP, lookupDoc);
     }
 
     private static Map<String, Object> unwind(String path) {
         Map<String, Object> u = new LinkedHashMap<>();
         u.put("path", path); u.put("preserveNullAndEmptyArrays", true);
-        return Map.of("$unwind", u);
+        return Map.of(UNWIND, u);
     }
 
     /**
@@ -210,7 +214,7 @@ public final class NitriteQueryBuilderHelper {
         }
         switch (selection) {
             case io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath ->
-                projectionObj.put(propertyPath.getProperty().getName(), 1);
+                projectionObj.put(persistedPath(propertyPath.getPropertyPath()), 1);
             case IdExpression<?, ?> idExpression -> {
                 PersistentEntity persistentEntity = idExpression.getRoot().getPersistentEntity();
                 if (!persistentEntity.hasIdentity() || persistentEntity.hasCompositeIdentity()) {
@@ -223,23 +227,23 @@ public final class NitriteQueryBuilderHelper {
                     case SUM, AVG, MAX, MIN -> {
                         PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
                         String op = switch (unary.getType()) {
-                            case SUM -> "$sum";
-                            case AVG -> "$avg";
-                            case MAX -> "$max";
-                            case MIN -> "$min";
+                            case SUM -> NitriteQueryOperators.SUM;
+                            case AVG -> NitriteQueryOperators.AVG;
+                            case MAX -> NitriteQueryOperators.MAX;
+                            case MIN -> NitriteQueryOperators.MIN;
                             default ->
                                 throw new IllegalStateException("Unexpected: " + unary.getType());
                         };
-                        group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + propertyPath.getPath()));
+                        group.put(propertyPath.getProperty().getName(), Map.of(op, "$" + persistedPath(propertyPath)));
                     }
-                    case COUNT -> countObj.put("$count", "result");
+                    case COUNT -> countObj.put(NitriteQueryOperators.COUNT, "result");
                     case COUNT_DISTINCT -> {
                         if (unary.getExpression() instanceof PersistentEntityRoot) {
-                            countObj.put("$count", "result");
+                            countObj.put(NitriteQueryOperators.COUNT, "result");
                         } else {
                             PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unary.getExpression()).getPropertyPath();
-                            group.put("_id", "$" + propertyPath.getPath());
-                            countObj.put("$count", "result");
+                            group.put("_id", "$" + persistedPath(propertyPath));
+                            countObj.put(NitriteQueryOperators.COUNT, "result");
                         }
                     }
                     default -> { /* ignore */ }
@@ -253,6 +257,15 @@ public final class NitriteQueryBuilderHelper {
             default -> {
             }
         }
+    }
+
+    private static String persistedPath(PersistentPropertyPath propertyPath) {
+        StringJoiner path = new StringJoiner(".");
+        for (Association association : propertyPath.getAssociations()) {
+            path.add(association.getPersistedName());
+        }
+        path.add(propertyPath.getProperty().getPersistedName());
+        return path.toString();
     }
 
     private static final class LookupsStage {

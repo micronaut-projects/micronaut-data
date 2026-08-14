@@ -25,7 +25,7 @@ import org.dizitart.no2.collection.Document;
  * Handles both full entity loading and DTO projections using
  * Micronaut's introspection-based entity mapper.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class ObjectRepositoryMapper {

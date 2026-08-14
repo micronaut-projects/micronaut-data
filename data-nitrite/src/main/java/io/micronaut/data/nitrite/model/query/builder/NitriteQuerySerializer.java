@@ -61,7 +61,9 @@ final class NitriteQuerySerializer {
                 return sb.toString();
             }
             case String str -> {
-                return "'" + str.replace("'", "\\'") + "'";
+                // Backslashes must be escaped before quotes: the parser unescapes '\\' back to a
+                // single backslash, so an unescaped 'C:\tmp' would otherwise be read as a tab.
+                return "'" + str.replace("\\", "\\\\").replace("'", "\\'") + "'";
             }
             case Boolean b -> {
                 return b.toString();
@@ -72,7 +74,7 @@ final class NitriteQuerySerializer {
             default -> {
             }
         }
-        return "'" + obj.toString().replace("'", "\\'") + "'";
+        return "'" + obj.toString().replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 
     private static boolean needsQuoting(String key) {

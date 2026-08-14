@@ -31,10 +31,14 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
+import io.micronaut.data.nitrite.runtime.read.CollectionAggregator;
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -58,7 +62,7 @@ import java.util.function.Function;
 /**
  * Helper class to execute Criteria queries for Nitrite.
  *
- * @since 4.14.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteCriteriaExecutor {
@@ -70,6 +74,7 @@ public final class NitriteCriteriaExecutor {
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
     private final CollectionProjectionMapper projectionMapper;
+    private final ConversionService conversionService;
 
     /**
      * Creates a new NitriteCriteriaExecutor.
@@ -95,6 +100,7 @@ public final class NitriteCriteriaExecutor {
         this.filterBuilder = filterBuilder;
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
+        this.conversionService = conversionService;
         this.projectionMapper = new CollectionProjectionMapper(new ValueConverter(conversionService), entityMapper);
     }
 
@@ -105,8 +111,8 @@ public final class NitriteCriteriaExecutor {
      * @return true if at least one entity matches
      */
     public boolean exists(@NonNull CriteriaQuery<?> query) {
-        QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
         Class<?> type = getEntityType(query);
         Filter filter = buildFilterFromQueryResult(queryResult, type);
         return collectionFactory.apply(type).find(filter).iterator().hasNext();
@@ -120,18 +126,31 @@ public final class NitriteCriteriaExecutor {
      * @return the first matching entity, or null if none found
      */
     public <R> @Nullable R findOne(@NonNull CriteriaQuery<R> query) {
-        QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Class<R> resultType = (Class<R>) ((PersistentEntityQuery) query).getResultType();
+        Class<R> resultType = (Class<R>) ((PersistentEntityQuery<?>) query).getResultType();
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
         FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
 
+        // A numeric result type alone does not imply a count: max/min/sum/avg also produce a
+        // $group stage, so the selection decides which aggregate to execute.
+        AggregateSelection aggregateSelection = extractAggregateSelection(queryResult.getQuery());
+        if (aggregateSelection != null) {
+            Object aggregate = new CollectionAggregator().aggregate(
+                collectionFactory.apply(entityType).find(filter).toList(),
+                aggregateSelection.field(),
+                aggregateSelection.function());
+            if (aggregate == null) {
+                return null;
+            }
+            return conversionService.convert(aggregate, resultType).orElse((R) aggregate);
+        }
         // Handle count queries specially
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
             String queryStr = queryResult.getQuery();
-            if (queryStr != null && queryStr.contains("$group")) {
+            if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
                 String fieldPath = queryParser.extractGroupFieldPath(queryStr);
                 if (fieldPath != null) {
                     long count = collectionFactory.apply(entityType).find(filter).toList().stream()
@@ -164,9 +183,9 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
-        QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
-        Class<T> type = (Class<T>) ((PersistentEntityQuery) query).getResultType();
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+        Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
@@ -194,9 +213,9 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
-        QueryResult queryResult = ((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
-        Class<T> type = (Class<T>) ((PersistentEntityQuery) query).getResultType();
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+        Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Filter filter = buildFilterFromQueryResult(queryResult, entityType);
@@ -224,52 +243,56 @@ public final class NitriteCriteriaExecutor {
         // For Nitrite, we need to fetch entities, apply updates, and save back
         try {
             // Build the query result to get the filter
-            QueryResult queryResult = ((AbstractPersistentEntityCriteriaUpdate<?>) query)
-                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+            QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaUpdate<?>) query)
+                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria update");
 
             Class<?> entityType = getEntityType(query);
             Filter filter = buildFilterFromQueryResult(queryResult, entityType);
 
             // Get the update values from the CriteriaUpdate
-            Map<String, Object> updateValues = getUpdateValues(query);
+            RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
+            Map<String, Object> updateValues = getUpdateValues(query, persistentEntity);
 
-            // Get all matching entities
             NitriteCollection collection = collectionFactory.apply(entityType);
-            List<Document> docs = new ArrayList<>();
-            for (Document doc : collection.find(filter)) {
-                docs.add(doc);
-            }
-
-            if (docs.isEmpty()) {
-                return Optional.of(0);
-            }
-
-            // Apply update to each document
-            for (Document doc : docs) {
-                for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
-                    doc.put(entry.getKey(), entry.getValue());
+            // Each matching document is read, modified and written back as a whole, so the
+            // sequence is held under one lock: Nitrite releases its own lock between the read and
+            // the write, which would let a concurrent update be overwritten.
+            return Optional.of(CollectionUpdateLock.withLock(collection.getName(), () -> {
+                List<Document> docs = new ArrayList<>();
+                for (Document doc : collection.find(filter)) {
+                    docs.add(doc);
                 }
-                // Update the document in the collection
-                Filter idFilter = FluentFilter.where("_id").eq(doc.get("_id"));
-                collection.update(idFilter, doc);
-            }
-
-            return Optional.of(docs.size());
+                for (Document doc : docs) {
+                    for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
+                        doc.put(entry.getKey(), entry.getValue());
+                    }
+                    Filter idFilter = FluentFilter.where("_id").eq(doc.get("_id"));
+                    collection.update(idFilter, doc);
+                }
+                return docs.size();
+            }));
         } catch (Exception e) {
             throw new IllegalStateException("Failed to update entities by criteria", e);
         }
     }
 
-    private Map<String, Object> getUpdateValues(CriteriaUpdate<?> query) {
+    private Map<String, Object> getUpdateValues(CriteriaUpdate<?> query, RuntimePersistentEntity<?> persistentEntity) {
         if (query instanceof AbstractPersistentEntityCriteriaUpdate<?> update) {
             Map<String, Object> rawValues = update.getUpdateValues();
             Map<String, Object> resolvedValues = new LinkedHashMap<>();
+            int index = 0;
             for (Map.Entry<String, Object> entry : rawValues.entrySet()) {
                 Object value = entry.getValue();
                 if (value instanceof BindingParameter bindingParam) {
-                    value = bindingParam.bind(BindingParameter.BindingContext.create().index(0)).getValue();
+                    // Each bound assignment takes its own index; sharing index 0 would collapse the
+                    // parameters of a multi-column update onto one another. Literal assignments are
+                    // not bound and must not consume an index.
+                    value = bindingParam.bind(BindingParameter.BindingContext.create().index(index)).getValue();
+                    index++;
                 }
-                resolvedValues.put(entry.getKey(), value);
+                // Assignments are keyed by the Java property path; the stored document uses the
+                // persisted path, which differs for @MappedProperty at any depth.
+                resolvedValues.put(NitriteEntityMapper.persistedPath(entry.getKey(), persistentEntity), value);
             }
             return Collections.unmodifiableMap(resolvedValues);
         }
@@ -283,8 +306,8 @@ public final class NitriteCriteriaExecutor {
      * @return optional containing the number of deleted entities
      */
     public Optional<Number> deleteAll(@NonNull CriteriaDelete<Number> query) {
-        QueryResult queryResult = ((AbstractPersistentEntityCriteriaDelete<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaDelete<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria delete");
         Class<?> type = getEntityType(query);
         Filter filter = buildFilterFromQueryResult(queryResult, type);
         long count = collectionFactory.apply(type).remove(filter).getAffectedCount();
@@ -293,11 +316,11 @@ public final class NitriteCriteriaExecutor {
 
     private Class<?> getEntityType(Object query) {
         if (query instanceof CriteriaUpdate<?> update) {
-            return ((RuntimePersistentEntity) ((PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity<?>) ((PersistentEntityCriteriaUpdate<?>) update).getPersistentEntity()).getIntrospection().getBeanType();
         } else if (query instanceof CriteriaDelete<?> delete) {
-            return ((RuntimePersistentEntity) ((PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity<?>) ((PersistentEntityCriteriaDelete<?>) delete).getPersistentEntity()).getIntrospection().getBeanType();
         } else {
-            return ((RuntimePersistentEntity) ((PersistentEntityQuery<?>) query).getPersistentEntity()).getIntrospection().getBeanType();
+            return ((RuntimePersistentEntity<?>) ((PersistentEntityQuery<?>) query).getPersistentEntity()).getIntrospection().getBeanType();
         }
     }
 
@@ -336,12 +359,12 @@ public final class NitriteCriteriaExecutor {
     private void resolveFilterMapPlaceholders(Map<String, Object> map, Object[] params) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof Map m) {
-                resolveFilterMapPlaceholders(m, params);
-            } else if (value instanceof String str && str.startsWith("$mn_qp:")) {
+            if (value instanceof Map<?, ?> m) {
+                resolveFilterMapPlaceholders((Map<String, Object>) m, params);
+            } else if (value instanceof String str && str.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
                 // Resolve placeholder
                 try {
-                    int idx = Integer.parseInt(str.substring(7));
+                    int idx = Integer.parseInt(str.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()));
                     if (params != null && idx >= 0 && idx < params.length) {
                         entry.setValue(params[idx]);
                     }
@@ -350,6 +373,44 @@ public final class NitriteCriteriaExecutor {
                 }
             }
         }
+    }
+
+    private @Nullable AggregateSelection extractAggregateSelection(@Nullable String queryString) {
+        if (queryString == null || !queryString.contains(NitriteQueryOperators.GROUP)) {
+            return null;
+        }
+        try {
+            Object parsed = queryParser.parseJson(queryString);
+            if (!(parsed instanceof List<?> pipeline)) {
+                return null;
+            }
+            for (Object stage : pipeline) {
+                if (!(stage instanceof Map<?, ?> stageMap) || !(stageMap.get(NitriteQueryOperators.GROUP) instanceof Map<?, ?> group)) {
+                    continue;
+                }
+                if (group.get("_id") != null) {
+                    // A grouped aggregate produces one value per key; only the ungrouped form can
+                    // be answered by collapsing the whole result set to a single value.
+                    return null;
+                }
+                for (Map.Entry<?, ?> entry : group.entrySet()) {
+                    if (!(entry.getValue() instanceof Map<?, ?> operation)) {
+                        continue;
+                    }
+                    for (String operator : List.of(NitriteQueryOperators.MAX, NitriteQueryOperators.MIN,
+                        NitriteQueryOperators.SUM, NitriteQueryOperators.AVG)) {
+                        Object field = operation.get(operator);
+                        if (field instanceof String path && path.startsWith("$")) {
+                            String function = Character.toUpperCase(operator.charAt(1)) + operator.substring(2);
+                            return new AggregateSelection(function, path.substring(1));
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // The normal query path reports malformed criteria queries.
+        }
+        return null;
     }
 
     private FindOptions buildFindOptions(QueryResult queryResult, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
@@ -383,16 +444,16 @@ public final class NitriteCriteriaExecutor {
                 }
 
                 for (Map<?, ?> stage : stages) {
-                    if (stage.get("$sort") instanceof Map<?, ?> sortMap) {
+                    if (stage.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> sortMap) {
                         for (Map.Entry<?, ?> entry : sortMap.entrySet()) {
                             SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
                             options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey().toString(), persistentEntity), order);
                         }
                     }
-                    if (offset <= 0 && stage.get("$skip") instanceof Number skip) {
+                    if (offset <= 0 && stage.get(NitriteQueryOperators.SKIP) instanceof Number skip) {
                         options.skip(skip.longValue());
                     }
-                    if (limit <= 0 && stage.get("$limit") instanceof Number lim) {
+                    if (limit <= 0 && stage.get(NitriteQueryOperators.LIMIT) instanceof Number lim) {
                         options.limit(lim.longValue());
                     }
                 }
@@ -402,5 +463,8 @@ public final class NitriteCriteriaExecutor {
             }
         }
         return options;
+    }
+
+    private record AggregateSelection(String function, String field) {
     }
 }

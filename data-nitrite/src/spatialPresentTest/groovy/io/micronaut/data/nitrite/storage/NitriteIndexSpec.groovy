@@ -14,7 +14,7 @@ class NitriteIndexSpec extends Specification {
     void "test automated index creation and advanced filters"() {
         given:
         def ctx = ApplicationContext.run([
-            "nitrite.storage-mode": "IN_MEMORY"
+            "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
         ])
         def repository = ctx.getBean(IndexedBookRepository)
         def db = ctx.getBean(Nitrite)

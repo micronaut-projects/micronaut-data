@@ -41,7 +41,7 @@ import java.util.function.Function;
 /**
  * Fetches joined associations for query results.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 final class JoinFetcher {

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Handles version properties and entity preparation.
  *
  * @param <T> The entity type
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class ObjectRepositoryWriter<T> {
@@ -52,7 +52,9 @@ public final class ObjectRepositoryWriter<T> {
         try {
             version = persistentEntity.getVersion();
         } catch (IllegalStateException e) {
-            LOG.debug("Entity {} has no version property: {}", persistentEntity.getName(), e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Entity {} has no version property: {}", persistentEntity.getName(), e.getMessage());
+            }
         }
         this.versionProperty = version;
     }

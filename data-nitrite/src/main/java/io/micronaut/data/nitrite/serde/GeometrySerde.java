@@ -41,6 +41,12 @@ public final class GeometrySerde implements Serializer<Geometry>, Deserializer<G
     private final WKTReader reader = new WKTReader();
     private final WKTWriter writer = new WKTWriter();
 
+    /**
+     * Create a new codec.
+     */
+    public GeometrySerde() {
+    }
+
     @Override
     public void serialize(Encoder encoder, EncoderContext context, Argument<? extends Geometry> type, Geometry value) throws IOException {
         encoder.encodeString(writer.write(value));

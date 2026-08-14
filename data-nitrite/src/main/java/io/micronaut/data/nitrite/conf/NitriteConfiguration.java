@@ -15,28 +15,31 @@
  */
 package io.micronaut.data.nitrite.conf;
 
-import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.naming.Named;
 
 /**
- * Configuration properties for NitriteDB, bound from {@code nitrite.*} in application.yml.
+ * Configuration properties for a named NitriteDB datasource.
  *
  * <p>Example:
  *
  * <pre>
- * nitrite:
- *   db-path: /data/myapp.db
- *   storage-mode: MVSTORE
- *   create-indexes: true
- *   username: admin
- *   password: secret
+ * micronaut:
+ *   nitrite:
+ *     default:
+ *       db-path: /data/myapp.db
+ *       storage-mode: MVSTORE
+ *       create-indexes: true
+ *       username: admin
+ *       password: secret
  * </pre>
  */
-@ConfigurationProperties(NitriteConfiguration.PREFIX)
-public final class NitriteConfiguration {
+public class NitriteConfiguration implements Named {
 
-  /** Configuration prefix used for binding Nitrite settings (e.g. {@code nitrite.db-path}). */
-  public static final String PREFIX = "nitrite";
+  /** Configuration prefix used for binding named Nitrite settings. */
+  public static final String PREFIX = "micronaut.nitrite";
+
+  private final String name;
 
   /**
    * Path to the NitriteDB file. If not provided and storage-mode is MVSTORE,
@@ -68,8 +71,16 @@ public final class NitriteConfiguration {
 
   /**
    * Default constructor.
+   *
+   * @param name The configuration name
    */
-  public NitriteConfiguration() {
+  public NitriteConfiguration(String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 
   /**

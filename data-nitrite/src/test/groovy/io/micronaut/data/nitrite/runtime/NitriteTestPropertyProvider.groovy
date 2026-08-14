@@ -11,8 +11,8 @@ trait NitriteTestPropertyProvider implements TestPropertyProvider {
     @Override
     Map<String, String> getProperties() {
         return [
-                'micronaut.data.nitrite.storage': 'memory',
-                'micronaut.data.nitrite.create-indexes': 'true'
+                'micronaut.nitrite.default.storage-mode': 'IN_MEMORY',
+                'micronaut.nitrite.default.create-indexes': 'true'
         ]
     }
 

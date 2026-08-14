@@ -25,6 +25,8 @@ snippet::example.AuthorRepository[project-base="doc-examples/nitrite-example", s
 
 `MANY_TO_ONE` and `ONE_TO_ONE` associations, by contrast, are always eagerly resolved — the owning entity stores the foreign key directly, so Nitrite fetches the associated entity whether or not `@Join` is used. Adding `@Join` to these still helps: it replaces the per-entity lookup with a single `$lookup`-based query, and is required to filter or project through the association with the Criteria API.
 
+IMPORTANT: Without `@Join`, each to-one association is resolved with a separate lookup per root document, and the associated entity's own to-one associations are resolved in turn. Loading N entities therefore costs N additional lookups per to-one association, and can walk further into the graph from there. Each root document has its own hydration cache, so the same associated document is fetched again for every root that references it, and cycles are handled without infinite recursion. Declare `@Join` on the association when loading more than a handful of entities, and model deep to-one chains deliberately.
+
 snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-usage"]
 
 == Fetching ONE_TO_MANY Associations

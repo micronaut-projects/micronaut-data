@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 /**
  * Designates a field to be indexed with a Nitrite Full-text index.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

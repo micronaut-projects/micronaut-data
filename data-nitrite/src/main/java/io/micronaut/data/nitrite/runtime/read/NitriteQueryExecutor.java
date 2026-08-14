@@ -20,8 +20,10 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -34,10 +36,15 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
+import io.micronaut.data.nitrite.runtime.NumericUpdateOperations;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryBinder;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.query.GeneratedQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import io.micronaut.data.nitrite.runtime.query.NitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
@@ -54,7 +61,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -73,14 +79,14 @@ import java.util.regex.Pattern;
  *   <li><strong>Aggregations:</strong> Resolves derived aggregations (max, min, sum, avg) for numeric and temporal fields (note: sum/avg on dates is intentionally excluded).</li>
  * </ul>
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteQueryExecutor {
 
     private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d*)");
-    private static final String NEGATE = "$mn_negate";
-    private static final String RECIPROCATE = "$mn_reciprocate";
+    private static final Pattern GENERATED_EQUALITY_PATTERN = Pattern.compile(
+        "(?:[A-Za-z0-9_]+\\.)?([A-Za-z0-9_]+)\\s*=\\s*:p\\d+");
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -96,6 +102,7 @@ public final class NitriteQueryExecutor {
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
     private final JoinFetcher joinFetcher;
+    private final GeneratedQueryParser generatedQueryParser = new GeneratedQueryParser();
 
     /**
      * Creates a new NitriteQueryExecutor.
@@ -159,14 +166,13 @@ public final class NitriteQueryExecutor {
     private Long handleDistinctCount(NitriteCollection coll, Filter filter, String queryStr) {
         String fieldPath = queryParser.extractGroupFieldPath(queryStr);
         if (fieldPath == null) {
-            return Long.valueOf(coll.find(filter).size());
+            return coll.find(filter).size();
         }
-        long count = coll.find(filter).toList().stream()
+        return coll.find(filter).toList().stream()
             .map(doc -> doc.get(fieldPath))
             .filter(Objects::nonNull)
             .distinct()
             .count();
-        return Long.valueOf(count);
     }
 
     /**
@@ -182,21 +188,21 @@ public final class NitriteQueryExecutor {
         NitriteCollection coll = collectionFactory.apply(nq.getRootEntity());
         if (nq.getUpdateMap() != null) {
             Optional<Number> result = executeUpdate((PreparedQuery<?, Number>) nq, (NitritePreparedQuery<?, Number>) nq);
-            return Number.class.isAssignableFrom(nq.getResultType()) ? (R) result.orElse(0L) : null;
+            return isNumericResultType(nq.getResultType()) ? (R) result.orElse(0L) : null;
         }
 
         Filter filter = nq.getNitriteFilter();
         helper.logFind(coll.getName(), filter);
 
         // Handle count queries
-        if (Number.class.isAssignableFrom(nq.getResultType())) {
+        if (isNumericResultType(nq.getResultType())) {
             String methodName = q.getName();
             String queryStr = nq.getQuery();
             boolean isCountQuery = methodName.startsWith("count") ||
                 (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
-                (queryStr != null && queryStr.contains("$count"));
+                (queryStr != null && queryStr.contains(NitriteQueryOperators.COUNT));
             if (isCountQuery) {
-                if (queryStr != null && queryStr.contains("$group")) {
+                if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
                     return (R) handleDistinctCount(coll, filter, queryStr);
                 }
                 return (R) Long.valueOf(coll.find(filter).size());
@@ -327,14 +333,14 @@ public final class NitriteQueryExecutor {
         helper.logFind(coll.getName(), filter);
 
         // Handle count queries
-        if (Number.class.isAssignableFrom(nq.getResultType())) {
+        if (isNumericResultType(nq.getResultType())) {
             String methodName = q.getName();
             String queryStr = nq.getQuery();
             boolean isCountQuery = methodName.startsWith("count") ||
                 (nq.getOperationType() != null && nq.getOperationType() == StoredQuery.OperationType.COUNT) ||
-                (queryStr != null && queryStr.contains("$count"));
+                (queryStr != null && queryStr.contains(NitriteQueryOperators.COUNT));
             if (isCountQuery) {
-                if (queryStr != null && queryStr.contains("$group")) {
+                if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
                     return Collections.singletonList((R) handleDistinctCount(coll, filter, queryStr));
                 }
                 return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
@@ -458,13 +464,10 @@ public final class NitriteQueryExecutor {
      * @return optional containing the number of updated entities
      */
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
-        if (nq.getFilterMap() == null) {
-            throw new UnsupportedOperationException("executeUpdate() requires a JSON filter map: " + nq.getQuery());
-        }
         Object[] jsonParams = buildJsonParameterValues(nq);
         Map<String, Object> namedParameters = buildNamedParameterValues(nq);
 
-        Map<String, Object> updateOperations = buildUpdateOperations(nq);
+        Map<String, Object> updateOperations = buildUpdateOperations(nq, jsonParams);
         if (updateOperations.isEmpty()) {
             return Optional.of(0);
         }
@@ -472,8 +475,10 @@ public final class NitriteQueryExecutor {
         Filter filter;
         if (nq.getCompiledFilter() != null) {
             filter = nq.getCompiledFilter().bind(jsonParams, namedParameters);
-        } else {
+        } else if (nq.getFilterMap() != null) {
             filter = filterBuilder.buildFilterFromJson(entityFactory.apply(nq.getRootEntity()), nq.getFilterMap(), jsonParams, namedParameters);
+        } else {
+            filter = buildGeneratedFilter(q, entityFactory.apply(nq.getRootEntity()), jsonParams);
         }
 
         Filter finalFilter = filter != null ? filter : nq.getNitriteFilter();
@@ -481,54 +486,106 @@ public final class NitriteQueryExecutor {
         RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
         long count;
         if (requiresDocumentUpdate(updateOperations)) {
-            count = 0;
-            for (Document doc : collection.find(finalFilter).toList()) {
-                Document updateDoc = buildUpdateDocument(updateOperations, doc, jsonParams, namedParameters);
-                if (isOptimisticLocking(q)) {
-                    applyVersionIncrement(updateDoc, entity, namedParameters);
+            // The new value is derived from the stored one, so the read and the write have to be
+            // held together: Nitrite releases its own lock between the two calls.
+            count = CollectionUpdateLock.withLock(collection.getName(), () -> {
+                long updated = 0;
+                for (Document doc : collection.find(finalFilter).toList()) {
+                    Document updateDoc = buildUpdateDocument(updateOperations, doc, jsonParams, namedParameters);
+                    if (isOptimisticLocking(q, entity)) {
+                        applyVersionIncrement(updateDoc, entity, namedParameters);
+                    }
+                    Object id = doc.get("id");
+                    Filter idFilter = id == null ? finalFilter : FluentFilter.where("id").eq(id);
+                    helper.logUpdate(collection.getName(), idFilter, updateDoc);
+                    updated += collection.update(idFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
                 }
-                Object id = doc.get("id");
-                Filter idFilter = id == null ? finalFilter : FluentFilter.where("id").eq(id);
-                helper.logUpdate(collection.getName(), idFilter, updateDoc);
-                count += collection.update(idFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
-            }
+                return updated;
+            });
         } else {
             Document updateDoc = buildUpdateDocument(updateOperations, null, jsonParams, namedParameters);
-            if (isOptimisticLocking(q)) {
+            if (isOptimisticLocking(q, entity)) {
                 applyVersionIncrement(updateDoc, entity, namedParameters);
             }
             helper.logUpdate(collection.getName(), finalFilter, updateDoc);
             count = collection.update(finalFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
         }
-        if (count == 0 && !Filter.ALL.equals(finalFilter) && isOptimisticLocking(q)) {
+        if (count == 0 && !Filter.ALL.equals(finalFilter) && isOptimisticLocking(q, entity)) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
         }
         return Optional.of(count);
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> buildUpdateOperations(NitritePreparedQuery<?, Number> nq) {
+    private Map<String, Object> buildUpdateOperations(NitritePreparedQuery<?, Number> nq, Object[] jsonParams) {
         Map<String, Object> updateOperations = new LinkedHashMap<>();
         if (nq.getUpdateMap() != null) {
             updateOperations.putAll(nq.getUpdateMap());
         }
         Map<String, Object> filterMap = nq.getFilterMap();
         if (filterMap != null) {
-            for (String operator : List.of("$set", "$inc", "$mul")) {
+            for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL)) {
                 Object value = filterMap.get(operator);
                 if (value instanceof Map<?, ?> map) {
                     updateOperations.put(operator, new LinkedHashMap<>((Map<String, Object>) map));
                 }
             }
         }
+        if (updateOperations.isEmpty()) {
+            Map<String, Object> generatedSet = extractGeneratedSet(nq, jsonParams);
+            if (!generatedSet.isEmpty()) {
+                return Map.of(NitriteQueryOperators.SET, generatedSet);
+            }
+        }
         if (updateOperations.keySet().stream().noneMatch(key -> key.startsWith("$"))) {
-            return Map.of("$set", updateOperations);
+            return Map.of(NitriteQueryOperators.SET, updateOperations);
         }
         return updateOperations;
     }
 
+    private Map<String, Object> extractGeneratedSet(NitritePreparedQuery<?, Number> nq, Object[] jsonParams) {
+        return generatedQueryParser.parseSet(nq.getQuery(), entityFactory.apply(nq.getRootEntity()), jsonParams);
+    }
+
+    private Filter buildGeneratedFilter(PreparedQuery<?, ?> query, RuntimePersistentEntity<?> entity, Object[] jsonParams) {
+        Filter parsed = generatedQueryParser.parseWhere(query.getQuery(), entity, jsonParams);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        Argument<?>[] arguments = query.getArguments();
+        Object[] values = query.getParameterArray();
+        if (arguments == null || values == null) {
+            return query instanceof NitritePreparedQuery<?, ?> nitriteQuery ? nitriteQuery.getNitriteFilter() : Filter.ALL;
+        }
+        List<Filter> filters = new ArrayList<>(2);
+        for (int i = 0; i < Math.min(arguments.length, values.length); i++) {
+            if (arguments[i].getAnnotationMetadata().hasAnnotation(Id.class)) {
+                filters.add(FluentFilter.where(NitriteEntityMapper.ID_FIELD).eq(toFilterValue(values[i])));
+            } else if (arguments[i].getAnnotationMetadata().hasAnnotation(Version.class) && entity.hasVersion()) {
+                filters.add(FluentFilter.where(entity.getVersion().getPersistedName()).eq(toFilterValue(values[i])));
+            }
+        }
+        if (filters.isEmpty()) {
+            return query instanceof NitritePreparedQuery<?, ?> nitriteQuery ? nitriteQuery.getNitriteFilter() : Filter.ALL;
+        }
+        return filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(Filter[]::new));
+    }
+
+    /**
+     * Whether the declared result type is numeric. Primitive result types such as {@code long} are
+     * not assignable to {@link Number}, so they are widened to their wrapper first.
+     *
+     * @param resultType the declared result type
+     * @return true if the method returns a number
+     */
+    private static boolean isNumericResultType(Class<?> resultType) {
+        return Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(resultType));
+    }
+
     private boolean requiresDocumentUpdate(Map<String, Object> updateOperations) {
-        return updateOperations.containsKey("$inc") || updateOperations.containsKey("$mul");
+        return updateOperations.containsKey(NitriteQueryOperators.INC)
+            || updateOperations.containsKey(NitriteQueryOperators.MUL);
     }
 
     @SuppressWarnings("unchecked")
@@ -537,14 +594,16 @@ public final class NitriteQueryExecutor {
                                          Object[] jsonParams,
                                          Map<String, Object> namedParameters) {
         Document updateDoc = Document.createDocument();
-        Object set = updateOperations.get("$set");
+        Object set = updateOperations.get(NitriteQueryOperators.SET);
         if (set instanceof Map<?, ?> setFields) {
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) setFields).entrySet()) {
                 updateDoc.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
             }
         }
-        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get("$inc"), jsonParams, namedParameters, "$inc");
-        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get("$mul"), jsonParams, namedParameters, "$mul");
+        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.INC),
+            jsonParams, namedParameters, NitriteQueryOperators.INC);
+        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.MUL),
+            jsonParams, namedParameters, NitriteQueryOperators.MUL);
         return updateDoc;
     }
 
@@ -558,57 +617,28 @@ public final class NitriteQueryExecutor {
         if (!(operation instanceof Map<?, ?> fields) || currentDocument == null) {
             return;
         }
+        boolean multiply = NitriteQueryOperators.MUL.equals(operator);
         for (Map.Entry<String, Object> entry : ((Map<String, Object>) fields).entrySet()) {
             Object currentValue = currentDocument.get(entry.getKey());
             Object operand = resolveUpdateOperand(entry.getValue(), jsonParams, namedParameters);
-            Object nextValue = applyNumericOperator(currentValue, operand, operator);
-            updateDoc.put(entry.getKey(), nextValue);
+            updateDoc.put(entry.getKey(), NumericUpdateOperations.apply(currentValue, operand, multiply, entry.getKey()));
         }
     }
 
     private @Nullable Object resolveUpdateOperand(Object value, Object[] jsonParams, Map<String, Object> namedParameters) {
         Object resolved = resolveParameterValue(value, jsonParams, namedParameters);
         if (value instanceof Map<?, ?> map) {
-            if (map.containsKey("$value")) {
-                resolved = resolveParameterValue(map.get("$value"), jsonParams, namedParameters);
+            if (map.containsKey(NitriteQueryOperators.VALUE)) {
+                resolved = resolveParameterValue(map.get(NitriteQueryOperators.VALUE), jsonParams, namedParameters);
             }
-            if (Boolean.TRUE.equals(map.get(NEGATE)) && resolved instanceof Number number) {
-                resolved = -number.doubleValue();
+            if (Boolean.TRUE.equals(map.get(NitriteInternalKeys.NEGATE)) && resolved instanceof Number number) {
+                resolved = NumericUpdateOperations.negate(number);
             }
-            if (Boolean.TRUE.equals(map.get(RECIPROCATE)) && resolved instanceof Number number) {
-                resolved = 1d / number.doubleValue();
+            if (Boolean.TRUE.equals(map.get(NitriteInternalKeys.RECIPROCATE)) && resolved instanceof Number number) {
+                resolved = NumericUpdateOperations.reciprocal(number);
             }
         }
         return resolved;
-    }
-
-    private @Nullable Object applyNumericOperator(@Nullable Object currentValue, @Nullable Object operand, String operator) {
-        if (!(currentValue instanceof Number currentNumber) || !(operand instanceof Number operandNumber)) {
-            return currentValue;
-        }
-        double current = currentNumber.doubleValue();
-        double delta = operandNumber.doubleValue();
-        double result = "$mul".equals(operator) ? current * delta : current + delta;
-        return convertNumber(result, currentValue);
-    }
-
-    private Object convertNumber(double value, Object currentValue) {
-        if (currentValue instanceof Integer) {
-            return (int) value;
-        }
-        if (currentValue instanceof Long) {
-            return (long) value;
-        }
-        if (currentValue instanceof Float) {
-            return (float) value;
-        }
-        if (currentValue instanceof Short) {
-            return (short) value;
-        }
-        if (currentValue instanceof Byte) {
-            return (byte) value;
-        }
-        return value;
     }
 
     /**
@@ -624,7 +654,8 @@ public final class NitriteQueryExecutor {
     public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> q, NitritePreparedQuery<?, Number> nq) {
         helper.logDelete(collectionFactory.apply(nq.getRootEntity()).getName(), nq.getNitriteFilter());
         long count = collectionFactory.apply(nq.getRootEntity()).remove(nq.getNitriteFilter(), false).getAffectedCount();
-        if (count == 0 && !Filter.ALL.equals(nq.getNitriteFilter()) && isOptimisticLocking(q)) {
+        RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
+        if (count == 0 && !Filter.ALL.equals(nq.getNitriteFilter()) && isOptimisticLocking(q, entity)) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: 0");
         }
         return Optional.of(count);
@@ -685,15 +716,38 @@ public final class NitriteQueryExecutor {
             .toList();
     }
 
-    boolean isOptimisticLocking(@NonNull PreparedQuery<?, ?> q) {
-        if (q.getArguments() != null && Arrays.stream(q.getArguments()).anyMatch(arg -> arg.getAnnotationMetadata().hasAnnotation(Version.class))) {
+    boolean isOptimisticLocking(@NonNull PreparedQuery<?, ?> q, RuntimePersistentEntity<?> entity) {
+        if (q.getArguments() != null
+            && Arrays.stream(q.getArguments()).anyMatch(arg -> arg.getAnnotationMetadata().hasAnnotation(Version.class))) {
             return true;
         }
-        String methodName = q.getName();
-        if (methodName.contains("AndVersion") || methodName.contains("ByVersion")) {
+        if (!entity.hasVersion()) {
+            return false;
+        }
+        RuntimePersistentProperty<?> version = entity.getVersion();
+        if (q.getQueryBindings() != null && q.getQueryBindings().stream().anyMatch(binding -> {
+            String[] propertyPath = binding.getPropertyPath();
+            if (propertyPath == null || propertyPath.length == 0) {
+                return false;
+            }
+            String property = propertyPath[propertyPath.length - 1];
+            return version.getName().equals(property) || version.getPersistedName().equals(property);
+        })) {
             return true;
         }
-        return q.getQuery().toLowerCase(Locale.ROOT).contains("version");
+        String queryString = q.getQuery();
+        int whereStart = queryString.indexOf(" WHERE ");
+        if (whereStart < 0) {
+            return false;
+        }
+        Matcher matcher = GENERATED_EQUALITY_PATTERN.matcher(queryString.substring(whereStart + 7));
+        while (matcher.find()) {
+            String property = matcher.group(1);
+            if (version.getName().equals(property) || version.getPersistedName().equals(property)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void applyVersionIncrement(Document updateDoc, RuntimePersistentEntity<?> entity, Map<String, Object> namedParameters) {

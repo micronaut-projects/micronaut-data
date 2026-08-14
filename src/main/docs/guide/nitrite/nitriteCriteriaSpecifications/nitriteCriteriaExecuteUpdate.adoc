@@ -21,5 +21,7 @@ snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-exam
 
 Nitrite-specific notes:
 
+- An update assigns values. `set` accepts a value or a parameter, not an arithmetic expression such as `cb.sum(path, 1)`; see <<nitriteLimitations>> for the alternatives.
+- Assignments are written to the document path the property is stored under, so a property mapped with `@MappedProperty`, including one nested inside an embedded value, is updated under its persisted name.
 - Some encodings represent an update as a wrapper document that contains a `$set` document. The Nitrite runtime unwraps `$set` before applying updates.
 - If you use explicit JSON `@Query` methods for updates, keep the filter document and update document separate and use named parameters (for example `:id`, `:title`).

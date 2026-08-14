@@ -66,4 +66,18 @@ class NitriteCompositeForeignKeySpec extends Specification {
         then:
         results*.name == ["child-a"]
     }
+
+    void "mapped composite join columns hydrate the referenced association"() {
+        given:
+        def parent = parentRepository.save(new CompositeFkParent("tenant-mapped", 77L))
+        childRepository.save(new CompositeFkChild("child-mapped", parent))
+
+        when:
+        def child = childRepository.findByName("child-mapped").orElseThrow()
+
+        then:
+        child.parent != null
+        child.parent.tenantId == "tenant-mapped"
+        child.parent.refId == 77L
+    }
 }

@@ -39,7 +39,7 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
 /**
  * A structured AST for Nitrite filters.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 @Internal
 public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
@@ -517,8 +517,8 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
                 }
                 String s = v.toString();
                 int codePoints = s.codePointCount(0, s.length());
-                int from = Math.max(0, Math.min(startValue, codePoints));
-                int to = Math.max(from, Math.min(from + Math.max(0, lengthValue), codePoints));
+                int from = Math.clamp(startValue, 0, codePoints);
+                int to = Math.clamp(from + Math.max(0, lengthValue), from, codePoints);
                 return s.substring(s.offsetByCodePoints(0, from), s.offsetByCodePoints(0, to));
             }
         }

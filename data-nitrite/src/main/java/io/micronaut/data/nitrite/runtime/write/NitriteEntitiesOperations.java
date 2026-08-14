@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncEntitiesOperations;
@@ -62,7 +63,7 @@ import java.util.stream.IntStream;
  * Requires all entities to have IDs; throws {@link OptimisticLockException} if version mismatch occurs.
  *
  * @param <T> The entity type
- * @since 4.14.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T, RuntimeException> {
@@ -79,6 +80,8 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final NitriteOperationsHelper helper;
     /** Prior version per entity, keyed by identity. Populated by triggerPre for !insert paths. */
     private @Nullable IdentityHashMap<T, Object> priorVersions;
+    /** Documents actually removed, which can be fewer than the entities passed in. */
+    private long affectedCount;
 
     /**
      * Creates a new NitriteEntitiesOperations.
@@ -124,6 +127,16 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     @Override
     public List<T> getEntities() {
         return entities;
+    }
+
+    /**
+     * The number of documents actually removed by {@link #delete()}, which is lower than the number
+     * of entities passed in when an entity was vetoed, had no identity, or was already gone.
+     *
+     * @return the affected document count
+     */
+    public long getAffectedCount() {
+        return affectedCount;
     }
 
     @Override
@@ -192,9 +205,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
             this.entities = combined;
 
-        } catch (EntityExistsException e) {
-            throw e;
-        } catch (OptimisticLockException e) {
+        } catch (EntityExistsException | OptimisticLockException e) {
             throw e;
         } catch (Exception e) {
             failed(e, "PERSIST");
@@ -249,6 +260,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 count++;
             }
         }
+        affectedCount = count;
 
         if (meta.versionProp() != null && count != entitiesToDelete.size()) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + entitiesToDelete.size() + " got: " + count);
@@ -263,7 +275,9 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
     @Override
     protected void execute() throws RuntimeException {
-        LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
+        }
 
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
@@ -331,7 +345,9 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
 
             if (!docsToInsert.isEmpty()) {
-                helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
+                }
                 collection.insert(docsToInsert.toArray(new Document[0]));
                 ctx.persisted.addAll(entities);
             }

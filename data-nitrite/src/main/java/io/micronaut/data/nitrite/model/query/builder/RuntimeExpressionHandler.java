@@ -18,6 +18,7 @@ package io.micronaut.data.nitrite.model.query.builder;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.nitrite.runtime.query.PatternConverter;
@@ -27,11 +28,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Runtime implementation of {@link NitriteExpressionHandler} that prioritizes parameter binding.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 public final class RuntimeExpressionHandler implements NitriteExpressionHandler {
 
@@ -46,7 +48,7 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         if (value instanceof BindingParameter bindingParameter) {
             BindingParameter.BindingContext context = NitritePredicateVisitor.newBindingContext(propertyPath, propertyPath);
             int index = queryState.pushParameter(bindingParameter, context);
-            return Map.of(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, index);
+            return Map.of(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER, index);
         }
         if (value instanceof LiteralExpression<?> literal) {
             return ValueConverter.toFilterValueStatic(unwrapLiteral(literal));
@@ -72,6 +74,8 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         PersistentPropertyPath propertyPath) {
 
         String ciPrefix = ignoreCase ? "(?i)" : "";
+        // Only the generated anchors and wildcards below stay unquoted; the user-provided value is
+        // regex-quoted so that a value such as "a.b" cannot match "aXb".
         String prefix = startsWith ? "^" : ".*";
         String suffix = endsWith ? "$" : ".*";
 
@@ -80,9 +84,9 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
             : resolveValue(queryState, propertyPath, rightExpression);
         String paramStr;
         if (paramPlaceholder instanceof Map<?, ?> m
-            && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
-            Object idx = m.get(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
-            paramStr = NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":" + idx;
+            && m.containsKey(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER)) {
+            Object idx = m.get(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER);
+            paramStr = NitriteInternalKeys.QUERY_PARAMETER_PREFIX + idx;
         } else {
             paramStr = paramPlaceholder != null ? paramPlaceholder.toString() : "";
         }
@@ -90,17 +94,35 @@ public final class RuntimeExpressionHandler implements NitriteExpressionHandler 
         if (isLike) {
             Character escapeChar = resolveEscapeChar(queryState, propertyPath, escapeExpression);
             if (paramPlaceholder instanceof Map<?, ?> m
-                && m.containsKey(NitriteQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
+                && m.containsKey(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER)) {
                 Map<String, Object> pattern = new LinkedHashMap<>(2);
-                pattern.put(NitriteQueryBuilder.LIKE_PATTERN, paramPlaceholder);
+                pattern.put(NitriteInternalKeys.LIKE_PATTERN, paramPlaceholder);
                 if (escapeChar != null) {
-                    pattern.put(NitriteQueryBuilder.LIKE_ESCAPE, escapeChar);
+                    pattern.put(NitriteInternalKeys.LIKE_ESCAPE, escapeChar);
                 }
                 return pattern;
             }
             return ciPrefix + PatternConverter.convertLikeToRegex(paramStr, escapeChar);
         }
-        return ciPrefix + prefix + paramStr + suffix;
+        boolean parameterPlaceholder = paramPlaceholder instanceof Map<?, ?> m
+            && m.containsKey(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER);
+        if (parameterPlaceholder) {
+            // The value is not known until bind time, so emit a descriptor and let the filter
+            // builder quote the resolved value.
+            Map<String, Object> pattern = new LinkedHashMap<>(4);
+            pattern.put(NitriteInternalKeys.REGEX_PATTERN, paramPlaceholder);
+            if (startsWith) {
+                pattern.put(NitriteInternalKeys.REGEX_STARTS_WITH, true);
+            }
+            if (endsWith) {
+                pattern.put(NitriteInternalKeys.REGEX_ENDS_WITH, true);
+            }
+            if (ignoreCase) {
+                pattern.put(NitriteInternalKeys.REGEX_IGNORE_CASE, true);
+            }
+            return pattern;
+        }
+        return ciPrefix + prefix + Pattern.quote(paramStr) + suffix;
     }
 
     private @Nullable Character resolveEscapeChar(

@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
 import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
 import org.dizitart.no2.collection.Document;
@@ -89,7 +90,7 @@ final class AssociationFilterResolver {
             return null;
         }
 
-        RuntimeAssociation<?> headAssoc = resolution.chain().get(0);
+        RuntimeAssociation<?> headAssoc = resolution.chain().getFirst();
         Relation.Kind kind = headAssoc.getKind();
 
         RuntimePersistentProperty<?> assocIdentity = headAssoc.getAssociatedEntity().getIdentity();
@@ -123,14 +124,13 @@ final class AssociationFilterResolver {
             String targetPropertyName = (field.contains(".") && resolution.terminal() != null)
                 ? resolution.terminal().getName()
                 : null;
-            return buildReverseLookupFilter(entity, headAssoc, targetPropertyName, value, params, namedParameters);
+            return buildReverseLookupFilter(headAssoc, targetPropertyName, value, params, namedParameters);
         }
 
         return null;
     }
 
     private @Nullable Filter buildReverseLookupFilter(
-            RuntimePersistentEntity<?> entity,
             RuntimeAssociation<?> association, @Nullable String targetPropertyName,
             Object value, Object[] params, Map<String, Object> namedParameters) {
 
@@ -169,8 +169,10 @@ final class AssociationFilterResolver {
         Map<String, Object> subFilterMap = Collections.singletonMap(
             targetProperty.getPersistedName(), Collections.singletonMap(EQ, value));
 
-        LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
-            associatedEntity.getName(), subFilterMap, backRefPersistedName);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
+                associatedEntity.getName(), subFilterMap, backRefPersistedName);
+        }
 
         List<Object> matchingValues = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
@@ -178,9 +180,9 @@ final class AssociationFilterResolver {
             return NONE;
         }
 
-        String idField = entity.getIdentity().getPersistedName();
+        // The identity is stored under the canonical document field, not the mapped identity name.
         Comparable<?>[] ids = toComparableArray(matchingValues);
-        return ids.length == 0 ? NONE : FluentFilter.where(idField).in(ids);
+        return ids.length == 0 ? NONE : FluentFilter.where(NitriteEntityMapper.ID_FIELD).in(ids);
     }
 
     private @Nullable Filter buildForwardLookupFilter(
@@ -228,7 +230,7 @@ final class AssociationFilterResolver {
         PathResolution firstResolution = PathResolver.resolve(entity, firstPart);
         RuntimePersistentProperty<?> prop = firstResolution.chain().isEmpty()
             ? null
-            : firstResolution.chain().get(0);
+            : firstResolution.chain().getFirst();
         if (prop == null && firstResolution.terminal() != null) {
             prop = firstResolution.terminal();
         }
@@ -283,8 +285,10 @@ final class AssociationFilterResolver {
                 }
                 String backRefPersistedName = backRefProp.getPersistedName();
 
-                LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
-                    associatedEntity.getName(), subFilterMap, backRefPersistedName);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
+                        associatedEntity.getName(), subFilterMap, backRefPersistedName);
+                }
 
                 List<Object> matchingValues = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);

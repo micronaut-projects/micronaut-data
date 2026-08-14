@@ -3,6 +3,9 @@ package io.micronaut.data.nitrite.runtime.query
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.math.BigDecimal
+import java.math.BigInteger
+
 class NitriteQueryParserUnitSpec extends Specification {
 
     def parser = new NitriteQueryParser()
@@ -63,6 +66,17 @@ class NitriteQueryParserUnitSpec extends Specification {
 
         expect:
         parser.parseJson(json) == expected
+    }
+
+    def "parseJson preserves large integral values"() {
+        expect:
+        parser.parseJson('{"n":9223372036854775807}').n == Long.MAX_VALUE
+        parser.parseJson('{"n":9223372036854775808}').n == new BigInteger("9223372036854775808")
+    }
+
+    def "parseJson preserves high precision decimal values"() {
+        expect:
+        parser.parseJson('{"n":0.12345678901234567890}').n == new BigDecimal("0.12345678901234567890")
     }
 
     def "parseJson handles JSON array"() {
@@ -244,12 +258,9 @@ class NitriteQueryParserUnitSpec extends Specification {
         "malformed double → string"                      | '{"v": 1.2.3}'             | [v: "1.2.3"]
         "digits+letters → string"                        | '{"v": 42abc}'             | [v: "42abc"]
         // NC 556: catch(Exception) in extractProjectionField unreachable — no test possible
-        // PC 112/113: original keeps raw backslash in dq key (will differ post-refactor)
         "sq value simple"                                | "{'key': 'hello'}"         | [key: "hello"]
-        // PC 246
         "bare :param"                                    | '{"name": :title}'         | [name: ":title"]
         "bare :param with digits"                        | '{"id": :id123}'           | [id: ":id123"]
-        // PC 253
         "positional placeholder \$mn_qp:0"              | '{"name": $mn_qp:0}'       | [name: '$mn_qp:0']
         // c=='n' branch
         "null value"                                     | '{"val": null}'            | [val: null]
@@ -259,17 +270,16 @@ class NitriteQueryParserUnitSpec extends Specification {
         "deeply nested object"                           | '{"a": {"b": {"c": 42}}}'  | [a: [b: [c: 42]]]
     }
 
-    def "dq key: escape sequence unescaped (PC 112/113)"() {
+    def "dq key: escape sequence unescaped"() {
         expect:
         (parser.parseJson('{"ke\\"y": "val"}') as Map).containsKey('ke"y')
     }
 
-    def "sq key: escape sequence unescaped (PC 121/122)"() {
+    def "sq key: escape sequence unescaped"() {
         expect:
         (parser.parseJson("{'ke\\'y': 'val'}") as Map).containsKey("ke'y")
     }
 
-    // PC 129: unquoted keys
     @Unroll
     def "parseJsonObject unquoted keys: #desc"() {
         expect:
@@ -281,9 +291,8 @@ class NitriteQueryParserUnitSpec extends Specification {
         "whitespace before colon"         | '{name : "Bob"}'       | [name: "Bob"]
     }
 
-    // PC 156/159: escape sequences in dq object values
     @Unroll
-    def "dq object value escape \\#esc (PC 156/159)"() {
+    def "dq object value escape \\#esc"() {
         expect:
         parser.parseJson('{"k": "' + raw + '"}') == [k: expected]
 
@@ -297,9 +306,8 @@ class NitriteQueryParserUnitSpec extends Specification {
         'unknown' | '\\z'    | 'z'
     }
 
-    // PC 180/183: escape sequences in sq object values
     @Unroll
-    def "sq object value escape \\#esc (PC 180/183)"() {
+    def "sq object value escape \\#esc"() {
         expect:
         parser.parseJson("{'k': '" + raw + "'}") == [k: expected]
 
@@ -313,9 +321,8 @@ class NitriteQueryParserUnitSpec extends Specification {
         'unknown' | '\\z'   | 'z'
     }
 
-    // PC 341/344: escape sequences in dq array elements
     @Unroll
-    def "dq array element escape \\#esc (PC 341/344)"() {
+    def "dq array element escape \\#esc"() {
         expect:
         parser.parseJson('["' + raw + '"]') == [expected]
 
@@ -329,9 +336,8 @@ class NitriteQueryParserUnitSpec extends Specification {
         'unknown' | '\\z'    | 'z'
     }
 
-    // PC 365/368: escape sequences in sq array elements
     @Unroll
-    def "sq array element escape \\#esc (PC 365/368)"() {
+    def "sq array element escape \\#esc"() {
         expect:
         parser.parseJson("['${raw}']") == [expected]
 
@@ -345,7 +351,6 @@ class NitriteQueryParserUnitSpec extends Specification {
         'unknown' | '\\z'   | 'z'
     }
 
-    // PC 420/422/426: -/:/$ chars in array literal branch; $ placeholder commented out (known gap)
     @Unroll
     def "parseJsonArray literal branch: #desc"() {
         expect:
@@ -363,7 +368,6 @@ class NitriteQueryParserUnitSpec extends Specification {
         "array of objects"                  | '[{"a":1},{"b":2}]'   | [[a: 1], [b: 2]]
     }
 
-    // ─── PC 547 — extractProjectionField instanceof Map false branch ──────────────
     // A {-prefixed query always produces a Map from parseJson, so the false branch
     // (parsed instanceof Map == false) is genuinely unreachable in practice.
     // The array-input guard (non-{ prefix) hits the earlier null-return instead.

@@ -14,7 +14,7 @@ class NitriteManyToManyFilterSpec extends Specification {
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run([
-        "nitrite.storage-mode": "IN_MEMORY"
+        "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
     ])
 
     @Shared

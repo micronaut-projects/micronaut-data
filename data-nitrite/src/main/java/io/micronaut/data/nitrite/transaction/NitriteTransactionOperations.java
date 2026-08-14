@@ -21,7 +21,7 @@ import org.dizitart.no2.transaction.Session;
 /**
  * Transaction operations for Nitrite databases.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 public interface NitriteTransactionOperations extends TransactionOperations<Session> {
 }

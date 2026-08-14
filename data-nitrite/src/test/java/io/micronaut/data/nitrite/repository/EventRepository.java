@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/** Repository for testing event patterns. */
 /**
  * Repository that drives event-oriented test scenarios.
  */
@@ -184,6 +183,36 @@ public interface EventRepository
 
   Optional<LocalDate> findMaxDateCreatedByStatus(Event.Status status);
   Optional<LocalDate> findMinDateCreatedByStatus(Event.Status status);
+
+  /**
+   * Applies a numeric increment to an event amount.
+   *
+   * @param type event type
+   * @param delta increment value
+   * @return number of updated events
+   */
+  @Query("{\"type\": \":type\", \"$inc\": {\"amount\": \":delta\"}}")
+  int incrementAmount(String type, BigDecimal delta);
+
+  /**
+   * Applies a numeric multiplication to an event amount.
+   *
+   * @param type event type
+   * @param factor multiplication factor
+   * @return number of updated events
+   */
+  @Query("{\"type\": \":type\", \"$mul\": {\"amount\": \":factor\"}}")
+  int multiplyAmount(String type, BigDecimal factor);
+
+  /**
+   * Applies a numeric increment to an integral event priority.
+   *
+   * @param type event type
+   * @param delta increment value
+   * @return number of updated events
+   */
+  @Query("{\"type\": \":type\", \"$inc\": {\"priority\": \":delta\"}}")
+  int incrementPriority(String type, Integer delta);
 
   // Status filter methods
   List<Event> findByStatus(Event.Status status);

@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 /**
  * Shared string naming conversions between camelCase and snake_case.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NameUtils {

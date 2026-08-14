@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * Shared Nitrite JSON query operator names.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class NitriteQueryOperators {
@@ -99,6 +99,43 @@ public final class NitriteQueryOperators {
     public static final String WITHIN = "$within";
     /** Intersects geospatial operator. */
     public static final String INTERSECTS = "$intersects";
+
+    /** Match pipeline stage. */
+    public static final String MATCH = "$match";
+    /** Group pipeline stage. */
+    public static final String GROUP = "$group";
+    /** Sort pipeline stage. */
+    public static final String SORT = "$sort";
+    /** Projection pipeline stage. */
+    public static final String PROJECT = "$project";
+    /** Limit pipeline stage. */
+    public static final String LIMIT = "$limit";
+    /** Skip pipeline stage. */
+    public static final String SKIP = "$skip";
+    /** Count pipeline stage. */
+    public static final String COUNT = "$count";
+    /** Lookup pipeline stage. */
+    public static final String LOOKUP = "$lookup";
+    /** Unwind pipeline stage. */
+    public static final String UNWIND = "$unwind";
+
+    /** Sum aggregation operator. */
+    public static final String SUM = "$sum";
+    /** Average aggregation operator. */
+    public static final String AVG = "$avg";
+    /** Maximum aggregation operator. */
+    public static final String MAX = "$max";
+    /** Minimum aggregation operator. */
+    public static final String MIN = "$min";
+
+    /** Set update operator. */
+    public static final String SET = "$set";
+    /** Increment update operator. */
+    public static final String INC = "$inc";
+    /** Multiply update operator. */
+    public static final String MUL = "$mul";
+    /** Wrapped update value key. */
+    public static final String VALUE = "$value";
 
     private NitriteQueryOperators() {
     }

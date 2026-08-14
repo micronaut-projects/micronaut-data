@@ -23,7 +23,7 @@ import org.dizitart.no2.Nitrite;
 /**
  * NitriteDB specialized {@link RepositoryOperations}.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
 public interface NitriteRepositoryOperations extends RepositoryOperations, PrimaryRepositoryOperations {
 

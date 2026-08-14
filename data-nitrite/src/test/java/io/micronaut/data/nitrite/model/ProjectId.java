@@ -17,6 +17,8 @@ package io.micronaut.data.nitrite.model;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Embeddable;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -56,5 +58,6 @@ public class ProjectId implements Serializable {
     return Objects.hash(departmentId, projectNumber);
   }
 
+  @Serial
   private static final long serialVersionUID = 1L;
 }

@@ -43,6 +43,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.criteria.NitriteCriteriaExecutor;
@@ -63,6 +64,7 @@ import io.micronaut.data.nitrite.runtime.write.NitriteEntityOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteOperationContext;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -72,7 +74,6 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import io.micronaut.serde.ObjectMapper;
-import jakarta.inject.Singleton;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -137,9 +138,8 @@ import java.util.stream.StreamSupport;
  * <p>The mapping layer may store numbers as different Java numeric types (for example {@code Long}
  * vs {@code BigDecimal}). Equality queries therefore tolerate numeric representation differences.
  *
- * @since 1.0.0
+ * @since 5.2.0
  */
-@Singleton
 @Internal
 public final class DefaultNitriteRepositoryOperations extends AbstractRepositoryOperations
     implements NitriteRepositoryOperations, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NitriteOperationsHelper,
@@ -148,6 +148,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     private static final Logger LOG =
         LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
+    private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
 
     private final Nitrite database;
@@ -260,19 +261,19 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public void logFind(String collection, Filter filter) {
-        LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
+        QUERY_LOG.debug("Executing Nitrite 'find' on collection [{}] with filter: {}",
             collection, filter != null ? filter : "Filter.ALL");
     }
 
     @Override
     public void logInsert(String collection, Object entityOrDocs) {
-        LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}",
+        QUERY_LOG.debug("Executing Nitrite 'insert' into collection [{}] with document: {}",
             collection, entityOrDocs);
     }
 
     @Override
     public void logUpdate(String collection, Filter filter, Document update) {
-        LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
+        QUERY_LOG.debug("Executing Nitrite 'update' on collection [{}] with filter: {} and update: {}",
             collection, filter != null ? filter : "Filter.ALL", update);
     }
 
@@ -322,7 +323,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     @Override
     @SuppressWarnings("unchecked")
     public <T> T persistOne(NitriteOperationContext ctx, T entityValue, RuntimePersistentEntity<T> persistentEntity) {
-        LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("persistOne: entity={}, type={}", entityValue, persistentEntity.getName());
+        }
 
         // Set back-references using pre-computed mappedBy metadata — no annotation lookups on hot path.
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta((Class<T>) entityValue.getClass());
@@ -400,7 +403,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public void logDelete(String collection, Filter filter) {
-        LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
+        QUERY_LOG.debug("Executing Nitrite 'remove' from collection [{}] with filter: {}",
             collection, filter != null ? filter : "Filter.ALL");
     }
 
@@ -446,7 +449,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             }
             Class<?> idType = idProperty.getType();
             Object generatedId = switch (idType) {
-                case Class<?> c when c == String.class -> UUID.randomUUID().toString();
                 case Class<?> c when c == UUID.class -> UUID.randomUUID();
                 case Class<?> c when c == Long.class || c == long.class ->
                     ID_GENERATOR.incrementAndGet();
@@ -512,7 +514,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
             operation.getEntity(), NitriteEntityOperations.OperationType.DELETE);
         op.delete();
-        return 1;
+        return (int) op.getAffectedCount();
     }
 
     @Override
@@ -521,15 +523,17 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (operation.all()) {
             NitriteCollection collection = getCollection(operation.getRootEntity());
             logDelete(collection.getName(), Filter.ALL);
+            // clear() reports nothing, so the size is read before the documents are dropped.
+            long size = collection.size();
             collection.clear();
-            return Optional.of(-1);
+            return Optional.of(size);
         }
         NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
             ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
             getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
             operation, false);
         op.delete();
-        return Optional.of((long) op.getEntities().size());
+        return Optional.of(op.getAffectedCount());
     }
 
     /**
@@ -569,19 +573,62 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 mergedOrders.put(order.getProperty(), order);
             }
         }
+        if (cursored && entity != null) {
+            // Cursor ordering appends the entity identity so that records sharing a primary sort
+            // value cannot be skipped between pages.
+            appendIdentitySort(mergedOrders, entity);
+        }
         if (!mergedOrders.isEmpty()) {
             for (var order : mergedOrders.values()) {
                 SortOrder sortOrder = order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.Ascending : SortOrder.Descending;
-                String property = order.getProperty();
-                // Sort properties coming from the document processor may include an entity alias prefix
-                // (for example "person.age"). Nitrite stores plain field names, so strip any prefix.
-                if (property.contains(".")) {
-                    property = property.substring(property.lastIndexOf('.') + 1);
-                }
+                String property = normalizeSortProperty(order.getProperty(), entity);
                 options.thenOrderBy(entityMapper.normalizeFieldName(property, entity), sortOrder);
             }
         }
         return options;
+    }
+
+    private void appendIdentitySort(Map<String, Sort.Order> orders, RuntimePersistentEntity<?> entity) {
+        if (!entity.hasIdentity() || entity.hasCompositeIdentity()) {
+            return;
+        }
+        RuntimePersistentProperty<?> identity = entity.getIdentity();
+        if (orders.values().stream().anyMatch(order -> isIdentitySort(order.getProperty(), entity, identity))) {
+            return;
+        }
+        Sort.Order.Direction direction = orders.isEmpty()
+            ? Sort.Order.Direction.ASC
+            : new ArrayList<>(orders.values()).get(orders.size() - 1).getDirection();
+        Sort.Order identityOrder = direction == Sort.Order.Direction.ASC
+            ? Sort.Order.asc(identity.getName())
+            : Sort.Order.desc(identity.getName());
+        orders.put(identity.getName(), identityOrder);
+    }
+
+    private boolean isIdentitySort(String property, RuntimePersistentEntity<?> entity, RuntimePersistentProperty<?> identity) {
+        String propertyName = normalizeSortProperty(property, entity);
+        if (propertyName.indexOf('.') >= 0) {
+            // A nested path such as "author.id" sorts by the association's identity, not the
+            // root identity, so it does not make the ordering unique on its own.
+            return false;
+        }
+        return propertyName.equals(identity.getName())
+            || propertyName.equals(identity.getPersistedName())
+            || propertyName.equals("_id")
+            || propertyName.equals(NitriteEntityMapper.ID_FIELD);
+    }
+
+    private String normalizeSortProperty(String property, @Nullable RuntimePersistentEntity<?> entity) {
+        if (entity == null || !property.contains(".")) {
+            return property;
+        }
+        int separator = property.indexOf('.');
+        if (entity.getPropertyByName(property.substring(0, separator)) != null) {
+            return property;
+        }
+        // Document-processor sorts can carry a root alias. Remove only that alias so a nested
+        // property path such as "event.location.region" remains "location.region".
+        return property.substring(separator + 1);
     }
 
     /**
@@ -589,17 +636,17 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      */
     @Override
     public @Nullable Sort parseSortFromJsonQuery(@Nullable final String queryString) {
-        if (queryString == null || !queryString.contains("$sort")) {
+        if (queryString == null || !queryString.contains(NitriteQueryOperators.SORT)) {
             return null;
         }
         try {
             Object parsed = queryParser.parseJson(queryString);
             Map<?, ?> sortObj = null;
             if (parsed instanceof Map<?, ?> m) {
-                sortObj = m.get("$sort") instanceof Map<?, ?> s ? s : null;
+                sortObj = m.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> s ? s : null;
             } else if (parsed instanceof List<?> pipeline) {
                 for (Object stage : pipeline) {
-                    if (stage instanceof Map<?, ?> sm && sm.get("$sort") instanceof Map<?, ?> s) {
+                    if (stage instanceof Map<?, ?> sm && sm.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> s) {
                         sortObj = s;
                         break;
                     }
@@ -887,7 +934,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             }
             return Sort.of(Sort.Order.asc(identity.getName()));
         }
-        return sort;
+        Map<String, Sort.Order> orders = new LinkedHashMap<>();
+        for (Sort.Order order : sort.getOrderBy()) {
+            orders.put(order.getProperty(), order);
+        }
+        appendIdentitySort(orders, entity);
+        return Sort.of(new ArrayList<>(orders.values()));
     }
 
     private <R> List<R> applyCursorWindow(List<R> results,
@@ -971,7 +1023,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     private @Nullable Object getPropertyValue(Object result, String property, RuntimePersistentEntity<?> entity) {
-        String propertyName = property.contains(".") ? property.substring(property.lastIndexOf('.') + 1) : property;
+        String propertyName = normalizeSortProperty(property, entity);
         PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
         if (propertyPath == null) {
             propertyPath = findPersistedPropertyPath(propertyName, entity);
@@ -983,9 +1035,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     private @Nullable PersistentPropertyPath findPersistedPropertyPath(String persistedName, RuntimePersistentEntity<?> entity) {
-        RuntimePersistentProperty<?> identity = entity.getIdentity();
-        if (identity != null && (identity.getPersistedName().equals(persistedName) || "_id".equals(persistedName))) {
-            return entity.getPropertyPath(identity.getName());
+        if (entity.hasIdentity()) {
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity.getPersistedName().equals(persistedName) || "_id".equals(persistedName)) {
+                return entity.getPropertyPath(identity.getName());
+            }
         }
         for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
             if (property.getPersistedName().equals(persistedName)) {

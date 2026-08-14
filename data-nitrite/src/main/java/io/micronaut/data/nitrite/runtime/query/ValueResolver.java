@@ -17,6 +17,7 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteTypeRegistry;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
@@ -52,9 +53,11 @@ final class ValueResolver {
             return null;
         }
         if (value instanceof String s) {
-            if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
+            if (s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)
+                && s.indexOf(NitriteInternalKeys.QUERY_PARAMETER_PREFIX,
+                    NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()) < 0) {
                 try {
-                    int idx = Integer.parseInt(s.substring(7));
+                    int idx = Integer.parseInt(s.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()));
                     if (params != null && idx >= 0 && idx < params.length) {
                         return params[idx];
                     }
@@ -62,22 +65,23 @@ final class ValueResolver {
                     // Fall through if placeholder is not a valid integer
                 }
             }
-            if (s.contains("$mn_qp:")) {
+            if (s.contains(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
                 StringBuilder result = new StringBuilder();
                 int pos = 0;
                 while (pos < s.length()) {
-                    int idx = s.indexOf("$mn_qp:", pos);
+                    int idx = s.indexOf(NitriteInternalKeys.QUERY_PARAMETER_PREFIX, pos);
                     if (idx < 0) {
                         result.append(s.substring(pos));
                         break;
                     }
                     result.append(s, pos, idx);
-                    int paramEnd = idx + 7;
+                    int paramEnd = idx + NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length();
                     while (paramEnd < s.length() && Character.isDigit(s.charAt(paramEnd))) {
                         paramEnd++;
                     }
                     try {
-                        int paramIdx = Integer.parseInt(s.substring(idx + 7, paramEnd));
+                        int paramIdx = Integer.parseInt(s.substring(
+                            idx + NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length(), paramEnd));
                         if (params != null && paramIdx >= 0 && paramIdx < params.length) {
                             Object paramValue = params[paramIdx];
                             result.append(paramValue != null ? paramValue.toString() : "");
@@ -97,7 +101,8 @@ final class ValueResolver {
                 }
             }
         }
-        if (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) {
+        if (value instanceof Map<?, ?> vm && vm.size() == 1
+            && vm.get(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER) instanceof Integer idx) {
             if (params != null && idx >= 0 && idx < params.length) {
                 return params[idx];
             }
@@ -122,9 +127,12 @@ final class ValueResolver {
 
     CompiledValue compileValue(Object value) {
         if (value instanceof String s) {
-            if (s.startsWith("$mn_qp:") && s.indexOf("$mn_qp:", 7) < 0) {
+            if (s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)
+                && s.indexOf(NitriteInternalKeys.QUERY_PARAMETER_PREFIX,
+                    NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()) < 0) {
                 try {
-                    return new CompiledValue.Parameter(Integer.parseInt(s.substring(7)));
+                    return new CompiledValue.Parameter(Integer.parseInt(
+                        s.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length())));
                 } catch (Exception ignored) {
                     // Fall through if placeholder is not a valid integer
                 }
@@ -132,12 +140,13 @@ final class ValueResolver {
             if (s.startsWith(":")) {
                 return new CompiledValue.NamedParameter(s.substring(1));
             }
-            if (s.contains("$mn_qp:")) {
+            if (s.contains(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
                 return (params, named) -> resolveValueInternal(s, params, named);
             }
             return new CompiledValue.Literal(s);
         }
-        if (value instanceof Map<?, ?> vm && vm.size() == 1 && vm.get("$mn_qp") instanceof Integer idx) {
+        if (value instanceof Map<?, ?> vm && vm.size() == 1
+            && vm.get(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER) instanceof Integer idx) {
             return new CompiledValue.Parameter(idx);
         }
         return new CompiledValue.Literal(value);
@@ -184,9 +193,11 @@ final class ValueResolver {
     }
 
     private boolean isPlaceholder(Object value) {
-        if (value instanceof String s && (s.startsWith("$mn_qp:") || s.startsWith(":"))) {
+        if (value instanceof String s
+            && (s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX) || s.startsWith(":"))) {
             return true;
         }
-        return value instanceof Map<?, ?> vm && vm.size() == 1 && vm.containsKey("$mn_qp");
+        return value instanceof Map<?, ?> vm && vm.size() == 1
+            && vm.containsKey(NitriteInternalKeys.QUERY_PARAMETER_PLACEHOLDER);
     }
 }

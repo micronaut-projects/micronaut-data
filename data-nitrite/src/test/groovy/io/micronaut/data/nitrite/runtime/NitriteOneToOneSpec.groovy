@@ -54,4 +54,19 @@ class NitriteOneToOneSpec extends Specification implements NitriteTestPropertyPr
             refA.id
             refA.refB.refC.name == "TestXyz"
     }
+
+    void 'eager to-one hydration loads every nested association in a result set'() {
+        given:
+        refARepository.saveAll([
+                new NitriteRefA(refB: new NitriteRefB(refC: new NitriteRefC(name: "First"))),
+                new NitriteRefA(refB: new NitriteRefB(refC: new NitriteRefC(name: "Second")))
+        ])
+
+        when:
+        def values = refARepository.findAll(Pageable.from(0, 10))
+
+        then:
+        values.size() == 2
+        values*.refB*.refC*.name.sort() == ["First", "Second"]
+    }
 }

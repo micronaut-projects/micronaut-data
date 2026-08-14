@@ -30,7 +30,7 @@ import java.util.List;
  * Centralized projection mapping for Nitrite operations.
  * Handles single-field, multi-field, and DTO projections from document cursors.
  *
- * @since 5.0.0
+ * @since 5.2.0
  */
 @Internal
 public final class CollectionProjectionMapper {
