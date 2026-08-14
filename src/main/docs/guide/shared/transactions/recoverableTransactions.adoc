@@ -94,5 +94,11 @@ If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut trea
 - Replayed work must be safe to execute again when Oracle reports `NOT_COMMITTED`
 - Outcome resolution always uses a fresh connection
 - Retry attempts also run on a fresh transaction/connection
+- Recovery begins only after the JDBC driver reports a connection failure. If
+  a network failure can leave JDBC operations waiting indefinitely, configure
+  an appropriate Oracle JDBC or infrastructure read timeout. Micronaut Data
+  does not set this timeout; it applies to JDBC reads generally and must be
+  tuned for the deployment. The timeout does not determine the Oracle commit
+  outcome.
 - If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result without replay
 - If you are already relying on TAF or Application Continuity to own the replay flow, do not add explicit transaction recovery on top of that path
