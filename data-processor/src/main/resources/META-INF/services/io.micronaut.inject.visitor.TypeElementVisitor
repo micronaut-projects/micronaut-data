@@ -4,3 +4,4 @@ io.micronaut.data.processor.visitors.EntityEventVisitor
 io.micronaut.data.processor.visitors.EmbeddableVisitor
 io.micronaut.data.processor.visitors.GenerateJakartaDataMetamodelVisitor
 io.micronaut.data.processor.visitors.ChangeListenerVisitor
+io.micronaut.data.processor.visitors.OracleChangeNotificationVisitor

@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.oraclexe.notification
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
+import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -83,12 +85,15 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     void "change listener receives an entity after an Oracle row is inserted"() {
         when:
         def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Continuous Query Notification"))
-        def notification = objectChangeListener.poll()
+        def notification = objectChangeListener.poll(ChangeOperation.INSERT)
+        def entity = notification?.entity()?.orElse(null)
 
         then:
         notification
-        notification.id == saved.id
-        notification.title == "Continuous Query Notification"
+        notification.operation() == ChangeOperation.INSERT
+        entity.id == saved.id
+        entity.title == "Continuous Query Notification"
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
     }
 
     void "change listener receives every entity affected by a bulk update"() {
@@ -99,33 +104,65 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
 
         when:
         objectChangeRepository.saveAll([firstBook, secondBook, thirdBook])
-        def insertNotifications = [objectChangeListener.poll(), objectChangeListener.poll(), objectChangeListener.poll()]
+        def insertNotifications = [
+            objectChangeListener.poll(ChangeOperation.INSERT),
+            objectChangeListener.poll(ChangeOperation.INSERT),
+            objectChangeListener.poll(ChangeOperation.INSERT)
+        ]
+        def insertedBooks = insertNotifications*.entity()*.orElseThrow()
 
         then:
         insertNotifications.every { it }
-        (insertNotifications*.id as Set) == ([firstBook.id, secondBook.id, thirdBook.id] as Set)
-        (insertNotifications*.title as Set) == (["First book", "Second book", "Third book"] as Set)
+        insertNotifications.every { it.operation() == ChangeOperation.INSERT }
+        (insertedBooks*.id as Set) == ([firstBook.id, secondBook.id, thirdBook.id] as Set)
+        (insertedBooks*.title as Set) == (["First book", "Second book", "Third book"] as Set)
+        insertNotifications.every { it.metadata(OracleChangeEventMetadata).orElseThrow().rowId() }
 
         when:
         def updated = objectChangeRepository.updateTitleByIds("Bulk updated", [firstBook.id, secondBook.id])
-        def updateNotifications = [objectChangeListener.poll(), objectChangeListener.poll()]
+        def updateNotifications = [
+            objectChangeListener.poll(ChangeOperation.UPDATE),
+            objectChangeListener.poll(ChangeOperation.UPDATE)
+        ]
+        def updatedBooks = updateNotifications*.entity()*.orElseThrow()
 
         then:
         updated == 2
         updateNotifications.every { it }
-        (updateNotifications*.id as Set) == ([firstBook.id, secondBook.id] as Set)
-        (updateNotifications*.title as Set) == (["Bulk updated"] as Set)
+        updateNotifications.every { it.operation() == ChangeOperation.UPDATE }
+        (updatedBooks*.id as Set) == ([firstBook.id, secondBook.id] as Set)
+        (updatedBooks*.title as Set) == (["Bulk updated"] as Set)
+        updateNotifications.every { it.metadata(OracleChangeEventMetadata).orElseThrow().rowId() }
+    }
+
+    void "change listener receives operation and ROWID after an Oracle row is deleted"() {
+        given:
+        def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Deleted book"))
+        assert objectChangeListener.poll(ChangeOperation.INSERT)
+
+        when:
+        objectChangeRepository.deleteById(saved.id)
+        def notification = objectChangeListener.poll(ChangeOperation.DELETE)
+
+        then:
+        notification
+        notification.operation() == ChangeOperation.DELETE
+        notification.entity().isEmpty()
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
     }
 
     void "query change listener receives an entity after an Oracle row is inserted"() {
         when:
         queryChangeRepository.save(new QueryChangeNotificationBook(title: "Ignored by query notification"))
         def saved = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
-        def notification = queryChangeListener.poll()
+        def notification = queryChangeListener.poll(ChangeOperation.INSERT)
+        def entity = notification?.entity()?.orElse(null)
 
         then:
         notification
-        notification.id == saved.id
-        notification.title == "Query Change Notification"
+        notification.operation() == ChangeOperation.INSERT
+        entity.id == saved.id
+        entity.title == "Query Change Notification"
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
     }
 }

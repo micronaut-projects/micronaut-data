@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -23,9 +24,16 @@ import io.micronaut.inject.ExecutableMethod;
  * Compile-time-discovered method annotated with {@code @ChangeListener}.
  *
  * <p>This value preserves the executable method and the bean definition that owns it until the
- * datasource-specific notification provider is resolved at application startup. It deliberately
- * contains no database-specific state; providers translate it to their own listener definition.</p>
+ * datasource-specific notification provider is resolved at application startup. The entity
+ * argument is resolved once from {@code ChangeEvent<E>}; providers translate this generic value
+ * to their own listener definition.</p>
+ *
+ * @param beanDefinition The bean definition that owns the listener method.
+ * @param method The executable listener method.
+ * @param entityArgument The persistent entity argument resolved from {@code ChangeEvent<E>}.
  */
 @Internal
-public record ChangeListenerMethod(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+public record ChangeListenerMethod(BeanDefinition<?> beanDefinition,
+                                   ExecutableMethod<?, ?> method,
+                                   Argument<?> entityArgument) {
 }

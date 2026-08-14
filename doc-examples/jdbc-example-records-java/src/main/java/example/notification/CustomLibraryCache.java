@@ -5,6 +5,8 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
+import io.micronaut.data.jdbc.notification.ChangeEvent;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,19 +35,22 @@ final class CustomLibraryCache implements ApplicationEventListener<StartupEvent>
             .findFirst();
     }
 
-    @ChangeListener(
+    @ChangeListener
+    @OracleChangeNotification(
         select = "name",
         where = "capacity >= 10000",
         properties = {
-            @ChangeListener.Property(name = "DCN_CLIENT_INIT_CONNECTION", value = "true"),
-            @ChangeListener.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
+            @OracleChangeNotification.Property(name = "DCN_CLIENT_INIT_CONNECTION", value = "true"),
+            @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
         }
     )
-    void onLibraryChanged(Library library) {
-        if (library.capacity() >= 10000) {
-            libraries.put(library.id(), library);
-        } else {
-            libraries.remove(library.id());
-        }
+    void onLibraryChanged(ChangeEvent<Library> event) {
+        event.entity().ifPresent(library -> {
+            if (library.capacity() >= 10000) {
+                libraries.put(library.id(), library);
+            } else {
+                libraries.remove(library.id());
+            }
+        });
     }
 }

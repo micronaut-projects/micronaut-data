@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept.annotation;
+package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.core.annotation.Internal;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import io.micronaut.data.jdbc.notification.ChangeEventMetadata;
 
 /**
- * Internal, compile-time generated reload query for a change listener.
+ * Oracle-specific metadata for a row-level change event.
+ *
+ * @param rowId The Oracle {@code ROWID} reported for the changed row.
+ * @since 5.2.0
  */
-@Internal
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface ChangeListenerQuery {
-
-    /**
-     * @return The generated SQL query.
-     */
-    String value();
-
-    /**
-     * @return The entity type reloaded by the query.
-     */
-    Class<?> entity();
+public record OracleChangeEventMetadata(String rowId) implements ChangeEventMetadata {
 }

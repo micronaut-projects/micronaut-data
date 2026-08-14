@@ -16,6 +16,9 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.jdbc.notification.ChangeOperation;
+import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
@@ -36,8 +39,8 @@ import java.util.function.Consumer;
  * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor. It
  * tracks accepted tasks so graceful shutdown can reject new work and wait for work already
- * submitted. Deleted rows are not dispatched because their entity state cannot be reloaded by
- * ROWID.</p>
+ * submitted. Inserts and updates reload current entity state by ROWID; deletes are dispatched
+ * without entity state because the deleted row can no longer be reloaded.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -91,13 +94,24 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void dispatch(DatabaseChangeEvent event) {
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            dispatchTables(tables);
+            if (tables.length == 0) {
+                dispatchInvalidation();
+            } else {
+                dispatchTables(tables);
+            }
             return;
         }
         QueryChangeDescription[] queries = event.getQueryChangeDescription();
-        if (queries != null) {
-            for (QueryChangeDescription query : queries) {
-                dispatchTables(query.getTableChangeDescription());
+        if (queries == null || queries.length == 0) {
+            dispatchInvalidation();
+            return;
+        }
+        for (QueryChangeDescription query : queries) {
+            TableChangeDescription[] queryTables = query.getTableChangeDescription();
+            if (queryTables == null || queryTables.length == 0) {
+                dispatchInvalidation();
+            } else {
+                dispatchTables(queryTables);
             }
         }
     }
@@ -112,30 +126,54 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             }
             RowChangeDescription[] rows = table.getRowChangeDescription();
             if (rows == null) {
+                dispatchInvalidation();
                 continue;
             }
             for (RowChangeDescription row : rows) {
-                if (!row.getRowOperations().contains(RowChangeDescription.RowOperation.DELETE) && row.getRowid() != null) {
-                    reloadAndInvoke(row.getRowid().stringValue());
+                if (row.getRowid() == null) {
+                    dispatchInvalidation();
+                    continue;
+                }
+                String rowId = row.getRowid().stringValue();
+                for (RowChangeDescription.RowOperation operation : row.getRowOperations()) {
+                    dispatchRow(operation, rowId);
                 }
             }
         }
     }
 
-    private void reloadAndInvoke(String rowId) {
+    private void dispatchInvalidation() {
+        invokeListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
+    }
+
+    private void dispatchRow(RowChangeDescription.RowOperation rowOperation, String rowId) {
         try {
-            Object entity = listenerDefinition.entityLoader().reload(rowId);
-            if (entity != null) {
-                invokeListener(entity);
-            }
+            ChangeOperation operation = toChangeOperation(rowOperation);
+            Object entity = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
+                ? listenerDefinition.entityLoader().reload(rowId)
+                : null;
+            invokeListener(new DefaultChangeEvent<>(operation, entity, new OracleChangeEventMetadata(rowId)));
         } catch (Exception e) {
             LOG.error("Error handling Oracle query notification for table [{}]", listenerDefinition.tableName(), e);
         }
     }
 
+    private static ChangeOperation toChangeOperation(RowChangeDescription.RowOperation operation) {
+        if (operation == RowChangeDescription.RowOperation.INSERT) {
+            return ChangeOperation.INSERT;
+        }
+        if (operation == RowChangeDescription.RowOperation.UPDATE) {
+            return ChangeOperation.UPDATE;
+        }
+        if (operation == RowChangeDescription.RowOperation.DELETE) {
+            return ChangeOperation.DELETE;
+        }
+        return ChangeOperation.INVALIDATE;
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void invokeListener(Object entity) {
-        ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), entity);
+    private void invokeListener(ChangeEvent<?> event) {
+        ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
     }
 
     private static boolean matchesTable(String tableName, String changedTableName) {

@@ -25,6 +25,13 @@ import java.util.Properties;
  *
  * <p>The definition combines the method to invoke, the Oracle registration query and properties,
  * and the ROWID reload query used to obtain the changed entity before dispatch.</p>
+ *
+ * @param beanDefinition The bean definition that owns the listener method.
+ * @param method The executable listener method.
+ * @param tableName The persistent Oracle table name.
+ * @param registrationQuery The query associated with the Oracle notification registration.
+ * @param entityLoader The loader that resolves current entity state from an Oracle ROWID.
+ * @param registrationProperties The Oracle notification registration properties.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,

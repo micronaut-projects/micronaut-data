@@ -105,6 +105,8 @@ final class OracleChangeNotificationManager {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(newRegistration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
                         // Executing the statement associates its query and tables with the registration.
+                        LOG.trace("Associated Oracle change notification registration [{}] with query",
+                            newRegistration.getRegId());
                     }
                 }
                 return newRegistration;

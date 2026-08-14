@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
 import io.micronaut.inject.BeanDefinition;
@@ -64,7 +65,13 @@ final class ChangeNotificationMethodProcessor implements ExecutableMethodProcess
         if (!dataSourceName.equals(method.stringValue(ChangeListener.class, "dataSource").orElse("default"))) {
             return;
         }
-        listenerMethods.add(new ChangeListenerMethod(beanDefinition, method));
+        Argument<?>[] arguments = method.getArguments();
+        if (arguments.length != 1) {
+            throw invalidChangeListener(method, "must declare exactly one ChangeEvent argument");
+        }
+        Argument<?> entityArgument = arguments[0].getFirstTypeVariable()
+            .orElseThrow(() -> invalidChangeListener(method, "must declare ChangeEvent<E> with a concrete entity type"));
+        listenerMethods.add(new ChangeListenerMethod(beanDefinition, method, entityArgument));
     }
 
     @Override
@@ -82,5 +89,9 @@ final class ChangeNotificationMethodProcessor implements ExecutableMethodProcess
             provider.register(dataSourceName, operations, listenerMethods);
             return Boolean.TRUE;
         });
+    }
+
+    private static IllegalStateException invalidChangeListener(ExecutableMethod<?, ?> method, String message) {
+        return new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + message);
     }
 }

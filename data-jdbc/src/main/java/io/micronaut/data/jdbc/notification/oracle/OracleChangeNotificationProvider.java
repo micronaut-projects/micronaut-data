@@ -31,9 +31,9 @@ import oracle.jdbc.OracleConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,7 +55,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
-    private final Map<String, OracleChangeNotificationManager> registrations = new ConcurrentHashMap<>();
+    private final Map<String, OracleChangeNotificationManager> managers = new ConcurrentHashMap<>();
 
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor) {
@@ -72,7 +72,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     public void register(String dataSourceName,
                          DefaultJdbcRepositoryOperations operations,
                          List<ChangeListenerMethod> listenerMethods) {
-        OracleChangeNotificationManager registration = registrations.computeIfAbsent(
+        OracleChangeNotificationManager manager = managers.computeIfAbsent(
             dataSourceName,
             ignored -> new OracleChangeNotificationManager(
                 operations,
@@ -82,15 +82,15 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
         );
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
         listenerMethods.forEach(listenerMethod -> {
-            OracleChangeListenerDefinition definition = definitionFactory.create(listenerMethod.beanDefinition(), listenerMethod.method());
-            registration.addDefinition(definition);
+            OracleChangeListenerDefinition definition = definitionFactory.create(listenerMethod);
+            manager.addDefinition(definition);
         });
-        registration.start();
+        manager.start();
     }
 
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        return CompletableFuture.allOf(registrations.values().stream()
+        return CompletableFuture.allOf(managers.values().stream()
             .map(OracleChangeNotificationManager::stop)
             .map(CompletionStage::toCompletableFuture)
             .toArray(CompletableFuture[]::new));
@@ -98,15 +98,15 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     @PreDestroy
     void close() {
-        registrations.values().forEach(OracleChangeNotificationManager::stop);
+        managers.values().forEach(OracleChangeNotificationManager::stop);
     }
 
     @Override
     public OptionalLong reportActiveTasks() {
         long activeTasks = 0;
         boolean shutdownStarted = false;
-        for (OracleChangeNotificationManager registration : registrations.values()) {
-            OptionalLong listenerActiveTasks = registration.reportActiveTasks();
+        for (OracleChangeNotificationManager manager : managers.values()) {
+            OptionalLong listenerActiveTasks = manager.reportActiveTasks();
             if (listenerActiveTasks.isPresent()) {
                 shutdownStarted = true;
                 activeTasks += listenerActiveTasks.getAsLong();

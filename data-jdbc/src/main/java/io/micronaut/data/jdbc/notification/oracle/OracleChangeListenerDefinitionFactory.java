@@ -17,10 +17,10 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.intercept.annotation.ChangeListenerQuery;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
+import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 
@@ -31,10 +31,9 @@ import java.util.Properties;
 /**
  * Converts a discovered listener method into a validated Oracle notification definition.
  *
- * <p>The generic processor has already selected the datasource. This factory therefore focuses on
- * Oracle concerns: listener signature validation, generated ROWID reload-query metadata,
- * registration properties, and the SQL used to associate an Oracle CQN registration with a
- * table or query.</p>
+ * <p>The generic processor has already selected the datasource and resolved the persistent entity
+ * argument. This factory consumes the compile-time generated Oracle ROWID query and applies the
+ * Oracle registration configuration.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
     private final DefaultJdbcRepositoryOperations operations;
@@ -43,54 +42,61 @@ final class OracleChangeListenerDefinitionFactory {
         this.operations = operations;
     }
 
-    OracleChangeListenerDefinition create(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
-        AnnotationValue<ChangeListener> changeListener = Objects.requireNonNull(method.getAnnotation(ChangeListener.class));
-        Argument<?>[] arguments = method.getArguments();
-        if (arguments.length != 1) {
-            throw invalidChangeListener(method, "must have exactly one entity argument");
-        }
-        String tableName = operations.getEntity(arguments[0].getType()).getPersistedName();
-        String reloadQuery = method.stringValue(ChangeListenerQuery.class)
-            .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle reload query"));
-        Properties properties = registrationProperties(changeListener, method);
+    OracleChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
+        ExecutableMethod<?, ?> method = listenerMethod.method();
+        AnnotationValue<OracleChangeNotification> notification = Objects.requireNonNull(
+            method.getAnnotation(OracleChangeNotification.class),
+            () -> "@ChangeListener method [" + method.getDescription(true) + "] requires @OracleChangeNotification for an Oracle datasource"
+        );
+        Argument<?> entityArgument = listenerMethod.entityArgument();
+        String tableName = operations.getEntity(entityArgument.getType()).getPersistedName();
+        String reloadQuery = method.stringValue(OracleChangeListenerQuery.class)
+            .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle ROWID reload query"));
+        Properties properties = registrationProperties(notification, method);
         return new OracleChangeListenerDefinition(
-            beanDefinition,
+            listenerMethod.beanDefinition(),
             method,
             tableName,
-            registrationQuery(changeListener, method, tableName, properties),
-            new OracleChangeListenerEntityLoader<>(operations, arguments[0].getType(), reloadQuery),
+            registrationQuery(notification, method, tableName, properties),
+            new OracleChangeListenerEntityLoader<>(operations, entityArgument.getType(), reloadQuery),
             properties
         );
     }
 
-    private static Properties registrationProperties(AnnotationValue<ChangeListener> changeListener,
+    private static Properties registrationProperties(AnnotationValue<OracleChangeNotification> notification,
                                                      ExecutableMethod<?, ?> method) {
         Properties properties = new Properties();
-        List<AnnotationValue<ChangeListener.Property>> propertyValues = changeListener
-            .getAnnotations("properties", ChangeListener.Property.class);
-        for (AnnotationValue<ChangeListener.Property> property : propertyValues) {
+        List<AnnotationValue<OracleChangeNotification.Property>> propertyValues = notification
+            .getAnnotations("properties", OracleChangeNotification.Property.class);
+        for (AnnotationValue<OracleChangeNotification.Property> property : propertyValues) {
             String name = property.stringValue("name").orElse("");
             if (name.isBlank()) {
-                throw invalidChangeListener(method, "has a property with a blank name");
+                throw invalidChangeListener(method, "has an Oracle property with a blank name");
             }
-            properties.setProperty(name, property.stringValue("value").orElse(""));
+            String value = property.stringValue("value").orElse("");
+            if (OracleConnection.DCN_NOTIFY_CHANGELAG.equals(name) && !"0".equals(value.trim())) {
+                throw invalidChangeListener(method, "requires " + OracleConnection.DCN_NOTIFY_CHANGELAG
+                    + " to be 0 so row-level operation and ROWID details are available");
+            }
+            properties.setProperty(name, value);
         }
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
         return properties;
     }
 
-    private static String registrationQuery(AnnotationValue<ChangeListener> changeListener,
+    private static String registrationQuery(AnnotationValue<OracleChangeNotification> notification,
                                             ExecutableMethod<?, ?> method,
                                             String tableName,
                                             Properties properties) {
         boolean isObjectChange = !Boolean.parseBoolean(properties.getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
-        String select = changeListener.stringValue("select").orElse("*").trim();
-        String where = changeListener.stringValue("where").orElse("").trim();
+        String select = notification.stringValue("select").orElse("*").trim();
+        String where = notification.stringValue("where").orElse("").trim();
         if ((!select.equals("*") || !where.isEmpty()) && isObjectChange) {
-            throw invalidChangeListener(method, "may specify select or where only when " + OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION + " is true");
+            throw invalidChangeListener(method, "may specify Oracle select or where only when "
+                + OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION + " is true");
         }
         if (select.isEmpty()) {
-            throw invalidChangeListener(method, "must have a non-blank select value");
+            throw invalidChangeListener(method, "must have a non-blank Oracle select value");
         }
         return "SELECT " + select + " FROM " + tableName + (where.isEmpty() ? "" : " WHERE " + where);
     }

@@ -5,6 +5,8 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
+import io.micronaut.data.jdbc.notification.ChangeEvent;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,10 +35,11 @@ final class LibraryCache implements ApplicationEventListener<StartupEvent> {
             .findFirst();
     }
 
-    @ChangeListener(properties = @ChangeListener.Property(
+    @ChangeListener
+    @OracleChangeNotification(properties = @OracleChangeNotification.Property(
         name = "DCN_CLIENT_INIT_CONNECTION", value = "true"
     ))
-    void onLibraryChanged(Library library) {
-        libraries.put(library.id(), library);
+    void onLibraryChanged(ChangeEvent<Library> event) {
+        event.entity().ifPresent(library -> libraries.put(library.id(), library));
     }
 }
