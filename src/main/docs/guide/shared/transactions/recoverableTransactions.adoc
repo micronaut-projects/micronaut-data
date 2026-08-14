@@ -94,9 +94,10 @@ If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut trea
 - Replayed work must be safe to execute again when Oracle reports `NOT_COMMITTED`
 - Outcome resolution always uses a fresh connection
 - Retry attempts also run on a fresh transaction/connection
-- Recovery is attempted only when commit handling or acknowledgement produces
-  an exception matching the configured `on` types (by default
-  `java.sql.SQLRecoverableException`, including a matching wrapped cause). If
+- Recovery is attempted only when commit handling or the commit acknowledgement
+  produces an exception whose type matches the exception types configured by
+  `on` (by default `java.sql.SQLRecoverableException`, including a matching
+  wrapped cause). If
   a particular network and driver setup can leave JDBC operations waiting
   indefinitely before an exception is surfaced, users may configure an
   appropriate Oracle JDBC or infrastructure read timeout. Micronaut Data does
