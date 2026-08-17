@@ -127,7 +127,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#DIALECT_OPTIONS_CONFIGURATION_PREFIX" class="member-name-link">DIALECT_OPTIONS_CONFIGURATION_PREFIX</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Annotation processor option prefix for SQL dialect options.</div>
+<div class="block">Build-time configuration prefix for SQL dialect options.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#MEMBER_VERSION" class="member-name-link">MEMBER_VERSION</a></code></div>
@@ -215,7 +215,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#versionConfiguration(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">versionConfiguration</a><wbr>(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Resolve the annotation processor option key for a dialect target version.</div>
+<div class="block">Resolve the build-time configuration key for a dialect target version.</div>
 </div>
 </div>
 </div>
@@ -256,7 +256,10 @@ loadScripts(document, 'script');</script>
 <h3>DIALECT_OPTIONS_CONFIGURATION_PREFIX</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">DIALECT_OPTIONS_CONFIGURATION_PREFIX</span></div>
-<div class="block">Annotation processor option prefix for SQL dialect options.</div>
+<div class="block">Build-time configuration prefix for SQL dialect options.
+
+<p>The annotation processor reads dialect-scoped values from its processor context and
+uses the corresponding JVM system property as a fallback.</p></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -369,12 +372,12 @@ loadScripts(document, 'script');</script>
 <h3>versionConfiguration</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">versionConfiguration</span><wbr><span class="parameters">(<a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
-<div class="block">Resolve the annotation processor option key for a dialect target version.</div>
+<div class="block">Resolve the build-time configuration key for a dialect target version.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>dialect</code> - The dialect</dd>
 <dt>Returns:</dt>
-<dd>The annotation processor option key</dd>
+<dd>The dialect-scoped configuration key</dd>
 </dl>
 </div>
 </section>

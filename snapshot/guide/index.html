@@ -14341,9 +14341,9 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </ul>
 </div>
 <div class="paragraph">
-<p>To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using <a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE">ORACLE</a> and set the annotation processor option <code>micronaut.data.sql.dialect-options.oracle.version=23.1</code>.
-The same value can also be provided as a JVM system property, for example <code>-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</code>.
-If both are present, the annotation processor option takes precedence.</p>
+<p>To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using <a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE">ORACLE</a> and set the build-time dialect target <code>micronaut.data.sql.dialect-options.oracle.version=23.1</code>.
+The target is consumed by the annotation processor from its processor-context options. Build integrations that can populate those options directly may provide this key there. For standard <code>javac</code>-based Maven and Gradle builds, make the value available as a JVM system property to the compiler process, as shown below. The examples use compiler forking to scope the property to compilation, but forking is not required when the property is already present in the compiler JVM.
+If both processor-context configuration and the JVM system property are available, processor-context configuration takes precedence.</p>
 </div>
 <div class="paragraph">
 <p>The configured dialect <code>version</code> is a SQL generation target.
@@ -14355,20 +14355,28 @@ Micronaut Data compares semantic version values, so a later configured version s
 <div class="paragraph">
 <p>For Gradle Java projects:</p>
 </div>
+<div class="paragraph">
+<p>The dialect-scoped key is read from the processor context, but raw <code>javac -A</code> options require dot-separated identifiers and therefore reject this key because it contains hyphens. Use the JVM-property fallback for a standard Gradle compiler invocation. This example uses a per-task JVM argument, which requires a forked compiler; alternatively, the property can be supplied to the Gradle daemon JVM.</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
+    options.fork = true
+    options.forkOptions.jvmArgs.add("-Dmicronaut.data.sql.dialect-options.oracle.version=23.1")
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>For Maven projects:</p>
 </div>
+<div class="paragraph">
+<p>This example uses Maven&#8217;s <code>-J</code> prefix to forward the <code>-D</code> property to the compiler JVM, so <code>&lt;fork&gt;true&lt;/fork&gt;</code> is required for this form. A system property supplied to the Maven/compiler process does not inherently require forking.</p>
+</div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;compilerArgs&gt;
-    &lt;arg&gt;-Amicronaut.data.sql.dialect-options.oracle.version=23.1&lt;/arg&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;fork&gt;true&lt;/fork&gt;
+&lt;compilerArgs&gt;
+    &lt;arg&gt;-J-Dmicronaut.data.sql.dialect-options.oracle.version=23.1&lt;/arg&gt;
 &lt;/compilerArgs&gt;</code></pre>
 </div>
 </div>
@@ -14605,7 +14613,7 @@ r2dbc.datasources.default.dialect-options.version=23.1</code></pre>
 <i class="fa icon-important" title="Important"></i>
 </td>
 <td class="content">
-Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository <code>version</code> option aligned with datasource <code>dialect-options</code> when using Micronaut Data schema generation.
+Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the build-time dialect target or repository <code>version</code> option aligned with datasource <code>dialect-options</code> when using Micronaut Data schema generation.
 </td>
 </tr>
 </table>
