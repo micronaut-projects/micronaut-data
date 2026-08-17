@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
@@ -26,6 +27,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -37,17 +39,25 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ConstructorElement;
+import io.micronaut.inject.ast.ElementQuery;
+import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataConverters;
@@ -67,6 +77,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
     private static final String JSON_SUB_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonSubView";
+    private static final String JSON_CREATOR_ANNOTATION = "com.fasterxml.jackson.annotation.JsonCreator";
+    private static final String TOOLS_JSON_CREATOR_ANNOTATION = "tools.jackson.annotation.JsonCreator";
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
@@ -95,6 +107,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        preferDataMappableCreator(element);
         SourcePersistentEntity entity = entityResolver.apply(element);
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
@@ -134,6 +147,84 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
         }
+    }
+
+    /**
+     * Jackson {@code @JsonCreator} is mapped to Micronaut {@link Creator}, which makes Data treat a
+     * JSON-only factory ({@code value}) as the persistence constructor. Ignore creators that are not
+     * Data-mappable when a canonical constructor/getters exist.
+     *
+     * @param element the mapped entity or embeddable
+     */
+    private void preferDataMappableCreator(ClassElement element) {
+        Set<String> propertyNames = new HashSet<>();
+        for (PropertyElement property : element.getBeanProperties()) {
+            if (!property.isExcluded() && !property.hasStereotype(Transient.class)) {
+                propertyNames.add(property.getName());
+            }
+        }
+        List<ConstructorElement> constructors = element.getAccessibleConstructors();
+        List<MethodElement> staticFactories = element.getEnclosedElements(
+                ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().onlyAccessible()
+                        .filter(method -> method.getReturnType().isAssignable(element))
+        );
+        List<MethodElement> candidates = new ArrayList<>(constructors.size() + staticFactories.size());
+        candidates.addAll(constructors);
+        candidates.addAll(staticFactories);
+
+        boolean hasDataMappableConstructor = false;
+        boolean hasNoArgConstructor = false;
+        for (ConstructorElement constructor : constructors) {
+            if (constructor.getParameters().length == 0) {
+                hasNoArgConstructor = true;
+            }
+            if (isDataMappable(constructor, propertyNames)) {
+                hasDataMappableConstructor = true;
+            }
+        }
+        if (!hasDataMappableConstructor && !hasNoArgConstructor) {
+            return;
+        }
+
+        for (MethodElement candidate : candidates) {
+            if (isJsonCreator(candidate) && !isDataMappable(candidate, propertyNames)) {
+                candidate.removeAnnotation(Creator.class);
+                candidate.removeStereotype(Creator.class);
+            }
+        }
+
+        boolean hasDataMappableCreator = false;
+        for (MethodElement candidate : candidates) {
+            if (candidate.hasStereotype(Creator.class) && isDataMappable(candidate, propertyNames)) {
+                hasDataMappableCreator = true;
+                break;
+            }
+        }
+        if (hasDataMappableCreator) {
+            return;
+        }
+        constructors.stream()
+                .filter(constructor -> constructor.getParameters().length > 0)
+                .filter(constructor -> isDataMappable(constructor, propertyNames))
+                .max(Comparator.comparingInt(constructor -> constructor.getParameters().length))
+                .ifPresent(constructor -> constructor.annotate(Creator.class));
+    }
+
+    private static boolean isJsonCreator(MethodElement element) {
+        return element.hasAnnotation(JSON_CREATOR_ANNOTATION) || element.hasAnnotation(TOOLS_JSON_CREATOR_ANNOTATION);
+    }
+
+    private static boolean isDataMappable(MethodElement method, Set<String> propertyNames) {
+        ParameterElement[] parameters = method.getParameters();
+        if (parameters.length == 0) {
+            return false;
+        }
+        for (ParameterElement parameter : parameters) {
+            if (!propertyNames.contains(parameter.getName())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void computeMappingDefaults(
