@@ -152,7 +152,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     /**
      * Jackson {@code @JsonCreator} is mapped to Micronaut {@link Creator}, which makes Data treat a
      * JSON-only factory ({@code value}) as the persistence constructor. Ignore creators that are not
-     * Data-mappable when a canonical constructor/getters exist.
+     * Data-mappable when a Data-mappable constructor or static factory exists. This does not replace
+     * custom Serde for string JSON; {@code @JsonCreator} on a single {@code value} argument is a JSON
+     * concern (see issue #3752).
      *
      * @param element the mapped entity or embeddable
      */
@@ -172,17 +174,20 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         candidates.addAll(constructors);
         candidates.addAll(staticFactories);
 
-        boolean hasDataMappableConstructor = false;
+        boolean hasDataMappableMember = false;
         boolean hasNoArgConstructor = false;
         for (ConstructorElement constructor : constructors) {
             if (constructor.getParameters().length == 0) {
                 hasNoArgConstructor = true;
             }
-            if (isDataMappable(constructor, propertyNames)) {
-                hasDataMappableConstructor = true;
+        }
+        for (MethodElement candidate : candidates) {
+            if (isDataMappable(candidate, propertyNames)) {
+                hasDataMappableMember = true;
+                break;
             }
         }
-        if (!hasDataMappableConstructor && !hasNoArgConstructor) {
+        if (!hasDataMappableMember && !hasNoArgConstructor) {
             return;
         }
 
@@ -193,27 +198,26 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             }
         }
 
-        boolean hasDataMappableCreator = false;
         for (MethodElement candidate : candidates) {
             if (candidate.hasStereotype(Creator.class) && isDataMappable(candidate, propertyNames)) {
-                hasDataMappableCreator = true;
-                break;
+                return;
             }
         }
-        if (hasDataMappableCreator) {
-            return;
-        }
-        constructors.stream()
-                .filter(constructor -> constructor.getParameters().length > 0)
-                .filter(constructor -> isDataMappable(constructor, propertyNames))
-                .max(Comparator.comparingInt(constructor -> constructor.getParameters().length))
-                .ifPresent(constructor -> constructor.annotate(Creator.class));
+        candidates.stream()
+                .filter(member -> member.getParameters().length > 0)
+                .filter(member -> isDataMappable(member, propertyNames))
+                .max(Comparator.comparingInt(member -> member.getParameters().length))
+                .ifPresent(member -> member.annotate(Creator.class));
     }
 
     private static boolean isJsonCreator(MethodElement element) {
         return element.hasAnnotation(JSON_CREATOR_ANNOTATION) || element.hasAnnotation(TOOLS_JSON_CREATOR_ANNOTATION);
     }
 
+    /**
+     * Persistable property names come from bean properties; constructor/factory parameter names
+     * must match ({@code -parameters} is assumed, as elsewhere in Micronaut Data).
+     */
     private static boolean isDataMappable(MethodElement method, Set<String> propertyNames) {
         ParameterElement[] parameters = method.getParameters();
         if (parameters.length == 0) {

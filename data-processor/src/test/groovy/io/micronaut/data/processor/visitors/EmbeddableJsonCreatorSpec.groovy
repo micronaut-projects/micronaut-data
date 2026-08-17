@@ -17,7 +17,6 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.beans.BeanIntrospection
-import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Unroll
 
@@ -40,15 +39,9 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         'record static factory'             | 'test.Country'    | RECORD_STATIC
         'class extra constructor'           | 'test.PojoCountry'| CLASS_CONSTRUCTOR
         'class static factory'              | 'test.PojoCountry'| CLASS_STATIC
-    }
-
-    void "RuntimePersistentEntity of JsonCreator embeddable does not throw MappingException"() {
-        when:
-        BeanIntrospection introspection = buildBeanIntrospection('test.Country', RECORD_CONSTRUCTOR)
-        new RuntimePersistentEntity(introspection)
-
-        then:
-        notThrown(MappingException)
+        'mappable @JsonCreator kept'        | 'test.PojoCountry'| CLASS_MAPPABLE_CREATOR
+        'static factory only'               | 'test.PojoCountry'| CLASS_FACTORY_ONLY
+        '@MappedEntity record constructor'  | 'test.Country'    | MAPPED_ENTITY_RECORD
     }
 
     private static final String RECORD_CONSTRUCTOR = '''
@@ -161,6 +154,101 @@ public class PojoCountry {
 
     public String getRegionCode() {
         return regionCode;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return countryCode + (regionCode != null ? "-" + regionCode : "");
+    }
+}
+'''
+
+    private static final String CLASS_MAPPABLE_CREATOR = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.micronaut.data.annotation.Embeddable;
+
+@Embeddable
+public class PojoCountry {
+    private final String countryCode;
+    private final String regionCode;
+
+    @JsonCreator
+    public PojoCountry(String countryCode, String regionCode) {
+        this.countryCode = countryCode;
+        this.regionCode = regionCode;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public String getRegionCode() {
+        return regionCode;
+    }
+
+    @Override
+    public String toString() {
+        return countryCode + (regionCode != null ? "-" + regionCode : "");
+    }
+}
+'''
+
+    private static final String CLASS_FACTORY_ONLY = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.micronaut.data.annotation.Embeddable;
+
+@Embeddable
+public class PojoCountry {
+    private final String countryCode;
+    private final String regionCode;
+
+    private PojoCountry(String countryCode, String regionCode) {
+        this.countryCode = countryCode;
+        this.regionCode = regionCode;
+    }
+
+    public static PojoCountry of(String countryCode, String regionCode) {
+        return new PojoCountry(countryCode, regionCode);
+    }
+
+    @JsonCreator
+    public static PojoCountry create(String value) {
+        return of(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public String getRegionCode() {
+        return regionCode;
+    }
+
+    @Override
+    public String toString() {
+        return countryCode + (regionCode != null ? "-" + regionCode : "");
+    }
+}
+'''
+
+    private static final String MAPPED_ENTITY_RECORD = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity
+public record Country(@Id String countryCode, String regionCode) {
+    @JsonCreator
+    public Country(String value) {
+        this(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
     }
 
     @Override
