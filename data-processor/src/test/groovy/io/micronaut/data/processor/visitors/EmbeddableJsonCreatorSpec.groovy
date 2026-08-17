@@ -17,31 +17,79 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.beans.BeanIntrospection
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Unroll
 
+/**
+ * Issue #3752. {@code @JsonCreator} is mapped to {@code @Creator} by micronaut-core, which makes it the single
+ * creator the introspection exposes. Micronaut Data must not fight over that creator - Jackson needs it to build
+ * the value object from a single JSON string - it just must not assume it can be used to map the persisted
+ * properties.
+ */
 class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
 
     @Unroll
-    void "embeddable with @JsonCreator uses persisted properties as constructor args: #title"() {
+    void "data ignores a creator it cannot map and uses setters instead: #title"() {
+        when:
+        BeanIntrospection introspection = buildBeanIntrospection(className, source)
+        RuntimePersistentEntity entity = new RuntimePersistentEntity(introspection)
+
+        then: "the creator Jackson claimed is left untouched"
+        introspection.constructorArguments*.name == ['value']
+
+        and: "but data doesn't use it, so it can populate the persisted properties itself"
+        entity.constructorArguments.length == 0
+        entity.persistentPropertyNames as Set == ['countryCode', 'regionCode'] as Set
+
+        where:
+        title                          | className          | source
+        'class with extra constructor' | 'test.PojoCountry' | CLASS_CONSTRUCTOR
+        'class with static factory'    | 'test.PojoCountry' | CLASS_STATIC
+    }
+
+    @Unroll
+    void "a data mappable creator is still used: #title"() {
         when:
         BeanIntrospection introspection = buildBeanIntrospection(className, source)
         RuntimePersistentEntity entity = new RuntimePersistentEntity(introspection)
 
         then:
-        introspection.constructorArguments*.name == ['countryCode', 'regionCode']
-        entity.constructorArguments*.name == ['countryCode', 'regionCode']
-        introspection.instantiate('US', 'NY').toString() == 'US-NY'
+        entity.constructorArguments*.name == expected
 
         where:
-        title                               | className         | source
-        'record compact constructor'        | 'test.Country'    | RECORD_CONSTRUCTOR
-        'record static factory'             | 'test.Country'    | RECORD_STATIC
-        'class extra constructor'           | 'test.PojoCountry'| CLASS_CONSTRUCTOR
-        'class static factory'              | 'test.PojoCountry'| CLASS_STATIC
-        'mappable @JsonCreator kept'        | 'test.PojoCountry'| CLASS_MAPPABLE_CREATOR
-        'static factory only'               | 'test.PojoCountry'| CLASS_FACTORY_ONLY
-        '@MappedEntity record constructor'  | 'test.Country'    | MAPPED_ENTITY_RECORD
+        title                                 | className          | source                 | expected
+        'mappable @JsonCreator'               | 'test.PojoCountry' | CLASS_MAPPABLE_CREATOR | ['countryCode', 'regionCode']
+        'no jackson, several constructors'    | 'test.Thing'       | SEVERAL_CONSTRUCTORS   | ['name']
+    }
+
+    @Unroll
+    void "an immutable type whose creator is claimed by jackson reports the conflict: #title"() {
+        when:
+        BeanIntrospection introspection = buildBeanIntrospection(className, source)
+        new RuntimePersistentEntity(introspection)
+
+        then:
+        MappingException e = thrown()
+        e.message.contains('is instantiated by the creator [value]')
+        e.message.contains('cannot be set after construction')
+
+        where:
+        title                            | className       | source
+        'record with extra constructor'  | 'test.Country'  | RECORD_CONSTRUCTOR
+        'record with static factory'     | 'test.Country'  | RECORD_STATIC
+    }
+
+    void "a static @JsonCreator does not promote a wider constructor"() {
+        given: "the shape that regressed on UuidEntity: the wider constructor takes a non-null argument"
+        BeanIntrospection introspection = buildBeanIntrospection('test.Thing', STATIC_CREATOR_AND_SEVERAL_CONSTRUCTORS)
+
+        when:
+        RuntimePersistentEntity entity = new RuntimePersistentEntity(introspection)
+
+        then: "no constructor is re-selected, so nothing forces a null into a non-null argument"
+        introspection.constructorArguments*.name == ['value']
+        entity.constructorArguments.length == 0
     }
 
     private static final String RECORD_CONSTRUCTOR = '''
@@ -97,25 +145,32 @@ import io.micronaut.data.annotation.Embeddable;
 
 @Embeddable
 public class PojoCountry {
-    private final String countryCode;
-    private final String regionCode;
+    private String countryCode;
+    private String regionCode;
 
-    public PojoCountry(String countryCode, String regionCode) {
-        this.countryCode = countryCode;
-        this.regionCode = regionCode;
+    public PojoCountry() {
     }
 
     @JsonCreator
     public PojoCountry(String value) {
-        this(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
+        this.countryCode = value.substring(0, 2);
+        this.regionCode = value.length() > 3 ? value.substring(3) : null;
     }
 
     public String getCountryCode() {
         return countryCode;
     }
 
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
     public String getRegionCode() {
         return regionCode;
+    }
+
+    public void setRegionCode(String regionCode) {
+        this.regionCode = regionCode;
     }
 
     @Override
@@ -135,25 +190,34 @@ import io.micronaut.data.annotation.Embeddable;
 
 @Embeddable
 public class PojoCountry {
-    private final String countryCode;
-    private final String regionCode;
+    private String countryCode;
+    private String regionCode;
 
-    public PojoCountry(String countryCode, String regionCode) {
-        this.countryCode = countryCode;
-        this.regionCode = regionCode;
+    public PojoCountry() {
     }
 
     @JsonCreator
     public static PojoCountry create(String value) {
-        return new PojoCountry(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
+        PojoCountry country = new PojoCountry();
+        country.setCountryCode(value.substring(0, 2));
+        country.setRegionCode(value.length() > 3 ? value.substring(3) : null);
+        return country;
     }
 
     public String getCountryCode() {
         return countryCode;
     }
 
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
     public String getRegionCode() {
         return regionCode;
+    }
+
+    public void setRegionCode(String regionCode) {
+        this.regionCode = regionCode;
     }
 
     @Override
@@ -188,73 +252,82 @@ public class PojoCountry {
     public String getRegionCode() {
         return regionCode;
     }
+}
+'''
 
-    @Override
-    public String toString() {
-        return countryCode + (regionCode != null ? "-" + regionCode : "");
+    private static final String SEVERAL_CONSTRUCTORS = '''
+package test;
+
+import io.micronaut.data.annotation.Embeddable;
+import java.util.UUID;
+
+@Embeddable
+public class Thing {
+    private final String name;
+    private final UUID nullableValue;
+
+    public Thing(String name) {
+        this(name, null);
+    }
+
+    public Thing(String name, UUID nullableValue) {
+        this.name = name;
+        this.nullableValue = nullableValue;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public UUID getNullableValue() {
+        return nullableValue;
     }
 }
 '''
 
-    private static final String CLASS_FACTORY_ONLY = '''
+    private static final String STATIC_CREATOR_AND_SEVERAL_CONSTRUCTORS = '''
 package test;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micronaut.data.annotation.Embeddable;
+import java.util.UUID;
 
 @Embeddable
-public class PojoCountry {
-    private final String countryCode;
-    private final String regionCode;
+public class Thing {
+    private String name;
+    private UUID nullableValue;
 
-    private PojoCountry(String countryCode, String regionCode) {
-        this.countryCode = countryCode;
-        this.regionCode = regionCode;
+    public Thing() {
     }
 
-    public static PojoCountry of(String countryCode, String regionCode) {
-        return new PojoCountry(countryCode, regionCode);
+    public Thing(String name) {
+        this.name = name;
+    }
+
+    public Thing(String name, UUID nullableValue) {
+        this.name = name;
+        this.nullableValue = nullableValue;
     }
 
     @JsonCreator
-    public static PojoCountry create(String value) {
-        return of(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
+    public static Thing parse(String value) {
+        return new Thing(value);
     }
 
-    public String getCountryCode() {
-        return countryCode;
+    public String getName() {
+        return name;
     }
 
-    public String getRegionCode() {
-        return regionCode;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @Override
-    public String toString() {
-        return countryCode + (regionCode != null ? "-" + regionCode : "");
-    }
-}
-'''
-
-    private static final String MAPPED_ENTITY_RECORD = '''
-package test;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-
-@MappedEntity
-public record Country(@Id String countryCode, String regionCode) {
-    @JsonCreator
-    public Country(String value) {
-        this(value.substring(0, 2), value.length() > 3 ? value.substring(3) : null);
+    public UUID getNullableValue() {
+        return nullableValue;
     }
 
-    @Override
-    @JsonValue
-    public String toString() {
-        return countryCode + (regionCode != null ? "-" + regionCode : "");
+    public void setNullableValue(UUID nullableValue) {
+        this.nullableValue = nullableValue;
     }
 }
 '''

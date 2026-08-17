@@ -101,8 +101,15 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
-        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-        Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
+        Argument<?>[] creatorArguments = introspection.getConstructorArguments();
+        // The introspection exposes a single creator, which may have been chosen for a purpose other than
+        // persistence - for example a Jackson @JsonCreator that builds the bean from one JSON value. When that
+        // creator cannot be mapped to the persisted properties, fall back to no-argument instantiation and
+        // property setters instead of failing. See https://github.com/micronaut-projects/micronaut-data/issues/3752
+        boolean creatorMapsToProperties = creatorMapsToProperties(creatorArguments, beanProperties);
+        Set<String> constructorArgumentNames = creatorMapsToProperties
+            ? Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.toSet())
+            : Set.of();
         RuntimePersistentProperty<T> version = null;
         List<RuntimePersistentProperty<T>> ids = new ArrayList<>(5);
         this.allPersistentProperties = new RuntimePersistentProperty[beanProperties.size()];
@@ -142,17 +149,71 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         this.identity = ids.toArray(new RuntimePersistentProperty[0]);
         this.version = version;
 
-        this.constructorArguments = new RuntimePersistentProperty[constructorArguments.length];
-        for (int i = 0; i < constructorArguments.length; i++) {
-            Argument<?> constructorArgument = constructorArguments[i];
-            String argumentName = constructorArgument.getName();
-            RuntimePersistentProperty<T> prop = getPropertyByName(argumentName);
-            if (prop == null) {
-                throw new MappingException("Constructor argument [" + argumentName + "] for type [" + getName() + "] must have an associated getter");
+        if (creatorMapsToProperties) {
+            this.constructorArguments = new RuntimePersistentProperty[creatorArguments.length];
+            for (int i = 0; i < creatorArguments.length; i++) {
+                Argument<?> constructorArgument = creatorArguments[i];
+                String argumentName = constructorArgument.getName();
+                RuntimePersistentProperty<T> prop = getPropertyByName(argumentName);
+                if (prop == null) {
+                    throw new MappingException("Constructor argument [" + argumentName + "] for type [" + getName() + "] must have an associated getter");
+                }
+                this.constructorArguments[i] = prop;
             }
-            this.constructorArguments[i] = prop;
+        } else {
+            requireWritableProperties(creatorArguments);
+            this.constructorArguments = new RuntimePersistentProperty[0];
         }
         this.aliasName = super.getAliasName();
+    }
+
+    /**
+     * Can the creator exposed by the introspection be used to populate the persisted properties, meaning every one
+     * of its arguments is a persisted property of this entity?
+     *
+     * @param creatorArguments The arguments of the creator exposed by the introspection
+     * @param beanProperties   The bean properties this entity is built from
+     * @return true if the creator can be used for persistence
+     */
+    private boolean creatorMapsToProperties(Argument<?>[] creatorArguments, Collection<BeanProperty<T, Object>> beanProperties) {
+        if (creatorArguments.length == 0) {
+            return true;
+        }
+        Set<String> propertyNames = new HashSet<>(beanProperties.size());
+        for (BeanProperty<T, Object> bp : beanProperties) {
+            if (!bp.hasStereotype(Transient.class)) {
+                propertyNames.add(bp.getName());
+            }
+        }
+        for (Argument<?> creatorArgument : creatorArguments) {
+            if (!propertyNames.contains(creatorArgument.getName())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Falling back to no-argument instantiation is only possible when every persisted property can be set after
+     * the instance has been created. Otherwise the type cannot be materialized at all and failing here produces a
+     * better message than failing later while reading a result set.
+     *
+     * @param creatorArguments The arguments of the creator exposed by the introspection
+     */
+    private void requireWritableProperties(Argument<?>[] creatorArguments) {
+        List<String> readOnly = new ArrayList<>(2);
+        for (RuntimePersistentProperty<T> property : allPersistentProperties) {
+            if (property != null && property.isReadOnly()) {
+                readOnly.add(property.getName());
+            }
+        }
+        if (!readOnly.isEmpty()) {
+            throw new MappingException("Type [" + getName() + "] is instantiated by the creator ["
+                + Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.joining(", "))
+                + "], which doesn't map to the persisted properties, and the properties " + readOnly
+                + " cannot be set after construction. Micronaut Data needs either a creator whose arguments are all "
+                + "persisted properties, or a no-argument constructor together with setters for every persisted property.");
+        }
     }
 
     @Override
