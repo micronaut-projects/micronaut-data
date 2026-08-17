@@ -159,12 +159,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      * @param element the mapped entity or embeddable
      */
     private void preferDataMappableCreator(ClassElement element) {
-        Set<String> propertyNames = new HashSet<>();
-        for (PropertyElement property : element.getBeanProperties()) {
-            if (!property.isExcluded() && !property.hasStereotype(Transient.class)) {
-                propertyNames.add(property.getName());
-            }
-        }
         List<ConstructorElement> constructors = element.getAccessibleConstructors();
         List<MethodElement> staticFactories = element.getEnclosedElements(
                 ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().onlyAccessible()
@@ -173,6 +167,30 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         List<MethodElement> candidates = new ArrayList<>(constructors.size() + staticFactories.size());
         candidates.addAll(constructors);
         candidates.addAll(staticFactories);
+
+        // Only intervene when a Jackson @JsonCreator is actually present on this class. Without one,
+        // there is nothing to neutralize, and unconditionally re-selecting the "best" data-mappable
+        // creator (by parameter count) can override the existing default constructor/creator choice
+        // for entities that never opted into Jackson creators - e.g. picking a wider constructor whose
+        // extra parameter isn't @Nullable, breaking reads that need to bind a null value (issue seen on
+        // UuidEntity, static metamodel joins, and JSON view entities in #3997 CI).
+        boolean hasJsonCreator = false;
+        for (MethodElement candidate : candidates) {
+            if (isJsonCreator(candidate)) {
+                hasJsonCreator = true;
+                break;
+            }
+        }
+        if (!hasJsonCreator) {
+            return;
+        }
+
+        Set<String> propertyNames = new HashSet<>();
+        for (PropertyElement property : element.getBeanProperties()) {
+            if (!property.isExcluded() && !property.hasStereotype(Transient.class)) {
+                propertyNames.add(property.getName());
+            }
+        }
 
         boolean hasDataMappableMember = false;
         boolean hasNoArgConstructor = false;
