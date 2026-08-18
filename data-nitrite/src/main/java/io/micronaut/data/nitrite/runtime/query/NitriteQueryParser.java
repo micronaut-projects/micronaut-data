@@ -93,8 +93,28 @@ public final class NitriteQueryParser {
      */
     public @Nullable String extractGroupFieldPath(@Nullable String jsonQuery) {
         try {
-            Object parsed = parseJson(jsonQuery);
-            if (parsed instanceof List<?> pipeline) {
+            return extractGroupFieldPath(parseJson(jsonQuery));
+        } catch (Exception ignored) {
+            // Best-effort JSON parsing; if it fails, treat as non-distinct count
+            return null;
+        }
+    }
+
+    /**
+     * Extract the distinct-count group field path from a parsed pipeline query.
+     *
+     * @param parsedQuery the parsed JSON query
+     * @return the field path to count distinct values of, or null
+     */
+    public @Nullable String extractGroupFieldPath(@Nullable Object parsedQuery) {
+        try {
+            // A query without a JSON array bracket parses as a Map (single stage).
+            // A pipeline parses as a List of Maps.
+            if (parsedQuery instanceof Map<?, ?> m && m.get(NitriteQueryOperators.GROUP) instanceof Map<?, ?> groupMap
+                && groupMap.get("_id") instanceof String s && s.startsWith("$")) {
+                return s.substring(1);
+            }
+            if (parsedQuery instanceof List<?> pipeline) {
                 for (Object stage : pipeline) {
                     if (stage instanceof Map<?, ?> m && m.get(NitriteQueryOperators.GROUP) instanceof Map<?, ?> groupMap
                         && groupMap.get("_id") instanceof String s && s.startsWith("$")) {
@@ -103,7 +123,7 @@ public final class NitriteQueryParser {
                 }
             }
         } catch (Exception ignored) {
-            // Best-effort JSON parsing; if it fails, treat as non-distinct count
+            // Best-effort structure matching
         }
         return null;
     }
@@ -139,7 +159,24 @@ public final class NitriteQueryParser {
             }
         }
         try {
-            Object parsed = parseJson(jsonQuery);
+            return extractProjectionFields((Object) parseJson(jsonQuery));
+        } catch (Exception ignored) {
+            // Best-effort JSON parsing; if it fails, assume no projection
+        }
+        return List.of();
+    }
+
+    /**
+     * Extract projection fields from an already-{@link #parseJson parsed} JSON query structure
+     * that uses {@code $project} syntax, bypassing the JSON parse step. Used by callers that
+     * already parsed the query string for another purpose (e.g. the filter map) and want to
+     * avoid re-parsing the same text.
+     *
+     * @param parsed the result of {@link #parseJson}
+     * @return projected field names, or an empty list if no projection is present
+     */
+    public List<String> extractProjectionFields(@Nullable Object parsed) {
+        try {
             if (parsed instanceof Map<?, ?> map && map.containsKey(NitriteQueryOperators.PROJECT)) {
                 List<String> fields = extractProjectionFieldsFromValue(map.get(NitriteQueryOperators.PROJECT));
                 if (!fields.isEmpty()) {
@@ -160,6 +197,18 @@ public final class NitriteQueryParser {
             // Best-effort JSON parsing; if it fails, assume no projection
         }
         return List.of();
+    }
+
+    /**
+     * Extract projection fields directly from an already-built projection map (field name to
+     * 1/true when included), bypassing the JSON parse step. Used by the runtime Criteria fast
+     * path, which already has the map in hand and never serialized it to text.
+     *
+     * @param projection the projection map
+     * @return projected field names, or an empty list if no projection is present
+     */
+    public List<String> extractProjectionFields(@Nullable Map<String, Object> projection) {
+        return extractProjectionFieldsFromValue(projection);
     }
 
     private List<String> extractProjectionFieldsFromValue(@Nullable Object value) {
@@ -244,7 +293,7 @@ public final class NitriteQueryParser {
     @SuppressWarnings("unchecked")
     private @Nullable Map<String, Object> extractUpdateMap(Map<?, ?> source) {
         Map<String, Object> updateMap = new LinkedHashMap<>();
-        for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL)) {
+        for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL, NitriteQueryOperators.CONCAT)) {
             if (source.get(operator) instanceof Map<?, ?> values) {
                 updateMap.put(operator, new LinkedHashMap<>((Map<String, Object>) values));
             }
@@ -255,6 +304,11 @@ public final class NitriteQueryParser {
     // ─── Private recursive-descent parser ────────────────────────────────────────
 
     private static final class JsonParser {
+
+        private static final BigInteger INT_MIN = BigInteger.valueOf(Integer.MIN_VALUE);
+        private static final BigInteger INT_MAX = BigInteger.valueOf(Integer.MAX_VALUE);
+        private static final BigInteger LONG_MIN = BigInteger.valueOf(Long.MIN_VALUE);
+        private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
         private final String src;
         private int pos;
@@ -401,34 +455,43 @@ public final class NitriteQueryParser {
         }
 
         private static Object parseNumber(String s) {
-            // Integral values widen through int/long/BigInteger and decimals fall back to
-            // BigDecimal when a double cannot represent the literal exactly.
-            // Named parameters and positional placeholders are returned as-is
-            if (s.startsWith(":") || s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
+            if (isParameterRef(s)) {
                 return s;
             }
             try {
-                if (s.contains(".") || s.indexOf('e') >= 0 || s.indexOf('E') >= 0) {
-                    BigDecimal decimal = new BigDecimal(s);
-                    double doubleValue = Double.parseDouble(s);
-                    if (Double.isFinite(doubleValue)
-                        && decimal.compareTo(BigDecimal.valueOf(doubleValue)) == 0) {
-                        return doubleValue;
-                    }
-                    return decimal;
-                }
-                try {
-                    return Integer.parseInt(s);
-                } catch (NumberFormatException ignored) {
-                    try {
-                        return Long.parseLong(s);
-                    } catch (NumberFormatException ignoredLong) {
-                        return new BigInteger(s);
-                    }
-                }
-            } catch (NumberFormatException ignored) {
+                return isDecimalLiteral(s) ? parseDecimal(s) : parseIntegral(s);
+            } catch (NumberFormatException notANumber) {
                 return s;
             }
+        }
+
+        private static boolean isParameterRef(String s) {
+            return s.startsWith(":") || s.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX);
+        }
+
+        private static boolean isDecimalLiteral(String s) {
+            return s.indexOf('.') >= 0 || s.indexOf('e') >= 0 || s.indexOf('E') >= 0;
+        }
+
+        // Exact BigDecimal is the source of truth; fall back to double only when it round-trips losslessly.
+        private static Object parseDecimal(String s) {
+            BigDecimal decimal = new BigDecimal(s);
+            double asDouble = Double.parseDouble(s);
+            boolean losslessAsDouble = Double.isFinite(asDouble)
+                && decimal.compareTo(BigDecimal.valueOf(asDouble)) == 0;
+            return losslessAsDouble ? asDouble : decimal;
+        }
+
+        // Parse once, then narrow to the smallest type that fits — no repeated parse/exception cascade.
+        private static Object parseIntegral(String s) {
+            BigInteger value = new BigInteger(s);
+            if (value.compareTo(INT_MIN) >= 0 && value.compareTo(INT_MAX) <= 0) {
+                return value.intValue();
+            }
+            if (value.compareTo(LONG_MIN) >= 0 && value.compareTo(LONG_MAX) <= 0) {
+                return value.longValue();
+            }
+            return value;
         }
 
         // ── Utilities ────────────────────────────────────────────────────────────

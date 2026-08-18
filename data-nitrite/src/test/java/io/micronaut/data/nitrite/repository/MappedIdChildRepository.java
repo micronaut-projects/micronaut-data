@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.repository;
 
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.nitrite.annotation.NitriteRepository;
+import io.micronaut.data.nitrite.model.MappedIdChild;
+import io.micronaut.data.repository.CrudRepository;
 
-@MappedEntity
-public class MyTestEntity {
-    @Id
-    private Long id;
-    private String name;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+@NitriteRepository
+public interface MappedIdChildRepository extends CrudRepository<MappedIdChild, String> {
 }

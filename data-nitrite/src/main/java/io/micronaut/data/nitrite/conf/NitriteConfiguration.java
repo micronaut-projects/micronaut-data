@@ -39,6 +39,12 @@ public class NitriteConfiguration implements Named {
   /** Configuration prefix used for binding named Nitrite settings. */
   public static final String PREFIX = "micronaut.nitrite";
 
+  /**
+   * Name of the implicit datasource. It is the primary configuration, so its per-datasource beans
+   * are resolvable without a name qualifier; every other datasource is named and qualified.
+   */
+  public static final String DEFAULT_NAME = "default";
+
   private final String name;
 
   /**

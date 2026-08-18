@@ -164,7 +164,10 @@ public final class NumericUpdateOperations {
         if (value < min || value > max) {
             throw new ArithmeticException(type + " overflow");
         }
-        return "short".equals(type) ? (short) value : (byte) value;
+        if ("short".equals(type)) {
+            return (short) value;
+        }
+        return (byte) value;
     }
 
     private static Object convertNumber(double value, Object currentValue) {

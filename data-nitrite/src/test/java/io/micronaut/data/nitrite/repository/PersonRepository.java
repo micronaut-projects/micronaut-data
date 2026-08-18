@@ -231,6 +231,15 @@ public interface PersonRepository
   long updateByName(String name, @Parameter("age") int age);
 
   /**
+   * Updates the age of every person whose id is in the given list.
+   *
+   * @param ids the document ids to match
+   * @param age the new age
+   * @return number of updated records
+   */
+  long updateAgeByIdIn(List<String> ids, @Parameter("age") int age);
+
+  /**
    * Finds all person names (projection to single property using SQL SELECT).
    *
    * @return list of names
@@ -246,4 +255,13 @@ public interface PersonRepository
    */
   @Query("{\"$project\": \"name\", \"active\": {\"$eq\": true}}")
   List<String> findActivePersonNames();
+
+  /**
+   * Appends a suffix to the names of persons matching an age.
+   *
+   * @param suffix suffix to append
+   * @param age age to match
+   */
+  @Query("{\"$concat\": {\"name\": :suffix}, \"age\": {\"$eq\": :age}}")
+  void updateAppendNameToAll(@Parameter("suffix") String suffix, @Parameter("age") int age);
 }

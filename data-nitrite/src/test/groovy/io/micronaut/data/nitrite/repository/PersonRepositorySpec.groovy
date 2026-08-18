@@ -2,7 +2,9 @@ package io.micronaut.data.nitrite.repository
 
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.nitrite.model.Person
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -277,7 +279,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        def spec = { root, cb -> root.get("id").in([p1.id, p2.id]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> root.get("id").in([p1.id, p2.id]) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -292,7 +294,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Charlie", 35))
 
         when:
-        def spec = { root, cb -> cb.not(root.get("id").in([p1.id])) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> cb.not(root.get("id").in([p1.id])) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -306,7 +308,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Bob", 30))
 
         when:
-        def spec = { root, cb -> root.get("id").in([]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> root.get("id").in([]) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -319,7 +321,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Bob", 30))
 
         when:
-        def spec = { root, cb -> cb.not(root.get("id").in([])) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> cb.not(root.get("id").in([])) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -525,7 +527,7 @@ class PersonRepositorySpec extends Specification {
         def spec = { root, cb -> cb.or(
             cb.lessThan(root.get("age"), 26),
             cb.greaterThan(root.get("age"), 34)
-        )} as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        )} as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -543,7 +545,7 @@ class PersonRepositorySpec extends Specification {
         def spec = { root, cb -> cb.and(
             cb.greaterThan(root.get("age"), 25),
             cb.lessThan(root.get("age"), 35)
-        )} as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        )} as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -575,7 +577,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Inactive", 30, false))
 
         when:
-        def spec = { root, cb -> cb.isTrue(root.get("active")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> cb.isTrue(root.get("active")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -589,7 +591,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.save(new Person("Inactive", 30, false))
 
         when:
-        def spec = { root, cb -> cb.isFalse(root.get("active")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> cb.isFalse(root.get("active")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1043,6 +1045,22 @@ class PersonRepositorySpec extends Specification {
         personRepository.findByName("Dave").get().age == 40  // unchanged
     }
 
+    void "test updateAgeByIdIn updates every person whose id is in the given list"() {
+        given:
+        Person bob = personRepository.save(new Person("Bob", 20))
+        Person carol = personRepository.save(new Person("Carol", 30))
+        personRepository.save(new Person("Dave", 40))
+
+        when:
+        long updated = personRepository.updateAgeByIdIn([bob.id, carol.id], 99)
+
+        then:
+        updated == 2
+        personRepository.findByName("Bob").get().age == 99
+        personRepository.findByName("Carol").get().age == 99
+        personRepository.findByName("Dave").get().age == 40  // unaffected
+    }
+
     void "test updatePerson does not affect other records"() {
         given:
         def p1 = personRepository.save(new Person("Eve", 22))
@@ -1084,7 +1102,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Albert", 30), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).startsWithString(root.get("name"), cb.literal("Al")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).startsWithString(root.get("name"), cb.literal("Al")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1109,7 +1127,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).startsWithStringIgnoreCase(root.get("name"), cb.literal("al")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).startsWithStringIgnoreCase(root.get("name"), cb.literal("al")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1122,7 +1140,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Charlie", 30), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).endingWithString(root.get("name"), cb.literal("ice")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).endingWithString(root.get("name"), cb.literal("ice")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1135,7 +1153,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Charlie", 30), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).containsString(root.get("name"), cb.literal("li")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).containsString(root.get("name"), cb.literal("li")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1148,7 +1166,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).containsStringIgnoreCase(root.get("name"), cb.literal("LIC")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).containsStringIgnoreCase(root.get("name"), cb.literal("LIC")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1161,7 +1179,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Albert", 30), new Person("Bob", 40)])
 
         when:
-        def spec = { root, cb -> ((io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb).regex(root.get("name"), cb.literal("^Al.*")) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> ((PersistentEntityCriteriaBuilder) cb).regex(root.get("name"), cb.literal("^Al.*")) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1174,7 +1192,7 @@ class PersonRepositorySpec extends Specification {
         personRepository.saveAll([new Person("Alice", 20), new Person("Bob", 30), new Person("Charlie", 40)])
 
         when:
-        def spec = { root, cb -> root.get("name").in(["Alice", "Charlie"]) } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification<Person>
+        def spec = { root, cb -> root.get("name").in(["Alice", "Charlie"]) } as PredicateSpecification<Person>
         def results = personRepository.findAll(spec)
 
         then:
@@ -1196,5 +1214,18 @@ class PersonRepositorySpec extends Specification {
         "Alice" in names
         "Charlie" in names
         !names.contains("Bob")
+    }
+
+    void "test update concat"() {
+        given:
+        personRepository.save(new Person("Alice", 25, true))
+        personRepository.save(new Person("Bob", 30, true))
+
+        when:
+        personRepository.updateAppendNameToAll("-san", 25)
+
+        then:
+        personRepository.findByAge(25)[0].name == "Alice-san"
+        personRepository.findByAge(30)[0].name == "Bob"
     }
 }

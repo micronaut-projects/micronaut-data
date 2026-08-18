@@ -68,4 +68,105 @@ class NumericUpdateOperationsSpec extends Specification {
         NumericUpdateOperations.apply("text", 1 as Integer, false, "type") == "text"
         NumericUpdateOperations.apply(null, 1 as Integer, false, "type") == null
     }
+
+    void "a floating point operand narrows the result to the stored integral or floating type"() {
+        expect:
+        def result = NumericUpdateOperations.apply(current, 2.5d, false, "x")
+        expectedType.isInstance(result)
+
+        where:
+        current       | expectedType
+        10 as Integer | Integer
+        10L           | Long
+        10.5f         | Float
+        (short) 10    | Short
+        (byte) 10     | Byte
+    }
+
+    void "a BigDecimal operand narrows the result to the stored numeric type"() {
+        expect:
+        def result = NumericUpdateOperations.apply(current, new BigDecimal("5"), false, "x")
+        expectedType.isInstance(result)
+
+        where:
+        current       | expectedType
+        10 as Integer | Integer
+        10L           | Long
+        (short) 10    | Short
+        (byte) 10     | Byte
+        10.5f         | Float
+        10.5d         | Double
+    }
+
+    void "a BigDecimal current value converts a non decimal operand of any integral width"() {
+        expect:
+        NumericUpdateOperations.apply(new BigDecimal("1"), operand, false, "amount") == expected
+
+        where:
+        operand       | expected
+        (byte) 1      | new BigDecimal("2")
+        (short) 1     | new BigDecimal("2")
+        1 as Integer  | new BigDecimal("2")
+        1L            | new BigDecimal("2")
+        2.5d          | new BigDecimal("3.5")
+    }
+
+    void "negate preserves the operand's numeric type"() {
+        expect:
+        def result = NumericUpdateOperations.negate(number)
+        result == expected
+        result.class == expected.class
+
+        where:
+        number               | expected
+        3 as Integer         | -3L
+        3L                   | -3L
+        new BigDecimal("3")  | new BigDecimal("-3")
+        new BigInteger("3")  | new BigInteger("-3")
+        3.5d                 | -3.5d
+        3.5f                 | -3.5f
+    }
+
+    void "reciprocal of a floating point operand divides in double precision"() {
+        expect:
+        NumericUpdateOperations.reciprocal(number) == 0.5d
+
+        where:
+        number << [2.0d, 2.0f]
+    }
+
+    void "reciprocal of an exact operand stays exact"() {
+        expect:
+        NumericUpdateOperations.reciprocal(number) == new BigDecimal("0.5")
+
+        where:
+        number << [2 as Integer, new BigDecimal("2")]
+    }
+
+    void "a multiplication of a narrow integral field keeps the stored type"() {
+        expect:
+        def result = NumericUpdateOperations.apply(current, 2 as Integer, true, "priority")
+        result == 20
+        current.class.isInstance(result)
+
+        where:
+        current << [(short) 10, (byte) 10]
+    }
+
+    void "a byte increment within range keeps the stored byte type"() {
+        expect:
+        NumericUpdateOperations.apply(10 as Byte, 5 as Integer, false, "priority") == 15
+        NumericUpdateOperations.apply(10 as Byte, 5 as Integer, false, "priority") instanceof Byte
+    }
+
+    void "an integral increment that overflows a short or byte field is a data access exception"() {
+        when:
+        NumericUpdateOperations.apply(current, 1 as Integer, false, "priority")
+
+        then:
+        thrown(DataAccessException)
+
+        where:
+        current << [Short.MAX_VALUE, Byte.MAX_VALUE]
+    }
 }

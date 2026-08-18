@@ -65,6 +65,9 @@ public final class CollectionAggregator {
         // Try to get values - field might be stored as camelCase or snake_case
         List<Object> values = docs.stream()
             .map(d -> {
+                // The caller resolves the mapped name through the entity metadata, so a property
+                // stored under a custom name is addressed directly. The snake-case attempt below
+                // covers callers that have no entity metadata to resolve against.
                 Object val = d.get(fieldName);
                 if (val == null) {
                     // Try snake_case conversion

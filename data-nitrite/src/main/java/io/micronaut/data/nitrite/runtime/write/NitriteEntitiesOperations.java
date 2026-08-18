@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -36,7 +37,6 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -239,7 +239,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             if (meta.versionProp() != null) {
                 BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
                 Object versionValue = versionProperty.get(entity);
-                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
 
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
@@ -365,7 +365,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     if (versionValue == null) {
                         versionValue = meta.versionProp().getProperty().get(entity);
                     }
-                    filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                    filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
                     long nextVersion = (versionValue == null ? 0L : ((Number) versionValue).longValue()) + 1;
                     entity = helper.updateEntityId(meta.versionProp().getProperty(), entity, nextVersion);
                     entities.set(i, entity);

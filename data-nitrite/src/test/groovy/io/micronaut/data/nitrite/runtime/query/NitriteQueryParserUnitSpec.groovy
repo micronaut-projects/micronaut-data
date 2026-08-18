@@ -445,4 +445,15 @@ class NitriteQueryParserUnitSpec extends Specification {
         "sq backslash at end (L350)"             | "['test\\]"   | ["test]"]
         "value with colon in else branch (L404)" | '[1:2]'       | ["1:2"]
     }
+
+    @Unroll
+    def "extractGroupFieldPath extracts field from both pipeline and single-object JSON: #desc"() {
+        expect:
+        parser.extractGroupFieldPath(json) == expected
+
+        where:
+        desc                          | json                                              | expected
+        "pipeline array with \$group" | '[{"$group": {"_id": "$category"}}]'             | "category"
+        "single object with \$group"  | '{"$group": {"_id": "$category"}}'               | "category"
+    }
 }

@@ -38,12 +38,12 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.NameUtils;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.serde.ObjectMapper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteId;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -361,7 +361,10 @@ public final class NitriteEntityMapper {
       LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
     }
 
-    Filter base = FluentFilter.where(dottedPath).eq(value);
+    if (value == null) {
+      return NitriteFilterUtils.isNullFilter(dottedPath);
+    }
+    Filter base = NitriteFilterUtils.eq(dottedPath, value);
     if (!(value instanceof Number n)) {
       return base;
     }
@@ -382,16 +385,16 @@ public final class NitriteEntityMapper {
         if (Number.class.isAssignableFrom(targetType) || targetType.isPrimitive()) {
           Optional<?> converted = conversionService.convert(n, targetType);
           if (converted.isPresent()) {
-            return FluentFilter.where(dottedPath).eq(converted.get());
+            return NitriteFilterUtils.eq(dottedPath, converted.get());
           }
         }
         Filter precise = switch (targetType) {
-          case Class<?> t when t == int.class   || t == Integer.class -> FluentFilter.where(dottedPath).eq(n.intValue());
-          case Class<?> t when t == long.class  || t == Long.class    -> FluentFilter.where(dottedPath).eq(n.longValue());
-          case Class<?> t when t == double.class || t == Double.class -> FluentFilter.where(dottedPath).eq(n.doubleValue());
-          case Class<?> t when t == float.class || t == Float.class   -> FluentFilter.where(dottedPath).eq(n.floatValue());
-          case Class<?> t when t == short.class || t == Short.class   -> FluentFilter.where(dottedPath).eq(n.shortValue());
-          case Class<?> t when t == byte.class  || t == Byte.class    -> FluentFilter.where(dottedPath).eq(n.byteValue());
+          case Class<?> t when t == int.class   || t == Integer.class -> NitriteFilterUtils.eq(dottedPath, n.intValue());
+          case Class<?> t when t == long.class  || t == Long.class    -> NitriteFilterUtils.eq(dottedPath, n.longValue());
+          case Class<?> t when t == double.class || t == Double.class -> NitriteFilterUtils.eq(dottedPath, n.doubleValue());
+          case Class<?> t when t == float.class || t == Float.class   -> NitriteFilterUtils.eq(dottedPath, n.floatValue());
+          case Class<?> t when t == short.class || t == Short.class   -> NitriteFilterUtils.eq(dottedPath, n.shortValue());
+          case Class<?> t when t == byte.class  || t == Byte.class    -> NitriteFilterUtils.eq(dottedPath, n.byteValue());
           default -> null;
         };
         if (precise != null) {
@@ -403,9 +406,9 @@ public final class NitriteEntityMapper {
     return switch (n) {
       case Integer _, Double _, Float _ -> base;
         default        -> Filter.or(base,
-          FluentFilter.where(dottedPath).eq(n.longValue()),
-          FluentFilter.where(dottedPath).eq(n.intValue()),
-          FluentFilter.where(dottedPath).eq(n.doubleValue()));
+          NitriteFilterUtils.eq(dottedPath, n.longValue()),
+          NitriteFilterUtils.eq(dottedPath, n.intValue()),
+          NitriteFilterUtils.eq(dottedPath, n.doubleValue()));
     };
   }
 
@@ -448,6 +451,17 @@ public final class NitriteEntityMapper {
     }
 
     RuntimePersistentProperty<T> idProperty = safeGetIdentity(persistentEntity);
+    if (idProperty == null && persistentEntity.hasCompositeIdentity()) {
+      // A composite identity has no single id property, and identity properties are not part of
+      // getPersistentProperties(), so nothing else writes them. Without this the document holds only
+      // the generated _id and the identity cannot be read back, filtered or sorted on.
+      for (RuntimePersistentProperty<T> identityProperty : persistentEntity.getRuntimeIdentityProperties()) {
+        Object identityValue = identityProperty.getProperty().get(entity);
+        if (identityValue != null) {
+          doc.put(identityProperty.getPersistedName(), toFilterValue(identityValue));
+        }
+      }
+    }
     Object normalizedId = null;
     Object idValue = idProperty != null ? idProperty.getProperty().get(entity) : null;
     boolean embeddedIdProperty = idProperty != null && idProperty.isAnnotationPresent(EmbeddedId.class);
@@ -527,12 +541,17 @@ public final class NitriteEntityMapper {
           strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
         } else {
           RuntimePersistentProperty<?> idPropRaw = safeGetIdentity(assoc.getAssociatedEntity());
-          if (idPropRaw == null) {
+          // An entity with a composite identity has no single id property, so idPropRaw is null.
+          // We must not fall back to ASSOCIATION_EMBEDDED here; it remains an ID reference,
+          // and its foreign keys are mapped explicitly via @JoinColumn (handled below).
+          if (idPropRaw == null && !assoc.getAssociatedEntity().hasCompositeIdentity()) {
             strategy = PropertyStrategy.ASSOCIATION_EMBEDDED;
           } else {
             boolean isCollection = Iterable.class.isAssignableFrom(prop.getType());
             strategy = isCollection ? PropertyStrategy.ASSOCIATION_IDS_REF : PropertyStrategy.ASSOCIATION_ID_REF;
-            associatedIdProp = (BeanProperty<Object, Object>) idPropRaw.getProperty();
+            if (idPropRaw != null) {
+              associatedIdProp = (BeanProperty<Object, Object>) idPropRaw.getProperty();
+            }
 
             // Composite foreign key: more than one @JoinColumn means the association also needs
             // its own local fields (matching NitriteQueryBuilderHelper's $lookup expectations)
@@ -1191,6 +1210,23 @@ public final class NitriteEntityMapper {
         }
     }
 
+    // A composite identity has no single id property and its properties are not part of
+    // getPersistentProperties(), so they are read back explicitly, mirroring how they are written.
+    if (idProp == null && persistentEntity.hasCompositeIdentity()) {
+        for (RuntimePersistentProperty<T> identityProperty : persistentEntity.getRuntimeIdentityProperties()) {
+            if (identityProperty.isReadOnly()) {
+                continue;
+            }
+            Object storedValue = docGet(doc, identityProperty.getPersistedName(), identityProperty.getName());
+            if (storedValue != null) {
+                Object convertedValue = convertFromDocumentValue(storedValue, identityProperty.getProperty().asArgument());
+                if (convertedValue != null) {
+                    identityProperty.getProperty().set(entity, convertedValue);
+                }
+            }
+        }
+    }
+
     // Populate properties
     for (RuntimePersistentProperty<T> prop : persistentEntity.getPersistentProperties()) {
         if (prop.isReadOnly() || prop.isAnnotationPresent(Transient.class)) {
@@ -1205,6 +1241,16 @@ public final class NitriteEntityMapper {
         Object value = storedName.equals(ID_FIELD)
             ? docGet(doc, storedName, prop.getName(), "_id")
             : docGet(doc, storedName, prop.getName());
+
+        if (value == null && prop instanceof RuntimeAssociation<?>) {
+            // An association to a composite-identity entity stores no single id reference, only the
+            // local fields named by its @JoinColumns, so it is resolved from those instead.
+            Object byJoinColumns = resolveByCompositeJoinColumns(doc, prop, type, visited);
+            if (byJoinColumns != null) {
+                property.set(entity, byJoinColumns);
+                continue;
+            }
+        }
 
         if (value != null) {
             boolean associationStoredEmbedded = isAssociationStoredEmbedded(prop);
@@ -1322,10 +1368,63 @@ public final class NitriteEntityMapper {
         return fromDocumentInternal(associatedDoc, associatedType, visited);
     }
 
+    /**
+     * Resolves an association that stores no single id reference, using the local fields named by
+     * its {@code @JoinColumn} mapping. This is the read-side counterpart of the composite join
+     * column write in {@code toDocumentInternal}, and is what lets an association to an entity with
+     * a composite identity hydrate at all: such an entity has no single id property, so no id
+     * reference field is ever written for it.
+     *
+     * @param doc     the source document
+     * @param prop    the association property being resolved
+     * @param type    the entity type being hydrated, used to look up its pre-computed metadata
+     * @param visited the in-progress hydration cache, to short-circuit cycles
+     * @param <T>     the entity type being hydrated
+     * @return the hydrated associated entity, or {@code null} if the association declares no
+     *     composite join columns, any of them is absent from the document, or nothing matches
+     */
+    private <T> @Nullable Object resolveByCompositeJoinColumns(Document doc,
+                                                              RuntimePersistentProperty<T> prop,
+                                                              Class<T> type,
+                                                              Map<String, Object> visited) {
+        if (helper == null) {
+            return null;
+        }
+        List<CompositeJoinColumn> joinColumns = List.of();
+        for (WritablePropertyMeta<T> wpm : getOrBuildMeta(type).writableProps()) {
+            if (wpm.prop().getName().equals(prop.getName())) {
+                joinColumns = wpm.compositeJoinColumns();
+                break;
+            }
+        }
+        if (joinColumns.isEmpty()) {
+            return null;
+        }
+        RuntimePersistentEntity<?> associatedEntity = ((RuntimeAssociation<?>) prop).getAssociatedEntity();
+        List<Filter> filters = new ArrayList<>(joinColumns.size());
+        for (CompositeJoinColumn joinColumn : joinColumns) {
+            Object localValue = doc.get(joinColumn.localName());
+            if (localValue == null) {
+                return null;
+            }
+            RuntimePersistentProperty<?> referenced = associatedEntity.getPropertyByName(joinColumn.referencedProperty());
+            String referencedField = referenced != null ? referenced.getPersistedName() : joinColumn.referencedProperty();
+            filters.add(NitriteFilterUtils.eq(referencedField, localValue));
+        }
+        Class<Object> associatedType = castClass(associatedEntity.getIntrospection().getBeanType());
+        Filter filter = filters.size() == 1 ? filters.get(0) : Filter.and(filters.toArray(new Filter[0]));
+        Document associatedDoc = helper.getCollection(associatedType).find(filter).firstOrNull();
+        return associatedDoc == null ? null : fromDocumentInternal(associatedDoc, associatedType, visited);
+    }
+
     private static <T> boolean isAssociationStoredEmbedded(RuntimePersistentProperty<T> prop) {
         boolean associationStoredEmbedded;
         if (prop instanceof RuntimeAssociation<T> association && !association.isEmbedded()) {
-            associationStoredEmbedded = safeGetIdentity(association.getAssociatedEntity()) == null;
+            // Mirrors the write-side rule in getOrBuildMeta: an associated entity with a composite
+            // identity has no single id property either, but it is still an id reference and was
+            // not written embedded, so it must not be read back as one.
+            associationStoredEmbedded = safeGetIdentity(association.getAssociatedEntity()) == null
+                && !association.getAssociatedEntity().hasCompositeIdentity();
         } else {
             associationStoredEmbedded = prop instanceof RuntimeAssociation<T> association && association.isEmbedded();
         }

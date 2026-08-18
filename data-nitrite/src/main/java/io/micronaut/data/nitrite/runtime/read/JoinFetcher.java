@@ -24,10 +24,10 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,8 +153,8 @@ final class JoinFetcher {
             };
         } else {
             filter = parentIds.size() == 1
-                ? FluentFilter.where(finalBackFieldName).eq(parentIds.getFirst())
-                : FluentFilter.where(finalBackFieldName).in(comparableIds);
+                ? NitriteFilterUtils.eq(finalBackFieldName, parentIds.getFirst())
+                : NitriteFilterUtils.in(finalBackFieldName, comparableIds);
         }
 
         Map<Object, List<Object>> resultsByParentId = new HashMap<>();

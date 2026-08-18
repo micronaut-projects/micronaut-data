@@ -15,12 +15,10 @@
  */
 package io.micronaut.data.nitrite.transaction;
 
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
-import jakarta.inject.Singleton;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.transaction.Session;
 
@@ -37,17 +35,15 @@ import org.dizitart.no2.transaction.Session;
  *
  * @since 5.2.0
  */
-@Singleton
-@Primary
 public class NitriteConnectionOperations extends AbstractConnectionOperations<Session>
     implements SynchronousConnectionManager<Session> {
 
   private final Nitrite database;
 
   /**
-   * Create a new Nitrite connection operations.
+   * Create connection operations bound to one datasource's database.
    *
-   * @param database the Nitrite database
+   * @param database the Nitrite database of this datasource
    */
   public NitriteConnectionOperations(Nitrite database) {
     this.database = database;

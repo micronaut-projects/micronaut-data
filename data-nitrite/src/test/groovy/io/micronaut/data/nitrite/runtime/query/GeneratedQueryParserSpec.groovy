@@ -1,7 +1,9 @@
 package io.micronaut.data.nitrite.runtime.query
 
+import io.micronaut.core.convert.ConversionService
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.nitrite.model.Event
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
@@ -35,12 +37,18 @@ class GeneratedQueryParserSpec extends Specification {
                 Document.createDocument("type", "alpha").put("priority", 10).put("payload", "hello world"),
                 Document.createDocument("type", "beta").put("priority", 20).put("payload", "goodbye"),
                 Document.createDocument("type", "gamma").put("priority", 30).put("payload", "hello again"),
-                Document.createDocument("type", "alpha AND beta").put("priority", 40).put("payload", "literal")
+                Document.createDocument("type", "alpha AND beta").put("priority", 40).put("payload", "literal"),
+                Document.createDocument("type", "alpha's AND beta").put("priority", 50).put("payload", "with quote")
         )
     }
 
     private GeneratedQueryParser parser() {
-        new GeneratedQueryParser()
+        // Leaf predicates are resolved by the module's own filter builder, exactly as the runtime wires it.
+        def filterBuilder = new NitriteFilterBuilder(
+                new NitriteEntityMapper(ConversionService.SHARED, null, runtimeEntityRegistry))
+        new GeneratedQueryParser({ entity, path, operators ->
+            filterBuilder.buildFieldFilter(entity, path, operators, new Object[0], [:])
+        } as GeneratedQueryParser.LeafFilterFactory)
     }
 
     private List<String> typesMatching(String query, Object... params) {
@@ -57,7 +65,7 @@ class GeneratedQueryParserSpec extends Specification {
     void "AND and OR keep their precedence"() {
         expect:
         typesMatching("UPDATE Event SET payload = :p1 WHERE type = :p2 OR priority > :p3", "x", "alpha", 25) ==
-                ["alpha", "alpha AND beta", "gamma"]
+                ["alpha", "alpha AND beta", "alpha's AND beta", "gamma"]
         typesMatching("UPDATE Event SET payload = :p1 WHERE (type = :p2 OR type = :p3) AND priority > :p4",
                 "x", "alpha", "beta", 15) == ["beta"]
     }
@@ -65,6 +73,11 @@ class GeneratedQueryParserSpec extends Specification {
     void "a quoted literal containing AND is not split into operands"() {
         expect:
         typesMatching("UPDATE Event SET payload = :p1 WHERE type = 'alpha AND beta'", "x") == ["alpha AND beta"]
+    }
+
+    void "a quoted literal containing an escaped quote and AND is not split into operands"() {
+        expect:
+        typesMatching("UPDATE Event SET payload = :p1 WHERE type = 'alpha\\'s AND beta'", "x") == ["alpha's AND beta"]
     }
 
     void "a LIKE predicate matches the wildcard pattern"() {
@@ -82,7 +95,7 @@ class GeneratedQueryParserSpec extends Specification {
         expect:
         typesMatching("UPDATE Event SET payload = :p1 WHERE type IN (:p2)", "x", ["alpha", "gamma"]) ==
                 ["alpha", "gamma"]
-        typesMatching("UPDATE Event SET payload = :p1 WHERE processed IS NULL", "x").size() == 4
+        typesMatching("UPDATE Event SET payload = :p1 WHERE processed IS NULL", "x").size() == 5
     }
 
     void "an unsupported predicate is rejected with an explanatory message"() {

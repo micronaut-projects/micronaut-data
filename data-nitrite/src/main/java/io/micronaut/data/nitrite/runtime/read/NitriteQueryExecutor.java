@@ -41,6 +41,7 @@ import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.NumericUpdateOperations;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryBinder;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -54,7 +55,6 @@ import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,6 +87,7 @@ public final class NitriteQueryExecutor {
     private static final Pattern TOP_FIRST_PATTERN = Pattern.compile("(?:Top|First)(\\d*)");
     private static final Pattern GENERATED_EQUALITY_PATTERN = Pattern.compile(
         "(?:[A-Za-z0-9_]+\\.)?([A-Za-z0-9_]+)\\s*=\\s*:p\\d+");
+    private static final Object[] EMPTY_PARAMS = new Object[0];
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -102,7 +103,11 @@ public final class NitriteQueryExecutor {
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
     private final JoinFetcher joinFetcher;
-    private final GeneratedQueryParser generatedQueryParser = new GeneratedQueryParser();
+    /**
+     * Parses SQL-shaped queries. Every leaf predicate is routed back through {@link #filterBuilder}
+     * so a generated query and its JSON equivalent resolve fields and coerce values identically.
+     */
+    private final GeneratedQueryParser generatedQueryParser;
 
     /**
      * Creates a new NitriteQueryExecutor.
@@ -129,6 +134,9 @@ public final class NitriteQueryExecutor {
         this.entityMapper = entityMapper;
         this.queryParser = queryParser;
         this.filterBuilder = filterBuilder;
+        this.generatedQueryParser = new GeneratedQueryParser(
+            (entity, propertyPath, operators) ->
+                filterBuilder.buildFieldFilter(entity, propertyPath, operators, EMPTY_PARAMS, Collections.emptyMap()));
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
         this.findOptionsFactory = findOptionsFactory;
@@ -161,6 +169,21 @@ public final class NitriteQueryExecutor {
             return list;
         }
         return entityMapper.toFilterValue(value);
+    }
+
+    /**
+     * Resolves the document field a derived aggregate reads.
+     *
+     * <p>The property name derived from the method name is the Java name; resolving it through the
+     * entity metadata is what lets an aggregate read a property mapped to a name that is neither
+     * that Java name nor its snake-case form.
+     *
+     * @param propertyName the property name derived from the method name
+     * @param nq the prepared query, used to resolve the root entity's metadata
+     * @return the field name the property is stored under
+     */
+    private String persistedField(String propertyName, NitritePreparedQuery<?, ?> nq) {
+        return entityMapper.normalizeFieldName(propertyName, entityFactory.apply(nq.getRootEntity()));
     }
 
     private Long handleDistinctCount(NitriteCollection coll, Filter filter, String queryStr) {
@@ -217,16 +240,16 @@ public final class NitriteQueryExecutor {
             String fieldName = aggregationHandler.extractFieldName(methodName);
             if (aggFunc != null && fieldName != null) {
                 List<Document> docs = coll.find(filter).toList();
-                Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+                Object result = aggregationHandler.aggregate(docs, persistedField(fieldName, nq), aggFunc);
                 return valueConverter.convertWithTemporalHandling(result, nq.getResultType());
             }
         }
 
         Sort sort = nq.getSort();
         Sort parsedSort = null;
-        String jsonQuery = nq.getQuery();
-        if (jsonQuery != null) {
-            parsedSort = helper.parseSortFromJsonQuery(jsonQuery);
+        String queryString = nq.getQuery();
+        if (queryString != null) {
+            parsedSort = helper.parseSortFromQuery(queryString);
         }
         if ((parsedSort == null || !parsedSort.isSorted()) && nq.getQueryHints() != null) {
             parsedSort = helper.parseSortFromHints(nq.getQueryHints());
@@ -350,9 +373,9 @@ public final class NitriteQueryExecutor {
         // Setup sort and limit
         Sort s = nq.getSort();
         Sort parsedS = null;
-        String jsonQuery = nq.getQuery();
-        if (jsonQuery != null) {
-            parsedS = helper.parseSortFromJsonQuery(jsonQuery);
+        String queryString = nq.getQuery();
+        if (queryString != null) {
+            parsedS = helper.parseSortFromQuery(queryString);
         }
         if ((parsedS == null || !parsedS.isSorted()) && nq.getQueryHints() != null) {
             parsedS = helper.parseSortFromHints(nq.getQueryHints());
@@ -393,7 +416,7 @@ public final class NitriteQueryExecutor {
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
             if (aggFunc != null && fieldName != null) {
-                Object result = aggregationHandler.aggregate(docs, fieldName, aggFunc);
+                Object result = aggregationHandler.aggregate(docs, persistedField(fieldName, nq), aggFunc);
                 return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
             }
         }
@@ -496,7 +519,7 @@ public final class NitriteQueryExecutor {
                         applyVersionIncrement(updateDoc, entity, namedParameters);
                     }
                     Object id = doc.get("id");
-                    Filter idFilter = id == null ? finalFilter : FluentFilter.where("id").eq(id);
+                    Filter idFilter = id == null ? finalFilter : NitriteFilterUtils.eq("id", id);
                     helper.logUpdate(collection.getName(), idFilter, updateDoc);
                     updated += collection.update(idFilter, updateDoc, UpdateOptions.updateOptions(false)).getAffectedCount();
                 }
@@ -524,7 +547,7 @@ public final class NitriteQueryExecutor {
         }
         Map<String, Object> filterMap = nq.getFilterMap();
         if (filterMap != null) {
-            for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL)) {
+            for (String operator : List.of(NitriteQueryOperators.SET, NitriteQueryOperators.INC, NitriteQueryOperators.MUL, NitriteQueryOperators.CONCAT)) {
                 Object value = filterMap.get(operator);
                 if (value instanceof Map<?, ?> map) {
                     updateOperations.put(operator, new LinkedHashMap<>((Map<String, Object>) map));
@@ -547,7 +570,17 @@ public final class NitriteQueryExecutor {
         return generatedQueryParser.parseSet(nq.getQuery(), entityFactory.apply(nq.getRootEntity()), jsonParams);
     }
 
-    private Filter buildGeneratedFilter(PreparedQuery<?, ?> query, RuntimePersistentEntity<?> entity, Object[] jsonParams) {
+    /**
+     * Builds a filter for a generated (SQL-shaped) query that carries no JSON filter map, by
+     * parsing its {@code WHERE} clause. Falls back to {@code @Id}/{@code @Version} arguments
+     * when the query has no {@code WHERE} clause.
+     *
+     * @param query the prepared query
+     * @param entity the root entity
+     * @param jsonParams the positional parameter values
+     * @return the built filter, or {@link Filter#ALL} when no predicate can be derived
+     */
+    public Filter buildGeneratedFilter(PreparedQuery<?, ?> query, RuntimePersistentEntity<?> entity, Object[] jsonParams) {
         Filter parsed = generatedQueryParser.parseWhere(query.getQuery(), entity, jsonParams);
         if (parsed != null) {
             return parsed;
@@ -561,9 +594,9 @@ public final class NitriteQueryExecutor {
         List<Filter> filters = new ArrayList<>(2);
         for (int i = 0; i < Math.min(arguments.length, values.length); i++) {
             if (arguments[i].getAnnotationMetadata().hasAnnotation(Id.class)) {
-                filters.add(FluentFilter.where(NitriteEntityMapper.ID_FIELD).eq(toFilterValue(values[i])));
+                filters.add(NitriteFilterUtils.eq(NitriteEntityMapper.ID_FIELD, toFilterValue(values[i])));
             } else if (arguments[i].getAnnotationMetadata().hasAnnotation(Version.class) && entity.hasVersion()) {
-                filters.add(FluentFilter.where(entity.getVersion().getPersistedName()).eq(toFilterValue(values[i])));
+                filters.add(NitriteFilterUtils.eq(entity.getVersion().getPersistedName(), toFilterValue(values[i])));
             }
         }
         if (filters.isEmpty()) {
@@ -585,7 +618,8 @@ public final class NitriteQueryExecutor {
 
     private boolean requiresDocumentUpdate(Map<String, Object> updateOperations) {
         return updateOperations.containsKey(NitriteQueryOperators.INC)
-            || updateOperations.containsKey(NitriteQueryOperators.MUL);
+            || updateOperations.containsKey(NitriteQueryOperators.MUL)
+            || updateOperations.containsKey(NitriteQueryOperators.CONCAT);
     }
 
     @SuppressWarnings("unchecked")
@@ -600,21 +634,28 @@ public final class NitriteQueryExecutor {
                 updateDoc.put(entry.getKey(), resolveParameterValue(entry.getValue(), jsonParams, namedParameters));
             }
         }
-        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.INC),
-            jsonParams, namedParameters, NitriteQueryOperators.INC);
-        applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.MUL),
-            jsonParams, namedParameters, NitriteQueryOperators.MUL);
+        // Every derived operator reads the stored value, so they only run on the per-document
+        // branch. requiresDocumentUpdate() names exactly those operators, so a null current
+        // document here means none of them are present.
+        if (currentDocument != null) {
+            applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.INC),
+                jsonParams, namedParameters, NitriteQueryOperators.INC);
+            applyNumericUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.MUL),
+                jsonParams, namedParameters, NitriteQueryOperators.MUL);
+            applyConcatUpdate(updateDoc, currentDocument, updateOperations.get(NitriteQueryOperators.CONCAT),
+                jsonParams, namedParameters);
+        }
         return updateDoc;
     }
 
     @SuppressWarnings("unchecked")
     private void applyNumericUpdate(Document updateDoc,
-                                    @Nullable Document currentDocument,
+                                    Document currentDocument,
                                     @Nullable Object operation,
                                     Object[] jsonParams,
                                     Map<String, Object> namedParameters,
                                     String operator) {
-        if (!(operation instanceof Map<?, ?> fields) || currentDocument == null) {
+        if (!(operation instanceof Map<?, ?> fields)) {
             return;
         }
         boolean multiply = NitriteQueryOperators.MUL.equals(operator);
@@ -622,6 +663,24 @@ public final class NitriteQueryExecutor {
             Object currentValue = currentDocument.get(entry.getKey());
             Object operand = resolveUpdateOperand(entry.getValue(), jsonParams, namedParameters);
             updateDoc.put(entry.getKey(), NumericUpdateOperations.apply(currentValue, operand, multiply, entry.getKey()));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void applyConcatUpdate(Document updateDoc,
+                                   Document currentDocument,
+                                   @Nullable Object operation,
+                                   Object[] jsonParams,
+                                   Map<String, Object> namedParameters) {
+        if (!(operation instanceof Map<?, ?> fields)) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : ((Map<String, Object>) fields).entrySet()) {
+            Object currentValue = currentDocument.get(entry.getKey());
+            Object operand = resolveUpdateOperand(entry.getValue(), jsonParams, namedParameters);
+            String currentStr = currentValue != null ? String.valueOf(currentValue) : "";
+            String appendStr = operand != null ? String.valueOf(operand) : "";
+            updateDoc.put(entry.getKey(), currentStr + appendStr);
         }
     }
 

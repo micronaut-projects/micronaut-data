@@ -20,15 +20,12 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
-import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledValue;
 import io.micronaut.data.nitrite.runtime.query.ast.NitriteFilterAST;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -41,26 +38,36 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.ALL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.AND;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.CONCAT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.COUNT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.DIVIDE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EMPTY;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXISTS;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EXPR;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.IN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.INC;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.INTERSECTS;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LIKE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LIMIT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.MUL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.MULTIPLY;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NEAR;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT_NULL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NULL;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.PROJECT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.REGEX;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.RIGHT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SET;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SKIP;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SORT;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.STR_LEN_CP;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.SUBSTR_CP;
 import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.TEXT;
@@ -131,10 +138,10 @@ public final class NitriteFilterBuilder {
         for (Map.Entry<String, Object> entry : filterObj.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (key != null && (key.equals(NitriteQueryOperators.SORT) || key.equals(NitriteQueryOperators.SET)
-                    || key.equals(NitriteQueryOperators.INC) || key.equals(NitriteQueryOperators.MUL)
-                    || key.equals(NitriteQueryOperators.LIMIT) || key.equals(NitriteQueryOperators.SKIP)
-                    || key.equals(NitriteQueryOperators.COUNT) || key.equals(NitriteQueryOperators.PROJECT))) {
+            if (key != null && (key.equals(SORT) || key.equals(SET)
+                    || key.equals(INC) || key.equals(MUL)
+                    || key.equals(LIMIT) || key.equals(SKIP)
+                    || key.equals(COUNT) || key.equals(PROJECT))) {
                 continue;
             }
             switch (key) {
@@ -160,7 +167,7 @@ public final class NitriteFilterBuilder {
                         compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                     }
                 }
-                case NitriteQueryOperators.NOT -> {
+                case NOT -> {
                     if (value instanceof Map<?, ?> m) {
                         compiledFilters.add(new NitriteFilterAST.NotNode(
                             (NitriteFilterAST) compile(entity, toStringObjectMap(m))));
@@ -417,47 +424,50 @@ public final class NitriteFilterBuilder {
         OperatorHandler handler = operatorRegistry.get(op);
         return handler != null
             ? handler.build(entity, field, finalValue, params, namedParameters)
-            : FluentFilter.where(field).eq(finalValue);
+            : NitriteFilterUtils.eq(field, finalValue);
     }
 
     private Map<String, OperatorHandler> buildOperatorRegistry() {
         Map<String, OperatorHandler> r = new LinkedHashMap<>();
         r.put(EQ,  (e, f, v, p, n) -> entityMapper.eqWithNumericCoercion(e, f, v, f));
-        r.put(NE,  (e, f, v, p, n) -> FluentFilter.where(f).notEq(v));
-        r.put(GT,  (e, f, v, p, n) -> buildRangeFilter(f, GT, v));
-        r.put(GTE, (e, f, v, p, n) -> buildRangeFilter(f, GTE, v));
-        r.put(LT,  (e, f, v, p, n) -> buildRangeFilter(f, LT, v));
-        r.put(LTE, (e, f, v, p, n) -> buildRangeFilter(f, LTE, v));
+        r.put(NE,  (e, f, v, p, n) -> v == null ? NitriteFilterUtils.isNotNullFilter(f) : NitriteFilterUtils.notEq(f, v));
+        r.put(GT,  (e, f, v, p, n) -> buildRangeFilter(e, f, GT, v));
+        r.put(GTE, (e, f, v, p, n) -> buildRangeFilter(e, f, GTE, v));
+        r.put(LT,  (e, f, v, p, n) -> buildRangeFilter(e, f, LT, v));
+        r.put(LTE, (e, f, v, p, n) -> buildRangeFilter(e, f, LTE, v));
         r.put(IN, this::buildInFilter);
         r.put(NIN, this::buildNotInFilter);
-        r.put(NULL,    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).eq(null) : Filter.ALL);
-        r.put(NOT_NULL, (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? FluentFilter.where(f).notEq(null) : Filter.ALL);
+        r.put(NULL,    (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? NitriteFilterUtils.isNullFilter(f) : NitriteFilterUtils.isNotNullFilter(f));
+        r.put(NOT_NULL, (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? NitriteFilterUtils.isNotNullFilter(f) : NitriteFilterUtils.isNullFilter(f));
         r.put(BETWEEN, (e, f, v, p, n) -> {
             if (v instanceof List<?> list && list.size() == 2) {
                 Object v1 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(0), p, n)));
                 Object v2 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(1), p, n)));
-                return buildBetweenFilter(f, v1, v2);
+                return buildBetweenFilter(e, f, v1, v2);
             }
-            return Filter.ALL;
+            throw malformedOperand(BETWEEN, f, "expected a two-element range, got " + v);
         });
-        r.put(REGEX, (e, f, v, p, n) -> FluentFilter.where(f).regex(resolveRegexValue(v, p, n)));
+        r.put(REGEX, (e, f, v, p, n) -> NitriteFilterUtils.regex(f, resolveRegexValue(v, p, n)));
         r.put(LIKE,  (e, f, v, p, n) -> {
             Object resolved = valueResolver.resolveValue(v, p, n);
-            return FluentFilter.where(f).regex(resolved != null ? PatternConverter.convertLikeToRegex(resolved.toString()) : "");
+            return NitriteFilterUtils.regex(f, resolved != null ? PatternConverter.convertLikeToRegex(resolved.toString()) : "");
         });
-        r.put(NitriteQueryOperators.NOT, (e, f, v, p, n) -> {
-            if (v instanceof Map<?, ?> m) {
-                Filter filter = buildFieldFilter(e, f, toStringObjectMap(m), p, n);
-                return filter != null ? filter.not() : Filter.ALL;
+        r.put(NOT, (e, f, v, p, n) -> {
+            if (!(v instanceof Map<?, ?> m)) {
+                throw malformedOperand(NOT, f, "expected a nested operator object, got " + v);
             }
-            return Filter.ALL;
+            Filter filter = buildFieldFilter(e, f, toStringObjectMap(m), p, n);
+            if (filter == null) {
+                throw malformedOperand(NOT, f, "nested operator object produced no filter: " + v);
+            }
+            return filter.not();
         });
-        r.put(NitriteQueryOperators.EXISTS, (e, f, v, p, n) -> Boolean.TRUE.equals(v)
-            ? FluentFilter.where(f).notEq(null) : FluentFilter.where(f).eq(null));
+        r.put(EXISTS, (e, f, v, p, n) -> Boolean.TRUE.equals(v)
+            ? NitriteFilterUtils.exists(f) : NitriteFilterUtils.exists(f).not());
         r.put(EMPTY, (e, f, v, p, n) -> Boolean.TRUE.equals(v)
-            ? Filter.or(FluentFilter.where(f).eq(""), FluentFilter.where(f).eq(null))
-            : Filter.and(FluentFilter.where(f).notEq(""), FluentFilter.where(f).notEq(null)));
-        r.put(TEXT,       (e, f, v, p, n) -> FluentFilter.where(f).text(v != null ? v.toString() : ""));
+            ? Filter.or(NitriteFilterUtils.eq(f, ""), NitriteFilterUtils.isNullFilter(f))
+            : Filter.and(NitriteFilterUtils.notEq(f, ""), NitriteFilterUtils.isNotNullFilter(f)));
+        r.put(TEXT,       (e, f, v, p, n) -> NitriteFilterUtils.text(f, v != null ? v.toString() : ""));
         r.put(ALL, (e, f, v, p, n) -> buildArrayContainsFilter(f, v, p, n));
         r.put(NEAR,       (e, f, v, p, n) -> spatialFactory.buildNearFilter(f, v, p, n));
         r.put(WITHIN,     (e, f, v, p, n) -> spatialFactory.createSpatialFilter(f, v, "within"));
@@ -498,7 +508,10 @@ public final class NitriteFilterBuilder {
             return NONE;
         }
         List<Comparable<?>> values = coerceCollectionValues(entity, field, valueResolver.resolveCollection(finalValue, params, namedParameters));
-        return values.isEmpty() ? NONE : FluentFilter.where(field).in(values.toArray(new Comparable[0]));
+        boolean hasNull = values.contains(null);
+        Comparable<?>[] nonNullArray = values.stream().filter(Objects::nonNull).toArray(Comparable[]::new);
+        Filter inFilter = nonNullArray.length == 0 ? NONE : NitriteFilterUtils.in(field, nonNullArray);
+        return hasNull ? Filter.or(inFilter, NitriteFilterUtils.isNullFilter(field)) : inFilter;
     }
 
     private Filter buildArrayContainsFilter(String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
@@ -512,14 +525,14 @@ public final class NitriteFilterBuilder {
         }
         if (values.size() == 1) {
             Comparable<?> first = values.getFirst();
-            return first != null ? FluentFilter.where(field).elemMatch(FluentFilter.$.eq(first)) : Filter.ALL;
+            return first != null ? NitriteFilterUtils.elemMatch(field, NitriteFilterUtils.eq("$", first)) : Filter.ALL;
         }
         Filter[] filters = values.stream()
             .map(elem -> {
                 if (elem == null) {
                     return Filter.ALL;
                 }
-                return (Filter) FluentFilter.where(field).elemMatch(FluentFilter.$.eq(elem));
+                return NitriteFilterUtils.elemMatch(field, NitriteFilterUtils.eq("$", elem));
             })
             .toArray(Filter[]::new);
         return Filter.and(filters);
@@ -530,26 +543,39 @@ public final class NitriteFilterBuilder {
             return Filter.ALL;
         }
         List<Comparable<?>> values = coerceCollectionValues(entity, field, valueResolver.resolveCollection(finalValue, params, namedParameters));
-        return values.isEmpty() ? Filter.ALL : FluentFilter.where(field).notIn(values.toArray(new Comparable[0]));
+        boolean hasNull = values.contains(null);
+        Comparable<?>[] nonNullArray = values.stream().filter(Objects::nonNull).toArray(Comparable[]::new);
+        Filter notInFilter = nonNullArray.length == 0 ? Filter.ALL : NitriteFilterUtils.notIn(field, nonNullArray);
+        return hasNull ? Filter.and(notInFilter, NitriteFilterUtils.isNotNullFilter(field)) : notInFilter;
     }
 
     private List<Comparable<?>> coerceCollectionValues(RuntimePersistentEntity<?> entity, String field, List<Comparable<?>> values) {
-        if (values.isEmpty()) {
-            return values;
-        }
-        RuntimePersistentProperty<?> property = findProperty(entity, field);
-        if (property == null || (property.getType() != char.class && property.getType() != Character.class)) {
+        if (values.isEmpty() || !isCharacterProperty(entity, field)) {
             return values;
         }
         List<Comparable<?>> coerced = new ArrayList<>(values.size());
         for (Comparable<?> value : values) {
-            if (value instanceof String string && string.length() == 1) {
-                coerced.add(string.charAt(0));
-            } else {
-                coerced.add(value);
-            }
+            coerced.add((Comparable<?>) coerceCharacter(value));
         }
         return coerced;
+    }
+
+    /**
+     * Aligns an operand with the type its field is stored under, so the comparison happens between
+     * two values of the same type. Nitrite's ordering filters compare with a raw
+     * {@code Comparable.compareTo}, which a mismatched pair would fail rather than silently skip.
+     */
+    private @Nullable Object coerceValue(RuntimePersistentEntity<?> entity, String field, @Nullable Object value) {
+        return isCharacterProperty(entity, field) ? coerceCharacter(value) : value;
+    }
+
+    private static @Nullable Object coerceCharacter(@Nullable Object value) {
+        return value instanceof String string && string.length() == 1 ? string.charAt(0) : value;
+    }
+
+    private boolean isCharacterProperty(RuntimePersistentEntity<?> entity, String field) {
+        RuntimePersistentProperty<?> property = findProperty(entity, field);
+        return property != null && (property.getType() == char.class || property.getType() == Character.class);
     }
 
     private @Nullable RuntimePersistentProperty<?> findProperty(@Nullable RuntimePersistentEntity<?> entity, String field) {
@@ -572,59 +598,58 @@ public final class NitriteFilterBuilder {
         return null;
     }
 
-    private Filter buildRangeFilter(String field, String op, @Nullable Object value) {
-        if (!(value instanceof Comparable<?> comparable)) {
-            return Filter.ALL;
+    /**
+     * Builds an ordering comparison as one of Nitrite's own filters rather than as a predicate
+     * lambda. The distinction matters beyond style: Nitrite's query planner selects an index by
+     * testing {@code filter instanceof ComparableFilter}, so a lambda can only ever drive a full
+     * collection scan, while these filters carry an {@code applyOnIndex} the planner can use
+     * against the indexes this module creates.
+     */
+    private Filter buildRangeFilter(RuntimePersistentEntity<?> entity, String field, String op, @Nullable Object value) {
+        Object coerced = coerceValue(entity, field, value);
+        if (coerced == null) {
+            return NONE;
         }
-        return pair -> compareValues(pair.getSecond().get(field), comparable, op);
-    }
-
-    private Filter buildBetweenFilter(String field, @Nullable Object lower, @Nullable Object upper) {
-        if (!(lower instanceof Comparable<?> lowerComparable) || !(upper instanceof Comparable<?> upperComparable)) {
-            return Filter.ALL;
-        }
-        return pair -> compareValues(pair.getSecond().get(field), lowerComparable, GTE)
-            && compareValues(pair.getSecond().get(field), upperComparable, LTE);
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static boolean compareValues(@Nullable Object left, Object right, String op) {
-        if (left == null || right == null) {
-            return false;
-        }
-        int comparison;
-        if (left instanceof Number || right instanceof Number) {
-            BigDecimal leftNumber = toBigDecimal(left);
-            BigDecimal rightNumber = toBigDecimal(right);
-            if (leftNumber == null || rightNumber == null) {
-                return false;
-            }
-            comparison = leftNumber.compareTo(rightNumber);
-        } else if (left instanceof Comparable comparable && left.getClass().isInstance(right)) {
-            comparison = comparable.compareTo(right);
-        } else {
-            return false;
+        if (!(coerced instanceof Comparable<?> comparable)) {
+            throw malformedOperand(op, field, "value is not comparable: " + coerced.getClass().getName());
         }
         return switch (op) {
-            case GT -> comparison > 0;
-            case GTE -> comparison >= 0;
-            case LT -> comparison < 0;
-            case LTE -> comparison <= 0;
-            default -> false;
+            case GT -> NitriteFilterUtils.gt(field, comparable);
+            case GTE -> NitriteFilterUtils.gte(field, comparable);
+            case LT -> NitriteFilterUtils.lt(field, comparable);
+            case LTE -> NitriteFilterUtils.lte(field, comparable);
+            default -> throw malformedOperand(op, field, "unsupported ordering operator");
         };
     }
 
-    private static @Nullable BigDecimal toBigDecimal(Object value) {
-        try {
-            return switch (value) {
-                case BigDecimal bigDecimal -> bigDecimal;
-                case Number number -> new BigDecimal(number.toString());
-                case String string -> new BigDecimal(string);
-                default -> null;
-            };
-        } catch (NumberFormatException e) {
-            return null;
+    private Filter buildBetweenFilter(RuntimePersistentEntity<?> entity, String field, @Nullable Object lower, @Nullable Object upper) {
+        Object coercedLower = coerceValue(entity, field, lower);
+        Object coercedUpper = coerceValue(entity, field, upper);
+        if (coercedLower == null || coercedUpper == null) {
+            return NONE;
         }
+        if (!(coercedLower instanceof Comparable<?> lowerComparable)
+            || !(coercedUpper instanceof Comparable<?> upperComparable)) {
+            throw malformedOperand(BETWEEN, field, "range bounds are not comparable");
+        }
+        return NitriteFilterUtils.between(field, lowerComparable, upperComparable);
+    }
+
+    /**
+     * Builds the failure raised when an operator is handed a value it cannot turn into a filter.
+     *
+     * <p>The alternative — returning {@link Filter#ALL} — reads as "no restriction" to Nitrite, so a
+     * malformed operand would silently widen the query to every document in the collection and
+     * surface as wrong data rather than as an error.
+     *
+     * @param operator the query operator being built
+     * @param field    the persisted field path the operator applies to
+     * @param detail   what was wrong with the operand
+     * @return the exception to throw
+     */
+    private static IllegalArgumentException malformedOperand(String operator, String field, String detail) {
+        return new IllegalArgumentException(
+            "Cannot build Nitrite filter for operator " + operator + " on field '" + field + "': " + detail);
     }
 
     private @Nullable Filter buildOperatorFiltersForPath(

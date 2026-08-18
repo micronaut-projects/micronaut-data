@@ -1,6 +1,7 @@
 package io.micronaut.data.nitrite
 
 import io.micronaut.data.nitrite.model.Event
+import io.micronaut.data.nitrite.repository.EventJdqlRepository
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
@@ -17,6 +18,9 @@ class NitriteCriteriaUpdatePathSpec extends Specification {
 
     @Inject
     EventRepository eventRepository
+
+    @Inject
+    EventJdqlRepository eventJdqlRepository
 
     def setup() {
         eventRepository.deleteAll()
@@ -46,5 +50,48 @@ class NitriteCriteriaUpdatePathSpec extends Specification {
         def event = eventRepository.findByType("nested").first()
         event.location.region == "after"
         event.location.zone == "zone-a"
+    }
+
+    private Event storedWithAmount(String type, BigDecimal amount) {
+        def event = new Event()
+        event.type = type
+        event.amount = amount
+        eventRepository.save(event)
+    }
+
+    void "a JDQL update that subtracts from a property decrements the stored value"() {
+        given:
+        storedWithAmount("subtract", new BigDecimal("100.00"))
+
+        when:
+        def updated = eventJdqlRepository.subtractAmountByType("subtract", new BigDecimal("30.00"))
+
+        then:
+        updated == 1
+        eventRepository.findByType("subtract").first().amount == new BigDecimal("70.00")
+    }
+
+    void "a JDQL update that subtracts a literal constant decrements the stored value"() {
+        given:
+        storedWithAmount("subtract-literal", new BigDecimal("100.00"))
+
+        when:
+        def updated = eventJdqlRepository.subtractLiteralAmountByType("subtract-literal")
+
+        then:
+        updated == 1
+        eventRepository.findByType("subtract-literal").first().amount == new BigDecimal("85.00")
+    }
+
+    void "a JDQL update that divides a property reduces the stored value proportionally"() {
+        given:
+        storedWithAmount("divide", new BigDecimal("100.00"))
+
+        when:
+        def updated = eventJdqlRepository.divideAmountByType("divide", new BigDecimal("4"))
+
+        then:
+        updated == 1
+        eventRepository.findByType("divide").first().amount.stripTrailingZeros() == new BigDecimal("25").stripTrailingZeros()
     }
 }

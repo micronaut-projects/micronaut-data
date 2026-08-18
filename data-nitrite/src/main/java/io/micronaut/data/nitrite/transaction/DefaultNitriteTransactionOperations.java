@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.nitrite.transaction;
 
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -23,7 +22,6 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.core.annotation.Internal;
-import jakarta.inject.Singleton;
 import org.dizitart.no2.transaction.Session;
 import org.dizitart.no2.transaction.Transaction;
 import org.slf4j.Logger;
@@ -56,8 +54,6 @@ import org.slf4j.LoggerFactory;
  *
  * @since 5.2.0
  */
-@Singleton
-@Primary
 @Internal
 public class DefaultNitriteTransactionOperations extends AbstractDefaultTransactionOperations<Session> implements NitriteTransactionOperations {
 

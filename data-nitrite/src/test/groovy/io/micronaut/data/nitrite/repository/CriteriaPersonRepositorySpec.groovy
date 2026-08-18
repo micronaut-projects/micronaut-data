@@ -2,9 +2,13 @@ package io.micronaut.data.nitrite.repository
 
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.nitrite.model.CriteriaPerson
+import io.micronaut.data.nitrite.model.CriteriaBook
+import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.criteria.Selection
 import spock.lang.Specification
 
 /**
@@ -17,7 +21,7 @@ class CriteriaPersonRepositorySpec extends Specification {
     CriteriaPersonRepository repository
 
     @Inject
-    io.micronaut.data.nitrite.operations.NitriteRepositoryOperations operations
+    NitriteRepositoryOperations operations
 
     def setup() {
         repository.deleteAll()
@@ -189,6 +193,21 @@ class CriteriaPersonRepositorySpec extends Specification {
         results[0].name == "Charlie"
     }
 
+    void "test criteria LIKE with a custom escape char matches a literal wildcard"() {
+        given:
+        repository.save(new CriteriaPerson("50%Off", 40))
+        repository.save(new CriteriaPerson("50XOff", 41))
+
+        when:
+        // Without the escape, "%" is a wildcard; with escapeChar '\', "\%" matches a literal "%".
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "50\\%Off", '\\' as char)
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].name == "50%Off"
+    }
+
     // ========== Section 8: exists / paginated findAll ==========
 
     void "test criteria exists"() {
@@ -328,5 +347,105 @@ class CriteriaPersonRepositorySpec extends Specification {
         then:
         results.size() == 1
         results[0].name == "Josh"
+    }
+
+    // ========== Section 10: IS EMPTY / IS NOT EMPTY Predicates ==========
+
+    void "test criteria isEmptyString"() {
+        given:
+        // setup already has Denis(13) and Josh(22) with non-empty names
+        repository.save(new CriteriaPerson("", 40))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isEmptyString(root.get("name"))
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 1
+        results[0].age == 40
+    }
+
+    void "test criteria isNotEmptyString"() {
+        given:
+        // setup already has Denis(13) and Josh(22) with non-empty names
+        repository.save(new CriteriaPerson("", 40))
+
+        when:
+        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isNotEmptyString(root.get("name"))
+        def results = repository.findAll(spec)
+
+        then:
+        results.size() == 2
+        results*.name.containsAll(["Denis", "Josh"])
+    }
+
+    // ========== Section 11: Criteria fallbacks — the string-query path ==========
+    //
+    // NitriteCriteriaExecutor first tries to build a runtime filter directly. A query carrying an
+    // aggregation or a join declines that fast path and falls back to the compiled string query,
+    // so each of these covers a distinct fallback entry point.
+
+    void "an aggregate selection falls back to the string query and counts the collection"() {
+        given:
+        repository.save(new CriteriaPerson("Zack", 50))
+        def cb = operations.criteriaBuilder
+
+        when:
+        def query = cb.createQuery(Long)
+        def root = query.from(CriteriaPerson)
+        query.select(cb.count(root))
+
+        then: "the two persons from setup plus Zack"
+        operations.findOne(query) == 3L
+    }
+
+    void "a non-aggregate selection typed as a count still reports the collection size"() {
+        given:
+        repository.save(new CriteriaPerson("Zack", 50))
+        def cb = operations.criteriaBuilder
+
+        when: "the result type is Long but the selection is the entity itself"
+        def query = cb.createQuery(Long)
+        def root = query.from(CriteriaPerson)
+        query.select(root as Selection)
+
+        then:
+        operations.findOne(query) == 3L
+    }
+
+    void "a joined read falls back to the string query for both the paged and the exists forms"() {
+        given: "no books are stored, so the join has nothing to resolve"
+        def cb = operations.criteriaBuilder
+
+        when:
+        def paged = cb.createQuery(CriteriaBook)
+        def pagedRoot = paged.from(CriteriaBook)
+        pagedRoot.join("author", JoinType.LEFT)
+        paged.select(pagedRoot).orderBy(cb.desc(pagedRoot.get("title")))
+
+        then:
+        operations.findAll(paged, 0, 2).isEmpty()
+
+        when:
+        def exists = cb.createQuery(CriteriaBook)
+        def existsRoot = exists.from(CriteriaBook)
+        existsRoot.join("author", JoinType.LEFT)
+        exists.select(existsRoot).where(cb.equal(existsRoot.get("title"), "Book title"))
+
+        then:
+        !operations.exists(exists)
+    }
+
+    void "a DTO projection and the aggregate finders read the same stored person"() {
+        given:
+        repository.save(new CriteriaPerson(name: "DtoPerson", age: 30))
+
+        expect:
+        repository.findByName("DtoPerson")*.name() == ["DtoPerson"]
+        repository.findByName("DtoPerson")*.age() == [30]
+
+        and:
+        repository.findMaxAgeByName("DtoPerson") == 30
+        repository.findAvgAgeByName("DtoPerson") == 30.0d
     }
 }

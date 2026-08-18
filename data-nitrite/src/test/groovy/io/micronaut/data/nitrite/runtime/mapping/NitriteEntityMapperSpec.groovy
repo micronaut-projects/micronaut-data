@@ -15,9 +15,12 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.core.annotation.Creator
+import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.nitrite.model.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.serde.ObjectMapper
+import io.micronaut.serde.annotation.Serdeable
 import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
 import org.dizitart.no2.collection.Document
@@ -25,11 +28,52 @@ import spock.lang.Specification
 
 @MicronautTest(transactional = false)
 class NitriteEntityMapperSpec extends Specification {
-
     @Inject ConversionService conversionService
     @Inject ObjectMapper objectMapper
     @Inject Nitrite nitrite
     @Inject RuntimeEntityRegistry runtimeEntityRegistry
+
+    def "a numeric equality narrows to the property's declared type when the conversion service declines"() {
+        given: "a conversion service that converts nothing, so the explicit narrowing switch is used"
+        def decliningConversionService = new ConversionService() {
+            @Override
+            def <T> Optional<T> convert(Object object, Class<T> targetType, ConversionContext context) {
+                Optional.empty()
+            }
+
+            @Override
+            def <S, T> boolean canConvert(Class<S> sourceType, Class<T> targetType) {
+                false
+            }
+        }
+        def mapper = new NitriteEntityMapper(decliningConversionService, objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(Person)
+        def expected = mapper.eqWithNumericCoercion(entity, "age", 10 as Integer, "age").toString()
+
+        expect: "every incoming numeric width collapses onto the Integer-typed filter"
+        mapper.eqWithNumericCoercion(entity, "age", value, "age").toString() == expected
+
+        where:
+        value << [10L, (short) 10, (byte) 10, 10.0f, 10.0d, 10 as Integer]
+    }
+
+    def "a numeric equality is left alone when the type cannot be narrowed"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(Person)
+
+        expect: "with no entity, or a field it does not declare, every numeric width is tried in turn"
+        mapper.eqWithNumericCoercion(null, "age", 10L, "age").toString().contains("||")
+        mapper.eqWithNumericCoercion(entity, "unknown", 10L, "unknown").toString().contains("||")
+
+        and: "a non-numeric value needs no widening"
+        !mapper.eqWithNumericCoercion(entity, "name", "hello", "name").toString().contains("||")
+
+        and: "a null value becomes an is-null test rather than an equality"
+        mapper.eqWithNumericCoercion(entity, "name", null, "name").toString() !=
+            mapper.eqWithNumericCoercion(entity, "name", "hello", "name").toString()
+    }
+
 
     def "test cyclic association handling in NitriteEntityMapper"() {
         given:
@@ -39,7 +83,7 @@ class NitriteEntityMapperSpec extends Specification {
         parent.id = 1L
         def child = new CyclicEntity(name: "Child", parent: parent)
         child.id = 2L
-        
+
         // Create the cycle
         parent.parent = child
 
@@ -78,13 +122,13 @@ class NitriteEntityMapperSpec extends Specification {
     def "test nested POJO mapping and naming strategies"() {
         given:
         def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
-        
+
         def pojo = new NestedPojo(camelCaseField: "camel", snake_case_field: "snake")
         def holder = new PojoHolder(id: 1L, nested: pojo)
 
         when: "serialize to document"
         def doc = mapper.toDocument(holder)
-        
+
         then:
         doc.get("nested") instanceof Map
         def nestedMap = doc.get("nested") as Map
@@ -299,13 +343,53 @@ class NitriteEntityMapperSpec extends Specification {
         NitriteTypeRegistry.get(Object) == null
     }
 
+    def "a joined association fetched as a Document or List of Documents hydrates directly"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+
+        when: "association is populated as a single Document"
+        def docWithDoc = Document.createDocument("id", "1")
+            .put("child", Document.createDocument("id", "2"))
+        def rootSingle = mapper.fromDocument(docWithDoc, ConstructorCycleParent)
+
+        then:
+        rootSingle.child != null
+        rootSingle.child.id == "2"
+
+        when: "association is populated as a List of Documents"
+        def docWithList = Document.createDocument("id", "1")
+            .put("children", [
+                Document.createDocument("id", "c1"),
+                Document.createDocument("id", "c2")
+            ])
+        def rootList = mapper.fromDocument(docWithList, UnembeddedParent)
+
+        then:
+        rootList.children != null
+        rootList.children.size() == 2
+        rootList.children[0].id == "c1"
+        rootList.children[1].id == "c2"
+    }
+}
+
+@MappedEntity
+class UnembeddedParent {
+    @Id String id
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    List<UnembeddedChild> children
+}
+
+@MappedEntity
+class UnembeddedChild {
+    @Id String id
 }
 
 @MappedEntity
 class CyclicEntity {
     @Id @GeneratedValue Long id
     String name
-    
+
     @Relation(Relation.Kind.EMBEDDED)
     CyclicEntity parent
 }
@@ -345,7 +429,7 @@ class PojoHolder {
 }
 
 @Introspected
-@io.micronaut.serde.annotation.Serdeable
+@Serdeable
 class CustomId {
     Map<String, Object> info
 }
@@ -355,7 +439,7 @@ class CustomIdEntity {
     @Id CustomId id
 }
 
-@io.micronaut.serde.annotation.Serdeable
+@Serdeable
 class CustomSerializable implements Serializable {
     String val
     @Override String toString() { val }

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.nitrite.runtime;
+package io.micronaut.data.nitrite.model;
 
-import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.core.annotation.Introspected;
 
-@NitriteRepository
-public interface MyTestRepo extends CrudRepository<MyTestEntity, Long> {
+/**
+ * Projection used by the Criteria repository tests.
+ */
+@Introspected
+public record CriteriaPersonDto(String name, int age) {
 }

@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 
+import java.util.List;
+
 @MappedEntity
 public class OneToManyChild {
     @Id
@@ -29,6 +31,13 @@ public class OneToManyChild {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     private OneToManyParent parent;
+
+    /**
+     * A second ONE_TO_MANY on the child, used only so that a reverse-lookup path can name a
+     * target property whose relation kind is not the MANY_TO_ONE inverse the resolver expects.
+     */
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    private List<OneToManyChild> siblings;
 
     public OneToManyChild() {
     }
@@ -60,5 +69,13 @@ public class OneToManyChild {
 
     public void setParent(OneToManyParent parent) {
         this.parent = parent;
+    }
+
+    public List<OneToManyChild> getSiblings() {
+        return siblings;
+    }
+
+    public void setSiblings(List<OneToManyChild> siblings) {
+        this.siblings = siblings;
     }
 }

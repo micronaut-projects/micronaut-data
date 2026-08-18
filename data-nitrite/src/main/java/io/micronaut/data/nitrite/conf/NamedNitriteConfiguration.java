@@ -23,7 +23,7 @@ import io.micronaut.context.annotation.Parameter;
  *
  * @since 5.2.0
  */
-@EachProperty(value = NitriteConfiguration.PREFIX, primary = "default")
+@EachProperty(value = NitriteConfiguration.PREFIX, primary = NitriteConfiguration.DEFAULT_NAME)
 public final class NamedNitriteConfiguration extends NitriteConfiguration {
 
   /**

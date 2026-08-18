@@ -82,7 +82,12 @@ public final class NitriteQueryOperators {
     public static final String TO_UPPER = "$toUpper";
     /** Multiply operator. */
     public static final String MULTIPLY = "$multiply";
-    /** Concatenate operator. */
+    /**
+     * Concatenate operator. It appears in two distinct positions and the two are not
+     * interchangeable: inside {@code $expr} its value is a {@code List} of operands to join, while
+     * as a top-level update operator its value is a {@code Map} of field to the value appended to
+     * that field. Consumers of either form must type-check the value before reading it.
+     */
     public static final String CONCAT = "$concat";
     /** Substring operator. */
     public static final String SUBSTR_CP = "$substrCP";

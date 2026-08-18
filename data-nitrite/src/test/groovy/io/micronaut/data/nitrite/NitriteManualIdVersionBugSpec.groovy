@@ -1,5 +1,6 @@
 package io.micronaut.data.nitrite
 
+import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.nitrite.model.ManualIdVersionedPerson
 import io.micronaut.data.nitrite.model.ProjectId
 import io.micronaut.data.nitrite.model.VersionedProject
@@ -54,6 +55,80 @@ class NitriteManualIdVersionBugSpec extends Specification {
         then: "the lowest age should win, not insertion order"
             found.isPresent()
             found.get().age == 25
+    }
+
+    void "saveAll with manually assigned ids upserts each entity by id"() {
+        given: "brand new entities that already carry a manually assigned (non-null) id"
+            def batch = [
+                new ManualIdVersionedPerson("Amy", 20),
+                new ManualIdVersionedPerson("Ben", 21)
+            ]
+
+        when:
+            def saved = repository.saveAll(batch).toList()
+
+        then: "each is upserted by its pre-set id, not treated as a duplicate insert"
+            saved.size() == 2
+            // Unlike single save() (see above), saveAll()'s upsert path does not special-case
+            // a fresh entity with a pre-set id: it always goes through the update-with-upsert
+            // branch, which increments the version like any other update.
+            saved*.version == [1L, 1L]
+            repository.findFirstByNameOrderByAgeAsc("Amy").isPresent()
+            repository.findFirstByNameOrderByAgeAsc("Ben").isPresent()
+    }
+
+    void "strict @Insert batch inserts entities with pre-set ids"() {
+        given:
+            def batch = [
+                new ManualIdVersionedPerson("Cara", 22),
+                new ManualIdVersionedPerson("Dan", 23)
+            ]
+
+        when:
+            def saved = repository.insertBatch(batch)
+
+        then:
+            saved.size() == 2
+            repository.findFirstByNameOrderByAgeAsc("Cara").isPresent()
+            repository.findFirstByNameOrderByAgeAsc("Dan").isPresent()
+    }
+
+    void "strict @Insert batch rejects an id that already exists"() {
+        given:
+            def existing = repository.save(new ManualIdVersionedPerson("Eve", 24))
+            def duplicate = new ManualIdVersionedPerson("Eve again", 25)
+            duplicate.id = existing.id
+
+        when:
+            repository.insertBatch([duplicate])
+
+        then:
+            thrown(EntityExistsException)
+    }
+
+    void "strict @Insert single-entity inserts an entity with a pre-set id"() {
+        given:
+            def person = new ManualIdVersionedPerson("Frank", 26)
+
+        when:
+            def saved = repository.insertOne(person)
+
+        then:
+            repository.findFirstByNameOrderByAgeAsc("Frank").isPresent()
+            saved.id == person.id
+    }
+
+    void "strict @Insert single-entity rejects an id that already exists"() {
+        given:
+            def existing = repository.save(new ManualIdVersionedPerson("Grace", 27))
+            def duplicate = new ManualIdVersionedPerson("Grace again", 28)
+            duplicate.id = existing.id
+
+        when:
+            repository.insertOne(duplicate)
+
+        then:
+            thrown(EntityExistsException)
     }
 
     void "new entity with a composite @EmbeddedId is saved with version 0, not 1"() {

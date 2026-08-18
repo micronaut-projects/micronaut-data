@@ -27,4 +27,9 @@ public class VetoTimestampedRecordListener implements EntityEventListener<Timest
     public boolean prePersist(EntityEventContext<TimestampedRecord> context) {
         return !"veto-me".equals(context.getEntity().getName());
     }
+
+    @Override
+    public boolean preUpdate(EntityEventContext<TimestampedRecord> context) {
+        return !"veto-update-me".equals(context.getEntity().getName());
+    }
 }

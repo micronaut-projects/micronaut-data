@@ -55,6 +55,14 @@ A repository that names no datasource uses the primary one, which is the datasou
 
 Datasources are isolated from each other: an entity written through a repository bound to one datasource is not visible through a repository bound to another, even when both repositories map the same entity type.
 
+The isolation extends to transactions. Each datasource gets its own connection operations, transaction operations and transaction context holder, so a transaction opened against one datasource neither covers nor is visible to repositories bound to another. To drive a transaction of a named datasource programmatically, resolve its `NitriteTransactionOperations` bean by that name:
+
+[source,java]
+----
+NitriteTransactionOperations auditTransactions =
+    beanContext.getBean(NitriteTransactionOperations.class, Qualifiers.byName("audit"));
+----
+
 == Optional Modules
 
 Micronaut Data Nitrite supports optional Nitrite modules that provide additional functionality:

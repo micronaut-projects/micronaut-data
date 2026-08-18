@@ -8,10 +8,20 @@ import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.EventRepository
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Selection
 import spock.lang.Specification
 
 import java.time.Instant
@@ -41,7 +51,7 @@ class NitriteQueryBuilderSpec extends Specification {
     CriteriaAuthorRepository criteriaAuthorRepository
 
     @Inject
-    io.micronaut.data.model.runtime.RuntimeEntityRegistry runtimeEntityRegistry
+    RuntimeEntityRegistry runtimeEntityRegistry
 
     def setup() {
         eventRepository.deleteAll()
@@ -107,6 +117,119 @@ class NitriteQueryBuilderSpec extends Specification {
         result.update == '''{$inc:{priority:{$mn_qp:0}}}'''
     }
 
+    void "test NitriteQueryBuilder buildUpdate emits PROD update operator"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "priority": new BinaryExpression(root.get("priority"), criteriaBuilder.parameter(Integer), BinaryExpressionType.PROD, null),
+        ]
+        def definition = updateDefinitionFor(entity, propertiesToUpdate)
+
+        when:
+        def result = builder.buildUpdate(AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '''{$mul:{priority:{$mn_qp:0}}}'''
+    }
+
+    void "test NitriteQueryBuilder buildUpdate emits QUOT update operator with reciprocate flag"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "priority": new BinaryExpression(root.get("priority"), criteriaBuilder.parameter(Integer), BinaryExpressionType.QUOT, null),
+        ]
+        def definition = updateDefinitionFor(entity, propertiesToUpdate)
+
+        when:
+        def result = builder.buildUpdate(AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '''{$mul:{priority:{$mn_qp:0,$mn_reciprocate:true}}}'''
+    }
+
+    void "test NitriteQueryBuilder buildUpdate emits DIFF update operator with negate flag"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "priority": new BinaryExpression(root.get("priority"), criteriaBuilder.parameter(Integer), BinaryExpressionType.DIFF, null),
+        ]
+        def definition = updateDefinitionFor(entity, propertiesToUpdate)
+
+        when:
+        def result = builder.buildUpdate(AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '''{$inc:{priority:{$mn_qp:0,$mn_negate:true}}}'''
+    }
+
+    void "test NitriteQueryBuilder buildUpdate emits arithmetic update with literal right operand"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "priority": new BinaryExpression(root.get("priority"), new LiteralExpression<Integer>(5), BinaryExpressionType.SUM, null),
+        ]
+        def definition = updateDefinitionFor(entity, propertiesToUpdate)
+
+        when:
+        def result = builder.buildUpdate(AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '''{$inc:{priority:5}}'''
+    }
+
+    void "test NitriteQueryBuilder buildUpdate handles CONCAT update operator without silently dropping"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(Event.class)
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery(Event)
+        def root = criteriaQuery.from(Event)
+        def propertiesToUpdate = [
+                "type": new BinaryExpression(root.get("type"), new LiteralExpression<String>("-suffix"), BinaryExpressionType.CONCAT, null),
+        ]
+        def definition = updateDefinitionFor(entity, propertiesToUpdate)
+
+        when:
+        def result = builder.buildUpdate(AnnotationMetadata.EMPTY_METADATA, definition)
+
+        then:
+        result.update == '{$concat:{type:\'-suffix\'}}'
+    }
+
+    private static QueryBuilder.UpdateQueryDefinition updateDefinitionFor(
+            PersistentEntity entity, Map<String, Object> propertiesToUpdate) {
+        new QueryBuilder.UpdateQueryDefinition() {
+            @Override
+            PersistentEntity persistentEntity() { return entity }
+            @Override
+            Map<String, Object> propertiesToUpdate() { return propertiesToUpdate }
+            @Override
+            Predicate predicate() { return null }
+            @Override
+            Collection getJoinPaths() { return [] }
+            @Override
+            Optional getJoinPath(String s) { return Optional.empty() }
+            @Override
+            Selection returningSelection() { return null }
+        }
+    }
+
     // ========== Bug #1: buildInsert returns null ==========
 
     void "test criteria insert does not throw NPE"() {
@@ -148,7 +271,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when: "Querying by string length using Criteria API"
         def results = eventRepository.findAll({ root, cb ->
             cb.gt(cb.length(root.get("payload")), 2)
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then: "Only payloads longer than 2 characters match"
         results*.type as Set == ["E2", "E3"] as Set
@@ -165,7 +288,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when: "Querying with multiplication expression using Criteria API"
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.prod(root.get("priority"), 2), 4)
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then: "Only the event whose priority * 2 == 4 matches"
         results.size() == 1
@@ -303,7 +426,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.like(root.get("payload"), "Port%--_%", '-' as char)
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload.sort() == ["Port-au-Prince", "Porto-Novo"]
@@ -318,7 +441,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.not(cb.like(root.get("payload"), "%_aa%", 'a' as char))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload.sort() == ["Belgium"]
@@ -386,7 +509,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.prod(root.get("priority"), root.get("priority")), cb.literal(25))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results.size() == 1
@@ -401,7 +524,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.length(root.get("type")), 5)
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results.size() == 1
@@ -414,7 +537,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         eventRepository.findAll({ root, cb ->
             cb.equal(cb.sum(root.get("priority"), cb.literal(2)), cb.literal(4))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
         then:
         def e = thrown(IllegalStateException)
         e.message.contains("SUM")
@@ -424,7 +547,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         eventRepository.findAll({ root, cb ->
             cb.equal(cb.diff(root.get("priority"), cb.literal(2)), cb.literal(0))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
         then:
         def e = thrown(IllegalStateException)
         e.message.contains("DIFF")
@@ -438,7 +561,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.lower(root.get("type")), cb.literal("abc"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload == ["upper"]
@@ -452,7 +575,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.upper(root.get("type")), cb.literal("ABC"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload == ["lower"]
@@ -466,7 +589,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.equal(cb.lower(cb.upper(root.get("type"))), cb.literal("abc"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload == ["mixed"]
@@ -480,7 +603,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         def results = eventRepository.findAll({ root, cb ->
             cb.between(cb.lower(root.get("type")), cb.literal("a"), cb.literal("c"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload == ["middle"]
@@ -497,7 +620,7 @@ class NitriteQueryBuilderSpec extends Specification {
             def suffix = cb.function("RIGHT", String, root.get("type"), cb.literal(1))
             def computed = cb.function("CONCAT", String, suffix, root.get("payload"))
             computed.in(["ACanada", "BLebanon", "EEgypt"])
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload.sort() == ["Canada", "Lebanon"]
@@ -518,7 +641,7 @@ class NitriteQueryBuilderSpec extends Specification {
             def suffix = cb.function("RIGHT", String, root.get("id"), cb.literal(1))
             def computed = cb.function("CONCAT", String, suffix, root.get("payload"))
             computed.in(["ACanada", "BLebanon", "EEgypt"])
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results*.payload.sort() == ["Canada", "Lebanon"]
@@ -532,7 +655,7 @@ class NitriteQueryBuilderSpec extends Specification {
         def result = eventRepository.findOne({ root, cb ->
             def persistentRoot = (io.micronaut.data.model.jpa.criteria.PersistentEntityRoot) root
             cb.equal(persistentRoot.id(), cb.literal(saved.id))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         result.isPresent()
@@ -550,7 +673,7 @@ class NitriteQueryBuilderSpec extends Specification {
         def results = eventRepository.findAll({ root, cb ->
             def pcb = (io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb
             pcb.arrayContains(root.get("tags"), cb.literal("sports"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results.size() == 2
@@ -606,7 +729,7 @@ class NitriteQueryBuilderSpec extends Specification {
         def results = eventRepository.findAll({ root, cb ->
             def pcb = (io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder) cb
             pcb.regex(root.get("type"), cb.literal("^ORDER.*"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results.size() == 2
@@ -643,7 +766,7 @@ class NitriteQueryBuilderSpec extends Specification {
                     cb.equal(root.get("payload"), cb.literal("p2"))
                 )
             )
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         results.size() == 2
@@ -653,7 +776,7 @@ class NitriteQueryBuilderSpec extends Specification {
         when:
         eventRepository.findAll({ root, cb ->
             cb.equal(cb.trim(root.get("type")), cb.literal("A"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
         then:
         thrown(IllegalStateException)
     }
@@ -672,7 +795,7 @@ class NitriteQueryBuilderSpec extends Specification {
             def root = q.from(Event)
             q.select(cb.countDistinct(root.get("payload")))
             q
-        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+        } as CriteriaQueryBuilder)
 
         then:
         distinctPayloadCount == 2
@@ -694,7 +817,7 @@ class NitriteQueryBuilderSpec extends Specification {
             def root = q.from(Event)
             q.select(cb.max(root.get("priority")))
             q
-        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+        } as CriteriaQueryBuilder)
 
         then:
         maximumPriority == 30L
@@ -745,7 +868,7 @@ class NitriteQueryBuilderSpec extends Specification {
             def root = q.from(Event)
             q.multiselect(root.get("location").get("region"))
             q
-        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+        } as CriteriaQueryBuilder)
 
         then:
         projection == ["EU"] as Object[]
@@ -780,7 +903,7 @@ class NitriteQueryBuilderSpec extends Specification {
             q.multiselect(root.get("type"), root.get("payload"))
             q.where(cb.equal(root.get("type"), cb.literal("A")))
             q
-        } as io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder)
+        } as CriteriaQueryBuilder)
 
         then:
         result != null
@@ -796,11 +919,120 @@ class NitriteQueryBuilderSpec extends Specification {
         def result = criteriaBookRepository.findOne({ root, cb ->
             def join = root.join("author")
             cb.equal(join.get("name"), cb.literal("Test Author"))
-        } as io.micronaut.data.repository.jpa.criteria.PredicateSpecification)
+        } as PredicateSpecification)
 
         then:
         result.isPresent()
         result.get().title == "Test Book"
+    }
+
+    void "test native single-field projection resolves field name from method name"() {
+        given: "events sharing a type with distinct payloads"
+        eventRepository.save(new Event("BULLETIN", "first"))
+        eventRepository.save(new Event("BULLETIN", "second"))
+
+        when: "querying a raw @Query method (no compiled \$project) whose result type differs from the root entity"
+        def results = eventRepository.findPayloadByTypeWithQuery("BULLETIN")
+
+        then: "the field is resolved via CollectionFieldMapper.extractFieldName's method-name fallback"
+        results.sort() == ["first", "second"]
+    }
+
+    void "test top-level \$not negates a whole sub-filter"() {
+        given: "events with different types"
+        eventRepository.save(new Event("A", "p1"))
+        eventRepository.save(new Event("B", "p2"))
+
+        when: "querying with a top-level \$not wrapping a sub-filter (NitriteFilterAST.NotNode)"
+        def results = eventRepository.findByTypeNotEqualTopLevelWithQuery("A")
+
+        then:
+        results.size() == 1
+        results[0].type == "B"
+    }
+
+    void "test computed \$expr \$divide comparison"() {
+        given: "an event with the default priority of 5, so priority / 2 == 2.5"
+        eventRepository.save(new Event("order-created", "payload"))
+
+        when:
+        def results = eventRepository.findByPriorityDividedByTwoWithQuery(2.5d)
+
+        then:
+        results.size() == 1
+        results[0].type == "order-created"
+    }
+
+    void "test computed \$expr \$substrCP comparison"() {
+        given: "an event whose type starts with the expected prefix"
+        eventRepository.save(new Event("ABCDEF", "payload"))
+        eventRepository.save(new Event("XYZ", "payload"))
+
+        when:
+        def results = eventRepository.findByTypePrefixWithQuery("ABC")
+
+        then:
+        results.size() == 1
+        results[0].type == "ABCDEF"
+    }
+
+    void "test computed \$expr \$toDouble comparison"() {
+        given: "an event with the default priority of 5"
+        eventRepository.save(new Event("order-created", "payload"))
+
+        when:
+        def results = eventRepository.findByPriorityAsDoubleWithQuery(5.0d)
+
+        then:
+        results.size() == 1
+        results[0].type == "order-created"
+    }
+
+    void "test criteria comparison between two literals (propertyless comparison)"() {
+        given: "an event to make the query non-trivial"
+        eventRepository.save(new Event("order-created", "payload"))
+
+        when: "comparing two literals, neither side a property path"
+        def results = eventRepository.findAll({ root, cb ->
+            cb.equal(cb.literal(1), cb.literal(1))
+        } as PredicateSpecification)
+
+        then:
+        results.size() == 1
+    }
+
+    void "test findAll via criteria query builder covers CriteriaRepositoryOperations.execute"() {
+        given:
+        eventRepository.saveAll([
+            new Event("A", "p1"),
+            new Event("B", "p2")
+        ])
+
+        when: "using the list-returning CriteriaQueryBuilder overload, not findOne"
+        List<Event> results = eventRepository.findAll({ cb ->
+            def q = cb.createQuery(Event)
+            def root = q.from(Event)
+            q.where(cb.equal(root.get("type"), cb.literal("A")))
+            q
+        } as CriteriaQueryBuilder)
+
+        then:
+        results.size() == 1
+        results[0].type == "A"
+    }
+
+    void "test cursored page sorted by persisted identity name covers findPersistedPropertyPath"() {
+        given: "events to page through with cursor-mode pagination"
+        eventRepository.saveAll([
+            new Event("A", "p1"),
+            new Event("B", "p2")
+        ])
+
+        when: "sorting by the persisted field name (_id), not the Java property name (id)"
+        def page = eventRepository.findAll(Pageable.from(Sort.of(Sort.Order.asc("_id"))))
+
+        then:
+        page.content.size() == 2
     }
 
     void "test buildInsert and buildLimitAndOffset"() {

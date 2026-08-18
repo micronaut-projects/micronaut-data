@@ -29,6 +29,8 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.transaction.DefaultNitriteTransactionOperations;
+import io.micronaut.data.nitrite.transaction.NitriteConnectionOperations;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -171,7 +173,6 @@ public final class NitriteOperationsFactory {
    * @param runtimeEntityRegistry the runtime entity registry
    * @param conversionService the conversion service
    * @param attributeConverterRegistry the attribute converter registry
-   * @param transactionHolder the transaction holder
    * @param serdeObjectMapper the optional Serde object mapper
    * @return the repository operations
    */
@@ -183,21 +184,87 @@ public final class NitriteOperationsFactory {
       RuntimeEntityRegistry runtimeEntityRegistry,
       DataConversionService conversionService,
       AttributeConverterRegistry attributeConverterRegistry,
-      NitriteTransactionHolder transactionHolder,
       @Nullable ObjectMapper serdeObjectMapper) {
-    // The implicit default configuration is a primary bean rather than a named one, so it has no
-    // name qualifier to match on and its database is resolved as the primary instead.
-    Nitrite database = beanLocator.findBean(Nitrite.class, Qualifiers.byName(configuration.getName()))
-        .orElseGet(() -> beanLocator.getBean(Nitrite.class));
     return new DefaultNitriteRepositoryOperations(
-        database,
+        forDatasource(beanLocator, Nitrite.class, configuration),
         configuration,
         dateTimeProvider,
         runtimeEntityRegistry,
         conversionService,
         attributeConverterRegistry,
-        transactionHolder,
+        forDatasource(beanLocator, NitriteTransactionHolder.class, configuration),
         serdeObjectMapper);
+  }
+
+  /**
+   * Creates the transaction context holder of one datasource.
+   *
+   * <p>The holder is per datasource: a transaction opened against one datasource must not be
+   * visible to the repositories of another.
+   *
+   * @param configuration the matching datasource configuration
+   * @return the transaction holder of that datasource
+   */
+  @EachBean(NitriteConfiguration.class)
+  public NitriteTransactionHolder nitriteTransactionHolder(@Parameter NitriteConfiguration configuration) {
+    return new NitriteTransactionHolder();
+  }
+
+  /**
+   * Creates the connection operations of one datasource.
+   *
+   * @param beanLocator the bean locator used to resolve the matching database
+   * @param configuration the matching datasource configuration
+   * @return the connection operations of that datasource
+   */
+  @EachBean(NitriteConfiguration.class)
+  public NitriteConnectionOperations nitriteConnectionOperations(
+      BeanLocator beanLocator,
+      @Parameter NitriteConfiguration configuration) {
+    return new NitriteConnectionOperations(forDatasource(beanLocator, Nitrite.class, configuration));
+  }
+
+  /**
+   * Creates the transaction operations of one datasource, over that datasource's own connection
+   * operations and transaction holder.
+   *
+   * @param beanLocator the bean locator used to resolve the matching beans
+   * @param configuration the matching datasource configuration
+   * @return the transaction operations of that datasource
+   */
+  @EachBean(NitriteConfiguration.class)
+  public DefaultNitriteTransactionOperations nitriteTransactionOperations(
+      BeanLocator beanLocator,
+      @Parameter NitriteConfiguration configuration) {
+    NitriteConnectionOperations connectionOperations =
+        forDatasource(beanLocator, NitriteConnectionOperations.class, configuration);
+    return new DefaultNitriteTransactionOperations(
+        connectionOperations,
+        connectionOperations,
+        forDatasource(beanLocator, NitriteTransactionHolder.class, configuration));
+  }
+
+  /**
+   * Resolves the instance of a per-datasource bean that belongs to one configuration.
+   *
+   * <p>The implicit default configuration is a primary bean rather than a named one, so it has no
+   * name qualifier to match on and its beans are resolved as the primary ones instead.
+   *
+   * @param beanLocator the bean locator
+   * @param beanType the per-datasource bean type
+   * @param configuration the matching datasource configuration
+   * @param <T> the per-datasource bean type
+   * @return the instance belonging to that datasource
+   */
+  private <T> T forDatasource(BeanLocator beanLocator, Class<T> beanType, NitriteConfiguration configuration) {
+    // Only the primary (unnamed) configuration falls back to the unqualified bean.
+    // Secondary datasources must fail-fast if their specific bean is missing, otherwise
+    // they would quietly bind to the primary datasource's instances.
+    if (NitriteConfiguration.DEFAULT_NAME.equals(configuration.getName())) {
+      return beanLocator.findBean(beanType, Qualifiers.byName(configuration.getName()))
+          .orElseGet(() -> beanLocator.getBean(beanType));
+    }
+    return beanLocator.getBean(beanType, Qualifiers.byName(configuration.getName()));
   }
 
 }

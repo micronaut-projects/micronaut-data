@@ -26,13 +26,13 @@ import io.micronaut.context.annotation.Requires;
  */
 @Primary
 @Requires(missingProperty = NitriteConfiguration.PREFIX)
-@ConfigurationProperties(NitriteConfiguration.PREFIX + ".default")
+@ConfigurationProperties(NitriteConfiguration.PREFIX + "." + NitriteConfiguration.DEFAULT_NAME)
 public final class DefaultNitriteConfiguration extends NitriteConfiguration {
 
   /**
    * Creates the default configuration.
    */
   public DefaultNitriteConfiguration() {
-    super("default");
+    super(NitriteConfiguration.DEFAULT_NAME);
   }
 }

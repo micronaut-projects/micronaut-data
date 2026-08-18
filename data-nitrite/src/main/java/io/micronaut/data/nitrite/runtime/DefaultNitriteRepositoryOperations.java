@@ -25,6 +25,7 @@ import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -52,6 +53,7 @@ import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
 import io.micronaut.data.nitrite.runtime.mapping.WritablePropertyMeta;
 import io.micronaut.data.nitrite.runtime.query.DefaultNitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.DefaultNitriteStoredQuery;
+import io.micronaut.data.nitrite.runtime.query.GeneratedQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
 import io.micronaut.data.nitrite.runtime.query.NitritePreparedQuery;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryBinder;
@@ -589,23 +591,28 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     private void appendIdentitySort(Map<String, Sort.Order> orders, RuntimePersistentEntity<?> entity) {
-        if (!entity.hasIdentity() || entity.hasCompositeIdentity()) {
-            return;
-        }
-        RuntimePersistentProperty<?> identity = entity.getIdentity();
-        if (orders.values().stream().anyMatch(order -> isIdentitySort(order.getProperty(), entity, identity))) {
-            return;
-        }
-        Sort.Order.Direction direction = orders.isEmpty()
+        // Every identity property becomes a secondary sort key, a composite identity included: a
+        // page sorted only by a non-unique field has no tie-breaker of its own, so records sharing
+        // that sort value could be skipped or repeated across pages.
+        // The direction is read from the caller's last sort key once, before anything is appended,
+        // so every identity key of a composite identity shares one direction instead of each one
+        // picking up the key the previous iteration just added.
+        List<Sort.Order> requestedOrders = new ArrayList<>(orders.values());
+        Sort.Order.Direction direction = requestedOrders.isEmpty()
             ? Sort.Order.Direction.ASC
-            : new ArrayList<>(orders.values()).get(orders.size() - 1).getDirection();
-        Sort.Order identityOrder = direction == Sort.Order.Direction.ASC
-            ? Sort.Order.asc(identity.getName())
-            : Sort.Order.desc(identity.getName());
-        orders.put(identity.getName(), identityOrder);
+            : requestedOrders.get(requestedOrders.size() - 1).getDirection();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            if (requestedOrders.stream().anyMatch(order -> isIdentitySort(order.getProperty(), entity, identity))) {
+                continue;
+            }
+            Sort.Order identityOrder = direction == Sort.Order.Direction.ASC
+                ? Sort.Order.asc(identity.getName())
+                : Sort.Order.desc(identity.getName());
+            orders.put(identity.getName(), identityOrder);
+        }
     }
 
-    private boolean isIdentitySort(String property, RuntimePersistentEntity<?> entity, RuntimePersistentProperty<?> identity) {
+    private boolean isIdentitySort(String property, RuntimePersistentEntity<?> entity, PersistentProperty identity) {
         String propertyName = normalizeSortProperty(property, entity);
         if (propertyName.indexOf('.') >= 0) {
             // A nested path such as "author.id" sorts by the association's identity, not the
@@ -632,12 +639,16 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     /**
-     * Parses sort from a JSON query string's $sort key.
+     * Parses the sort a query carries: the {@code $sort} key of a Nitrite JSON filter, or the
+     * {@code ORDER BY} clause of a SQL-shaped generated query.
      */
     @Override
-    public @Nullable Sort parseSortFromJsonQuery(@Nullable final String queryString) {
-        if (queryString == null || !queryString.contains(NitriteQueryOperators.SORT)) {
+    public @Nullable Sort parseSortFromQuery(@Nullable final String queryString) {
+        if (queryString == null) {
             return null;
+        }
+        if (!queryString.contains(NitriteQueryOperators.SORT)) {
+            return GeneratedQueryParser.parseOrderBy(queryString);
         }
         try {
             Object parsed = queryParser.parseJson(queryString);
@@ -784,6 +795,23 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         return createNitritePreparedQuery(q);
     }
 
+    /**
+     * Resolves the Nitrite filter for a prepared query, in descending order of preference:
+     * the filter compiled once at stored-query creation, the stored JSON filter map, and finally
+     * the query's own {@code WHERE} clause.
+     *
+     * <p>The last case covers every query whose string is SQL-shaped rather than a Nitrite JSON
+     * filter — a JDQL {@code @Query}, and any repository compiled without
+     * {@code io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder} on the annotation
+     * processor path, where {@code RepositoryTypeElementVisitor} silently falls back to
+     * {@code JpaQueryBuilder}. Returning {@code Filter.ALL} here instead would make such a query
+     * match every document in the collection, so a single-argument finder would return the whole
+     * collection rather than failing.
+     *
+     * @param q      the prepared query
+     * @param stored the Nitrite stored query it was created from
+     * @return the filter to execute
+     */
     private Filter buildFilterFromPreparedQuery(final PreparedQuery<?, ?> q, NitriteStoredQuery<?, ?> stored) {
         Map<String, Object> namedParameters = buildNamedParameterValues(q);
         if (stored.getCompiledFilter() != null) {
@@ -792,7 +820,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (stored.getFilterMap() != null) {
             return filterBuilder.buildFilterFromJson(getEntity(stored.getRootEntity()), stored.getFilterMap(), ensureJsonParamsForFilter(stored.getFilterMap(), q.getParameterArray(), buildJsonParameterValues(q)), namedParameters);
         }
-        return Filter.ALL;
+        return queryExecutor.buildGeneratedFilter(q, getEntity(stored.getRootEntity()), buildJsonParameterValues(q));
     }
 
     @Override
@@ -913,7 +941,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     private Sort resolveCursoredSort(PagedQuery<?> query, RuntimePersistentEntity<?> entity) {
         Sort sort = query.getPageable().getSort();
         if (query instanceof NitritePreparedQuery<?, ?> nitriteQuery) {
-            Sort parsedSort = parseSortFromJsonQuery(nitriteQuery.getQuery());
+            Sort parsedSort = parseSortFromQuery(nitriteQuery.getQuery());
             if ((parsedSort == null || !parsedSort.isSorted()) && nitriteQuery.getQueryHints() != null) {
                 parsedSort = parseSortFromHints(nitriteQuery.getQueryHints());
             }

@@ -31,12 +31,14 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
+import io.micronaut.data.nitrite.model.query.builder.NitriteRuntimeFilter;
 import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.read.CollectionAggregator;
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper;
@@ -48,7 +50,6 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -111,9 +112,14 @@ public final class NitriteCriteriaExecutor {
      * @return true if at least one entity matches
      */
     public boolean exists(@NonNull CriteriaQuery<?> query) {
+        Class<?> type = getEntityType(query);
+        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter((AbstractPersistentEntityCriteriaQuery<?>) query);
+        if (runtimeFilter != null) {
+            Filter filter = buildFilterFromRuntimeFilter(runtimeFilter, type);
+            return collectionFactory.apply(type).find(filter).iterator().hasNext();
+        }
         QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
                 .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
-        Class<?> type = getEntityType(query);
         Filter filter = buildFilterFromQueryResult(queryResult, type);
         return collectionFactory.apply(type).find(filter).iterator().hasNext();
     }
@@ -126,17 +132,37 @@ public final class NitriteCriteriaExecutor {
      * @return the first matching entity, or null if none found
      */
     public <R> @Nullable R findOne(@NonNull CriteriaQuery<R> query) {
-        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
         Class<R> resultType = (Class<R>) ((PersistentEntityQuery<?>) query).getResultType();
-        Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
+
+        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter((AbstractPersistentEntityCriteriaQuery<?>) query);
+        if (runtimeFilter != null) {
+            Filter filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
+            FindOptions options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, -1, -1);
+            if (Long.class.equals(resultType) || long.class.equals(resultType)) {
+                return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter, options).size());
+            }
+            Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
+            if (doc == null) {
+                return null;
+            }
+            List<String> projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
+            if (!projectedFields.isEmpty()) {
+                return projectionMapper.mapDocument(doc, projectedFields, persistentEntity, resultType, false);
+            }
+            return entityMapper.fromDocument(doc, resultType);
+        }
+
+        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+        Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
+        Filter filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
+        FindOptions options = buildFindOptions(persistentEntity, -1, -1, parsedQuery);
 
         // A numeric result type alone does not imply a count: max/min/sum/avg also produce a
         // $group stage, so the selection decides which aggregate to execute.
-        AggregateSelection aggregateSelection = extractAggregateSelection(queryResult.getQuery());
+        AggregateSelection aggregateSelection = extractAggregateSelection(parsedQuery);
         if (aggregateSelection != null) {
             Object aggregate = new CollectionAggregator().aggregate(
                 collectionFactory.apply(entityType).find(filter).toList(),
@@ -151,7 +177,7 @@ public final class NitriteCriteriaExecutor {
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
             String queryStr = queryResult.getQuery();
             if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
-                String fieldPath = queryParser.extractGroupFieldPath(queryStr);
+                String fieldPath = queryParser.extractGroupFieldPath(parsedQuery);
                 if (fieldPath != null) {
                     long count = collectionFactory.apply(entityType).find(filter).toList().stream()
                         .map(doc -> doc.get(fieldPath))
@@ -168,7 +194,7 @@ public final class NitriteCriteriaExecutor {
         if (doc == null) {
             return null;
         }
-        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
+        List<String> projectedFields = queryParser.extractProjectionFields(parsedQuery);
         if (!projectedFields.isEmpty()) {
             return projectionMapper.mapDocument(doc, projectedFields, persistentEntity, resultType, false);
         }
@@ -183,15 +209,27 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
-        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
         Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, persistentEntity, -1, -1);
+
+        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter((AbstractPersistentEntityCriteriaQuery<?>) query);
+        Filter filter;
+        FindOptions options;
+        List<String> projectedFields;
+        if (runtimeFilter != null) {
+            filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
+            options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, -1, -1);
+            projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
+        } else {
+            QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+            Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
+            filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
+            options = buildFindOptions(persistentEntity, -1, -1, parsedQuery);
+            projectedFields = queryParser.extractProjectionFields(parsedQuery);
+        }
         List<T> results = new ArrayList<>();
-        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             T result = projectedFields.isEmpty()
                 ? entityMapper.fromDocument(doc, type)
@@ -213,15 +251,27 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
-        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
         Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Filter filter = buildFilterFromQueryResult(queryResult, entityType);
-        FindOptions options = buildFindOptions(queryResult, persistentEntity, offset, limit);
+
+        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter((AbstractPersistentEntityCriteriaQuery<?>) query);
+        Filter filter;
+        FindOptions options;
+        List<String> projectedFields;
+        if (runtimeFilter != null) {
+            filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
+            options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, offset, limit);
+            projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
+        } else {
+            QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
+                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+            Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
+            filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
+            options = buildFindOptions(persistentEntity, offset, limit, parsedQuery);
+            projectedFields = queryParser.extractProjectionFields(parsedQuery);
+        }
         List<T> results = new ArrayList<>();
-        List<String> projectedFields = queryParser.extractProjectionFields(queryResult.getQuery());
         for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
             T result = projectedFields.isEmpty()
                 ? entityMapper.fromDocument(doc, type)
@@ -266,7 +316,7 @@ public final class NitriteCriteriaExecutor {
                     for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
                         doc.put(entry.getKey(), entry.getValue());
                     }
-                    Filter idFilter = FluentFilter.where("_id").eq(doc.get("_id"));
+                    Filter idFilter = NitriteFilterUtils.eq("_id", doc.get("_id"));
                     collection.update(idFilter, doc);
                 }
                 return docs.size();
@@ -324,13 +374,78 @@ public final class NitriteCriteriaExecutor {
         }
     }
 
-    private Filter buildFilterFromQueryResult(QueryResult queryResult, Class<?> entityType) {
-        String queryString = queryResult.getQuery();
+    /**
+     * Attempts the fast path: build the filter/sort/projection directly from the Criteria
+     * predicate tree, skipping the JSON serialize/reparse round trip {@link #buildFilterFromQueryResult}
+     * needs. Returns {@code null} when the query needs the aggregation pipeline (joins, group,
+     * count) — callers fall back to the {@link QueryResult}-based path for that case.
+     */
+    private @Nullable NitriteRuntimeFilter tryBuildRuntimeFilter(AbstractPersistentEntityCriteriaQuery<?> query) {
+        if (!(queryBuilder instanceof NitriteQueryBuilder nitriteQueryBuilder)) {
+            return null;
+        }
+        return nitriteQueryBuilder.buildRuntimeFilter(query.toSelectQueryDefinition());
+    }
+
+    private Filter buildFilterFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, Class<?> entityType) {
+        Map<String, Object> filterMap = runtimeFilter.filter();
+        if (filterMap.isEmpty()) {
+            return Filter.ALL;
+        }
+        List<QueryParameterBinding> bindings = runtimeFilter.parameterBindings();
+        Object[] params = new Object[bindings.size()];
+        for (int i = 0; i < bindings.size(); i++) {
+            params[i] = bindings.get(i).getValue();
+        }
+        return filterBuilder.buildFilterFromJson(entityFactory.apply(entityType), filterMap, params, Collections.emptyMap());
+    }
+
+    private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
+        FindOptions options = new FindOptions();
+        if (offset > 0) {
+            options.skip((long) offset);
+        } else if (runtimeFilter.offset() > 0) {
+            options.skip((long) runtimeFilter.offset());
+        }
+        if (limit > 0) {
+            options.limit((long) limit);
+        } else if (runtimeFilter.limit() != -1) {
+            options.limit((long) runtimeFilter.limit());
+        }
+        for (Map.Entry<String, Object> entry : runtimeFilter.sort().entrySet()) {
+            SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
+            options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey(), persistentEntity), order);
+        }
+        return options;
+    }
+
+    /**
+     * Parses the query JSON once, guarded the same way {@link #buildFilterFromQueryResult} is,
+     * so callers that need the filter plus sort/aggregate info can share a single parse instead
+     * of each re-parsing the same string.
+     */
+    private @Nullable Object parseQueryForFilter(@Nullable String queryString) {
         if (queryString == null || queryString.trim().isEmpty() || "{}".equals(queryString.trim())) {
+            return null;
+        }
+        try {
+            return queryParser.parseJson(queryString);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                "Failed to build Nitrite filter from criteria query: " + queryString, e);
+        }
+    }
+
+    private Filter buildFilterFromQueryResult(QueryResult queryResult, Class<?> entityType) {
+        return buildFilterFromQueryResult(queryResult, entityType, parseQueryForFilter(queryResult.getQuery()));
+    }
+
+    private Filter buildFilterFromQueryResult(QueryResult queryResult, Class<?> entityType, @Nullable Object parsedQuery) {
+        if (parsedQuery == null) {
             return Filter.ALL;
         }
         try {
-            Map<String, Object> filterMap = queryParser.extractFilterMap(queryParser.parseJson(queryString));
+            Map<String, Object> filterMap = queryParser.extractFilterMap(parsedQuery);
             if (filterMap == null || filterMap.isEmpty()) {
                 return Filter.ALL;
             }
@@ -342,9 +457,6 @@ public final class NitriteCriteriaExecutor {
                 params[i] = bindings.get(i).getValue();
             }
 
-            // Resolve placeholders in the filter map using params
-            resolveFilterMapPlaceholders(filterMap, params);
-
             return filterBuilder.buildFilterFromJson(
                     entityFactory.apply(entityType),
                     filterMap,
@@ -352,36 +464,14 @@ public final class NitriteCriteriaExecutor {
                     Collections.emptyMap());
         } catch (Exception e) {
             throw new IllegalStateException(
-                "Failed to build Nitrite filter from criteria query: " + queryString, e);
+                "Failed to build Nitrite filter from criteria query: " + queryResult.getQuery(), e);
         }
     }
 
-    private void resolveFilterMapPlaceholders(Map<String, Object> map, Object[] params) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof Map<?, ?> m) {
-                resolveFilterMapPlaceholders((Map<String, Object>) m, params);
-            } else if (value instanceof String str && str.startsWith(NitriteInternalKeys.QUERY_PARAMETER_PREFIX)) {
-                // Resolve placeholder
-                try {
-                    int idx = Integer.parseInt(str.substring(NitriteInternalKeys.QUERY_PARAMETER_PREFIX.length()));
-                    if (params != null && idx >= 0 && idx < params.length) {
-                        entry.setValue(params[idx]);
-                    }
-                } catch (NumberFormatException e) {
-                    // Ignore
-                }
-            }
-        }
-    }
-
-    private @Nullable AggregateSelection extractAggregateSelection(@Nullable String queryString) {
-        if (queryString == null || !queryString.contains(NitriteQueryOperators.GROUP)) {
-            return null;
-        }
+    private @Nullable AggregateSelection extractAggregateSelection(@Nullable Object parsedQuery) {
         try {
-            Object parsed = queryParser.parseJson(queryString);
-            if (!(parsed instanceof List<?> pipeline)) {
+            // Only a pipeline carries a $group stage; a single-stage query never does.
+            if (!(parsedQuery instanceof List<?> pipeline)) {
                 return null;
             }
             for (Object stage : pipeline) {
@@ -413,7 +503,7 @@ public final class NitriteCriteriaExecutor {
         return null;
     }
 
-    private FindOptions buildFindOptions(QueryResult queryResult, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
+    private FindOptions buildFindOptions(RuntimePersistentEntity<?> persistentEntity, int offset, int limit, @Nullable Object parsedQuery) {
         FindOptions options = new FindOptions();
 
         // Handle explicit offset/limit parameters
@@ -424,14 +514,12 @@ public final class NitriteCriteriaExecutor {
             options.limit((long) limit);
         }
 
-        String queryString = queryResult.getQuery();
-        if (queryString != null && !queryString.isEmpty()) {
+        if (parsedQuery != null) {
             try {
-                Object parsed = queryParser.parseJson(queryString);
                 List<Map<?, ?>> stages;
-                if (parsed instanceof Map<?, ?> m) {
+                if (parsedQuery instanceof Map<?, ?> m) {
                     stages = List.of(m);
-                } else if (parsed instanceof List<?> pipeline) {
+                } else if (parsedQuery instanceof List<?> pipeline) {
                     List<Map<?, ?>> pipelineStages = new ArrayList<>();
                     for (Object s : pipeline) {
                         if (s instanceof Map<?, ?> sm) {

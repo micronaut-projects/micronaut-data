@@ -26,7 +26,6 @@ import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExec
 import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +92,14 @@ final class AssociationFilterResolver {
         RuntimeAssociation<?> headAssoc = resolution.chain().getFirst();
         Relation.Kind kind = headAssoc.getKind();
 
-        RuntimePersistentProperty<?> assocIdentity = headAssoc.getAssociatedEntity().getIdentity();
+        RuntimePersistentEntity<?> associatedEntity = headAssoc.getAssociatedEntity();
+        if (!associatedEntity.hasIdentity()) {
+            // The sub-query below filters on a single id property, so the target must have exactly
+            // one. hasIdentity() is false both when the target has no identity and when it has a
+            // composite one; neither can drive that filter.
+            return null;
+        }
+        RuntimePersistentProperty<?> assocIdentity = associatedEntity.getIdentity();
         boolean useSubQuery = false;
         if (value instanceof String strValue) {
             if (assocIdentity.getType() == UUID.class) {
@@ -182,7 +188,7 @@ final class AssociationFilterResolver {
 
         // The identity is stored under the canonical document field, not the mapped identity name.
         Comparable<?>[] ids = toComparableArray(matchingValues);
-        return ids.length == 0 ? NONE : FluentFilter.where(NitriteEntityMapper.ID_FIELD).in(ids);
+        return ids.length == 0 ? NONE : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
     }
 
     private @Nullable Filter buildForwardLookupFilter(
@@ -212,7 +218,7 @@ final class AssociationFilterResolver {
         }
 
         Comparable<?>[] ids = toComparableArray(matchingIds);
-        return ids.length == 0 ? NONE : FluentFilter.where(field).in(ids);
+        return ids.length == 0 ? NONE : NitriteFilterUtils.in(field, ids);
     }
 
     @Nullable Filter buildNestedFilter(
@@ -246,7 +252,7 @@ final class AssociationFilterResolver {
             if (isCollection) {
                 if (subQueryExecutor == null) {
                     Filter subFilter = fieldFilterProvider.build(associatedEntity, remaining, operators, params, namedParameters);
-                    return FluentFilter.where(fieldName).elemMatch(subFilter);
+                    return NitriteFilterUtils.elemMatch(fieldName, subFilter);
                 }
 
                 Map<String, Object> resolvedOperators = new LinkedHashMap<>();
@@ -296,9 +302,10 @@ final class AssociationFilterResolver {
                     return NONE;
                 }
 
-                String idField = entity.getIdentity().getPersistedName();
+                // The identity is stored under the canonical document field, not under the mapped
+                // identity name, so an entity whose id carries a mapped name is matched here too.
                 Comparable<?>[] ids = toComparableArray(matchingValues);
-                return ids.length == 0 ? NONE : FluentFilter.where(idField).in(ids);
+                return ids.length == 0 ? NONE : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
 
             } else if (isManyToOne && subQueryExecutor != null) {
                 Map<String, Object> resolvedOperators = new LinkedHashMap<>();
@@ -312,7 +319,7 @@ final class AssociationFilterResolver {
                     return NONE;
                 }
                 Comparable<?>[] ids = toComparableArray(matchingIds);
-                return ids.length == 0 ? NONE : FluentFilter.where(fieldName).in(ids);
+                return ids.length == 0 ? NONE : NitriteFilterUtils.in(fieldName, ids);
             } else {
                 return operatorFiltersForPath.build(entity, fieldName + "." + remaining, operators, params, namedParameters);
             }

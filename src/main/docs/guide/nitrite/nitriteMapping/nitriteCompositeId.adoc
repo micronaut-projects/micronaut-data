@@ -21,3 +21,7 @@ snippet::example.ProjectRepositoryExample[project-base="doc-examples/nitrite-exa
 
 TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
 TIP: When using Java, define getters for the fields making up your composite key.
+
+=== Multiple @Id Properties
+
+An identity can also be composed by annotating more than one property with ann:data.annotation.Id[], without a separate key class. Each identity property is stored as a document field of its own, so it round-trips with the entity and can be filtered and sorted on like any other property. The identity properties are also appended to the sort of a paged query, giving a page boundary a tie-breaker when the requested sort is on a non-unique field.

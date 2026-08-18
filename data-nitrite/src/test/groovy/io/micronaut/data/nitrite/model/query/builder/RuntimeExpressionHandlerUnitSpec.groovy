@@ -13,6 +13,8 @@ class RuntimeExpressionHandlerUnitSpec extends Specification {
         expect:
         handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression("4_"), true, null, queryState, null) == '(?s)^4.$'
         handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression(new LiteralExpression("4_")), true, null, queryState, null) == '(?s)^4.$'
+        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression("4\\_"), true, new LiteralExpression('\\' as char), queryState, null) == '(?s)^4_$'
+        handler.handleRegex("hexadecimal", false, false, false, false, new LiteralExpression("4\\_"), true, new LiteralExpression("\\"), queryState, null) == '(?s)^4_$'
     }
 
     void "handleRegex quotes regex metacharacters in literal values"() {

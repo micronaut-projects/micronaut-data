@@ -15,6 +15,14 @@ micronaut {
 
 // Source sets for testing with optional dependencies present
 sourceSets {
+    // Compiled without micronaut-data-nitrite on the annotation processor path, so queries are
+    // SQL-shaped rather than Nitrite JSON. Adding it back makes this a duplicate of `test`.
+    generatedQueryTest {
+        java.srcDir file('src/generatedQueryTest/java')
+        groovy.srcDir file('src/generatedQueryTest/groovy')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
     rocksDbPresentTest {
         groovy.srcDir file('src/rocksDbPresentTest/groovy')
         resources.srcDir file('src/rocksDbPresentTest/resources')
@@ -30,6 +38,16 @@ sourceSets {
 }
 
 configurations {
+    // Inherits the test compile/runtime dependencies but not testAnnotationProcessor.
+    generatedQueryTestImplementation {
+        extendsFrom configurations.testImplementation
+    }
+    generatedQueryTestCompileOnly {
+        extendsFrom configurations.testCompileOnly
+    }
+    generatedQueryTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
     rocksDbPresentTestRuntimeOnly {
         extendsFrom configurations.testRuntimeOnly
     }
@@ -105,10 +123,32 @@ dependencies {
     spatialPresentTestCompileOnly libs.nitrite.spatial
     spatialPresentTestRuntimeOnly libs.nitrite.spatial
     spatialPresentTestAnnotationProcessor projects.micronautDataNitrite
+
+    // No micronautDataNitrite here by design - see the generatedQueryTest source set.
+    generatedQueryTestAnnotationProcessor projects.micronautDataDocumentProcessor
+    generatedQueryTestAnnotationProcessor mn.micronaut.inject.java
 }
 
 test {
     useJUnitPlatform()
+}
+
+// Nitrite is embedded, so no suite here resolves anything through test resources. The plugin is
+// still applied for the shared build conventions, and its client throws an NPE out of
+// DefaultTestResourcesClient.getRequiredPropertyEntries while loading property sources, which
+// fails context startup for every spec. Disabling the client is what keeps the suites runnable.
+tasks.withType(Test).configureEach {
+    systemProperty "micronaut.test.resources.enabled", "false"
+}
+
+tasks.register('generatedQueryTest', Test) {
+    group = "verification"
+    description = "Run the generated (SQL-shaped) query fallback suite"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.generatedQueryTest.output.classesDirs
+    classpath = sourceSets.generatedQueryTest.runtimeClasspath
+    mustRunAfter test
+    onlyIf { tasks.named('test').get().state.failure == null }
 }
 
 tasks.register('rocksDbPresentTest', Test) {
@@ -129,9 +169,10 @@ tasks.register('spatialPresentTest', Test) {
     onlyIf { tasks.named('test').get().state.failure == null }
 }
 
-test.finalizedBy rocksDbPresentTest, spatialPresentTest
+test.finalizedBy generatedQueryTest, rocksDbPresentTest, spatialPresentTest
 
 tasks.named('check') {
+    dependsOn tasks.named('generatedQueryTest')
     dependsOn tasks.named('rocksDbPresentTest')
     dependsOn tasks.named('spatialPresentTest')
 }
@@ -142,6 +183,6 @@ micronautBuild {
 
 spotless {
     java {
-        target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'src/rocksDbPresentTest/java/**/*.java', 'src/spatialPresentTest/java/**/*.java'
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'src/generatedQueryTest/java/**/*.java', 'src/rocksDbPresentTest/java/**/*.java', 'src/spatialPresentTest/java/**/*.java'
     }
 }

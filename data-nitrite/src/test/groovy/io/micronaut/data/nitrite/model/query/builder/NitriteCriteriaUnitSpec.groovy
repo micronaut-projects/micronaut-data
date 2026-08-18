@@ -158,6 +158,9 @@ class NitriteCriteriaUnitSpec extends Specification {
             "containsIgnoreCase"       | { r, cb -> cb.containsStringIgnoreCase(r.get("name"), cb.literal("Al")) }      | regex(".*", ".*", true)
             "ilike"                    | { r, cb -> cb.ilike(r.get("name"), cb.literal("Al%")) }                        | '''{name:{$regex:{$mn_like_pattern:{$mn_qp:0},$mn_like_ignore_case:true}}}'''
             "regex"                    | { r, cb -> cb.regex(r.get("name"), cb.literal("^Al.*")) }                      | '''{name:{$regex:{$mn_qp:0}}}'''
+            "likeWithEscapeLiteralChar"| { r, cb -> cb.like(r.get("name"), cb.literal("Al\\%"), '\\' as char) }         | '''{name:{$regex:{$mn_like_pattern:{$mn_qp:0},$mn_like_escape:{$mn_qp:1}}}}'''
+            "likeWithEscapeLiteralCharExpr" | { r, cb -> cb.like(r.get("name"), cb.literal("Al\\%"), cb.literal('\\' as char)) } | '''{name:{$regex:{$mn_like_pattern:{$mn_qp:0},$mn_like_escape:{$mn_qp:1}}}}'''
+            "likeWithEscapeParam"      | { r, cb -> cb.like(r.get("name"), cb.literal("Al\\%"), cb.parameter(Character.class, "esc")) } | '''{name:{$regex:{$mn_like_pattern:{$mn_qp:0},$mn_like_escape:{$mn_qp:1}}}}'''
     }
 
     void "test equality on the id field"() {
@@ -346,6 +349,23 @@ class NitriteCriteriaUnitSpec extends Specification {
             ]
     }
 
+    void "test multiple joins"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def othersJoin = entityRoot.join("others")
+            def oneOtherJoin = entityRoot.join("oneOther")
+            criteriaQuery.where(
+                criteriaBuilder.and(
+                    criteriaBuilder.equal(entityRoot.get("amount"), othersJoin.get("amount")),
+                    criteriaBuilder.equal(entityRoot.get("amount"), oneOtherJoin.get("amount"))
+                )
+            )
+            String q = getQuery(criteriaQuery)
+
+        expect:
+            q == '''[{$lookup:{from:'nitrite_other',localField:'_id',foreignField:'test_id',as:'others'}},{$lookup:{from:'nitrite_other',localField:'one_other_id',foreignField:'_id',as:'oneOther'}},{$unwind:{path:'$oneOther',preserveNullAndEmptyArrays:true}},{$match:{$and:[{$expr:{$eq:['$amount','$others.amount']}},{$expr:{$eq:['$amount','$oneOther.amount']}}]}}]'''
+    }
+
     @Unroll
     void "test projection #projection"() {
         given:
@@ -358,10 +378,21 @@ class NitriteCriteriaUnitSpec extends Specification {
 
         where:
             property | projection | expectedWhereQuery
-            "age"    | "max"      | '''[{$group:{age:{$max:'$age'},_id:null}}]'''
-            "age"    | "min"      | '''[{$group:{age:{$min:'$age'},_id:null}}]'''
-            "age"    | "avg"      | '''[{$group:{age:{$avg:'$age'},_id:null}}]'''
-            "age"    | "sum"      | '''[{$group:{age:{$sum:'$age'},_id:null}}]'''
+            "age"    | "max"          | '''[{$group:{age:{$max:'$age'},_id:null}}]'''
+            "age"    | "min"          | '''[{$group:{age:{$min:'$age'},_id:null}}]'''
+            "age"    | "avg"          | '''[{$group:{age:{$avg:'$age'},_id:null}}]'''
+            "age"    | "sum"          | '''[{$group:{age:{$sum:'$age'},_id:null}}]'''
+            "age"    | "countDistinct"| '''[{$group:{_id:'$age'}},{$count:'result'}]'''
+    }
+
+    void "test countDistinct on root"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(criteriaBuilder.countDistinct(entityRoot))
+            def predicateQuery = getQuery(criteriaQuery)
+
+        expect:
+            predicateQuery == '''[{$count:'result'}]'''
     }
 
     void "test count"() {

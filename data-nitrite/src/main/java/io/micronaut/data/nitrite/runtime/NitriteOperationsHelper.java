@@ -103,12 +103,13 @@ public interface NitriteOperationsHelper {
     void logDelete(String collection, Filter filter);
 
     /**
-     * Parses a sort from a JSON query.
+     * Parses the sort a query carries, whether it is a Nitrite JSON filter or a SQL-shaped
+     * generated query.
      *
-     * @param queryString the JSON query string
+     * @param queryString the query string
      * @return the parsed sort
      */
-    @Nullable Sort parseSortFromJsonQuery(@Nullable String queryString);
+    @Nullable Sort parseSortFromQuery(@Nullable String queryString);
 
     /**
      * Parses a sort from query hints.

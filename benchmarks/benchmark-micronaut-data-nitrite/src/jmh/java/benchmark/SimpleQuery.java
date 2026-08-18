@@ -47,11 +47,11 @@ public class SimpleQuery {
     public void prepare() throws Exception {
         tempDir = Files.createTempDirectory("nitrite-benchmark").toFile();
         Map<String, Object> props = new HashMap<>();
-        props.put("nitrite.storage-mode", storageMode);
+        props.put("micronaut.nitrite.default.storage-mode", storageMode);
         // Disable query logging to avoid overhead during benchmarks
         props.put("logger.levels.io.micronaut.data.query", "INFO");
         if (!"IN_MEMORY".equals(storageMode)) {
-            props.put("nitrite.db-path", new File(tempDir, "test.db").getAbsolutePath());
+            props.put("micronaut.nitrite.default.db-path", new File(tempDir, "test.db").getAbsolutePath());
         }
         this.applicationContext = ApplicationContext.run(props);
         this.bookRepository = applicationContext.getBean(BookRepository.class);

@@ -16,16 +16,20 @@
 package io.micronaut.data.nitrite.transaction;
 
 import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Singleton;
 
 /**
  * Holder for the current Nitrite transaction context.
  *
  * @since 5.2.0
  */
-@Singleton
 public class NitriteTransactionHolder {
 
+  /*
+   * Deliberately an instance field, not static: one holder (and one ThreadLocal slot) exists per
+   * datasource, since a per-datasource singleton bean owns it (see NitriteOperationsFactory). A
+   * static ThreadLocal would be shared across datasources, letting one datasource's bind() clobber
+   * another's transaction context on the same thread.
+   */
   private final ThreadLocal<NitriteTransactionContext> current = new ThreadLocal<>();
 
   /**

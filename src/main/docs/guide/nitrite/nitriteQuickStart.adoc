@@ -3,15 +3,19 @@ Micronaut Launch does not currently offer a dedicated `data-nitrite` feature. Th
 
 == Dependency Setup
 
-Add the following dependency to your annotation processor path:
+Add the following dependencies to your annotation processor path:
 
 dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor"]
+
+dependency:io.micronaut.data:micronaut-data-nitrite[scope="annotationProcessor"]
+
+NOTE: For Kotlin, add both dependencies in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add both in compileOnly scope.
+
+`micronaut-data-nitrite` is needed on the annotation processor path as well as the compile path: it carries the `NitriteQueryBuilder` that ann:data.nitrite.annotation.NitriteRepository[] names, and Micronaut Data resolves that builder at compilation time. Without it, repository methods are compiled against the default JPQL query builder instead of into Nitrite filters, and Nitrite-specific features such as projections, association lookups and `$regex` queries are lost.
 
 Then add a compile-scoped dependency on the Nitrite implementation:
 
 dependency:io.micronaut.data:micronaut-data-nitrite[scope="implementation"]
-
-NOTE: For Kotlin, add `micronaut-data-document-processor` in kapt or ksp scope. For Groovy, add it in compileOnly scope.
 
 == Create an Entity
 

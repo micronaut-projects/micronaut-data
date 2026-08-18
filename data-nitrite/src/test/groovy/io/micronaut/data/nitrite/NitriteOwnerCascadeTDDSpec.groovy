@@ -87,6 +87,21 @@ class NitriteOwnerCascadeTDDSpec extends Specification {
             savedCity.state.id == savedState.id
     }
 
+    void "test cascading update on owner side (ManyToOne) merges a mutated, already-saved association"() {
+        given: "a city already linked to an already-saved state"
+            def state = stateRepository.save(new State(name: "California"))
+            def savedCity = cityRepository.save(new City(name: "Sacramento", state: state))
+
+        when: "re-saving the city after mutating the (already-persisted) attached state"
+            savedCity.state.name = "California Updated"
+            cityRepository.save(savedCity)
+
+        then: "the update cascades the mutation to the state, instead of leaving it stale"
+            stateRepository.count() == 1
+            def reloadedState = stateRepository.findById(state.id).get()
+            reloadedState.name == "California Updated"
+    }
+
     void "test findByStateIsNull returns cities without a state"() {
         given:
             cityRepository.save(new City(name: "Stateless City", state: null))

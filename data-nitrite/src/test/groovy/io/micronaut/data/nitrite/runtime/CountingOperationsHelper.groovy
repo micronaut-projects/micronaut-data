@@ -51,7 +51,7 @@ class CountingOperationsHelper implements NitriteOperationsHelper {
     }
 
     @Override
-    Sort parseSortFromJsonQuery(String query) {
+    Sort parseSortFromQuery(String query) {
         return null
     }
 

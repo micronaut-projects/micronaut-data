@@ -30,6 +30,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMeta;
+import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
@@ -38,7 +39,6 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -322,11 +322,24 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (versionValue == null) {
                     versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
             Document update = repositoryWriter.toDocument(entity);
             if (update != null) {
                 helper.logUpdate(collection.getName(), filter, update);
+                // An unversioned update runs with Nitrite's upsert option, so update() and
+                // updateAll() of an entity whose id matches no document still write that document.
+                // This is deliberate: Nitrite has no notion of a detached entity, so an id assigned
+                // by the application is the only evidence of what the caller intends to store, and
+                // re-attaching such an entity through update() must not lose it. It differs from
+                // save() only in that save() also assigns a generated id and runs the insert
+                // cascade for new children.
+                // A versioned entity keeps strict semantics: the version is part of the filter, so a
+                // row that is absent (or stale) affects nothing and raises an optimistic-lock
+                // failure instead of being inserted. An entity with no id at all is rejected above,
+                // before this point, rather than inserted.
+                // Documented in src/main/docs/guide/nitrite/nitriteLimitations.adoc; covered by
+                // NitriteUpdateUpsertSemanticsSpec.
                 boolean upsert = meta.versionProp() == null;
                 long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
                 affectedCount = rows;
@@ -348,7 +361,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 if (versionValue == null) {
                     versionValue = meta.versionProp().getProperty().get(entity);
                 }
-                filter = Filter.and(filter, FluentFilter.where(meta.versionProp().getPersistedName()).eq(helper.toFilterValue(versionValue)));
+                filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
             helper.logFind(collection.getName(), filter);
             long rows = collection.remove(filter, false).getAffectedCount();

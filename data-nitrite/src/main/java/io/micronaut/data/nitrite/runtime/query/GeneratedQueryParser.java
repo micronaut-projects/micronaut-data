@@ -17,10 +17,10 @@ package io.micronaut.data.nitrite.runtime.query;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import org.dizitart.no2.filters.Filter;
-import org.dizitart.no2.filters.FluentFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +30,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.BETWEEN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.EQ;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.GTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.IN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LIKE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.LTE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NE;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NIN;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NOT_NULL;
+import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.NULL;
 
 /**
  * Parses the SQL-shaped query string that reaches the Nitrite runtime when a query was not built
@@ -49,6 +63,18 @@ public final class GeneratedQueryParser {
     private static final String SET_KEYWORD = " SET ";
     private static final String PARAMETER_PREFIX = ":p";
 
+    /**
+     * Clauses a generated {@code SELECT} may append after its {@code WHERE} clause. Ordering and
+     * grouping are applied by the caller through Nitrite's {@code FindOptions}, so they must be
+     * cut off the predicate text rather than parsed as part of it — leaving them attached makes
+     * the trailing operand of the last comparison read as {@code :p1 ORDER BY title ASC}.
+     */
+    private static final List<String> TRAILING_CLAUSE_KEYWORDS = List.of(" ORDER BY ", " GROUP BY ", " HAVING ");
+
+    private static final String ORDER_BY_KEYWORD = " ORDER BY ";
+    private static final String DESCENDING = "DESC";
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+
     private static final Pattern COMPARISON_PATTERN = Pattern.compile(
         "([A-Za-z0-9_.]+)\\s*(=|<>|!=|>=|<=|>|<)\\s*(.+)", Pattern.DOTALL);
     private static final Pattern NULL_PATTERN = Pattern.compile(
@@ -64,14 +90,22 @@ public final class GeneratedQueryParser {
     private static final Pattern ASSIGNMENT_PATTERN = Pattern.compile(
         "([A-Za-z0-9_.]+)\\s*=\\s*(.+)", Pattern.DOTALL);
 
+    private final LeafFilterFactory leafFilterFactory;
+
     /**
      * Create a new parser.
+     *
+     * @param leafFilterFactory builds the filter for a single resolved predicate
      */
-    public GeneratedQueryParser() {
+    public GeneratedQueryParser(LeafFilterFactory leafFilterFactory) {
+        this.leafFilterFactory = leafFilterFactory;
     }
 
     /**
      * Parses the {@code WHERE} clause of a generated query.
+     *
+     * <p>Any {@code ORDER BY}, {@code GROUP BY} or {@code HAVING} clause following the predicate is
+     * discarded: those are applied through {@code FindOptions} by the caller, not through the filter.
      *
      * @param query  the full query string
      * @param entity the root entity
@@ -83,7 +117,55 @@ public final class GeneratedQueryParser {
         if (whereStart < 0) {
             return null;
         }
-        return parsePredicate(query.substring(whereStart + WHERE_KEYWORD.length()), entity, params);
+        return parsePredicate(stripTrailingClauses(query.substring(whereStart + WHERE_KEYWORD.length())), entity, params);
+    }
+
+    /**
+     * Truncates the predicate text at the first {@link #TRAILING_CLAUSE_KEYWORDS} keyword that
+     * appears outside a quoted literal.
+     *
+     * @param predicate the text following the {@code WHERE} keyword
+     * @return the predicate with any trailing clause removed
+     */
+    private static String stripTrailingClauses(String predicate) {
+        int end = predicate.length();
+        for (String keyword : TRAILING_CLAUSE_KEYWORDS) {
+            int index = indexOfKeyword(predicate, keyword);
+            if (index >= 0 && index < end) {
+                end = index;
+            }
+        }
+        return predicate.substring(0, end);
+    }
+
+    /**
+     * Parses the {@code ORDER BY} clause of a generated query into a {@link Sort}, so a sorted
+     * derived finder orders its results even when its query was built as SQL rather than as a
+     * Nitrite JSON filter carrying a {@code $sort} key.
+     *
+     * <p>Property names are returned as written, minus the query alias; the caller resolves them
+     * against the entity when it builds the find options.
+     *
+     * @param query the full query string
+     * @return the sort, or {@code null} when the query carries no {@code ORDER BY} clause
+     */
+    public static @Nullable Sort parseOrderBy(String query) {
+        int start = indexOfKeyword(query, ORDER_BY_KEYWORD);
+        if (start < 0) {
+            return null;
+        }
+        List<Sort.Order> orders = new ArrayList<>();
+        for (String item : splitTopLevel(query.substring(start + ORDER_BY_KEYWORD.length()), ",")) {
+            String[] parts = WHITESPACE_PATTERN.split(item.trim());
+            if (parts.length == 0 || parts[0].isEmpty()) {
+                continue;
+            }
+            String property = stripAlias(parts[0]);
+            orders.add(parts.length > 1 && DESCENDING.equalsIgnoreCase(parts[1])
+                ? Sort.Order.desc(property)
+                : Sort.Order.asc(property));
+        }
+        return orders.isEmpty() ? null : Sort.of(orders);
     }
 
     /**
@@ -133,50 +215,86 @@ public final class GeneratedQueryParser {
 
         Matcher nullMatcher = NULL_PATTERN.matcher(predicate);
         if (nullMatcher.matches()) {
-            String field = resolveField(nullMatcher.group(1), entity);
-            return nullMatcher.group(2) == null
-                ? FluentFilter.where(field).eq(null)
-                : FluentFilter.where(field).notEq(null);
+            return leafFilter(entity, nullMatcher.group(1), predicate,
+                nullMatcher.group(2) == null ? NULL : NOT_NULL, true);
         }
 
         Matcher betweenMatcher = BETWEEN_PATTERN.matcher(predicate);
         if (betweenMatcher.matches()) {
-            String field = resolveField(betweenMatcher.group(1), entity);
-            Comparable<?> lower = asComparable(resolveOperand(betweenMatcher.group(2), params, predicate), predicate);
-            Comparable<?> upper = asComparable(resolveOperand(betweenMatcher.group(3), params, predicate), predicate);
-            return Filter.and(FluentFilter.where(field).gte(lower), FluentFilter.where(field).lte(upper));
+            List<Object> range = new ArrayList<>(2);
+            range.add(resolveOperand(betweenMatcher.group(2), params, predicate));
+            range.add(resolveOperand(betweenMatcher.group(3), params, predicate));
+            return leafFilter(entity, betweenMatcher.group(1), predicate, BETWEEN, range);
         }
 
         Matcher inMatcher = IN_PATTERN.matcher(predicate);
         if (inMatcher.matches()) {
-            String field = resolveField(inMatcher.group(1), entity);
-            Comparable<?>[] values = toComparableArray(resolveOperand(inMatcher.group(3), params, predicate), predicate);
-            return inMatcher.group(2) == null
-                ? FluentFilter.where(field).in(values)
-                : FluentFilter.where(field).notIn(values);
+            Object values = toValueList(resolveOperand(inMatcher.group(3), params, predicate));
+            return leafFilter(entity, inMatcher.group(1), predicate,
+                inMatcher.group(2) == null ? IN : NIN, values);
         }
 
         Matcher likeMatcher = LIKE_PATTERN.matcher(predicate);
         if (likeMatcher.matches()) {
-            String field = resolveField(likeMatcher.group(1), entity);
-            String regex = PatternConverter.resolveRegexPattern(resolveOperand(likeMatcher.group(3), params, predicate));
-            Filter like = FluentFilter.where(field).regex(regex);
-            return likeMatcher.group(2) == null ? like : like.not();
+            Object pattern = resolveOperand(likeMatcher.group(3), params, predicate);
+            if (likeMatcher.group(2) == null) {
+                return leafFilter(entity, likeMatcher.group(1), predicate, LIKE, pattern);
+            }
+            return leafFilter(entity, likeMatcher.group(1), predicate, NOT, Map.of(LIKE, pattern));
         }
 
         Matcher matcher = COMPARISON_PATTERN.matcher(predicate);
         if (!matcher.matches()) {
             throw unsupported(predicate, "predicate");
         }
-        String field = resolveField(matcher.group(1), entity);
         Object value = resolveOperand(matcher.group(3), params, predicate);
-        return switch (matcher.group(2)) {
-            case "=" -> FluentFilter.where(field).eq(value);
-            case "!=", "<>" -> FluentFilter.where(field).notEq(value);
-            case ">" -> FluentFilter.where(field).gt(asComparable(value, predicate));
-            case ">=" -> FluentFilter.where(field).gte(asComparable(value, predicate));
-            case "<" -> FluentFilter.where(field).lt(asComparable(value, predicate));
-            default -> FluentFilter.where(field).lte(asComparable(value, predicate));
+        String operator = switch (matcher.group(2)) {
+            case "=" -> EQ;
+            case "!=", "<>" -> NE;
+            case ">" -> GT;
+            case ">=" -> GTE;
+            case "<" -> LT;
+            default -> LTE;
+        };
+        return leafFilter(entity, matcher.group(1), predicate, operator, value);
+    }
+
+    /**
+     * Hands one resolved predicate to the {@link LeafFilterFactory} as the Nitrite operator object
+     * the JSON path would have carried, so both paths resolve the field and coerce the value the
+     * same way.
+     *
+     * @param entity    the root entity
+     * @param reference the field reference as written in the query, alias included
+     * @param predicate the predicate text, used for error reporting
+     * @param operator  the Nitrite operator
+     * @param value     the operator's value
+     * @return the built filter
+     */
+    private Filter leafFilter(RuntimePersistentEntity<?> entity, String reference, String predicate,
+                              String operator, @Nullable Object value) {
+        Map<String, Object> operators = new LinkedHashMap<>(1);
+        operators.put(operator, value);
+        Filter filter = leafFilterFactory.build(entity, stripAlias(reference, entity), operators);
+        if (filter == null) {
+            throw unsupported(predicate, "predicate");
+        }
+        return filter;
+    }
+
+    /**
+     * Normalises an {@code IN} operand to a list, so a single bound value and a bound collection
+     * reach the filter builder in the same shape.
+     *
+     * @param value the resolved operand
+     * @return the operand as a list
+     */
+    private static List<?> toValueList(@Nullable Object value) {
+        return switch (value) {
+            case null -> List.of();
+            case Collection<?> collection -> new ArrayList<>(collection);
+            case Object[] array -> Arrays.asList(array);
+            default -> List.of(value);
         };
     }
 
@@ -199,7 +317,7 @@ public final class GeneratedQueryParser {
             return params[position];
         }
         if (value.length() >= 2 && value.startsWith("'") && value.endsWith("'")) {
-            return value.substring(1, value.length() - 1).replace("''", "'");
+            return value.substring(1, value.length() - 1).replace("\\'", "'").replace("''", "'");
         }
         if (value.equalsIgnoreCase("NULL")) {
             return null;
@@ -218,33 +336,48 @@ public final class GeneratedQueryParser {
     }
 
     /**
+     * Drops the query alias from a field reference. A generated query addresses its root as
+     * {@code book_.title}; only the property path is meaningful to the filter builder.
+     *
+     * @param reference the field reference as written in the query
+     * @param entity    the root entity
+     * @return the property path
+     */
+    private static String stripAlias(String reference, RuntimePersistentEntity<?> entity) {
+        int separator = reference.indexOf('.');
+        if (separator < 0) {
+            return reference;
+        }
+        String head = reference.substring(0, separator);
+        return entity.getPropertyByName(head) == null ? reference.substring(separator + 1) : reference;
+    }
+
+    /**
+     * Drops the query alias without entity metadata to check against. A generated alias is the
+     * entity's simple name with a trailing underscore, a shape no persistent property has.
+     *
+     * @param reference the field reference as written in the query
+     * @return the property path
+     */
+    private static String stripAlias(String reference) {
+        int separator = reference.indexOf('.');
+        if (separator < 0 || reference.charAt(separator - 1) != '_') {
+            return reference;
+        }
+        return reference.substring(separator + 1);
+    }
+
+    /**
      * Resolves a possibly dotted field reference to the persisted document path. A leading segment
      * that is not a property of the entity is treated as a query alias and dropped; a segment that
      * is an association or embedded property keeps its place in the path under its persisted name.
+     *
+     * @param reference the field reference as written in the query
+     * @param entity    the root entity
+     * @return the persisted document path
      */
-    private String resolveField(String reference, RuntimePersistentEntity<?> entity) {
-        List<String> segments = new ArrayList<>(Arrays.asList(reference.split("\\.")));
-        if (segments.size() > 1 && entity.getPropertyByName(segments.getFirst()) == null) {
-            segments.removeFirst();
-        }
-        return NitriteEntityMapper.persistedPath(String.join(".", segments), entity);
-    }
-
-    private Comparable<?>[] toComparableArray(@Nullable Object value, String predicate) {
-        Collection<?> values = switch (value) {
-            case null -> List.of();
-            case Collection<?> collection -> collection;
-            case Object[] array -> Arrays.asList(array);
-            default -> List.of(value);
-        };
-        return values.stream().map(v -> asComparable(v, predicate)).toArray(Comparable<?>[]::new);
-    }
-
-    private Comparable<?> asComparable(@Nullable Object value, String predicate) {
-        if (value instanceof Comparable<?> comparable) {
-            return comparable;
-        }
-        throw new IllegalStateException("Non-comparable value in generated predicate: " + predicate);
+    private static String resolveField(String reference, RuntimePersistentEntity<?> entity) {
+        return NitriteEntityMapper.persistedPath(stripAlias(reference, entity), entity);
     }
 
     private static UnsupportedOperationException unsupported(String fragment, String kind) {
@@ -256,15 +389,42 @@ public final class GeneratedQueryParser {
     }
 
     /**
+     * Advances past all characters belonging to quoted literals, including opening/closing
+     * quotes and backslash escapes. Returns the index of the first character the caller
+     * should process (which may equal {@code i} if no literal content was consumed, or
+     * may exceed the string length if the remainder was all literal content).
+     */
+    private static int skipLiterals(String s, int i, boolean[] inLiteral) {
+        while (i < s.length()) {
+            char ch = s.charAt(i);
+            if (ch == '\\' && inLiteral[0] && i + 1 < s.length()) {
+                i += 2;
+                continue;
+            }
+            if (ch == '\'') {
+                inLiteral[0] = !inLiteral[0];
+                i++;
+                continue;
+            }
+            if (!inLiteral[0]) {
+                break;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    /**
      * Finds a keyword outside of any quoted literal.
      */
     private static int indexOfKeyword(String query, String keyword) {
-        boolean inLiteral = false;
+        boolean[] inLiteral = {false};
         for (int i = 0; i <= query.length() - keyword.length(); i++) {
-            char ch = query.charAt(i);
-            if (ch == '\'') {
-                inLiteral = !inLiteral;
-            } else if (!inLiteral && query.regionMatches(true, i, keyword, 0, keyword.length())) {
+            i = skipLiterals(query, i, inLiteral);
+            if (i > query.length() - keyword.length()) {
+                break;
+            }
+            if (query.regionMatches(true, i, keyword, 0, keyword.length())) {
                 return i;
             }
         }
@@ -294,13 +454,14 @@ public final class GeneratedQueryParser {
         List<String> parts = new ArrayList<>();
         int depth = 0;
         int start = 0;
-        boolean inLiteral = false;
+        boolean[] inLiteral = {false};
         for (int i = 0; i <= expression.length() - separator.length(); i++) {
+            i = skipLiterals(expression, i, inLiteral);
+            if (i > expression.length() - separator.length()) {
+                break;
+            }
             char ch = expression.charAt(i);
-            if (ch == '\'') {
-                inLiteral = !inLiteral;
-            } else if (inLiteral) {
-            } else if (ch == '(') {
+            if (ch == '(') {
                 depth++;
             } else if (ch == ')') {
                 depth--;
@@ -322,13 +483,14 @@ public final class GeneratedQueryParser {
         while (result.startsWith("(") && result.endsWith(")")) {
             int depth = 0;
             boolean enclosesWholeExpression = true;
-            boolean inLiteral = false;
+            boolean[] inLiteral = {false};
             for (int i = 0; i < result.length(); i++) {
+                i = skipLiterals(result, i, inLiteral);
+                if (i >= result.length()) {
+                    break;
+                }
                 char ch = result.charAt(i);
-                if (ch == '\'') {
-                    inLiteral = !inLiteral;
-                } else if (inLiteral) {
-                } else if (ch == '(') {
+                if (ch == '(') {
                     depth++;
                 } else if (ch == ')' && --depth == 0 && i < result.length() - 1) {
                     enclosesWholeExpression = false;
@@ -341,5 +503,27 @@ public final class GeneratedQueryParser {
             result = result.substring(1, result.length() - 1).trim();
         }
         return result;
+    }
+
+    /**
+     * Builds the Nitrite filter for one leaf predicate.
+     *
+     * <p>Deliberately narrow: it exists so this parser never grows a second implementation of
+     * field resolution. Association paths, embedded paths, identity aliasing and value coercion
+     * all live in the module's JSON filter builder, and routing every leaf through this factory
+     * keeps a SQL-shaped query and its JSON equivalent on exactly the same semantics.
+     */
+    @FunctionalInterface
+    public interface LeafFilterFactory {
+
+        /**
+         * Builds the filter for one field and its operators.
+         *
+         * @param entity       the entity the path is rooted at
+         * @param propertyPath the property path, with any query alias already stripped
+         * @param operators    the Nitrite operator object for the field, e.g. {@code {$gt: 10}}
+         * @return the filter, or {@code null} when the path cannot be resolved
+         */
+        @Nullable Filter build(RuntimePersistentEntity<?> entity, String propertyPath, Map<String, Object> operators);
     }
 }

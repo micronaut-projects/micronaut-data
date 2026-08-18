@@ -6,6 +6,8 @@ import jakarta.inject.Inject
 import org.dizitart.no2.collection.Document
 import spock.lang.Specification
 
+import java.util.function.Function
+
 @MicronautTest(transactional = false)
 class NitriteQueryBinderSpec extends Specification {
 
@@ -35,14 +37,43 @@ class NitriteQueryBinderSpec extends Specification {
         binder.readSegmentValue(null, "foo") == null
 
         when:
-        def bean = new MyBean(firstName: "Alice")
+        def bean = new NamedBean(firstName: "Alice")
 
         then:
         binder.readSegmentValue(bean, "firstName") == "Alice"
         binder.readSegmentValue(bean, "first_name") == "Alice"
     }
+
+    void "a value that is not a positional placeholder has no index"() {
+        expect:
+        NitriteQueryBinder.extractPlaceholderIndex(null) == null
+        NitriteQueryBinder.extractPlaceholderIndex("plain string") == null
+        NitriteQueryBinder.extractPlaceholderIndex('$mn_qp:not-a-number') == null
+
+        and: "both placeholder encodings carry the same index"
+        NitriteQueryBinder.extractPlaceholderIndex('$mn_qp:2') == 2
+        NitriteQueryBinder.extractPlaceholderIndex(['$mn_qp': 2]) == 2
+    }
+
+    void "placeholders resolve against the parameters they name"() {
+        given:
+        def identity = { it } as Function
+
+        expect: "a named parameter resolves from the named map"
+        NitriteQueryBinder.resolveParameterValue(":p1", null, ["p1": "val"], identity) == "val"
+
+        and: "both positional encodings resolve from the JSON parameter array"
+        NitriteQueryBinder.resolveParameterValue('$mn_qp:0', [1] as Object[], [:], identity) == 1
+        NitriteQueryBinder.resolveParameterValue(['$mn_qp': 0], [1] as Object[], [:], identity) == 1
+
+        and: "an unresolvable placeholder still goes through the converter, as a null"
+        NitriteQueryBinder.resolveParameterValue(":missing", null, [:], identity) == null
+
+        and: "a value that is not a placeholder is returned untouched"
+        NitriteQueryBinder.resolveParameterValue("plain string", [1] as Object[], [:], identity) == "plain string"
+    }
 }
 
-class MyBean {
+class NamedBean {
     String firstName
 }

@@ -59,6 +59,28 @@ class NitriteUpsertLifecycleSpec extends Specification {
         all[0].name == "keep"
     }
 
+    void "test veto blocks a single save() of a new entity"() {
+        when:
+        repo.save(new TimestampedRecord("veto-me"))
+
+        then:
+        repo.findAll().toList().isEmpty()
+    }
+
+    void "test veto blocks a single save() update of an existing entity"() {
+        given:
+        def existing = repo.save(new TimestampedRecord("keep"))
+
+        when:
+        existing.name = "veto-update-me"
+        repo.save(existing)
+
+        then:
+        def reloaded = repo.findById(existing.id).get()
+        reloaded.name == "keep"
+        reloaded.version == 0L
+    }
+
     void "test saveAll() on mixed entities sets correct timestamps and versions"() {
         given:
         def existing = repo.save(new TimestampedRecord("existing"))

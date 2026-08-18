@@ -876,6 +876,17 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         return newBindingContext(ref, ref);
     }
 
+    /**
+     * Creates a binding context for a root-level property, which has no owning associations.
+     *
+     * @param property the property being bound, {@code null} when it is not mapped
+     * @return the binding context
+     */
+    static BindingParameter.BindingContext newBindingContext(@Nullable final PersistentProperty property) {
+        return newBindingContext(
+            property == null ? null : PersistentPropertyPath.of(Collections.emptyList(), property, property.getName()));
+    }
+
     static BindingParameter.BindingContext newBindingContext(
         @Nullable final PersistentPropertyPath in, @Nullable final PersistentPropertyPath out) {
         return BindingParameter.BindingContext.create()
