@@ -15,7 +15,7 @@ dependencies {
 	api projects.micronautDataModel
 	api(mnSql.jakarta.persistence.api)
 
-    implementation libs.antlr.runtime
+	api libs.antlr.runtime
 
 	compileOnly mn.micronaut.core.processor
     compileOnly libs.managed.jakarta.data.stateful
