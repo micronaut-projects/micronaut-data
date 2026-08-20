@@ -3,6 +3,14 @@ plugins {
     id 'antlr'
 }
 
+// The Gradle ANTLR plugin wires its tooling configuration into `api`, which
+// would otherwise expose the parser generator and all of its transitive
+// dependencies at runtime. ANTLR is only needed to generate sources; the
+// generated parser itself uses the runtime dependency declared below.
+configurations.named("api") {
+    setExtendsFrom(extendsFrom.findAll { it.name != "antlr" })
+}
+
 dependencies {
 	api projects.micronautDataModel
 	api(mnSql.jakarta.persistence.api)
