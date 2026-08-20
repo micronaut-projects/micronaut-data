@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.vector
 
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
@@ -40,6 +41,9 @@ class OracleXeVectorIndexDdlSpec extends Specification {
     static class DocumentEmbeddingDefaultEntity {
         Long id
         Vector embedding
+
+        @Nullable
+        Vector nullableEmbedding
     }
 
     @MappedEntity("document_embedding_sparse")
@@ -84,10 +88,11 @@ class OracleXeVectorIndexDdlSpec extends Specification {
         ctx.close()
 
         then:
-        statements.any { s ->
-            def u = s.toUpperCase(Locale.ROOT)
-            u.contains("VECTOR(*,FLOAT64)") || u.contains("VECTOR(*, FLOAT64)")
-        }
+        def createTable = statements.find { it.startsWith("CREATE TABLE") }
+        def sql = createTable.toUpperCase(Locale.ROOT)
+        sql.contains('"EMBEDDING" VECTOR(*,FLOAT64) NOT NULL')
+        sql.contains('"NULLABLE_EMBEDDING" VECTOR(*,FLOAT64)')
+        !sql.contains('"NULLABLE_EMBEDDING" VECTOR(*,FLOAT64) NOT NULL')
     }
 
     def "generates Oracle VECTOR with SPARSE storage"() {

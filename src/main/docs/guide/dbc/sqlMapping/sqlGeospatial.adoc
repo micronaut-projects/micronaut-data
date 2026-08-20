@@ -61,8 +61,9 @@ for planar and spherical distance checks:
 |===
 
 For the other supported SQL dialects, `Srid.CrsType` does not currently change the generated `Near` predicate function.
-It also does not change the database column type. Use `@MappedProperty(definition = "geography")` when a dialect such as
-PostgreSQL / PostGIS or SQL Server should use a native `GEOGRAPHY` column.
+For PostgreSQL / PostGIS and SQL Server, `Srid.CrsType.GEOGRAPHIC` selects the native `GEOGRAPHY` column type and matching
+read and write conversions. Other dialects retain their native geometry column type. An explicit
+`@MappedProperty(definition = "...")` always takes precedence over the inferred column type.
 
 === Query predicates
 

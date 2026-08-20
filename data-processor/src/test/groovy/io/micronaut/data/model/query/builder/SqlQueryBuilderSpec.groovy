@@ -35,12 +35,14 @@ import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
+import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Owner
 import io.micronaut.data.tck.entities.Product
@@ -211,6 +213,39 @@ interface MyRepository {
         insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
+    void 'test configure dialect options version'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.ORACLE)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(@SqlQueryConfiguration.DialectConfiguration(dialect = Dialect.ORACLE, version = "23.1"))
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        when:
+        SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(annotationMetadata)
+
+        then:
+        sqlQueryBuilder.dialect == Dialect.ORACLE
+        sqlQueryBuilder.dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)
+    }
+
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"
         def query = builder.createCriteriaUpdate(Sale)
@@ -221,6 +256,52 @@ interface MyRepository {
 
         then:"The update query is correct"
         encoded.query == 'UPDATE `sale` SET `data`=CONVERT(? USING UTF8MB4)'
+    }
+
+    void "test oracle native boolean predicate rendering"() {
+        given:
+        def legacyDeleteQuery = builder.createCriteriaDelete(Contact)
+        def legacyDeleteRoot = legacyDeleteQuery.from(Contact)
+
+        when:
+        def legacyResult = legacyDeleteQuery
+            .where(builder.isTrue(legacyDeleteRoot.get("active")))
+            .build(new SqlQueryBuilder(Dialect.ORACLE))
+
+        then:
+        legacyResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" = 1)'
+
+        and:
+        def nativeDeleteQuery = builder.createCriteriaDelete(Contact)
+        def nativeDeleteRoot = nativeDeleteQuery.from(Contact)
+        def nativeBuilder = new SqlQueryBuilder(
+            Dialect.ORACLE,
+            SqlDialectOptions.ORACLE_23_1_0_VERSION
+        )
+
+        when:
+        def nativeResult = nativeDeleteQuery
+            .where(builder.isTrue(nativeDeleteRoot.get("active")))
+            .build(nativeBuilder)
+
+        then:
+        nativeResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
+
+        and:
+        def laterBaselineDeleteQuery = builder.createCriteriaDelete(Contact)
+        def laterBaselineDeleteRoot = laterBaselineDeleteQuery.from(Contact)
+        def laterBaselineBuilder = new SqlQueryBuilder(
+            Dialect.ORACLE,
+            "23.4"
+        )
+
+        when:
+        def laterBaselineResult = laterBaselineDeleteQuery
+            .where(builder.isTrue(laterBaselineDeleteRoot.get("active")))
+            .build(laterBaselineBuilder)
+
+        then:
+        laterBaselineResult.query == 'DELETE  FROM "TBL_CONTACT"  WHERE ("ACTIVE" IS TRUE)'
     }
 
     void "test build queries with schema"() {
@@ -535,21 +616,25 @@ interface MyRepository {
         result.query == expectedQuery
 
         where:
-        dialect            | entityClass    || expectedQuery
-        Dialect.ORACLE     | GeomEntityJson || 'INSERT INTO "GEOM_ENTITY_JSON" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","ID") VALUES (SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),"GEOM_ENTITY_JSON_SEQ".nextval)'
-        Dialect.ORACLE     | GeomEntityWkt  || 'INSERT INTO "GEOM_ENTITY_WKT" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","ID") VALUES (SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 3857),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 3857),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"GEOM_ENTITY_WKT_SEQ".nextval)'
-        Dialect.MYSQL      | GeomEntityJson || 'INSERT INTO `geom_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?))'
-        Dialect.MYSQL      | GeomEntityWkt  || 'INSERT INTO `geom_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
-        Dialect.H2         | GeomEntityJson || 'INSERT INTO `geom_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?))'
-        Dialect.H2         | GeomEntityWkt  || 'INSERT INTO `geom_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
-        Dialect.POSTGRES   | GeomEntityJson || 'INSERT INTO "geom_entity_json" ("location","multi_point","line_string","multi_line_string") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?))'
-        Dialect.POSTGRES   | GeomEntityWkt  || 'INSERT INTO "geom_entity_wkt" ("location","multi_point","line_string","multi_line_string") VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
-        Dialect.POSTGRES   | GeogEntityJson || 'INSERT INTO "geog_entity_json" ("location","multi_point","line_string","multi_line_string") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857)::geography,ST_GeomFromGeoJSON(?)::geography,ST_SetSRID(ST_GeomFromGeoJSON(?), 3857)::geography,ST_GeomFromGeoJSON(?)::geography)'
-        Dialect.POSTGRES   | GeogEntityWkt  || 'INSERT INTO "geog_entity_wkt" ("location","multi_point","line_string","multi_line_string") VALUES (ST_GeomFromText(?, 3857)::geography,ST_GeomFromText(?)::geography,ST_GeomFromText(?, 3857)::geography,ST_GeomFromText(?)::geography)'
-        Dialect.SQL_SERVER | GeomEntityJson || 'INSERT INTO [geom_entity_json] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857))'
-        Dialect.SQL_SERVER | GeomEntityWkt  || 'INSERT INTO [geom_entity_wkt] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857))'
-        Dialect.SQL_SERVER | GeogEntityJson || 'INSERT INTO [geog_entity_json] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326))'
-        Dialect.SQL_SERVER | GeogEntityWkt  || 'INSERT INTO [geog_entity_wkt] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326))'
+        dialect            | entityClass        || expectedQuery
+        Dialect.ORACLE     | GeomEntityJson     || 'INSERT INTO "GEOM_ENTITY_JSON" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","ID") VALUES (SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),SDO_UTIL.FROM_GEOJSON(?, NULL, 3857),SDO_UTIL.FROM_GEOJSON(?),"GEOM_ENTITY_JSON_SEQ".nextval)'
+        Dialect.ORACLE     | GeomEntityWkt      || 'INSERT INTO "GEOM_ENTITY_WKT" ("LOCATION","MULTI_POINT","LINE_STRING","MULTI_LINE_STRING","ID") VALUES (SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 3857),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), 3857),SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?)),"GEOM_ENTITY_WKT_SEQ".nextval)'
+        Dialect.MYSQL      | GeomEntityJson     || 'INSERT INTO `geom_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?),ST_GeomFromGeoJSON(?, 1, 3857),ST_GeomFromGeoJSON(?))'
+        Dialect.MYSQL      | GeomEntityWkt      || 'INSERT INTO `geom_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
+        Dialect.H2         | GeomEntityJson     || 'INSERT INTO `geom_entity_json` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?))'
+        Dialect.H2         | GeomEntityWkt      || 'INSERT INTO `geom_entity_wkt` (`location`,`multi_point`,`line_string`,`multi_line_string`) VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
+        Dialect.POSTGRES   | GeomEntityJson     || 'INSERT INTO "geom_entity_json" ("location","multi_point","line_string","multi_line_string") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?),ST_SetSRID(ST_GeomFromGeoJSON(?), 3857),ST_GeomFromGeoJSON(?))'
+        Dialect.POSTGRES   | GeomEntityWkt      || 'INSERT INTO "geom_entity_wkt" ("location","multi_point","line_string","multi_line_string") VALUES (ST_GeomFromText(?, 3857),ST_GeomFromText(?),ST_GeomFromText(?, 3857),ST_GeomFromText(?))'
+        Dialect.POSTGRES   | GeogEntityJson     || 'INSERT INTO "geog_entity_json" ("location","multi_point","line_string","multi_line_string") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 3857)::geography,ST_GeomFromGeoJSON(?)::geography,ST_SetSRID(ST_GeomFromGeoJSON(?), 3857)::geography,ST_GeomFromGeoJSON(?)::geography)'
+        Dialect.POSTGRES   | GeogEntityWkt      || 'INSERT INTO "geog_entity_wkt" ("location","multi_point","line_string","multi_line_string") VALUES (ST_GeomFromText(?, 3857)::geography,ST_GeomFromText(?)::geography,ST_GeomFromText(?, 3857)::geography,ST_GeomFromText(?)::geography)'
+        Dialect.POSTGRES   | GeomEntityWGS84    || 'INSERT INTO "geom_entity_wgs84" ("location") VALUES (ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)::geography)'
+        Dialect.POSTGRES   | GeomEntityWGS84Wkt || 'INSERT INTO "geom_entity_wgs84_wkt" ("location") VALUES (ST_GeomFromText(?, 4326)::geography)'
+        Dialect.SQL_SERVER | GeomEntityJson     || 'INSERT INTO [geom_entity_json] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857))'
+        Dialect.SQL_SERVER | GeomEntityWkt      || 'INSERT INTO [geom_entity_wkt] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857),geometry::STGeomFromText(?, 3857))'
+        Dialect.SQL_SERVER | GeogEntityJson     || 'INSERT INTO [geog_entity_json] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326))'
+        Dialect.SQL_SERVER | GeogEntityWkt      || 'INSERT INTO [geog_entity_wkt] ([location],[multi_point],[line_string],[multi_line_string]) VALUES (geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326),geography::STGeomFromText(?, 3857),geography::STGeomFromText(?, 4326))'
+        Dialect.SQL_SERVER | GeomEntityWGS84    || 'INSERT INTO [geom_entity_wgs84] ([location]) VALUES (geography::STGeomFromText(?, 4326))'
+        Dialect.SQL_SERVER | GeomEntityWGS84Wkt || 'INSERT INTO [geom_entity_wgs84_wkt] ([location]) VALUES (geography::STGeomFromText(?, 4326))'
     }
 
     @Unroll
@@ -586,6 +671,25 @@ interface MyRepository {
     }
 
     @Unroll
+    void "test encode #dialect update statement for geographic property for #entityClass.simpleName"() {
+        given:
+        def query = builder.createCriteriaUpdate(entityClass)
+        def root = query.from(entityClass)
+        query.set(root.get('point'), builder.parameter(Object))
+        query.where(builder.equal(root.get('id'), builder.parameter(Object)))
+
+        expect:
+        query.build(new SqlQueryBuilder(dialect)).query == expectedQuery
+
+        where:
+        dialect            | entityClass          || expectedQuery
+        Dialect.POSTGRES   | GeomEntityWGS84      || 'UPDATE "geom_entity_wgs84" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)::geography WHERE ("id" = ?)'
+        Dialect.POSTGRES   | GeomEntityWGS84Wkt   || 'UPDATE "geom_entity_wgs84_wkt" SET "location"=ST_GeomFromText(?, 4326)::geography WHERE ("id" = ?)'
+        Dialect.SQL_SERVER | GeomEntityWGS84      || 'UPDATE [geom_entity_wgs84] SET [location]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
+        Dialect.SQL_SERVER | GeomEntityWGS84Wkt   || 'UPDATE [geom_entity_wgs84_wkt] SET [location]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
+    }
+
+    @Unroll
     void "test encode #dialect read statement for geospatial properties for #entityClass.simpleName"() {
         given:
         def query = builder.createQuery(entityClass)
@@ -597,21 +701,25 @@ interface MyRepository {
         result.query == expectedQuery
 
         where:
-        dialect            | entityClass   || expectedQuery
-        Dialect.ORACLE     | GeomEntityJson || 'SELECT geom_entity_json_."ID",SDO_UTIL.TO_GEOJSON(geom_entity_json_."LOCATION") AS "LOCATION",SDO_UTIL.TO_GEOJSON(geom_entity_json_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_GEOJSON(geom_entity_json_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_GEOJSON(geom_entity_json_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING" FROM "GEOM_ENTITY_JSON" geom_entity_json_ WHERE (geom_entity_json_."ID" = ?)'
-        Dialect.ORACLE     | GeomEntityWkt  || 'SELECT geom_entity_wkt_."ID",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LOCATION") AS "LOCATION",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING" FROM "GEOM_ENTITY_WKT" geom_entity_wkt_ WHERE (geom_entity_wkt_."ID" = ?)'
-        Dialect.MYSQL      | GeomEntityJson || 'SELECT geom_entity_json_.`id`,ST_AsGeoJSON(geom_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geom_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geom_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geom_entity_json_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_json` geom_entity_json_ WHERE (geom_entity_json_.`id` = ?)'
-        Dialect.MYSQL      | GeomEntityWkt  || 'SELECT geom_entity_wkt_.`id`,ST_AsText(geom_entity_wkt_.`location`) AS `location`,ST_AsText(geom_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geom_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geom_entity_wkt_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_wkt` geom_entity_wkt_ WHERE (geom_entity_wkt_.`id` = ?)'
-        Dialect.H2         | GeomEntityJson || 'SELECT geom_entity_json_.`id`,ST_AsGeoJSON(geom_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geom_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geom_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geom_entity_json_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_json` geom_entity_json_ WHERE (geom_entity_json_.`id` = ?)'
-        Dialect.H2         | GeomEntityWkt  || 'SELECT geom_entity_wkt_.`id`,ST_AsText(geom_entity_wkt_.`location`) AS `location`,ST_AsText(geom_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geom_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geom_entity_wkt_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_wkt` geom_entity_wkt_ WHERE (geom_entity_wkt_.`id` = ?)'
-        Dialect.POSTGRES   | GeomEntityJson || 'SELECT geom_entity_json_."id",ST_AsGeoJSON(geom_entity_json_."location") AS "location",ST_AsGeoJSON(geom_entity_json_."multi_point") AS "multi_point",ST_AsGeoJSON(geom_entity_json_."line_string") AS "line_string",ST_AsGeoJSON(geom_entity_json_."multi_line_string") AS "multi_line_string" FROM "geom_entity_json" geom_entity_json_ WHERE (geom_entity_json_."id" = ?)'
-        Dialect.POSTGRES   | GeomEntityWkt  || 'SELECT geom_entity_wkt_."id",ST_AsText(geom_entity_wkt_."location") AS "location",ST_AsText(geom_entity_wkt_."multi_point") AS "multi_point",ST_AsText(geom_entity_wkt_."line_string") AS "line_string",ST_AsText(geom_entity_wkt_."multi_line_string") AS "multi_line_string" FROM "geom_entity_wkt" geom_entity_wkt_ WHERE (geom_entity_wkt_."id" = ?)'
-        Dialect.POSTGRES   | GeogEntityJson || 'SELECT geog_entity_json_."id",ST_AsGeoJSON(geog_entity_json_."location"::geometry) AS "location",ST_AsGeoJSON(geog_entity_json_."multi_point"::geometry) AS "multi_point",ST_AsGeoJSON(geog_entity_json_."line_string"::geometry) AS "line_string",ST_AsGeoJSON(geog_entity_json_."multi_line_string"::geometry) AS "multi_line_string" FROM "geog_entity_json" geog_entity_json_ WHERE (geog_entity_json_."id" = ?)'
-        Dialect.POSTGRES   | GeogEntityWkt  || 'SELECT geog_entity_wkt_."id",ST_AsText(geog_entity_wkt_."location"::geometry) AS "location",ST_AsText(geog_entity_wkt_."multi_point"::geometry) AS "multi_point",ST_AsText(geog_entity_wkt_."line_string"::geometry) AS "line_string",ST_AsText(geog_entity_wkt_."multi_line_string"::geometry) AS "multi_line_string" FROM "geog_entity_wkt" geog_entity_wkt_ WHERE (geog_entity_wkt_."id" = ?)'
-        Dialect.SQL_SERVER | GeomEntityJson || 'SELECT geom_entity_json_.[id],geom_entity_json_.[location].STAsText() AS [location],geom_entity_json_.[multi_point].STAsText() AS [multi_point],geom_entity_json_.[line_string].STAsText() AS [line_string],geom_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_json] geom_entity_json_ WHERE (geom_entity_json_.[id] = ?)'
-        Dialect.SQL_SERVER | GeomEntityWkt  || 'SELECT geom_entity_wkt_.[id],geom_entity_wkt_.[location].STAsText() AS [location],geom_entity_wkt_.[multi_point].STAsText() AS [multi_point],geom_entity_wkt_.[line_string].STAsText() AS [line_string],geom_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_wkt] geom_entity_wkt_ WHERE (geom_entity_wkt_.[id] = ?)'
-        Dialect.SQL_SERVER | GeogEntityJson || 'SELECT geog_entity_json_.[id],geog_entity_json_.[location].STAsText() AS [location],geog_entity_json_.[multi_point].STAsText() AS [multi_point],geog_entity_json_.[line_string].STAsText() AS [line_string],geog_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geog_entity_json] geog_entity_json_ WHERE (geog_entity_json_.[id] = ?)'
-        Dialect.SQL_SERVER | GeogEntityWkt  || 'SELECT geog_entity_wkt_.[id],geog_entity_wkt_.[location].STAsText() AS [location],geog_entity_wkt_.[multi_point].STAsText() AS [multi_point],geog_entity_wkt_.[line_string].STAsText() AS [line_string],geog_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geog_entity_wkt] geog_entity_wkt_ WHERE (geog_entity_wkt_.[id] = ?)'
+        dialect            | entityClass        || expectedQuery
+        Dialect.ORACLE     | GeomEntityJson     || 'SELECT geom_entity_json_."ID",SDO_UTIL.TO_GEOJSON(geom_entity_json_."LOCATION") AS "LOCATION",SDO_UTIL.TO_GEOJSON(geom_entity_json_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_GEOJSON(geom_entity_json_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_GEOJSON(geom_entity_json_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING" FROM "GEOM_ENTITY_JSON" geom_entity_json_ WHERE (geom_entity_json_."ID" = ?)'
+        Dialect.ORACLE     | GeomEntityWkt      || 'SELECT geom_entity_wkt_."ID",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LOCATION") AS "LOCATION",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."MULTI_POINT") AS "MULTI_POINT",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LINE_STRING") AS "LINE_STRING",SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."MULTI_LINE_STRING") AS "MULTI_LINE_STRING" FROM "GEOM_ENTITY_WKT" geom_entity_wkt_ WHERE (geom_entity_wkt_."ID" = ?)'
+        Dialect.MYSQL      | GeomEntityJson     || 'SELECT geom_entity_json_.`id`,ST_AsGeoJSON(geom_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geom_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geom_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geom_entity_json_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_json` geom_entity_json_ WHERE (geom_entity_json_.`id` = ?)'
+        Dialect.MYSQL      | GeomEntityWkt      || 'SELECT geom_entity_wkt_.`id`,ST_AsText(geom_entity_wkt_.`location`) AS `location`,ST_AsText(geom_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geom_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geom_entity_wkt_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_wkt` geom_entity_wkt_ WHERE (geom_entity_wkt_.`id` = ?)'
+        Dialect.H2         | GeomEntityJson     || 'SELECT geom_entity_json_.`id`,ST_AsGeoJSON(geom_entity_json_.`location`) AS `location`,ST_AsGeoJSON(geom_entity_json_.`multi_point`) AS `multi_point`,ST_AsGeoJSON(geom_entity_json_.`line_string`) AS `line_string`,ST_AsGeoJSON(geom_entity_json_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_json` geom_entity_json_ WHERE (geom_entity_json_.`id` = ?)'
+        Dialect.H2         | GeomEntityWkt      || 'SELECT geom_entity_wkt_.`id`,ST_AsText(geom_entity_wkt_.`location`) AS `location`,ST_AsText(geom_entity_wkt_.`multi_point`) AS `multi_point`,ST_AsText(geom_entity_wkt_.`line_string`) AS `line_string`,ST_AsText(geom_entity_wkt_.`multi_line_string`) AS `multi_line_string` FROM `geom_entity_wkt` geom_entity_wkt_ WHERE (geom_entity_wkt_.`id` = ?)'
+        Dialect.POSTGRES   | GeomEntityJson     || 'SELECT geom_entity_json_."id",ST_AsGeoJSON(geom_entity_json_."location") AS "location",ST_AsGeoJSON(geom_entity_json_."multi_point") AS "multi_point",ST_AsGeoJSON(geom_entity_json_."line_string") AS "line_string",ST_AsGeoJSON(geom_entity_json_."multi_line_string") AS "multi_line_string" FROM "geom_entity_json" geom_entity_json_ WHERE (geom_entity_json_."id" = ?)'
+        Dialect.POSTGRES   | GeomEntityWkt      || 'SELECT geom_entity_wkt_."id",ST_AsText(geom_entity_wkt_."location") AS "location",ST_AsText(geom_entity_wkt_."multi_point") AS "multi_point",ST_AsText(geom_entity_wkt_."line_string") AS "line_string",ST_AsText(geom_entity_wkt_."multi_line_string") AS "multi_line_string" FROM "geom_entity_wkt" geom_entity_wkt_ WHERE (geom_entity_wkt_."id" = ?)'
+        Dialect.POSTGRES   | GeogEntityJson     || 'SELECT geog_entity_json_."id",ST_AsGeoJSON(geog_entity_json_."location"::geometry) AS "location",ST_AsGeoJSON(geog_entity_json_."multi_point"::geometry) AS "multi_point",ST_AsGeoJSON(geog_entity_json_."line_string"::geometry) AS "line_string",ST_AsGeoJSON(geog_entity_json_."multi_line_string"::geometry) AS "multi_line_string" FROM "geog_entity_json" geog_entity_json_ WHERE (geog_entity_json_."id" = ?)'
+        Dialect.POSTGRES   | GeogEntityWkt      || 'SELECT geog_entity_wkt_."id",ST_AsText(geog_entity_wkt_."location"::geometry) AS "location",ST_AsText(geog_entity_wkt_."multi_point"::geometry) AS "multi_point",ST_AsText(geog_entity_wkt_."line_string"::geometry) AS "line_string",ST_AsText(geog_entity_wkt_."multi_line_string"::geometry) AS "multi_line_string" FROM "geog_entity_wkt" geog_entity_wkt_ WHERE (geog_entity_wkt_."id" = ?)'
+        Dialect.POSTGRES   | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_."id",ST_AsGeoJSON(geom_entity_wgs84_."location"::geometry) AS "location" FROM "geom_entity_wgs84" geom_entity_wgs84_ WHERE (geom_entity_wgs84_."id" = ?)'
+        Dialect.POSTGRES   | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_."id",ST_AsText(geom_entity_wgs84_wkt_."location"::geometry) AS "location" FROM "geom_entity_wgs84_wkt" geom_entity_wgs84_wkt_ WHERE (geom_entity_wgs84_wkt_."id" = ?)'
+        Dialect.SQL_SERVER | GeomEntityJson     || 'SELECT geom_entity_json_.[id],geom_entity_json_.[location].STAsText() AS [location],geom_entity_json_.[multi_point].STAsText() AS [multi_point],geom_entity_json_.[line_string].STAsText() AS [line_string],geom_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_json] geom_entity_json_ WHERE (geom_entity_json_.[id] = ?)'
+        Dialect.SQL_SERVER | GeomEntityWkt      || 'SELECT geom_entity_wkt_.[id],geom_entity_wkt_.[location].STAsText() AS [location],geom_entity_wkt_.[multi_point].STAsText() AS [multi_point],geom_entity_wkt_.[line_string].STAsText() AS [line_string],geom_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geom_entity_wkt] geom_entity_wkt_ WHERE (geom_entity_wkt_.[id] = ?)'
+        Dialect.SQL_SERVER | GeogEntityJson     || 'SELECT geog_entity_json_.[id],geog_entity_json_.[location].STAsText() AS [location],geog_entity_json_.[multi_point].STAsText() AS [multi_point],geog_entity_json_.[line_string].STAsText() AS [line_string],geog_entity_json_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geog_entity_json] geog_entity_json_ WHERE (geog_entity_json_.[id] = ?)'
+        Dialect.SQL_SERVER | GeogEntityWkt      || 'SELECT geog_entity_wkt_.[id],geog_entity_wkt_.[location].STAsText() AS [location],geog_entity_wkt_.[multi_point].STAsText() AS [multi_point],geog_entity_wkt_.[line_string].STAsText() AS [line_string],geog_entity_wkt_.[multi_line_string].STAsText() AS [multi_line_string] FROM [geog_entity_wkt] geog_entity_wkt_ WHERE (geog_entity_wkt_.[id] = ?)'
+        Dialect.SQL_SERVER | GeomEntityWGS84    || 'SELECT geom_entity_wgs84_.[id],geom_entity_wgs84_.[location].STAsText() AS [location] FROM [geom_entity_wgs84] geom_entity_wgs84_ WHERE (geom_entity_wgs84_.[id] = ?)'
+        Dialect.SQL_SERVER | GeomEntityWGS84Wkt || 'SELECT geom_entity_wgs84_wkt_.[id],geom_entity_wgs84_wkt_.[location].STAsText() AS [location] FROM [geom_entity_wgs84_wkt] geom_entity_wgs84_wkt_ WHERE (geom_entity_wgs84_wkt_.[id] = ?)'
     }
 
     @Unroll
@@ -968,14 +1076,24 @@ interface MyRepository {
         Dialect.SQL_SERVER | 'CREATE TABLE [school] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL,[point] GEOMETRY NOT NULL,[description] VARCHAR(255));'       | 'CREATE SPATIAL INDEX [idx_school_point] ON [school] ([point]);'
     }
 
-    void "test build create index for SQL Server geometry column 4326 srid"() {
+    void "test build create index for SQL Server geographic column"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.SQL_SERVER)
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityWGS84))
 
         then:
-        statements[0] == 'CREATE TABLE [geom_entity_wgs84] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOMETRY NOT NULL);'
-        statements[1] == 'CREATE SPATIAL INDEX [idx_geom_entity_wgs84_location] ON [geom_entity_wgs84] ([location]) USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90));'
+        statements[0] == 'CREATE TABLE [geom_entity_wgs84] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[location] GEOGRAPHY NOT NULL);'
+        statements[1] == 'CREATE SPATIAL INDEX [idx_geom_entity_wgs84_location] ON [geom_entity_wgs84] ([location]);'
+    }
+
+    void "test build create index for PostgreSQL geographic column"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(GeomEntityWGS84))
+
+        then:
+        statements[0] == 'CREATE TABLE "geom_entity_wgs84" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"location" GEOGRAPHY NOT NULL);'
+        statements[1] == 'CREATE INDEX "idx_geom_entity_wgs84_location" ON "geom_entity_wgs84" USING GIST ("location");'
     }
 
     void "test build create table rejects composite index containing geometry column"() {
