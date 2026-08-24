@@ -260,7 +260,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
         /**
          * An upsert operation.
          *
-         * @since 5.1.0
+         * @since 5.2.0
          */
         UPSERT,
     }

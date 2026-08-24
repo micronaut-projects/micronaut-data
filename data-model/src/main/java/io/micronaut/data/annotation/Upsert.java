@@ -42,7 +42,7 @@ import java.lang.annotation.Target;
  * target.
  * </p>
  *
- * @since 5.1.0
+ * @since 5.2.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

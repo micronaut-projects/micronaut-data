@@ -63,7 +63,7 @@ public interface QueryBuilder {
      * @param repositoryMetadata The repository annotation metadata
      * @param definition         The definition
      * @return The upsert statement
-     * @since 5.1.0
+     * @since 5.2.0
      */
     default QueryResult buildUpsert(AnnotationMetadata repositoryMetadata, UpsertQueryDefinition definition) {
         throw new UnsupportedOperationException("Upsert is not supported by " + getClass().getName());
