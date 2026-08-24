@@ -570,7 +570,7 @@ interface MyRepository {
         String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, "book_book_")
 
         then:
-        query == ' ORDER BY book_book_author_.name ASC'
+        query == ' ORDER BY book_book_author_.`name` ASC'
     }
 
     void "test encode insert statement"() {
