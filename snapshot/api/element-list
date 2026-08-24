@@ -47,7 +47,6 @@ io.micronaut.data.intercept.reactive
 io.micronaut.data.jdbc.annotation
 io.micronaut.data.jdbc.config
 io.micronaut.data.jdbc.convert
-io.micronaut.data.jdbc.exceptions
 io.micronaut.data.jdbc.mapper
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
@@ -114,7 +113,6 @@ io.micronaut.data.r2dbc.annotation
 io.micronaut.data.r2dbc.config
 io.micronaut.data.r2dbc.connection
 io.micronaut.data.r2dbc.convert
-io.micronaut.data.r2dbc.exceptions
 io.micronaut.data.r2dbc.mapper
 io.micronaut.data.r2dbc.operations
 io.micronaut.data.r2dbc.transaction
@@ -178,7 +176,6 @@ io.micronaut.transaction.interceptor.annotation
 io.micronaut.transaction.jdbc
 io.micronaut.transaction.jdbc.exceptions
 io.micronaut.transaction.reactive
-io.micronaut.transaction.recovery
 io.micronaut.transaction.support
 io.micronaut.transaction.sync
 io.micronaut.transaction.test
