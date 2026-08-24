@@ -19,7 +19,8 @@ class PostgresMultitenancySpec extends AbstractJdbcMultitenancySpec implements C
         return [
                 'db-type'        : 'postgresql',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'POSTGRES'
+                'dialect'        : 'POSTGRES',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

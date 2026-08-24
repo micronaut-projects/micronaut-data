@@ -125,6 +125,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     private static final int MAX_POSTGRES_IDENTIFIER_LENGTH = 63;
 
+    private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
+
     private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     // Shared, stateless no-op predicate to avoid per-call allocations in createQueryState().predicate()
@@ -141,6 +143,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     };
 
     private final Dialect dialect;
+    private final SqlDialectOptions dialectOptions;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
 
     /**
@@ -157,6 +160,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     annotationMetadata
                         .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
                         .orElse(Dialect.ANSI));
+            this.dialectOptions = SqlDialectOptions.of(annotationMetadata, dialect);
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -177,6 +181,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         } else {
             this.dialect = Dialect.ANSI;
+            this.dialectOptions = SqlDialectOptions.defaults(dialect);
         }
     }
 
@@ -185,14 +190,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
+        this.dialectOptions = SqlDialectOptions.defaults(dialect);
     }
 
     /**
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
+        this(dialect, null);
+    }
+
+    /**
+     * @param dialect The dialect
+     * @param dialectVersion The target dialect version
+     * @since 5.2
+     */
+    public SqlQueryBuilder(Dialect dialect, @Nullable String dialectVersion) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
+        this.dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
     }
 
     /**
@@ -201,6 +217,31 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Override
     public Dialect getDialect() {
         return dialect;
+    }
+
+    /**
+     * @param requiredVersion The required target dialect version
+     * @return Whether the target dialect version meets the requirement
+     * @since 5.2
+     */
+    @Override
+    public boolean isDialectVersionAtLeast(String requiredVersion) {
+        return dialectOptions.isVersionAtLeast(requiredVersion);
+    }
+
+    /**
+     * @return The normalized target dialect version, or {@code null} when none is configured.
+     * @since 5.2
+     */
+    @Override
+    @Nullable
+    public String getDialectVersion() {
+        return dialectOptions.version().orElse(null);
+    }
+
+    @Override
+    protected SqlDialectOptions getDialectOptions() {
+        return dialectOptions;
     }
 
     @Override
@@ -232,7 +273,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String asLiteral(@Nullable Object value) {
-        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean vBoolean) {
+        if (dialect == Dialect.SQL_SERVER && value instanceof Boolean vBoolean) {
+            return Boolean.TRUE.equals(vBoolean) ? "1" : "0";
+        }
+        if (dialect == Dialect.ORACLE
+            && value instanceof Boolean vBoolean
+            && !dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
             return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);
@@ -416,7 +462,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
+     * Builds the create table statements for a collection of entities. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities The collection of entities
@@ -432,6 +478,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return buildCreateTableStatements(List.of(), entities, dialect);
     }
 
+    /**
+     * Builds the create table statements for a collection of entities.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The collection of entities
+     * @param dialect The dialect
+     * @return The tables for the given entities
+     */
     @Experimental
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
@@ -831,7 +885,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
                     column += " " + tableIdentity.getDefinition();
                 } else {
-                    column += " " + tableIdentity.getSqlType(dialect);
+                    column += " " + tableIdentity.getSqlType(dialectOptions);
+                    column = appendReservableAndCheckConstraints(column, tableIdentity, escape);
                     if (tableIdentity.isRequired()) {
                         column += " NOT NULL";
                     }
@@ -851,7 +906,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
                 column += " " + tableColumn.getDefinition();
             } else {
-                column += " " + tableColumn.getSqlType(dialect);
+                column += " " + tableColumn.getSqlType(dialectOptions);
+                column = appendReservableAndCheckConstraints(column, tableColumn, escape);
                 if (tableColumn.isRequired()) {
                     column += " NOT NULL";
                 }
@@ -877,6 +933,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createSequenceStatements(table, escape, createStatements);
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
+        StringBuilder result = new StringBuilder(column);
+        if (tableColumn.isReservable()) {
+            if (dialect != Dialect.ORACLE) {
+                throw new IllegalStateException("Reservable columns are only supported for Oracle");
+            }
+            result.append(" RESERVABLE");
+        }
+        for (SqlColumnMapping.SqlCheckConstraint checkConstraint : tableColumn.getCheckConstraints()) {
+            String columnName = tableColumn.getName();
+            if (escape) {
+                columnName = quote(columnName);
+            }
+            String constraintName = checkConstraint.name();
+            if (escape) {
+                constraintName = quote(constraintName);
+            }
+            result.append(String.format(CONSTRAINT_CHECK_TEMPLATE, constraintName, columnName, checkConstraint.operator(), checkConstraint.value()));
+        }
+        return result.toString();
     }
 
     private void createAuxiliaryStatements(SqlTableMapping table, List<String> createStatements) {
@@ -1665,12 +1743,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         // since sqlserver doesn't have built-in functions for conversion between
         // json and internal geospatial data type, use always Well-Known Text (WKT) functions
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
-        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
         OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
 
         String geoDataType;
         int defaultSrid;
-        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+        if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
             geoDataType = "geography";
             defaultSrid = 4326;
         } else {
@@ -1713,7 +1790,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
-        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+        boolean isGeography = dialect == Dialect.POSTGRES
+            ? SqlQueryBuilderUtils.isGeography(annotationMetadata)
+            : optDefinition.filter(SqlQueryBuilderUtils::isGeographyDefinition).isPresent();
+        if (isGeography) {
             // convert result of ST_GeomFromText and ST_GeomFromGeoJSON to geography
             sb.append("::geography");
         }
