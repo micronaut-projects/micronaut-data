@@ -1,0 +1,108 @@
+Micronaut Data supports Oracle transaction recovery for ambiguous commit failures with `@OracleTransactional.Recoverable`.
+
+This feature is Oracle-only, opt-in, and currently applies only to synchronous JDBC transactions.
+It is intended for the case where the database may have committed, but the client lost the commit acknowledgement and needs a deterministic commit outcome before retrying.
+
+`@OracleTransactional.Recoverable` is a companion to ann:transaction.annotation.Transactional[] and ann:transaction.annotation.OracleTransactional[].
+Use it on a method or type whose intercepted invocation owns the transaction commit boundary:
+
+[source,java]
+----
+import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.annotation.Transactional;
+
+@Transactional
+@OracleTransactional.Recoverable
+void updateInventory() {
+    // repository or JDBC work
+}
+----
+
+The recovery flow is:
+
+- execute the method in a normal synchronous transaction
+- capture the Oracle logical transaction identifier (LTXID) before commit
+- if a configured recoverable exception is raised during commit handling or commit acknowledgement, open a fresh connection and resolve the outcome with Oracle transaction recovery
+- if Oracle reports `COMMITTED`, return the original result
+- if Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, treat the transaction as committed, return the already produced result without replay, and log a warning that Oracle call-completion details may be incomplete
+- if Oracle reports `NOT_COMMITTED`, retry the transaction on a fresh connection up to the configured limit
+- if Oracle reports `UNKNOWN`, apply the configured unknown-outcome policy
+
+`@OracleTransactional.Recoverable` attributes:
+
+- `on`: exception types that trigger recovery handling. Default: `java.sql.SQLRecoverableException`
+- `maxAttempts`: retry attempts after the initial attempt. Default: `1`
+- `backoff`: delay between retries in milliseconds. Default: `100`
+- `unknownOutcomePolicy`: behavior when the outcome cannot be determined. Default: `FAIL`
+
+=== Usage Constraints
+
+`@OracleTransactional.Recoverable` must be used together with ann:transaction.annotation.Transactional[] or ann:transaction.annotation.OracleTransactional[].
+It does not create a transaction by itself.
+
+Recovery runs only for the synchronous invocation that starts and owns the final commit boundary.
+If the annotated method joins an existing transaction, Micronaut does not run recovery for that method because the outer transaction boundary owns commit.
+
+In practice, this means:
+
+- apply `@OracleTransactional.Recoverable` together with `@Transactional` or `@OracleTransactional`
+- place it on a top-level synchronous transactional entry point that owns commit
+- do not expect recovery to run when the method is invoked inside an outer `@Transactional` method
+- do not expect recovery to run when the method is wrapped in programmatic transaction execution such as `transactionOperations.execute(...)`
+
+=== Configuration
+
+Oracle transaction recovery activates only when Oracle JDBC is in use and the feature is enabled for the datasource:
+
+[configuration]
+----
+datasources:
+  default:
+    dialect: ORACLE
+    enable-oracle-transaction-recovery: true
+----
+
+=== Oracle Requirements
+
+The database and service must be configured correctly for Oracle transaction recovery:
+
+- use an Oracle Database version that supports Oracle Transaction Guard
+- configure the datasource JDBC URL to connect through the Oracle service that your DBA set up for this application and enabled for Oracle Transaction Guard, rather than the database's default service name
+- enable `COMMIT_OUTCOME=TRUE` on that service
+- set an appropriate `RETENTION_TIMEOUT`
+- grant `EXECUTE` on `DBMS_APP_CONT` to the application user
+
+Micronaut Data does not automatically detect whether Transparent Application Failover (TAF) or Application Continuity is already handling Oracle Transaction Guard for the connection.
+If that Oracle failover path is enabled, do not use `@OracleTransactional.Recoverable` on the same execution path.
+
+If the database, service, or client are out of sync for outcome resolution, Micronaut Data fails fast instead of treating the failure as an `UNKNOWN` outcome.
+
+=== Scope and Limitations
+
+- Recovery applies only to synchronous JDBC transactions
+- Recovery applies only when the intercepted execution owns the transaction commit boundary
+- If a method joins an existing transaction, the outer transaction boundary owns commit and therefore owns recovery
+- R2DBC is not supported by this feature
+- Micronaut does not expose Oracle's `USER_CALL_COMPLETED` flag through the method return type or another public API
+
+Oracle Transaction Guard can also report whether the user call completed after a committed transaction.
+Micronaut Data uses `USER_CALL_COMPLETED` internally to avoid replaying committed work.
+If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result instead of replaying the call or exposing a separate structured recovery result.
+
+=== Operational Notes
+
+- Replayed work must be safe to execute again when Oracle reports `NOT_COMMITTED`
+- Outcome resolution always uses a fresh connection
+- Retry attempts also run on a fresh transaction/connection
+- Recovery is attempted only when commit handling or the commit acknowledgement
+  produces an exception whose type matches the exception types configured by
+  `on` (by default `java.sql.SQLRecoverableException`; a configured exception
+  type matches if it appears anywhere in the exception cause chain). If a
+  particular network and driver setup can leave JDBC operations waiting
+  indefinitely before an exception is surfaced, users may configure an
+  appropriate Oracle JDBC or infrastructure read timeout.
+  Micronaut Data does not set this timeout. It applies to JDBC reads generally
+  and must be tuned for the deployment; an immediate connection reset may not
+  require one. The timeout does not determine the Oracle commit outcome.
+- If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result without replay
+- If you are already relying on TAF or Application Continuity to own the replay flow, do not add explicit transaction recovery on top of that path

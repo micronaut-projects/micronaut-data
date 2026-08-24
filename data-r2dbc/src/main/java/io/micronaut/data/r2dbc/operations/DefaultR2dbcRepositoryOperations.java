@@ -37,6 +37,8 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
@@ -76,6 +78,7 @@ import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOp
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
+import io.micronaut.data.r2dbc.exceptions.R2dbcExceptionUtils;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareReadableR2dbcResultReader;
@@ -518,6 +521,12 @@ class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<R
                     return dataAccessException;
                 }
             }
+        }
+        if (R2dbcExceptionUtils.isUniqueConstraintViolation(r2dbcException)) {
+            return new EntityExistsException("Entity already exists: " + r2dbcException.getMessage(), r2dbcException);
+        }
+        if (R2dbcExceptionUtils.isIntegrityConstraintViolation(r2dbcException)) {
+            return new DataIntegrityViolationException("Data integrity violation: " + r2dbcException.getMessage(), r2dbcException);
         }
         return null;
     }

@@ -45,6 +45,7 @@ shared:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
+    recoverableTransactions: Oracle Transaction Recovery
   kotlinCriteria: Kotlin Criteria API extensions
   multitenancy:
     title: Multi-tenancy
@@ -98,7 +99,9 @@ dbc:
     mappedPropertyAlias: Using @MappedProperty alias
     sqlGeospatial: Geospatial Support
     sqlJsonType: JSON Column Support
+    sqlReservable: Oracle Reservable Columns
     sqlJsonView: JSON View
+    sqlOracleBoolean: Oracle BOOLEAN Support
     sqlVectorType: SQL Vector Type Mapping
     javaRecords: Support for Java 16 Records
     kotlinData: Support for Kotlin immutable data classes
