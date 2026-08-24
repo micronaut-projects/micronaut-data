@@ -5,7 +5,6 @@ import io.micronaut.context.BeanContext
 import io.micronaut.core.util.StringUtils
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static example.FamilyRepository.Specifications.childrenArrayContainsGender
@@ -17,7 +16,6 @@ import static example.FamilyRepository.Specifications.tagsContain
 
 
 @MicronautTest
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class FamilyRepositorySpec extends AbstractAzureCosmosSpec {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily()

@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql.validation;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 
@@ -42,7 +43,19 @@ public interface SqlTableMappingValidator {
      * @param tableMetadata   The SQL table metadata from the database to compare against
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    void validateTable(SqlTableMapping tableMapping,  SqlTableMetadata tableMetadata);
+    default void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
+        validateTable(tableMapping, tableMetadata, SqlDialectOptions.defaults(getSupportedDialect()));
+    }
+
+    /**
+     * Validates a table definition based on {@link PersistentEntity} mapping against its actual corresponding metadata from the database.
+     *
+     * @param tableMapping    The SQL table mapping from {@link PersistentEntity} to validate
+     * @param tableMetadata   The SQL table metadata from the database to compare against
+     * @param dialectOptions  The dialect options
+     * @throws SchemaValidationException When expected column not found or is not matching expected type
+     */
+    void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SqlDialectOptions dialectOptions);
 
     /**
      * Returns the SQL dialect supported by this validator.

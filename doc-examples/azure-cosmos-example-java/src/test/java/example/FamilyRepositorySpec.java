@@ -23,7 +23,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -49,7 +48,6 @@ import static example.FamilyRepository.Specifications.tagsContain;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class FamilyRepositorySpec extends AbstractAzureCosmosTest {
 
     private static final Family ANDERSEN_FAMILY = createAndersenFamily();
