@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.intercept.InsertEntityInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -36,6 +37,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getOperationType
 import static io.micronaut.data.processor.visitors.TestUtils.getOutBindingParameters
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 
@@ -328,6 +330,314 @@ interface MyInterface extends CrudRepository<Person, Long> {
         expect:
         getQuery(method) == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
         getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId', 'company.myId'] as String[]
+    }
+
+    void "test save fails when all update properties are reservable"() {
+        when:
+        buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Cannot generate save/update for entity [test.Account]")
+        e.message.contains("all updatable properties are reservable")
+        e.message.contains("reserveIncrement.../reserveDecrement... methods")
+    }
+
+    void "test save fails when all embedded update properties are reservable"() {
+        when:
+        buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @MappedProperty("stats_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stats getStats() { return stats; }
+    public void setStats(Stats stats) { this.stats = stats; }
+}
+
+@Embeddable
+class Stats {
+    @Reservable
+    private Long balance;
+
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Cannot generate save/update for entity [test.Account]")
+        e.message.contains("all updatable properties are reservable")
+    }
+
+    void "test save adds fallback update when entity has no updatable properties"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.AuditAccountRepository', """
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import java.time.Instant;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AuditAccountRepository extends CrudRepository<AuditAccount, Long> {
+}
+
+@MappedEntity
+class AuditAccount {
+    @Id
+    private Long id;
+    @DateCreated
+    private Instant createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+}
+""")
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+        def saveQueries = method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+
+        expect:
+        getQuery(method) == 'INSERT INTO "AUDIT_ACCOUNT" ("CREATED_AT","ID") VALUES (?,?)'
+        saveQueries.size() == 1
+        saveQueries[0].stringValue().get() == 'UPDATE "AUDIT_ACCOUNT" SET "ID"=? WHERE ("ID" = ?)'
+        saveQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
+    }
+
+    void "test insert still works when all update properties are reservable"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    Account insert(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("insert").findFirst().get()
+
+        expect:
+        getQuery(method) == 'INSERT INTO "ACCOUNT" ("BALANCE","ID") VALUES (?,"ACCOUNT_SEQ".nextval)'
+        method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery).isEmpty()
+    }
+
+    void "test save secondary update omits reservable properties instead of mixing assignments"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+        def saveQueries = method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+
+        expect:
+        getQuery(method) == 'INSERT INTO "ACCOUNT" ("NAME","BALANCE","ID") VALUES (?,?,"ACCOUNT_SEQ".nextval)'
+        saveQueries.size() == 1
+        saveQueries[0].stringValue().get() == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !saveQueries[0].stringValue().get().contains('"BALANCE"')
+        saveQueries[0].enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == DataMethod.OperationType.UPDATE
+    }
+
+    void "test implicit save secondary update omits reservable properties instead of mixing assignments"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.ImplicitAccountRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, operations = JdbcRepositoryOperations.class, implicitQueries = true)
+interface ImplicitAccountRepository extends CrudRepository<Account, Long> {
+}
+
+@MappedEntity
+class Account {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+        def saveQueries = method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+
+        expect:
+        getQuery(method) == 'INSERT INTO "ACCOUNT" ("NAME","BALANCE","ID") VALUES (?,?,"ACCOUNT_SEQ".nextval)'
+        saveQueries.size() == 1
+        saveQueries[0].stringValue().get() == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !saveQueries[0].stringValue().get().contains('"BALANCE"')
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")

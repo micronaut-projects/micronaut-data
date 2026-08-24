@@ -18,6 +18,7 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Internal;
+import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
@@ -126,8 +127,27 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
             @Override
             public void visit(UnaryExpression<?> unaryExpression) {
-                query.append(VALUE);
+                boolean appendValue = switch (unaryExpression.getType()) {
+                    case SUM, AVG, MAX, MIN, UPPER, LOWER ->
+                        // Don't need to append VALUE for these expressions, unless it is single field/projection
+                        isSingleProjection();
+                    default -> true;
+                };
+                if (appendValue) {
+                    query.append(VALUE);
+                }
                 super.visit(unaryExpression);
+            }
+
+            /**
+             * Cosmos SQL uses {@code VALUE} for a scalar result, but it must be omitted when
+             * selecting multiple expressions so that Cosmos returns an object for each row.
+             *
+             * @return Whether the select clause has exactly one projection
+             */
+            private boolean isSingleProjection() {
+                Selection<?> selection = ((SelectQueryDefinition) queryState.baseQueryDefinition()).selection();
+                return !selection.isCompoundSelection() || selection.getCompoundSelectionItems().size() == 1;
             }
         };
     }

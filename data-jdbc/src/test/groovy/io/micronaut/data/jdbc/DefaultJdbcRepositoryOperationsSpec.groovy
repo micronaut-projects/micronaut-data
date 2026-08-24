@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
@@ -31,12 +32,14 @@ import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
+import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -119,38 +122,162 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
     void "sqlite batch insert stays disabled even when generated keys are not required"() {
         given:
-            DefaultJdbcRepositoryOperations operations = newOperations(null)
-            RuntimePersistentProperty<?> identity = Mock {
-                isGenerated() >> false
-            }
-            RuntimePersistentEntity<?> persistentEntity = Mock {
-                hasIdentity() >> true
-                getIdentity() >> identity
-            }
-            Connection connection = Mock()
-            def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
-                    AnnotationMetadata.EMPTY_METADATA,
-                    null,
-                    Object,
-                    Dialect.SQLITE,
-                    connection
-            )
+        DefaultJdbcRepositoryOperations operations = newOperations(null)
+        RuntimePersistentProperty<?> identity = Mock {
+            isGenerated() >> false
+        }
+        RuntimePersistentEntity<?> persistentEntity = Mock {
+            hasIdentity() >> true
+            getIdentity() >> identity
+        }
+        Connection connection = Mock()
+        def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                AnnotationMetadata.EMPTY_METADATA,
+                null,
+                Object,
+                Dialect.SQLITE,
+                connection
+        )
 
         when:
-            boolean supported = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+        boolean supported = operations.isSupportsBatchInsert(operationContext, persistentEntity)
 
         then:
-            !supported
-            0 * connection._
+        !supported
+        0 * connection._
+    }
+
+    void "binds datasource dialect options"() {
+        given:
+            context = ApplicationContext.run([
+                "datasources.default.dialect": "ORACLE",
+                "datasources.default.dialect-options.version": "23.1",
+                "datasources.default.dialect-options.validate-version": false,
+                "datasources.default.enabled": false
+            ])
+
+        when:
+            def configuration = context.getBean(DataJdbcConfiguration)
+
+        then:
+            configuration.dialect == Dialect.ORACLE
+            configuration.dialectOptions.version == "23.1"
+            !configuration.dialectOptions.validateVersion
+    }
+
+    void "enables datasource target version validation by default"() {
+        expect:
+            new DataJdbcConfiguration("default").dialectOptions.validateVersion
+    }
+
+    void "ignores malformed target version metadata for JDBC diagnostics"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23.1.0.1"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            statement.executeUpdate() >> 0
+
+        when:
+            Optional<Number> result = operations.executeUpdate(query)
+
+        then:
+            result == Optional.of(0)
+            0 * connection.getMetaData()
+    }
+
+    void "normalizes major-only target version metadata for JDBC diagnostics"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            DatabaseMetaData databaseMetaData = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            int metadataCalls = 0
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            connection.getMetaData() >> {
+                metadataCalls++
+                databaseMetaData
+            }
+            databaseMetaData.databaseMajorVersion >> 23
+            databaseMetaData.databaseMinorVersion >> 0
+            statement.executeUpdate() >> 0
+
+        when:
+            Optional<Number> result = operations.executeUpdate(query)
+
+        then:
+            result == Optional.of(0)
+            metadataCalls == 1
+    }
+
+    void "retries JDBC target-version diagnostics after a metadata lookup failure"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            DatabaseMetaData databaseMetaData = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query = Mock()
+            int metadataAttempts = 0
+            query.dialect >> Dialect.ORACLE
+            query.dialectVersion >> "23"
+            query.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+            query.query >> "UPDATE test SET active = 1"
+            query.optimisticLock >> false
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            connection.getMetaData() >> {
+                if (metadataAttempts++ == 0) {
+                    throw new SQLException("Temporary metadata failure")
+                }
+                databaseMetaData
+            }
+            databaseMetaData.databaseMajorVersion >> 23
+            databaseMetaData.databaseMinorVersion >> 0
+            statement.executeUpdate() >> 0
+
+        when:
+            operations.executeUpdate(query)
+            operations.executeUpdate(query)
+
+        then:
+            metadataAttempts == 2
     }
 
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {
+        newOperations(executorService, Mock(ConnectionOperations<Connection>))
+    }
+
+    private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService,
+                                                           ConnectionOperations<Connection> connectionOperations) {
         context = ApplicationContext.run()
         return new DefaultJdbcRepositoryOperations(
                 "default",
                 new DataJdbcConfiguration("default"),
                 Mock(DataSource),
-                Mock(ConnectionOperations<Connection>),
+                connectionOperations,
                 Mock(TransactionOperations<Connection>),
                 executorService,
                 context,
