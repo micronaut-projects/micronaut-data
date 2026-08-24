@@ -17,7 +17,9 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -571,6 +573,20 @@ interface MyRepository {
 
         then:
         query == ' ORDER BY book_book_author_.`name` ASC'
+    }
+
+    void "test encode order by normalizes a long Postgres entity alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+        String normalizedAlias = alias.substring(0, 53) + "_" + String.format(Locale.ROOT, "%08x", alias.hashCode()) + "_"
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == " ORDER BY ${normalizedAlias}.\"name\" ASC"
     }
 
     void "test encode insert statement"() {
@@ -1160,4 +1176,12 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
 }

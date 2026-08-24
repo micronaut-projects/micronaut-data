@@ -1573,7 +1573,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String getAliasName(PersistentEntity entity) {
-        return entity.getAliasName();
+        return normalizeAlias(entity.getAliasName());
     }
 
     @Override
