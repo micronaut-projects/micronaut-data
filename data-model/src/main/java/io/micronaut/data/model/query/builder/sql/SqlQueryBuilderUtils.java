@@ -23,7 +23,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.model.Association;
@@ -40,6 +42,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -356,6 +360,30 @@ final class SqlQueryBuilderUtils {
             optionalInt = annotationMetadata.intValue(annotationName, value);
         }
         return optionalInt;
+    }
+
+    /**
+     * Determines whether a spatial property should use the database geography type.
+     * An explicit column definition takes precedence over the coordinate reference system type.
+     *
+     * @param annotationMetadata The property annotation metadata
+     * @return {@code true} if the property should use geography storage
+     */
+    static boolean isGeography(AnnotationMetadata annotationMetadata) {
+        Optional<String> definition = annotationMetadata.stringValue(MappedProperty.class, "definition");
+        if (definition.isPresent()) {
+            return isGeographyDefinition(definition.get());
+        }
+        return annotationMetadata.enumValue(Srid.class, "type", Srid.CrsType.class)
+            .orElse(Srid.CrsType.PROJECTED) == Srid.CrsType.GEOGRAPHIC;
+    }
+
+    /**
+     * @param definition The database column definition
+     * @return {@code true} if the definition specifies geography storage
+     */
+    static boolean isGeographyDefinition(String definition) {
+        return definition.toLowerCase(Locale.ROOT).contains("geography");
     }
 
     /**

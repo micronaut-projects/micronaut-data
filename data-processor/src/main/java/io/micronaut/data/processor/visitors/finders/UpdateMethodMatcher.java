@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Update;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -35,6 +36,7 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteri
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMethodMatch;
@@ -47,6 +49,7 @@ import jakarta.persistence.criteria.Path;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -130,6 +133,12 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                                                      PersistentEntityCriteriaUpdate<T> query,
                                                      SourcePersistentEntityCriteriaBuilder cb) {
                 final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                // Repository entity updates are internally represented as criteria updates.
+                // Mark them so the SQL builder can omit direct @Reservable assignments;
+                // explicit Criteria API updates are intentionally left unmarked.
+                if (query instanceof SourcePersistentEntityCriteriaUpdate<?> sourceUpdate) {
+                    sourceUpdate.markGeneratedEntityUpdate();
+                }
 
                 // for JSON entity representation we don't update all entity fields but all fields at once via JSON update
                 if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
@@ -154,6 +163,28 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             @Override
             protected boolean supportedByImplicitQueries() {
                 return true;
+            }
+
+            @Override
+            protected boolean supportedByImplicitQueries(MethodMatchContext matchContext) {
+                return !hasReservableUpdateProperty(matchContext.getRootEntity()) && super.supportedByImplicitQueries(matchContext);
+            }
+
+            private boolean hasReservableUpdateProperty(SourcePersistentEntity entity) {
+                boolean[] found = {false};
+                Stream.concat(entity.getPersistentProperties().stream(), entity.hasVersion() ? Stream.of(entity.getVersion()) : Stream.empty())
+                    .filter(p -> !(p instanceof Association association && association.isForeignKey())
+                        && !p.isGenerated()
+                        && p.findAnnotation(AutoPopulated.class)
+                        .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(true))
+                    .forEach(property -> PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (associations, persistentProperty) -> {
+                        if (!(persistentProperty instanceof Association)
+                            && !persistentProperty.isGenerated()
+                            && persistentProperty.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                            found[0] = true;
+                        }
+                    }));
+                return found[0];
             }
 
             @Override

@@ -19,6 +19,7 @@ import groovy.transform.Memoized
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.AssignedIdReturningEntity
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Owner
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -185,6 +186,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     IntervalRepository getIntervalRepository() {
         return context.getBean(PostgresIntervalRepository)
+    }
+
+    @Memoized
+    PostgresOwnerRepository getOwnerRepository() {
+        return context.getBean(PostgresOwnerRepository)
     }
 
     @Memoized
@@ -743,4 +749,30 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         result2.tags() == ["foo", "bar"]
     }
 
+    private Owner createOwner(String name) {
+        Owner owner = new Owner(name)
+        return ownerRepository.save(owner)
+    }
+
+    void 'test uppercase column names'() {
+        given:
+        createOwner("George Franklin")
+        createOwner("Betty Davis")
+        createOwner("Eduardo Rodriquez")
+        createOwner("Harold Davis")
+        createOwner("Peter McTavish")
+        createOwner("Jean Coleman")
+        createOwner("Jeff Black")
+        createOwner("Maria Escobito")
+        when:
+        def owners = ownerRepository.findByNameContainingIgnoreCase("davis", Sort.of(Sort.Order.asc("name")))
+        then:
+        owners.size() == 2
+        when:
+        owners = ownerRepository.findByNameNativeQuery("Eduardo Rodriquez")
+        then:
+        owners.size() == 1
+        cleanup:
+        ownerRepository.deleteAll()
+    }
 }
