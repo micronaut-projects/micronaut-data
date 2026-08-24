@@ -90,6 +90,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
                 null,
                 context.getBean(SqlJsonColumnMapperProvider),
                 Mock(DatabaseConversionContextFactory),
+                [],
                 []
         )
     }

@@ -30,9 +30,9 @@ import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.util.logging.Logger
 
-class JdbcRepositoryOperationsConditionsSpec extends Specification {
+class JdbcRepositoryOperationsBeanSpec extends Specification {
 
-    void "default operations are selected for non-special dialect #dialect"() {
+    void "default operations are selected for dialect #dialect"() {
         given:
         ApplicationContext context = contextWithDataSource('default', dialect)
 
@@ -43,35 +43,7 @@ class JdbcRepositoryOperationsConditionsSpec extends Specification {
         context.close()
 
         where:
-        dialect << ['H2', 'MYSQL']
-    }
-
-    void "oracle operations are selected for oracle dialect #dialect"() {
-        given:
-        ApplicationContext context = contextWithDataSource('default', dialect)
-
-        expect:
-        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('default')) instanceof OracleJdbcRepositoryOperations
-
-        cleanup:
-        context.close()
-
-        where:
-        dialect << ['ORACLE', 'oracle']
-    }
-
-    void "sql server operations are selected for sql server dialect #dialect"() {
-        given:
-        ApplicationContext context = contextWithDataSource('default', dialect)
-
-        expect:
-        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('default')) instanceof SqlServerJdbcRepositoryOperations
-
-        cleanup:
-        context.close()
-
-        where:
-        dialect << ['SQL_SERVER', 'sql_server']
+        dialect << ['H2', 'MYSQL', 'ORACLE', 'oracle', 'SQL_SERVER', 'sql_server']
     }
 
     void "operations condition uses named datasource dialect #dialect"() {
@@ -86,15 +58,13 @@ class JdbcRepositoryOperationsConditionsSpec extends Specification {
 
         expect:
         context.getBean(JdbcRepositoryOperations, Qualifiers.byName('default')) instanceof DefaultJdbcRepositoryOperations
-        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('mdb')).class == operationsType
+        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('mdb')) instanceof DefaultJdbcRepositoryOperations
 
         cleanup:
         context.close()
 
         where:
-        dialect      | operationsType
-        'ORACLE'     | OracleJdbcRepositoryOperations
-        'SQL_SERVER' | SqlServerJdbcRepositoryOperations
+        dialect << ['ORACLE', 'SQL_SERVER']
     }
 
     void "default operations are selected for named non-special datasource when default is #specialDialect"() {
@@ -108,16 +78,14 @@ class JdbcRepositoryOperationsConditionsSpec extends Specification {
         context.start()
 
         expect:
-        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('default')).class == specialOperationsType
+        context.getBean(JdbcRepositoryOperations, Qualifiers.byName('default')) instanceof DefaultJdbcRepositoryOperations
         context.getBean(JdbcRepositoryOperations, Qualifiers.byName('mdb')) instanceof DefaultJdbcRepositoryOperations
 
         cleanup:
         context.close()
 
         where:
-        specialDialect | specialOperationsType
-        'ORACLE'       | OracleJdbcRepositoryOperations
-        'SQL_SERVER'   | SqlServerJdbcRepositoryOperations
+        specialDialect << ['ORACLE', 'SQL_SERVER']
     }
 
     private ApplicationContext contextWithDataSource(String dataSourceName, String dialect) {

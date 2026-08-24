@@ -19,7 +19,6 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
@@ -149,7 +148,6 @@ import java.util.stream.StreamSupport;
  * @since 1.0.0
  */
 @EachBean(DataSource.class)
-@Requires(condition = DefaultJdbcRepositoryOperationsCondition.class)
 @Internal
 public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement, SQLException> implements
     JdbcRepositoryOperations,
@@ -171,6 +169,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Map<Dialect, JdbcUpsertReturningExecutor> upsertReturningExecutors = new EnumMap<>(Dialect.class);
 
     private final Integer defaultFetchSize;
 
@@ -193,7 +192,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
      * @param conversionContextFactory    The conversion context factory
-     * @param sqlExceptionMapperList The SQL exception mapper list
+     * @param upsertReturningExecutorList The dialect-specific upsert returning executors
+     * @param sqlExceptionMapperList      The SQL exception mapper list
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
@@ -213,6 +213,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
                                     @Parameter DatabaseConversionContextFactory conversionContextFactory,
+                                    List<JdbcUpsertReturningExecutor> upsertReturningExecutorList,
                                     List<SqlExceptionMapper> sqlExceptionMapperList) {
 
         super(
@@ -239,6 +240,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
+        for (JdbcUpsertReturningExecutor executor : upsertReturningExecutorList) {
+            upsertReturningExecutors.put(executor.getDialect(), executor);
+        }
         if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
             for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
                 Dialect dialect = sqlExceptionMapper.getDialect();
@@ -1150,6 +1154,42 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return storedQuery.getOperationType() == StoredQuery.OperationType.UPSERT;
     }
 
+    private boolean isUpsertReturningOperation(SqlStoredQuery<?, ?> storedQuery) {
+        return isUpsertOperation(storedQuery)
+            && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
+    }
+
+    private <T> JdbcUpsertReturningExecutor.Result executeUpsertReturning(
+        JdbcOperationContext ctx,
+        RuntimePersistentEntity<T> persistentEntity,
+        SqlStoredQuery<T, ?> storedQuery,
+        List<JdbcUpsertReturningExecutor.Entity<T>> entities) throws SQLException {
+        JdbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+        if (executor == null) {
+            throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+        }
+        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+        return executor.execute(
+            ctx.connection,
+            storedQuery,
+            entities,
+            (statement, executionEntity) -> {
+                if (storedQuery instanceof SqlPreparedQuery<T, ?> preparedQuery) {
+                    preparedQuery.prepare(executionEntity.entity());
+                }
+                JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, statement, storedQuery);
+                storedQuery.bindParameters(
+                    parameterBinder,
+                    ctx.invocationContext,
+                    executionEntity.entity(),
+                    executionEntity.previousValues()
+                );
+                return parameterBinder.currentIndex() - 1;
+            },
+            resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
+        );
+    }
+
     /**
      * Creates the entity operation for a single write.
      *
@@ -1397,6 +1437,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
                     || storedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING) {
                     executeReturning();
+                } else if (isUpsertReturningOperation(storedQuery)) {
+                    executeUpsertReturning();
                 } else {
                     executeUpdate();
                 }
@@ -1410,6 +1452,23 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 throw e;
             }
+        }
+
+        private void executeUpsertReturning() throws SQLException {
+            JdbcUpsertReturningExecutor.Result result = DefaultJdbcRepositoryOperations.this.executeUpsertReturning(
+                ctx,
+                persistentEntity,
+                storedQuery,
+                List.of(new JdbcUpsertReturningExecutor.Entity<>(entity, previousValues))
+            );
+            if (result.returnedIds().size() != 1) {
+                throw new DataAccessException(
+                    "Upsert returning produced " + result.returnedIds().size() + " generated IDs for a single entity: " + entity
+                );
+            }
+            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+            entity = updateEntityId(identity.getProperty(), entity, result.returnedIds().getFirst());
+            rowsUpdated = result.rowsUpdated();
         }
 
         private void executeReturning() {
@@ -1555,6 +1614,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
                 throw new IllegalStateException("Batch operations don't support returning operations");
             }
+            if (isUpsertReturningOperation(storedQuery)) {
+                executeUpsertReturning();
+                return;
+            }
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);
                 rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
@@ -1588,6 +1651,43 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
             } catch (SQLException e) {
                 throw sqlExceptionToDataAccessException(e, ctx.dialect, sqlException -> new DataAccessException("Error executing batch SQL UPDATE: " + sqlException.getMessage(), sqlException));
+            }
+        }
+
+        private void executeUpsertReturning() {
+            List<Data> notVetoedEntities = entities.stream().filter(data -> !data.vetoed).toList();
+            if (notVetoedEntities.isEmpty()) {
+                rowsUpdated = 0;
+                return;
+            }
+            List<JdbcUpsertReturningExecutor.Entity<T>> executionEntities = notVetoedEntities.stream()
+                .map(data -> new JdbcUpsertReturningExecutor.Entity<>(data.entity, data.previousValues))
+                .toList();
+            try {
+                JdbcUpsertReturningExecutor.Result result = DefaultJdbcRepositoryOperations.this.executeUpsertReturning(
+                    ctx,
+                    persistentEntity,
+                    storedQuery,
+                    executionEntities
+                );
+                if (result.returnedIds().size() != notVetoedEntities.size()) {
+                    throw new DataAccessException(
+                        "Upsert returning produced " + result.returnedIds().size() + " generated IDs for " + notVetoedEntities.size() + " entities"
+                    );
+                }
+                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                for (int i = 0; i < notVetoedEntities.size(); i++) {
+                    Data data = notVetoedEntities.get(i);
+                    data.entity = updateEntityId(identity.getProperty(), data.entity, result.returnedIds().get(i));
+                }
+                rowsUpdated = result.rowsUpdated();
+            } catch (SQLException e) {
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException(
+                        "Error executing upsert statement: " + sqlException.getMessage(),
+                        sqlException
+                    )
+                );
             }
         }
 
