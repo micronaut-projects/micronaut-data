@@ -63,6 +63,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperationsSupportingCriteria;
+import io.micronaut.data.runtime.operations.PageIdCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.transaction.TransactionOperations;
@@ -114,7 +115,7 @@ import static org.hibernate.query.Page.page;
 @RequiresSyncHibernate
 @EachBean(DataSource.class)
 final class HibernateJpaOperations extends AbstractHibernateOperations<Session, CommonQueryContract, Query<?>>
-    implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, CriteriaRepositoryOperations {
+    implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, CriteriaRepositoryOperations, PageIdCriteriaRepositoryOperations {
 
     private final SessionFactory sessionFactory;
     private final ConnectionOperations<Session> connectionOperations;
@@ -795,6 +796,12 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             }
             return sessionQuery.getResultList();
         });
+    }
+
+    @Override
+    public <T> List<T> findPageIds(CriteriaQuery<T> query, int offset, int limit) {
+        convertFetchesToJoinsForIdQuery(query);
+        return findAll(query, offset, limit);
     }
 
     @Override

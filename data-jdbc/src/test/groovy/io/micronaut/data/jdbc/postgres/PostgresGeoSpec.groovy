@@ -1,6 +1,9 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.geo.Point
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -55,6 +58,23 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         return context.getBean(PostgresHotelWktRepository)
     }
 
+    @Memoized
+    @Override
+    DeliveryDriverJsonRepository getDeliveryDriverJsonRepository() {
+        return context.getBean(PostgresDeliveryDriverJsonRepository)
+    }
+
+    @Memoized
+    @Override
+    DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
+        return context.getBean(PostgresDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    PostgresDeliveryDriverWktGeographyRepository getDeliveryDriverWktGeographyRepository() {
+        return context.getBean(PostgresDeliveryDriverWktGeographyRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo", "io.micronaut.data.jdbc.postgres")
@@ -84,7 +104,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         ] as Map<String, String>
     }
 
-    void "test crud when json conversion used on geography type"() {
+    void "test creates, reads, updates, and clears geography with JSON conversion"() {
         given:
         GeographyEntityJson entity = new GeographyEntityJson()
         entity.setPoint(createPoint(1))
@@ -158,7 +178,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         }
     }
 
-    void "test crud when wkt conversion used on geography type"() {
+    void "test creates, reads, updates, and clears geography with WKT conversion"() {
         given:
         GeographyEntityWkt entity = new GeographyEntityWkt()
         entity.setPoint(createPoint(1))
@@ -230,5 +250,29 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
             assertNull(it.getMultiPolygon())
             assertNull(it.getGeometryCollection())
         }
+    }
+
+    void "test findByLocationNear with an explicit geography column and WKT conversion"() {
+        given:
+        DeliveryDriverWktGeography nearby = new DeliveryDriverWktGeography("Nearby Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverWktGeography closest = new DeliveryDriverWktGeography("Closest Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverWktGeography busy = new DeliveryDriverWktGeography("Busy Driver", DeliveryDriverWktGeography.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverWktGeography far = new DeliveryDriverWktGeography("Far Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverWktGeographyRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverWktGeography> candidates = getDeliveryDriverWktGeographyRepository().findByStatusAndLocationNear(
+                DeliveryDriverWktGeography.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+        List<String> names = candidates.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 }

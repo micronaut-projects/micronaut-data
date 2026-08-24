@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Verifies that doRollbackOnCommitException dispatches to the correct
@@ -90,6 +92,25 @@ class DoRollbackOnCommitExceptionTest {
             List.of("doBegin", "doNestedBegin", "doNestedCommit", "doNestedRollback", "doCommit"),
             txManager.calls
         );
+    }
+
+    @Test
+    void rollbackFailureDoesNotOverrideCommitFailure() {
+        txManager.failCommit = true;
+        txManager.failRollback = true;
+
+        TransactionSystemException exception = null;
+        try {
+            txManager.executeWrite(status -> null);
+        } catch (TransactionSystemException e) {
+            exception = e;
+        }
+
+        assertInstanceOf(TransactionSystemException.class, exception);
+        assertEquals("simulated commit failure", exception.getMessage());
+        assertEquals(1, exception.getSuppressed().length);
+        assertSame(txManager.rollbackFailure, exception.getSuppressed()[0]);
+        assertEquals(List.of("doBegin", "doCommit", "doRollback"), txManager.calls);
     }
 
     @Test
@@ -153,6 +174,9 @@ class DoRollbackOnCommitExceptionTest {
 
         final List<String> calls = new ArrayList<>();
         boolean failNestedCommit;
+        boolean failCommit;
+        boolean failRollback;
+        RuntimeException rollbackFailure;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);
@@ -172,11 +196,18 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doCommit(DefaultTransactionStatus<String> tx) {
             calls.add("doCommit");
+            if (failCommit) {
+                throw new TransactionSystemException("simulated commit failure");
+            }
         }
 
         @Override
         protected void doRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doRollback");
+            if (failRollback) {
+                rollbackFailure = new TransactionSystemException("simulated rollback failure");
+                throw rollbackFailure;
+            }
         }
 
         @Override

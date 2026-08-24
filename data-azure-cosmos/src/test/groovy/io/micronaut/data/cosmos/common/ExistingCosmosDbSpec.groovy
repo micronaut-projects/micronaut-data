@@ -1,6 +1,5 @@
 package io.micronaut.data.cosmos.common
 
-import com.azure.cosmos.CosmosAsyncClient
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.models.CosmosContainerProperties
 import com.azure.cosmos.models.ExcludedPath
@@ -18,7 +17,6 @@ import io.micronaut.data.azure.repositories.CosmosBookRepository
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -26,7 +24,6 @@ import spock.lang.Specification
  * This test does not run db and containers initialization on context load (StorageUpdatePolicy = NONE)
  * so we simulate database pre-existence in setupSpec method and let tests run with db created this way.
  */
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestProperties {
 
     private static final int BOOK_TIME_TO_LIVE = 30 * 24 * 60 * 60
@@ -94,10 +91,11 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             bookThroughPut.properties.autoscaleMaxThroughput == 0
             bookThroughPut.properties.manualThroughput == 500
             bookContainerProperties.defaultTimeToLiveInSeconds == BOOK_TIME_TO_LIVE
+            bookContainerProperties.indexingPolicy.indexingMode == IndexingMode.CONSISTENT
             bookContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
             bookContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/title", "/totalPages")
-            bookContainerProperties.indexingPolicy.indexingMode == IndexingMode.CONSISTENT
             bookContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/title/*"))
+
             // by default _etag is excluded
             bookContainerProperties.indexingPolicy.excludedPaths.size() == 1
             familyThroughput.properties.autoscaleMaxThroughput == 0
@@ -106,7 +104,8 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             familyContainerProperties.uniqueKeyPolicy.uniqueKeys.size() == 1
             familyContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/lastName", "/registered")
             familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/lastName/*"))
-            familyContainerProperties.indexingPolicy.excludedPaths.size() == 2
+
+            familyContainerProperties.indexingPolicy.excludedPaths.size() == 1
             familyContainerProperties.indexingPolicy.excludedPaths.contains(new ExcludedPath("/address/*"))
     }
 
@@ -116,7 +115,7 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             book.id = UUID.randomUUID().toString()
             book.title = "Book1"
             book.totalPages = 500
-            bookRepository.save(book)
+            bookRepository.insert(book)
         when:
             def optBook = bookRepository.queryById(book.id, new PartitionKey(book.id))
         then:

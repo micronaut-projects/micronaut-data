@@ -22,7 +22,9 @@ class OracleXEMultitenancySpec extends AbstractR2dbcMultitenancySpec implements 
         return [
                 'db-type'        : 'oracle',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'ORACLE'
+                'dialect'        : 'ORACLE',
+                'packages'       : 'io.micronaut.data.tck.entities'
+
         ]
     }
 }

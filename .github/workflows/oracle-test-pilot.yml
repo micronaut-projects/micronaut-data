@@ -42,7 +42,7 @@ jobs:
           unset JAVA_HOME
           export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Pre-Build Steps
         uses: micronaut-projects/github-actions/graalvm/pre-build@master
@@ -55,17 +55,18 @@ jobs:
 
       - name: Create Oracle Test Pilot Databases...
         id: create_database
-        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        uses: oracle-actions/setup-testpilot@5622b688a27bde714b9b914a5147d6d96aa0af6f # v1.0.29
         with:
           oci-service: ${{ matrix.db }}
           action: create
           user: ${{ matrix.native_test_task }}
+          surround-connection-string-with-double-quotes: true
 
       - name: Disable TCP Fast Open for Autonomous databases
         id: disable_tfo
         run: |
           TESTPILOT_CONNECTION_STRING_SUFFIX=${{ steps.create_database.outputs.connection_string_suffix }}
-          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//USE_TCP_FAST_OPEN=ON/USE_TCP_FAST_OPEN=OFF}
+          TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO=${TESTPILOT_CONNECTION_STRING_SUFFIX//useTcpFastOpen=true/useTcpFastOpen=false}
           echo "TESTPILOT_CONNECTION_STRING_SUFFIX=$TESTPILOT_CONNECTION_STRING_SUFFIX_WO_TFO" >> $GITHUB_ENV
         shell: bash
 
@@ -94,7 +95,7 @@ jobs:
       - name: Delete Oracle Test Pilot Databases...
         id: delete_database
         if: always() && steps.create_database.outcome == 'success'
-        uses: oracle-actions/setup-testpilot@f620f11f9f26dacfe80ba1823342e3e92604c55f # v1.0.23
+        uses: oracle-actions/setup-testpilot@5622b688a27bde714b9b914a5147d6d96aa0af6f # v1.0.29
         with:
           oci-service: ${{ matrix.db }}
           action: delete

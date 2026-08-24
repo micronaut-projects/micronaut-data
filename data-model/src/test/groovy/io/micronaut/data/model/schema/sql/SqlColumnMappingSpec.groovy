@@ -3,6 +3,7 @@ package io.micronaut.data.model.schema.sql
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import spock.lang.Specification
 
 class SqlColumnMappingSpec extends Specification {
@@ -18,5 +19,33 @@ class SqlColumnMappingSpec extends Specification {
         Dialect.POSTGRES   | "JSONB"
         Dialect.SQL_SERVER | "NVARCHAR(MAX)"
         Dialect.H2         | "JSON"
+    }
+
+    void "oracle boolean SQL type follows dialect options"() {
+        given:
+        def column = new SqlColumnMapping("active", DataType.BOOLEAN, SqlDbType.BOOLEAN)
+
+        expect:
+        column.getSqlType(Dialect.ORACLE) == "NUMBER(1)"
+        column.getSqlType(Dialect.ORACLE, SqlDialectOptions.ORACLE_23_1_0_VERSION) == "BOOLEAN"
+    }
+
+    void "dialect options compare parsed target versions"() {
+        expect:
+        SqlDialectOptions.of(Dialect.ORACLE, version).isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION) == compatible
+
+        where:
+        version      | compatible
+        "23.1"      | true
+        "23.1.0"    | true
+        "23.4"      | true
+        "24.0"      | true
+        "23"        | false
+        "23.0"      | false
+        "23.1.0.1" | false
+        "23_1"      | false
+        "23.foo"    | false
+        "ORACLE_FOO" | false
+        null         | false
     }
 }

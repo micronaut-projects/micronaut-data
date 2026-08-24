@@ -44,6 +44,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -307,6 +308,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         dataType = dialect.getDataType(dataType);
+
+        if (value == null
+            && dataType == DataType.BOOLEAN
+            && dialect == Dialect.ORACLE
+            && storedQuery.isDialectVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
+            preparedStatementWriter.setBoolean(preparedStatement, index, null);
+            return;
+        }
 
         VectorParameterBinder.PreparedParameter preparedParameter = vectorParameterBinder.bind(dialect, dataType, value);
         dataType = preparedParameter.dataType();
@@ -604,9 +613,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
-        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+        if (!dialect.allowBatch()) {
+            return false;
+        }
         return switch (dialect) {
-            case SQL_SERVER -> false;
             case MYSQL, ORACLE -> {
                 if (persistentEntity.hasIdentity()) {
                     // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"

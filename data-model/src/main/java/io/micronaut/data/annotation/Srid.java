@@ -35,4 +35,37 @@ public @interface Srid {
      * @return The spatial reference system identifier.
      */
     int value();
+
+    /**
+     * @return The coordinate reference system type. SQL query builders use this value when generating geospatial
+     * distance predicates to choose between planar and spherical distance functions where the dialect supports both,
+     * and to select geography storage for PostgreSQL and SQL Server when no explicit column definition is present.
+     * @since 5.0.4
+     */
+    CrsType type() default CrsType.PROJECTED;
+
+    /**
+     * The coordinate reference system type.
+     * <p>
+     * This distinguishes projected coordinate systems, where distances are calculated in planar coordinate-system
+     * units, from geographic coordinate systems, where coordinates describe positions on the earth and distance
+     * predicates should use spherical distance functions when available. Micronaut Data uses this metadata during SQL
+     * query generation for geospatial distance predicates such as {@code near}. MySQL and H2 use the distinction when
+     * selecting distance functions. PostgreSQL and SQL Server additionally use it to select native geography storage
+     * when the property does not declare an explicit column definition.
+     *
+     * @since 5.0.4
+     */
+    enum CrsType {
+        /**
+         * Geographic coordinate reference system. Use when distance predicates should account for earth-surface
+         * distance, for example longitude/latitude SRIDs.
+         */
+        GEOGRAPHIC,
+        /**
+         * Projected coordinate reference system. This is the default and keeps distance predicates in planar
+         * coordinate-system units.
+         */
+        PROJECTED
+    }
 }

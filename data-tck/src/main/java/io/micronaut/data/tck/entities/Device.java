@@ -27,7 +27,7 @@ public class Device {
     @GeneratedValue
     private Long id;
     private String name;
-    @Relation(Relation.Kind.MANY_TO_ONE)
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     private User user;
 
     public Long getId() {
