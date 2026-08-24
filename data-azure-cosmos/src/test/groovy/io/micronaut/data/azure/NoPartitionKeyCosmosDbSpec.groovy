@@ -16,7 +16,6 @@ import io.micronaut.data.cosmos.operations.CosmosDiagnosticsProcessor
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import jakarta.inject.Singleton
 import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -25,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * This tests operations with an entity that does not have partition key defined.
  */
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class NoPartitionKeyCosmosDbSpec extends Specification implements AzureCosmosTestProperties {
 
     @AutoCleanup

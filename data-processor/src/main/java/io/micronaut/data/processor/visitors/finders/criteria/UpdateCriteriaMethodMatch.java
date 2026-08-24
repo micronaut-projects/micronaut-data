@@ -115,13 +115,15 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         AbstractPersistentEntityCriteriaUpdate<T> criteriaUpdate = (AbstractPersistentEntityCriteriaUpdate<T>) query;
 
-        // Add updatable auto-populated parameters
-        entity.getPersistentProperties().stream()
-            .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
-            .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
+        if (shouldAddAutomaticUpdateAssignments()) {
+            // Add updatable auto-populated parameters
+            entity.getPersistentProperties().stream()
+                .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
+                .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
-        if (entity.hasVersion() && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
-            query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
+            if (entity.hasVersion() && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
+                query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
+            }
         }
 
         if (criteriaUpdate.getUpdateValues().isEmpty()) {
@@ -243,6 +245,13 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                              PersistentEntityRoot<T> root,
                                              PersistentEntityCriteriaUpdate<T> query,
                                              SourcePersistentEntityCriteriaBuilder cb) {
+    }
+
+    /**
+     * @return Whether auto-populated and version properties should be added to the update assignments
+     */
+    protected boolean shouldAddAutomaticUpdateAssignments() {
+        return true;
     }
 
     @Override

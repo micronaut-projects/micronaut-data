@@ -104,14 +104,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         ] as Map<String, String>
     }
 
-    @Override
-    protected boolean supportsGeometryTypeWithGeographicCrs() {
-        // Geography type should be used instead of geometry type
-        // when using geographic coordinate reference system
-        return false
-    }
-
-    void "test crud when json conversion used on geography type"() {
+    void "test creates, reads, updates, and clears geography with JSON conversion"() {
         given:
         GeographyEntityJson entity = new GeographyEntityJson()
         entity.setPoint(createPoint(1))
@@ -185,7 +178,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         }
     }
 
-    void "test crud when wkt conversion used on geography type"() {
+    void "test creates, reads, updates, and clears geography with WKT conversion"() {
         given:
         GeographyEntityWkt entity = new GeographyEntityWkt()
         entity.setPoint(createPoint(1))
@@ -259,7 +252,7 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         }
     }
 
-    void "test findByLocationNear on geography database type when geographic crs is used and wkt conversion applied"() {
+    void "test findByLocationNear with an explicit geography column and WKT conversion"() {
         given:
         DeliveryDriverWktGeography nearby = new DeliveryDriverWktGeography("Nearby Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
         DeliveryDriverWktGeography closest = new DeliveryDriverWktGeography("Closest Driver", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))

@@ -19,20 +19,22 @@ import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionOperationsRegistry;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -57,8 +59,8 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     private final TransactionOperationsRegistry transactionOperationsRegistry;
     @Nullable
     private final TransactionDataSourceTenantResolver tenantResolver;
-
     private final ConversionService conversionService;
+    private final RecoverableTransactionExecutor recoverableTransactionExecutor;
 
     /**
      * Default constructor.
@@ -66,12 +68,16 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      * @param transactionOperationsRegistry The {@link TransactionOperationsRegistry}
      * @param tenantResolver                The {@link TransactionDataSourceTenantResolver}
      * @param conversionService             The conversion service
+     * @param beanLocator                   The bean locator
      */
     public TransactionalInterceptor(@NonNull TransactionOperationsRegistry transactionOperationsRegistry,
-                                    @Nullable TransactionDataSourceTenantResolver tenantResolver, ConversionService conversionService) {
+                                    @Nullable TransactionDataSourceTenantResolver tenantResolver,
+                                    ConversionService conversionService,
+                                    BeanLocator beanLocator) {
         this.transactionOperationsRegistry = transactionOperationsRegistry;
         this.tenantResolver = tenantResolver;
         this.conversionService = conversionService;
+        this.recoverableTransactionExecutor = new RecoverableTransactionExecutor(beanLocator);
     }
 
     @Override
@@ -83,71 +89,122 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     @Nullable
     @SuppressWarnings("NullAway")
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        @Nullable String tenantDataSourceName;
-        if (tenantResolver != null) {
-            tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
-        } else {
-            tenantDataSourceName = null;
-        }
+        @Nullable String tenantDataSourceName = resolveTenantDataSourceName();
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
-            final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
-                .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
-                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Transactional.class).orElse(null) : tenantDataSourceName;
-                    final TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
-
-                    switch (interceptedMethod.resultType()) {
-                        case PUBLISHER -> {
-                            ReactiveTransactionOperations<?> reactiveTransactionOperations = transactionOperationsRegistry.provideReactive(ReactiveTransactionOperations.class, dataSource);
-                            return new TransactionInvocation<>(null, reactiveTransactionOperations, null, transactionDefinition);
-                        }
-                        case COMPLETION_STAGE -> {
-                            AsyncTransactionOperations<?> asyncTransactionOperations = transactionOperationsRegistry.provideAsync(AsyncTransactionOperations.class, dataSource);
-                            return new TransactionInvocation<>(null, null, asyncTransactionOperations, transactionDefinition);
-                        }
-                        default -> {
-                            TransactionOperations<?> transactionManager = transactionOperationsRegistry.provideSynchronous(TransactionOperations.class, dataSource);
-                            return new TransactionInvocation<>(transactionManager, null, null, transactionDefinition);
-                        }
-                    }
-                });
-
-            final TransactionDefinition definition = transactionInvocation.definition;
-            switch (interceptedMethod.resultType()) {
-                case PUBLISHER -> {
-                    ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
-                    if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorTransactionOperations) {
-                        if (context.getReturnType().isSingleResult()) {
-                            return interceptedMethod.handleResult(
-                                reactorTransactionOperations.withTransactionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
-                            );
-                        }
-                        return interceptedMethod.handleResult(
-                            reactorTransactionOperations.withTransactionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
-                        );
-                    }
-                    return interceptedMethod.handleResult(
-                        reactiveTransactionOperations.withTransaction(definition, (status) -> interceptedMethod.interceptResultAsPublisher())
-                    );
-                }
-                case COMPLETION_STAGE -> {
-                    AsyncTransactionOperations<?> asyncTransactionOperations = Objects.requireNonNull(transactionInvocation.asyncTransactionOperations);
-                    return interceptedMethod.handleResult(
-                        asyncTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsCompletionStage())
-                    );
-                }
-                case SYNCHRONOUS -> {
-                    TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
-                    return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
-                }
-                default -> {
-                    return interceptedMethod.unsupported();
-                }
-            }
+            @Nullable String dataSource = resolveDataSourceName(tenantDataSourceName, executableMethod);
+            TransactionInvocation<?> transactionInvocation = resolveTransactionInvocation(tenantDataSourceName, executableMethod, interceptedMethod, dataSource);
+            return switch (interceptedMethod.resultType()) {
+                case PUBLISHER -> interceptPublisher(context, interceptedMethod, transactionInvocation);
+                case COMPLETION_STAGE -> interceptCompletionStage(interceptedMethod, transactionInvocation);
+                case SYNCHRONOUS -> interceptSynchronous(context, dataSource, transactionInvocation);
+                default -> interceptedMethod.unsupported();
+            };
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
         }
+    }
+
+    @Nullable
+    private String resolveTenantDataSourceName() {
+        if (tenantResolver == null) {
+            return null;
+        }
+        return tenantResolver.resolveTenantDataSourceName();
+    }
+
+    @Nullable
+    private String resolveDataSourceName(@Nullable String tenantDataSourceName,
+                                         ExecutableMethod<Object, Object> executableMethod) {
+        if (tenantDataSourceName != null) {
+            return tenantDataSourceName;
+        }
+        return executableMethod.stringValue(Transactional.class).orElse(null);
+    }
+
+    private TransactionInvocation<?> resolveTransactionInvocation(@Nullable String tenantDataSourceName,
+                                                                  ExecutableMethod<Object, Object> executableMethod,
+                                                                  InterceptedMethod interceptedMethod,
+                                                                  @Nullable String dataSource) {
+        return transactionInvocationMap.computeIfAbsent(
+            new TenantExecutableMethod(tenantDataSourceName, executableMethod),
+            ignore -> createTransactionInvocation(interceptedMethod, executableMethod, dataSource)
+        );
+    }
+
+    private TransactionInvocation<?> createTransactionInvocation(InterceptedMethod interceptedMethod,
+                                                                 ExecutableMethod<Object, Object> executableMethod,
+                                                                 @Nullable String dataSource) {
+        TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
+        return switch (interceptedMethod.resultType()) {
+            case PUBLISHER -> new TransactionInvocation<>(
+                null,
+                transactionOperationsRegistry.provideReactive(ReactiveTransactionOperations.class, dataSource),
+                null,
+                transactionDefinition
+            );
+            case COMPLETION_STAGE -> new TransactionInvocation<>(
+                null,
+                null,
+                transactionOperationsRegistry.provideAsync(AsyncTransactionOperations.class, dataSource),
+                transactionDefinition
+            );
+            default -> new TransactionInvocation<>(
+                transactionOperationsRegistry.provideSynchronous(TransactionOperations.class, dataSource),
+                null,
+                null,
+                transactionDefinition
+            );
+        };
+    }
+
+    @Nullable
+    private Object interceptPublisher(MethodInvocationContext<Object, Object> context,
+                                      InterceptedMethod interceptedMethod,
+                                      TransactionInvocation<?> transactionInvocation) {
+        TransactionDefinition definition = transactionInvocation.definition;
+        ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
+        if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorTransactionOperations) {
+            if (context.getReturnType().isSingleResult()) {
+                return interceptedMethod.handleResult(
+                    reactorTransactionOperations.withTransactionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
+                );
+            }
+            return interceptedMethod.handleResult(
+                reactorTransactionOperations.withTransactionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
+            );
+        }
+        return interceptedMethod.handleResult(
+            reactiveTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsPublisher())
+        );
+    }
+
+    @Nullable
+    private Object interceptCompletionStage(InterceptedMethod interceptedMethod,
+                                            TransactionInvocation<?> transactionInvocation) {
+        TransactionDefinition definition = transactionInvocation.definition;
+        AsyncTransactionOperations<?> asyncTransactionOperations = Objects.requireNonNull(transactionInvocation.asyncTransactionOperations);
+        return interceptedMethod.handleResult(
+            asyncTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsCompletionStage())
+        );
+    }
+
+    @Nullable
+    private Object interceptSynchronous(MethodInvocationContext<Object, Object> context,
+                                        @Nullable String dataSource,
+                                        TransactionInvocation<?> transactionInvocation) {
+        TransactionDefinition definition = transactionInvocation.definition;
+        TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
+        if (context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
+            return recoverableTransactionExecutor.execute(
+                transactionManager,
+                definition,
+                context,
+                dataSource
+            );
+        }
+        return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
     }
 
     /**

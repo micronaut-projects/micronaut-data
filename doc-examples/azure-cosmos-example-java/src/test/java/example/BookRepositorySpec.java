@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class BookRepositorySpec extends AbstractAzureCosmosTest {
 
     @AfterEach

@@ -23,7 +23,8 @@ class MySqlMultitenancySpec extends AbstractJdbcMultitenancySpec implements Clea
         return [
                 'db-type'        : 'mysql',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'MYSQL'
+                'dialect'        : 'MYSQL',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

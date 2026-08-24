@@ -18,7 +18,8 @@ class MariaMultitenancySpec extends AbstractJdbcMultitenancySpec implements Clea
         return [
                 'db-type'        : 'mariadb',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'MYSQL'
+                'dialect'        : 'MYSQL',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

@@ -3,12 +3,10 @@ package example
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.IgnoreIf
 
 import static example.PersonRepository.Specifications.*
 
 @MicronautTest
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class PersonRepositorySpec extends AbstractAzureCosmosSpec {
 
     @Inject

@@ -15,12 +15,14 @@ import java.time.Duration
 
 trait AzureCosmosTestProperties implements TestPropertyProvider {
 
-    static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(5)
+    static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(3)
 
     @Shared
     @AutoCleanup("stop")
-    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
-            .waitingFor(Wait.forHttps("/_explorer/emulator.pem").forStatusCode(200).allowInsecure().withStartupTimeout(STARTUP_TIMEOUT))
+    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+        .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+        .withCommand("--protocol", "https")
+        .waitingFor(Wait.forLogMessage(".*PostgreSQL=OK, Gateway=OK, Explorer=OK.*", 1).withStartupTimeout(STARTUP_TIMEOUT))
 
     @Override
     Map<String, String> getProperties() {

@@ -26,12 +26,14 @@ import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.recovery.RecoverableTransactionContext;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import jakarta.inject.Inject;
@@ -169,7 +171,15 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                 @Override
                 public void executionComplete() {
                     for (Runnable runnable : onComplete) {
-                        runnable.run();
+                        try {
+                            runnable.run();
+                        } catch (ConnectionException e) {
+                            if (isRecoveryCommitAttempt(status)) {
+                                logger.debug("Skipping JDBC Connection [{}] state restore after a recoverable commit attempt", connection, e);
+                                continue;
+                            }
+                            throw e;
+                        }
                     }
                 }
             });
@@ -185,11 +195,21 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         if (logger.isDebugEnabled()) {
             logger.debug("Committing JDBC transaction on Connection [{}]", connection);
         }
+        // The recovery context is configured only for a new recoverable transaction.
+        // Capture the LTXID directly before JDBC commit, after application
+        // synchronizations have completed successfully.
+        RecoverableTransactionContext.find().ifPresent(context -> context.captureRecoveryToken(status));
         try {
             connection.commit();
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not commit JDBC transaction", ex);
         }
+    }
+
+    private static boolean isRecoveryCommitAttempt(DefaultTransactionStatus<Connection> status) {
+        return RecoverableTransactionContext.find()
+            .map(context -> context.hasCapturedToken(status))
+            .orElse(false);
     }
 
     @Override

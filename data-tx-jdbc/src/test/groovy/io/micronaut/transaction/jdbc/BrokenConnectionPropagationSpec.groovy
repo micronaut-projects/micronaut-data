@@ -41,9 +41,13 @@ class BrokenConnectionPropagationSpec extends spock.lang.Specification {
         mockDataSource.getLastConnection().breakAndClose()
         txManager.rollback(status)
 
-        then: "rollback fails (simulated driver throws due to closed connection or sync failure)"
+        then: "rollback fails (simulated driver or synchronization failure)"
         def ex = thrown(Throwable)
-        assert ex instanceof io.micronaut.data.connection.exceptions.ConnectionException || ex instanceof IllegalStateException
+        // The completion synchronization may now surface directly here because later
+        // rollback/reset failures are no longer expected to replace the original error.
+        assert ex instanceof io.micronaut.data.connection.exceptions.ConnectionException ||
+            ex instanceof IllegalStateException ||
+            ex.message == "Simulated sync failure at executionComplete"
         and: "all connection synchronizations executed even when one throws"
         assert tracker.executionComplete.get() >= 1
         assert tracker.beforeClosed.get() >= 1

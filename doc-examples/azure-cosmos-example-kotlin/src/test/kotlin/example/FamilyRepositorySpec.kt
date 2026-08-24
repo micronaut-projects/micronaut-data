@@ -24,13 +24,11 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import java.util.*
 import java.util.AbstractMap.SimpleImmutableEntry
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest
-@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class FamilyRepositorySpec : AbstractAzureCosmosTest() {
 
     @Inject

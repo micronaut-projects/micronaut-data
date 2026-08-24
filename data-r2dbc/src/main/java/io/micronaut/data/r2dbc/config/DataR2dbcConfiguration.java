@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.config;
 
+import io.micronaut.context.annotation.ConfigurationBuilder;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Fetch;
@@ -24,6 +25,7 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import io.micronaut.r2dbc.BasicR2dbcProperties;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Provider;
@@ -43,6 +45,8 @@ public class DataR2dbcConfiguration implements Named {
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
+    @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
+    private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     private final ConnectionFactory connectionFactory;
@@ -149,6 +153,22 @@ public class DataR2dbcConfiguration implements Named {
         this.dialect = dialect;
     }
 
+    /**
+     * @return The dialect options.
+     */
+    public DialectOptionsConfiguration getDialectOptions() {
+        return dialectOptions;
+    }
+
+    /**
+     * @param dialectOptions The dialect options.
+     */
+    public void setDialectOptions(@Nullable DialectOptionsConfiguration dialectOptions) {
+        if (dialectOptions != null) {
+            this.dialectOptions = dialectOptions;
+        }
+    }
+
     @NonNull
     @Override
     public String getName() {
@@ -207,5 +227,11 @@ public class DataR2dbcConfiguration implements Named {
      */
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
+    }
+
+    /**
+     * SQL dialect options for R2DBC schema generation.
+     */
+    public static final class DialectOptionsConfiguration extends SqlDialectOptionsConfiguration {
     }
 }

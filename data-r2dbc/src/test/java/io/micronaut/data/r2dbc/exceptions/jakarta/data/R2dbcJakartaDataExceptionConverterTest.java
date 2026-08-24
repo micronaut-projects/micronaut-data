@@ -17,15 +17,18 @@ package io.micronaut.data.r2dbc.exceptions.jakarta.data;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.runtime.support.exceptions.jakarta.data.JakartaDataInsertExceptionConverter;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
+import io.r2dbc.spi.R2dbcException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class R2dbcJakartaDataExceptionConverterTest {
 
@@ -50,10 +53,33 @@ class R2dbcJakartaDataExceptionConverterTest {
     }
 
     @Test
-    void convertsOtherR2dbcExceptionsToMicronautDataAccessException() {
+    void convertsNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
         Exception converted = converter.convert(new R2dbcDataIntegrityViolationException("not null violation", "23502", 0));
 
-        assertInstanceOf(DataAccessException.class, converted);
+        assertInstanceOf(DataIntegrityViolationException.class, converted);
+    }
+
+    @Test
+    void doesNotWrapExistingDataIntegrityViolationException() {
+        DataIntegrityViolationException exception = new DataIntegrityViolationException(
+            "Data integrity violation",
+            new R2dbcDataIntegrityViolationException("not null violation", "23502", 0)
+        );
+
+        assertSame(exception, converter.convert(exception));
+    }
+
+    @Test
+    void convertsCausedNonUniqueIntegrityConstraintViolationsToMicronautDataIntegrityViolationException() {
+        R2dbcException exception = new R2dbcException(
+            "batch update failed", "HY000", 0,
+            new R2dbcDataIntegrityViolationException("not null violation", "23502", 0)
+        ) {
+        };
+
+        Exception converted = converter.convert(exception);
+
+        assertInstanceOf(DataIntegrityViolationException.class, converted);
     }
 
     @Test

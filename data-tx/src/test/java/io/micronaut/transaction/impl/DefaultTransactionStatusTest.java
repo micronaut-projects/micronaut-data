@@ -16,6 +16,7 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
@@ -23,12 +24,16 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.support.TransactionSynchronization;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultTransactionStatusTest {
@@ -141,6 +146,46 @@ class DefaultTransactionStatusTest {
         assertTrue(existingTx.isLocalRollbackOnly());
         assertTrue(outerTx.isGlobalRollbackOnly(),
             "Outer tx SHOULD be marked as global rollback-only for non-nested existing tx");
+    }
+
+    @Test
+    void synchronizationsExecuteWithOwningTransactionPropagated() {
+        DefaultTransactionStatus<Object> transactionStatus = newOuterTx();
+        List<TransactionStatus<Object>> propagatedStatuses = new ArrayList<>();
+        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void beforeCommit(boolean readOnly) {
+                propagatedStatuses.add(currentTransactionStatus());
+            }
+
+            @Override
+            public void afterCommit() {
+                propagatedStatuses.add(currentTransactionStatus());
+            }
+
+            @Override
+            public void beforeCompletion() {
+                propagatedStatuses.add(currentTransactionStatus());
+            }
+
+            @Override
+            public void afterCompletion(Status status) {
+                propagatedStatuses.add(currentTransactionStatus());
+            }
+        });
+
+        transactionStatus.triggerBeforeCommit();
+        transactionStatus.triggerAfterCommit();
+        transactionStatus.triggerBeforeCompletion();
+        transactionStatus.triggerAfterCompletion(TransactionSynchronization.Status.COMMITTED);
+
+        assertEquals(4, propagatedStatuses.size());
+        propagatedStatuses.forEach(status -> assertSame(transactionStatus, status));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static TransactionStatus<Object> currentTransactionStatus() {
+        return PropagatedContext.getOrEmpty().find(TransactionStatus.class).orElseThrow();
     }
 
     private static DefaultTransactionStatus<Object> newOuterTx() {

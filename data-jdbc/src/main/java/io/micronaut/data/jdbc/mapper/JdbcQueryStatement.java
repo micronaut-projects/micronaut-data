@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
@@ -75,16 +76,32 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      *
      * @param dataType The data type
      * @param dialect The dialect
-     * @return The SQL type
+     * @return The SQL type using the dialect's default type mappings
      */
     @Internal
     public static int findSqlType(DataType dataType, Dialect dialect) {
+        return findSqlType(dataType, SqlDialectOptions.defaults(dialect));
+    }
+
+    /**
+     * Find the SQL type from {@link DataType} and resolved dialect options.
+     *
+     * @param dataType The data type
+     * @param dialectOptions The resolved dialect options
+     * @return The SQL type
+     */
+    @Internal
+    public static int findSqlType(DataType dataType, SqlDialectOptions dialectOptions) {
+        Dialect dialect = dialectOptions.dialect();
         return switch (dataType) {
             case LONG -> Types.BIGINT;
             case STRING, JSON -> Types.VARCHAR;
             case DATE -> Types.DATE;
             case BOOLEAN -> {
                 if (dialect == Dialect.ORACLE) {
+                    if (dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION)) {
+                        yield Types.BOOLEAN;
+                    }
                     // oracle driver treats Boolean types as bits
                     // see https://github.com/micronaut-projects/micronaut-data/issues/1259
                     yield Types.BIT;

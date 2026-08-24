@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
@@ -30,7 +31,7 @@ import java.sql.Types;
  * This class extends {@link BaseSqlTableMappingValidator} and provides Oracle-specific logic for validating
  * SQL table mappings against actual table metadata from an Oracle database.
  * <p>
- * It overrides the {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata)} method to handle
+ * It overrides the {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)} method to handle
  * Oracle-specific type mappings, such as UUIDs stored as VARCHAR(36) and numeric types represented as NUMBER.
  *
  * @since 4.13.0
@@ -44,7 +45,9 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
     }
 
     @Override
-    protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+    protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
+                                                SqlColumnMetadata columnMetadata,
+                                                SqlDialectOptions dialectOptions) {
         if (columnMapping.getDbType() == SqlDbType.UUID) {
             return uuidMatchesVarchar(columnMetadata);
         } else if (columnMetadata.type() == Types.NUMERIC) {
@@ -57,7 +60,7 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
                 }
                 oracleSqlType += ")";
             }
-            return columnMapping.getSqlType(Dialect.ORACLE).equalsIgnoreCase(oracleSqlType);
+            return columnMapping.getSqlType(dialectOptions).equalsIgnoreCase(oracleSqlType);
         } else if (isOracleBinaryDoubleOrFloat(columnMetadata.typeName())) {
             return isFloatOrRealOrDouble(columnMapping.getDbType().getType());
         }

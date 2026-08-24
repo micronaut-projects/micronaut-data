@@ -32,6 +32,583 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
+    void "test reserve method requires Oracle dialect"() {
+        when:
+        buildRepository('test.NonOracleAccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface NonOracleAccountRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+record Account(@Id Long id, @Reservable Long balance) {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Reservation methods require the Oracle dialect")
+    }
+
+    void "test entity update with reservable property requires Oracle dialect"() {
+        when:
+        buildRepository('test.NonOracleEntityUpdateRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface NonOracleEntityUpdateRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    private String name;
+    @Reservable private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    String getName() { return name; }
+    void setName(String name) { this.name = name; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("@Reservable properties require the Oracle dialect")
+    }
+
+    void "test reserve method validates property targets"() {
+        when:
+        buildRepository('test.UnknownReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface UnknownReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementMissing(@Id Long id, Long missing);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Reservation property [missing] does not exist")
+
+        when:
+        buildRepository('test.UnannotatedReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface UnannotatedReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    private Long balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains("Reservation property [balance] must be annotated with @Reservable")
+
+        when:
+        buildRepository('test.NonNumericReservationPropertyRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface NonNumericReservationPropertyRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private String balance;
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    String getBalance() { return balance; }
+    void setBalance(String balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains("Reservation property [balance] must be numeric")
+    }
+
+    void "test reserve methods render reservable delta updates"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amount, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long amount;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+    }
+
+    void "test reserve methods omit automatic audit assignments"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.time.Instant;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveDecrementBalance(@Id Long id, Long balance);
+}
+
+@MappedEntity
+class Account {
+    @Id private Long id;
+    @Reservable private Long balance;
+    @DateUpdated private Instant updatedAt;
+
+    Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
+    Long getBalance() { return balance; }
+    void setBalance(Long balance) { this.balance = balance; }
+    Instant getUpdatedAt() { return updatedAt; }
+    void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserveDecrementBalance").findFirst().get()) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+    }
+
+    void "test reserve method expands an embedded composite ID"() {
+        given:
+        def repository = buildRepository('test.OrderLineRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface OrderLineRepository extends GenericRepository<Project, ProjectId> {
+    long reserveDecrementLimitsAvailableBalance(@Id ProjectId id, Long limitsAvailableBalance);
+}
+
+@MappedEntity
+class Project {
+    @EmbeddedId
+    private ProjectId id;
+    @Relation(Relation.Kind.EMBEDDED)
+    private Limits limits;
+
+    public ProjectId getId() { return id; }
+    public void setId(ProjectId id) { this.id = id; }
+    public Limits getLimits() { return limits; }
+    public void setLimits(Limits limits) { this.limits = limits; }
+}
+
+@Embeddable
+class Limits {
+    @Reservable
+    private Long availableBalance;
+
+    public Long getAvailableBalance() { return availableBalance; }
+    public void setAvailableBalance(Long availableBalance) { this.availableBalance = availableBalance; }
+}
+
+@Embeddable
+class ProjectId {
+    private Long departmentId;
+    private Long projectId;
+
+    public Long getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+    public Long getProjectId() { return projectId; }
+    public void setProjectId(Long projectId) { this.projectId = projectId; }
+}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods("reserveDecrementLimitsAvailableBalance").findFirst().get()) == 'UPDATE "PROJECT" SET "AVAILABLE_BALANCE"=("AVAILABLE_BALANCE" - ?) WHERE ("DEPARTMENT_ID" = ? AND "PROJECT_ID" = ?)'
+        getParameterPropertyPaths(repository.findPossibleMethods("reserveDecrementLimitsAvailableBalance").findFirst().get()) == ['limits.availableBalance', 'id.departmentId', 'id.projectId'] as String[]
+    }
+
+    void "test reserve method rejects relationship paths"() {
+        when:
+        buildRepository('test.InvoiceRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface InvoiceRepository extends GenericRepository<Invoice, Long> {
+    long reserveIncrementAccountBalance(@Id Long id, Long accountBalance);
+}
+
+@MappedEntity
+class Invoice {
+    @Id
+    private Long id;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Account account;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("cannot update relation property paths")
+    }
+
+    void "test entity update omits reservable properties instead of mixing assignments"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('"BALANCE"')
+        getParameterBindingIndexes(method) == ['-1', '-1'] as String[]
+        getParameterPropertyPaths(method) == ['name', 'id'] as String[]
+    }
+
+    void "test implicit entity update omits reservable properties instead of mixing assignments"() {
+        given:
+        def repository = buildRepository('test.ImplicitAccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, operations = JdbcRepositoryOperations.class, implicitQueries = true)
+interface ImplicitAccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('"BALANCE"')
+    }
+
+    void "test entity update fails if only update properties are reservable"() {
+        when:
+        buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long balance;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Long balance) {
+        this.balance = balance;
+    }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("all update properties are reservable")
+        e.message.contains("reserveIncrement.../reserveDecrement... methods")
+    }
+
+    void "test entity update omits reservable properties inside an embeddable"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    void update(Account account);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+
+    @MappedProperty("stats_")
+    @Relation(Relation.Kind.EMBEDDED)
+    private Stats stats;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stats getStats() { return stats; }
+    public void setStats(Stats stats) { this.stats = stats; }
+}
+
+@Embeddable
+class Stats {
+    private String name;
+    @Reservable
+    private Long balance;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "STATS_NAME"=? WHERE ("ID" = ?)'
+        !getQuery(method).contains('BALANCE')
+        getParameterPropertyPaths(method) == ['stats.name', 'id'] as String[]
+    }
+
+    void "test entity update falls back to identity update when no updatable properties remain"() {
+        given:
+        def repository = buildRepository('test.AuditAccountRepository', """
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.time.Instant;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AuditAccountRepository extends GenericRepository<AuditAccount, Long> {
+    void update(AuditAccount account);
+}
+
+@MappedEntity
+class AuditAccount {
+    @Id
+    private Long id;
+    @DateCreated
+    private Instant createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "AUDIT_ACCOUNT" SET "ID"=? WHERE ("ID" = ?)'
+    }
+
     @Unroll
     void "test build update for type #type"() {
         given:

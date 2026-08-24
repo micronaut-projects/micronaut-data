@@ -19,13 +19,15 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 
-@MappedEntity
+@MappedEntity("OWNERS")
 public class Owner {
 
     @Id
     @GeneratedValue
     private Long id;
+    @MappedProperty("OWNER_NAME")
     private String name;
     private int age;
 

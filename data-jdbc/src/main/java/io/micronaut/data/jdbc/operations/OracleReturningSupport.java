@@ -26,6 +26,7 @@ import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareCallableResultReade
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -74,9 +75,10 @@ final class OracleReturningSupport {
         int pos = inCount;
         List<String> columnNames = new ArrayList<>(outParams.size());
         List<Integer> columnIndexes = new ArrayList<>(outParams.size());
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, query.getDialectVersion());
         for (QueryOutParameterBinding outParam : outParams) {
             DataType dataType = dialect.getDataType(outParam.dataType());
-            int sqlType = JdbcQueryStatement.findSqlType(dataType, dialect);
+            int sqlType = JdbcQueryStatement.findSqlType(dataType, dialectOptions);
             if (sqlType == -1) {
                 sqlType = Types.VARCHAR;
                 debugLogger.accept("Binding Oracle out parameter of data type: " + dataType + " as sql type: " + sqlType);

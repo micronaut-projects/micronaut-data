@@ -21,6 +21,7 @@ import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.Named;
+import io.micronaut.data.connection.jdbc.DataSourceConstants;
 import io.micronaut.inject.BeanDefinition;
 
 /**
@@ -34,11 +35,8 @@ import io.micronaut.inject.BeanDefinition;
 @Internal
 final class OracleClientInfoCondition implements Condition {
 
-    static final String DATASOURCES = "datasources";
     private static final Character DOT = '.';
-    private static final String DIALECT = "dialect";
     private static final String ORACLE_CLIENT_INFO_ENABLED = "enable-oracle-client-info";
-    private static final String ORACLE_DIALECT = "ORACLE";
 
     @Override
     public boolean matches(ConditionContext context) {
@@ -58,13 +56,13 @@ final class OracleClientInfoCondition implements Condition {
             }
         }
 
-        String dialectProperty = DATASOURCES + DOT + dataSourceName + DOT + DIALECT;
+        String dialectProperty = DataSourceConstants.DATASOURCES + DOT + dataSourceName + DOT + DataSourceConstants.DIALECT;
         String dialect = context.getProperty(dialectProperty, String.class).orElse(null);
-        if (!ORACLE_DIALECT.equalsIgnoreCase(dialect)) {
+        if (!DataSourceConstants.ORACLE_DIALECT.equalsIgnoreCase(dialect)) {
             return false;
         }
 
-        String property = DATASOURCES + DOT + dataSourceName + DOT + ORACLE_CLIENT_INFO_ENABLED;
+        String property = DataSourceConstants.DATASOURCES + DOT + dataSourceName + DOT + ORACLE_CLIENT_INFO_ENABLED;
         return context.getProperty(property, Boolean.class, false);
     }
 }

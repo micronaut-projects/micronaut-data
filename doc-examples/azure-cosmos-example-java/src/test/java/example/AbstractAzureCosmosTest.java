@@ -6,18 +6,25 @@ import io.micronaut.test.support.TestPropertyProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.CosmosDBEmulatorContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractAzureCosmosTest implements TestPropertyProvider {
 
-    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"));
+    private static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(3);
+
+    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+        .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator"))
+        .waitingFor(Wait.forLogMessage(".*PostgreSQL=OK, Gateway=OK, Explorer=OK.*", 1).withStartupTimeout(STARTUP_TIMEOUT))
+        .withCommand("--protocol", "https");
 
     @BeforeAll
     public static void startContainer() {

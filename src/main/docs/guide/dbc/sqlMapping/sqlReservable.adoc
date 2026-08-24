@@ -1,0 +1,84 @@
+Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
+
+Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
+Reservable columns require Oracle Database 23.26.1 or later. Oracle documentation may refer to this capability using the `26` code name.
+Micronaut Data validates only that the configured dialect is Oracle; it does not configure or detect the database version.
+Use ann:data.annotation.Reservable[] only when the target Oracle Database supports reservable columns. Otherwise, Oracle rejects the generated DDL or DML.
+
+The ann:data.annotation.Reservable[] annotation can be used on numeric persistent properties.
+That includes a scalar property inside an embedded component, but not the embedded association property itself.
+It can also be combined with validation annotations to generate Oracle `CHECK` constraints for the reservable column.
+Validation annotations without ann:data.annotation.Reservable[] do not create database constraints.
+
+snippet::example.Account[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable"]
+
+The generated Oracle DDL includes the `RESERVABLE` column modifier and, when supported validation annotations are present, a column `CHECK` constraint:
+
+[source,sql]
+----
+CREATE TABLE "ACCOUNT" (
+    "ID" NUMBER(19) NOT NULL,
+    "NAME" VARCHAR(255) NOT NULL,
+    "BALANCE" NUMBER(19) RESERVABLE CONSTRAINT "CK_ACCOUNT_BALANCE_GE_0" CHECK ("BALANCE" >= 0) NOT NULL,
+    PRIMARY KEY("ID")
+)
+----
+
+Reservable columns can also be declared without validation annotations.
+In that case Micronaut Data generates a reservable column without a `CHECK` constraint.
+
+== Updates
+
+Oracle reservable column updates must be expressed as delta operations, for example `balance = balance + ?` or `balance = balance - ?`, and must identify the primary key in the `WHERE` clause.
+Oracle does not allow mixing reservable and non-reservable column assignments in the same update statement.
+Use derived reservation methods to generate reservation-delta updates. A method name starts with `reserve` and declares one or more `Increment<Property>` or `Decrement<Property>` operations joined by `And`.
+
+This `Account` example has a non-reservable mutable `name` property, so it can extend api:data.repository.CrudRepository[].
+
+snippet::example.AccountRepository[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable"]
+
+For reservation updates that cannot be expressed by the derived method grammar, use an explicit ann:data.annotation.Query[] method:
+
+snippet::example.AccountRepository[project-base="doc-examples/jdbc-example-records", source="main", tags="reservable-raw-query"]
+
+Raw queries bypass the derived reservation-method matcher. They can use a different `WHERE` predicate, but Micronaut Data does not validate their lock-free reservation semantics. The query must use only reservable delta assignments in its `SET` clause and must not mix reservable and non-reservable assignments.
+
+Generated entity update operations skip reservable properties.
+For example, `repository.update(account)` updates non-reservable properties but does not assign the reservable column directly.
+If an entity has no non-reservable update properties, Micronaut Data fails query generation instead of rendering an invalid update statement.
+The same restriction applies to `save(...)` because save can resolve to an update path at runtime.
+If an entity's only updatable properties are reservable, generated `save(...)` and `update(...)` methods are unsupported, including inherited methods from api:data.repository.CrudRepository[].
+Micronaut Data reports this at compilation time with a message that explains that all updatable properties are reservable and directs the user to api:data.repository.GenericRepository[].
+For those reservable-only entities, extend api:data.repository.GenericRepository[] and explicitly declare the supported operations, such as `insert(...)`, finder methods, delete methods, and derived reservation methods; a reservation-specific repository hierarchy is not needed.
+Use `insert(...)` for new rows and an explicit derived reservation method for existing rows.
+
+This restriction is specific to reservable-only update shapes.
+If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
+
+Each reservation method identifies the row with exactly one `@Id` parameter whose type matches the entity identity. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
+Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
+Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but `reserveIncrementAccountBalance(...)` is rejected when `account` is a relationship.
+Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML `RETURNING`.
+Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.
+
+== Runtime Errors
+
+Reservation updates that fail because of a database integrity constraint, such as a generated reservable `CHECK` constraint, throw api:data.exceptions.DataIntegrityViolationException[].
+This applies to JDBC and R2DBC and is not limited to reservable columns. Micronaut Data maps broad SQL integrity failures to that exception type while preserving existing api:data.exceptions.EntityExistsException[] behavior for unique and duplicate-key cases.
+
+This database exception is distinct from Bean Validation failures.
+Method or entity validation that fails before SQL execution continues to throw `jakarta.validation.ConstraintViolationException`.
+
+== Restrictions
+
+Micronaut Data validates reservable mappings during schema generation:
+
+* ann:data.annotation.Reservable[] is supported only for Oracle schema generation.
+* The property type must be numeric.
+* The entity must have a primary key.
+* A reservable property cannot be a primary key, generated value, relationship, foreign key, indexed property, or use a custom column definition.
+* An entity can declare at most 10 reservable properties.
+* Only column-level check constraints derived from supported validation annotations are generated. Table-level check constraints are not generated.
+* Oracle applies additional table-level restrictions, for example on partition keys and some table types such as index-organized, external, temporary, blockchain, and sharded tables. Micronaut Data does not try to detect every database-side table restriction during compile-time schema generation.
+
+Supported validation annotations include `jakarta.validation` and `javax.validation` variants of `Positive`, `PositiveOrZero`, `Negative`, `NegativeOrZero`, `Min`, `Max`, `DecimalMin`, and `DecimalMax`.

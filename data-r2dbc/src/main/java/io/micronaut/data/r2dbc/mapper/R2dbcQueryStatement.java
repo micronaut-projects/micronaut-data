@@ -223,7 +223,11 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     @NonNull
     @Override
     public QueryStatement<Statement, Integer> setBoolean(Statement statement, Integer name, @Nullable Boolean bool) {
-        setValue(statement, name, bool);
+        if (bool == null) {
+            statement.bindNull(name, Boolean.class);
+        } else {
+            statement.bind(name, bool);
+        }
         return this;
     }
 

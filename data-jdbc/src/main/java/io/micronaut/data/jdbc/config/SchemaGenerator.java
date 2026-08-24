@@ -36,6 +36,7 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
@@ -192,7 +193,7 @@ public class SchemaGenerator {
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -273,6 +274,7 @@ public class SchemaGenerator {
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
                                  List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
@@ -310,7 +312,7 @@ public class SchemaGenerator {
             if (dbSqlTableMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Expected table [" + sqlTableMapping.name() + "] not found");
             }
-            sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata);
+            sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata, dialectOptions);
         }
     }
 

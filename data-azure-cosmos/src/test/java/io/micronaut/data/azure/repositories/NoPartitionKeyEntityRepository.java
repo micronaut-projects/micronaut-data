@@ -47,7 +47,7 @@ public interface NoPartitionKeyEntityRepository extends CrudRepository<NoPartiti
     String findNameById(String id);
 
     // This has to be custom query since we cannot make String[] as a result in Micronaut generated queries.
-    @Query("SELECT DISTINCT VALUE f.tags FROM f WHERE f.id = :id")
+    @Query("SELECT VALUE ARRAY(SELECT DISTINCT VALUE t FROM t IN f.tags) FROM f WHERE f.id = :id")
     String[] getTagsById(String id);
 
     List<NoPartitionKeyEntity> findByNameIsNotEmpty();
