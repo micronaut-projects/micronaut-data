@@ -38,6 +38,8 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.OracleTransactional
+import io.micronaut.transaction.annotation.Transactional
+import io.micronaut.transaction.exceptions.TransactionUsageException
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionHttpConfiguration
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations
 import jakarta.inject.Inject
@@ -146,6 +148,33 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
         expenseReportRepository.findById(report.id()).isEmpty()
     }
 
+    void "a resumed approval nested in an outer transaction is rejected and leaves the suspended transaction intact"() {
+        given:
+        SubmittedExpenseReport report = suspendReport("employee-nested-tx", "hardware", 1299.00)
+
+        when: "the resume runs inside an already active transaction"
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.approveReportInOuterTransaction(report.id())
+            null
+        })
+
+        then: "it fails instead of silently writing into the outer transaction"
+        TransactionUsageException e = thrown()
+        e.message == "Oracle sessionless transaction mode 'REQUIRES_SUSPENDED' cannot join an existing transaction"
+
+        and: "nothing was committed"
+        expenseReportRepository.findById(report.id()).isEmpty()
+
+        when: "the caller retries the resume at a top-level boundary"
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.approveReport(report.id())
+            null
+        })
+
+        then: "the suspended transaction was still there to be completed"
+        expenseReportRepository.findById(report.id()).orElseThrow().status == "APPROVED"
+    }
+
     void "nested programmatic propagation restores the outer expense report approval"() {
         when:
         List<Long> reportIds = Objects.requireNonNull(transactionPropagationOperations.withPropagation({
@@ -237,6 +266,11 @@ class ExpenseReportService {
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
     void approveReport(Long id) {
         expenseReportRepository.updateStatus(id, "APPROVED")
+    }
+
+    @Transactional
+    void approveReportInOuterTransaction(Long id) {
+        approveReport(id)
     }
 
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
