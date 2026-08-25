@@ -1167,35 +1167,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
-    private <T> JdbcUpsertReturningExecutor.Result executeUpsertReturning(
-        JdbcOperationContext ctx,
-        RuntimePersistentEntity<T> persistentEntity,
-        SqlStoredQuery<T, ?> storedQuery,
-        List<JdbcUpsertReturningExecutor.Entity<T>> entities) throws SQLException {
-        JdbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
-        if (executor == null) {
-            throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+    private <T> int bindUpsertParameters(JdbcOperationContext ctx,
+                                         SqlStoredQuery<T, ?> storedQuery,
+                                         PreparedStatement statement,
+                                         JdbcUpsertReturningExecutor.Entity<T> executionEntity) {
+        if (storedQuery instanceof SqlPreparedQuery<T, ?> preparedQuery) {
+            preparedQuery.prepare(executionEntity.entity());
         }
-        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-        return executor.execute(
-            ctx.connection,
-            storedQuery,
-            entities,
-            (statement, executionEntity) -> {
-                if (storedQuery instanceof SqlPreparedQuery<T, ?> preparedQuery) {
-                    preparedQuery.prepare(executionEntity.entity());
-                }
-                JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, statement, storedQuery);
-                storedQuery.bindParameters(
-                    parameterBinder,
-                    ctx.invocationContext,
-                    executionEntity.entity(),
-                    executionEntity.previousValues()
-                );
-                return parameterBinder.currentIndex() - 1;
-            },
-            resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
+        JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, statement, storedQuery);
+        storedQuery.bindParameters(
+            parameterBinder,
+            ctx.invocationContext,
+            executionEntity.entity(),
+            executionEntity.previousValues()
         );
+        return parameterBinder.currentIndex() - 1;
     }
 
     /**
@@ -1503,18 +1489,26 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         private void executeUpsertReturning() throws SQLException {
-            JdbcUpsertReturningExecutor.Result result = DefaultJdbcRepositoryOperations.this.executeUpsertReturning(
-                ctx,
-                persistentEntity,
+            JdbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+            if (executor == null) {
+                throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+            }
+            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+
+            JdbcUpsertReturningExecutor.Result result = executor.execute(
+                ctx.connection,
                 storedQuery,
-                List.of(new JdbcUpsertReturningExecutor.Entity<>(entity, previousValues))
+                List.of(new JdbcUpsertReturningExecutor.Entity<>(entity, previousValues)),
+                (statement, executionEntity) -> bindUpsertParameters(ctx, storedQuery, statement, executionEntity),
+                resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
             );
+
             if (result.returnedIds().size() != 1) {
                 throw new DataAccessException(
                     "Upsert returning produced " + result.returnedIds().size() + " generated IDs for a single entity: " + entity
                 );
             }
-            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+
             entity = updateEntityId(identity.getProperty(), entity, result.returnedIds().getFirst());
             rowsUpdated = result.rowsUpdated();
         }
@@ -1700,27 +1694,41 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         private void executeUpsertReturning() {
-            List<Data> notVetoedEntities = entities.stream().filter(data -> !data.vetoed).toList();
+            List<Data> notVetoedEntities = new ArrayList<>();
+            List<JdbcUpsertReturningExecutor.Entity<T>> executionEntities = new ArrayList<>();
+
+            for (Data data : entities) {
+                if (!data.vetoed) {
+                    notVetoedEntities.add(data);
+                    executionEntities.add(new JdbcUpsertReturningExecutor.Entity<>(data.entity, data.previousValues));
+                }
+            }
+
             if (notVetoedEntities.isEmpty()) {
                 rowsUpdated = 0;
                 return;
             }
-            List<JdbcUpsertReturningExecutor.Entity<T>> executionEntities = notVetoedEntities.stream()
-                .map(data -> new JdbcUpsertReturningExecutor.Entity<>(data.entity, data.previousValues))
-                .toList();
+
             try {
-                JdbcUpsertReturningExecutor.Result result = DefaultJdbcRepositoryOperations.this.executeUpsertReturning(
-                    ctx,
-                    persistentEntity,
+                JdbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+                if (executor == null) {
+                    throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+                }
+                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                JdbcUpsertReturningExecutor.Result result = executor.execute(
+                    ctx.connection,
                     storedQuery,
-                    executionEntities
+                    executionEntities,
+                    (statement, executionEntity) -> bindUpsertParameters(ctx, storedQuery, statement, executionEntity),
+                    resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
                 );
+
                 if (result.returnedIds().size() != notVetoedEntities.size()) {
                     throw new DataAccessException(
                         "Upsert returning produced " + result.returnedIds().size() + " generated IDs for " + notVetoedEntities.size() + " entities"
                     );
                 }
-                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+
                 for (int i = 0; i < notVetoedEntities.size(); i++) {
                     Data data = notVetoedEntities.get(i);
                     data.entity = updateEntityId(identity.getProperty(), data.entity, result.returnedIds().get(i));
