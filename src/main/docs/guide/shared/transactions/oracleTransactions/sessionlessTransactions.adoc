@@ -5,10 +5,13 @@ attribute:
 * api:transaction.annotation.OracleTransactional.Sessionless#SUSPEND[]
 * api:transaction.annotation.OracleTransactional.Sessionless#REQUIRES_SUSPENDED[]
 
-The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another
-active transaction. If a parent transaction is already active, Micronaut's generic transaction orchestration treats
-the inner method as participating in that existing transaction, so the Oracle sessionless begin or resume lifecycle is not started.
+The feature is intended for top-level workflow boundaries. `SUSPEND` and `REQUIRES_SUSPENDED` must start their own
+transaction: if a parent transaction is already active the invocation fails, because a participating method would otherwise
+write into the parent transaction while the suspended Oracle transaction is left behind.
 The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
+
+Sessionless transactions are applied by transactional advice, so they are available only on synchronous methods annotated
+with ann:transaction.annotation.OracleTransactional[]. Reactive and `CompletionStage` methods are rejected.
 
 Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
 For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
@@ -17,21 +20,22 @@ The following service starts a sessionless transaction, suspends it, and later r
 
 snippet::example.BookingService[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
 
-For a method annotated with `@OracleTransactional(sessionless = SUSPEND)`, the Oracle transaction manager:
+For a method annotated with `@OracleTransactional(sessionless = SUSPEND)`, Micronaut Data:
 
 * requires an active Oracle sessionless propagation state
-* begins the JDBC transaction normally
-* starts an Oracle sessionless transaction with `OracleConnection.startTransaction(...)`
-* stores the returned Oracle global transaction identifier, or GTRID, in the propagation state
-* suspends the Oracle transaction instead of committing it when the method completes
+* begins the JDBC transaction normally, using the regular JDBC transaction manager
+* starts an Oracle sessionless transaction with `OracleConnection.startTransaction(...)` on the transactional connection
+* suspends the Oracle transaction with `OracleConnection.suspendTransactionImmediately()` immediately before the JDBC commit,
+which detaches it from the session so that the commit has nothing left to commit
+* stores the returned Oracle global transaction identifier, or GTRID, in the propagation state once the suspend succeeded
 
 If the method declares `@OracleTransactional(timeout = ...)`, that timeout is passed to Oracle when the sessionless transaction is started.
 If no timeout is declared, the Oracle driver and database defaults apply.
 
-For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPENDED)`, the Oracle transaction manager:
+For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPENDED)`, Micronaut Data:
 
 * reads the GTRID from the active propagation state
-* begins the JDBC transaction normally
+* begins the JDBC transaction normally, using the regular JDBC transaction manager
 * resumes the Oracle sessionless transaction with `OracleConnection.resumeTransaction(...)`
 * commits or rolls back the JDBC transaction normally
 * clears the GTRID from the propagation state after completion

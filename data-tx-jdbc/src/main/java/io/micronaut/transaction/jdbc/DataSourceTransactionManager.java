@@ -60,7 +60,7 @@ import java.util.Objects;
 @EachBean(DataSource.class)
 @Requires(condition = JdbcTransactionManagerCondition.class)
 @TypeHint(DataSourceTransactionManager.class)
-public class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
+public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
 
     // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";

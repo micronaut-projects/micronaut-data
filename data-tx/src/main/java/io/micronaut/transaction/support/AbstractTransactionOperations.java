@@ -160,7 +160,6 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
-        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);

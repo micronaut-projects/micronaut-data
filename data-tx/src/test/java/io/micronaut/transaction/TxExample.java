@@ -17,6 +17,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -36,6 +37,16 @@ public class TxExample {
     public TxExample(ReactiveTxManager txManager, OpLogger opLogger) {
         this.txManager = txManager;
         this.opLogger = opLogger;
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND)
+    Mono<String> doSessionlessSuspendMono() {
+        return Mono.just("ignored");
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
+    Mono<String> doSessionlessResumeMono() {
+        return Mono.just("ignored");
     }
 
     @Transactional

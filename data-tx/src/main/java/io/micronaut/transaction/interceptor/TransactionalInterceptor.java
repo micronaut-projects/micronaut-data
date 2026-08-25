@@ -29,6 +29,7 @@ import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
@@ -61,6 +62,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     private final TransactionDataSourceTenantResolver tenantResolver;
     private final ConversionService conversionService;
     private final RecoverableTransactionExecutor recoverableTransactionExecutor;
+    private final SessionlessTransactionExecutor sessionlessTransactionExecutor;
 
     /**
      * Default constructor.
@@ -78,6 +80,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         this.tenantResolver = tenantResolver;
         this.conversionService = conversionService;
         this.recoverableTransactionExecutor = new RecoverableTransactionExecutor(beanLocator);
+        this.sessionlessTransactionExecutor = new SessionlessTransactionExecutor(beanLocator);
     }
 
     @Override
@@ -164,6 +167,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                                       InterceptedMethod interceptedMethod,
                                       TransactionInvocation<?> transactionInvocation) {
         TransactionDefinition definition = transactionInvocation.definition;
+        rejectOracleSessionlessMode(definition);
         ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
         if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorTransactionOperations) {
             if (context.getReturnType().isSingleResult()) {
@@ -184,6 +188,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     private Object interceptCompletionStage(InterceptedMethod interceptedMethod,
                                             TransactionInvocation<?> transactionInvocation) {
         TransactionDefinition definition = transactionInvocation.definition;
+        rejectOracleSessionlessMode(definition);
         AsyncTransactionOperations<?> asyncTransactionOperations = Objects.requireNonNull(transactionInvocation.asyncTransactionOperations);
         return interceptedMethod.handleResult(
             asyncTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsCompletionStage())
@@ -196,6 +201,17 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                                         TransactionInvocation<?> transactionInvocation) {
         TransactionDefinition definition = transactionInvocation.definition;
         TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
+        OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
+        if (sessionless != null) {
+            TransactionUtil.validateOracleSessionlessMode(definition);
+            return sessionlessTransactionExecutor.execute(
+                transactionManager,
+                definition,
+                context,
+                sessionless,
+                dataSource
+            );
+        }
         if (context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
             return recoverableTransactionExecutor.execute(
                 transactionManager,
@@ -205,6 +221,15 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             );
         }
         return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
+    }
+
+    private static void rejectOracleSessionlessMode(TransactionDefinition definition) {
+        OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
+        if (sessionless != null) {
+            throw new TransactionSuspensionNotSupportedException(
+                "Oracle sessionless transaction mode '" + sessionless + "' requires Oracle sessionless transaction support"
+            );
+        }
     }
 
     /**

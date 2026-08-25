@@ -23,7 +23,6 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
-import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -128,20 +127,14 @@ public final class TransactionUtil {
     }
 
     /**
-     * Validates whether a transaction definition that uses Oracle sessionless transaction mode is supported.
+     * Validates a transaction definition that uses Oracle sessionless transaction mode.
      *
      * @param definition The transaction definition
-     * @param supported Whether the transaction manager supports Oracle sessionless transactions
      */
-    public static void validateOracleSessionlessMode(TransactionDefinition definition, boolean supported) {
+    public static void validateOracleSessionlessMode(TransactionDefinition definition) {
         OracleTransactional.Sessionless mode = getOracleSessionlessMode(definition);
         if (mode == null) {
             return;
-        }
-        if (!supported) {
-            throw new TransactionSuspensionNotSupportedException(
-                "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support"
-            );
         }
         if (definition.getPropagationBehavior() != TransactionDefinition.Propagation.REQUIRED) {
             throw new TransactionUsageException(
