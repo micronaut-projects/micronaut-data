@@ -180,9 +180,3 @@ tasks.named('check') {
 micronautBuild {
     binaryCompatibility.enabledAfter("5.2.0")
 }
-
-spotless {
-    java {
-        target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'src/generatedQueryTest/java/**/*.java', 'src/rocksDbPresentTest/java/**/*.java', 'src/spatialPresentTest/java/**/*.java'
-    }
-}
