@@ -18,7 +18,6 @@ package io.micronaut.data.r2dbc.operations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.r2dbc.spi.Statement;
-import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 /**
@@ -37,22 +36,12 @@ interface R2dbcUpsertReturningExecutor {
      * @param statement The bound statement
      * @param storedQuery The stored query
      * @param entity The entity being upserted
-     * @param identityType The identity property type
      * @param inputParameterCount The number of bound input parameters
      * @param <T> The entity type
      * @return The generated identity result
      */
-    <T> Mono<Result> execute(Statement statement,
+    <T> Mono<Object> execute(Statement statement,
                              SqlStoredQuery<T, ?> storedQuery,
                              T entity,
-                             Class<?> identityType,
                              int inputParameterCount);
-
-    /**
-     * A generated identity result. An empty identity is allowed when a driver returns no value.
-     *
-     * @param generatedId The generated identity
-     */
-    record Result(@Nullable Object generatedId) {
-    }
 }

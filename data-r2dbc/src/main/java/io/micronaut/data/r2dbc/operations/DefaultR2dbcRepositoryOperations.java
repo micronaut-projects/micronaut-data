@@ -1463,14 +1463,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
                 Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
                 int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
-                return executor.execute(statement, entityStoredQuery, d.entity, identityProperty.getType(), inputParameterCount)
+                return executor.execute(statement, entityStoredQuery, d.entity, inputParameterCount)
                     .onErrorResume(throwable -> Mono.from(
-                        DefaultR2dbcRepositoryOperations.this.<R2dbcUpsertReturningExecutor.Result>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                        DefaultR2dbcRepositoryOperations.this.<Object>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
                     ))
-                    .map(result -> {
-                        if (result.generatedId() != null) {
-                            d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
-                        }
+                    .map(generatedId -> {
+                        d.entity = updateEntityId(identityProperty, d.entity, generatedId);
                         return d;
                     });
             });
@@ -1653,14 +1651,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
                     Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
                     int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
-                    return executor.execute(statement, entityStoredQuery, d.entity, identityProperty.getType(), inputParameterCount)
+                    return executor.execute(statement, entityStoredQuery, d.entity, inputParameterCount)
                         .onErrorResume(throwable -> Mono.from(
-                            DefaultR2dbcRepositoryOperations.this.<R2dbcUpsertReturningExecutor.Result>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                            DefaultR2dbcRepositoryOperations.this.<Object>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
                         ))
-                        .map(result -> {
-                            if (result.generatedId() != null) {
-                                d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
-                            }
+                        .map(generatedId -> {
+                            d.entity = updateEntityId(identityProperty, d.entity, generatedId);
                             return d;
                         });
                 })

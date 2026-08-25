@@ -46,10 +46,9 @@ final class SqlServerR2dbcUpsertReturningExecutor implements R2dbcUpsertReturnin
     }
 
     @Override
-    public <T> Mono<Result> execute(Statement statement,
+    public <T> Mono<Object> execute(Statement statement,
                                     SqlStoredQuery<T, ?> storedQuery,
                                     T entity,
-                                    Class<?> identityType,
                                     int inputParameterCount) {
         List<QueryOutParameterBinding> outParameters = storedQuery.getOutParameterBindings();
         if (outParameters.size() != 1) {
@@ -57,16 +56,21 @@ final class SqlServerR2dbcUpsertReturningExecutor implements R2dbcUpsertReturnin
         }
         QueryOutParameterBinding out = outParameters.getFirst();
         return Flux.from(statement.execute())
-            .flatMap(result -> Flux.from(result.map((row, metadata) -> resultReader.readDynamic(row, 0, out.dataType()))))
+            .flatMap(result -> result.map(
+                (row, ignored) -> resultReader.readDynamic(row, 0, out.dataType())
+            ))
             .collectList()
-            .flatMap(ids -> {
-                if (ids.isEmpty()) {
-                    return Mono.error(new DataAccessException("SQL Server upsert OUTPUT clause produced no generated ID for entity: " + entity));
-                }
-                if (ids.size() > 1) {
-                    return Mono.error(new DataAccessException("SQL Server upsert OUTPUT clause produced " + ids.size() + " generated IDs for a single entity: " + entity));
-                }
-                return Mono.just(new Result(ids.getFirst()));
+            .map(ids -> switch (ids.size()) {
+                case 0 -> throw new DataAccessException(
+                    "SQL Server upsert OUTPUT clause produced no generated ID for entity: " + entity
+                );
+                case 1 -> ids.getFirst();
+                default -> throw new DataAccessException(
+                    "SQL Server upsert OUTPUT clause produced "
+                        + ids.size()
+                        + " generated IDs for a single entity: "
+                        + entity
+                );
             });
     }
 }

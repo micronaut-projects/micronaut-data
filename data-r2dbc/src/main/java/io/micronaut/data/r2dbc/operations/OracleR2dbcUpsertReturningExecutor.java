@@ -23,14 +23,13 @@ import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
-import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Executes Oracle upserts that expose generated identities through DML RETURNING OUT parameters.
@@ -50,10 +49,9 @@ final class OracleR2dbcUpsertReturningExecutor implements R2dbcUpsertReturningEx
     }
 
     @Override
-    public <T> Mono<Result> execute(Statement statement,
+    public <T> Mono<Object> execute(Statement statement,
                                     SqlStoredQuery<T, ?> storedQuery,
                                     T entity,
-                                    Class<?> identityType,
                                     int inputParameterCount) {
         List<QueryOutParameterBinding> outParameters = storedQuery.getOutParameterBindings();
         if (outParameters.size() != 1) {
@@ -64,27 +62,18 @@ final class OracleR2dbcUpsertReturningExecutor implements R2dbcUpsertReturningEx
         OracleReturningMetadata metadata = OracleReturningMetadata.create(List.of(out.name()));
         ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, metadata.columnIndexesByName());
         return Flux.from(statement.execute())
-            .flatMap(result -> Flux.from(result.map(readable -> Mono.justOrEmpty(mapOutValue(readable, identityType, resultReader, out)))).flatMap(value -> value))
+            .flatMap(result -> result.map(readable -> Optional.ofNullable(
+                resultReader.readDynamic(readable, out.name(), out.dataType())
+            )))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .collectList()
-            .flatMap(values -> {
-                if (values.isEmpty()) {
-                    return Mono.just(new Result(null));
-                }
-                if (values.size() > 1) {
-                    return Mono.error(new NonUniqueResultException());
-                }
-                return Mono.just(new Result(values.getFirst()));
+            .map(ids -> switch (ids.size()) {
+                case 0 -> throw new DataAccessException(
+                    "Oracle upsert RETURNING clause produced no generated ID for entity: " + entity
+                );
+                case 1 -> ids.getFirst();
+                default -> throw new NonUniqueResultException();
             });
-    }
-
-    private @Nullable Object mapOutValue(Readable readable,
-                                         Class<?> targetType,
-                                         ColumnNameByIndexR2dbcResultReader resultReader,
-                                         QueryOutParameterBinding out) {
-        Object value = resultReader.readDynamic(readable, out.name(), out.dataType());
-        if (value == null || targetType.isInstance(value)) {
-            return value;
-        }
-        return conversionService.convert(value, targetType).orElse(null);
     }
 }
