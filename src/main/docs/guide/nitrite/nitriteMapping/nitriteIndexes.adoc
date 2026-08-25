@@ -39,6 +39,39 @@ Use `@FullTextIndex` on string fields that should be queried with Nitrite's `$te
 
 Spatial indexes are covered in <<nitriteSpatial>>.
 
+=== Indexes and Sorting
+
+An index on a sort field does more than speed up filtering. When a query has no filter, orders by
+exactly one field, and asks for a bounded number of records, Nitrite takes the ordering from a
+simple index on that field — which already holds the value for every document — and fetches only
+the records actually returned. Without such an index the sort has to deserialize every stored
+document to read the one field it orders by, so the query costs what reading the whole collection
+costs however few records are returned.
+
+The conditions are narrow, and all of them have to hold:
+
+* the query has no `WHERE` clause of its own;
+* it orders by a single property — a second sort key disqualifies it, including the identity
+  properties appended to a <<nitriteCompositeId, cursored>> page;
+* it is bounded, by `Pageable` size, by `Limit`, or by returning a single result — an unpaged
+  sorted `findAll` is not. Note the method-name form: an unfiltered ordered finder is
+  `findFirstOrderByCreatedAtDesc()`, without a `By` — `findFirstBy...` expects a property to
+  filter on and does not compile;
+* a property-level `@Index` (unique or non-unique) exists on exactly that property. A compound
+  index does not qualify, and neither does a full-text or spatial index.
+
+The results are identical either way — the same comparator runs over keys read from the index
+instead of from the documents, so ordering, null placement and tie-breaking do not change. A
+collection-valued property is indexed once per element rather than once per document, and is
+detected and excluded, falling back to the ordinary sort.
+
+Bounding a single-result read does not weaken it: a query that matches more than one record still
+raises api:data.exceptions.NonUniqueResultException[] rather than silently returning the first.
+
+The gain grows with document size and collection size, and is largest where a small page is taken
+from a large collection of large documents. Where documents are small the index read replaces a
+document read that was already cheap, so such a query can be marginally slower.
+
 === Configuration
 
 Automatic index creation can be disabled by setting `create-indexes` to `false` for the datasource, for example `micronaut.nitrite.default.create-indexes`.

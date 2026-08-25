@@ -156,7 +156,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
             for (T entity : entities) {
-                if (!ctx.isStrictInsert() && meta.idAccessor() != null && meta.idAccessor().get(entity) != null) {
+                if (!ctx.isStrictInsert() && entityMapper.getEntityIdValue(meta, entity) != null) {
                     existingEntities.add(entity);
                 } else {
                     newEntities.add(entity);
@@ -229,7 +229,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         List<T> entitiesToDelete = new ArrayList<>();
 
         for (T entity : entities) {
-            Object idValue = entityMapper.getEntityIdValue(entity, persistentEntity.getIntrospection().getBeanType());
+            Object idValue = entityMapper.getEntityIdValue(meta, entity);
             if (idValue == null) {
                 continue;
             }
@@ -295,7 +295,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     continue;
                 }
 
-                Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+                Object id = entityMapper.getEntityIdValue(meta, entity);
                 if (id != null) {
                     if (ctx.isStrictInsert()) {
                         Filter filter = entityMapper.idEqualsFilter(meta, id);
@@ -358,7 +358,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
-                Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+                Object id = entityMapper.getEntityIdValue(meta, entity);
                 Filter filter = entityMapper.idEqualsFilter(meta, id);
                 if (meta.versionProp() != null) {
                     Object versionValue = priorVersions != null ? priorVersions.get(entity) : null;

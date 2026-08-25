@@ -88,6 +88,11 @@ public final class NitriteQueryExecutor {
     private static final Pattern GENERATED_EQUALITY_PATTERN = Pattern.compile(
         "(?:[A-Za-z0-9_]+\\.)?([A-Za-z0-9_]+)\\s*=\\s*:p\\d+");
     private static final Object[] EMPTY_PARAMS = new Object[0];
+    /**
+     * The number of documents {@link #singleResult} consumes: one to return, and a second to detect
+     * that the result was not unique.
+     */
+    private static final long SINGLE_RESULT_LIMIT = 2L;
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -268,6 +273,8 @@ public final class NitriteQueryExecutor {
         if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && limit.maxResults() > 0) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
+        } else if (sort != null && sort.isSorted()) {
+            boundSingleResultSort(findOptions);
         }
         boolean hasFindOptions = (sort != null && sort.isSorted()) || limit.maxResults() > 0;
         Document doc = singleResult(hasFindOptions
@@ -314,6 +321,23 @@ public final class NitriteQueryExecutor {
         }
 
         return entity;
+    }
+
+    /**
+     * Bounds a sorted cursor that {@link #singleResult} will read, leaving one that already carries
+     * a limit untouched.
+     *
+     * <p>Nitrite orders a find from an index on the sort field only when the query asks for a
+     * bounded number of rows; without a limit it falls back to a blocking sort, which deserializes
+     * every stored document to read the one field it orders by. An unbounded sorted read for a
+     * single result therefore costs what draining the whole collection costs, however few documents
+     * are consumed. Two rows is the smallest bound that keeps the read's meaning: the first is the
+     * result, and the second is what makes a non-unique result detectable.
+     */
+    private static void boundSingleResultSort(FindOptions findOptions) {
+        if (findOptions.limit() == null) {
+            findOptions.limit(SINGLE_RESULT_LIMIT);
+        }
     }
 
     private @Nullable Document singleResult(RecordStream<Document> cursor) {

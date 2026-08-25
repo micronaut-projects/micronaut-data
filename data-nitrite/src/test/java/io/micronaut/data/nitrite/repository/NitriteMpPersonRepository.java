@@ -24,6 +24,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @NitriteRepository
 public interface NitriteMpPersonRepository extends CrudRepository<NitriteMpPerson, String>, PageableRepository<NitriteMpPerson, String> {
@@ -45,6 +46,8 @@ public interface NitriteMpPersonRepository extends CrudRepository<NitriteMpPerso
     List<NitriteMpPerson> findByNameNotLike(String pattern);
 
     List<NitriteMpPerson> findAllByNameRegexOrderByName(String pattern);
+
+    Optional<NitriteMpPerson> findByNameOrderByAge(String name);
 
     Page<NitriteMpPerson> findAllByNameRegexOrderByName(String pattern, Pageable pageable);
 

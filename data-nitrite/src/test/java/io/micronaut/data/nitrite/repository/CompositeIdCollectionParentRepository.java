@@ -15,18 +15,27 @@
  */
 package io.micronaut.data.nitrite.repository;
 
-import io.micronaut.data.annotation.Insert;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.nitrite.annotation.NitriteRepository;
-import io.micronaut.data.nitrite.model.CompositeIdEntity;
+import io.micronaut.data.nitrite.model.CompositeIdCollectionParent;
 import io.micronaut.data.repository.CrudRepository;
 
 import java.util.Optional;
 
 @NitriteRepository
-public interface CompositeIdEntityRepository extends CrudRepository<CompositeIdEntity, CompositeIdEntity> {
+public interface CompositeIdCollectionParentRepository
+    extends CrudRepository<CompositeIdCollectionParent, CompositeIdCollectionParent> {
 
-    Optional<CompositeIdEntity> findByTenantIdAndRefId(String tenantId, String refId);
+    @Join("children")
+    Optional<CompositeIdCollectionParent> findByTenantIdAndRefId(String tenantId, String refId);
 
-    @Insert
-    CompositeIdEntity insertOne(CompositeIdEntity entity);
+    /**
+     * Loads a parent by a non-identity property, so a parent whose composite identity is only
+     * half populated can still be fetched with its join.
+     *
+     * @param name the parent name
+     * @return the parent, if any
+     */
+    @Join("children")
+    Optional<CompositeIdCollectionParent> findByName(String name);
 }

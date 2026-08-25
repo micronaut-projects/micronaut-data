@@ -46,7 +46,22 @@ public final class PersistentEntityUtils {
     }
 
     /**
-     * Check if the property is an association ID that can be accessed without join. In a case it's not an ID stored outside the associated table.
+     * Check if the association's property is stored on the owning side, and so can be read without joining
+     * to the associated table.
+     *
+     * <p>The answer has to agree with what {@link #traversePersistentProperties(List, PersistentProperty, boolean, BiConsumer)}
+     * emits for the same association, because a caller that resolves a property path uses this method to decide
+     * whether the leaf that traversal produced belongs to the owning table or to the join alias. The three
+     * association target shapes are therefore mirrored here:</p>
+     * <ul>
+     *     <li>a single identity - only that identity is on the owning side;</li>
+     *     <li>a composite identity - every identity property maps a column on the owning side;</li>
+     *     <li>no identity - the target is stored inline, so all of its properties are on the owning side.</li>
+     * </ul>
+     *
+     * <p>Traversal descends through embedded properties, so the leaf it produces can be nested several
+     * embeddeds deep; matching is recursive to reach it.</p>
+     *
      * @param association The association
      * @param persistentProperty The association's property
      * @return true if can be accessed
@@ -188,6 +203,30 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded, consumerProperty);
     }
 
+    /**
+     * Traverses the properties that should be persisted for the given property, descending through embedded
+     * properties and through the owning side of non-foreign-key associations until a leaf is reached.
+     *
+     * <p>An association contributes the columns that the owning side stores for it, which depends on the
+     * shape of the association's target:</p>
+     * <ul>
+     *     <li><b>single identity</b> - that identity, or the column named by a single {@code @JoinColumn}
+     *     when one is declared on the property;</li>
+     *     <li><b>composite identity</b> - one leaf per identity property. A single referenced column cannot
+     *     stand in for several, so {@code @JoinColumn} substitution does not apply;</li>
+     *     <li><b>no identity</b> - the target is a value object stored inline in the owning record, so its
+     *     properties are traversed as if it were embedded. Traversal stops if the value object refers back
+     *     to an entity already on the path, which would otherwise never terminate.</li>
+     * </ul>
+     *
+     * <p>The latter two shapes only arise in document stores; a relational mapping declares an identity on
+     * every association target.</p>
+     *
+     * @param associations      The associations traversed so far, prefixed to every emitted leaf
+     * @param property          The property to traverse
+     * @param traverseEmbedded  Whether to descend into an embedded property or emit it whole
+     * @param consumerProperty  The function to invoke on every leaf property
+     */
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     boolean traverseEmbedded,

@@ -5,6 +5,8 @@ import io.micronaut.data.nitrite.model.NestedPojo
 import io.micronaut.data.nitrite.model.CompositeFkChild
 import io.micronaut.data.nitrite.model.CompositeFkParent
 import io.micronaut.data.nitrite.model.CompositeIdEntity
+import io.micronaut.data.nitrite.model.CompositeIdCollectionChild
+import io.micronaut.data.nitrite.model.MappedNumericCompositeIdEntity
 import io.micronaut.data.nitrite.model.NitriteComplexValue
 import io.micronaut.data.nitrite.runtime.CountingOperationsHelper
 import io.micronaut.core.annotation.Introspected
@@ -24,6 +26,8 @@ import io.micronaut.serde.annotation.Serdeable
 import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
 import org.dizitart.no2.collection.Document
+import org.dizitart.no2.collection.NitriteId
+import org.dizitart.no2.common.tuples.Pair
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -369,6 +373,68 @@ class NitriteEntityMapperSpec extends Specification {
         rootList.children.size() == 2
         rootList.children[0].id == "c1"
         rootList.children[1].id == "c2"
+    }
+
+    def "composite join columns are resolved by property name and absent for an unknown property"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+
+        expect: "the mapped association reports both of its @JoinColumn entries"
+        mapper.getCompositeJoinColumns(CompositeIdCollectionChild, "parent")*.localName() ==
+            ["parent_tenant_id", "parent_ref_id"]
+
+        and: "a property the entity does not have resolves to no join columns rather than failing"
+        mapper.getCompositeJoinColumns(CompositeIdCollectionChild, "noSuchProperty").isEmpty()
+    }
+
+    def "a composite identity key is read from a Map by persisted name, by property name, and from a Document"() {
+        given: "an entity whose @MappedProperty names differ from its property names"
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def meta = mapper.getOrBuildMeta(MappedNumericCompositeIdEntity)
+        def expected = mapper.idEqualsFilter(meta,
+            new MappedNumericCompositeIdEntity(42L, 7, null)).toString()
+
+        expect: "every key shape resolves to the same filter as the entity itself"
+        mapper.idEqualsFilter(meta, key).toString() == expected
+
+        where:
+        key << [
+            [tenant_key: 42L, sequence_no: 7],
+            [tenantId: 42L, sequence: 7],
+            Document.createDocument("tenant_key", 42L).put("sequence_no", 7),
+            Document.createDocument("tenantId", 42L).put("sequence", 7)
+        ]
+    }
+
+    def "a composite identity filter matches nothing when the key is absent or incomplete"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def meta = mapper.getOrBuildMeta(CompositeIdEntity)
+        def document = Document.createDocument("tenant_id", "tenant-a").put("ref_id", "ref-1")
+        def element = Pair.pair(NitriteId.newId(), document)
+
+        expect: "a null key never degrades into a filter that matches the whole collection"
+        !mapper.idEqualsFilter(meta, null).apply(element)
+
+        and: "half an identity identifies nothing rather than matching on the half that is set"
+        !mapper.idEqualsFilter(meta, new CompositeIdEntity(tenantId: "tenant-a")).apply(element)
+
+        and: "the complete identity still matches"
+        mapper.idEqualsFilter(meta,
+            new CompositeIdEntity(tenantId: "tenant-a", refId: "ref-1")).apply(element)
+    }
+
+    def "a composite identity key of the wrong type is rejected rather than silently read as null"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def meta = mapper.getOrBuildMeta(CompositeIdEntity)
+
+        when:
+        mapper.idEqualsFilter(meta, "not-a-composite-id")
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains(CompositeIdEntity.name)
     }
 }
 

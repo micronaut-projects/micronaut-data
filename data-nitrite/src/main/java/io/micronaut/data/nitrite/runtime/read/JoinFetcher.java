@@ -23,6 +23,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.runtime.mapping.CompositeJoinColumn;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import org.dizitart.no2.collection.Document;
@@ -105,6 +106,10 @@ final class JoinFetcher {
             return List.of();
         }
 
+        if (persistentEntity.hasCompositeIdentity()) {
+            return fetchCompositeIdentityCollection(entities, persistentEntity, association, mappedBy);
+        }
+
         RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
         List<Object> parentIds = new ArrayList<>();
         for (Object entity : entities) {
@@ -185,6 +190,63 @@ final class JoinFetcher {
                 List<Object> children = resultsByParentId.getOrDefault(entityMapper.toFilterValue(parentId), new ArrayList<>());
                 beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
             }
+        }
+        return fetchedChildren;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> fetchCompositeIdentityCollection(
+        List<?> entities,
+        RuntimePersistentEntity<?> persistentEntity,
+        RuntimeAssociation<?> association,
+        String mappedBy) {
+        Class<?> associatedType = association.getAssociatedEntity().getIntrospection().getBeanType();
+        NitriteCollection assocCollection = collectionFactory.apply(associatedType);
+        List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(associatedType, mappedBy);
+        if (joinColumns.isEmpty()) {
+            return List.of();
+        }
+
+        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+        var beanProperty = (BeanProperty<Object, Object>) association.getProperty();
+        List<Object> fetchedChildren = new ArrayList<>();
+
+        for (Object entity : entities) {
+            List<Filter> filters = new ArrayList<>(joinColumns.size());
+            boolean completeIdentity = true;
+            for (CompositeJoinColumn joinColumn : joinColumns) {
+                RuntimePersistentProperty<?> referenced = persistentEntity.getPropertyByName(joinColumn.referencedProperty());
+                if (referenced == null) {
+                    completeIdentity = false;
+                    break;
+                }
+                Object value = ((BeanProperty) referenced.getProperty()).get(entity);
+                if (value == null) {
+                    completeIdentity = false;
+                    break;
+                }
+                filters.add(entityMapper.eqWithNumericCoercion(
+                    associatedEntity,
+                    joinColumn.localName(),
+                    entityMapper.toFilterValue(value),
+                    joinColumn.localName()));
+            }
+            if (!completeIdentity) {
+                // Matches the single-identity path: a parent with no identity to match on keeps
+                // whatever the property already holds rather than being handed a foreign type.
+                continue;
+            }
+
+            Filter filter = filters.size() == 1
+                ? filters.getFirst()
+                : Filter.and(filters.toArray(new Filter[0]));
+            List<Object> children = new ArrayList<>();
+            for (Document doc : assocCollection.find(filter)) {
+                Object child = entityMapper.fromDocument(doc, associatedType);
+                children.add(child);
+                fetchedChildren.add(child);
+            }
+            beanProperty.set(entity, conversionService.convert(children, beanProperty.asArgument()).orElse(null));
         }
         return fetchedChildren;
     }

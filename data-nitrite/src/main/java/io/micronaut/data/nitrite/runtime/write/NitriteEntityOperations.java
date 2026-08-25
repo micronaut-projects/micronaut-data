@@ -169,7 +169,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // carry a non-null id, even on their very first save. Only treat the id as
             // evidence of an existing row when it's framework-generated (null pre-insert),
             // or otherwise confirm by checking the collection.
-            Object idValue = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Object idValue = entityMapper.getEntityIdValue(meta, entity);
             boolean isUpdate;
             if (ctx.isStrictInsert() || idValue == null) {
                 isUpdate = false;
@@ -244,8 +244,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // - If entity has no ID: generate ID and insert as new document
             // - If entity has ID: update (replace) existing document, or insert if not found
             // This allows save() to work for both create and update scenarios
-            // Use cached idAccessor from meta - eliminates chained lookups
-            Object entityId = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Object entityId = entityMapper.getEntityIdValue(meta, entity);
 
             if (entityId != null) {
                 if (ctx.isStrictInsert()) {
@@ -307,8 +306,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Update operation: replace existing document by ID
             // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
-            // Use cached idAccessor from meta - eliminates chained lookups
-            Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Object id = entityMapper.getEntityIdValue(meta, entity);
             // A transient entity has nothing to update: an "id == null" filter combined with upsert
             // would insert it instead. Report zero affected rows rather than silently inserting.
             if (id == null) {
@@ -347,8 +345,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             }
         } else {
             // Delete operation
-            // Use cached idAccessor from meta - eliminates chained lookups
-            Object id = meta.idAccessor() != null ? meta.idAccessor().get(entity) : null;
+            Object id = entityMapper.getEntityIdValue(meta, entity);
             if (id == null) {
                 // Without an identity there is no document to remove; an "id == null" filter would
                 // match every identity-less document in the collection.

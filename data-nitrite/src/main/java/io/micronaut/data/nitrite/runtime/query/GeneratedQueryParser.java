@@ -156,7 +156,9 @@ public final class GeneratedQueryParser {
         }
         List<Sort.Order> orders = new ArrayList<>();
         for (String item : splitTopLevel(query.substring(start + ORDER_BY_KEYWORD.length()), ",")) {
-            String[] parts = WHITESPACE_PATTERN.split(item.trim());
+            // splitAsStream rather than split: the latter's trailing-empty-token handling
+            // depends on the input, which is what makes String/Pattern split surprising.
+            String[] parts = WHITESPACE_PATTERN.splitAsStream(item.trim()).toArray(String[]::new);
             if (parts.length == 0 || parts[0].isEmpty()) {
                 continue;
             }

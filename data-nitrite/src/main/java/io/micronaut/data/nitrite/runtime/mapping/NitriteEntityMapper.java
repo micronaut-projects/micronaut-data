@@ -86,6 +86,12 @@ public final class NitriteEntityMapper {
    */
   public static final String ID_FIELD = "id";
 
+  /**
+   * A filter no document satisfies, used where an identity is absent or incomplete: without it a
+   * missing identity would degrade into a filter that matches the whole collection.
+   */
+  private static final Filter MATCH_NONE = pair -> false;
+
   private static final Logger LOG = LoggerFactory.getLogger(NitriteEntityMapper.class);
   private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
 
@@ -222,20 +228,29 @@ public final class NitriteEntityMapper {
   }
 
   /**
-   * Extract the ID value from an entity.
+   * Extract the ID value from an entity using pre-computed metadata.
    *
+   * <p>An entity with a composite identity has no single id property to read, so the entity itself
+   * stands in for its identity: {@link #idEqualsFilter(NitriteEntityMeta, Object)} reads the
+   * individual identity properties back off it. A composite identity is only an identity once every
+   * one of its properties is set, so a partially populated one reads as absent.
+   *
+   * @param meta the pre-computed entity metadata
    * @param entity the entity instance
-   * @param type the entity class
-   * @return the ID value
+   * @return the ID value, or {@code null} when the entity carries no complete identity
    * @param <T> the entity type
    */
-  public <T> @Nullable Object getEntityIdValue(final T entity, final Class<T> type) {
-    RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
-    RuntimePersistentProperty<T> idProp = safeGetIdentity(persistentEntity);
-    if (idProp != null) {
-      return idProp.getProperty().get(entity);
+  public <T> @Nullable Object getEntityIdValue(final NitriteEntityMeta<T> meta, final T entity) {
+    if (meta.persistentEntity().hasCompositeIdentity()) {
+      for (RuntimePersistentProperty<T> identityProperty : meta.persistentEntity().getRuntimeIdentityProperties()) {
+        if (identityProperty.getProperty().get(entity) == null) {
+          return null;
+        }
+      }
+      return entity;
     }
-    return null;
+    BeanProperty<T, Object> idAccessor = meta.idAccessor();
+    return idAccessor != null ? idAccessor.get(entity) : null;
   }
 
   private static <E> @Nullable RuntimePersistentProperty<E> safeGetIdentity(RuntimePersistentEntity<E> persistentEntity) {
@@ -326,6 +341,30 @@ public final class NitriteEntityMapper {
   public <T> Filter idEqualsFilter(final NitriteEntityMeta<T> meta, final @Nullable Object id) {
     RuntimePersistentProperty<T> idProperty = meta.idProp();
 
+    if (meta.persistentEntity().hasCompositeIdentity()) {
+      // A composite identity is stored as its individual fields, never as the "id" field the
+      // single-identity path below filters on, so that path would match every document here.
+      if (id == null) {
+        return MATCH_NONE;
+      }
+      List<Filter> filters = new ArrayList<>();
+      for (RuntimePersistentProperty<T> identityProperty : meta.persistentEntity().getRuntimeIdentityProperties()) {
+        Object identityValue = readCompositeIdentityValue(meta, identityProperty, id);
+        if (identityValue == null) {
+          // Half a composite identity identifies nothing; filtering on the fields that are set
+          // would match unrelated documents that happen to share them.
+          return MATCH_NONE;
+        }
+        String persistedName = identityProperty.getPersistedName();
+        filters.add(eqWithNumericCoercion(
+            meta.persistentEntity(),
+            persistedName,
+            toFilterValue(identityValue),
+            persistedName));
+      }
+      return filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
+    }
+
     // In Nitrite, we consistently use ID_FIELD ("id") for the identity property.
     String idField = ID_FIELD;
 
@@ -344,6 +383,37 @@ public final class NitriteEntityMapper {
       }
     }
     return eqWithNumericCoercion(meta.persistentEntity(), idField, toFilterValue(id), idField);
+  }
+
+  /**
+   * Read one property of a composite identity off the key object, which is either an instance of
+   * the entity itself or the field map a caller passed to {@code findById}/{@code deleteById}.
+   *
+   * @param meta the entity metadata the identity belongs to
+   * @param identityProperty the identity property to read
+   * @param id the key object
+   * @return the identity value, or {@code null} when the key does not carry it
+   * @param <T> the entity type
+   */
+  private static <T> @Nullable Object readCompositeIdentityValue(
+      NitriteEntityMeta<T> meta,
+      RuntimePersistentProperty<T> identityProperty,
+      Object id) {
+    if (id instanceof Document document) {
+      Object value = document.get(identityProperty.getPersistedName());
+      return value != null ? value : document.get(identityProperty.getName());
+    }
+    if (id instanceof Map<?, ?> map) {
+      Object value = map.get(identityProperty.getPersistedName());
+      return value != null ? value : map.get(identityProperty.getName());
+    }
+    Class<T> beanType = meta.persistentEntity().getIntrospection().getBeanType();
+    if (!beanType.isInstance(id)) {
+      throw new IllegalArgumentException("Cannot read the composite identity of ["
+          + beanType.getName() + "] from a key of type [" + id.getClass().getName()
+          + "]; expected an instance of the entity, a Document or a Map");
+    }
+    return identityProperty.getProperty().get(beanType.cast(id));
   }
 
   /**
@@ -644,6 +714,23 @@ public final class NitriteEntityMapper {
     // Lambda allocation only happens on cache miss path now
     return (NitriteEntityMeta<T>) entityMetaCache.computeIfAbsent(
         type, k -> buildEntityMeta(runtimeEntityRegistry.getEntity((Class<T>) k)));
+  }
+
+  /**
+   * Find the composite join-column metadata for an association property.
+   *
+   * @param type the entity declaring the association
+   * @param propertyName the association property name
+   * @return the join columns, or an empty list when the association is not composite
+   */
+  public List<CompositeJoinColumn> getCompositeJoinColumns(final Class<?> type, final String propertyName) {
+    NitriteEntityMeta<?> meta = getOrBuildMeta(type);
+    for (WritablePropertyMeta<?> property : meta.writableProps()) {
+      if (property.prop().getName().equals(propertyName)) {
+        return property.compositeJoinColumns();
+      }
+    }
+    return List.of();
   }
 
   /**
