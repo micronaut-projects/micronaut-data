@@ -30,6 +30,7 @@ import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
@@ -204,6 +205,11 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
         if (sessionless != null) {
             TransactionUtil.validateOracleSessionlessMode(definition);
+            if (context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
+                throw new TransactionUsageException(
+                    "Oracle sessionless transaction mode '" + sessionless + "' cannot be combined with @OracleTransactional.Recoverable"
+                );
+            }
             return sessionlessTransactionExecutor.execute(
                 transactionManager,
                 definition,

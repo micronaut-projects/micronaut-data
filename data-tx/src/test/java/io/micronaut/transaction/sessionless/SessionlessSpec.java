@@ -131,6 +131,20 @@ class SessionlessSpec {
         }
     }
 
+    @Test
+    void combiningSessionlessWithRecoverableIsRejected() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            SessionlessService service = context.getBean(SessionlessService.class);
+
+            TransactionUsageException exception = assertThrows(TransactionUsageException.class, service::suspendRecoverable);
+            assertEquals(
+                "Oracle sessionless transaction mode 'SUSPEND' cannot be combined with @OracleTransactional.Recoverable",
+                exception.getMessage()
+            );
+            assertEquals(0, context.getBean(RecordingTransactionManager.class).begins);
+        }
+    }
+
     @Singleton
     static class EventLog {
         final List<String> events = new ArrayList<>();
@@ -158,6 +172,12 @@ class SessionlessSpec {
         @OracleTransactional(value = MANAGER, sessionless = OracleTransactional.Sessionless.SUSPEND,
             propagation = TransactionDefinition.Propagation.REQUIRES_NEW)
         String suspendRequiresNew() {
+            return "ok";
+        }
+
+        @OracleTransactional(value = MANAGER, sessionless = OracleTransactional.Sessionless.SUSPEND)
+        @OracleTransactional.Recoverable
+        String suspendRecoverable() {
             return "ok";
         }
 
