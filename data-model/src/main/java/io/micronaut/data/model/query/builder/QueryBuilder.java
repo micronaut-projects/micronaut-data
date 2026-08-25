@@ -208,7 +208,7 @@ public interface QueryBuilder {
     /**
      * The upsert query definition.
      *
-     * @since 5.1.0
+     * @since 5.2.0
      */
     interface UpsertQueryDefinition {
 

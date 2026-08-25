@@ -596,7 +596,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             || operationType == OperationType.DELETE_RETURNING);
     }
 
-    protected boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
+    private boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
         return storedQuery.getOperationType() == OperationType.UPSERT;
     }
 
@@ -605,24 +605,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
-    private <T> Mono<R2dbcUpsertReturningExecutor.Result> executeUpsertReturning(
-        R2dbcOperationContext ctx,
-        SqlStoredQuery<T, ?> storedQuery,
-        T entity,
-        Class<?> identityType,
-        @Nullable Map<QueryParameterBinding, Object> previousValues) {
-        R2dbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
-        if (executor == null) {
-            return Mono.error(new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect()));
-        }
-        SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, entity);
-        Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
-        R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
-        entityStoredQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
-        return executor.execute(statement, entityStoredQuery, entity, identityType, binder.currentIndex())
-            .onErrorResume(throwable -> Mono.from(
-                DefaultR2dbcRepositoryOperations.this.<R2dbcUpsertReturningExecutor.Result>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
-            ));
+    private <T> int bindUpsertParameters(R2dbcOperationContext ctx,
+                                         Statement statement,
+                                         SqlStoredQuery<T, ?> storedQuery,
+                                         T entity,
+                                         @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
+        storedQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
+        return binder.currentIndex();
     }
 
     @SuppressWarnings("unchecked")
@@ -1491,23 +1481,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private void executeUpsertReturning() {
+            R2dbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+            if (executor == null) {
+                throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+            }
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             data = data.flatMap(d -> {
                 if (d.vetoed) {
                     return Mono.just(d);
                 }
-                return DefaultR2dbcRepositoryOperations.this.executeUpsertReturning(
-                    ctx,
-                    storedQuery,
-                    d.entity,
-                    identityProperty.getType(),
-                    d.previousValues
-                ).map(result -> {
-                    if (result.generatedId() != null) {
-                        d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
-                    }
-                    return d;
-                });
+                SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
+                Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
+                int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
+                return executor.execute(statement, entityStoredQuery, d.entity, identityProperty.getType(), inputParameterCount)
+                    .onErrorResume(throwable -> Mono.from(
+                        DefaultR2dbcRepositoryOperations.this.<R2dbcUpsertReturningExecutor.Result>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                    ))
+                    .map(result -> {
+                        if (result.generatedId() != null) {
+                            d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
+                        }
+                        return d;
+                    });
             });
         }
     }
@@ -1675,24 +1670,29 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private void executeUpsertReturning() {
+            R2dbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+            if (executor == null) {
+                throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+            }
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
             entities = entities.flatMap(list -> Flux.fromIterable(list)
                 .concatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    return DefaultR2dbcRepositoryOperations.this.executeUpsertReturning(
-                        ctx,
-                        storedQuery,
-                        d.entity,
-                        identityProperty.getType(),
-                        d.previousValues
-                    ).map(result -> {
-                        if (result.generatedId() != null) {
-                            d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
-                        }
-                        return d;
-                    });
+                    SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
+                    Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
+                    int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
+                    return executor.execute(statement, entityStoredQuery, d.entity, identityProperty.getType(), inputParameterCount)
+                        .onErrorResume(throwable -> Mono.from(
+                            DefaultR2dbcRepositoryOperations.this.<R2dbcUpsertReturningExecutor.Result>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                        ))
+                        .map(result -> {
+                            if (result.generatedId() != null) {
+                                d.entity = updateEntityId(identityProperty, d.entity, result.generatedId());
+                            }
+                            return d;
+                        });
                 })
                 .collectList());
         }

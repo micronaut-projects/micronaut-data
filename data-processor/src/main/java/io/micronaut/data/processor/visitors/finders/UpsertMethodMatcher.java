@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * Upsert method matcher.
  *
- * @since 5.1.0
+ * @since 5.2.0
  */
 @Internal
 public final class UpsertMethodMatcher extends AbstractMethodMatcher {
