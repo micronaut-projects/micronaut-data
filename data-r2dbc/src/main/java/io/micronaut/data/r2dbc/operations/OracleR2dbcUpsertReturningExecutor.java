@@ -25,7 +25,6 @@ import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -61,19 +60,13 @@ final class OracleR2dbcUpsertReturningExecutor implements R2dbcUpsertReturningEx
         OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, inputParameterCount);
         OracleReturningMetadata metadata = OracleReturningMetadata.create(List.of(out.name()));
         ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, metadata.columnIndexesByName());
-        return Flux.from(statement.execute())
-            .flatMap(result -> result.map(readable -> Optional.ofNullable(
+        return R2dbcUpsertReturningSupport.readSingleGeneratedId(
+            statement,
+            result -> result.map(readable -> Optional.ofNullable(
                 resultReader.readDynamic(readable, out.name(), out.dataType())
-            )))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collectList()
-            .map(ids -> switch (ids.size()) {
-                case 0 -> throw new DataAccessException(
-                    "Oracle upsert RETURNING clause produced no generated ID for entity: " + entity
-                );
-                case 1 -> ids.getFirst();
-                default -> throw new NonUniqueResultException();
-            });
+            )),
+            () -> new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity),
+            count -> new NonUniqueResultException("Oracle upsert RETURNING clause produced " + count + " generated IDs for a single entity: " + entity)
+        );
     }
 }

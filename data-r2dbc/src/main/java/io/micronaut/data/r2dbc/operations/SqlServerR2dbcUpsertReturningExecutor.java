@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.operations;
 
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
@@ -23,10 +24,10 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Executes SQL Server upserts that expose generated identities as OUTPUT result rows.
@@ -55,22 +56,13 @@ final class SqlServerR2dbcUpsertReturningExecutor implements R2dbcUpsertReturnin
             return Mono.error(new DataAccessException("SQL Server upsert OUTPUT requires exactly one generated identity OUT parameter, but got: " + outParameters.size()));
         }
         QueryOutParameterBinding out = outParameters.getFirst();
-        return Flux.from(statement.execute())
-            .flatMap(result -> result.map(
-                (row, ignored) -> resultReader.readDynamic(row, 0, out.dataType())
-            ))
-            .collectList()
-            .map(ids -> switch (ids.size()) {
-                case 0 -> throw new DataAccessException(
-                    "SQL Server upsert OUTPUT clause produced no generated ID for entity: " + entity
-                );
-                case 1 -> ids.getFirst();
-                default -> throw new DataAccessException(
-                    "SQL Server upsert OUTPUT clause produced "
-                        + ids.size()
-                        + " generated IDs for a single entity: "
-                        + entity
-                );
-            });
+        return R2dbcUpsertReturningSupport.readSingleGeneratedId(
+            statement,
+            result -> result.map((row, ignored) -> Optional.ofNullable(
+                resultReader.readDynamic(row, 0, out.dataType())
+            )),
+            () -> new DataAccessException("SQL Server upsert OUTPUT clause produced no generated ID for entity: " + entity),
+            count -> new NonUniqueResultException("SQL Server upsert OUTPUT clause produced " + count + " generated IDs for a single entity: " + entity)
+        );
     }
 }
