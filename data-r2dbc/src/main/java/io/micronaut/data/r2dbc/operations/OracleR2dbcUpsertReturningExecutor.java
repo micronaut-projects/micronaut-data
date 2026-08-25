@@ -17,15 +17,12 @@ package io.micronaut.data.r2dbc.operations;
 
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.internal.sql.OracleReturningMetadata;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
-import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
@@ -63,7 +60,7 @@ final class OracleR2dbcUpsertReturningExecutor implements R2dbcUpsertReturningEx
             return Mono.error(new DataAccessException("Oracle upsert RETURNING requires exactly one generated identity OUT parameter, but got: " + outParameters.size()));
         }
         QueryOutParameterBinding out = outParameters.getFirst();
-        statement.bind(inputParameterCount, Parameters.out(findR2dbcType(out.dataType())));
+        OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, inputParameterCount);
         OracleReturningMetadata metadata = OracleReturningMetadata.create(List.of(out.name()));
         ColumnNameByIndexR2dbcResultReader resultReader = new ColumnNameByIndexR2dbcResultReader(conversionService, metadata.columnIndexesByName());
         return Flux.from(statement.execute())
@@ -89,25 +86,5 @@ final class OracleR2dbcUpsertReturningExecutor implements R2dbcUpsertReturningEx
             return value;
         }
         return conversionService.convert(value, targetType).orElse(null);
-    }
-
-    private R2dbcType findR2dbcType(DataType dataType) {
-        return switch (dataType) {
-            case BOOLEAN -> R2dbcType.BOOLEAN;
-            case BYTE, SHORT, INTEGER -> R2dbcType.INTEGER;
-            case LONG -> R2dbcType.BIGINT;
-            case FLOAT -> R2dbcType.REAL;
-            case DOUBLE -> R2dbcType.DOUBLE;
-            case BIGDECIMAL -> R2dbcType.NUMERIC;
-            case BYTE_ARRAY -> R2dbcType.VARBINARY;
-            case DATE -> R2dbcType.DATE;
-            case TIME -> R2dbcType.TIME;
-            case TIMESTAMP -> R2dbcType.TIMESTAMP;
-            case CHARACTER -> R2dbcType.CHAR;
-            case BOOLEAN_ARRAY, CHARACTER_ARRAY, DOUBLE_ARRAY,
-                 FLOAT_ARRAY, INTEGER_ARRAY, LONG_ARRAY, SHORT_ARRAY,
-                 STRING_ARRAY -> R2dbcType.COLLECTION;
-            default -> R2dbcType.VARCHAR;
-        };
     }
 }

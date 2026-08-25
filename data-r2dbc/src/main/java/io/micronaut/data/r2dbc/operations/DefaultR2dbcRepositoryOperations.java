@@ -581,7 +581,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <R> Flux<R> executeOracleReturningPreparedQuery(Statement statement, SqlPreparedQuery<?, R> preparedQuery, int startIndex) {
-        Statement oracleStatement = bindOracleReturningOutParameters(statement, preparedQuery, startIndex);
+        Statement oracleStatement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, preparedQuery, startIndex);
         SqlTypeMapper<Readable, R> mapper = createOracleReturningMapper(preparedQuery);
         return executeAndMapOracleReturningSingleNullable(oracleStatement, preparedQuery.getDialect(), readable -> mapper.map(readable, preparedQuery.getResultType()))
             .flux()
@@ -720,18 +720,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
     }
 
-    private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
-        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        if (CollectionUtils.isEmpty(outParameterBindings)) {
-            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-        }
-        int index = startIndex;
-        for (QueryOutParameterBinding outParameterBinding : outParameterBindings) {
-            statement.bind(index++, Parameters.out(findR2dbcType(outParameterBinding.dataType())));
-        }
-        return statement;
-    }
-
     private int getJsonGeneratedIdOutParameterIndex(SqlStoredQuery<?, ?> storedQuery) {
         return countQueryPlaceholders(storedQuery.getQuery()) - 1;
     }
@@ -744,26 +732,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         return placeholders;
-    }
-
-    private R2dbcType findR2dbcType(DataType dataType) {
-        return switch (dataType) {
-            case BOOLEAN -> R2dbcType.BOOLEAN;
-            case BYTE, SHORT, INTEGER -> R2dbcType.INTEGER;
-            case LONG -> R2dbcType.BIGINT;
-            case FLOAT -> R2dbcType.REAL;
-            case DOUBLE -> R2dbcType.DOUBLE;
-            case BIGDECIMAL -> R2dbcType.NUMERIC;
-            case BYTE_ARRAY -> R2dbcType.VARBINARY;
-            case DATE -> R2dbcType.DATE;
-            case TIME -> R2dbcType.TIME;
-            case TIMESTAMP -> R2dbcType.TIMESTAMP;
-            case CHARACTER -> R2dbcType.CHAR;
-            case BOOLEAN_ARRAY, CHARACTER_ARRAY, DOUBLE_ARRAY,
-                 FLOAT_ARRAY, INTEGER_ARRAY, LONG_ARRAY, SHORT_ARRAY,
-                 STRING_ARRAY -> R2dbcType.COLLECTION;
-            default -> R2dbcType.VARCHAR;
-        };
     }
 
     private <R> Mono<R> executeAndMapOracleReturningSingle(Statement statement, Dialect dialect, Function<Readable, R> mapper) {
@@ -975,7 +943,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
                 storedQuery.bindParameters(binder, ctx.invocationContext, operation.getEntity(), null);
                 if (isOracleReturningQuery(storedQuery)) {
-                    statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                    statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
                     SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
                     return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                 }
@@ -1004,7 +972,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
                             storedQuery.bindParameters(binder, ctx.invocationContext, deleteOp.getEntity(), null);
                             if (isOracleReturningQuery(storedQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                                statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
                                 SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
                                 return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                             }
@@ -1395,7 +1363,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, stmt, storedQuery);
                         storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
-                            bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
+                            OracleR2dbcReturningSupport.bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
                         } else if (hasGeneratedId && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                             stmt.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
                         }
@@ -1583,7 +1551,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
                             entityStoredQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                             if (isOracleReturningQuery(entityStoredQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
+                                statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
                             }
                             @SuppressWarnings("unchecked")
                             SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(entityStoredQuery)
