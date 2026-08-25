@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 @Internal
 final class SessionlessTransactionExecutor {
 
-    private static final String DEFAULT_DATA_SOURCE_NAME = "default";
+    private static final String UNQUALIFIED = "";
 
     private final BeanLocator beanLocator;
     private final ConcurrentMap<String, Optional<SessionlessTransactionHandler>> handlers = new ConcurrentHashMap<>();
@@ -83,12 +83,25 @@ final class SessionlessTransactionExecutor {
     @Nullable
     private SessionlessTransactionHandler findHandler(@Nullable String dataSourceName) {
         return handlers
-            .computeIfAbsent(dataSourceName == null ? DEFAULT_DATA_SOURCE_NAME : dataSourceName, this::resolveHandler)
+            .computeIfAbsent(dataSourceName == null ? UNQUALIFIED : dataSourceName, this::resolveHandler)
             .orElse(null);
     }
 
+    /**
+     * Resolves the handler the same way {@code DefaultTransactionOperationsRegistry} resolves the
+     * transaction manager: by name when the transactional method declares a datasource, and unqualified
+     * otherwise. The handler is an {@code @EachBean(DataSource.class)} bean, so its qualifier is the
+     * datasource name; assuming "default" would break every application whose datasource is named
+     * something else.
+     *
+     * @param dataSourceName The declared datasource name, or {@link #UNQUALIFIED} when none was declared
+     * @return The handler, if one is configured
+     */
     @NonNull
     private Optional<SessionlessTransactionHandler> resolveHandler(@NonNull String dataSourceName) {
+        if (UNQUALIFIED.equals(dataSourceName)) {
+            return beanLocator.findBean(SessionlessTransactionHandler.class);
+        }
         return beanLocator.findBean(SessionlessTransactionHandler.class, Qualifiers.byName(dataSourceName));
     }
 }

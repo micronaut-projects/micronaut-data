@@ -18,6 +18,7 @@ package io.micronaut.transaction.jdbc.oracle;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
@@ -77,12 +78,13 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
 
             @Override
             public void beforeCommit(boolean readOnly) {
-                suspend(oracle);
-                // The transaction id is published only once the suspend has succeeded, so a caller can
-                // never be handed an id for a transaction that is still attached to this session.
+                // Claim the slot before suspending. Once the transaction is detached from this session
+                // the manager's rollback can no longer reach it, so anything that can fail must fail
+                // while the transaction is still attached.
                 if (!state.setGtridIfAbsent(gtrid)) {
-                    throw new TransactionSystemException("Oracle sessionless transaction context already contains a transaction id");
+                    throw new ConnectionException("Oracle sessionless transaction context already contains a transaction id");
                 }
+                suspend(oracle);
             }
 
             @Override
@@ -152,11 +154,22 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         }
     }
 
+    /**
+     * Suspends the transaction from inside {@link TransactionSynchronization#beforeCommit(boolean)}.
+     *
+     * <p>The failure is reported as a {@link ConnectionException} rather than a
+     * {@link io.micronaut.transaction.exceptions.TransactionException}: {@code beforeCommit} explicitly
+     * forbids the latter, and the transaction manager routes a {@code TransactionException} raised there
+     * through a branch that skips {@code beforeCompletion} for every other synchronization on the
+     * transaction.</p>
+     *
+     * @param oracle The Oracle connection
+     */
     private static void suspend(OracleConnection oracle) {
         try {
             oracle.suspendTransactionImmediately();
         } catch (SQLException e) {
-            throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", e);
+            throw new ConnectionException("Could not suspend Oracle sessionless transaction", e);
         }
     }
 

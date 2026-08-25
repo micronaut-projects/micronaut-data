@@ -7,6 +7,7 @@ import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
+import io.micronaut.transaction.exceptions.TransactionException
 import io.micronaut.transaction.exceptions.TransactionSystemException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
 import io.micronaut.transaction.sessionless.SessionlessTransactionHandler
@@ -110,8 +111,64 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
 
         then:
         1 * oracle.suspendTransactionImmediately() >> { throw new SQLException("suspend failed") }
-        thrown(TransactionSystemException)
+        thrown(RuntimeException)
+
+        when: "the transaction manager completes the transaction with a rollback"
+        status.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK)
+
+        then: "no id is left for a caller to observe"
         state.gtrid.isEmpty()
+    }
+
+    def "a lost race for the transaction id slot never leaves a detached Oracle transaction behind"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler()
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
+        def status = txStatus(connection, definition)
+        def state = new OracleSessionlessTransactionState()
+
+        when:
+        PropagatedContext.empty().plus(state).propagate({ handler.begin(status, definition) })
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.startTransaction() >> ([1, 2] as byte[])
+
+        when: "another transaction claims the slot before this one reaches its commit boundary"
+        state.setGtrid([7, 7, 7] as byte[])
+        status.triggerBeforeCommit()
+
+        then: "the claim is rejected before the suspend, so the transaction is still attached and can be rolled back"
+        thrown(RuntimeException)
+        0 * oracle.suspendTransactionImmediately()
+        Arrays.equals([7, 7, 7] as byte[], state.gtrid.orElseThrow())
+    }
+
+    def "beforeCommit failures do not use TransactionException, which would skip beforeCompletion callbacks"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler()
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def definition = definition(OracleTransactional.Sessionless.SUSPEND)
+        def status = txStatus(connection, definition)
+        def state = new OracleSessionlessTransactionState()
+
+        when:
+        PropagatedContext.empty().plus(state).propagate({ handler.begin(status, definition) })
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.startTransaction() >> ([1, 2] as byte[])
+
+        when:
+        status.triggerBeforeCommit()
+
+        then: "TransactionSynchronization#beforeCommit forbids TransactionException subclasses: AbstractTransactionOperations.commitInternal catches those in a branch that skips triggerBeforeCompletion()"
+        def e = thrown(RuntimeException)
+        !(e instanceof TransactionException)
+        1 * oracle.suspendTransactionImmediately() >> { throw new SQLException("suspend failed") }
     }
 
     def "resume mode resumes the transaction and clears the id on completion"() {
