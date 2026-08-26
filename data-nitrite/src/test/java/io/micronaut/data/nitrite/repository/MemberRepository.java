@@ -11,7 +11,7 @@ import java.util.Optional;
 @NitriteRepository
 public interface MemberRepository extends CrudRepository<Member, String> {
     List<Member> findByClubsName(String name);
-    
+
     @Join("clubs")
     Optional<Member> findByName(String name);
 }

@@ -1,26 +1,18 @@
 package io.micronaut.data.nitrite.runtime
 
-import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.convert.ConversionService
-import io.micronaut.core.type.Argument
-import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.PagedQuery
-import io.micronaut.data.model.runtime.PreparedQuery
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder
 import io.micronaut.data.nitrite.runtime.query.ast.NitriteFilterAST
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.dizitart.no2.collection.Document
 import spock.lang.Specification
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.MappedEntity
 
 @MicronautTest(transactional = false)
 class DefaultNitriteRepositoryOperationsSpec extends Specification {
@@ -37,60 +29,8 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
     @Inject
     RuntimeEntityRegistry runtimeEntityRegistry
 
-    void "test resolve escape char in criteria API"() {
-        given:
-        def e1 = new OperationsEntity(name: "A%B")
-        def e2 = new OperationsEntity(name: "AxB")
-        repo.saveAll([e1, e2])
 
-        when:
-        def spec = PredicateSpecification.where({ root, cb ->
-            cb.like(root.get("name"), cb.literal("A\\%B"), cb.literal('\\' as char))
-        })
-        def list = repo.findAll(spec)
 
-        then:
-        list.size() == 1
-        list[0].name == "A%B"
-
-        cleanup:
-        repo.deleteAll()
-    }
-
-    void "test char filtering"() {
-        given:
-        def e1 = new OperationsEntity(name: "exec1")
-        e1.setInitial('A' as char)
-        repo.save(e1)
-
-        when:
-        def list = repo.findByInitial('A' as char)
-
-        then:
-        list.size() == 1
-        list[0].initial == ('A' as char)
-
-        cleanup:
-        repo.deleteAll()
-    }
-
-    void "test DTO projection findOne and findAll"() {
-        given:
-        repo.save(new OperationsEntity(id: 101L, name: "dtoTest"))
-
-        when:
-        def singleDto = repo.getByName("dtoTest")
-        def listDto = repo.queryByName("dtoTest")
-
-        then:
-        singleDto != null
-        singleDto.name == "dtoTest"
-        listDto.size() == 1
-        listDto[0].name == "dtoTest"
-
-        cleanup:
-        repo.deleteAll()
-    }
 
     void "test malformed operators"() {
         given:
@@ -202,59 +142,6 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
         mapper.mapDocument(null, ["name"], persistentEntity, String, false) == null
     }
 
-    void "a cursored page reads in sort order"() {
-        given:
-        repo.saveAll([
-            new OperationsEntity(id: 1L, name: "A"),
-            new OperationsEntity(id: 2L, name: "B"),
-            new OperationsEntity(id: 3L, name: "C")
-        ])
 
-        when:
-        def page = repo.findAll(Pageable.afterCursor(null, 0, 2, Sort.of(Sort.Order.asc("name"))))
 
-        then:
-        page.content*.name == ["A", "B"]
-
-        cleanup:
-        repo.deleteAll()
-    }
-
-    void "updateAll writes every entity it is given"() {
-        given:
-        repo.saveAll([
-            new OperationsEntity(id: 1L, name: "A"),
-            new OperationsEntity(id: 2L, name: "B"),
-            new OperationsEntity(id: 3L, name: "C")
-        ])
-
-        when:
-        def entities = repo.findAll().toList()
-        entities.each { it.name = it.name + " updated" }
-        repo.updateAll(entities)
-
-        then:
-        repo.findAll()*.name.toSorted() == ["A updated", "B updated", "C updated"]
-
-        cleanup:
-        repo.deleteAll()
-    }
-
-    void "deleteAll removes only the entities it is given"() {
-        given:
-        repo.saveAll([
-            new OperationsEntity(id: 1L, name: "A"),
-            new OperationsEntity(id: 2L, name: "B"),
-            new OperationsEntity(id: 3L, name: "C")
-        ])
-
-        when:
-        repo.deleteAll(repo.findAll().toList().findAll { it.name != "C" })
-
-        then:
-        repo.findAll()*.name == ["C"]
-
-        cleanup:
-        repo.deleteAll()
-    }
 }

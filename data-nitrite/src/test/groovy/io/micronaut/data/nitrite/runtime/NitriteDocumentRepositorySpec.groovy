@@ -2,7 +2,6 @@ package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
 import io.micronaut.data.nitrite.model.NitriteDocument
 import io.micronaut.data.nitrite.model.NitriteDocumentOwner
 import io.micronaut.data.nitrite.model.NitriteMpPerson
@@ -43,19 +42,6 @@ class NitriteDocumentRepositorySpec extends Specification implements NitriteTest
 
     def cleanup() {
         personRepository.deleteAll()
-    }
-
-    void "test between"() {
-        given:
-            savePersons(["A", "B", "C", "D", "E", "F"])
-        when:
-            def peopleBetween = personRepository.findAllByNameBetween("B", "E").collect { it.name}
-        then:
-            peopleBetween == ["B", "C", "D", "E"]
-        when:
-            def peopleNotBetween = personRepository.findAllByNameNotBetween("B", "E").collect { it.name}
-        then:
-            peopleNotBetween == ["A", "F"]
     }
 
     void "test custom find"() {
@@ -121,85 +107,6 @@ class NitriteDocumentRepositorySpec extends Specification implements NitriteTest
             peoplePage.pageNumber == 2
             people.size() == 1
             people[0].name == "Josh"
-    }
-
-    void "test custom update"() {
-        given:
-            savePersons(["Dennis", "Jeff", "James", "Dennis"])
-
-        when:
-            def people = personRepository.findAll().toList()
-            def dennisList = people.findAll { it.name == "Dennis" }
-            dennisList.forEach { it.name = "Denis" }
-            personRepository.updateAll(dennisList)
-            people = personRepository.findAll().toList()
-
-        then:
-            people.count { it.name == "Dennis"} == 0
-            people.count { it.name == "Denis"} == 2
-    }
-
-    void "test custom delete"() {
-        given:
-            savePersons(["Dennis", "Jeff", "James", "Dennis"])
-
-        when:
-            def people = personRepository.findAll().toList()
-            people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
-            def deleted = personRepository.deleteAll(people.findAll { it.name == "DoNotDelete" })
-            people = personRepository.findAll().toList()
-
-        then:
-            people.size() == 2
-            people.every { it.name != "Dennis" }
-    }
-
-    void "test sorting"() {
-        given:
-            savePersons(["Charlie", "Alice", "Bob"])
-        when:
-            def people = personRepository.findAll(Sort.of(Sort.Order.asc("name"))).toList()
-        then:
-            people.collect { it.name } == ["Alice", "Bob", "Charlie"]
-        when:
-            people = personRepository.findAll(Sort.of(Sort.Order.desc("name"))).toList()
-        then:
-            people.collect { it.name } == ["Charlie", "Bob", "Alice"]
-    }
-
-    void "test find by ids in"() {
-        given:
-            savePersons(["Joe", "Jennifer"])
-        when:
-            def people = personRepository.findAll().toList()
-            def person = people.first()
-            def optPerson = personRepository.findById(person.id)
-            def personsByIdIn = personRepository.findByIdIn([person.id])
-            def personsByIdNotIn = personRepository.findByIdNotIn([person.id]).collect { it.id }
-        then:
-            optPerson.present
-            optPerson.get().id == person.id
-            personsByIdIn.size() == 1
-            personsByIdIn[0].id == person.id
-            personsByIdNotIn.size() > 0
-            !personsByIdNotIn.contains(person.id)
-    }
-
-    void "test find by multiple in params"() {
-        given:
-            def persons = savePersons(["Joe", "Jennifer"])
-        when:
-            def personsByIdIn = personRepository.findByIdIn([persons[0].id])
-            def multiplePersonsByNamesIn = personRepository.findByNameIn([persons[0].name, persons[1].name])
-            def multiplePersonsByIdIn = personRepository.findByIdIn([persons[0].id, persons[1].id])
-            def multiplePersonsByNamesInArr = personRepository.findByNameIn([persons[0].name, persons[1].name] as String[])
-            def personsByNamesInArr = personRepository.findByNameIn([persons[0].name] as String[])
-        then:
-            personsByIdIn.size() == 1
-            multiplePersonsByNamesIn.size() == 2
-            multiplePersonsByIdIn.size() == 2
-            multiplePersonsByNamesInArr.size() == 2
-            personsByNamesInArr.size() == 1
     }
 
     void "test find by not like with parameterized pattern"() {

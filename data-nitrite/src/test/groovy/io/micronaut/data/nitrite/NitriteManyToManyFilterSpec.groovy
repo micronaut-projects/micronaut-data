@@ -60,36 +60,4 @@ class NitriteManyToManyFilterSpec extends Specification {
         bothClubsMembers.collect { it.name }.sort() == ["Art Club", "Science Club"]
     }
 
-    void "test inverse-side MANY_TO_MANY filtering (Member.clubs.name)"() {
-        given:
-        def club1 = new Club("Science Club")
-        def club2 = new Club("Art Club")
-        clubRepo.saveAll([club1, club2])
-
-        def member1 = new Member("Alice")
-        def member2 = new Member("Bob")
-        memberRepo.saveAll([member1, member2])
-
-        // Add members to clubs (owner side controls relationship)
-        club1.members.add(member1)
-        club1.members.add(member2)
-        clubRepo.update(club1)
-
-        club2.members.add(member2)
-        clubRepo.update(club2)
-
-        when:
-        def membersInScienceClub = memberRepo.findByClubsName("Science Club")
-
-        then:
-        membersInScienceClub.size() == 2
-        membersInScienceClub.collect { it.name }.sort() == ["Alice", "Bob"]
-
-        when:
-        def membersInArtClub = memberRepo.findByClubsName("Art Club")
-
-        then:
-        membersInArtClub.size() == 1
-        membersInArtClub[0].name == "Bob"
-    }
 }

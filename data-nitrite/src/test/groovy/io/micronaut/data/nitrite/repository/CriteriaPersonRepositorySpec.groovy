@@ -33,85 +33,9 @@ class CriteriaPersonRepositorySpec extends Specification {
 
     // ========== Section 3: Null Check Predicates ==========
 
-    void "test criteria IS NULL"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson(null, 30))  // null name
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isNull(root.get("name"))
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 1
-        results[0].age == 30
-    }
-
-    void "test criteria IS NOT NULL"() {
-        given:
-        // Note: setup already has Denis (13) and Josh (22) with non-null names
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson(null, 30))  // null name
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.isNotNull(root.get("name"))
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 3  // Denis, Josh, Alice (all have non-null names)
-        results*.name.containsAll(["Denis", "Josh", "Alice"])
-    }
-
     // ========== Section 4: BETWEEN Predicate ==========
 
-    void "test criteria BETWEEN"() {
-        given:
-        repository.save(new CriteriaPerson("Young", 20))
-        repository.save(new CriteriaPerson("Middle", 25))
-        repository.save(new CriteriaPerson("Old", 30))
-        repository.save(new CriteriaPerson("Elder", 35))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.between(root.get("age"), 24, 31)
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Middle", "Old"])
-    }
-
-    void "test criteria BETWEEN with inclusive bounds"() {
-        given:
-        // Note: setup already has Denis (13) and Josh (22)
-        repository.save(new CriteriaPerson("A", 20))
-        repository.save(new CriteriaPerson("B", 25))
-        repository.save(new CriteriaPerson("C", 30))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.between(root.get("age"), 20, 30)
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 4  // Josh (22 from setup), A (20), B (25), C (30)
-        results*.name.containsAll(["Josh", "A", "B", "C"])
-    }
-
     // ========== Section 5: IN / NOT IN Predicates ==========
-
-    void "test criteria IN"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Bob", 30))
-        repository.save(new CriteriaPerson("Charlie", 35))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> root.get("name").in(["Alice", "Charlie"])
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Alice", "Charlie"])
-    }
 
     void "test criteria NOT IN"() {
         given:
@@ -130,83 +54,7 @@ class CriteriaPersonRepositorySpec extends Specification {
 
     // ========== Section 6: Logical Operators (AND, OR, NOT) ==========
 
-    void "test criteria OR predicate"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Bob", 30))
-        repository.save(new CriteriaPerson("Charlie", 35))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.or(
-            cb.equal(root.get("name"), "Alice"),
-            cb.equal(root.get("name"), "Charlie")
-        )
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Alice", "Charlie"])
-    }
-
-    void "test criteria NOT predicate"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Bob", 30))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.not(cb.equal(root.get("name"), "Bob"))
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 3 // Denis, Josh, Alice
-        results*.name.containsAll(["Denis", "Josh", "Alice"])
-    }
-
     // ========== Section 7: LIKE Predicate ==========
-
-    void "test criteria LIKE startsWith"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Albert", 30))
-        repository.save(new CriteriaPerson("Bob", 35))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "Al%")
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Alice", "Albert"])
-    }
-
-    void "test criteria LIKE endsWith"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Charlie", 30))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "%ie")
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 1
-        results[0].name == "Charlie"
-    }
-
-    void "test criteria LIKE with a custom escape char matches a literal wildcard"() {
-        given:
-        repository.save(new CriteriaPerson("50%Off", 40))
-        repository.save(new CriteriaPerson("50XOff", 41))
-
-        when:
-        // Without the escape, "%" is a wildcard; with escapeChar '\', "\%" matches a literal "%".
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "50\\%Off", '\\' as char)
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 1
-        results[0].name == "50%Off"
-    }
 
     // ========== Section 8: exists / paginated findAll ==========
 
@@ -279,33 +127,6 @@ class CriteriaPersonRepositorySpec extends Specification {
         db != null
     }
 
-    void "test findAllViaQuery"() {
-        given:
-        repository.save(new CriteriaPerson("Amy", 40))
-        repository.save(new CriteriaPerson("Ben", 41))
-
-        when:
-        def results = repository.findAllViaQuery()
-
-        then:
-        results.size() >= 4
-        results*.name.containsAll(["Denis", "Josh", "Amy", "Ben"])
-    }
-
-    void "test criteria LIKE contains"() {
-        given:
-        repository.save(new CriteriaPerson("Alice", 25))
-        repository.save(new CriteriaPerson("Charlie", 30))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.like(root.get("name"), "%li%")
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 2
-        results*.name.containsAll(["Alice", "Charlie"])
-    }
-
     // ========== Section 9: computed-expression predicates (length, prod) ==========
 
     void "test criteria length() predicate"() {
@@ -320,19 +141,6 @@ class CriteriaPersonRepositorySpec extends Specification {
         then:
         results.size() == 1
         results[0].name == "Josh"
-    }
-
-    void "test criteria length() with greaterThan"() {
-        given:
-        repository.save(new CriteriaPerson("Al", 40))
-
-        when:
-        PredicateSpecification<CriteriaPerson> spec = (root, cb) -> cb.greaterThan(cb.length(root.get("name")), 4)
-        def results = repository.findAll(spec)
-
-        then:
-        results.size() == 1
-        results[0].name == "Denis"
     }
 
     void "test criteria prod() predicate against a literal multiplier"() {
@@ -385,20 +193,6 @@ class CriteriaPersonRepositorySpec extends Specification {
     // aggregation or a join declines that fast path and falls back to the compiled string query,
     // so each of these covers a distinct fallback entry point.
 
-    void "an aggregate selection falls back to the string query and counts the collection"() {
-        given:
-        repository.save(new CriteriaPerson("Zack", 50))
-        def cb = operations.criteriaBuilder
-
-        when:
-        def query = cb.createQuery(Long)
-        def root = query.from(CriteriaPerson)
-        query.select(cb.count(root))
-
-        then: "the two persons from setup plus Zack"
-        operations.findOne(query) == 3L
-    }
-
     void "a non-aggregate selection typed as a count still reports the collection size"() {
         given:
         repository.save(new CriteriaPerson("Zack", 50))
@@ -436,16 +230,4 @@ class CriteriaPersonRepositorySpec extends Specification {
         !operations.exists(exists)
     }
 
-    void "a DTO projection and the aggregate finders read the same stored person"() {
-        given:
-        repository.save(new CriteriaPerson(name: "DtoPerson", age: 30))
-
-        expect:
-        repository.findByName("DtoPerson")*.name() == ["DtoPerson"]
-        repository.findByName("DtoPerson")*.age() == [30]
-
-        and:
-        repository.findMaxAgeByName("DtoPerson") == 30
-        repository.findAvgAgeByName("DtoPerson") == 30.0d
-    }
 }

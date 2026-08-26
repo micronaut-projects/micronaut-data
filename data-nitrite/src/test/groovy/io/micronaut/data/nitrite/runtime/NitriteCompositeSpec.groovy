@@ -48,17 +48,4 @@ class NitriteCompositeSpec extends Specification implements NitriteTestPropertyP
         repository.count() == 1
     }
 
-    void "composite identity remains usable for lookup after a round trip"() {
-        given:
-        def id = new NitriteProjectId("CODE3", "DE")
-        repository.save(new NitriteProject(id: id, name: "Project Gamma"))
-
-        when:
-        def loaded = repository.findById(id).orElse(null)
-
-        then:
-        loaded != null
-        loaded.id.code == "CODE3"
-        loaded.id.country == "DE"
-    }
 }

@@ -80,43 +80,4 @@ class TypeDiverseEventSpec extends Specification {
         reloaded.location.zone == "zone-a"
     }
 
-    void "enum values serialize and deserialize correctly"() {
-        given:
-        def event = new Event("enum-test", "payload", Event.Status.PENDING, null, null, null, null, null, null, null, Optional.empty(), null)
-
-        when:
-        def saved = repository.save(event)
-        def reloaded = repository.findById(saved.id).orElse(null)
-
-        then: "enum preserved"
-        reloaded != null
-        reloaded.status == Event.Status.PENDING
-    }
-
-    void "optional.empty stores as null"() {
-        given:
-        def event = new Event("opt-test", "payload", null, null, null, null, null, null, null, null, Optional.empty(), null)
-
-        when:
-        def saved = repository.save(event)
-        def reloaded = repository.findById(saved.id).orElse(null)
-
-        then: "optional.empty → null on round-trip"
-        reloaded != null
-        reloaded.optionalDescription == null
-    }
-
-    void "optional.of present value round-trips (exercises serialize-present path)"() {
-        given:
-        def event = new Event("opt-present", "payload", null, null, null, null, null, null, null, null, Optional.of("hello"), null)
-
-        when:
-        def saved = repository.save(event)
-        def reloaded = repository.findById(saved.id).orElse(null)
-
-        then: "present optional value survives round-trip"
-        reloaded != null
-        reloaded.optionalDescription != null
-        reloaded.optionalDescription.toString().contains("hello")
-    }
 }

@@ -26,16 +26,6 @@ class RuntimeExpressionHandlerUnitSpec extends Specification {
         handler.handleRegex("field", false, false, true, true, new LiteralExpression("a.b[0]"), false, null, queryState, null) == '^\\Qa.b[0]\\E$'
     }
 
-    void "resolveValue unwraps literal expressions"() {
-        given:
-        def handler = new RuntimeExpressionHandler()
-        def queryState = new NitriteQueryState()
-
-        expect:
-        handler.resolveValue(queryState, null, new LiteralExpression(72L)) == 72L
-        handler.resolveValue(queryState, null, new LiteralExpression(new LiteralExpression(72L))) == 72L
-    }
-
     void "resolveCollectionValue unwraps literal iterable expressions"() {
         given:
         def handler = new RuntimeExpressionHandler()

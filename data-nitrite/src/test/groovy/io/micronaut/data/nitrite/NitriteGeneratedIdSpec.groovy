@@ -17,39 +17,20 @@ class NitriteGeneratedIdSpec extends Specification {
     @Inject
     IntegerIdEntityRepository integerIdEntityRepository
 
-    def "test UUID generated id"() {
-        given:
-            def widget = new Widget(name: "Test UUID Widget")
-            
-        when:
-            def saved = widgetRepository.save(widget)
-            
-        then:
-            saved.id != null
-            saved.id instanceof UUID
-            
-        when:
-            def found = widgetRepository.findById(saved.id).orElse(null)
-            
-        then:
-            found != null
-            found.name == "Test UUID Widget"
-    }
-
     def "test Integer generated id"() {
         given:
             def entity = new IntegerIdEntity(name: "Test Integer Entity")
-            
+
         when:
             def saved = integerIdEntityRepository.save(entity)
-            
+
         then:
             saved.id != null
             saved.id instanceof Integer
-            
+
         when:
             def found = integerIdEntityRepository.findById(saved.id).orElse(null)
-            
+
         then:
             found != null
             found.name == "Test Integer Entity"

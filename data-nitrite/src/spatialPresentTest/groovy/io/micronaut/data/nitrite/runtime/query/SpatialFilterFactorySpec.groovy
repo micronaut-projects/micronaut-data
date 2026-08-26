@@ -70,7 +70,7 @@ class SpatialFilterFactorySpec extends Specification {
             def mapGeoPoint = [center: geoPoint, distance: 10.0]
             assert factory.buildNearFilter("loc", mapGeoPoint, [] as Object[], [:]).toString().contains("near")
         }
-        
+
         // Center is JTS Geometry (Polygon)
         def mapJtsPolygon = [center: jtsPolygon, distance: 10.0]
         factory.buildNearFilter("loc", mapJtsPolygon, [] as Object[], [:]).toString().contains("near")
@@ -90,13 +90,13 @@ class SpatialFilterFactorySpec extends Specification {
         if (geoPoint != null) {
             assert factory.createSpatialFilter("loc", geoPoint, "within").toString().contains("within")
         }
-        
+
         when: "unsupported center"
         factory.buildNearFilter("loc", [center: "unsupported", distance: 10], [] as Object[], [:])
         then:
         def e1 = thrown(Exception)
         e1.message.contains("Unsupported center type")
-        
+
         when: "unsupported geometry"
         factory.createSpatialFilter("loc", "unsupported", "within")
         then:

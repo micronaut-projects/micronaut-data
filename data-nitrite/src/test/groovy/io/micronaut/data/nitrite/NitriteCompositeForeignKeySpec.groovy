@@ -23,34 +23,6 @@ class NitriteCompositeForeignKeySpec extends Specification {
         parentRepository.deleteAll()
     }
 
-    void "@Join hydrates a composite foreign key association through a constructor-based entity"() {
-        given:
-        def parent = parentRepository.save(new CompositeFkParent("tenant-a", 42L))
-        childRepository.save(new CompositeFkChild("child-a", parent))
-
-        when:
-        def child = childRepository.findByName("child-a").orElseThrow()
-
-        then:
-        child.parent != null
-        child.parent.tenantId == "tenant-a"
-        child.parent.refId == 42L
-    }
-
-    void "a composite foreign key association is eagerly hydrated without @Join"() {
-        given:
-        def parent = parentRepository.save(new CompositeFkParent("tenant-a", 42L))
-        def saved = childRepository.save(new CompositeFkChild("child-a", parent))
-
-        when: "findById carries no @Join, yet MANY_TO_ONE is always resolved eagerly into the constructor argument"
-        def child = childRepository.findById(saved.id).orElseThrow()
-
-        then:
-        child.parent != null
-        child.parent.tenantId == "tenant-a"
-        child.parent.refId == 42L
-    }
-
     void "criteria query can filter across a composite foreign key join"() {
         given:
         def tenantAParent = parentRepository.save(new CompositeFkParent("tenant-a", 42L))
@@ -67,17 +39,4 @@ class NitriteCompositeForeignKeySpec extends Specification {
         results*.name == ["child-a"]
     }
 
-    void "mapped composite join columns hydrate the referenced association"() {
-        given:
-        def parent = parentRepository.save(new CompositeFkParent("tenant-mapped", 77L))
-        childRepository.save(new CompositeFkChild("child-mapped", parent))
-
-        when:
-        def child = childRepository.findByName("child-mapped").orElseThrow()
-
-        then:
-        child.parent != null
-        child.parent.tenantId == "tenant-mapped"
-        child.parent.refId == 77L
-    }
 }

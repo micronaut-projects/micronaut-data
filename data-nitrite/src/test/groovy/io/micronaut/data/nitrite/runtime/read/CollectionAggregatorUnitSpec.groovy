@@ -16,7 +16,7 @@ class CollectionAggregatorUnitSpec extends Specification {
         expect:
         aggregator.aggregate(null, "age", "Max") == null
         aggregator.aggregate([], "age", "Max") == null
-        
+
         // Collection with docs but null field values
         def doc1 = Document.createDocument("name", "Alice")
         def doc2 = Document.createDocument("name", "Bob")

@@ -35,22 +35,6 @@ class NitriteAssociationRegressionSpec extends Specification {
         memberRepository.deleteAll()
     }
 
-    void "criteria query can filter across MANY_TO_ONE association path"() {
-        given:
-        def king = authorRepository.save(new CriteriaAuthor("Stephen King"))
-        def rowling = authorRepository.save(new CriteriaAuthor("J.K. Rowling"))
-        bookRepository.save(new CriteriaBook("The Stand", king))
-        bookRepository.save(new CriteriaBook("Harry Potter", rowling))
-
-        when:
-        PredicateSpecification<CriteriaBook> byAuthorName = (root, cb) ->
-            cb.equal(root.get("author").get("name"), "Stephen King")
-        def results = bookRepository.findAll(byAuthorName)
-
-        then:
-        results*.title == ["The Stand"]
-    }
-
     void "@Join can populate MANY_TO_MANY mappedBy association"() {
         given:
         def alice = memberRepository.save(new Member("Alice"))

@@ -15,7 +15,7 @@ class CompileExpressionHandlerUnitSpec extends Specification {
         handler.resolveValue(queryState, null, new LiteralExpression("test")) == "test"
         handler.resolveValue(queryState, null, new LiteralExpression(new LiteralExpression("test"))) == "test"
         handler.resolveValue(queryState, null, new LiteralExpression(new RegexPattern(".*"))) == ".*"
-        
+
         // fallback to RuntimeExpressionHandler for non-literals
         handler.resolveValue(queryState, null, "not-literal") == "not-literal"
     }
@@ -33,16 +33,16 @@ class CompileExpressionHandlerUnitSpec extends Specification {
         handler.handleRegex("name", false, false, false, false, new LiteralExpression(new LiteralExpression('4_')), true, null, queryState, null) == '(?s)^4.$'
         handler.handleRegex("name", false, false, false, false, new LiteralExpression('J\\_hn\\%'), true, new LiteralExpression('\\' as char), queryState, null) == '(?s)^J_hn%$'
         handler.handleRegex("name", false, false, false, false, new LiteralExpression('J\\_hn\\%'), true, new LiteralExpression("\\"), queryState, null) == '(?s)^J_hn%$'
-        
+
         // startsWith = true
         handler.handleRegex("name", false, false, true, false, literal, false, null, queryState, null) == '^\\QJohn\\E.*'
-        
+
         // endsWith = true
         handler.handleRegex("name", false, false, false, true, literal, false, null, queryState, null) == '.*\\QJohn\\E$'
-        
+
         // contains
         handler.handleRegex("name", false, false, false, false, literal, false, null, queryState, null) == '.*\\QJohn\\E.*'
-        
+
         // ignoreCase = true
         handler.handleRegex("name", true, false, false, false, literal, false, null, queryState, null) == '(?i).*\\QJohn\\E.*'
     }
@@ -55,7 +55,7 @@ class CompileExpressionHandlerUnitSpec extends Specification {
         expect:
         handler.resolveRegexValue(queryState, null, new LiteralExpression("pattern")) == "pattern"
         handler.resolveRegexValue(queryState, null, new LiteralExpression(new LiteralExpression("pattern"))) == "pattern"
-        
+
         // fallback to resolveValue for non-string literals
         handler.resolveRegexValue(queryState, null, new LiteralExpression(123)) == 123
     }

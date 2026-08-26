@@ -70,11 +70,11 @@ class NitriteRuntimeSpec extends Specification implements NitriteTestPropertyPro
                 value: new NitriteComplexValue("original", "data")
             )
             complexEntityRepository.save(entity)
-            
+
             entity.name = "Updated"
             entity.value = new NitriteComplexValue("updated", "newdata")
             complexEntityRepository.update(entity)
-            
+
             NitriteComplexEntity retrieved = complexEntityRepository.findById(entity.id).get()
 
         then:

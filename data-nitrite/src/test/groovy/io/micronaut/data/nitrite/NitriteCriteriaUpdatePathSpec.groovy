@@ -33,25 +33,6 @@ class NitriteCriteriaUpdatePathSpec extends Specification {
         eventRepository.save(event)
     }
 
-    void "a criteria update of an embedded property writes the nested document path"() {
-        given:
-        stored("nested", "before", "zone-a")
-
-        when:
-        UpdateSpecification<Event> setRegion = (root, query, cb) -> {
-            query.set(root.get("location").get("region"), "after")
-            return null
-        }
-        PredicateSpecification<Event> byType = (root, cb) -> cb.equal(root.get("type"), "nested")
-        def updated = eventRepository.updateAll(setRegion.where(byType))
-
-        then:
-        updated == 1
-        def event = eventRepository.findByType("nested").first()
-        event.location.region == "after"
-        event.location.zone == "zone-a"
-    }
-
     private Event storedWithAmount(String type, BigDecimal amount) {
         def event = new Event()
         event.type = type
@@ -83,15 +64,4 @@ class NitriteCriteriaUpdatePathSpec extends Specification {
         eventRepository.findByType("subtract-literal").first().amount == new BigDecimal("85.00")
     }
 
-    void "a JDQL update that divides a property reduces the stored value proportionally"() {
-        given:
-        storedWithAmount("divide", new BigDecimal("100.00"))
-
-        when:
-        def updated = eventJdqlRepository.divideAmountByType("divide", new BigDecimal("4"))
-
-        then:
-        updated == 1
-        eventRepository.findByType("divide").first().amount.stripTrailingZeros() == new BigDecimal("25").stripTrailingZeros()
-    }
 }

@@ -9,11 +9,11 @@ class ValueConverterUnitSpec extends Specification {
     void "test epoch nanos"() {
         given:
         Instant now = Instant.now()
-        
+
         when:
         long nanos = ValueConverter.epochNanos(now)
         Instant restored = ValueConverter.fromEpochNanos(nanos)
-        
+
         then:
         restored == now
     }
@@ -33,7 +33,7 @@ class ValueConverterUnitSpec extends Specification {
     void "test convert"() {
         given:
         ValueConverter converter = new ValueConverter(ConversionService.SHARED)
-        
+
         expect:
         converter.convert(null, String) == null
         converter.convert("foo", String) == "foo"

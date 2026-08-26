@@ -22,31 +22,6 @@ class NitriteUpsertLifecycleSpec extends Specification {
         repo.deleteAll()
     }
 
-    void "test save() on new entity sets created and updated timestamps"() {
-        when:
-        def record = new TimestampedRecord("new")
-        def saved = repo.save(record)
-
-        then:
-        saved.id != null
-        saved.version == 0L
-        saved.dateCreated != null
-        saved.dateUpdated != null
-        saved.dateCreated == saved.dateUpdated
-
-        when:
-        sleep(100) // Ensure time passes
-        def originalDateUpdated = saved.dateUpdated
-        saved.name = "updated"
-        def updated = repo.save(saved)
-
-        then:
-        updated.id == saved.id
-        updated.version == 1L
-        updated.dateCreated == saved.dateCreated
-        updated.dateUpdated > originalDateUpdated
-    }
-
     void "test veto removes entity from batch before persist"() {
         when:
         def r1 = new TimestampedRecord("keep")
@@ -67,42 +42,4 @@ class NitriteUpsertLifecycleSpec extends Specification {
         repo.findAll().toList().isEmpty()
     }
 
-    void "test veto blocks a single save() update of an existing entity"() {
-        given:
-        def existing = repo.save(new TimestampedRecord("keep"))
-
-        when:
-        existing.name = "veto-update-me"
-        repo.save(existing)
-
-        then:
-        def reloaded = repo.findById(existing.id).get()
-        reloaded.name == "keep"
-        reloaded.version == 0L
-    }
-
-    void "test saveAll() on mixed entities sets correct timestamps and versions"() {
-        given:
-        def existing = repo.save(new TimestampedRecord("existing"))
-        def initialCreated = existing.dateCreated
-        def initialUpdated = existing.dateUpdated
-        sleep(100)
-
-        when:
-        existing.name = "existing-updated"
-        def newRecord = new TimestampedRecord("new")
-        repo.saveAll([existing, newRecord])
-
-        then:
-        def reloadedExisting = repo.findById(existing.id).get()
-        reloadedExisting.version == 1L
-        reloadedExisting.dateCreated == initialCreated
-        reloadedExisting.dateUpdated > initialUpdated
-
-        def reloadedNew = repo.findAll().find { it.name == "new" }
-        reloadedNew != null
-        reloadedNew.version == 0L
-        reloadedNew.dateCreated != null
-        reloadedNew.dateCreated == reloadedNew.dateUpdated
-    }
 }

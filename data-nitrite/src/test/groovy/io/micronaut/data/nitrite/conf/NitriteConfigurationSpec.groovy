@@ -16,137 +16,6 @@ class NitriteConfigurationSpec extends Specification {
 
     @AutoCleanup ApplicationContext ctx
 
-    void "test default configuration values"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        expect:
-        config.getDbPath() == null
-        config.getStorageMode() == NitriteConfiguration.StorageMode.MVSTORE
-        config.getFieldSeparator() == "."
-        config.isCreateIndexes() == true
-        config.getUsername() == null
-        config.getPassword() == null
-    }
-
-    void "test setDbPath"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setDbPath("/data/test.db")
-
-        then:
-        config.getDbPath() == "/data/test.db"
-
-        when:
-        config.setDbPath(null)
-
-        then:
-        config.getDbPath() == null
-    }
-
-    void "test setUsername"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setUsername("admin")
-
-        then:
-        config.getUsername() == "admin"
-
-        when:
-        config.setUsername(null)
-
-        then:
-        config.getUsername() == null
-    }
-
-    void "test setPassword"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setPassword("secret")
-
-        then:
-        config.getPassword() == "secret"
-
-        when:
-        config.setPassword(null)
-
-        then:
-        config.getPassword() == null
-    }
-
-    void "test setStorageMode MVSTORE"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setStorageMode(NitriteConfiguration.StorageMode.MVSTORE)
-
-        then:
-        config.getStorageMode() == NitriteConfiguration.StorageMode.MVSTORE
-    }
-
-    void "test setStorageMode IN_MEMORY"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setStorageMode(NitriteConfiguration.StorageMode.IN_MEMORY)
-
-        then:
-        config.getStorageMode() == NitriteConfiguration.StorageMode.IN_MEMORY
-    }
-
-    void "test setStorageMode ROCKSDB"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setStorageMode(NitriteConfiguration.StorageMode.ROCKSDB)
-
-        then:
-        config.getStorageMode() == NitriteConfiguration.StorageMode.ROCKSDB
-    }
-
-    void "test setFieldSeparator"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setFieldSeparator("_")
-
-        then:
-        config.getFieldSeparator() == "_"
-
-        when:
-        config.setFieldSeparator("/")
-
-        then:
-        config.getFieldSeparator() == "/"
-    }
-
-    void "test setCreateIndexes"() {
-        given:
-        def config = new NitriteConfiguration("default")
-
-        when:
-        config.setCreateIndexes(false)
-
-        then:
-        !config.isCreateIndexes()
-
-        when:
-        config.setCreateIndexes(true)
-
-        then:
-        config.isCreateIndexes()
-    }
-
     void "test configuration binding from properties - MVSTORE with db-path"() {
         given:
         def props = [
@@ -175,7 +44,7 @@ class NitriteConfigurationSpec extends Specification {
 
         expect:
         config.getStorageMode() == NitriteConfiguration.StorageMode.IN_MEMORY
-        config.getDbPath() == null  // No db-path for in-memory
+        config.getDbPath() == null
     }
 
     void "test configuration binding from properties - custom field separator"() {
@@ -192,20 +61,6 @@ class NitriteConfigurationSpec extends Specification {
         !config.isCreateIndexes()
     }
 
-    void "test StorageMode enum values exist"() {
-        expect:
-        NitriteConfiguration.StorageMode.MVSTORE != null
-        NitriteConfiguration.StorageMode.IN_MEMORY != null
-        NitriteConfiguration.StorageMode.ROCKSDB != null
-    }
-
-    void "test StorageMode valueOf"() {
-        expect:
-        NitriteConfiguration.StorageMode.valueOf("MVSTORE") == NitriteConfiguration.StorageMode.MVSTORE
-        NitriteConfiguration.StorageMode.valueOf("IN_MEMORY") == NitriteConfiguration.StorageMode.IN_MEMORY
-        NitriteConfiguration.StorageMode.valueOf("ROCKSDB") == NitriteConfiguration.StorageMode.ROCKSDB
-    }
-
     void "named datasource configuration creates an isolated Nitrite configuration"() {
         given:
         ctx = ApplicationContext.run([
@@ -216,4 +71,5 @@ class NitriteConfigurationSpec extends Specification {
         expect:
         ctx.getBeansOfType(NitriteConfiguration)*.name.findAll { it in ["primary", "audit"] }.sort() == ["audit", "primary"]
     }
+
 }

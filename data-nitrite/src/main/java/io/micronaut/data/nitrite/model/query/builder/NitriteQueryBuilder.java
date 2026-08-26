@@ -49,12 +49,12 @@ import java.util.Objects;
 /**
  * Builds Nitrite JSON filter queries from Micronaut Data criteria expressions.
  * Generates JSON that is interpreted at runtime by {@link io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder}.
- * 
- * <p><strong>Note on explicitly defined queries:</strong> This builder and the underlying Nitrite engine 
- * explicitly do <strong>not</strong> support SQL strings. The legacy SQL-parsing support present in 
- * older versions (4.14.x) has been entirely removed. Any explicitly defined {@code @Query} must use 
+ *
+ * <p><strong>Note on explicitly defined queries:</strong> This builder and the underlying Nitrite engine
+ * explicitly do <strong>not</strong> support SQL strings. The legacy SQL-parsing support present in
+ * older versions (4.14.x) has been entirely removed. Any explicitly defined {@code @Query} must use
  * Nitrite's JSON filter syntax.
- * 
+ *
  * @since 5.2.0
  */
 @Internal

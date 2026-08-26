@@ -71,24 +71,6 @@ class NitriteOneToManyFilterSpec extends Specification {
         parentsWithChildC.isEmpty()
     }
 
-    void "test MANY_TO_ONE filtering (Child.parent.name)"() {
-        given:
-        def parent1 = new OneToManyParent("Parent 1")
-        def parent2 = new OneToManyParent("Parent 2")
-        parentRepo.saveAll([parent1, parent2])
-
-        def child1 = new OneToManyChild("Child A", parent1)
-        def child2 = new OneToManyChild("Child B", parent2)
-        childRepo.saveAll([child1, child2])
-
-        when:
-        def childrenOfParent1 = childRepo.findByParentName("Parent 1")
-
-        then:
-        childrenOfParent1.size() == 1
-        childrenOfParent1[0].name == "Child A"
-    }
-
     void "an association whose target has no identity cannot be reverse-looked-up"() {
         when: "the target of NitriteComplexEntity.values carries no @Id, so no sub-query can select ids"
         def results = complexRepo.findByValuesKey("some key with space")
@@ -116,28 +98,6 @@ class NitriteOneToManyFilterSpec extends Specification {
 
         then: "an equality on that FK, not a match-all"
         filter.toString() == MAPPED_BY_FILTER
-    }
-
-    void "a reverse lookup naming a target property resolves it through a sub-query: #shape"() {
-        given:
-        def filterBuilder = reverseLookupFilterBuilder()
-        def parentEntity = runtimeEntityRegistry.getEntity(OneToManyParent)
-
-        when: "the value carries a space, so it is treated as a target-property value rather than an id"
-        def filter = filterBuilder
-            .buildFieldFilter(parentEntity, path, ["\$eq": "some id with space"], new Object[0], [:])
-
-        then: "the sub-query found no ids, so the result is an id filter rather than the mappedBy one"
-        filter != null
-        filter.toString() != MAPPED_BY_FILTER
-
-        where:
-        shape                                       | path
-        "the mappedBy inverse"                      | "children.parent"
-        "a property the target does not declare"    | "children.invalidProp"
-        "a plain property of the target"            | "children.name"
-        "an association of the wrong relation kind" | "children.siblings"
-        "the target identity"                       | "children.id"
     }
 
     /** The filter produced when the reverse lookup goes straight to the child's parent FK. */

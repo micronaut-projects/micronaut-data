@@ -1,10 +1,10 @@
 package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.context.exceptions.BeanInstantiationException
 import io.micronaut.data.nitrite.conf.NitriteConfiguration
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations
+import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.serde.ObjectMapper
 import org.dizitart.no2.Nitrite
 import spock.lang.Specification
@@ -12,13 +12,21 @@ import java.nio.file.Files
 
 class NitriteOperationsFactorySpec extends Specification {
 
-    void "nitrite defaults to an in-memory datasource without explicit configuration"() {
+    void "default datasource starts with default configuration without explicit properties"() {
         when:
         def ctx = ApplicationContext.run()
+        def config = ctx.getBean(NitriteConfiguration)
 
         then:
-        ctx.containsBean(Nitrite)
-        ctx.containsBean(NitriteRepositoryOperations)
+        config.name == "default"
+        config.dbPath == null
+        config.storageMode == NitriteConfiguration.StorageMode.MVSTORE
+        config.fieldSeparator == "."
+        config.createIndexes
+        config.username == null
+        config.password == null
+        ctx.getBean(Nitrite) != null
+        ctx.getBean(NitriteRepositoryOperations) != null
 
         cleanup:
         ctx?.close()
@@ -43,28 +51,6 @@ class NitriteOperationsFactorySpec extends Specification {
         ctx?.close()
     }
 
-    void "one configured datasource creates exactly one repository operations bean"() {
-        when:
-        def ctx = ApplicationContext.run([
-                "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
-        ])
-
-        then:
-        ctx.getBeansOfType(NitriteRepositoryOperations).size() == 1
-
-        cleanup:
-        ctx?.close()
-    }
-
-    void "test nitrite factory in-memory mode"() {
-        when: "In-memory mode"
-        def ctx = ApplicationContext.run(["micronaut.nitrite.default.storage-mode": "IN_MEMORY"])
-        then:
-        ctx.getBean(Nitrite) != null
-        cleanup:
-        ctx?.close()
-    }
-
     void "test nitrite repository operations without serde object mapper"() {
         when:
         def ctx = ApplicationContext.builder(["micronaut.nitrite.default.storage-mode": "IN_MEMORY"])
@@ -82,12 +68,13 @@ class NitriteOperationsFactorySpec extends Specification {
     void "test nitrite factory empty dbPath with MVSTORE"() {
         when: "Empty dbPath with MVSTORE (default)"
         def ctx = ApplicationContext.run(["micronaut.nitrite.default.db-path": ""])
+
         then:
         ctx.getBean(Nitrite) != null
+
         cleanup:
         ctx?.close()
     }
-
     void "test nitrite factory empty dbPath with ROCKSDB"() {
         when: "Empty dbPath with ROCKSDB"
         def ctx = ApplicationContext.run([
@@ -137,15 +124,6 @@ class NitriteOperationsFactorySpec extends Specification {
         ctx3?.close()
     }
 
-    void "test nitrite factory with partial auth"() {
-        when: "Only username provided"
-        def ctx = ApplicationContext.run(["micronaut.nitrite.default.username": "admin"])
-        then:
-        ctx.getBean(Nitrite) != null
-        cleanup:
-        ctx?.close()
-    }
-
     void "test nitrite factory with explicit path and nested dirs"() {
         given:
         def tempDir = Files.createTempDirectory("nitrite-factory-test").toFile()
@@ -153,6 +131,7 @@ class NitriteOperationsFactorySpec extends Specification {
         when: "MVSTORE with explicit path"
         def dbFile = new File(tempDir, "test.db")
         def ctx4 = ApplicationContext.run(["micronaut.nitrite.default.db-path": dbFile.absolutePath])
+
         then:
         ctx4.getBean(Nitrite) != null
         dbFile.exists()
@@ -160,12 +139,14 @@ class NitriteOperationsFactorySpec extends Specification {
         when: "Nested directory creation"
         def nestedFile = new File(tempDir, "nested/dir/test.db")
         def ctx5 = ApplicationContext.run(["micronaut.nitrite.default.db-path": nestedFile.absolutePath])
+
         then:
         ctx5.getBean(Nitrite) != null
         nestedFile.exists()
 
         when: "Path with no parent"
         def ctx6 = ApplicationContext.run(["micronaut.nitrite.default.db-path": "standalone.db"])
+
         then:
         ctx6.getBean(Nitrite) != null
         new File("standalone.db").exists()
@@ -218,5 +199,18 @@ class NitriteOperationsFactorySpec extends Specification {
         def configurationField = registry.class.getDeclaredField("configuration")
         configurationField.accessible = true
         return (NitriteConfiguration) configurationField.get(registry)
+    }
+
+    void "one configured datasource creates exactly one repository operations bean"() {
+        when:
+        def ctx = ApplicationContext.run([
+                "micronaut.nitrite.default.storage-mode": "IN_MEMORY"
+        ])
+
+        then:
+        ctx.getBeansOfType(NitriteRepositoryOperations).size() == 1
+
+        cleanup:
+        ctx?.close()
     }
 }

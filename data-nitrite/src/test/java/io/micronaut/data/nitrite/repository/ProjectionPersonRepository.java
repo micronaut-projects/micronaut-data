@@ -14,7 +14,7 @@ public interface ProjectionPersonRepository extends CrudRepository<CriteriaPerso
 
     // Single property projection (findAll)
     List<String> findNameByAgeGreaterThan(int age);
-    
+
     // Explicit projection using conventions
     List<Integer> listAgeByNameLike(String name);
 

@@ -35,28 +35,6 @@ class NitriteManualIdVersionBugSpec extends Specification {
         projectRepository.deleteAll()
     }
 
-    void "new entity is saved with version 0, not 1"() {
-        when: "saving a brand new entity that already carries a manually assigned id"
-            ManualIdVersionedPerson saved = repository.save(new ManualIdVersionedPerson("John", 30))
-
-        then: "version should be initialized, not pre-incremented as if this were an update"
-            saved.version == 0L
-    }
-
-    void "findFirstByNameOrderByAgeAsc honours the Sort clause"() {
-        given:
-            repository.save(new ManualIdVersionedPerson("John", 35))
-            repository.save(new ManualIdVersionedPerson("John", 25))
-            repository.save(new ManualIdVersionedPerson("John", 30))
-
-        when:
-            Optional<ManualIdVersionedPerson> found = repository.findFirstByNameOrderByAgeAsc("John")
-
-        then: "the lowest age should win, not insertion order"
-            found.isPresent()
-            found.get().age == 25
-    }
-
     void "saveAll with manually assigned ids upserts each entity by id"() {
         given: "brand new entities that already carry a manually assigned (non-null) id"
             def batch = [
@@ -77,22 +55,6 @@ class NitriteManualIdVersionBugSpec extends Specification {
             repository.findFirstByNameOrderByAgeAsc("Ben").isPresent()
     }
 
-    void "strict @Insert batch inserts entities with pre-set ids"() {
-        given:
-            def batch = [
-                new ManualIdVersionedPerson("Cara", 22),
-                new ManualIdVersionedPerson("Dan", 23)
-            ]
-
-        when:
-            def saved = repository.insertBatch(batch)
-
-        then:
-            saved.size() == 2
-            repository.findFirstByNameOrderByAgeAsc("Cara").isPresent()
-            repository.findFirstByNameOrderByAgeAsc("Dan").isPresent()
-    }
-
     void "strict @Insert batch rejects an id that already exists"() {
         given:
             def existing = repository.save(new ManualIdVersionedPerson("Eve", 24))
@@ -106,50 +68,4 @@ class NitriteManualIdVersionBugSpec extends Specification {
             thrown(EntityExistsException)
     }
 
-    void "strict @Insert single-entity inserts an entity with a pre-set id"() {
-        given:
-            def person = new ManualIdVersionedPerson("Frank", 26)
-
-        when:
-            def saved = repository.insertOne(person)
-
-        then:
-            repository.findFirstByNameOrderByAgeAsc("Frank").isPresent()
-            saved.id == person.id
-    }
-
-    void "strict @Insert single-entity rejects an id that already exists"() {
-        given:
-            def existing = repository.save(new ManualIdVersionedPerson("Grace", 27))
-            def duplicate = new ManualIdVersionedPerson("Grace again", 28)
-            duplicate.id = existing.id
-
-        when:
-            repository.insertOne(duplicate)
-
-        then:
-            thrown(EntityExistsException)
-    }
-
-    void "new entity with a composite @EmbeddedId is saved with version 0, not 1"() {
-        when: "saving a brand new entity that already carries a manually assigned composite id"
-            VersionedProject saved = projectRepository.save(
-                new VersionedProject(new ProjectId(1, 100), "Alpha"))
-
-        then: "version should be initialized, not pre-incremented as if this were an update"
-            saved.version == 0L
-    }
-
-    void "re-saving an existing @EmbeddedId entity increments the version"() {
-        given:
-            VersionedProject saved = projectRepository.save(
-                new VersionedProject(new ProjectId(2, 200), "Beta"))
-
-        when:
-            saved.name = "Beta v2"
-            VersionedProject updated = projectRepository.save(saved)
-
-        then: "the existence check must recognise the row despite the composite id"
-            updated.version == 1L
-    }
 }

@@ -22,11 +22,11 @@ class NitriteConnectionOperationsSpec extends Specification {
         NitriteConnectionOperations connectionOperations = new NitriteConnectionOperations(database)
         NitriteTransactionHolder holder = new NitriteTransactionHolder()
         NitriteTransactionOperations transactionManager = new DefaultNitriteTransactionOperations(connectionOperations, connectionOperations, holder)
-        
+
         when:
         ConnectionDefinition definition = ConnectionDefinition.DEFAULT
         Session session = connectionOperations.openConnection(definition)
-        
+
         then:
         session != null
 
@@ -35,13 +35,13 @@ class NitriteConnectionOperationsSpec extends Specification {
             session, definition, true, connectionOperations
         )
         connectionOperations.setupConnection(status)
-        
+
         then:
         noExceptionThrown()
-        
+
         when:
         connectionOperations.closeConnection(status)
-        
+
         then:
         noExceptionThrown()
 
@@ -63,7 +63,7 @@ class NitriteConnectionOperationsSpec extends Specification {
         then:
         txStatus.getTransaction() != null
         holder.get() != null
-        
+
         cleanup:
         activeSession?.close()
         database?.close()

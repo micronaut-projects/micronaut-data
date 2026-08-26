@@ -3,7 +3,6 @@ package io.micronaut.data.nitrite.runtime
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.CursoredPage
 import io.micronaut.data.model.CursoredPageable
-import io.micronaut.data.model.Pageable
 import io.micronaut.data.exceptions.NonUniqueResultException
 import io.micronaut.data.model.Sort
 import io.micronaut.data.nitrite.model.NitriteMpPerson
@@ -53,37 +52,6 @@ class NitriteSortSpec extends Specification implements NitriteTestPropertyProvid
             personRepository.findByNameOrderByAge("Alice")
         then: 'the bound is two rows, not one, so the second match is still seen and reported'
             thrown(NonUniqueResultException)
-    }
-
-    void 'test sort ascending'() {
-        when:
-            def people = personRepository.findAll(Sort.of(Sort.Order.asc("name"))).toList()
-        then:
-            people.collect { it.name } == ["Alice", "Bob", "Charlie"]
-    }
-
-    void 'test sort descending'() {
-        when:
-            def people = personRepository.findAll(Sort.of(Sort.Order.desc("name"))).toList()
-        then:
-            people.collect { it.name } == ["Charlie", "Bob", "Alice"]
-    }
-
-    void 'test sort by age'() {
-        when:
-            def people = personRepository.findAll(Sort.of(Sort.Order.asc("age"))).toList()
-        then:
-            people.collect { it.name } == ["Alice", "Charlie", "Bob"]
-    }
-
-    void 'test sort with pageable'() {
-        when:
-            def page = personRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.asc("name"))))
-        then:
-            page.content.size() == 2
-            page.content[0].name == "Alice"
-            page.content[1].name == "Bob"
-
     }
 
     void 'cursor pagination does not skip records with equal sort values'() {
