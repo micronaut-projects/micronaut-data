@@ -237,19 +237,14 @@ public final class SqlSchemaUtils {
         List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, tableName, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
-        Map<String, String[]> identityColumnPaths = new LinkedHashMap<>();
-        Map<String, TableColumnPath> columnPaths = new LinkedHashMap<>();
+        Map<String, String[]> columnPaths = new LinkedHashMap<>();
         for (PersistentProperty identity : identities) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 String columnName = namingStrategy.mappedName(associations, property);
                 String[] path = SqlQueryBuilderUtils.asPath(associations, property);
-                String @Nullable [] existingIdentityPath = identityColumnPaths.putIfAbsent(columnName, path);
-                if (existingIdentityPath != null && !Arrays.equals(existingIdentityPath, path)) {
-                    failOnConflictingIdentityColumn(entity, columnName, existingIdentityPath, path);
-                }
-                TableColumnPath existingColumnPath = columnPaths.putIfAbsent(columnName, new TableColumnPath(path, false));
-                if (existingColumnPath != null && !Arrays.equals(existingColumnPath.path(), path)) {
-                    failOnConflictingIdentityColumn(entity, columnName, existingColumnPath.path(), path);
+                String @Nullable [] existingPath = columnPaths.putIfAbsent(columnName, path);
+                if (existingPath != null && !Arrays.equals(existingPath, path)) {
+                    failOnConflictingIdentityColumn(entity, columnName, existingPath, path);
                 }
             });
         }
@@ -259,16 +254,18 @@ public final class SqlSchemaUtils {
             if (!version.isGenerated()) {
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
                 SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, tableName, false, true, false, dialect);
-                addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, new String[]{version.getName()}, false, column);
+                addTableColumn(entity, columns, columnPaths, columnName, new String[]{version.getName()}, column);
             }
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, columnName)) {
+                return;
+            }
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, tableName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
-            boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, columnName);
-            addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, SqlQueryBuilderUtils.asPath(associations, property), sharedIdentityJoinColumn, column);
+            addTableColumn(entity, columns, columnPaths, columnName, SqlQueryBuilderUtils.asPath(associations, property), column);
         };
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -294,48 +291,24 @@ public final class SqlSchemaUtils {
     /**
      * Adds a DDL column while detecting multiple property paths mapped to the same physical column.
      *
-     * <p>The only duplicate accepted here is the shared identity relation case where the table identity column is also
-     * used as an explicit relation join column. Other duplicate mappings would generate invalid or ambiguous DDL, so
-     * they fail fast instead of silently dropping one property path.</p>
+     * <p>Shared identity relation columns are omitted before this method is called. Other duplicate mappings would
+     * generate invalid or ambiguous DDL, so they fail fast instead of silently dropping one property path.</p>
      */
     private static void addTableColumn(PersistentEntity entity,
                                        List<SqlColumnMapping> columns,
-                                       Map<String, TableColumnPath> columnPaths,
-                                       Map<String, String[]> identityColumnPaths,
+                                       Map<String, String[]> columnPaths,
                                        String columnName,
                                        String[] path,
-                                       boolean sharedIdentityJoinColumn,
                                        SqlColumnMapping column) {
-        TableColumnPath existingColumnPath = columnPaths.get(columnName);
-        if (existingColumnPath != null) {
-            String[] existingPath = existingColumnPath.path();
-            String @Nullable [] identityPath = identityColumnPaths.get(columnName);
-            TableColumnPath newColumnPath = new TableColumnPath(path, sharedIdentityJoinColumn);
-            if (Arrays.equals(existingPath, path) || isAllowedSharedIdentityColumnReuse(identityPath, existingColumnPath, newColumnPath)) {
+        String @Nullable [] existingPath = columnPaths.putIfAbsent(columnName, path);
+        if (existingPath != null) {
+            if (Arrays.equals(existingPath, path)) {
                 return;
             }
             throw new MappingException("Conflicting table mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
                 + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
         }
-        columnPaths.put(columnName, new TableColumnPath(path, sharedIdentityJoinColumn));
         columns.add(column);
-    }
-
-    /**
-     * Checks whether one of two DDL paths is the identity path and the other is an explicit shared-identity relation path.
-     */
-    private static boolean isAllowedSharedIdentityColumnReuse(String @Nullable [] identityPath,
-                                                              TableColumnPath existingColumnPath,
-                                                              TableColumnPath newColumnPath) {
-        if (identityPath == null) {
-            return false;
-        }
-        String[] existingPath = existingColumnPath.path();
-        String[] newPath = newColumnPath.path();
-        return (Arrays.equals(existingPath, identityPath)
-            && newColumnPath.sharedIdentityJoinColumn())
-            || (Arrays.equals(newPath, identityPath)
-            && existingColumnPath.sharedIdentityJoinColumn());
     }
 
     /**
@@ -957,31 +930,6 @@ public final class SqlSchemaUtils {
             }
         }
         return primaryKeyColumns;
-    }
-
-    @SuppressWarnings("ArrayRecordComponent")
-    private record TableColumnPath(String[] path, boolean sharedIdentityJoinColumn) {
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof TableColumnPath(
-                String[] otherPath, boolean otherSharedIdentityJoinColumn
-            )
-                && Arrays.equals(path, otherPath)
-                && sharedIdentityJoinColumn == otherSharedIdentityJoinColumn;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = Arrays.hashCode(path);
-            result = 31 * result + Boolean.hashCode(sharedIdentityJoinColumn);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TableColumnPath[path=" + Arrays.toString(path) + ", sharedIdentityJoinColumn=" + sharedIdentityJoinColumn + ']';
-        }
     }
 
     private record ColumnOptions(@Nullable Integer length,

@@ -964,6 +964,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         boolean[] needsTrimming = {false};
+        List<SharedIdentityUpdateBinding> sharedIdentityUpdateBindings = new ArrayList<>(1);
         boolean computesPropertyPaths = computePropertyPaths();
         if (!computesPropertyPaths || jsonEntity) {
             String jsonViewColumnName = getJsonEntityColumn(annotationMetadata);
@@ -1018,6 +1019,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         // identity and must remain driven by the WHERE predicate instead of being written
                         // through the relation path in SET.
                         if (SqlQueryBuilderUtils.isSharedIdentityColumn(queryState.getEntity(), namingStrategy, associations, property, unescapedColumnName)) {
+                            if (sharedIdentityUpdateBindings.isEmpty()) {
+                                sharedIdentityUpdateBindings.add(new SharedIdentityUpdateBinding(bindingParameter, propertyPath.getTableAlias()));
+                            }
                             return;
                         }
                         String tableAlias = propertyPath.getTableAlias();
@@ -1055,7 +1059,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         }
         if (computesPropertyPaths && !jsonEntity && !needsTrimming[0] && generatedEntityUpdate
-            && appendSharedIdentityUpdateFallback(queryState, getNamingStrategy(entity), update)) {
+            && !sharedIdentityUpdateBindings.isEmpty()
+            && appendIdentityUpdateFallback(queryState, getNamingStrategy(entity), sharedIdentityUpdateBindings.get(0))) {
             needsTrimming[0] = true;
         }
         if (needsTrimming[0]) {
@@ -1069,19 +1074,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * <p>A shared-identity relation can make the criteria update appear non-empty before its relation columns are
      * skipped. Reusing its entity binding for the owner identity keeps the generated update syntactically valid.</p>
      */
-    private boolean appendSharedIdentityUpdateFallback(QueryState queryState,
-                                                       NamingStrategy namingStrategy,
-                                                       List<Map.Entry<QueryPropertyPath, Object>> update) {
-        Map.Entry<QueryPropertyPath, Object> fallbackEntry = update.stream()
-            .filter(entry -> unwrapUpdateValue(entry.getValue()) instanceof BindingParameter)
-            .filter(entry -> containsSharedIdentityColumn(queryState, namingStrategy, entry.getKey()))
-            .findFirst()
-            .orElse(null);
-        if (fallbackEntry == null) {
-            return false;
-        }
-        BindingParameter bindingParameter = (BindingParameter) unwrapUpdateValue(fallbackEntry.getValue());
-        String tableAlias = fallbackEntry.getKey().getTableAlias();
+    private boolean appendIdentityUpdateFallback(QueryState queryState,
+                                                 NamingStrategy namingStrategy,
+                                                 SharedIdentityUpdateBinding updateBinding) {
+        BindingParameter bindingParameter = updateBinding.bindingParameter();
+        String tableAlias = updateBinding.tableAlias();
         boolean[] assignmentAppended = {false};
         for (PersistentProperty identity : queryState.getEntity().getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
@@ -1107,23 +1104,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             });
         }
         return assignmentAppended[0];
-    }
-
-    private boolean containsSharedIdentityColumn(QueryState queryState,
-                                                 NamingStrategy namingStrategy,
-                                                 QueryPropertyPath propertyPath) {
-        boolean[] sharedIdentityColumn = {false};
-        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
-            if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
-                || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
-                return;
-            }
-            String columnName = getMappedName(namingStrategy, associations, property);
-            if (SqlQueryBuilderUtils.isSharedIdentityColumn(queryState.getEntity(), namingStrategy, associations, property, columnName)) {
-                sharedIdentityColumn[0] = true;
-            }
-        });
-        return sharedIdentityColumn[0];
     }
 
     private static Object unwrapUpdateValue(Object value) {
@@ -3726,6 +3706,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return queryState.findProperty(propertyPath);
         }
 
+    }
+
+    private record SharedIdentityUpdateBinding(BindingParameter bindingParameter, @Nullable String tableAlias) {
     }
 
     /**
