@@ -229,6 +229,16 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         page.content*.licensePlate == ["AAA", "BBB"]
         page.totalSize == 3
 
+        when:
+        Page<Car> implicitlyJoinedPage = carRepository.findByTagsNameOrderByManufacturerNameAndLicensePlate(
+            "electric",
+            Pageable.from(0, 2)
+        )
+
+        then:
+        implicitlyJoinedPage.content*.licensePlate == ["AAA", "BBB"]
+        implicitlyJoinedPage.totalSize == 3
+
         cleanup:
         carTagRepository.deleteAll()
         carRepository.deleteAll()
@@ -501,6 +511,8 @@ interface CarRepository extends CrudRepository<Car, Long> {
 
     @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
     Page<Car> findByTagsName(String name, Pageable pageable)
+
+    Page<Car> findByTagsNameOrderByManufacturerNameAndLicensePlate(String name, Pageable pageable)
 }
 
 @JdbcRepository(dialect = H2)

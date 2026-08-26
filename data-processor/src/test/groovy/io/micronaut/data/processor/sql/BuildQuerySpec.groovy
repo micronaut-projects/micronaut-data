@@ -2910,6 +2910,36 @@ interface TestRepository extends GenericRepository<Book, Long> {
         getParameterTableAliases(method) == [null, "book_book_", "book_"]
     }
 
+    void "test pageable to-many predicate copies implicit to-one order join and uses distinct count"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    Page<Book> findByStudentsNameOrderByAuthorNameAndTitle(String name, Pageable pageable);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByStudentsNameOrderByAuthorNameAndTitle", String, Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+
+        expect:
+        query.contains('INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id`')
+        query.contains('book_book_book_students_.`name` = ?')
+        countQuery.startsWith('SELECT COUNT(DISTINCT(book_.`id`))')
+        countQuery.contains('book_students_.`name` = ?')
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "book_book_", "book_"]
+    }
+
     void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
         given:
         def repository = buildRepository('test.CarRepository', """
