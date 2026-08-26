@@ -33,6 +33,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
@@ -118,12 +119,12 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         Element paginationParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);
         boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
         SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
-        PersistentEntityCriteriaQuery<Object> criteriaQuery;
-        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, joinSpecs)) {
+        // Predicates, projections, and ordering can introduce joins in addition to explicit @Join specifications.
+        PersistentEntityCriteriaQuery<Object> criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
+        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, criteriaQuery)) {
             int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
             criteriaQuery = createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, pageableParameterIndex);
         } else {
-            criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
             if (isPageable) {
                 AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
                 abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
@@ -140,9 +141,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return criteriaQuery;
     }
 
-    private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity, MethodMatchContext matchContext, List<AnnotationValue<Join>> joinSpecs) {
-        return !joinSpecs.isEmpty()
-            && requiresPaginationSubquery(persistentEntity, joinSpecs)
+    private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity,
+                                        MethodMatchContext matchContext,
+                                        PersistentEntityCriteriaQuery<Object> criteriaQuery) {
+        return requiresPaginationSubquery((PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next())
             && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
             // MySQL doesn't support subquery with limits
             && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
@@ -244,10 +246,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
     }
 
-    private boolean requiresPaginationSubquery(PersistentEntity persistentEntity, List<AnnotationValue<Join>> joinSpecs) {
-        for (AnnotationValue<Join> joinSpec : joinSpecs) {
-            String path = joinSpec.stringValue().orElse(null);
-            if (path == null || !isToOneJoinPath(persistentEntity, path)) {
+    private boolean requiresPaginationSubquery(PersistentEntityFrom<?, ?> from) {
+        for (var join : from.getPersistentJoins()) {
+            if (join.getAssociation().isForeignKey() || requiresPaginationSubquery(join)) {
                 return true;
             }
         }

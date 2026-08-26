@@ -50,6 +50,9 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     CarManufacturerRepository carManufacturerRepository = applicationContext.getBean(CarManufacturerRepository)
 
     @Shared
+    CarTagRepository carTagRepository = applicationContext.getBean(CarTagRepository)
+
+    @Shared
     FleetRepository fleetRepository = applicationContext.getBean(FleetRepository)
 
     @Shared
@@ -196,6 +199,38 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         slice.content*.manufacturer*.name == ["Delta", "Gamma"]
 
         cleanup:
+        carRepository.deleteAll()
+        carManufacturerRepository.deleteAll()
+    }
+
+    void "test pageable to-one fetch join with to-many predicate paginates root rows"() {
+        given:
+        carTagRepository.deleteAll()
+        carRepository.deleteAll()
+        carManufacturerRepository.deleteAll()
+
+        def manufacturer = carManufacturerRepository.save(new CarManufacturer(name: "Acme"))
+        carRepository.save(new Car(licensePlate: "AAA", manufacturer: manufacturer, tags: [
+            new CarTag(name: "electric"),
+            new CarTag(name: "electric")
+        ]))
+        carRepository.save(new Car(licensePlate: "BBB", manufacturer: manufacturer, tags: [
+            new CarTag(name: "electric")
+        ]))
+        carRepository.save(new Car(licensePlate: "CCC", manufacturer: manufacturer, tags: [
+            new CarTag(name: "electric")
+        ]))
+
+        when:
+        def pageable = Pageable.from(0, 2, Sort.of(Sort.Order.asc("licensePlate")))
+        Page<Car> page = carRepository.findByTagsName("electric", pageable)
+
+        then:
+        page.content*.licensePlate == ["AAA", "BBB"]
+        page.totalSize == 3
+
+        cleanup:
+        carTagRepository.deleteAll()
         carRepository.deleteAll()
         carManufacturerRepository.deleteAll()
     }
@@ -463,10 +498,17 @@ interface CarRepository extends CrudRepository<Car, Long> {
 
     @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
     Slice<Car> getAll(Pageable pageable)
+
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<Car> findByTagsName(String name, Pageable pageable)
 }
 
 @JdbcRepository(dialect = H2)
 interface CarManufacturerRepository extends CrudRepository<CarManufacturer, Long> {
+}
+
+@JdbcRepository(dialect = H2)
+interface CarTagRepository extends CrudRepository<CarTag, Long> {
 }
 
 @MappedEntity("the_car")
@@ -479,6 +521,9 @@ class Car {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     CarManufacturer manufacturer
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "car", cascade = Relation.Cascade.ALL)
+    List<CarTag> tags = []
 }
 
 @MappedEntity("the_car_manufacturer")
@@ -488,6 +533,18 @@ class CarManufacturer {
     Long id
 
     String name
+}
+
+@MappedEntity("the_car_tag")
+class CarTag {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    Car car
 }
 
 @JdbcRepository(dialect = H2)

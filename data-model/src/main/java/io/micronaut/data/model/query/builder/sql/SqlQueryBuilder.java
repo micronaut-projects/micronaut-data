@@ -76,6 +76,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -252,15 +255,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String normalizeAlias(String alias) {
-        if (dialect == Dialect.POSTGRES && alias.length() > MAX_POSTGRES_IDENTIFIER_LENGTH) {
+        if (dialect == Dialect.POSTGRES && alias.getBytes(StandardCharsets.UTF_8).length > MAX_POSTGRES_IDENTIFIER_LENGTH) {
             String hash = String.format(Locale.ROOT, "%08x", alias.hashCode());
             boolean trailingUnderscore = alias.endsWith("_");
             int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
-            int prefixLength = MAX_POSTGRES_IDENTIFIER_LENGTH - reserved;
-            String normalized = alias.substring(0, prefixLength) + "_" + hash;
+            String prefix = truncateToUtf8Bytes(alias, MAX_POSTGRES_IDENTIFIER_LENGTH - reserved);
+            String normalized = prefix + "_" + hash;
             return trailingUnderscore ? normalized + "_" : normalized;
         }
         return alias;
+    }
+
+    private static String truncateToUtf8Bytes(String value, int maxBytes) {
+        CharBuffer input = CharBuffer.wrap(value);
+        StandardCharsets.UTF_8.newEncoder().encode(input, ByteBuffer.allocate(maxBytes), true);
+        return value.substring(0, input.position());
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {

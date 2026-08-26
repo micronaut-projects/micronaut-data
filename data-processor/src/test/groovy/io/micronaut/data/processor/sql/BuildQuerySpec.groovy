@@ -2880,6 +2880,36 @@ interface TestRepository extends GenericRepository<Book, Long> {
             getParameterTableAliases(findAll) == ["book_"]
     }
 
+    void "test pageable to-one fetch join with to-many predicate uses pagination subquery"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    @Join(value = "author", type = Join.Type.LEFT_FETCH)
+    Page<Book> findByStudentsName(String name, Pageable pageable);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByStudentsName", String, Pageable)
+        def query = getQuery(method)
+
+        expect:
+        query.contains('WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_')
+        query.contains('WHERE (book_book_.`id` IN (SELECT book_book_book_.`id`')
+        query.contains('book_book_book_students_.`name` = ?')
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "book_book_", "book_"]
+    }
+
     void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
         given:
         def repository = buildRepository('test.CarRepository', """
