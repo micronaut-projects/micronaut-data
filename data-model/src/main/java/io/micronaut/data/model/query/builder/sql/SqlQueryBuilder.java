@@ -1320,7 +1320,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (existingValueSlot != null) {
                         failOnConflictingInsertColumn(entity, unescapedColumnName, existingValueSlot.getPropertyPath(), path);
                     }
-                    boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, unescapedColumnName);
+                    boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, unescapedColumnName);
                     // Relation properties are visited before the entity identity, so an explicit shared
                     // PK/FK one-to-one can legitimately claim the physical column first. We record that
                     // fact on the slot so the identity pass below can decide whether the duplicate is
@@ -1362,10 +1362,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     InsertValueSlot existingValueSlot = valueSlotsByColumn.get(unescapedColumnName);
                     if (existingValueSlot != null) {
                         String @Nullable [] existingPath = existingValueSlot.getPropertyPath();
-                        // At this point the real entity identity is being processed. Reusing an existing
-                        // column slot is allowed only when the earlier relation path was already proven to
-                        // be an explicit shared-identity join column to this same identity path.
-                        if (!SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(path, existingPath, existingValueSlot.isSharedIdentityJoinColumn())) {
+                        // At this point the real entity identity is being processed. Reusing the same
+                        // physical column is allowed only when the earlier relation slot was already
+                        // proven to be an explicit join to an owner identity column.
+                        if (!existingValueSlot.isSharedIdentityJoinColumn()) {
                             failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                         }
                     }

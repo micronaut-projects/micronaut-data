@@ -1496,6 +1496,7 @@ class ConflictingEmbeddedInsertValue {
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -1548,16 +1549,17 @@ class GeneratedSharedIdentityAsset {
 @MappedEntity("generated_assetmetadata")
 class GeneratedSharedIdentityAssetMetadata {
     @Id
-    private Long id;
+    @MappedProperty("id")
+    private Long metadataId;
 
     private String author;
 
-    Long getId() {
-        return id;
+    Long getMetadataId() {
+        return metadataId;
     }
 
-    void setId(Long id) {
-        this.id = id;
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
     }
 
     String getAuthor() {

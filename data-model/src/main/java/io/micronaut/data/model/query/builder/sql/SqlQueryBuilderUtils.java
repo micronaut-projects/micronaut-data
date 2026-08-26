@@ -34,14 +34,12 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
-import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -204,26 +202,6 @@ final class SqlQueryBuilderUtils {
             }
         }
         return false;
-    }
-
-    /**
-     * Validates reuse of a relation path that intentionally shares an identity column.
-     *
-     * <p>The candidate path must already be proven to come from an explicit shared-identity join column, and it
-     * must end with the root identity path. This rejects unrelated duplicate mappings such as {@code details.id}.</p>
-     */
-    static boolean isAllowedSharedIdentityColumnReuse(String[] identityPath,
-                                                      String @Nullable [] candidatePath,
-                                                      boolean candidateSharedIdentityJoinColumn) {
-        if (!candidateSharedIdentityJoinColumn || candidatePath == null || candidatePath.length <= identityPath.length) {
-            return false;
-        }
-        for (int i = 1; i <= identityPath.length; i++) {
-            if (!Objects.equals(candidatePath[candidatePath.length - i], identityPath[identityPath.length - i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**

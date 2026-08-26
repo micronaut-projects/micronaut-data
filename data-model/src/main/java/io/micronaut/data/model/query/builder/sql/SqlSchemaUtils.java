@@ -267,7 +267,7 @@ public final class SqlSchemaUtils {
             String columnName = namingStrategy.mappedName(associations, property);
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, tableName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
-            boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isExplicitSharedIdentityJoinColumn(associations, property, columnName);
+            boolean sharedIdentityJoinColumn = SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, columnName);
             addTableColumn(entity, columns, columnPaths, identityColumnPaths, columnName, SqlQueryBuilderUtils.asPath(associations, property), sharedIdentityJoinColumn, column);
         };
 
@@ -333,9 +333,9 @@ public final class SqlSchemaUtils {
         String[] existingPath = existingColumnPath.path();
         String[] newPath = newColumnPath.path();
         return (Arrays.equals(existingPath, identityPath)
-            && SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(identityPath, newPath, newColumnPath.sharedIdentityJoinColumn()))
+            && newColumnPath.sharedIdentityJoinColumn())
             || (Arrays.equals(newPath, identityPath)
-            && SqlQueryBuilderUtils.isAllowedSharedIdentityColumnReuse(identityPath, existingPath, existingColumnPath.sharedIdentityJoinColumn()));
+            && existingColumnPath.sharedIdentityJoinColumn());
     }
 
     /**

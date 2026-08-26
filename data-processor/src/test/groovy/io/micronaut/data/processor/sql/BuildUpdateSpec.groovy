@@ -994,6 +994,73 @@ class AssetMetadata {
         getParameterPropertyPaths(method) == ["title", "id.containerId", "id.assetId"] as String[]
     }
 
+    void "shared identity only entity update falls back to identity assignment"() {
+        given:
+        def repository = buildRepository('test.SharedIdentityOnlyAssetRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface SharedIdentityOnlyAssetRepository extends GenericRepository<SharedIdentityOnlyAsset, Long> {
+    SharedIdentityOnlyAsset update(SharedIdentityOnlyAsset entity);
+}
+
+@MappedEntity("shared_identity_only_asset")
+class SharedIdentityOnlyAsset {
+    @Id
+    @MappedProperty("asset_id")
+    private Long assetId;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "asset_id", referencedColumnName = "metadata_id")
+    private SharedIdentityOnlyMetadata metadata;
+
+    Long getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    SharedIdentityOnlyMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(SharedIdentityOnlyMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("shared_identity_only_metadata")
+class SharedIdentityOnlyMetadata {
+    @Id
+    @MappedProperty("metadata_id")
+    private Long metadataId;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE `shared_identity_only_asset` SET `asset_id`=? WHERE (`asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["assetId", "assetId"] as String[]
+    }
+
     void "test build update by ID"() {
         given:
         def repository = buildRepository('test.PersonRepository', """

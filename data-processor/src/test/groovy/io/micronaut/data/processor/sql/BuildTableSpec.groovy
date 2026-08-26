@@ -659,7 +659,7 @@ import jakarta.persistence.JoinColumn;
 @MappedEntity("asset")
 class Asset {
     @EmbeddedId
-    private AssetId id;
+    private AssetKey ownerKey;
 
     private String title;
 
@@ -668,12 +668,12 @@ class Asset {
     @JoinColumn(name = "asset_id", referencedColumnName = "asset_id")
     private AssetMetadata metadata;
 
-    AssetId getId() {
-        return id;
+    AssetKey getOwnerKey() {
+        return ownerKey;
     }
 
-    void setId(AssetId id) {
-        this.id = id;
+    void setOwnerKey(AssetKey ownerKey) {
+        this.ownerKey = ownerKey;
     }
 
     String getTitle() {
@@ -694,43 +694,43 @@ class Asset {
 }
 
 @Embeddable
-class AssetId {
+class AssetKey {
     @MappedProperty("container_id")
-    private UUID containerId;
+    private UUID ownerContainer;
 
     @MappedProperty("asset_id")
-    private Integer assetId;
+    private Integer ownerAsset;
 
-    UUID getContainerId() {
-        return containerId;
+    UUID getOwnerContainer() {
+        return ownerContainer;
     }
 
-    void setContainerId(UUID containerId) {
-        this.containerId = containerId;
+    void setOwnerContainer(UUID ownerContainer) {
+        this.ownerContainer = ownerContainer;
     }
 
-    Integer getAssetId() {
-        return assetId;
+    Integer getOwnerAsset() {
+        return ownerAsset;
     }
 
-    void setAssetId(Integer assetId) {
-        this.assetId = assetId;
+    void setOwnerAsset(Integer ownerAsset) {
+        this.ownerAsset = ownerAsset;
     }
 }
 
 @MappedEntity("assetmetadata")
 class AssetMetadata {
     @EmbeddedId
-    private AssetId id;
+    private MetadataKey metadataKey;
 
     private String author;
 
-    AssetId getId() {
-        return id;
+    MetadataKey getMetadataKey() {
+        return metadataKey;
     }
 
-    void setId(AssetId id) {
-        this.id = id;
+    void setMetadataKey(MetadataKey metadataKey) {
+        this.metadataKey = metadataKey;
     }
 
     String getAuthor() {
@@ -739,6 +739,31 @@ class AssetMetadata {
 
     void setAuthor(String author) {
         this.author = author;
+    }
+}
+
+@Embeddable
+class MetadataKey {
+    @MappedProperty("container_id")
+    private UUID metadataContainer;
+
+    @MappedProperty("asset_id")
+    private Integer metadataAsset;
+
+    UUID getMetadataContainer() {
+        return metadataContainer;
+    }
+
+    void setMetadataContainer(UUID metadataContainer) {
+        this.metadataContainer = metadataContainer;
+    }
+
+    Integer getMetadataAsset() {
+        return metadataAsset;
+    }
+
+    void setMetadataAsset(Integer metadataAsset) {
+        this.metadataAsset = metadataAsset;
     }
 }
 ''')

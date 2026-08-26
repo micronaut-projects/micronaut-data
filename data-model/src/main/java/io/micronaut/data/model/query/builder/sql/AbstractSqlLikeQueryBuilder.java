@@ -964,7 +964,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         boolean[] needsTrimming = {false};
-        if (!computePropertyPaths() || jsonEntity) {
+        boolean computesPropertyPaths = computePropertyPaths();
+        if (!computesPropertyPaths || jsonEntity) {
             String jsonViewColumnName = getJsonEntityColumn(annotationMetadata);
             if (jsonViewColumnName != null) {
                 queryString.append(queryState.getRootAlias()).append(DOT).append(jsonViewColumnName).append("= json_transform(").append(jsonViewColumnName);
@@ -1053,9 +1054,76 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+        if (computesPropertyPaths && !jsonEntity && !needsTrimming[0] && generatedEntityUpdate
+            && appendSharedIdentityUpdateFallback(queryState, getNamingStrategy(entity), update)) {
+            needsTrimming[0] = true;
+        }
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
         }
+    }
+
+    /**
+     * Appends the same identity assignment used for generated updates of entities that have no mutable properties.
+     *
+     * <p>A shared-identity relation can make the criteria update appear non-empty before its relation columns are
+     * skipped. Reusing its entity binding for the owner identity keeps the generated update syntactically valid.</p>
+     */
+    private boolean appendSharedIdentityUpdateFallback(QueryState queryState,
+                                                       NamingStrategy namingStrategy,
+                                                       List<Map.Entry<QueryPropertyPath, Object>> update) {
+        Map.Entry<QueryPropertyPath, Object> fallbackEntry = update.stream()
+            .filter(entry -> unwrapUpdateValue(entry.getValue()) instanceof BindingParameter)
+            .filter(entry -> containsSharedIdentityColumn(queryState, namingStrategy, entry.getKey()))
+            .findFirst()
+            .orElse(null);
+        if (fallbackEntry == null) {
+            return false;
+        }
+        BindingParameter bindingParameter = (BindingParameter) unwrapUpdateValue(fallbackEntry.getValue());
+        String tableAlias = fallbackEntry.getKey().getTableAlias();
+        boolean[] assignmentAppended = {false};
+        for (PersistentProperty identity : queryState.getEntity().getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                    return;
+                }
+                StringBuilder queryString = queryState.getQuery();
+                if (tableAlias != null) {
+                    queryString.append(tableAlias).append(DOT);
+                }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (queryState.escape) {
+                    columnName = quote(columnName);
+                }
+                queryString.append(columnName).append('=');
+                appendUpdateSetParameter(queryString, tableAlias, property, () -> {
+                    PersistentPropertyPath identityPath = PersistentPropertyPath.of(associations, property);
+                    queryState.pushParameter(bindingParameter,
+                        newBindingContext(identityPath));
+                });
+                queryString.append(COMMA);
+                assignmentAppended[0] = true;
+            });
+        }
+        return assignmentAppended[0];
+    }
+
+    private boolean containsSharedIdentityColumn(QueryState queryState,
+                                                 NamingStrategy namingStrategy,
+                                                 QueryPropertyPath propertyPath) {
+        boolean[] sharedIdentityColumn = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                return;
+            }
+            String columnName = getMappedName(namingStrategy, associations, property);
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(queryState.getEntity(), namingStrategy, associations, property, columnName)) {
+                sharedIdentityColumn[0] = true;
+            }
+        });
+        return sharedIdentityColumn[0];
     }
 
     private static Object unwrapUpdateValue(Object value) {
