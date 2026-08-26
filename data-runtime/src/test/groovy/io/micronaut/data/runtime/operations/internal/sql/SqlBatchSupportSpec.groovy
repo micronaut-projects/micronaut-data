@@ -20,6 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.InsertBatchOperation
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
+import io.micronaut.data.model.runtime.StoredQuery
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -30,6 +31,17 @@ class SqlBatchSupportSpec extends Specification {
     void "mysql dialect stays conservative for generated identities by default"() {
         expect:
         !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL)
+    }
+
+    void "stored query preserves sqlite batch opt-out"() {
+        given:
+        SqlStoredQuery<?, ?> storedQuery = Stub {
+            getDialect() >> Dialect.SQLITE
+            getOperationType() >> StoredQuery.OperationType.INSERT
+        }
+
+        expect:
+        !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), storedQuery)
     }
 
     @Unroll
