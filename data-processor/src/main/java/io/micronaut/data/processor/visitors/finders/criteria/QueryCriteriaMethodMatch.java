@@ -445,27 +445,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         boolean embeddedSelection = isEmbeddedSelection(query);
         boolean dto = result.isDto() && !embeddedSelection;
-        if (dto && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);
-            if (!dtoProjectionProperties.isEmpty()) {
-                Root<?> root = query.getRoots().iterator().next();
-                List<Selection<?>> selectionList = dtoProjectionProperties.stream()
-                    .map(p -> {
-                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
-                            return root.get(p.getName());
-                        } else {
-                            return root.get(p.getName()).alias(p.getName());
-                        }
-                    })
-                    .collect(Collectors.toList());
-                query.multiselect(
-                    selectionList
-                );
-            }
-        }
         ClassElement declaredReturnType = unwrapReactiveReturnType(matchContext.getReturnType());
         applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
-        applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType);
+        applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType, dto);
 
         final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
         QueryResult queryResult = criteriaQuery.build(annotationMetadata, matchContext.getQueryBuilder());
@@ -627,8 +609,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                             SourcePersistentEntityCriteriaQuery<?> query,
                                             MethodResult result,
                                             SourcePersistentEntity persistentEntity,
-                                            ClassElement resultType) {
-        if (!result.isDto() || result.isRuntimeDtoConversion()) {
+                                            ClassElement resultType,
+                                            boolean dto) {
+        if (!dto || result.isRuntimeDtoConversion()) {
             return;
         }
         List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);

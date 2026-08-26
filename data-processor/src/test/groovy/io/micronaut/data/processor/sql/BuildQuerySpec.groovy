@@ -1591,6 +1591,50 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
     }
 
+    void "test embeddable type reused as ordinary DTO projection"() {
+        given:
+        def repository = buildRepository('test.ParcelRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@MappedEntity
+record Parcel(@Id Long id, String name, String street, String zipCode) {
+}
+
+@Embeddable
+class ShippingAddress {
+    private String street;
+    private String zipCode;
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ParcelRepository extends GenericRepository<Parcel, Long> {
+    ShippingAddress findByName(String name);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByName", String)) ==
+            'SELECT parcel_.`street`,parcel_.`zip_code` FROM `parcel` parcel_ WHERE (parcel_.`name` = ?)'
+    }
+
     void "test embedded projection aliases nested embedded columns"() {
         given:
         def repository = buildRepository('test.VehicleRepository', """

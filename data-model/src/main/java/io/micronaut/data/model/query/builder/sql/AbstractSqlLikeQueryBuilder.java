@@ -3433,11 +3433,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             String column = getMappedName(sourceNamingStrategy, associations, property);
             String escapedColumn = escapeColumnIfNeeded(column, escape);
-            if (tableAlias == null) {
-                query.append(escapedColumn);
-            } else {
-                query.append(tableAlias).append(DOT).append(escapedColumn);
+            String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
+            if (isJsonOrWktGeometry(property)) {
+                query.append(getGeometryFunction(columnWithTableAlias, targetName, property));
+                return;
             }
+            query.append(columnWithTableAlias);
             if (!column.equals(targetName)) {
                 query.append(AS_CLAUSE).append(targetName);
             }

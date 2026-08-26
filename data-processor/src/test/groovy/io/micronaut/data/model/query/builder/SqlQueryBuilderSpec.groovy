@@ -57,6 +57,7 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
+import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -329,6 +330,28 @@ interface MyRepository {
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
+    }
+
+    @Unroll
+    void "test #dialect embedded geometry projection applies read conversion"() {
+        given:
+        def criteriaQuery = builder.createQuery(Location)
+        def root = criteriaQuery.from(School)
+        criteriaQuery.select(root.get("location"))
+
+        when:
+        def encoded = criteriaQuery.build(new SqlQueryBuilder(dialect))
+
+        then:
+        encoded.query.contains(expectedProjection)
+
+        where:
+        dialect            || expectedProjection
+        Dialect.ORACLE     || 'SDO_UTIL.TO_GEOJSON(school_."POINT") AS point'
+        Dialect.MYSQL      || 'ST_AsGeoJSON(school_.`point`) AS point'
+        Dialect.H2         || 'ST_AsGeoJSON(school_.`point`) AS point'
+        Dialect.POSTGRES   || 'ST_AsGeoJSON(school_."point") AS point'
+        Dialect.SQL_SERVER || 'school_.[point].STAsText() AS point'
     }
 
     void "test aliased embedded projection with multiple columns throws"() {
