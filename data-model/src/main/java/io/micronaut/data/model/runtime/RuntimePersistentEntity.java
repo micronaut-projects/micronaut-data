@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.AutoPopulated;
@@ -105,7 +106,8 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         // The introspection exposes a single creator, which may have been chosen for a purpose other than
         // persistence - for example a Jackson @JsonCreator that builds the bean from one JSON value. When that
         // creator cannot be mapped to the persisted properties, fall back to no-argument instantiation and
-        // property setters instead of failing. See https://github.com/micronaut-projects/micronaut-data/issues/3752
+        // property setters. If there is no no-argument constructor either, fail here rather than later in
+        // SqlResultEntityTypeMapper. See https://github.com/micronaut-projects/micronaut-data/issues/3752
         boolean creatorMapsToProperties = creatorMapsToProperties(creatorArguments, beanProperties);
         Set<String> constructorArgumentNames = creatorMapsToProperties
             ? Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.toSet())
@@ -194,9 +196,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
     }
 
     /**
-     * Falling back to no-argument instantiation is only possible when every persisted property can be set after
-     * the instance has been created. Otherwise the type cannot be materialized at all and failing here produces a
-     * better message than failing later while reading a result set.
+     * Falling back to no-argument instantiation is only possible when a no-argument constructor exists and every
+     * persisted property can be set after the instance has been created. Generated introspections only override
+     * {@link BeanIntrospection#instantiate()} when such a constructor exists; otherwise it throws immediately.
+     * Failing here produces a better message than failing later while reading a result set.
      *
      * @param creatorArguments The arguments of the creator exposed by the introspection
      */
@@ -208,12 +211,23 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
             }
         }
         if (!readOnly.isEmpty()) {
-            throw new MappingException("Type [" + getName() + "] is instantiated by the creator ["
-                + Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.joining(", "))
-                + "], which doesn't map to the persisted properties, and the properties " + readOnly
-                + " cannot be set after construction. Micronaut Data needs either a creator whose arguments are all "
-                + "persisted properties, or a no-argument constructor together with setters for every persisted property.");
+            throw new MappingException(unmappableCreatorMessage(creatorArguments,
+                "and the properties " + readOnly + " cannot be set after construction."));
         }
+        try {
+            introspection.instantiate();
+        } catch (InstantiationException e) {
+            throw new MappingException(unmappableCreatorMessage(creatorArguments,
+                "and no no-argument constructor exists."), e);
+        }
+    }
+
+    private String unmappableCreatorMessage(Argument<?>[] creatorArguments, String reason) {
+        return "Type [" + getName() + "] is instantiated by the creator ["
+            + Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.joining(", "))
+            + "], which doesn't map to the persisted properties, " + reason
+            + " Micronaut Data needs either a creator whose arguments are all "
+            + "persisted properties, or a no-argument constructor together with setters for every persisted property.";
     }
 
     @Override

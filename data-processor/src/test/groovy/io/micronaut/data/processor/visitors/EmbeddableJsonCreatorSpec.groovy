@@ -92,6 +92,17 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         entity.constructorArguments.length == 0
     }
 
+    void "a mutable type with setters but no no-arg constructor is rejected when the json creator is unmappable"() {
+        when:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Country', CLASS_SETTERS_WITHOUT_NOARG)
+        new RuntimePersistentEntity(introspection)
+
+        then:
+        MappingException e = thrown()
+        e.message.contains('is instantiated by the creator [value]')
+        e.message.contains('no no-argument constructor exists')
+    }
+
     private static final String RECORD_CONSTRUCTOR = '''
 package test;
 
@@ -281,6 +292,46 @@ public class Thing {
 
     public UUID getNullableValue() {
         return nullableValue;
+    }
+}
+'''
+
+    private static final String CLASS_SETTERS_WITHOUT_NOARG = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.micronaut.data.annotation.Embeddable;
+
+@Embeddable
+public class Country {
+    private String countryCode;
+    private String regionCode;
+
+    public Country(String countryCode, String regionCode) {
+        this.countryCode = countryCode;
+        this.regionCode = regionCode;
+    }
+
+    @JsonCreator
+    public static Country fromJson(String value) {
+        return new Country(value.substring(0, 2),
+            value.length() > 3 ? value.substring(3) : null);
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String value) {
+        countryCode = value;
+    }
+
+    public String getRegionCode() {
+        return regionCode;
+    }
+
+    public void setRegionCode(String value) {
+        regionCode = value;
     }
 }
 '''
