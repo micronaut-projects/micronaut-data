@@ -168,7 +168,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                                       InterceptedMethod interceptedMethod,
                                       TransactionInvocation<?> transactionInvocation) {
         TransactionDefinition definition = transactionInvocation.definition;
-        rejectOracleSessionlessMode(definition);
+        rejectOracleSessionlessMode(definition, "reactive");
         ReactiveTransactionOperations<?> reactiveTransactionOperations = Objects.requireNonNull(transactionInvocation.reactiveTransactionOperations);
         if (reactiveTransactionOperations instanceof ReactorReactiveTransactionOperations<?> reactorTransactionOperations) {
             if (context.getReturnType().isSingleResult()) {
@@ -189,7 +189,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     private Object interceptCompletionStage(InterceptedMethod interceptedMethod,
                                             TransactionInvocation<?> transactionInvocation) {
         TransactionDefinition definition = transactionInvocation.definition;
-        rejectOracleSessionlessMode(definition);
+        rejectOracleSessionlessMode(definition, "CompletionStage");
         AsyncTransactionOperations<?> asyncTransactionOperations = Objects.requireNonNull(transactionInvocation.asyncTransactionOperations);
         return interceptedMethod.handleResult(
             asyncTransactionOperations.withTransaction(definition, status -> interceptedMethod.interceptResultAsCompletionStage())
@@ -204,7 +204,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         TransactionOperations<?> transactionManager = Objects.requireNonNull(transactionInvocation.transactionManager);
         OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
         if (sessionless != null) {
-            TransactionUtil.validateOracleSessionlessMode(definition);
+            TransactionUtil.validateOracleSessionlessPropagation(definition);
             if (context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
                 throw new TransactionUsageException(
                     "Oracle sessionless transaction mode '" + sessionless + "' cannot be combined with @OracleTransactional.Recoverable"
@@ -229,11 +229,12 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         return transactionManager.<@Nullable Object>execute(definition, status -> context.proceed());
     }
 
-    private static void rejectOracleSessionlessMode(TransactionDefinition definition) {
+    private static void rejectOracleSessionlessMode(TransactionDefinition definition, String resultType) {
         OracleTransactional.Sessionless sessionless = TransactionUtil.getOracleSessionlessMode(definition);
         if (sessionless != null) {
             throw new TransactionSuspensionNotSupportedException(
-                "Oracle sessionless transaction mode '" + sessionless + "' requires Oracle sessionless transaction support"
+                "Oracle sessionless transaction mode '" + sessionless + "' is not supported on " + resultType
+                    + " methods; sessionless transactions are only supported on synchronous methods"
             );
         }
     }

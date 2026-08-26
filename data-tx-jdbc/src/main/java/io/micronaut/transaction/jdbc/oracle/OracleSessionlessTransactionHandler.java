@@ -16,15 +16,16 @@
 package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.jdbc.JdbcTransactionManagerCondition;
+import io.micronaut.transaction.sessionless.SessionlessTransactionCompletion;
 import io.micronaut.transaction.sessionless.SessionlessTransactionHandler;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import io.micronaut.transaction.support.TransactionUtil;
@@ -35,6 +36,7 @@ import org.jspecify.annotations.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Applies Oracle sessionless transaction semantics to a JDBC transaction.
@@ -51,49 +53,59 @@ import java.sql.SQLException;
 @Requires(condition = JdbcTransactionManagerCondition.class)
 final class OracleSessionlessTransactionHandler implements SessionlessTransactionHandler {
 
+    private final String dataSourceName;
+
+    OracleSessionlessTransactionHandler(@Parameter String dataSourceName) {
+        this.dataSourceName = dataSourceName;
+    }
+
     @Override
-    public void begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition) {
+    @Nullable
+    public SessionlessTransactionCompletion begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition) {
         OracleTransactional.Sessionless mode = TransactionUtil.getOracleSessionlessMode(definition);
         if (mode == null) {
-            return;
+            return null;
         }
         OracleSessionlessTransactionState state = OracleSessionlessTransactionState.current()
             .orElseThrow(() -> new CannotCreateTransactionException("Oracle sessionless transaction propagation is not active"));
         if (mode == OracleTransactional.Sessionless.SUSPEND) {
-            beginSuspendable(status, definition, state);
-        } else {
-            beginResumed(status, state);
+            return beginSuspendable(status, definition, state);
         }
+        beginResumed(status, state);
+        return null;
     }
 
-    private void beginSuspendable(TransactionStatus<?> status,
-                                  TransactionDefinition definition,
-                                  OracleSessionlessTransactionState state) {
+    private SessionlessTransactionCompletion beginSuspendable(TransactionStatus<?> status,
+                                                              TransactionDefinition definition,
+                                                              OracleSessionlessTransactionState state) {
         if (state.getGtrid().isPresent()) {
             throw new CannotCreateTransactionException("Oracle sessionless transaction context already contains a transaction id");
         }
         OracleConnection oracle = unwrapRequiredOracleForBegin(status);
         byte[] gtrid = startTransaction(oracle, getTimeoutSeconds(definition));
+        AtomicBoolean suspended = new AtomicBoolean();
         status.registerSynchronization(new TransactionSynchronization() {
 
             @Override
-            public void beforeCommit(boolean readOnly) {
-                // Claim the slot before suspending. Once the transaction is detached from this session
-                // the manager's rollback can no longer reach it, so anything that can fail must fail
-                // while the transaction is still attached.
-                if (!state.setGtridIfAbsent(gtrid)) {
-                    throw new ConnectionException("Oracle sessionless transaction context already contains a transaction id");
-                }
-                suspend(oracle);
-            }
-
-            @Override
             public void afterCompletion(@NonNull Status completionStatus) {
-                if (completionStatus != Status.COMMITTED) {
+                // Once the transaction is detached the id is the only handle left on it, so it must
+                // survive a non-committed outcome: dropping it would strand an open database transaction.
+                if (completionStatus != Status.COMMITTED && !suspended.get()) {
                     state.clearGtrid();
                 }
             }
         });
+        return () -> {
+            // Claim the slot before suspending. Once the transaction is detached from this session
+            // the manager's rollback can no longer reach it, so anything that can fail must fail
+            // while the transaction is still attached.
+            if (!state.setGtridIfAbsent(gtrid)) {
+                throw new TransactionSystemException("Oracle sessionless transaction context already contains a transaction id");
+            }
+            suspend(oracle);
+            suspended.set(true);
+            return true;
+        };
     }
 
     private void beginResumed(TransactionStatus<?> status, OracleSessionlessTransactionState state) {
@@ -127,16 +139,32 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         }
     }
 
-    private static OracleConnection unwrapRequiredOracleForBegin(TransactionStatus<?> status) {
+    /**
+     * {@code @Requires(classes = OracleConnection.class)} only proves the Oracle driver is on the classpath,
+     * so in a mixed application a handler exists for every JDBC datasource. The datasource's vendor cannot be
+     * established from configuration alone -- a datasource may be a hand-built bean with no {@code url} or
+     * {@code dialect} -- so it is established here, from the connection the transaction manager has already
+     * opened, before any application code runs. The message names both the datasource and the offending
+     * method so a mis-targeted sessionless method is immediately identifiable.
+     *
+     * @param status The transaction status
+     * @return The Oracle connection
+     */
+    private OracleConnection unwrapRequiredOracleForBegin(TransactionStatus<?> status) {
         Object connection = status.getConnection();
         if (!(connection instanceof Connection jdbcConnection)) {
-            throw new CannotCreateTransactionException("Oracle sessionless transactions require an Oracle JDBC connection");
+            throw new CannotCreateTransactionException(notOracleMessage(status));
         }
         try {
             return jdbcConnection.unwrap(OracleConnection.class);
         } catch (SQLException e) {
-            throw new CannotCreateTransactionException("Oracle sessionless transactions require an Oracle JDBC connection", e);
+            throw new CannotCreateTransactionException(notOracleMessage(status), e);
         }
+    }
+
+    private String notOracleMessage(TransactionStatus<?> status) {
+        return "Oracle sessionless transactions require an Oracle JDBC connection, but datasource '"
+            + dataSourceName + "' used by '" + status.getTransactionDefinition().getName() + "' did not provide one";
     }
 
     private static byte[] startTransaction(OracleConnection oracle, @Nullable Integer timeout) {
@@ -155,13 +183,9 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
     }
 
     /**
-     * Suspends the transaction from inside {@link TransactionSynchronization#beforeCommit(boolean)}.
-     *
-     * <p>The failure is reported as a {@link ConnectionException} rather than a
-     * {@link io.micronaut.transaction.exceptions.TransactionException}: {@code beforeCommit} explicitly
-     * forbids the latter, and the transaction manager routes a {@code TransactionException} raised there
-     * through a branch that skips {@code beforeCompletion} for every other synchronization on the
-     * transaction.</p>
+     * Suspends the transaction at the resource commit boundary, from inside the transaction manager's
+     * {@code doCommit}. A {@link TransactionSystemException} raised here is handled exactly like a failed
+     * commit: the transaction is still attached to the session, so the manager's rollback reaches it.
      *
      * @param oracle The Oracle connection
      */
@@ -169,7 +193,7 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         try {
             oracle.suspendTransactionImmediately();
         } catch (SQLException e) {
-            throw new ConnectionException("Could not suspend Oracle sessionless transaction", e);
+            throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", e);
         }
     }
 

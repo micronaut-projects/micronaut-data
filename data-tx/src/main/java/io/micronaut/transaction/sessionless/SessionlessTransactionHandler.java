@@ -19,14 +19,17 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Applies vendor-specific sessionless transaction semantics to a transaction that has just been started.
  *
  * <p>The handler runs inside the transactional boundary, immediately after the resource-level transaction
- * has begun and before any application code executes. Implementations are expected to register a
- * {@link io.micronaut.transaction.support.TransactionSynchronization} on the supplied status to complete
- * the sessionless lifecycle, rather than participating in the transaction manager itself.</p>
+ * has begun and before any application code executes. Anything that must happen at the commit boundary is
+ * returned as a {@link SessionlessTransactionCompletion}, which the transaction manager invokes after every
+ * {@link io.micronaut.transaction.support.TransactionSynchronization} callback has run. Suspending from a
+ * synchronization instead would detach the transaction while later {@code beforeCommit} callbacks -- an
+ * {@code @TransactionalEventListener(BEFORE_COMMIT)} among them -- can still issue SQL on the connection.</p>
  *
  * @since 5.2
  */
@@ -38,6 +41,9 @@ public interface SessionlessTransactionHandler {
      *
      * @param status     The transaction status, guaranteed to be a new transaction
      * @param definition The transaction definition that declared the sessionless mode
+     * @return The completion to run at the resource commit boundary, or {@code null} when the transaction
+     *         commits normally
      */
-    void begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition);
+    @Nullable
+    SessionlessTransactionCompletion begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition);
 }

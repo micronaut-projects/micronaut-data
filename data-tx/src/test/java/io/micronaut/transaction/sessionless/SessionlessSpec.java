@@ -27,6 +27,7 @@ import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -64,10 +65,11 @@ class SessionlessSpec {
             assertEquals("ok", service.suspend());
 
             assertEquals(
-                List.of("begin:SUSPEND:new=true", "work", "beforeCommit", "afterCompletion:COMMITTED"),
+                List.of("begin:SUSPEND:new=true", "work", "handlerBeforeCommit", "suspend", "afterCompletion:COMMITTED"),
                 eventLog.events
             );
-            assertEquals(1, context.getBean(RecordingTransactionManager.class).commits);
+            // The resource commit is skipped: the transaction was suspended instead.
+            assertEquals(0, context.getBean(RecordingTransactionManager.class).commits);
         }
     }
 
@@ -95,7 +97,8 @@ class SessionlessSpec {
             TransactionSuspensionNotSupportedException exception =
                 assertThrows(TransactionSuspensionNotSupportedException.class, service::suspend);
             assertEquals(
-                "Oracle sessionless transaction mode 'SUSPEND' requires Oracle sessionless transaction support",
+                "Oracle sessionless transaction mode 'SUSPEND' is not supported by datasource 'sessionless'. "
+                    + "Sessionless transactions require an Oracle datasource using the Micronaut JDBC transaction manager.",
                 exception.getMessage()
             );
             assertEquals(0, context.getBean(RecordingTransactionManager.class).begins);
@@ -145,6 +148,73 @@ class SessionlessSpec {
         }
     }
 
+    @Test
+    void suspendRunsAfterEveryApplicationSynchronizationCallback() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            EventLog eventLog = context.getBean(EventLog.class);
+            BeforeCommitListenerService service = context.getBean(BeforeCommitListenerService.class);
+
+            assertEquals("ok", service.suspendWithBeforeCommitListener());
+
+            // The suspend detaches the transaction from the session, so it must come last. An
+            // application beforeCommit callback that runs after it would issue SQL outside the
+            // sessionless transaction, and that SQL would then be committed independently.
+            assertEquals(
+                List.of(
+                    "begin:SUSPEND:new=true",
+                    "work",
+                    "handlerBeforeCommit",
+                    "applicationBeforeCommit",
+                    "applicationBeforeCompletion",
+                    "suspend",
+                    "afterCompletion:COMMITTED"
+                ),
+                eventLog.events
+            );
+        }
+    }
+
+    @Test
+    void programmaticDefinitionCarryingSessionlessModeIsRejected() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            RecordingTransactionManager transactionManager = context.getBean(RecordingTransactionManager.class);
+            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+            definition.putProperty(
+                OracleTransactional.ORACLE_SESSIONLESS_MODE,
+                OracleTransactional.Sessionless.SUSPEND
+            );
+
+            TransactionUsageException exception = assertThrows(
+                TransactionUsageException.class,
+                () -> transactionManager.execute(definition, status -> "ignored")
+            );
+            assertEquals(
+                "Oracle sessionless transaction mode 'SUSPEND' is only applied to methods annotated with "
+                    + "@OracleTransactional; it cannot be requested through a programmatic transaction definition",
+                exception.getMessage()
+            );
+            assertEquals(0, transactionManager.begins);
+        }
+    }
+
+    @Test
+    void programmaticGetTransactionCarryingSessionlessModeIsRejected() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            RecordingTransactionManager transactionManager = context.getBean(RecordingTransactionManager.class);
+            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+            definition.putProperty(
+                OracleTransactional.ORACLE_SESSIONLESS_MODE,
+                OracleTransactional.Sessionless.REQUIRES_SUSPENDED
+            );
+
+            assertThrows(
+                TransactionUsageException.class,
+                () -> transactionManager.getTransaction(definition)
+            );
+            assertEquals(0, transactionManager.begins);
+        }
+    }
+
     @Singleton
     static class EventLog {
         final List<String> events = new ArrayList<>();
@@ -188,6 +258,37 @@ class SessionlessSpec {
     }
 
     @Singleton
+    static class BeforeCommitListenerService {
+        private final EventLog eventLog;
+        private final RecordingTransactionManager transactionManager;
+
+        BeforeCommitListenerService(EventLog eventLog, RecordingTransactionManager transactionManager) {
+            this.eventLog = eventLog;
+            this.transactionManager = transactionManager;
+        }
+
+        @OracleTransactional(value = MANAGER, sessionless = OracleTransactional.Sessionless.SUSPEND)
+        String suspendWithBeforeCommitListener() {
+            eventLog.events.add("work");
+            // Same shape as the synchronization TransactionalEventListener(BEFORE_COMMIT) registers:
+            // default order, registered after the handler, and it may still issue SQL.
+            transactionManager.findTransactionStatus().orElseThrow().registerSynchronization(new TransactionSynchronization() {
+
+                @Override
+                public void beforeCommit(boolean readOnly) {
+                    eventLog.events.add("applicationBeforeCommit");
+                }
+
+                @Override
+                public void beforeCompletion() {
+                    eventLog.events.add("applicationBeforeCompletion");
+                }
+            });
+            return "ok";
+        }
+    }
+
+    @Singleton
     static class OuterService {
         private final SessionlessService sessionlessService;
 
@@ -213,13 +314,14 @@ class SessionlessSpec {
         }
 
         @Override
-        public void begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition) {
-            events.add("begin:" + TransactionUtil.getOracleSessionlessMode(definition) + ":new=" + status.isNewTransaction());
+        public SessionlessTransactionCompletion begin(@NonNull TransactionStatus<?> status, @NonNull TransactionDefinition definition) {
+            OracleTransactional.Sessionless mode = TransactionUtil.getOracleSessionlessMode(definition);
+            events.add("begin:" + mode + ":new=" + status.isNewTransaction());
             status.registerSynchronization(new TransactionSynchronization() {
 
                 @Override
                 public void beforeCommit(boolean readOnly) {
-                    events.add("beforeCommit");
+                    events.add("handlerBeforeCommit");
                 }
 
                 @Override
@@ -227,6 +329,13 @@ class SessionlessSpec {
                     events.add("afterCompletion:" + completionStatus);
                 }
             });
+            if (mode != OracleTransactional.Sessionless.SUSPEND) {
+                return null;
+            }
+            return () -> {
+                events.add("suspend");
+                return true;
+            };
         }
     }
 
@@ -254,6 +363,10 @@ class SessionlessSpec {
 
         @Override
         protected void doCommit(@NonNull DefaultTransactionStatus<String> tx) {
+            // Mirror the JDBC manager: the sessionless hook runs at the resource commit boundary.
+            if (SessionlessTransactionContext.find().map(context -> context.suspendInsteadOfCommit(tx)).orElse(false)) {
+                return;
+            }
             commits++;
         }
 

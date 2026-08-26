@@ -34,6 +34,7 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.recovery.RecoverableTransactionContext;
+import io.micronaut.transaction.sessionless.SessionlessTransactionContext;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import jakarta.inject.Inject;
@@ -194,6 +195,15 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         Connection connection = status.getConnection();
         if (logger.isDebugEnabled()) {
             logger.debug("Committing JDBC transaction on Connection [{}]", connection);
+        }
+        // Sessionless transactions suspend here instead of committing. This is the resource commit
+        // boundary: every beforeCommit and beforeCompletion callback has already run against a
+        // transaction that was still attached to the session.
+        if (SessionlessTransactionContext.find().map(context -> context.suspendInsteadOfCommit(status)).orElse(false)) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Suspended sessionless transaction on Connection [{}] instead of committing", connection);
+            }
+            return;
         }
         // The recovery context is configured only for a new recoverable transaction.
         // Capture the LTXID directly before JDBC commit, after application

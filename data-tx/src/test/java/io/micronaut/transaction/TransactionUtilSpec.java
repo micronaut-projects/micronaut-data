@@ -113,7 +113,7 @@ public class TransactionUtilSpec {
 
         TransactionUsageException exception = Assertions.assertThrows(
             TransactionUsageException.class,
-            () -> TransactionUtil.validateOracleSessionlessMode(definition)
+            () -> TransactionUtil.validateOracleSessionlessPropagation(definition)
         );
         Assertions.assertEquals(
             "Oracle sessionless transaction mode 'SUSPEND' requires propagation 'REQUIRED'",

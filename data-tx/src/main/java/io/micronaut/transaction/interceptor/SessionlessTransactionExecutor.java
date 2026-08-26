@@ -18,6 +18,7 @@ package io.micronaut.transaction.interceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
@@ -26,6 +27,7 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.sessionless.SessionlessTransactionContext;
 import io.micronaut.transaction.sessionless.SessionlessTransactionHandler;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -63,21 +65,26 @@ final class SessionlessTransactionExecutor {
         SessionlessTransactionHandler handler = findHandler(dataSourceName);
         if (handler == null) {
             throw new TransactionSuspensionNotSupportedException(
-                "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support"
+                "Oracle sessionless transaction mode '" + mode + "' is not supported by datasource '"
+                    + (dataSourceName == null ? "default" : dataSourceName)
+                    + "'. Sessionless transactions require an Oracle datasource using the Micronaut JDBC transaction manager."
             );
         }
-        return transactionManager.<@Nullable Object>execute(definition, new TransactionCallback<C, @Nullable Object>() {
-            @Override
-            public @Nullable Object call(TransactionStatus<C> status) throws Exception {
-                if (!status.isNewTransaction()) {
-                    throw new TransactionUsageException(
-                        "Oracle sessionless transaction mode '" + mode + "' cannot join an existing transaction"
-                    );
+        SessionlessTransactionContext sessionlessContext = new SessionlessTransactionContext();
+        return PropagatedContext.getOrEmpty().plus(sessionlessContext).propagate(() ->
+            transactionManager.<@Nullable Object>execute(definition, new TransactionCallback<C, @Nullable Object>() {
+                @Override
+                public @Nullable Object call(TransactionStatus<C> status) throws Exception {
+                    if (!status.isNewTransaction()) {
+                        throw new TransactionUsageException(
+                            "Oracle sessionless transaction mode '" + mode + "' cannot join an existing transaction"
+                        );
+                    }
+                    sessionlessContext.configure(status, handler.begin(status, definition));
+                    return context.proceed();
                 }
-                handler.begin(status, definition);
-                return context.proceed();
-            }
-        });
+            })
+        );
     }
 
     @Nullable

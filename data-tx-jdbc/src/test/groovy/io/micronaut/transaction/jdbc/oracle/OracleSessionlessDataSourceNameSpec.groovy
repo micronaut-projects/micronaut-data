@@ -48,11 +48,43 @@ class OracleSessionlessDataSourceNameSpec extends Specification {
         context.close()
     }
 
+    def "a sessionless method on a non-Oracle datasource fails before any application code runs, naming the datasource and the method"() {
+        given:
+        def context = ApplicationContext.run([
+            "spec.name"            : SPEC_NAME,
+            "datasources.other.url": "jdbc:h2:mem:oracleSessionlessOther;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
+        ])
+        def service = context.getBean(OtherDataSourceService)
+        def propagation = context.getBean(OracleSessionlessTransactionPropagationOperations)
+
+        when:
+        propagation.withPropagation({ service.suspend(); null })
+
+        then:
+        def e = thrown(CannotCreateTransactionException)
+        e.message.contains("datasource 'other'")
+        e.message.contains("OtherDataSourceService.suspend")
+        e.message.startsWith("Oracle sessionless transactions require an Oracle JDBC connection")
+
+        cleanup:
+        context.close()
+    }
+
     private static ApplicationContext newContext() {
         ApplicationContext.run([
             "spec.name"           : SPEC_NAME,
             "datasources.mydb.url": "jdbc:h2:mem:oracleSessionlessDsName;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
         ])
+    }
+
+    @Singleton
+    @Requires(property = "spec.name", value = SPEC_NAME)
+    static class OtherDataSourceService {
+
+        @OracleTransactional(value = "other", sessionless = OracleTransactional.Sessionless.SUSPEND)
+        void suspend() {
+            throw new IllegalStateException("must not be reached")
+        }
     }
 
     @Singleton

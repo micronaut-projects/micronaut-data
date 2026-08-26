@@ -25,6 +25,7 @@ import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.support.TransactionUtil;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
@@ -72,6 +73,7 @@ public abstract class AbstractSpringTransactionOperations
 
     @Override
     public TransactionStatus<Connection> getTransaction(TransactionDefinition definition) throws TransactionException {
+        TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
         DefaultTransactionDefinition def = asSpringTxDefinition(definition);
         org.springframework.transaction.TransactionStatus transaction = transactionManager.getTransaction(def);
         return new SpringTransactionStatus(transaction, definition, this);
@@ -103,6 +105,7 @@ public abstract class AbstractSpringTransactionOperations
     protected <R> R doExecute(TransactionDefinition definition, TransactionCallback<Connection, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
         ArgumentUtils.requireNonNull("definition", definition);
+        TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
 
         final DefaultTransactionDefinition def = asSpringTxDefinition(definition);
 

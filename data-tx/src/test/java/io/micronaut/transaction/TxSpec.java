@@ -262,7 +262,8 @@ public class TxSpec {
             () -> invocation.get().block()
         );
         Assertions.assertEquals(
-            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
+            "Oracle sessionless transaction mode '" + mode + "' is not supported on reactive methods; "
+                + "sessionless transactions are only supported on synchronous methods",
             exception.getMessage()
         );
     }

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.sessionless.SessionlessTransactionContext;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
@@ -127,11 +128,11 @@ public final class TransactionUtil {
     }
 
     /**
-     * Validates a transaction definition that uses Oracle sessionless transaction mode.
+     * Validates the propagation of a transaction definition that uses Oracle sessionless transaction mode.
      *
      * @param definition The transaction definition
      */
-    public static void validateOracleSessionlessMode(TransactionDefinition definition) {
+    public static void validateOracleSessionlessPropagation(TransactionDefinition definition) {
         OracleTransactional.Sessionless mode = getOracleSessionlessMode(definition);
         if (mode == null) {
             return;
@@ -141,6 +142,28 @@ public final class TransactionUtil {
                 "Oracle sessionless transaction mode '" + mode + "' requires propagation 'REQUIRED'"
             );
         }
+    }
+
+    /**
+     * Rejects a transaction definition that carries an Oracle sessionless transaction mode but was not
+     * started by the transactional advice.
+     *
+     * <p>Sessionless mode is applied by {@code TransactionalInterceptor}, not by any transaction manager.
+     * A definition built by hand and passed straight to
+     * {@link io.micronaut.transaction.TransactionOperations#execute} would otherwise run as an ordinary
+     * transaction with the mode silently ignored.</p>
+     *
+     * @param definition The transaction definition
+     */
+    public static void rejectUnmanagedOracleSessionlessMode(TransactionDefinition definition) {
+        OracleTransactional.Sessionless mode = getOracleSessionlessMode(definition);
+        if (mode == null || SessionlessTransactionContext.isActive()) {
+            return;
+        }
+        throw new TransactionUsageException(
+            "Oracle sessionless transaction mode '" + mode + "' is only applied to methods annotated with "
+                + "@OracleTransactional; it cannot be requested through a programmatic transaction definition"
+        );
     }
 
     private static OracleTransactional.Priority parseOraclePriority(String priority) {

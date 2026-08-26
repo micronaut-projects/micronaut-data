@@ -110,6 +110,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
+            TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
             @Nullable ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
             return withTransactionFlux(transactionStatus, definition, handler);
         });
@@ -158,6 +159,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Mono.deferContextual(contextView -> {
+            TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
             ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (transactionStatus != null) {

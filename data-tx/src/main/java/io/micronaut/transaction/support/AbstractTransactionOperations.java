@@ -120,6 +120,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
     @Override
     protected final <R extends @Nullable Object> R doExecute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<C, R> callback) {
+        TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
         if (synchronousConnectionManager == null) {
             return doExecuteWithoutSynchronousConnectionManager(definition, callback);
         }
@@ -160,6 +161,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
+        TransactionUtil.rejectUnmanagedOracleSessionlessMode(definition);
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);
