@@ -71,6 +71,9 @@ public final class SqlBatchSupport {
      */
     public static boolean isSupportsBatchInsert(PersistentEntity persistentEntity,
                                                 Dialect dialect) {
+        if (!dialect.allowBatch()) {
+            return false;
+        }
         return switch (dialect) {
             case SQL_SERVER -> false;
             // Preserve the generic SQL/R2DBC rule for dialects where generated IDs cannot be
