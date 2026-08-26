@@ -20,11 +20,14 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
+import jakarta.persistence.Tuple;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.common.RecordStream;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Centralized projection mapping for Nitrite operations.
@@ -88,7 +91,16 @@ public final class CollectionProjectionMapper {
             return null;
         }
 
-        if (fields.size() == 1) {
+        if (Tuple.class.equals(resultType)) {
+            Object[] values = new Object[fields.size()];
+            Map<String, Integer> aliases = new LinkedHashMap<>(fields.size());
+            for (int i = 0; i < fields.size(); i++) {
+                String field = fields.get(i);
+                values[i] = getProjectedValue(doc, field, entity);
+                aliases.putIfAbsent(field, i);
+            }
+            return (R) new NitriteTuple(valueConverter, values, aliases);
+        } else if (fields.size() == 1) {
             // Single field projection - extract and convert the value
             Object value = getProjectedValue(doc, fields.getFirst(), entity);
             return valueConverter.convert(value, resultType);

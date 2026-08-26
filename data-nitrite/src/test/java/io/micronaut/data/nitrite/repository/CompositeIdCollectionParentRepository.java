@@ -5,6 +5,7 @@ import io.micronaut.data.nitrite.annotation.NitriteRepository;
 import io.micronaut.data.nitrite.model.CompositeIdCollectionParent;
 import io.micronaut.data.repository.CrudRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @NitriteRepository
@@ -23,4 +24,6 @@ public interface CompositeIdCollectionParentRepository
      */
     @Join("children")
     Optional<CompositeIdCollectionParent> findByName(String name);
+
+    List<CompositeIdCollectionParent> findByChildrenName(String name);
 }

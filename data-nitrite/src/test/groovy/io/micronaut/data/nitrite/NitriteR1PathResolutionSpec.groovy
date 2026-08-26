@@ -12,6 +12,7 @@ import io.micronaut.data.nitrite.repository.R1ReviewRepository
 import io.micronaut.data.nitrite.repository.StateRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.JoinType
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import spock.lang.Specification
 
@@ -64,4 +65,25 @@ class NitriteR1PathResolutionSpec extends Specification {
 
     // G6: plain field is not mis-classified as an association path (regression).
     //     findByTitle must resolve "book_title" directly without routing through association logic.
+
+    // A nested INNER join has to hold at every hop: a review whose book carries no author is
+    // excluded by review -> book -> author, even though review -> book matches.
+    void "a nested INNER criteria join requires a match at every hop"() {
+        given:
+        def author = authorRepository.save(new R1Author("Nested author"))
+        def authored = bookRepository.save(new R1Book("Authored book", author))
+        def unauthored = bookRepository.save(new R1Book("Unauthored book", null))
+        reviewRepository.save(new R1Review("Review of authored", authored))
+        reviewRepository.save(new R1Review("Review of unauthored", unauthored))
+
+        when:
+        PredicateSpecification<R1Review> nestedInner = { root, cb ->
+            root.join("book", JoinType.INNER).join("author", JoinType.INNER)
+            cb.like(root.get("text"), "Review of%")
+        }
+        def results = reviewRepository.findAll(nestedInner)
+
+        then:
+        results*.text == ["Review of authored"]
+    }
 }

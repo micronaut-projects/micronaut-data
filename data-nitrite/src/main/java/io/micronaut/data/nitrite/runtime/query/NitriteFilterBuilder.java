@@ -116,7 +116,7 @@ public final class NitriteFilterBuilder {
         this.valueResolver = new ValueResolver(entityMapper);
         this.spatialFactory = new SpatialFilterFactory(entityMapper, valueResolver);
         this.assocResolver = new AssociationFilterResolver(
-            subQueryExecutor, valueResolver,
+            entityMapper, subQueryExecutor, valueResolver,
             this::buildFieldFilter,
             this::buildOperatorFiltersForPath);
         this.operatorRegistry = buildOperatorRegistry();
@@ -715,6 +715,7 @@ public final class NitriteFilterBuilder {
          * @param associatedEntity the associated entity metadata
          * @param filterMap the filter criteria
          * @param targetField the field to extract from matching documents (optional, defaults to identity if null)
+         * @param retainDocuments whether to return complete matching documents instead of field values
          * @param params positional parameters
          * @param namedParameters named parameters
          * @return list of matching field values
@@ -722,6 +723,7 @@ public final class NitriteFilterBuilder {
         List<Object> executeSubQuery(RuntimePersistentEntity<?> associatedEntity,
                                      Map<String, Object> filterMap,
                                      @Nullable String targetField,
+                                     boolean retainDocuments,
                                      Object[] params,
                                      Map<String, Object> namedParameters);
     }

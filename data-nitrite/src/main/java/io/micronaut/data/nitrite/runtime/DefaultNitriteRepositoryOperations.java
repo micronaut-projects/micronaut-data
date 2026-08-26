@@ -230,16 +230,25 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         // Without this, nested association paths (e.g. review.book.author.name) would silently
         // return no results because the inner sub-query builder lacks sub-query support.
         NitriteFilterBuilder[] builderRef = new NitriteFilterBuilder[1];
-        NitriteFilterBuilder.SubQueryExecutor subQueryExecutor = (associatedEntity, filterMap, targetField, params, namedParameters) -> {
+        NitriteFilterBuilder.SubQueryExecutor subQueryExecutor =
+            (associatedEntity, filterMap, targetField, retainDocuments, params, namedParameters) -> {
             NitriteCollection assocCollection = getCollection(associatedEntity.getIntrospection().getBeanType());
             Filter subFilter = filterMap != null && !filterMap.isEmpty()
                 ? builderRef[0].buildFilterFromJson(associatedEntity, filterMap, params, namedParameters)
                 : Filter.ALL;
             return assocCollection.find(subFilter).toList().stream()
                 .flatMap(doc -> {
+                    if (retainDocuments) {
+                        return Stream.of(doc);
+                    }
                     String fieldName = targetField;
                     if (fieldName == null) {
                         RuntimePersistentProperty<?> identity = associatedEntity.getIdentity();
+                        if (identity == null) {
+                            // A composite identity has no single field to project; callers needing a
+                            // composite match ask for the documents themselves via retainDocuments.
+                            return Stream.empty();
+                        }
                         fieldName = identity.getPersistedName();
                     }
                     Object val = doc.get(fieldName);
@@ -956,11 +965,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             }
         }
         if (sort == null || !sort.isSorted()) {
-            RuntimePersistentProperty<?> identity = entity.getIdentity();
-            if (identity == null) {
+            Map<String, Sort.Order> identityOrders = new LinkedHashMap<>();
+            appendIdentitySort(identityOrders, entity);
+            if (identityOrders.isEmpty()) {
                 throw new IllegalStateException("Cursored pagination requires a sort or identity property for " + entity);
             }
-            return Sort.of(Sort.Order.asc(identity.getName()));
+            return Sort.of(new ArrayList<>(identityOrders.values()));
         }
         Map<String, Sort.Order> orders = new LinkedHashMap<>();
         for (Sort.Order order : sort.getOrderBy()) {

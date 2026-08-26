@@ -10,6 +10,8 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
 import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.Association
+import io.micronaut.data.model.query.JoinPath
 import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
@@ -18,7 +20,10 @@ import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import io.micronaut.data.annotation.Join
+import jakarta.persistence.criteria.Order
 import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import jakarta.persistence.criteria.Selection
 import spock.lang.Specification
 
@@ -67,13 +72,13 @@ class NitriteQueryBuilderSpec extends Specification {
             @Override
             java.util.Map<String, Object> propertiesToUpdate() { return ["type": "NEW"] }
             @Override
-            jakarta.persistence.criteria.Predicate predicate() { return null }
+            Predicate predicate() { return null }
             @Override
             java.util.Collection getJoinPaths() { return [] }
             @Override
             java.util.Optional getJoinPath(String s) { return java.util.Optional.empty() }
             @Override
-            jakarta.persistence.criteria.Selection returningSelection() { return null }
+            Selection returningSelection() { return null }
         }
 
         when: "Building an update"
@@ -81,6 +86,29 @@ class NitriteQueryBuilderSpec extends Specification {
 
         then: "getQueryParts returns empty list"
         result.getQueryParts() == Collections.emptyList()
+    }
+
+    void "buildSelect preserves join paths in pipeline and non-pipeline results"() {
+        given:
+        def builder = new NitriteQueryBuilder()
+        def entity = runtimeEntityRegistry.getEntity(CriteriaBook)
+        def association = entity.getPropertyByName("author") as Association
+        def pipelineJoin = JoinPath.of(association)
+        def unresolvedJoin = new JoinPath("missing", new Association[0], Join.Type.DEFAULT, null)
+
+        when:
+        def pipelineResult = builder.buildSelect(
+                AnnotationMetadata.EMPTY_METADATA,
+                selectDefinitionFor(entity, [pipelineJoin]))
+        def nonPipelineResult = builder.buildSelect(
+                AnnotationMetadata.EMPTY_METADATA,
+                selectDefinitionFor(entity, [unresolvedJoin]))
+
+        then:
+        pipelineResult.query.startsWith("[")
+        pipelineResult.joinPaths == [pipelineJoin]
+        nonPipelineResult.query == "{}"
+        nonPipelineResult.joinPaths == [unresolvedJoin]
     }
 
     void "test NitriteQueryBuilder buildUpdate emits arithmetic update operators"() {
@@ -99,13 +127,13 @@ class NitriteQueryBuilderSpec extends Specification {
             @Override
             java.util.Map<String, Object> propertiesToUpdate() { return propertiesToUpdate }
             @Override
-            jakarta.persistence.criteria.Predicate predicate() { return null }
+            Predicate predicate() { return null }
             @Override
             java.util.Collection getJoinPaths() { return [] }
             @Override
             java.util.Optional getJoinPath(String s) { return java.util.Optional.empty() }
             @Override
-            jakarta.persistence.criteria.Selection returningSelection() { return null }
+            Selection returningSelection() { return null }
         }
 
         when:
@@ -210,39 +238,27 @@ class NitriteQueryBuilderSpec extends Specification {
         }
     }
 
-    // ========== Bug #1: buildInsert returns null ==========
-
-
-    // ========== Bug #2 & #3: Duplicate methods and MONGO_ID_FIELD naming ==========
-
-
-    // ========== Bug #4: $expr/$multiply/$strLenCP computed-expression criteria ==========
-
-
-
-    // ========== Bug #5: Invalid \$null/\$notNull/\$true/\$false/\$empty operators ==========
-
-
-
-
-
-    // ========== Bug #6: Instant conversion mismatch ==========
-
-
-
-    // ========== Bug #7: Hand-rolled JSON serializer edge cases ==========
-
-
-
-
-
-
-
-
-
-
-    // Operator-expression rejection: each unsupported criteria operator must be rejected
-    // with its own exception + message (PROD/LENGTH above).
+    private static QueryBuilder.SelectQueryDefinition selectDefinitionFor(
+            PersistentEntity entity, Collection<JoinPath> joinPaths) {
+        new QueryBuilder.SelectQueryDefinition() {
+            @Override
+            PersistentEntity persistentEntity() { return entity }
+            @Override
+            Predicate predicate() { return null }
+            @Override
+            Collection<JoinPath> getJoinPaths() { return joinPaths }
+            @Override
+            Optional<JoinPath> getJoinPath(String path) {
+                return Optional.ofNullable(joinPaths.find { it.path == path })
+            }
+            @Override
+            Root root() { return null }
+            @Override
+            Selection selection() { return null }
+            @Override
+            List<Order> order() { return [] }
+        }
+    }
 
     void "test criteria with DIFF expression throws"() {
         when:
@@ -253,8 +269,6 @@ class NitriteQueryBuilderSpec extends Specification {
         def e = thrown(IllegalStateException)
         e.message.contains("DIFF")
     }
-
-
 
     void "test criteria with nested LOWER UPPER expression evaluates via Criteria API"() {
         given:
@@ -409,8 +423,6 @@ class NitriteQueryBuilderSpec extends Specification {
         then:
         projection == ["EU"] as Object[]
     }
-
-
 
     void "test join via criteria predicate"() {
         given:

@@ -45,24 +45,40 @@ import java.util.function.Function;
  * @since 5.2.0
  */
 @Internal
-final class JoinFetcher {
+public final class JoinFetcher {
 
     private final NitriteEntityMapper entityMapper;
     private final Function<Class<?>, NitriteCollection> collectionFactory;
     private final Function<Class<?>, RuntimePersistentEntity<?>> entityFactory;
     private final ConversionService conversionService;
 
-    JoinFetcher(NitriteEntityMapper entityMapper,
-                Function<Class<?>, NitriteCollection> collectionFactory,
-                Function<Class<?>, RuntimePersistentEntity<?>> entityFactory,
-                ConversionService conversionService) {
+    /**
+     * Creates a join fetcher.
+     *
+     * @param entityMapper The entity mapper
+     * @param collectionFactory The collection factory
+     * @param entityFactory The persistent entity factory
+     * @param conversionService The conversion service
+     */
+    public JoinFetcher(NitriteEntityMapper entityMapper,
+                       Function<Class<?>, NitriteCollection> collectionFactory,
+                       Function<Class<?>, RuntimePersistentEntity<?>> entityFactory,
+                       ConversionService conversionService) {
         this.entityMapper = entityMapper;
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
         this.conversionService = conversionService;
     }
 
-    <R> void fetch(List<R> entities, Set<JoinPath> joinPaths, Class<?> entityType) {
+    /**
+     * Fetches the requested associations for the given entities.
+     *
+     * @param entities The entities to populate
+     * @param joinPaths The association paths to fetch
+     * @param entityType The root entity type
+     * @param <R> The entity type
+     */
+    public <R> void fetch(List<R> entities, Set<JoinPath> joinPaths, Class<?> entityType) {
         if (entities == null || entities.isEmpty() || joinPaths == null || joinPaths.isEmpty()) {
             return;
         }
@@ -215,7 +231,8 @@ final class JoinFetcher {
             List<Filter> filters = new ArrayList<>(joinColumns.size());
             boolean completeIdentity = true;
             for (CompositeJoinColumn joinColumn : joinColumns) {
-                RuntimePersistentProperty<?> referenced = persistentEntity.getPropertyByName(joinColumn.referencedProperty());
+                RuntimePersistentProperty<?> referenced = entityMapper.findPropertyByNameOrPersistedName(
+                    persistentEntity, joinColumn.referencedProperty());
                 if (referenced == null) {
                     completeIdentity = false;
                     break;

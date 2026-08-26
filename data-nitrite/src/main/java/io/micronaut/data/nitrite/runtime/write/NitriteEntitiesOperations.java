@@ -373,7 +373,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 Document update = repositoryWriter.toDocument(entity);
                 if (update != null) {
                     helper.logUpdate(collection.getName(), filter, update);
-                    boolean upsert = meta.versionProp() == null;
+                    boolean upsert = meta.versionProp() == null && id != null;
                     long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
                     affectedCount += rows;
                 }

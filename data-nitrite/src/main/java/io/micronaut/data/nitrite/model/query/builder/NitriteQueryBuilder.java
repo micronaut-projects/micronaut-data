@@ -150,7 +150,14 @@ public final class NitriteQueryBuilder implements QueryBuilder {
                 pipeline.add(Map.of(NitriteQueryOperators.LIMIT, query.limit()));
             }
             String queryString = NitriteQuerySerializer.toJsonString(pipeline);
-            return QueryResult.of(queryString, Collections.emptyList(), queryState.getParameterBindings());
+            return QueryResult.of(
+                queryString,
+                Collections.emptyList(),
+                queryState.getParameterBindings(),
+                Collections.emptyMap(),
+                query.limit(),
+                query.offset(),
+                query.getJoinPaths());
         }
 
         Map<String, Object> topLevel = new LinkedHashMap<>();
@@ -172,7 +179,13 @@ public final class NitriteQueryBuilder implements QueryBuilder {
 
         String queryString = topLevel.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(topLevel);
         return QueryResult.of(
-            queryString, Collections.emptyList(), queryState.getParameterBindings());
+            queryString,
+            Collections.emptyList(),
+            queryState.getParameterBindings(),
+            Collections.emptyMap(),
+            query.limit(),
+            query.offset(),
+            query.getJoinPaths());
     }
 
     /**

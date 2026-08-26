@@ -1,6 +1,7 @@
 package io.micronaut.data.nitrite
 
 import io.micronaut.core.convert.ConversionService
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.nitrite.model.OneToManyChild
@@ -13,6 +14,7 @@ import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.JoinType
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -71,6 +73,86 @@ class NitriteOneToManyFilterSpec extends Specification {
         parentsWithChildC.isEmpty()
     }
 
+    void "an explicit criteria join populates a mappedBy to-many association"() {
+        given:
+        def parent = parentRepo.save(new OneToManyParent("Joined parent"))
+        childRepo.saveAll([
+                new OneToManyChild("Child A", parent),
+                new OneToManyChild("Child B", parent)
+        ])
+
+        when:
+        PredicateSpecification<OneToManyParent> byChildA = { root, cb ->
+            def join = root.join("children")
+            cb.equal(join.get("name"), "Child A")
+        }
+        def results = parentRepo.findAll(byChildA)
+        def one = parentRepo.findOne(byChildA).orElseThrow()
+        def page = parentRepo.findAll(byChildA, Pageable.from(0, 1))
+
+        then:
+        results.size() == 1
+        results[0].children*.name.toSet() == ["Child A", "Child B"].toSet()
+        one.children*.name.toSet() == ["Child A", "Child B"].toSet()
+        page.content.size() == 1
+        page.content[0].children*.name.toSet() == ["Child A", "Child B"].toSet()
+    }
+
+    void "a criteria join is fetched on the runtime-filter path of findOne"() {
+        given:
+        def parent = parentRepo.save(new OneToManyParent("Runtime filter parent"))
+        childRepo.saveAll([
+                new OneToManyChild("Child C", parent),
+                new OneToManyChild("Child D", parent)
+        ])
+
+        when: "the predicate touches the root only, so the builder emits no lookup stage and a runtime filter is used"
+        PredicateSpecification<OneToManyParent> byParentName = { root, cb ->
+            root.join("children")
+            cb.equal(root.get("name"), "Runtime filter parent")
+        }
+        def one = parentRepo.findOne(byParentName).orElseThrow()
+
+        then: "the explicit join is still fetched, on the branch the string-query path never reaches"
+        one.children*.name.toSet() == ["Child C", "Child D"].toSet()
+    }
+
+    void "an INNER criteria join excludes roots with no children"() {
+        given:
+        def withChildren = parentRepo.save(new OneToManyParent("Join type parent with children"))
+        childRepo.save(new OneToManyChild("Child E", withChildren))
+        parentRepo.save(new OneToManyParent("Join type parent without children"))
+
+        when:
+        PredicateSpecification<OneToManyParent> innerJoined = { root, cb ->
+            root.join("children", JoinType.INNER)
+            cb.like(root.get("name"), "Join type parent%")
+        }
+        def results = parentRepo.findAll(innerJoined)
+
+        then: "an INNER join keeps only roots that have at least one child"
+        results*.name == ["Join type parent with children"]
+    }
+
+    // The INNER restriction runs after Nitrite has already applied the page window, so an excluded
+    // root leaves a short page rather than pulling the next row forward. Documented, not desired.
+    void "an INNER criteria join restricts a page after the window is applied"() {
+        given:
+        def withChildren = parentRepo.save(new OneToManyParent("Paged parent with children"))
+        childRepo.save(new OneToManyChild("Child F", withChildren))
+        parentRepo.save(new OneToManyParent("Paged parent without children"))
+
+        when:
+        PredicateSpecification<OneToManyParent> innerJoined = { root, cb ->
+            root.join("children", JoinType.INNER)
+            cb.like(root.get("name"), "Paged parent%")
+        }
+        def page = parentRepo.findAll(innerJoined, Pageable.from(0, 2))
+
+        then: "both rows fill the window, then the childless one is dropped from it"
+        page.content*.name == ["Paged parent with children"]
+    }
+
     void "an association whose target has no identity cannot be reverse-looked-up"() {
         when: "the target of NitriteComplexEntity.values carries no @Id, so no sub-query can select ids"
         def results = complexRepo.findByValuesKey("some key with space")
@@ -114,6 +196,7 @@ class NitriteOneToManyFilterSpec extends Specification {
                 List<Object> executeSubQuery(RuntimePersistentEntity<?> associatedEntity,
                                              Map<String, Object> filterMap,
                                              String targetField,
+                                             boolean retainDocuments,
                                              Object[] params,
                                              Map<String, Object> namedParameters) {
                     []

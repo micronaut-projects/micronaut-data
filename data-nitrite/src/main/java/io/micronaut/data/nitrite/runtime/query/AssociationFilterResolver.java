@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.nitrite.runtime.mapping.CompositeJoinColumn;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.runtime.query.NitriteFilterBuilder.SubQueryExecutor;
 import io.micronaut.data.nitrite.runtime.query.PathResolver.PathResolution;
@@ -47,6 +48,7 @@ final class AssociationFilterResolver {
     private static final Logger LOG = LoggerFactory.getLogger(AssociationFilterResolver.class);
     private static final Filter NONE = element -> false;
 
+    private final NitriteEntityMapper entityMapper;
     private final @Nullable SubQueryExecutor subQueryExecutor;
     private final ValueResolver valueResolver;
     /** Callback into NitriteFilterBuilder for nested filter building. */
@@ -55,10 +57,12 @@ final class AssociationFilterResolver {
     private final FieldFilterProvider operatorFiltersForPath;
 
     AssociationFilterResolver(
+            NitriteEntityMapper entityMapper,
             @Nullable SubQueryExecutor subQueryExecutor,
             ValueResolver valueResolver,
             FieldFilterProvider fieldFilterProvider,
             FieldFilterProvider operatorFiltersForPath) {
+        this.entityMapper = entityMapper;
         this.subQueryExecutor = subQueryExecutor;
         this.valueResolver = valueResolver;
         this.fieldFilterProvider = fieldFilterProvider;
@@ -130,13 +134,14 @@ final class AssociationFilterResolver {
             String targetPropertyName = (field.contains(".") && resolution.terminal() != null)
                 ? resolution.terminal().getName()
                 : null;
-            return buildReverseLookupFilter(headAssoc, targetPropertyName, value, params, namedParameters);
+            return buildReverseLookupFilter(entity, headAssoc, targetPropertyName, value, params, namedParameters);
         }
 
         return null;
     }
 
     private @Nullable Filter buildReverseLookupFilter(
+            RuntimePersistentEntity<?> entity,
             RuntimeAssociation<?> association, @Nullable String targetPropertyName,
             Object value, Object[] params, Map<String, Object> namedParameters) {
 
@@ -175,13 +180,20 @@ final class AssociationFilterResolver {
         Map<String, Object> subFilterMap = Collections.singletonMap(
             targetProperty.getPersistedName(), Collections.singletonMap(EQ, value));
 
+        List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
+            associatedEntity.getIntrospection().getBeanType(), mappedBy);
+        if (!joinColumns.isEmpty()) {
+            return buildCompositeReverseLookupFilter(
+                entity, associatedEntity, joinColumns, subFilterMap, params, namedParameters);
+        }
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Reverse lookup sub-query: entity={}, filter={}, backRef={}",
                 associatedEntity.getName(), subFilterMap, backRefPersistedName);
         }
 
         List<Object> matchingValues = subQueryExecutor.executeSubQuery(
-            associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
+            associatedEntity, subFilterMap, backRefPersistedName, false, params, namedParameters);
         if (matchingValues.isEmpty()) {
             return NONE;
         }
@@ -212,7 +224,7 @@ final class AssociationFilterResolver {
 
         Map<String, Object> subFilterMap = Collections.singletonMap(OR, orClauses);
         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
-            associatedEntity, subFilterMap, null, params, namedParameters);
+            associatedEntity, subFilterMap, null, false, params, namedParameters);
         if (matchingIds.isEmpty()) {
             return NONE;
         }
@@ -265,7 +277,7 @@ final class AssociationFilterResolver {
                 if (mappedBy == null) {
                     if (kind == Relation.Kind.MANY_TO_MANY) {
                         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
-                            associatedEntity, subFilterMap, null, params, namedParameters);
+                            associatedEntity, subFilterMap, null, false, params, namedParameters);
                         if (matchingIds.isEmpty()) {
                             return NONE;
                         }
@@ -291,13 +303,20 @@ final class AssociationFilterResolver {
                 }
                 String backRefPersistedName = backRefProp.getPersistedName();
 
+                List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
+                    associatedEntity.getIntrospection().getBeanType(), mappedBy);
+                if (!joinColumns.isEmpty()) {
+                    return buildCompositeReverseLookupFilter(
+                        entity, associatedEntity, joinColumns, subFilterMap, params, namedParameters);
+                }
+
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Collection reverse lookup: entity={}, filter={}, backRef={}",
                         associatedEntity.getName(), subFilterMap, backRefPersistedName);
                 }
 
                 List<Object> matchingValues = subQueryExecutor.executeSubQuery(
-                    associatedEntity, subFilterMap, backRefPersistedName, params, namedParameters);
+                    associatedEntity, subFilterMap, backRefPersistedName, false, params, namedParameters);
                 if (matchingValues.isEmpty()) {
                     return NONE;
                 }
@@ -313,8 +332,12 @@ final class AssociationFilterResolver {
                     resolvedOperators.put(entry.getKey(), valueResolver.resolveValue(entry.getValue(), params, namedParameters));
                 }
                 Map<String, Object> subFilterMap = Collections.singletonMap(remaining, resolvedOperators);
+                if (associatedEntity.hasCompositeIdentity()) {
+                    return buildCompositeForwardLookupFilter(
+                        entity, firstPart, associatedEntity, subFilterMap, params, namedParameters);
+                }
                 List<Object> matchingIds = subQueryExecutor.executeSubQuery(
-                    associatedEntity, subFilterMap, null, params, namedParameters);
+                    associatedEntity, subFilterMap, null, false, params, namedParameters);
                 if (matchingIds.isEmpty()) {
                     return NONE;
                 }
@@ -327,6 +350,98 @@ final class AssociationFilterResolver {
 
         // Non-association property or unresolved path — use persisted field name for dotted access.
         return operatorFiltersForPath.build(entity, fieldName + "." + remaining, operators, params, namedParameters);
+    }
+
+    private Filter buildCompositeForwardLookupFilter(
+        RuntimePersistentEntity<?> entity,
+        String associationName,
+        RuntimePersistentEntity<?> associatedEntity,
+        Map<String, Object> subFilterMap,
+        Object[] params,
+        Map<String, Object> namedParameters) {
+        List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
+            entity.getIntrospection().getBeanType(), associationName);
+        if (joinColumns.isEmpty()) {
+            return NONE;
+        }
+
+        SubQueryExecutor executor = Objects.requireNonNull(subQueryExecutor);
+        List<Object> matchingDocuments = executor.executeSubQuery(
+            associatedEntity, subFilterMap, null, true, params, namedParameters);
+        List<Filter> matchingRows = new ArrayList<>(matchingDocuments.size());
+        for (Object matchingDocument : matchingDocuments) {
+            if (!(matchingDocument instanceof Document document)) {
+                continue;
+            }
+            List<Filter> rowFilters = new ArrayList<>(joinColumns.size());
+            boolean completeIdentity = true;
+            for (CompositeJoinColumn joinColumn : joinColumns) {
+                RuntimePersistentProperty<?> referenced = entityMapper.findPropertyByNameOrPersistedName(
+                    associatedEntity, joinColumn.referencedProperty());
+                Object value = referenced == null ? null : document.get(referenced.getPersistedName());
+                if (value == null) {
+                    completeIdentity = false;
+                    break;
+                }
+                rowFilters.add(NitriteFilterUtils.eq(joinColumn.localName(), value));
+            }
+            if (completeIdentity) {
+                matchingRows.add(rowFilters.size() == 1
+                    ? rowFilters.getFirst()
+                    : Filter.and(rowFilters.toArray(new Filter[0])));
+            }
+        }
+        if (matchingRows.isEmpty()) {
+            return NONE;
+        }
+        return matchingRows.size() == 1
+            ? matchingRows.getFirst()
+            : Filter.or(matchingRows.toArray(new Filter[0]));
+    }
+
+    private Filter buildCompositeReverseLookupFilter(
+        RuntimePersistentEntity<?> entity,
+        RuntimePersistentEntity<?> associatedEntity,
+        List<CompositeJoinColumn> joinColumns,
+        Map<String, Object> subFilterMap,
+        Object[] params,
+        Map<String, Object> namedParameters) {
+        SubQueryExecutor executor = Objects.requireNonNull(subQueryExecutor);
+        List<Object> matchingDocuments = executor.executeSubQuery(
+            associatedEntity, subFilterMap, null, true, params, namedParameters);
+        List<Filter> matchingRows = new ArrayList<>(matchingDocuments.size());
+        for (Object matchingDocument : matchingDocuments) {
+            if (!(matchingDocument instanceof Document document)) {
+                continue;
+            }
+            List<Filter> rowFilters = new ArrayList<>(joinColumns.size());
+            boolean completeReference = true;
+            for (CompositeJoinColumn joinColumn : joinColumns) {
+                RuntimePersistentProperty<?> referenced = entityMapper.findPropertyByNameOrPersistedName(
+                    entity, joinColumn.referencedProperty());
+                if (referenced == null) {
+                    completeReference = false;
+                    break;
+                }
+                Object value = document.get(joinColumn.localName());
+                if (value == null) {
+                    completeReference = false;
+                    break;
+                }
+                rowFilters.add(NitriteFilterUtils.eq(referenced.getPersistedName(), value));
+            }
+            if (completeReference) {
+                matchingRows.add(rowFilters.size() == 1
+                    ? rowFilters.getFirst()
+                    : Filter.and(rowFilters.toArray(new Filter[0])));
+            }
+        }
+        if (matchingRows.isEmpty()) {
+            return NONE;
+        }
+        return matchingRows.size() == 1
+            ? matchingRows.getFirst()
+            : Filter.or(matchingRows.toArray(new Filter[0]));
     }
 
     private boolean looksLikeId(String value, Class<?> idType) {

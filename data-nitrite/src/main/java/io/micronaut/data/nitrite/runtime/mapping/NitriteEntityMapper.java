@@ -796,14 +796,17 @@ public final class NitriteEntityMapper {
         doc.put(fieldName, stored);
       }
       if (!wpm.compositeJoinColumns().isEmpty() && value != null) {
-        BeanIntrospection<Object> associatedIntro = BeanIntrospector.SHARED.getIntrospection(castClass(value.getClass()));
+        RuntimePersistentEntity<?> associatedEntity = ((RuntimeAssociation<?>) wpm.prop()).getAssociatedEntity();
         for (CompositeJoinColumn joinColumn : wpm.compositeJoinColumns()) {
-          associatedIntro.getProperty(joinColumn.referencedProperty()).ifPresent(referencedProp -> {
-            Object referencedValue = referencedProp.get(value);
+          RuntimePersistentProperty<?> referencedProperty = findPropertyByNameOrPersistedName(
+              associatedEntity, joinColumn.referencedProperty());
+          if (referencedProperty != null) {
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            Object referencedValue = ((BeanProperty) referencedProperty.getProperty()).get(value);
             if (referencedValue != null) {
               doc.put(joinColumn.localName(), toFilterValue(referencedValue));
             }
-          });
+          }
         }
       }
     }
@@ -1494,7 +1497,8 @@ public final class NitriteEntityMapper {
             if (localValue == null) {
                 return null;
             }
-            RuntimePersistentProperty<?> referenced = associatedEntity.getPropertyByName(joinColumn.referencedProperty());
+            RuntimePersistentProperty<?> referenced = findPropertyByNameOrPersistedName(
+                associatedEntity, joinColumn.referencedProperty());
             String referencedField = referenced != null ? referenced.getPersistedName() : joinColumn.referencedProperty();
             filters.add(NitriteFilterUtils.eq(referencedField, localValue));
         }
@@ -1502,6 +1506,32 @@ public final class NitriteEntityMapper {
         Filter filter = filters.size() == 1 ? filters.get(0) : Filter.and(filters.toArray(new Filter[0]));
         Document associatedDoc = helper.getCollection(associatedType).find(filter).firstOrNull();
         return associatedDoc == null ? null : fromDocumentInternal(associatedDoc, associatedType, visited);
+    }
+
+    /**
+     * Finds a persistent property by its Java name or persisted document name.
+     *
+     * @param entity The persistent entity
+     * @param name The Java or persisted property name
+     * @return The matching property, or {@code null} if none matches
+     */
+    public @Nullable RuntimePersistentProperty<?> findPropertyByNameOrPersistedName(
+        RuntimePersistentEntity<?> entity, String name) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(name);
+        if (property != null) {
+            return property;
+        }
+        for (RuntimePersistentProperty<?> candidate : entity.getRuntimeIdentityProperties()) {
+            if (candidate.getPersistedName().equals(name)) {
+                return candidate;
+            }
+        }
+        for (RuntimePersistentProperty<?> candidate : entity.getPersistentProperties()) {
+            if (candidate.getPersistedName().equals(name)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private static <T> boolean isAssociationStoredEmbedded(RuntimePersistentProperty<T> prop) {
