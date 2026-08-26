@@ -103,6 +103,17 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         e.message.contains('no no-argument constructor exists')
     }
 
+    void "building RuntimePersistentEntity does not invoke the no-arg constructor"() {
+        when:
+        BeanIntrospection introspection = buildBeanIntrospection('test.PojoCountry', CLASS_NOARG_SIDE_EFFECT)
+        RuntimePersistentEntity entity = new RuntimePersistentEntity(introspection)
+
+        then:
+        noExceptionThrown()
+        entity.constructorArguments.length == 0
+        entity.persistentPropertyNames as Set == ['countryCode', 'regionCode'] as Set
+    }
+
     private static final String RECORD_CONSTRUCTOR = '''
 package test;
 
@@ -332,6 +343,52 @@ public class Country {
 
     public void setRegionCode(String value) {
         regionCode = value;
+    }
+}
+'''
+
+    private static final String CLASS_NOARG_SIDE_EFFECT = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.micronaut.data.annotation.Embeddable;
+
+@Embeddable
+public class PojoCountry {
+    private String countryCode;
+    private String regionCode;
+
+    public PojoCountry() {
+        throw new RuntimeException("no-arg constructor must not run during entity metadata initialization");
+    }
+
+    @JsonCreator
+    public PojoCountry(String value) {
+        this.countryCode = value.substring(0, 2);
+        this.regionCode = value.length() > 3 ? value.substring(3) : null;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    public String getRegionCode() {
+        return regionCode;
+    }
+
+    public void setRegionCode(String regionCode) {
+        this.regionCode = regionCode;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return countryCode + (regionCode != null ? "-" + regionCode : "");
     }
 }
 '''

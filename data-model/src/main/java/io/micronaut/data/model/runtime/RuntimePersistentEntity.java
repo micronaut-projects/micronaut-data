@@ -17,7 +17,6 @@ package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.AutoPopulated;
@@ -35,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,8 +197,8 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
 
     /**
      * Falling back to no-argument instantiation is only possible when a no-argument constructor exists and every
-     * persisted property can be set after the instance has been created. Generated introspections only override
-     * {@link BeanIntrospection#instantiate()} when such a constructor exists; otherwise it throws immediately.
+     * persisted property can be set after the instance has been created. Constructor availability is checked through
+     * reflection metadata only; user constructor code must not run during entity metadata initialization.
      * Failing here produces a better message than failing later while reading a result set.
      *
      * @param creatorArguments The arguments of the creator exposed by the introspection
@@ -214,12 +214,19 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
             throw new MappingException(unmappableCreatorMessage(creatorArguments,
                 "and the properties " + readOnly + " cannot be set after construction."));
         }
-        try {
-            introspection.instantiate();
-        } catch (InstantiationException e) {
+        if (!hasNoArgumentConstructor()) {
             throw new MappingException(unmappableCreatorMessage(creatorArguments,
-                "and no no-argument constructor exists."), e);
+                "and no no-argument constructor exists."));
         }
+    }
+
+    private boolean hasNoArgumentConstructor() {
+        for (Constructor<?> constructor : introspection.getBeanType().getDeclaredConstructors()) {
+            if (constructor.getParameterCount() == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String unmappableCreatorMessage(Argument<?>[] creatorArguments, String reason) {
