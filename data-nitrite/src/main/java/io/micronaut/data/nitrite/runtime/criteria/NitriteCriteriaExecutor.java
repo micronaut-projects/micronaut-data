@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
@@ -55,9 +56,13 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Selection;
 import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.collection.DocumentCursor;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.common.Lookup;
+import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 
@@ -128,16 +133,11 @@ public final class NitriteCriteriaExecutor {
      * @return true if at least one entity matches
      */
     public boolean exists(@NonNull CriteriaQuery<?> query) {
-        Class<?> type = getEntityType(query);
-        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter((AbstractPersistentEntityCriteriaQuery<?>) query);
-        if (runtimeFilter != null) {
-            Filter filter = buildFilterFromRuntimeFilter(runtimeFilter, type);
-            return collectionFactory.apply(type).find(filter).iterator().hasNext();
+        CriteriaReadPlan plan = prepareRead(query, -1, -1);
+        if (!plan.innerJoin()) {
+            return collectionFactory.apply(plan.entityType()).find(plan.filter()).iterator().hasNext();
         }
-        QueryResult queryResult = Objects.requireNonNull(((AbstractPersistentEntityCriteriaQuery<?>) query)
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
-        Filter filter = buildFilterFromQueryResult(queryResult, type);
-        return collectionFactory.apply(type).find(filter).iterator().hasNext();
+        return !readDocuments(plan, true).documents().isEmpty();
     }
 
     /**
@@ -148,50 +148,15 @@ public final class NitriteCriteriaExecutor {
      * @return the first matching entity, or null if none found
      */
     public <R> @Nullable R findOne(@NonNull CriteriaQuery<R> query) {
-        Class<?> entityType = getEntityType(query);
-        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        Class<R> resultType = (Class<R>) ((PersistentEntityQuery<?>) query).getResultType();
-        AbstractPersistentEntityCriteriaQuery<?> persistentQuery = (AbstractPersistentEntityCriteriaQuery<?>) query;
-        Set<JoinPath> joinPaths = resolveJoinPaths(
-            query, persistentQuery.toSelectQueryDefinition().getJoinPaths(), persistentEntity);
-
-        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter(persistentQuery);
-        if (runtimeFilter != null) {
-            Filter filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
-            FindOptions options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, -1, -1);
-            if (Long.class.equals(resultType) || long.class.equals(resultType)) {
-                return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter, options).size());
-            }
-            Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
-            if (doc == null) {
-                return null;
-            }
-            List<String> projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
-            if (!projectedFields.isEmpty()) {
-                return projectionMapper.mapDocument(doc, projectedFields, persistentEntity, resultType, false);
-            }
-            R result = entityMapper.fromDocument(doc, resultType);
-            if (result != null && !joinPaths.isEmpty()) {
-                joinFetcher.fetch(Collections.singletonList(result), joinPaths, entityType);
-                return retainInnerJoinMatches(Collections.singletonList(result), joinPaths)
-                    .stream().findFirst().orElse(null);
-            }
-            return result;
-        }
-
-        QueryResult queryResult = Objects.requireNonNull(persistentQuery
-                .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
-        joinPaths = resolveJoinPaths(query, queryResult.getJoinPaths(), persistentEntity);
-        Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
-        Filter filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
-        FindOptions options = buildFindOptions(persistentEntity, -1, -1, parsedQuery);
+        CriteriaReadPlan plan = prepareRead(query, -1, -1);
+        Class<R> resultType = (Class<R>) plan.resultType();
 
         // A numeric result type alone does not imply a count: max/min/sum/avg also produce a
         // $group stage, so the selection decides which aggregate to execute.
-        AggregateSelection aggregateSelection = extractAggregateSelection(parsedQuery);
+        AggregateSelection aggregateSelection = extractAggregateSelection(plan.parsedQuery());
         if (aggregateSelection != null) {
             Object aggregate = new CollectionAggregator().aggregate(
-                collectionFactory.apply(entityType).find(filter).toList(),
+                readDocuments(plan, plan.innerJoin()).documents(),
                 aggregateSelection.field(),
                 aggregateSelection.function());
             if (aggregate == null) {
@@ -201,11 +166,11 @@ public final class NitriteCriteriaExecutor {
         }
         // Handle count queries specially
         if (Long.class.equals(resultType) || long.class.equals(resultType)) {
-            String queryStr = queryResult.getQuery();
+            String queryStr = plan.queryString();
             if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
-                String fieldPath = queryParser.extractGroupFieldPath(parsedQuery);
+                String fieldPath = queryParser.extractGroupFieldPath(plan.parsedQuery());
                 if (fieldPath != null) {
-                    long count = collectionFactory.apply(entityType).find(filter).toList().stream()
+                    long count = readDocuments(plan, plan.innerJoin()).documents().stream()
                         .map(doc -> doc.get(fieldPath))
                         .filter(Objects::nonNull)
                         .distinct()
@@ -213,22 +178,16 @@ public final class NitriteCriteriaExecutor {
                     return (R) Long.valueOf(count);
                 }
             }
-            return (R) Long.valueOf(collectionFactory.apply(entityType).find(filter, options).size());
+            return (R) Long.valueOf(readDocuments(plan, plan.innerJoin()).documents().size());
         }
 
-        Document doc = collectionFactory.apply(entityType).find(filter, options).firstOrNull();
-        if (doc == null) {
+        DocumentRead read = readDocuments(plan, plan.projectedFields().isEmpty() || plan.innerJoin());
+        if (read.documents().isEmpty()) {
             return null;
         }
-        List<String> projectedFields = queryParser.extractProjectionFields(parsedQuery);
-        if (!projectedFields.isEmpty()) {
-            return projectionMapper.mapDocument(doc, projectedFields, persistentEntity, resultType, false);
-        }
-        R result = entityMapper.fromDocument(doc, resultType);
-        if (result != null && !joinPaths.isEmpty()) {
-            joinFetcher.fetch(Collections.singletonList(result), joinPaths, entityType);
-            return retainInnerJoinMatches(Collections.singletonList(result), joinPaths)
-                .stream().findFirst().orElse(null);
+        R result = mapDocument(read.documents().getFirst(), plan, resultType);
+        if (result != null && plan.projectedFields().isEmpty()) {
+            fetchRemainingJoins(Collections.singletonList(result), plan, read.nativeJoinPaths());
         }
         return result;
     }
@@ -241,45 +200,7 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query) {
-        Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
-        Class<?> entityType = getEntityType(query);
-        RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
-        AbstractPersistentEntityCriteriaQuery<?> persistentQuery = (AbstractPersistentEntityCriteriaQuery<?>) query;
-
-        NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter(persistentQuery);
-        Filter filter;
-        FindOptions options;
-        List<String> projectedFields;
-        Set<JoinPath> joinPaths;
-        if (runtimeFilter != null) {
-            joinPaths = resolveJoinPaths(
-                query, persistentQuery.toSelectQueryDefinition().getJoinPaths(), persistentEntity);
-            filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
-            options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, -1, -1);
-            projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
-        } else {
-            QueryResult queryResult = Objects.requireNonNull(persistentQuery
-                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
-            joinPaths = resolveJoinPaths(query, queryResult.getJoinPaths(), persistentEntity);
-            Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
-            filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
-            options = buildFindOptions(persistentEntity, -1, -1, parsedQuery);
-            projectedFields = queryParser.extractProjectionFields(parsedQuery);
-        }
-        List<T> results = new ArrayList<>();
-        for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
-            T result = projectedFields.isEmpty()
-                ? entityMapper.fromDocument(doc, type)
-                : projectionMapper.mapDocument(doc, projectedFields, persistentEntity, type, false);
-            if (result != null) {
-                results.add(result);
-            }
-        }
-        if (projectedFields.isEmpty() && !joinPaths.isEmpty()) {
-            joinFetcher.fetch(results, joinPaths, entityType);
-            return retainInnerJoinMatches(results, joinPaths);
-        }
-        return results;
+        return findAll(query, -1, -1);
     }
 
     /**
@@ -292,55 +213,204 @@ public final class NitriteCriteriaExecutor {
      * @return list of matching entities
      */
     public <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit) {
-        Class<T> type = (Class<T>) ((PersistentEntityQuery<?>) query).getResultType();
+        CriteriaReadPlan plan = prepareRead(query, offset, limit);
+        Class<T> type = (Class<T>) plan.resultType();
+        DocumentRead read = readDocuments(plan, plan.projectedFields().isEmpty() || plan.innerJoin());
+        List<T> results = mapDocuments(read.documents(), plan, type);
+        if (plan.projectedFields().isEmpty()) {
+            fetchRemainingJoins(results, plan, read.nativeJoinPaths());
+        }
+        return results;
+    }
+
+    private CriteriaReadPlan prepareRead(CriteriaQuery<?> query, int offset, int limit) {
         Class<?> entityType = getEntityType(query);
         RuntimePersistentEntity<?> persistentEntity = entityFactory.apply(entityType);
+        Class<?> resultType = ((PersistentEntityQuery<?>) query).getResultType();
         AbstractPersistentEntityCriteriaQuery<?> persistentQuery = (AbstractPersistentEntityCriteriaQuery<?>) query;
-
+        QueryBuilder.SelectQueryDefinition definition = persistentQuery.toSelectQueryDefinition();
         NitriteRuntimeFilter runtimeFilter = tryBuildRuntimeFilter(persistentQuery);
+        Set<JoinPath> joinPaths;
         Filter filter;
         FindOptions options;
+        Window window;
         List<String> projectedFields;
-        Set<JoinPath> joinPaths;
+        Object parsedQuery = null;
+        String queryString = null;
+
         if (runtimeFilter != null) {
-            joinPaths = resolveJoinPaths(
-                query, persistentQuery.toSelectQueryDefinition().getJoinPaths(), persistentEntity);
+            joinPaths = resolveJoinPaths(query, definition.getJoinPaths(), persistentEntity);
+            boolean innerJoin = hasInnerJoin(joinPaths);
             filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
-            options = buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, offset, limit);
+            options = buildFindOptionsFromRuntimeFilter(
+                runtimeFilter, persistentEntity, offset, limit, !innerJoin);
+            window = runtimeFilterWindow(runtimeFilter, offset, limit);
             projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
         } else {
-            QueryResult queryResult = Objects.requireNonNull(persistentQuery
-                    .build(AnnotationMetadata.EMPTY_METADATA, queryBuilder), "Failed to build query for criteria query");
+            QueryResult queryResult = Objects.requireNonNull(
+                persistentQuery.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder),
+                "Failed to build query for criteria query");
+            queryString = queryResult.getQuery();
             joinPaths = resolveJoinPaths(query, queryResult.getJoinPaths(), persistentEntity);
-            Object parsedQuery = parseQueryForFilter(queryResult.getQuery());
+            boolean innerJoin = hasInnerJoin(joinPaths);
+            parsedQuery = parseQueryForFilter(queryString);
             filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
-            options = buildFindOptions(persistentEntity, offset, limit, parsedQuery);
+            options = buildFindOptions(persistentEntity, offset, limit, parsedQuery, !innerJoin);
+            window = pipelineWindow(parsedQuery, offset, limit);
             projectedFields = queryParser.extractProjectionFields(parsedQuery);
         }
-        List<T> results = new ArrayList<>();
-        for (Document doc : collectionFactory.apply(entityType).find(filter, options)) {
-            T result = projectedFields.isEmpty()
-                ? entityMapper.fromDocument(doc, type)
-                : projectionMapper.mapDocument(doc, projectedFields, persistentEntity, type, false);
+
+        return new CriteriaReadPlan(
+            entityType,
+            persistentEntity,
+            resultType,
+            filter,
+            options,
+            joinPaths,
+            hasInnerJoin(joinPaths),
+            window,
+            projectedFields,
+            selectionAliases(query),
+            selectionJavaTypes(query),
+            parsedQuery,
+            queryString);
+    }
+
+    private DocumentRead readDocuments(CriteriaReadPlan plan, boolean fetchAssociations) {
+        DocumentCursor cursor = collectionFactory.apply(plan.entityType()).find(plan.filter(), plan.options());
+        NativeJoin nativeJoin = fetchAssociations ? resolveNativeJoin(plan) : null;
+        RecordStream<Document> stream = cursor;
+        Set<JoinPath> nativeJoinPaths = Set.of();
+
+        if (nativeJoin != null) {
+            stream = cursor.join(nativeJoin.foreignCollection().find(), nativeJoin.lookup());
+            nativeJoinPaths = Set.of(nativeJoin.joinPath());
+        } else if (!plan.innerJoin() && !plan.projectedFields().isEmpty()) {
+            stream = cursor.project(nativeProjection(plan));
+        }
+
+        List<Document> documents = stream.toList();
+        if (plan.innerJoin()) {
+            documents = nativeJoin == null
+                ? restrictToInnerJoins(documents, plan.joinPaths(), plan.entityType())
+                : documents.stream()
+                    .filter(document -> hasNativeJoinValue(document, nativeJoin.targetField()))
+                    .toList();
+            documents = applyWindow(documents, plan.window().offset(), plan.window().limit());
+        }
+        return new DocumentRead(documents, nativeJoinPaths);
+    }
+
+    private Document nativeProjection(CriteriaReadPlan plan) {
+        Document projection = Document.createDocument();
+        for (String field : plan.projectedFields()) {
+            projection.put(entityMapper.normalizeFieldName(field, plan.persistentEntity()), null);
+        }
+        return projection;
+    }
+
+    private @Nullable NativeJoin resolveNativeJoin(CriteriaReadPlan plan) {
+        if (plan.joinPaths().size() != 1 || plan.persistentEntity().hasCompositeIdentity()) {
+            return null;
+        }
+        JoinPath joinPath = plan.joinPaths().iterator().next();
+        if (joinPath.getAssociationPath().length != 1) {
+            return null;
+        }
+        Association associationValue = joinPath.getAssociation();
+        if (!(associationValue instanceof RuntimeAssociation<?> association)
+            || association.getKind() != Relation.Kind.ONE_TO_MANY) {
+            return null;
+        }
+        String mappedBy = association.getAnnotationMetadata()
+            .stringValue(Relation.class, "mappedBy")
+            .orElse(null);
+        if (mappedBy == null) {
+            return null;
+        }
+        RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
+        Class<?> associatedType = associatedEntity.getIntrospection().getBeanType();
+        if (!entityMapper.getCompositeJoinColumns(associatedType, mappedBy).isEmpty()) {
+            return null;
+        }
+        RuntimePersistentProperty<?> foreignProperty = associatedEntity.getPropertyByName(mappedBy);
+        if (foreignProperty == null) {
+            return null;
+        }
+
+        Lookup lookup = new Lookup();
+        lookup.setLocalField(NitriteEntityMapper.ID_FIELD);
+        lookup.setForeignField(foreignProperty.getPersistedName());
+        lookup.setTargetField(association.getPersistedName());
+        return new NativeJoin(
+            joinPath,
+            lookup,
+            association.getPersistedName(),
+            collectionFactory.apply(associatedType));
+    }
+
+    private static boolean hasNativeJoinValue(Document document, String targetField) {
+        Object value = document.get(targetField);
+        return value instanceof Collection<?> collection ? !collection.isEmpty() : value != null;
+    }
+
+    private <T> @Nullable T mapDocument(Document document, CriteriaReadPlan plan, Class<T> type) {
+        if (plan.projectedFields().isEmpty()) {
+            return entityMapper.fromDocument(document, type);
+        }
+        return projectionMapper.mapDocument(
+            document,
+            plan.projectedFields(),
+            plan.selectionAliases(),
+            plan.selectionJavaTypes(),
+            plan.persistentEntity(),
+            type,
+            false);
+    }
+
+    private <T> List<T> mapDocuments(List<Document> documents, CriteriaReadPlan plan, Class<T> type) {
+        List<T> results = new ArrayList<>(documents.size());
+        for (Document document : documents) {
+            T result = mapDocument(document, plan, type);
             if (result != null) {
                 results.add(result);
             }
         }
-        if (projectedFields.isEmpty() && !joinPaths.isEmpty()) {
-            joinFetcher.fetch(results, joinPaths, entityType);
-            return retainInnerJoinMatches(results, joinPaths);
-        }
         return results;
+    }
+
+    private <T> void fetchRemainingJoins(
+        List<T> results,
+        CriteriaReadPlan plan,
+        Set<JoinPath> nativeJoinPaths) {
+        if (results.isEmpty() || plan.joinPaths().isEmpty()) {
+            return;
+        }
+        Set<JoinPath> remaining = new LinkedHashSet<>(plan.joinPaths());
+        remaining.removeAll(nativeJoinPaths);
+        if (!remaining.isEmpty()) {
+            joinFetcher.fetch(results, remaining, plan.entityType());
+        }
     }
 
     private Set<JoinPath> resolveJoinPaths(
         CriteriaQuery<?> query,
         Collection<JoinPath> compiledJoinPaths,
         RuntimePersistentEntity<?> persistentEntity) {
-        Set<JoinPath> joinPaths = new LinkedHashSet<>(compiledJoinPaths);
+        Set<JoinPath> explicitPaths = new LinkedHashSet<>();
         query.getRoots().forEach(root -> collectExplicitJoinPaths(
-            root, persistentEntity, new ArrayList<>(), joinPaths));
-        return joinPaths;
+            root, persistentEntity, new ArrayList<>(), explicitPaths));
+        // Keyed by path, explicit last: JoinPath equality ignores the join type, so a set holding
+        // the compiled DEFAULT path would silently swallow the INNER one declared on the criteria
+        // root and the restriction would never run.
+        Map<String, JoinPath> merged = new LinkedHashMap<>();
+        for (JoinPath compiled : compiledJoinPaths) {
+            merged.put(compiled.getPath(), compiled);
+        }
+        for (JoinPath explicit : explicitPaths) {
+            merged.put(explicit.getPath(), explicit);
+        }
+        return new LinkedHashSet<>(merged.values());
     }
 
     private void collectExplicitJoinPaths(
@@ -368,7 +438,6 @@ public final class NitriteCriteriaExecutor {
         }
     }
 
-
     private static Join.Type resolveJoinType(From<?, ?> join) {
         // The criteria implementation keeps the declared type in its own enum and returns null from
         // the Jakarta getJoinType(), so read it here. A join declared without a type stays DEFAULT,
@@ -383,29 +452,108 @@ public final class NitriteCriteriaExecutor {
     }
 
     /**
-     * Drops the roots that an INNER join excludes: one whose joined association came back empty
-     * did not match on the join, so it must not appear in the result set. Only INNER paths filter -
-     * the fetch types load the association without restricting anything.
+     * Reads the aliases declared on the criteria selection, positionally. A selection item without
+     * an alias contributes null, so the projected field name stays the tuple key for it.
      *
-     * @param results The entities read so far
-     * @param joinPaths The resolved join paths
-     * @param <T> The entity type
-     * @return The retained entities
+     * @param query The criteria query
+     * @return The declared aliases, in selection order
      */
-    private <T> List<T> retainInnerJoinMatches(List<T> results, Set<JoinPath> joinPaths) {
+    private static List<String> selectionAliases(CriteriaQuery<?> query) {
+        Selection<?> selection = query.getSelection();
+        if (selection == null) {
+            return List.of();
+        }
+        if (selection.isCompoundSelection()) {
+            List<String> aliases = new ArrayList<>();
+            for (Selection<?> item : selection.getCompoundSelectionItems()) {
+                aliases.add(item.getAlias());
+            }
+            return aliases;
+        }
+        return Collections.singletonList(selection.getAlias());
+    }
+
+    private static List<Class<?>> selectionJavaTypes(CriteriaQuery<?> query) {
+        Selection<?> selection = query.getSelection();
+        if (selection == null) {
+            return List.of();
+        }
+        if (selection.isCompoundSelection()) {
+            List<Class<?>> javaTypes = new ArrayList<>();
+            for (Selection<?> item : selection.getCompoundSelectionItems()) {
+                javaTypes.add(item.getJavaType());
+            }
+            return javaTypes;
+        }
+        return Collections.singletonList(selection.getJavaType());
+    }
+
+    private static Window runtimeFilterWindow(NitriteRuntimeFilter runtimeFilter, int offset, int limit) {
+        return new Window(
+            offset > 0 ? offset : runtimeFilter.offset(),
+            limit > 0 ? limit : runtimeFilter.limit());
+    }
+
+    private Window pipelineWindow(@Nullable Object parsedQuery, int offset, int limit) {
+        int windowOffset = offset;
+        int windowLimit = limit;
+        List<?> stages = parsedQuery instanceof List<?> pipeline ? pipeline
+            : parsedQuery instanceof Map<?, ?> map ? List.of(map) : List.of();
+        for (Object stage : stages) {
+            if (!(stage instanceof Map<?, ?> stageMap)) {
+                continue;
+            }
+            if (windowOffset <= 0 && stageMap.get(NitriteQueryOperators.SKIP) instanceof Number skip) {
+                windowOffset = skip.intValue();
+            }
+            if (windowLimit <= 0 && stageMap.get(NitriteQueryOperators.LIMIT) instanceof Number lim) {
+                windowLimit = lim.intValue();
+            }
+        }
+        return new Window(windowOffset, windowLimit);
+    }
+
+    private static boolean hasInnerJoin(Set<JoinPath> joinPaths) {
+        return joinPaths.stream().anyMatch(joinPath -> joinPath.getJoinType() == Join.Type.INNER);
+    }
+
+    /**
+     * Drops the documents that an INNER join excludes: a root whose joined association came back
+     * empty did not match on the join. This runs on documents, before any offset/limit window or
+     * count, because a root excluded by the join must not consume a slot in the page or be counted.
+     * Only INNER paths restrict - the fetch types load the association without filtering.
+     *
+     * @param documents The documents matching the predicate
+     * @param joinPaths The resolved join paths
+     * @param entityType The root entity type
+     * @return The retained documents
+     */
+    private List<Document> restrictToInnerJoins(List<Document> documents, Set<JoinPath> joinPaths, Class<?> entityType) {
         List<JoinPath> innerPaths = joinPaths.stream()
             .filter(joinPath -> joinPath.getJoinType() == Join.Type.INNER)
             .toList();
-        if (innerPaths.isEmpty() || results.isEmpty()) {
-            return results;
+        if (innerPaths.isEmpty() || documents.isEmpty()) {
+            return documents;
         }
-        List<T> retained = new ArrayList<>(results.size());
-        for (T result : results) {
-            if (innerPaths.stream().allMatch(joinPath -> hasJoinedValues(result, joinPath))) {
-                retained.add(result);
+        List<Document> retained = new ArrayList<>(documents.size());
+        for (Document document : documents) {
+            Object root = entityMapper.fromDocument(document, entityType);
+            if (root == null) {
+                continue;
+            }
+            List<Object> single = Collections.singletonList(root);
+            joinFetcher.fetch(single, joinPaths, entityType);
+            if (innerPaths.stream().allMatch(joinPath -> hasJoinedValues(root, joinPath))) {
+                retained.add(document);
             }
         }
         return retained;
+    }
+
+    private static List<Document> applyWindow(List<Document> documents, int offset, int limit) {
+        int from = Math.min(Math.max(offset, 0), documents.size());
+        int to = limit < 0 ? documents.size() : Math.min(from + limit, documents.size());
+        return documents.subList(from, to);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -547,15 +695,27 @@ public final class NitriteCriteriaExecutor {
     }
 
     private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
+        return buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, offset, limit, true);
+    }
+
+    /**
+     * @param applyWindow false to leave skip/limit off the options, so the caller can page the
+     *                    result itself after an INNER join has restricted it
+     */
+    private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit, boolean applyWindow) {
         FindOptions options = new FindOptions();
+        if (!applyWindow) {
+            offset = -1;
+            limit = -1;
+        }
         if (offset > 0) {
             options.skip((long) offset);
-        } else if (runtimeFilter.offset() > 0) {
+        } else if (applyWindow && runtimeFilter.offset() > 0) {
             options.skip((long) runtimeFilter.offset());
         }
         if (limit > 0) {
             options.limit((long) limit);
-        } else if (runtimeFilter.limit() != -1) {
+        } else if (applyWindow && runtimeFilter.limit() != -1) {
             options.limit((long) runtimeFilter.limit());
         }
         for (Map.Entry<String, Object> entry : runtimeFilter.sort().entrySet()) {
@@ -650,7 +810,19 @@ public final class NitriteCriteriaExecutor {
     }
 
     private FindOptions buildFindOptions(RuntimePersistentEntity<?> persistentEntity, int offset, int limit, @Nullable Object parsedQuery) {
+        return buildFindOptions(persistentEntity, offset, limit, parsedQuery, true);
+    }
+
+    /**
+     * @param applyWindow false to leave skip/limit off the options, so the caller can page the
+     *                    result itself after an INNER join has restricted it
+     */
+    private FindOptions buildFindOptions(RuntimePersistentEntity<?> persistentEntity, int offset, int limit, @Nullable Object parsedQuery, boolean applyWindow) {
         FindOptions options = new FindOptions();
+        if (!applyWindow) {
+            offset = -1;
+            limit = -1;
+        }
 
         // Handle explicit offset/limit parameters
         if (offset > 0) {
@@ -684,10 +856,10 @@ public final class NitriteCriteriaExecutor {
                             options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey().toString(), persistentEntity), order);
                         }
                     }
-                    if (offset <= 0 && stage.get(NitriteQueryOperators.SKIP) instanceof Number skip) {
+                    if (applyWindow && offset <= 0 && stage.get(NitriteQueryOperators.SKIP) instanceof Number skip) {
                         options.skip(skip.longValue());
                     }
-                    if (limit <= 0 && stage.get(NitriteQueryOperators.LIMIT) instanceof Number lim) {
+                    if (applyWindow && limit <= 0 && stage.get(NitriteQueryOperators.LIMIT) instanceof Number lim) {
                         options.limit(lim.longValue());
                     }
                 }
@@ -697,6 +869,35 @@ public final class NitriteCriteriaExecutor {
             }
         }
         return options;
+    }
+
+    private record CriteriaReadPlan(
+        Class<?> entityType,
+        RuntimePersistentEntity<?> persistentEntity,
+        Class<?> resultType,
+        Filter filter,
+        FindOptions options,
+        Set<JoinPath> joinPaths,
+        boolean innerJoin,
+        Window window,
+        List<String> projectedFields,
+        List<String> selectionAliases,
+        List<Class<?>> selectionJavaTypes,
+        @Nullable Object parsedQuery,
+        @Nullable String queryString) {
+    }
+
+    private record DocumentRead(List<Document> documents, Set<JoinPath> nativeJoinPaths) {
+    }
+
+    private record NativeJoin(
+        JoinPath joinPath,
+        Lookup lookup,
+        String targetField,
+        NitriteCollection foreignCollection) {
+    }
+
+    private record Window(int offset, int limit) {
     }
 
     private record AggregateSelection(String function, String field) {

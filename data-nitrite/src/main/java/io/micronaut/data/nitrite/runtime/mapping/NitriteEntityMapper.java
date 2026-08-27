@@ -57,6 +57,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1352,9 +1353,11 @@ public final class NitriteEntityMapper {
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, associatedType, visited));
                     continue;
-                } else if (value instanceof List<?> list && !list.isEmpty() && list.getFirst() instanceof Document) {
+                } else if (value instanceof Collection<?> collection
+                    && !collection.isEmpty()
+                    && collection.iterator().next() instanceof Document) {
                     List<Object> associatedEntities = new ArrayList<>();
-                    for (Object item : list) {
+                    for (Object item : collection) {
                         if (item instanceof Document d) {
                             associatedEntities.add(fromDocumentInternal(d, associatedType, visited));
                         }
@@ -1385,9 +1388,9 @@ public final class NitriteEntityMapper {
                 if (value instanceof Document embeddedDoc) {
                     property.set(entity, fromDocumentInternal(embeddedDoc, castClass(association.getAssociatedEntity().getIntrospection().getBeanType()), visited));
                     continue;
-                } else if (value instanceof List<?> list) {
+                } else if (value instanceof Collection<?> collection) {
                     List<Object> embeddedEntities = new ArrayList<>();
-                    for (Object item : list) {
+                    for (Object item : collection) {
                         if (item instanceof Document d) {
                             embeddedEntities.add(fromDocumentInternal(d, castClass(association.getAssociatedEntity().getIntrospection().getBeanType()), visited));
                         }

@@ -8,6 +8,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.Tuple
 import jakarta.persistence.criteria.Selection
 import spock.lang.Specification
 
@@ -205,6 +206,53 @@ class CriteriaPersonRepositorySpec extends Specification {
 
         then:
         operations.findOne(query) == 3L
+    }
+
+    void "a tuple projection is readable by selection alias and by element"() {
+        given:
+        def cb = operations.criteriaBuilder
+        def query = cb.createQuery(Tuple)
+        def root = query.from(CriteriaPerson)
+
+        when: "the selection declares an alias that is not the persisted field name"
+        query.multiselect(root.get("name").alias("personName"), root.get("age").alias("personAge"))
+        query.where(cb.equal(root.get("name"), "Denis"))
+        Tuple tuple = operations.findOne(query)
+
+        then: "the alias resolves, and so do the position and the persisted name"
+        tuple.get("personName") == "Denis"
+        tuple.get("personAge") == 13
+        tuple.get(0) == "Denis"
+        tuple.get("name") == "Denis"
+
+        and: "the elements carry the aliases and answer element-based access"
+        tuple.elements.size() == 2
+        tuple.elements*.alias == ["personName", "personAge"]
+        tuple.elements*.javaType == [String, Integer]
+        tuple.get(tuple.elements[0]) == "Denis"
+        tuple.toArray() == ["Denis", 13] as Object[]
+    }
+
+    void "an unknown tuple alias or index is rejected"() {
+        given:
+        def cb = operations.criteriaBuilder
+        def query = cb.createQuery(Tuple)
+        def root = query.from(CriteriaPerson)
+        query.multiselect(root.get("name").alias("personName"))
+        query.where(cb.equal(root.get("name"), "Denis"))
+        Tuple tuple = operations.findOne(query)
+
+        when:
+        tuple.get("noSuchAlias")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        tuple.get(5)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     void "a joined read falls back to the string query for both the paged and the exists forms"() {

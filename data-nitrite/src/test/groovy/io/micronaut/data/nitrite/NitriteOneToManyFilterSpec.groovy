@@ -134,13 +134,15 @@ class NitriteOneToManyFilterSpec extends Specification {
         results*.name == ["Join type parent with children"]
     }
 
-    // The INNER restriction runs after Nitrite has already applied the page window, so an excluded
-    // root leaves a short page rather than pulling the next row forward. Documented, not desired.
-    void "an INNER criteria join restricts a page after the window is applied"() {
-        given:
-        def withChildren = parentRepo.save(new OneToManyParent("Paged parent with children"))
-        childRepo.save(new OneToManyChild("Child F", withChildren))
-        parentRepo.save(new OneToManyParent("Paged parent without children"))
+    // The INNER restriction has to run before the page window: a root the join excludes must not
+    // consume a slot, or the page comes back short while a valid match is skipped entirely.
+    void "an INNER criteria join restricts the result set before the page window"() {
+        given: "a childless parent sorts ahead of two parents that have children"
+        parentRepo.save(new OneToManyParent("Paged parent A without children"))
+        def firstWithChildren = parentRepo.save(new OneToManyParent("Paged parent B with children"))
+        childRepo.save(new OneToManyChild("Child F", firstWithChildren))
+        def secondWithChildren = parentRepo.save(new OneToManyParent("Paged parent C with children"))
+        childRepo.save(new OneToManyChild("Child G", secondWithChildren))
 
         when:
         PredicateSpecification<OneToManyParent> innerJoined = { root, cb ->
@@ -149,8 +151,46 @@ class NitriteOneToManyFilterSpec extends Specification {
         }
         def page = parentRepo.findAll(innerJoined, Pageable.from(0, 2))
 
-        then: "both rows fill the window, then the childless one is dropped from it"
-        page.content*.name == ["Paged parent with children"]
+        then: "the window is filled from the joined roots only, not left short by the excluded one"
+        page.content*.name.toSet() == ["Paged parent B with children", "Paged parent C with children"].toSet()
+    }
+
+    void "findOne skips a root the INNER join excludes rather than returning nothing"() {
+        given: "the childless parent is written first, so an unrestricted read reaches it first"
+        parentRepo.save(new OneToManyParent("Single parent A without children"))
+        def withChildren = parentRepo.save(new OneToManyParent("Single parent B with children"))
+        childRepo.save(new OneToManyChild("Child H", withChildren))
+
+        when:
+        PredicateSpecification<OneToManyParent> innerJoined = { root, cb ->
+            root.join("children", JoinType.INNER)
+            cb.like(root.get("name"), "Single parent%")
+        }
+
+        then:
+        parentRepo.findOne(innerJoined).orElseThrow().name == "Single parent B with children"
+    }
+
+    void "count and exists honour an INNER criteria join"() {
+        given:
+        def withChildren = parentRepo.save(new OneToManyParent("Counted parent with children"))
+        childRepo.save(new OneToManyChild("Child I", withChildren))
+        parentRepo.save(new OneToManyParent("Counted parent without children"))
+
+        when:
+        PredicateSpecification<OneToManyParent> innerJoined = { root, cb ->
+            root.join("children", JoinType.INNER)
+            cb.like(root.get("name"), "Counted parent%")
+        }
+        PredicateSpecification<OneToManyParent> childlessOnly = { root, cb ->
+            root.join("children", JoinType.INNER)
+            cb.equal(root.get("name"), "Counted parent without children")
+        }
+
+        then: "a root excluded by the join is neither counted nor reported to exist"
+        parentRepo.count(innerJoined) == 1
+        parentRepo.findAll(innerJoined).size() == 1
+        !parentRepo.exists(childlessOnly)
     }
 
     void "an association whose target has no identity cannot be reverse-looked-up"() {

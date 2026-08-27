@@ -85,21 +85,73 @@ public final class CollectionProjectionMapper {
      * @param <R> the result type
      * @return the mapped result, or null if not applicable
      */
-    @SuppressWarnings("unchecked")
     public <R> @Nullable R mapDocument(@Nullable Document doc, List<String> fields, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
+        return mapDocument(doc, fields, List.of(), List.of(), entity, resultType, isDto);
+    }
+
+    /**
+     * Maps a document to the projected result type, resolving a tuple by selection alias.
+     *
+     * @param doc the document
+     * @param fields the projected field names
+     * @param selectionAliases the aliases declared on the selection, positional and possibly shorter
+     * @param entity the entity metadata
+     * @param resultType the expected result type
+     * @param isDto whether this is a DTO projection
+     * @param <R> the result type
+     * @return the mapped result, or null if not applicable
+     */
+    public <R> @Nullable R mapDocument(@Nullable Document doc, List<String> fields, List<String> selectionAliases, @Nullable RuntimePersistentEntity<?> entity, Class<R> resultType, boolean isDto) {
+        return mapDocument(doc, fields, selectionAliases, List.of(), entity, resultType, isDto);
+    }
+
+    /**
+     * Maps a document to the projected result type, resolving tuple aliases and declared element types.
+     *
+     * @param doc the document
+     * @param fields the projected field names
+     * @param selectionAliases the aliases declared on the selection, positional and possibly shorter
+     * @param selectionJavaTypes the Java types declared by the selections, positional and possibly shorter
+     * @param entity the entity metadata
+     * @param resultType the expected result type
+     * @param isDto whether this is a DTO projection
+     * @param <R> the result type
+     * @return the mapped result, or null if not applicable
+     */
+    @SuppressWarnings("unchecked")
+    public <R> @Nullable R mapDocument(@Nullable Document doc,
+                                       List<String> fields,
+                                       List<String> selectionAliases,
+                                       List<Class<?>> selectionJavaTypes,
+                                       @Nullable RuntimePersistentEntity<?> entity,
+                                       Class<R> resultType,
+                                       boolean isDto) {
         if (doc == null) {
             return null;
         }
 
         if (Tuple.class.equals(resultType)) {
             Object[] values = new Object[fields.size()];
+            // Both keys resolve: a selection declaring alias("bookName") is read back under that
+            // name, and the persisted field name keeps working for a selection that declared none.
             Map<String, Integer> aliases = new LinkedHashMap<>(fields.size());
+            List<String> elementAliases = new ArrayList<>(fields.size());
             for (int i = 0; i < fields.size(); i++) {
                 String field = fields.get(i);
+                String alias = i < selectionAliases.size() ? selectionAliases.get(i) : null;
                 values[i] = getProjectedValue(doc, field, entity);
+                if (alias != null) {
+                    aliases.putIfAbsent(alias, i);
+                }
                 aliases.putIfAbsent(field, i);
+                elementAliases.add(alias);
             }
-            return (R) new NitriteTuple(valueConverter, values, aliases);
+            return (R) new NitriteTuple(
+                valueConverter,
+                values,
+                aliases,
+                elementAliases,
+                selectionJavaTypes);
         } else if (fields.size() == 1) {
             // Single field projection - extract and convert the value
             Object value = getProjectedValue(doc, fields.getFirst(), entity);

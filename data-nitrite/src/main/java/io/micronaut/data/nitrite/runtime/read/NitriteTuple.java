@@ -21,6 +21,7 @@ import io.micronaut.data.nitrite.runtime.ValueConverter;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,16 +36,36 @@ final class NitriteTuple implements Tuple {
     private final ValueConverter valueConverter;
     private final Object[] values;
     private final Map<String, Integer> aliasToPosition;
+    private final List<TupleElement<?>> elements;
 
-    NitriteTuple(ValueConverter valueConverter, Object[] values, Map<String, Integer> aliasToPosition) {
+    NitriteTuple(ValueConverter valueConverter,
+                 Object[] values,
+                 Map<String, Integer> aliasToPosition,
+                 List<String> elementAliases,
+                 List<Class<?>> elementJavaTypes) {
         this.valueConverter = valueConverter;
         this.values = values;
         this.aliasToPosition = aliasToPosition;
+        List<TupleElement<?>> tupleElements = new ArrayList<>(values.length);
+        for (int i = 0; i < values.length; i++) {
+            String alias = i < elementAliases.size() ? elementAliases.get(i) : null;
+            Object value = values[i];
+            Class<?> javaType = i < elementJavaTypes.size()
+                ? elementJavaTypes.get(i)
+                : value == null ? Object.class : value.getClass();
+            tupleElements.add(new NitriteTupleElement(alias, javaType));
+        }
+        this.elements = List.copyOf(tupleElements);
     }
 
     @Override
-    public <X> X get(TupleElement<X> tupleElement) {
-        throw new UnsupportedOperationException();
+    @SuppressWarnings("unchecked")
+    public <X> @Nullable X get(TupleElement<X> tupleElement) {
+        int index = elements.indexOf(tupleElement);
+        if (index < 0) {
+            throw new IllegalArgumentException("Unknown tuple element: " + tupleElement);
+        }
+        return (X) get(index);
     }
 
     @Override
@@ -81,6 +102,25 @@ final class NitriteTuple implements Tuple {
 
     @Override
     public List<TupleElement<?>> getElements() {
-        throw new UnsupportedOperationException();
+        return elements;
+    }
+
+    /**
+     * A tuple element carrying the selection alias, or {@code null} when the selection had none.
+     *
+     * @param alias The selection alias
+     * @param javaType The runtime type of the projected value
+     */
+    private record NitriteTupleElement(@Nullable String alias, Class<?> javaType) implements TupleElement<Object> {
+
+        @Override
+        public Class<? extends Object> getJavaType() {
+            return javaType;
+        }
+
+        @Override
+        public @Nullable String getAlias() {
+            return alias;
+        }
     }
 }

@@ -26,6 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
@@ -213,6 +214,8 @@ public final class NitriteQueryBuilderHelper {
             return;
         }
         switch (selection) {
+            case AliasedSelection<?> aliasedSelection ->
+                buildProjection(aliasedSelection.getSelection(), group, projectionObj, countObj);
             case io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath ->
                 projectionObj.put(persistedPath(propertyPath.getPropertyPath()), 1);
             case IdExpression<?, ?> idExpression -> {
