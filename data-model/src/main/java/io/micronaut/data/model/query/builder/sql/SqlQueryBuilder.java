@@ -1729,12 +1729,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         // since sqlserver doesn't have built-in functions for conversion between
         // json and internal geospatial data type, use always Well-Known Text (WKT) functions
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
-        Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
         OptionalInt optSrid = annotationMetadata.intValue(Srid.class);
 
         String geoDataType;
         int defaultSrid;
-        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+        if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
             geoDataType = "geography";
             defaultSrid = 4326;
         } else {
@@ -1777,7 +1776,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
-        if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+        boolean isGeography = dialect == Dialect.POSTGRES
+            ? SqlQueryBuilderUtils.isGeography(annotationMetadata)
+            : optDefinition.filter(SqlQueryBuilderUtils::isGeographyDefinition).isPresent();
+        if (isGeography) {
             // convert result of ST_GeomFromText and ST_GeomFromGeoJSON to geography
             sb.append("::geography");
         }

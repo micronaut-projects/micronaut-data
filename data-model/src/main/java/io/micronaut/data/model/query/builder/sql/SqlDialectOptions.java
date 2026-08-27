@@ -46,7 +46,10 @@ public record SqlDialectOptions(
     public static final String ORACLE_23_1_0_VERSION = "23.1.0";
 
     /**
-     * Annotation processor option prefix for SQL dialect options.
+     * Build-time configuration prefix for SQL dialect options.
+     *
+     * <p>The annotation processor reads dialect-scoped values from its processor context and
+     * uses the corresponding JVM system property as a fallback.</p>
      */
     public static final String DIALECT_OPTIONS_CONFIGURATION_PREFIX = "micronaut.data.sql.dialect-options";
 
@@ -116,10 +119,10 @@ public record SqlDialectOptions(
     }
 
     /**
-     * Resolve the annotation processor option key for a dialect target version.
+     * Resolve the build-time configuration key for a dialect target version.
      *
      * @param dialect The dialect
-     * @return The annotation processor option key
+     * @return The dialect-scoped configuration key
      */
     public static String versionConfiguration(Dialect dialect) {
         Objects.requireNonNull(dialect, "Dialect cannot be null");
