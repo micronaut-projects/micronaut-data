@@ -34,7 +34,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -106,8 +105,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         // The introspection exposes a single creator, which may have been chosen for a purpose other than
         // persistence - for example a Jackson @JsonCreator that builds the bean from one JSON value. When that
         // creator cannot be mapped to the persisted properties, fall back to no-argument instantiation and
-        // property setters. If there is no no-argument constructor either, fail here rather than later in
-        // SqlResultEntityTypeMapper. See https://github.com/micronaut-projects/micronaut-data/issues/3752
+        // property setters. BeanIntrospection does not expose whether a no-argument constructor exists, and
+        // reflective constructor lookup is not native-image safe, so instantiate() is deferred until
+        // materialization (SqlResultEntityTypeMapper handles InstantiationException there).
+        // See https://github.com/micronaut-projects/micronaut-data/issues/3752
         boolean creatorMapsToProperties = creatorMapsToProperties(creatorArguments, beanProperties);
         Set<String> constructorArgumentNames = creatorMapsToProperties
             ? Arrays.stream(creatorArguments).map(Argument::getName).collect(Collectors.toSet())
@@ -196,10 +197,11 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
     }
 
     /**
-     * Falling back to no-argument instantiation is only possible when a no-argument constructor exists and every
-     * persisted property can be set after the instance has been created. Constructor availability is checked through
-     * reflection metadata only; user constructor code must not run during entity metadata initialization.
-     * Failing here produces a better message than failing later while reading a result set.
+     * Falling back to no-argument instantiation is only possible when every persisted property can be set after
+     * the instance has been created. Whether a no-argument constructor exists is not checked here:
+     * {@link BeanIntrospection} does not expose that, and reflective constructor lookup has accessibility and
+     * native-image issues. {@code instantiate()} is deferred until materialization, where
+     * {@link io.micronaut.core.reflect.exception.InstantiationException} is handled.
      *
      * @param creatorArguments The arguments of the creator exposed by the introspection
      */
@@ -214,19 +216,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
             throw new MappingException(unmappableCreatorMessage(creatorArguments,
                 "and the properties " + readOnly + " cannot be set after construction."));
         }
-        if (!hasNoArgumentConstructor()) {
-            throw new MappingException(unmappableCreatorMessage(creatorArguments,
-                "and no no-argument constructor exists."));
-        }
-    }
-
-    private boolean hasNoArgumentConstructor() {
-        for (Constructor<?> constructor : introspection.getBeanType().getDeclaredConstructors()) {
-            if (constructor.getParameterCount() == 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private String unmappableCreatorMessage(Argument<?>[] creatorArguments, String reason) {

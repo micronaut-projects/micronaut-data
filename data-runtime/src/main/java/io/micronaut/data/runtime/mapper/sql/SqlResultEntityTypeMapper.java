@@ -668,8 +668,22 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
             return entity;
         } catch (InstantiationException e) {
-            throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
+            throw new DataAccessException(instantiationErrorMessage(persistentEntity, e), e);
         }
+    }
+
+    /**
+     * {@link BeanIntrospection} does not expose no-argument constructor availability, so unmappable-creator
+     * types are accepted at metadata time and fail here if {@code instantiate()} cannot run.
+     */
+    private static String instantiationErrorMessage(RuntimePersistentEntity<?> persistentEntity, InstantiationException e) {
+        Argument<?>[] creatorArguments = persistentEntity.getIntrospection().getConstructorArguments();
+        if (ArrayUtils.isEmpty(persistentEntity.getConstructorArguments()) && creatorArguments.length > 0) {
+            return "Error instantiating entity [" + persistentEntity.getName()
+                + "]: the introspection creator does not map to persisted properties and no no-argument constructor is available. "
+                + e.getMessage();
+        }
+        return "Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage();
     }
 
     /**

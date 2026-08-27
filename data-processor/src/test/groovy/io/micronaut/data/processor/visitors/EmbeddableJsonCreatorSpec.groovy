@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.beans.BeanIntrospection
+import io.micronaut.core.reflect.exception.InstantiationException
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Unroll
@@ -92,15 +93,20 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         entity.constructorArguments.length == 0
     }
 
-    void "a mutable type with setters but no no-arg constructor is rejected when the json creator is unmappable"() {
+    void "a mutable type with setters but no no-arg constructor is accepted at metadata time"() {
         when:
         BeanIntrospection introspection = buildBeanIntrospection('test.Country', CLASS_SETTERS_WITHOUT_NOARG)
-        new RuntimePersistentEntity(introspection)
+        RuntimePersistentEntity entity = new RuntimePersistentEntity(introspection)
+
+        then: "BeanIntrospection does not expose no-arg availability, so metadata cannot reject this"
+        entity.constructorArguments.length == 0
+        entity.persistentPropertyNames as Set == ['countryCode', 'regionCode'] as Set
+
+        when: "instantiate() is deferred until materialization"
+        introspection.instantiate()
 
         then:
-        MappingException e = thrown()
-        e.message.contains('is instantiated by the creator [value]')
-        e.message.contains('no no-argument constructor exists')
+        thrown(InstantiationException)
     }
 
     void "building RuntimePersistentEntity does not invoke the no-arg constructor"() {
