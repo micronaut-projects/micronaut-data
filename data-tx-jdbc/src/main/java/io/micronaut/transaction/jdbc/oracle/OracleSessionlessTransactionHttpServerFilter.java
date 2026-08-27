@@ -16,6 +16,7 @@
 package io.micronaut.transaction.jdbc.oracle;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.propagation.MutablePropagatedContext;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.StringUtils;
@@ -68,7 +69,9 @@ final class OracleSessionlessTransactionHttpServerFilter {
     }
 
     @ResponseFilter
-    void writeTransactionId(MutableHttpResponse<?> response, MutablePropagatedContext mutablePropagatedContext) {
+    void writeTransactionId(MutableHttpResponse<?> response,
+                            MutablePropagatedContext mutablePropagatedContext,
+                            @Nullable Throwable ignored) {
         PropagatedContext propagatedContext = mutablePropagatedContext.getContext();
         if (propagatedContext != null) {
             OracleSessionlessTransactionState.find(propagatedContext).ifPresent(transactionState -> {

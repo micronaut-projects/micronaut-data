@@ -135,7 +135,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             );
         }
         T existingTransaction = existingTransactionOptional.get();
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW ||  definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             return connectionOperations.execute(
@@ -160,7 +160,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
-        TransactionUtil.validateOracleSessionlessMode(definition, supportsOracleSessionlessTransactions());
+        validateTransactionDefinition(definition);
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);
@@ -190,7 +190,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
         }
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
@@ -362,7 +362,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 beforeCompletionInvoked = true;
 
                 if (tx.isNewTransaction()) {
-                    doCommit(tx);
+                    if (!tx.triggerResourceCommit()) {
+                        doCommit(tx);
+                    }
                 } else if (tx.isNestedTransaction()) {
                     doNestedCommit(tx);
                 }
@@ -453,7 +455,12 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
     }
 
-    private void checkNeverTransactionPropagation(TransactionDefinition definition) {
+    private void validateExistingTransaction(TransactionDefinition definition) {
+        var mode = TransactionUtil.getOracleSessionlessMode(definition);
+        if (mode != null) {
+            throw new TransactionUsageException("Existing transaction found for Oracle sessionless transaction mode '" + mode
+                + "'; a new transaction boundary is required");
+        }
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.NEVER) {
             throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
         }

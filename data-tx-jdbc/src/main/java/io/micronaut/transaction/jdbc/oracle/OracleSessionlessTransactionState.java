@@ -27,7 +27,7 @@ import java.util.Optional;
  */
 final class OracleSessionlessTransactionState implements PropagatedContextElement {
 
-    private byte @Nullable [] gtrid;
+    private volatile byte @Nullable [] gtrid;
 
     Optional<byte[]> getGtrid() {
         return Optional.ofNullable(gtrid).map(byte[]::clone);

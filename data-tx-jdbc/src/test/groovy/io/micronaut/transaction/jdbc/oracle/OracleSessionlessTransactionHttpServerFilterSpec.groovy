@@ -6,6 +6,7 @@ import io.micronaut.core.propagation.PropagatedContext
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.MutableHttpResponse
 import io.micronaut.http.exceptions.HttpStatusException
 import spock.lang.Specification
 
@@ -83,10 +84,30 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
         context.add(state)
 
         when:
-        filter.writeTransactionId(response, context)
+        filter.writeTransactionId(response, context, null)
 
         then:
         response.headers.get(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME) == encodedGtrid
+        OracleSessionlessTransactionState.find(context.context).isEmpty()
+    }
+
+    def "writes transaction id when the response contains a downstream failure"() {
+        given:
+        def configuration = new OracleSessionlessTransactionHttpConfiguration()
+        def codec = new DefaultOracleSessionlessTransactionIdCodec()
+        def filter = new OracleSessionlessTransactionHttpServerFilter(configuration, codec)
+        def gtrid = [10, 20, 30] as byte[]
+        def state = new OracleSessionlessTransactionState()
+        def context = MutablePropagatedContext.of(PropagatedContext.empty())
+        def response = HttpResponse.serverError()
+        state.setGtrid(gtrid)
+        context.add(state)
+
+        when:
+        filter.writeTransactionId(response, context, new IllegalStateException("response failed"))
+
+        then:
+        response.headers.get(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME) == codec.encode(gtrid)
         OracleSessionlessTransactionState.find(context.context).isEmpty()
     }
 
@@ -100,7 +121,7 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
         context.add(state)
 
         when:
-        filter.writeTransactionId(response, context)
+        filter.writeTransactionId(response, context, null)
 
         then:
         !response.headers.contains(OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME)
@@ -120,7 +141,7 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
 
         when:
         filter.readTransactionId(request, context)
-        filter.writeTransactionId(response, context)
+        filter.writeTransactionId(response, context, null)
 
         then:
         response.headers.get("X-Oracle-Sessionless-Tx") == encodedGtrid
@@ -157,7 +178,7 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
         when:
         filter.readTransactionId(request, context)
         def state = OracleSessionlessTransactionState.find(context.context).orElseThrow()
-        filter.writeTransactionId(response, context)
+        filter.writeTransactionId(response, context, null)
 
         then:
         Arrays.equals([1, 2, 3, 4] as byte[], state.gtrid.orElseThrow())
@@ -173,6 +194,10 @@ class OracleSessionlessTransactionHttpServerFilterSpec extends Specification {
 
         then:
         context.containsBean(OracleSessionlessTransactionHttpServerFilter)
+        context.getBeanDefinition(OracleSessionlessTransactionHttpServerFilter)
+            .getRequiredMethod("writeTransactionId", MutableHttpResponse, MutablePropagatedContext, Throwable)
+            .arguments[2]
+            .nullable
 
         cleanup:
         context.close()
