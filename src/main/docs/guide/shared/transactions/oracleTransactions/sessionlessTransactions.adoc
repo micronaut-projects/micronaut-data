@@ -9,6 +9,9 @@ The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` 
 active transaction. If a parent transaction is already active, Micronaut rejects the sessionless transaction definition
 instead of allowing it to participate in the existing transaction.
 The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
+They also cannot be combined with `@OracleTransactional.Recoverable`. `SUSPEND` detaches the transaction instead of
+committing it, so there is no ambiguous commit outcome to resolve. Replaying `REQUIRES_SUSPENDED` could attempt to resume
+a transaction whose completion state is already uncertain. Micronaut rejects either combination before transactional work begins.
 
 Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
 For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.

@@ -41,6 +41,7 @@ import java.sql.SQLException;
  */
 @Internal
 @EachBean(DataSource.class)
+@Requires(classes = OracleConnection.class)
 @Requires(condition = JdbcTransactionManagerCondition.class)
 final class OracleSessionlessTransactionHandler implements SessionlessTransactionHandler {
 

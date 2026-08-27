@@ -28,6 +28,7 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.recovery.CommitOutcome;
 import io.micronaut.transaction.recovery.CommitOutcomeResolver;
 import io.micronaut.transaction.recovery.RecoverableTransactionContext;
@@ -49,6 +50,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RecoverableSpec {
+
+    @Test
+    void sessionlessTransactionsCannotBeRecoverable() {
+        try (ApplicationContext context = ApplicationContext.run()) {
+            SessionlessRecoverableService service = context.getBean(SessionlessRecoverableService.class);
+            RecordingTransactionManager transactionManager = context.getBean(RecordingTransactionManager.class);
+
+            TransactionUsageException suspendException = assertThrows(TransactionUsageException.class, service::suspend);
+            assertEquals(
+                "Oracle sessionless transaction mode 'SUSPEND' cannot be combined with @OracleTransactional.Recoverable",
+                suspendException.getMessage()
+            );
+
+            TransactionUsageException resumeException = assertThrows(TransactionUsageException.class, service::resume);
+            assertEquals(
+                "Oracle sessionless transaction mode 'REQUIRES_SUSPENDED' cannot be combined with @OracleTransactional.Recoverable",
+                resumeException.getMessage()
+            );
+            assertEquals(0, transactionManager.beginAttempts.get());
+        }
+    }
 
     @Test
     void committedOutcomeReturnsOriginalResultWithoutRetry() {
@@ -305,6 +327,20 @@ class RecoverableSpec {
         @OracleTransactional.Recoverable
         String work() {
             return "ok-" + invocations.incrementAndGet();
+        }
+    }
+
+    @Singleton
+    static class SessionlessRecoverableService {
+
+        @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND)
+        @OracleTransactional.Recoverable
+        void suspend() {
+        }
+
+        @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
+        @OracleTransactional.Recoverable
+        void resume() {
         }
     }
 

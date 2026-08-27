@@ -170,6 +170,8 @@ public @interface OracleTransactional {
     /**
      * The desired Oracle sessionless transaction mode.
      *
+     * <p>A sessionless mode cannot be combined with {@link Recoverable}.</p>
+     *
      * @return The sessionless transaction mode
      * @since 5.2.0
      */
@@ -182,6 +184,8 @@ public @interface OracleTransactional {
      * {@link OracleTransactional}. It does not start a transaction by itself.
      * Recovery is attempted only for the intercepted synchronous execution that
      * starts and owns the transaction commit boundary.</p>
+     *
+     * <p>This annotation cannot be combined with a {@link OracleTransactional#sessionless() sessionless mode}.</p>
      *
      * @since 5.2
      */
