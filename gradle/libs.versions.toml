@@ -87,7 +87,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
 managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
-managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data-stateful', version.ref = "managed-jakarta-data" }
+managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data.stateful-api', version.ref = "managed-jakarta-data" }
 managed-pg-vector = { module = 'com.pgvector:pgvector', version.ref = "managed-pg-vector"}
 # JPA
 

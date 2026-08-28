@@ -1,7 +1,7 @@
 package io.micronaut.data.jakarta.tck;
 
 import ee.jakarta.tck.data.standalone.entity.EntityTests;
-import ee.jakarta.tck.data.standalone.persistence.PersistenceEntityTests;
+import ee.jakarta.tck.data.standalone.persistence.stateless.PersistenceEntityTests;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
