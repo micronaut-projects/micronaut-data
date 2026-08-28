@@ -158,11 +158,9 @@ public interface Sort {
          * @param direction The direction
          * @param ignoreCase Whether to ignore case
          */
-        @JsonCreator
-        @Creator
-        public Order(@JsonProperty("property") String property,
-                @JsonProperty("direction") Direction direction,
-                @JsonProperty("ignoreCase") boolean ignoreCase) {
+        public Order(String property,
+                Direction direction,
+                boolean ignoreCase) {
             this(property, direction, ignoreCase, NullOrdering.NONE);
         }
 
@@ -171,20 +169,22 @@ public interface Sort {
          * @param property The property
          * @param direction The direction
          * @param ignoreCase Whether to ignore case
-         * @param nullOrdering Where to place null values relative to non-null values
+         * @param nullOrdering Where to place null values relative to non-null values, {@code null} is treated
+         *                     as {@link NullOrdering#NONE} so that payloads written before 5.2 still deserialize
          * @since 5.2
          */
-        public Order(String property,
-                Direction direction,
-                boolean ignoreCase,
-                NullOrdering nullOrdering) {
+        @JsonCreator
+        @Creator
+        public Order(@JsonProperty("property") String property,
+                @JsonProperty("direction") Direction direction,
+                @JsonProperty("ignoreCase") boolean ignoreCase,
+                @JsonProperty("nullOrdering") @Nullable NullOrdering nullOrdering) {
             ArgumentUtils.requireNonNull("direction", direction);
             ArgumentUtils.requireNonNull("property", property);
-            ArgumentUtils.requireNonNull("nullOrdering", nullOrdering);
             this.direction = direction;
             this.property = property;
             this.ignoreCase = ignoreCase;
-            this.nullOrdering = nullOrdering;
+            this.nullOrdering = nullOrdering == null ? NullOrdering.NONE : nullOrdering;
         }
 
         /**
