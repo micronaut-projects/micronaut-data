@@ -1276,6 +1276,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 buff.append(")");
             }
             buff.append(SPACE).append(order.getDirection());
+            switch (order.getNullOrdering()) {
+                case FIRST -> buff.append(" NULLS FIRST");
+                case LAST -> buff.append(" NULLS LAST");
+                default -> { /* let the database decide */ }
+            }
             if (i.hasNext()) {
                 buff.append(",");
             }

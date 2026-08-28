@@ -69,6 +69,7 @@ import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -138,7 +139,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 .map(av -> new Sort.Order(
                     av.stringValue().orElseThrow(),
                     av.booleanValue("descending").orElse(false) ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
-                    av.booleanValue("ignoreCase").orElse(false)
+                    av.booleanValue("ignoreCase").orElse(false),
+                    av.enumValue("nullOrdering", Sort.Order.NullOrdering.class).orElse(Sort.Order.NullOrdering.NONE)
                 ))
                 .toList();
         return orders;
@@ -806,7 +808,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
             }
             Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) path) : path;
-            orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
+            Nulls nullPrecedence = switch (order.getNullOrdering()) {
+                case FIRST -> Nulls.FIRST;
+                case LAST -> Nulls.LAST;
+                case NONE -> Nulls.NONE;
+            };
+            orders.add(order.isAscending() ? cb.asc(expression, nullPrecedence) : cb.desc(expression, nullPrecedence));
         }
         return orders;
     }

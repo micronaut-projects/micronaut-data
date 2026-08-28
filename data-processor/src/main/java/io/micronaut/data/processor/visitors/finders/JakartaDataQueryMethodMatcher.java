@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -212,6 +214,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 SourcePersistentEntityCriteriaQuery<?> criteriaQueryInternal = (SourcePersistentEntityCriteriaQuery) criteriaQuery;
 
                 applyProjections(matchContext, criteriaQueryInternal);
+                applyFirst(matchContext, criteriaQueryInternal);
 
                 MethodResult result = analyzeMethodResult(
                     matchContext,
@@ -301,6 +304,21 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
             criteriaQuery.select((Selection) selections.getFirst());
         } else {
             criteriaQuery.multiselect(selections);
+        }
+    }
+
+    /**
+     * Applies the limit declared by {@link First} (mapped from Jakarta Data {@code @First}) to a JDQL query.
+     * JDQL itself has no limit clause, so the annotation is the only static source of one.
+     *
+     * @param matchContext The match context
+     * @param criteriaQuery The criteria query
+     */
+    private static void applyFirst(MethodMatchContext matchContext,
+                                   SourcePersistentEntityCriteriaQuery<?> criteriaQuery) {
+        AnnotationValue<First> firstAnnotation = matchContext.getMethodElement().getAnnotation(First.class);
+        if (firstAnnotation != null) {
+            criteriaQuery.limit(firstAnnotation.intValue().orElse(1));
         }
     }
 

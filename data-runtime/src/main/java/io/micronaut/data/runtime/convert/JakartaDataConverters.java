@@ -67,25 +67,13 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         conversionService.addConverter(Limit.class, io.micronaut.data.model.Limit.class,
             limit -> io.micronaut.data.model.Limit.of(limit.maxResults(), (int) limit.startAt() - 1));
         conversionService.addConverter(Order.class, Sort.class, order -> Sort.of(
-            ((Order<?>) order).sorts().stream().map(sort -> new Sort.Order(
-                sort.property(),
-                sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                sort.ignoreCase())
-            ).toList()
+            ((Order<?>) order).sorts().stream().map(JakartaDataConverters::toOrder).toList()
         ));
-        conversionService.addConverter(jakarta.data.Sort.class, Sort.class, sort -> Sort.of(
-                new Sort.Order(
-                    sort.property(),
-                    sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                    sort.ignoreCase())
-            )
+        conversionService.addConverter(jakarta.data.Sort.class, Sort.class,
+            sort -> Sort.of(toOrder(sort))
         );
         conversionService.addConverter(jakarta.data.Sort[].class, Sort.class, sort -> Sort.of(
-                Arrays.stream(sort).map(s -> new Sort.Order(
-                    s.property(),
-                    s.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                    s.ignoreCase())
-                ).toList()
+                Arrays.stream(sort).map(JakartaDataConverters::toOrder).toList()
             )
         );
         conversionService.addConverter(jakarta.data.page.PageRequest.class, Pageable.class, pageRequest -> {
@@ -160,4 +148,17 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         return PageRequest.ofPage(pageable.getNumber() + 1, pageable.getSize() == -1 ? Integer.MAX_VALUE : pageable.getSize(), pageable.requestTotal());
     }
 
+
+    private static Sort.Order toOrder(jakarta.data.Sort<?> sort) {
+        return new Sort.Order(
+            sort.property(),
+            sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
+            sort.ignoreCase(),
+            switch (sort.nullOrdering()) {
+                case FIRST -> Sort.Order.NullOrdering.FIRST;
+                case LAST -> Sort.Order.NullOrdering.LAST;
+                case UNSPECIFIED -> Sort.Order.NullOrdering.NONE;
+            }
+        );
+    }
 }

@@ -142,6 +142,7 @@ public interface Sort {
         private final String property;
         private final Direction direction;
         private final boolean ignoreCase;
+        private final NullOrdering nullOrdering;
 
         /**
          * Constructs an order for the given property in ascending order.
@@ -162,11 +163,36 @@ public interface Sort {
         public Order(@JsonProperty("property") String property,
                 @JsonProperty("direction") Direction direction,
                 @JsonProperty("ignoreCase") boolean ignoreCase) {
+            this(property, direction, ignoreCase, NullOrdering.NONE);
+        }
+
+        /**
+         * Constructs an order for the given property with the given direction and null ordering.
+         * @param property The property
+         * @param direction The direction
+         * @param ignoreCase Whether to ignore case
+         * @param nullOrdering Where to place null values relative to non-null values
+         * @since 5.2
+         */
+        public Order(String property,
+                Direction direction,
+                boolean ignoreCase,
+                NullOrdering nullOrdering) {
             ArgumentUtils.requireNonNull("direction", direction);
             ArgumentUtils.requireNonNull("property", property);
+            ArgumentUtils.requireNonNull("nullOrdering", nullOrdering);
             this.direction = direction;
             this.property = property;
             this.ignoreCase = ignoreCase;
+            this.nullOrdering = nullOrdering;
+        }
+
+        /**
+         * @return Where null values are placed relative to non-null values
+         * @since 5.2
+         */
+        public NullOrdering getNullOrdering() {
+            return nullOrdering;
         }
 
         /**
@@ -198,7 +224,8 @@ public interface Sort {
         public Order reverse() {
             return new Order(property,
                 direction == Direction.ASC ? Direction.DESC : Direction.ASC,
-                ignoreCase);
+                ignoreCase,
+                nullOrdering);
         }
 
         /**
@@ -269,11 +296,32 @@ public interface Sort {
             ASC, DESC
         }
 
+        /**
+         * Represents where null values are placed relative to non-null values.
+         *
+         * @since 5.2
+         */
+        public enum NullOrdering {
+            /**
+             * Let the database decide, which is the default.
+             */
+            NONE,
+            /**
+             * Null values are ordered before non-null values.
+             */
+            FIRST,
+            /**
+             * Null values are ordered after non-null values.
+             */
+            LAST
+        }
+
         @Override
         public String toString() {
             return "SORT{" + property
                 + (direction == Direction.ASC ? ", ASC" : ", DESC")
                 + (ignoreCase ? ", ignoreCase" : "")
+                + (nullOrdering == NullOrdering.NONE ? "" : ", NULLS " + nullOrdering)
                 + ")";
         }
 
@@ -288,12 +336,13 @@ public interface Sort {
             Order order = (Order) o;
             return ignoreCase == order.ignoreCase &&
                     property.equals(order.property) &&
-                    direction == order.direction;
+                    direction == order.direction &&
+                    nullOrdering == order.nullOrdering;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(property, direction, ignoreCase);
+            return Objects.hash(property, direction, ignoreCase, nullOrdering);
         }
     }
 }
