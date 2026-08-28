@@ -72,6 +72,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#getTransactionStatus(reactor.util.context.ContextView)" tabindex="0">getTransactionStatus(ContextView)</a></li>
 <li><a href="#getTransactionDefinition(reactor.util.context.ContextView)" tabindex="0">getTransactionDefinition(ContextView)</a></li>
 <li><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" tabindex="0">withTransaction(TransactionDefinition, ReactiveTransactionOperations.TransactionalCallback)</a></li>
+<li><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" tabindex="0">supportsSessionlessTransactions(TransactionDefinition)</a></li>
+<li><a href="#validateTransactionDefinition(io.micronaut.transaction.TransactionDefinition)" tabindex="0">validateTransactionDefinition(TransactionDefinition)</a></li>
 <li><a href="#withTransactionFlux(io.micronaut.transaction.reactive.ReactiveTransactionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" tabindex="0">withTransactionFlux(ReactiveTransactionStatus, TransactionDefinition, ReactiveTransactionOperations.TransactionalCallback)</a></li>
 <li><a href="#withTransactionMono(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" tabindex="0">withTransactionMono(TransactionDefinition, Function)</a></li>
 <li><a href="#executeTransactionFlux(io.micronaut.transaction.support.AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" tabindex="0">executeTransactionFlux(AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus, ReactiveTransactionOperations.TransactionalCallback)</a></li>
@@ -225,6 +227,14 @@ managed by this <a href="../reactive/ReactiveTransactionOperations.html" title="
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#rollbackTransaction(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">rollbackTransaction</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractReactorTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
  @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">supportsSessionlessTransactions</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateTransactionDefinition(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">validateTransactionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Validate a transaction definition before transactional work begins.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final &lt;T&gt;&nbsp;@NonNull reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="../reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a>&lt;<a href="#type-param-C" title="type parameter in AbstractReactorTransactionOperations">C</a>,<wbr>T&gt;&nbsp;handler)</code></div>
@@ -402,6 +412,33 @@ managed by this <a href="../reactive/ReactiveTransactionOperations.html" title="
 <dd><code>handler</code> - The handler</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the result type</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)">
+<h3>supportsSessionlessTransactions</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsSessionlessTransactions</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dt>Returns:</dt>
+<dd>Whether this transaction manager supports the requested sessionless transaction mode.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="validateTransactionDefinition(io.micronaut.transaction.TransactionDefinition)">
+<h3>validateTransactionDefinition</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTransactionDefinition</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="block">Validate a transaction definition before transactional work begins.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
 </dl>
 </div>
 </section>

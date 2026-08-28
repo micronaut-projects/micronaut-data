@@ -88,7 +88,9 @@ loadScripts(document, 'script');</script>
 <p>Use this annotation together with <a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation"><code>Transactional</code></a> or
 <a href="OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation"><code>OracleTransactional</code></a>. It does not start a transaction by itself.
 Recovery is attempted only for the intercepted synchronous execution that
-starts and owns the transaction commit boundary.</p></div>
+starts and owns the transaction commit boundary.</p>
+
+<p>This annotation cannot be combined with a <a href="OracleTransactional.html#sessionless()"><code>sessionless mode</code></a>.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.2</dd>

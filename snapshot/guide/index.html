@@ -171,7 +171,13 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>3.7.2</strong><span>Transactional Events</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-recoverableTransactions"><a href="#recoverableTransactions"><strong>3.7.3</strong><span>Oracle Transaction Recovery</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-oracleTransactions"><a href="#oracleTransactions"><strong>3.7.3</strong><span>Oracle Transactions</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-transactionPriority"><a href="#transactionPriority"><strong>3.7.3.1</strong><span>Oracle Transaction Priority</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-recoverableTransactions"><a href="#recoverableTransactions"><strong>3.7.3.2</strong><span>Oracle Transaction Recovery</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sessionlessTransactions"><a href="#sessionlessTransactions"><strong>3.7.3.3</strong><span>Oracle Sessionless Transactions</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-kotlinCriteria"><a href="#kotlinCriteria"><strong>3.8</strong><span>Kotlin Criteria API extensions</span></a></div>
         
@@ -5631,47 +5637,6 @@ If you prefer Spring-managed transactions for Hibernate or JDBC you can add the 
 </tr>
 </table>
 </div>
-<div class="sect2">
-<h3 id="_oracle_transaction_priority">Oracle Transaction Priority</h3>
-<div class="paragraph">
-<p>For Oracle JDBC and R2DBC transactions, Micronaut Data supports Oracle transaction priority with <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
-The annotation is a transactional stereotype and can be used instead of <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> when Oracle transaction priority should be applied:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.transaction.annotation.OracleTransactional;
-
-@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
-void updateInventory() {
-    // ...
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>When the transaction uses an Oracle connection, Micronaut Data sets the session <code>txn_priority</code> for the duration of the transaction and resets it afterwards.
-Non-Oracle databases ignore this property.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
-Older Oracle versions that reject <code>txn_priority</code> continue without applying priority.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_oracle_transaction_recovery">Oracle Transaction Recovery</h3>
-<div class="paragraph">
-<p>For Oracle JDBC transactions, Micronaut Data supports ambiguous commit recovery with <code>@OracleTransactional.Recoverable</code>.
-See <a href="#recoverableTransactions">Oracle Transaction Recovery</a> for configuration, scope, and usage details.</p>
-</div>
-</div>
 
 <h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>3.7.1 Programmatic Transactions</h2>
 
@@ -6248,10 +6213,70 @@ Using <a href="../api/io/micronaut/transaction/annotation/TransactionalEventList
 </table>
 </div>
 
-<h2 id="recoverableTransactions"><a class="anchor" href="#recoverableTransactions"></a>3.7.3 Oracle Transaction Recovery</h2>
+<h2 id="oracleTransactions"><a class="anchor" href="#oracleTransactions"></a>3.7.3 Oracle Transactions</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/recoverableTransactions.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/oracleTransactions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data provides Oracle-specific transaction options through <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
+The annotation is a transactional stereotype that can be used instead of <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> when an
+Oracle transaction feature should be applied.</p>
+</div>
+<div class="paragraph">
+<p>Oracle transaction priority is available for Oracle JDBC and R2DBC transactions.
+Oracle sessionless transactions are available for Oracle JDBC transactions.</p>
+</div>
+
+<h2 id="transactionPriority"><a class="anchor" href="#transactionPriority"></a>3.7.3.1 Oracle Transaction Priority</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/oracleTransactions/transactionPriority.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>For Oracle JDBC and R2DBC transactions, Micronaut Data supports Oracle transaction priority with <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
+Set the <code>priority</code> attribute to request the desired Oracle transaction priority:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.transaction.annotation.OracleTransactional;
+
+@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+void updateInventory() {
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the transaction uses an Oracle connection, Micronaut Data sets the session <code>txn_priority</code> for the duration of the transaction and resets it afterwards.
+Non-Oracle databases ignore this property.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
+Older Oracle versions that reject <code>txn_priority</code> continue without applying priority.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="recoverableTransactions"><a class="anchor" href="#recoverableTransactions"></a>3.7.3.2 Oracle Transaction Recovery</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/oracleTransactions/recoverableTransactions.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
@@ -6332,6 +6357,11 @@ void updateInventory() {
 <div class="paragraph">
 <p><code>@OracleTransactional.Recoverable</code> must be used together with <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> or <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a>.
 It does not create a transaction by itself.</p>
+</div>
+<div class="paragraph">
+<p>It cannot be combined with an <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a> sessionless mode. A suspended transaction
+does not commit at that boundary, and replaying a resumed transaction could attempt to resume a transaction whose completion
+state is already uncertain. Micronaut rejects the combination before transactional work begins.</p>
 </div>
 <div class="paragraph">
 <p>Recovery runs only for the synchronous invocation that starts and owns the final commit boundary.
@@ -6463,6 +6493,9 @@ If that Oracle failover path is enabled, do not use <code>@OracleTransactional.R
 <p>Recovery applies only when the intercepted execution owns the transaction commit boundary</p>
 </li>
 <li>
+<p>Recovery cannot be combined with an Oracle sessionless transaction mode</p>
+</li>
+<li>
 <p>If a method joins an existing transaction, the outer transaction boundary owns commit and therefore owns recovery</p>
 </li>
 <li>
@@ -6511,6 +6544,414 @@ require one. The timeout does not determine the Oracle commit outcome.</p>
 <p>If you are already relying on TAF or Application Continuity to own the replay flow, do not add explicit transaction recovery on top of that path</p>
 </li>
 </ul>
+</div>
+</div>
+
+<h2 id="sessionlessTransactions"><a class="anchor" href="#sessionlessTransactions"></a>3.7.3.3 Oracle Sessionless Transactions</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.2.x/src/main/docs/guide/shared/transactions/oracleTransactions/sessionlessTransactions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Oracle sessionless transactions allow a JDBC transaction to be suspended and later resumed, potentially from a different
+request. Micronaut Data supports this for Oracle JDBC with the <a href="../api/io/micronaut/transaction/annotation/OracleTransactional.html">@OracleTransactional</a> <code>sessionless</code>
+attribute:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../api/io/micronaut/transaction/annotation/OracleTransactional.Sessionless.html#SUSPEND">SUSPEND</a></p>
+</li>
+<li>
+<p><a href="../api/io/micronaut/transaction/annotation/OracleTransactional.Sessionless.html#REQUIRES_SUSPENDED">REQUIRES_SUSPENDED</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The feature is intended for top-level workflow boundaries. Do not use <code>SUSPEND</code> or <code>REQUIRES_SUSPENDED</code> inside another
+active transaction. If a parent transaction is already active, Micronaut rejects the sessionless transaction definition
+instead of allowing it to participate in the existing transaction.
+The sessionless modes require the default <code>REQUIRED</code> propagation and cannot be combined with other propagation values.
+They also cannot be combined with <code>@OracleTransactional.Recoverable</code>. <code>SUSPEND</code> detaches the transaction instead of
+committing it, so there is no ambiguous commit outcome to resolve. Replaying <code>REQUIRES_SUSPENDED</code> could attempt to resume
+a transaction whose completion state is already uncertain. Micronaut rejects either combination before transactional work begins.</p>
+</div>
+<div class="paragraph">
+<p>Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
+For <code>SUSPEND</code> and <code>REQUIRES_SUSPENDED</code>, the underlying JDBC connection must unwrap to an <code>oracle.jdbc.OracleConnection</code>.</p>
+</div>
+<div class="paragraph">
+<p>The following service starts a sessionless transaction, suspends it, and later resumes it:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.transaction.annotation.OracleTransactional;
+import jakarta.inject.Singleton;
+
+@Singleton
+public class BookingService {
+
+    private final SeatRepository seatRepository;
+
+    public BookingService(SeatRepository seatRepository) {
+        this.seatRepository = seatRepository;
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 60)
+    public Long holdSeat(Seat seat) {
+        return seatRepository.save(seat).getId();
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
+    public void ticketSeat(Long id) {
+        Seat seat = seatRepository.findById(id).orElseThrow(() -&gt; new RuntimeException("Seat not found"));
+        seat.setStatus("TICKETED");
+        seatRepository.update(seat);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For a method annotated with <code>@OracleTransactional(sessionless = SUSPEND)</code>, the standard JDBC transaction manager and
+Oracle sessionless transaction handler:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>requires an active Oracle sessionless propagation state</p>
+</li>
+<li>
+<p>begins the JDBC transaction normally</p>
+</li>
+<li>
+<p>starts an Oracle sessionless transaction with <code>OracleConnection.startTransaction(&#8230;&#8203;)</code></p>
+</li>
+<li>
+<p>stores the returned Oracle global transaction identifier, or GTRID, in the propagation state</p>
+</li>
+<li>
+<p>registers work at the resource commit boundary</p>
+</li>
+<li>
+<p>runs all transaction synchronization callbacks before suspending the Oracle transaction and skipping the JDBC commit</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If the method declares <code>@OracleTransactional(timeout = &#8230;&#8203;)</code>, that timeout is passed to Oracle when the sessionless transaction is started.
+If no timeout is declared, the Oracle driver and database defaults apply.</p>
+</div>
+<div class="paragraph">
+<p>For a method annotated with <code>@OracleTransactional(sessionless = REQUIRES_SUSPENDED)</code>, the Oracle sessionless transaction handler:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>reads the GTRID from the active propagation state</p>
+</li>
+<li>
+<p>begins the JDBC transaction normally</p>
+</li>
+<li>
+<p>resumes the Oracle sessionless transaction with <code>OracleConnection.resumeTransaction(&#8230;&#8203;)</code></p>
+</li>
+<li>
+<p>commits or rolls back the JDBC transaction normally</p>
+</li>
+<li>
+<p>clears the GTRID from the propagation state after completion</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Because <code>SUSPEND</code> leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction
+until a later <code>REQUIRES_SUSPENDED</code> transaction completes it.</p>
+</div>
+<div class="sect1">
+<h2 id="_http_propagation">HTTP Propagation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>HTTP propagation is provided by an HTTP server filter and is opt-in:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.oracle.sessionless.http.propagation-enabled=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    oracle:
+      sessionless:
+        http:
+          propagation-enabled: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {data = {oracle = {sessionless = {http = {propagation-enabled = true}}}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    oracle {
+      sessionless {
+        http {
+          propagationEnabled = true
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      oracle {
+        sessionless {
+          http {
+            propagation-enabled = true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "oracle": {
+        "sessionless": {
+          "http": {
+            "propagation-enabled": true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>By default, the filter uses the <code>Oracle-Sessionless-Transaction-Id</code> header.
+You can change the header name:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.oracle.sessionless.http.propagation-enabled=true
+micronaut.data.oracle.sessionless.http.header-name=X-Oracle-Sessionless-Transaction-Id</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    oracle:
+      sessionless:
+        http:
+          propagation-enabled: true
+          header-name: X-Oracle-Sessionless-Transaction-Id</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">micronaut = {data = {oracle = {sessionless = {http = {propagation-enabled = true, header-name = "X-Oracle-Sessionless-Transaction-Id"}}}}}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    oracle {
+      sessionless {
+        http {
+          propagationEnabled = true
+          headerName = "X-Oracle-Sessionless-Transaction-Id"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      oracle {
+        sessionless {
+          http {
+            propagation-enabled = true
+            header-name = "X-Oracle-Sessionless-Transaction-Id"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "oracle": {
+        "sessionless": {
+          "http": {
+            "propagation-enabled": true,
+            "header-name": "X-Oracle-Sessionless-Transaction-Id"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>On each HTTP request, the filter creates the request-scoped Oracle sessionless propagation state. If the configured header
+is present, the filter decodes the header and stores the GTRID in that state so a <code>REQUIRES_SUSPENDED</code> method can resume it.
+If the request contains a malformed transaction id, the filter fails the request with a bad request response. If another
+component has already created Oracle sessionless transaction state before the filter runs, the filter fails fast because
+the HTTP filter owns the request-level state.</p>
+</div>
+<div class="paragraph">
+<p>On the response, if the request still has a suspended transaction id, the filter writes it to the configured header.
+After a resumed transaction commits or rolls back, the sessionless transaction handler clears the id, so the response does not contain the header.</p>
+</div>
+<div class="paragraph">
+<p>The following controller does not need to handle the header directly:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Post;
+
+@Controller("/bookings")
+public class BookingController {
+
+    private final BookingService bookingService;
+
+    public BookingController(BookingService bookingService) {
+        this.bookingService = bookingService;
+    }
+
+    @Post("/hold/{flightId}/{seatId}/{customerId}")
+    public HttpResponse&lt;String&gt; holdSeat(String flightId, String seatId, String customerId) {
+        Long seatIdValue = bookingService.holdSeat(new Seat(flightId, seatId, customerId));
+        return HttpResponse.ok(seatIdValue.toString());
+    }
+
+    @Post("/ticket/{id}")
+    public HttpResponse&lt;Void&gt; ticketSeat(Long id) {
+        bookingService.ticketSeat(id);
+        return HttpResponse.noContent();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The HTTP client sends one request that starts and suspends the transaction:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">HttpResponse&lt;String&gt; holdResponse = client.toBlocking()
+    .exchange(HttpRequest.POST("/bookings/hold/JU501/2c/msid", ""), String.class);
+String transactionId = holdResponse.getHeaders().get(SESSIONLESS_TRANSACTION_HEADER);
+Long seatId = Long.valueOf(holdResponse.getBody().orElseThrow());</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then sends the returned header back on a later request that resumes and completes it:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">HttpRequest&lt;String&gt; ticketRequest = HttpRequest.POST("/bookings/ticket/" + seatId, "")
+    .header(SESSIONLESS_TRANSACTION_HEADER, transactionId);
+HttpResponse&lt;Void&gt; ticketResponse = client.toBlocking().exchange(ticketRequest, Void.class);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The header value is encoded through <a href="../api/io/micronaut/transaction/jdbc/oracle/OracleSessionlessTransactionIdCodec.html">OracleSessionlessTransactionIdCodec</a>. The default codec
+uses URL-safe Base64 without padding. Applications can provide their own <code>OracleSessionlessTransactionIdCodec</code> bean to sign,
+encrypt, or otherwise protect the value before it is exposed outside the process.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+The encoded transaction id is a capability to resume the suspended Oracle transaction.
+Only enable HTTP propagation for trusted workflows, protect the request with normal authentication and transport security,
+and use short transaction timeouts.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_programmatic_propagation">Programmatic Propagation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For non-HTTP workflows, inject <a href="../api/io/micronaut/transaction/jdbc/oracle/OracleSessionlessTransactionPropagationOperations.html">OracleSessionlessTransactionPropagationOperations</a> and create
+an explicit propagation scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export
+and import the encoded transaction id itself.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">SuspendedSeat suspendedSeat = transactionPropagationOperations.withPropagation(() -&gt; {
+    Long seatId = bookingService.holdSeat(new Seat("JU502", "3a", "msid"));
+    String transactionId = transactionPropagationOperations.currentTransactionId().orElseThrow();
+    return new SuspendedSeat(seatId, transactionId);
+});
+
+transactionPropagationOperations.withPropagation(suspendedSeat.transactionId(), () -&gt; {
+    bookingService.ticketSeat(suspendedSeat.seatId());
+    return null;
+});</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first <code>withPropagation</code> call creates an empty propagation state. After the <code>SUSPEND</code> method returns,
+<code>currentTransactionId()</code> exposes the encoded transaction id from that state. The second <code>withPropagation(transactionId, &#8230;&#8203;)</code>
+call creates a state that already contains the id, so the <code>REQUIRES_SUSPENDED</code> method can resume and complete the transaction.</p>
+</div>
+<div class="paragraph">
+<p>The programmatic propagation scope is lexical. Code invoked in the same scope sees the same transaction id.
+A nested <code>withPropagation(&#8230;&#8203;)</code> call creates a scoped override and restores the previous state after the supplier returns.</p>
+</div>
 </div>
 </div>
 

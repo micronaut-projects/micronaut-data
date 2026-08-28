@@ -78,6 +78,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#triggerBeforeCommit()" tabindex="0">triggerBeforeCommit()</a></li>
 <li><a href="#triggerAfterCommit()" tabindex="0">triggerAfterCommit()</a></li>
 <li><a href="#triggerBeforeCompletion()" tabindex="0">triggerBeforeCompletion()</a></li>
+<li><a href="#registerResourceCommit(io.micronaut.transaction.support.TransactionResourceCommit)" tabindex="0">registerResourceCommit(TransactionResourceCommit)</a></li>
+<li><a href="#triggerResourceCommit()" tabindex="0">triggerResourceCommit()</a></li>
 <li><a href="#triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" tabindex="0">triggerAfterCompletion(TransactionSynchronization.Status)</a></li>
 <li><a href="#cleanupAfterCompletion()" tabindex="0">cleanupAfterCompletion()</a></li>
 <li><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" tabindex="0">registerSynchronization(TransactionSynchronization)</a></li>
@@ -195,32 +197,42 @@ underlying transaction, if any.</div>
 <div class="block">The variation of <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> that is always executed on the current TX invocation.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerResourceCommit(io.micronaut.transaction.support.TransactionResourceCommit)" class="member-name-link">registerResourceCommit</a><wbr>(<a href="../support/TransactionResourceCommit.html" title="interface in io.micronaut.transaction.support">TransactionResourceCommit</a>&nbsp;resourceCommit)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Registers vendor-specific work for the resource commit boundary.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerSynchronization</a><wbr>(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Register a new transaction synchronization for the current state.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setGlobalRollbackOnly()" class="member-name-link">setGlobalRollbackOnly</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setGlobalRollbackOnly()" class="member-name-link">setGlobalRollbackOnly</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set global rollback only.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRollbackOnly()" class="member-name-link">setRollbackOnly</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRollbackOnly()" class="member-name-link">setRollbackOnly</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the transaction rollback-only.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerAfterCommit()" class="member-name-link">triggerAfterCommit</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">triggerAfterCompletion</a><wbr>(<a href="../support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerAfterCommit()" class="member-name-link">triggerAfterCommit</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerBeforeCommit()" class="member-name-link">triggerBeforeCommit</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">triggerAfterCompletion</a><wbr>(<a href="../support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerBeforeCompletion()" class="member-name-link">triggerBeforeCompletion</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerBeforeCommit()" class="member-name-link">triggerBeforeCommit</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerBeforeCompletion()" class="member-name-link">triggerBeforeCompletion</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#triggerResourceCommit()" class="member-name-link">triggerResourceCommit</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Runs a registered resource commit action.</div>
+</div>
 </div>
 </div>
 </div>
@@ -406,6 +418,38 @@ whether it has already been committed or rolled back.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="InternalTransaction.html#triggerBeforeCompletion()">triggerBeforeCompletion</a></code>&nbsp;in interface&nbsp;<code><a href="InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="#type-param-C" title="type parameter in AbstractInternalTransaction">C</a>&gt;</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="registerResourceCommit(io.micronaut.transaction.support.TransactionResourceCommit)">
+<h3>registerResourceCommit</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">registerResourceCommit</span><wbr><span class="parameters">(<a href="../support/TransactionResourceCommit.html" title="interface in io.micronaut.transaction.support">TransactionResourceCommit</a>&nbsp;resourceCommit)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="InternalTransaction.html#registerResourceCommit(io.micronaut.transaction.support.TransactionResourceCommit)">InternalTransaction</a></code></span></div>
+<div class="block">Registers vendor-specific work for the resource commit boundary.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="InternalTransaction.html#registerResourceCommit(io.micronaut.transaction.support.TransactionResourceCommit)">registerResourceCommit</a></code>&nbsp;in interface&nbsp;<code><a href="InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="#type-param-C" title="type parameter in AbstractInternalTransaction">C</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>resourceCommit</code> - The resource commit callback</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="triggerResourceCommit()">
+<h3>triggerResourceCommit</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">triggerResourceCommit</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="InternalTransaction.html#triggerResourceCommit()">InternalTransaction</a></code></span></div>
+<div class="block">Runs a registered resource commit action.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="InternalTransaction.html#triggerResourceCommit()">triggerResourceCommit</a></code>&nbsp;in interface&nbsp;<code><a href="InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="#type-param-C" title="type parameter in AbstractInternalTransaction">C</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd><code>true</code> when a resource commit action was registered and executed</dd>
 </dl>
 </div>
 </section>

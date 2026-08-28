@@ -231,8 +231,10 @@ loadScripts(document, 'script');</script>
 <li><a href="io/micronaut/transaction/interceptor/annotation/package-tree.html">io.micronaut.transaction.interceptor.annotation</a>, </li>
 <li><a href="io/micronaut/transaction/jdbc/package-tree.html">io.micronaut.transaction.jdbc</a>, </li>
 <li><a href="io/micronaut/transaction/jdbc/exceptions/package-tree.html">io.micronaut.transaction.jdbc.exceptions</a>, </li>
+<li><a href="io/micronaut/transaction/jdbc/oracle/package-tree.html">io.micronaut.transaction.jdbc.oracle</a>, </li>
 <li><a href="io/micronaut/transaction/reactive/package-tree.html">io.micronaut.transaction.reactive</a>, </li>
 <li><a href="io/micronaut/transaction/recovery/package-tree.html">io.micronaut.transaction.recovery</a>, </li>
+<li><a href="io/micronaut/transaction/sessionless/package-tree.html">io.micronaut.transaction.sessionless</a>, </li>
 <li><a href="io/micronaut/transaction/support/package-tree.html">io.micronaut.transaction.support</a>, </li>
 <li><a href="io/micronaut/transaction/sync/package-tree.html">io.micronaut.transaction.sync</a>, </li>
 <li><a href="io/micronaut/transaction/test/package-tree.html">io.micronaut.transaction.test</a></li>
@@ -283,7 +285,11 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></li>
 </ul>
 </li>
-<li class="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractDataSourceTransactionManagerCondition.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractDataSourceTransactionManagerCondition</a> (implements io.micronaut.context.condition.Condition)</li>
+<li class="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractDataSourceTransactionManagerCondition.html" class="type-name-link" title="class in io.micronaut.transaction.support">AbstractDataSourceTransactionManagerCondition</a> (implements io.micronaut.context.condition.Condition)
+<ul>
+<li class="circle">io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/JdbcTransactionManagerCondition.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc">JdbcTransactionManagerCondition</a></li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" class="type-name-link" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a>&lt;RS,<wbr>ID&gt; (implements io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;RS,<wbr>IDX&gt;)
 <ul>
 <li class="circle">io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareCallableResultReader.html" class="type-name-link" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareCallableResultReader</a></li>
@@ -1160,6 +1166,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" class="type-name-link" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.transaction.jdbc.oracle.<a href="io/micronaut/transaction/jdbc/oracle/OracleSessionlessTransactionHttpConfiguration.html" class="type-name-link" title="class in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionHttpConfiguration</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Order.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Order</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Order_.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Order_</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/OrderPk_.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">OrderPk_</a></li>
@@ -2837,6 +2844,8 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" class="type-name-link" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></li>
+<li class="circle">io.micronaut.transaction.jdbc.oracle.<a href="io/micronaut/transaction/jdbc/oracle/OracleSessionlessTransactionIdCodec.html" class="type-name-link" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionIdCodec</a></li>
+<li class="circle">io.micronaut.transaction.jdbc.oracle.<a href="io/micronaut/transaction/jdbc/oracle/OracleSessionlessTransactionPropagationOperations.html" class="type-name-link" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionPropagationOperations</a></li>
 <li class="circle">io.micronaut.core.order.Ordered
 <ul>
 <li class="circle">io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionCapabilities.html" class="type-name-link" title="interface in io.micronaut.data.connection">ConnectionCapabilities</a></li>
@@ -3042,6 +3051,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.document.serde.<a href="io/micronaut/data/document/serde/OneRelationSerializer.html" class="type-name-link" title="interface in io.micronaut.data.document.serde">OneRelationSerializer</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.transaction.sessionless.<a href="io/micronaut/transaction/sessionless/SessionlessTransactionHandler.html" class="type-name-link" title="interface in io.micronaut.transaction.sessionless">SessionlessTransactionHandler</a></li>
 <li class="circle">io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/SimpleBookRepository.html" class="type-name-link" title="interface in io.micronaut.data.tck.repositories">SimpleBookRepository</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.html" class="type-name-link" title="interface in io.micronaut.data.model">Sort</a>
 <ul>
@@ -3087,6 +3097,7 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperationsRegistry.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionOperationsRegistry</a></li>
+<li class="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionResourceCommit.html" class="type-name-link" title="interface in io.micronaut.transaction.support">TransactionResourceCommit</a></li>
 <li class="circle">jakarta.persistence.TupleElement&lt;X&gt;
 <ul>
 <li class="circle">jakarta.persistence.criteria.Selection&lt;X&gt;
@@ -3579,6 +3590,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.runtime.multitenancy.<a href="io/micronaut/data/runtime/multitenancy/MultiTenancyMode.html" class="type-name-link" title="enum class in io.micronaut.data.runtime.multitenancy">MultiTenancyMode</a></li>
 <li class="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Priority.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></li>
 <li class="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Recoverable.OutcomePolicy.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Recoverable.OutcomePolicy</a></li>
+<li class="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.Sessionless.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></li>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" class="type-name-link" title="enum class in io.micronaut.data.model">Pageable.Mode</a></li>
 <li class="circle">io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Pet.PetType.html" class="type-name-link" title="enum class in io.micronaut.data.document.tck.entities">Pet.PetType</a></li>
 <li class="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.PetType.html" class="type-name-link" title="enum class in io.micronaut.data.tck.entities">Pet.PetType</a></li>

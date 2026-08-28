@@ -60,6 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#field-detail" tabindex="0">Field Details</a>
 <ol class="toc-list">
 <li><a href="#ORACLE_PRIORITY" tabindex="0">ORACLE_PRIORITY</a></li>
+<li><a href="#ORACLE_SESSIONLESS_MODE" tabindex="0">ORACLE_SESSIONLESS_MODE</a></li>
 </ol>
 </li>
 <li><a href="#annotation-interface-element-detail" tabindex="0">Element Details</a>
@@ -74,6 +75,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#noRollbackFor()" tabindex="0">noRollbackFor</a></li>
 <li><a href="#name()" tabindex="0">name</a></li>
 <li><a href="#priority()" tabindex="0">priority</a></li>
+<li><a href="#sessionless()" tabindex="0">sessionless</a></li>
 </ol>
 </li>
 </ol>
@@ -90,7 +92,7 @@ loadScripts(document, 'script');</script>
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Retention.html" title="class or interface in java.lang.annotation" class="external-link">@Retention</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/RetentionPolicy.html#RUNTIME" title="class or interface in java.lang.annotation" class="external-link">RUNTIME</a>)
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Target.html" title="class or interface in java.lang.annotation" class="external-link">@Target</a>({<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#ANNOTATION_TYPE" title="class or interface in java.lang.annotation" class="external-link">ANNOTATION_TYPE</a>,<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#METHOD" title="class or interface in java.lang.annotation" class="external-link">METHOD</a>,<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#TYPE" title="class or interface in java.lang.annotation" class="external-link">TYPE</a>})
 </span><span class="modifiers">public @interface </span><span class="element-name type-name-label">OracleTransactional</span></div>
-<div class="block">Oracle-specific transactional annotation that applies Oracle transaction priority.</div>
+<div class="block">Oracle-specific transactional annotation that applies Oracle transaction options.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.0</dd>
@@ -120,6 +122,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="block">Oracle-specific companion annotation for ambiguous commit recovery.</div>
 </div>
+<div class="col-first even-row-color"><code>static enum&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="OracleTransactional.Sessionless.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Sessionless transaction mode for Oracle JDBC transactions.</div>
+</div>
 </div>
 </section>
 </li>
@@ -136,6 +143,11 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><code><a href="#ORACLE_PRIORITY" class="member-name-link">ORACLE_PRIORITY</a></code></div>
 <div class="col-last even-row-color">
 <div class="block">Transaction definition property used to store Oracle transaction priority.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ORACLE_SESSIONLESS_MODE" class="member-name-link">ORACLE_SESSIONLESS_MODE</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Transaction definition property used to store Oracle sessionless transaction mode.</div>
 </div>
 </div>
 </section>
@@ -184,19 +196,24 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Defines the exceptions that will result in a rollback.</div>
 </div>
-<div class="col-first odd-row-color"><code>int</code></div>
-<div class="col-second odd-row-color"><code><a href="#timeout()" class="member-name-link">timeout</a></code></div>
+<div class="col-first odd-row-color"><code><a href="OracleTransactional.Sessionless.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#sessionless()" class="member-name-link">sessionless</a></code></div>
 <div class="col-last odd-row-color">
+<div class="block">The desired Oracle sessionless transaction mode.</div>
+</div>
+<div class="col-first even-row-color"><code>int</code></div>
+<div class="col-second even-row-color"><code><a href="#timeout()" class="member-name-link">timeout</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The timeout for this transaction.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#transactionManager()" class="member-name-link">transactionManager</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#transactionManager()" class="member-name-link">transactionManager</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">A qualifier value for the specified transaction.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#value()" class="member-name-link">value</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#value()" class="member-name-link">value</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Alias for <a href="#transactionManager()"><code>transactionManager()</code></a>.</div>
 </div>
 </div>
@@ -222,6 +239,25 @@ loadScripts(document, 'script');</script>
 <dd>
 <ul class="tag-list">
 <li><a href="../../../../constant-values.html#io.micronaut.transaction.annotation.OracleTransactional.ORACLE_PRIORITY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ORACLE_SESSIONLESS_MODE">
+<h3>ORACLE_SESSIONLESS_MODE</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">ORACLE_SESSIONLESS_MODE</span></div>
+<div class="block">Transaction definition property used to store Oracle sessionless transaction mode.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>5.2.0</dd>
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../../constant-values.html#io.micronaut.transaction.annotation.OracleTransactional.ORACLE_SESSIONLESS_MODE">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -331,7 +367,10 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@AliasFor(annotation=<a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a>.class,
           member="timeout")
 </span><span class="return-type">int</span>&nbsp;<span class="element-name">timeout</span></div>
-<div class="block">The timeout for this transaction.</div>
+<div class="block">The timeout for this transaction.
+<p>When <a href="#sessionless()"><code>sessionless()</code></a> is <a href="OracleTransactional.Sessionless.html#SUSPEND"><code>OracleTransactional.Sessionless.SUSPEND</code></a>, this timeout is passed to
+Oracle when the sessionless transaction is started. If no timeout is specified, the Oracle
+JDBC driver and database defaults apply.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The timeout</dd>
@@ -432,6 +471,27 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Default:</dt>
 <dd><code>HIGH</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="sessionless()">
+<h3>sessionless</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="return-type"><a href="OracleTransactional.Sessionless.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></span>&nbsp;<span class="element-name">sessionless</span></div>
+<div class="block">The desired Oracle sessionless transaction mode.
+
+<p>A sessionless mode cannot be combined with <a href="OracleTransactional.Recoverable.html" title="annotation interface in io.micronaut.transaction.annotation"><code>OracleTransactional.Recoverable</code></a>.</p></div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The sessionless transaction mode</dd>
+<dt>Since:</dt>
+<dd>5.2.0</dd>
+</dl>
+<dl class="notes">
+<dt>Default:</dt>
+<dd><code>NONE</code></dd>
 </dl>
 </div>
 </section>

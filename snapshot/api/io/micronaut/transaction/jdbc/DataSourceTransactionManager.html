@@ -59,12 +59,14 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
+<li><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List,io.micronaut.transaction.sessionless.SessionlessTransactionHandler)" tabindex="0">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager, List, SessionlessTransactionHandler)</a></li>
 <li><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List)" tabindex="0">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager, List)</a></li>
 <li><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" tabindex="0">DataSourceTransactionManager(DataSource, ConnectionOperations, SynchronousConnectionManager)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" tabindex="0">supportsSessionlessTransactions(TransactionDefinition)</a></li>
 <li><a href="#getDataSource()" tabindex="0">getDataSource()</a></li>
 <li><a href="#setEnforceReadOnly(boolean)" tabindex="0">setEnforceReadOnly(boolean)</a></li>
 <li><a href="#isEnforceReadOnly()" tabindex="0">isEnforceReadOnly()</a></li>
@@ -103,7 +105,7 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
 @EachBean(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>.class)
-@Requires(condition=io.micronaut.transaction.jdbc.JdbcTransactionManagerCondition.class)
+@Requires(condition=<a href="JdbcTransactionManagerCondition.html" title="class in io.micronaut.transaction.jdbc">JdbcTransactionManagerCondition</a>.class)
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">DataSourceTransactionManager</span>
 <span class="extends-implements">extends <a href="../support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</span></div>
 <div class="block">The <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link"><code>DataSource</code></a> transaction manager.
@@ -146,6 +148,14 @@ Partially based on https://github.com/spring-projects/spring-framework/blob/main
  @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../support/TransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">TransactionExecutionListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&gt;&nbsp;transactionExecutionListeners)</code></div>
 <div class="col-last odd-row-color">
+<div class="block">Create a new DataSourceTransactionManager instance.</div>
+</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List,io.micronaut.transaction.sessionless.SessionlessTransactionHandler)" class="member-name-link">DataSourceTransactionManager</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
+ <a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
+ @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../support/TransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">TransactionExecutionListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&gt;&nbsp;transactionExecutionListeners,
+ @Nullable <a href="../sessionless/SessionlessTransactionHandler.html" title="interface in io.micronaut.transaction.sessionless">SessionlessTransactionHandler</a>&nbsp;sessionlessTransactionHandler)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Create a new DataSourceTransactionManager instance.</div>
 </div>
 </div>
@@ -218,6 +228,9 @@ definition.</div>
 through an explicit statement on the transactional connection:
 "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">supportsSessionlessTransactions</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -229,7 +242,7 @@ through an explicit statement on the transactional connection:
 <code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" title="commit(TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)" title="determineTimeout(TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="doExecute(TransactionDefinition, TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)" title="doResume(DefaultTransactionStatus)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)" title="doSuspend(DefaultTransactionStatus)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" title="getConnectionDefinition(TransactionDefinition)">getConnectionDefinition</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" title="getTransaction(TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#hasConnection()" title="hasConnection()">hasConnection</a>, <a href="../support/AbstractTransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)" title="managesTransaction(TransactionStatus)">managesTransaction</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" title="rollback(TransactionStatus)">rollback</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations">Methods inherited from class&nbsp;<a href="../support/AbstractPropagatedStatusTransactionOperations.html#method-summary" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></h3>
-<code><a href="../support/AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="execute(TransactionDefinition, TransactionCallback)">execute</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()" title="findTransactionStatus()">findTransactionStatus</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatusInternal()" title="findTransactionStatusInternal()">findTransactionStatusInternal</a></code></div>
+<code><a href="../support/AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" title="execute(TransactionDefinition, TransactionCallback)">execute</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()" title="findTransactionStatus()">findTransactionStatus</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatusInternal()" title="findTransactionStatusInternal()">findTransactionStatusInternal</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#validateTransactionDefinition(io.micronaut.transaction.TransactionDefinition)" title="validateTransactionDefinition(TransactionDefinition)">validateTransactionDefinition</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -248,11 +261,35 @@ through an explicit statement on the transactional connection:
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List)">
+<section class="detail" id="&lt;init&gt;(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List,io.micronaut.transaction.sessionless.SessionlessTransactionHandler)">
 <h3>DataSourceTransactionManager</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Inject
 </span><span class="modifiers">public</span>&nbsp;<span class="element-name">DataSourceTransactionManager</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
+ @Parameter
+ <a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
+ @Parameter
+ @Nullable <a href="../../data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;synchronousConnectionManager,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../support/TransactionExecutionListener.html" title="interface in io.micronaut.transaction.support">TransactionExecutionListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&gt;&nbsp;transactionExecutionListeners,
+ @Parameter
+ @Nullable <a href="../sessionless/SessionlessTransactionHandler.html" title="interface in io.micronaut.transaction.sessionless">SessionlessTransactionHandler</a>&nbsp;sessionlessTransactionHandler)</span></div>
+<div class="block">Create a new DataSourceTransactionManager instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dataSource</code> - The JDBC DataSource to manage transactions for</dd>
+<dd><code>connectionOperations</code> - The connection operations</dd>
+<dd><code>synchronousConnectionManager</code> - The synchronous connection operations</dd>
+<dd><code>transactionExecutionListeners</code> - The transaction execution listeners</dd>
+<dd><code>sessionlessTransactionHandler</code> - The sessionless transaction handler for this datasource, if any</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager,java.util.List)">
+<h3>DataSourceTransactionManager</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DataSourceTransactionManager</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
  @Parameter
  <a href="../../data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
  @Parameter
@@ -296,6 +333,22 @@ through an explicit statement on the transactional connection:
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)">
+<h3>supportsSessionlessTransactions</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsSessionlessTransactions</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractPropagatedStatusTransactionOperations.html#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)">supportsSessionlessTransactions</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dt>Returns:</dt>
+<dd>Whether this transaction manager supports the requested sessionless transaction mode.</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="getDataSource()">
 <h3>getDataSource</h3>

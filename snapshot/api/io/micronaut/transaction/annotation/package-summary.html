@@ -90,7 +90,7 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color class-summary class-summary-tab6"><a href="OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab6">
-<div class="block">Oracle-specific transactional annotation that applies Oracle transaction priority.</div>
+<div class="block">Oracle-specific transactional annotation that applies Oracle transaction options.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab3"><a href="OracleTransactional.Priority.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Priority</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab3">
@@ -104,20 +104,24 @@ to use enums, SLF4J and decoupling from Spring.</div>
 <div class="col-last odd-row-color class-summary class-summary-tab3">
 <div class="block">Policy used when the outcome cannot be determined.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab6"><a href="ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="OracleTransactional.Sessionless.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
+<div class="block">Sessionless transaction mode for Oracle JDBC transactions.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="ReadOnly.html" title="annotation interface in io.micronaut.transaction.annotation">ReadOnly</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Stereotype annotation for demarcating a read-only transaction.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab6">
+<div class="col-first even-row-color class-summary class-summary-tab6"><a href="Transactional.html" title="annotation interface in io.micronaut.transaction.annotation">Transactional</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab6">
 <div class="block">Micronaut alternative <code>jakarta.transaction.Transactional</code> annotation.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab6"><a href="TransactionalEventListener.html" title="annotation interface in io.micronaut.transaction.annotation">TransactionalEventListener</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab6">
+<div class="col-first odd-row-color class-summary class-summary-tab6"><a href="TransactionalEventListener.html" title="annotation interface in io.micronaut.transaction.annotation">TransactionalEventListener</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab6">
 <div class="block">Largely based on the similar annotation in Spring.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="TransactionalEventListener.TransactionPhase.html" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="TransactionalEventListener.TransactionPhase.html" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">The phase at which a transactional event listener applies.</div>
 </div>
 </div>

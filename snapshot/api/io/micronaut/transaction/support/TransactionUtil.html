@@ -59,6 +59,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" tabindex="0">getTransactionDefinition(String, AnnotationMetadataProvider)</a></li>
 <li><a href="#getOraclePriority(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getOraclePriority(TransactionDefinition)</a></li>
+<li><a href="#getOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getOracleSessionlessMode(TransactionDefinition)</a></li>
+<li><a href="#validateOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition,boolean)" tabindex="0">validateOracleSessionlessMode(TransactionDefinition, boolean)</a></li>
 </ol>
 </li>
 </ol>
@@ -104,11 +106,22 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Resolves Oracle transaction priority from a transaction definition.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" class="member-name-link">getTransactionDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- io.micronaut.core.annotation.AnnotationMetadataProvider&nbsp;annotationMetadataProvider)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="../annotation/OracleTransactional.Sessionless.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getOracleSessionlessMode</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Resolves Oracle sessionless transaction mode from a transaction definition.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" class="member-name-link">getTransactionDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ io.micronaut.core.annotation.AnnotationMetadataProvider&nbsp;annotationMetadataProvider)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Creates a transaction definition from a given name and annotation metadata provider.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition,boolean)" class="member-name-link">validateOracleSessionlessMode</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ boolean&nbsp;supported)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Validates whether a transaction definition that uses Oracle sessionless transaction mode is supported.</div>
 </div>
 </div>
 </div>
@@ -155,6 +168,36 @@ loadScripts(document, 'script');</script>
 <dd><code>definition</code> - The transaction definition</dd>
 <dt>Returns:</dt>
 <dd>The Oracle transaction priority, or <code>null</code> if none is present</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition)">
+<h3>getOracleSessionlessMode</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">@Nullable <a href="../annotation/OracleTransactional.Sessionless.html" title="enum class in io.micronaut.transaction.annotation">OracleTransactional.Sessionless</a></span>&nbsp;<span class="element-name">getOracleSessionlessMode</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="block">Resolves Oracle sessionless transaction mode from a transaction definition.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dt>Returns:</dt>
+<dd>The Oracle sessionless transaction mode, or <code>null</code> if none is present</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="validateOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition,boolean)">
+<h3>validateOracleSessionlessMode</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateOracleSessionlessMode</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ boolean&nbsp;supported)</span></div>
+<div class="block">Validates whether a transaction definition that uses Oracle sessionless transaction mode is supported.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>supported</code> - Whether the transaction manager supports Oracle sessionless transactions</dd>
 </dl>
 </div>
 </section>
