@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.transaction.jdbc;
+package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.transaction.support.AbstractDataSourceTransactionManagerCondition;
 
 /**
- * Matches when the datasource is managed by the Micronaut JDBC transaction manager.
+ * Work performed at the final resource commit boundary.
  *
  * @since 5.2
  */
 @Internal
-@Introspected
-public final class JdbcTransactionManagerCondition extends AbstractDataSourceTransactionManagerCondition {
+@FunctionalInterface
+public interface TransactionResourceCommit {
 
-    @Override
-    protected String getTransactionManagerName() {
-        return "jdbc";
-    }
-
+    /**
+     * Performs the resource action that replaces the transaction manager's normal commit.
+     */
+    void commit();
 }
