@@ -157,7 +157,11 @@ final class JakartaDataConstraintConverter<E> implements TypeConverter<Specifica
         if (byPropertyName.isPresent()) {
             String propertyName = byPropertyName.get();
             if (propertyName.equals(By.ID)) {
-                return ((PersistentEntityRoot<E>) root).id();
+                if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
+                    return (Expression<V>) persistentEntityRoot.id();
+                }
+                // Providers such as Hibernate supply their own criteria root implementation
+                return root.get(runtimeEntityRegistry.get().getEntity(root.getJavaType()).getIdentity().getName());
             }
             return getPropertyByPath(root, propertyName);
         }
