@@ -99,6 +99,18 @@ class MongoIndexAdvancedOptionsResolutionSpec extends Specification {
         e.message.contains('must use the same defaultLanguage option')
     }
 
+    void 'fails for mixed specified text options regardless property order'() {
+        when:
+        MongoEntityIndexes.create(getRuntimePersistentEntity(entityType))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains('must use the same defaultLanguage option')
+
+        where:
+        entityType << [TextLanguageUnsetThenSetEntity, TextLanguageSetThenUnsetEntity]
+    }
+
     void 'resolves commitQuorum for simple index'() {
         when:
         def indexes = MongoEntityIndexes.create(getRuntimePersistentEntity(SimpleCommitQuorumEntity)).indexes
@@ -294,6 +306,24 @@ class InvalidTextDefaultLanguageEntity {
     String first
 
     @MongoTextIndexed(defaultLanguage = 'spanish')
+    String second
+}
+
+@MappedEntity('text_language_unset_then_set_entity')
+class TextLanguageUnsetThenSetEntity {
+    @MongoTextIndexed
+    String first
+
+    @MongoTextIndexed(defaultLanguage = 'french')
+    String second
+}
+
+@MappedEntity('text_language_set_then_unset_entity')
+class TextLanguageSetThenUnsetEntity {
+    @MongoTextIndexed(defaultLanguage = 'french')
+    String first
+
+    @MongoTextIndexed
     String second
 }
 

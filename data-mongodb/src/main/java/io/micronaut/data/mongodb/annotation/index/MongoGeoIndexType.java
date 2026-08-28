@@ -19,7 +19,7 @@ package io.micronaut.data.mongodb.annotation.index;
  * Supported MongoDB geospatial index kinds.
  *
  * @author radovanradic
- * @since 5.1.0
+ * @since 5.2.0
  */
 public enum MongoGeoIndexType {
     GEO_2D("2d"),

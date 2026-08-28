@@ -72,7 +72,7 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         given:
         def collectionDocument = new Document('name', 'events')
                 .append('options', new Document('clusteredIndex', new Document('name', 'clustered_idx').append('unique', true))
-                        .append('expireAfterSeconds', 300))
+                        .append('expireAfterSeconds', 300L))
 
         when:
         def options = AbstractMongoCollectionsCreator.toResolvedCollectionOptions(collectionDocument)
@@ -109,6 +109,20 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         index.fields()[0].kind() == 'text'
         index.defaultLanguage() == 'english'
         index.textIndexVersion() == 3
+    }
+
+    void 'resolves long ttl from index document'() {
+        given:
+        def indexDocument = new Document('name', 'ttl_idx')
+                .append('key', new Document('createdAt', 1))
+                .append('expireAfterSeconds', 60L)
+
+        when:
+        def index = AbstractMongoCollectionsCreator.toResolvedIndex(indexDocument)
+
+        then:
+        index != null
+        index.expireAfterSeconds() == 60
     }
 
     void 'builds create collection options from resolved options'() {
@@ -169,7 +183,7 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         given:
         def index = new AbstractMongoCollectionsCreator.MongoResolvedIndex(
                 'field_idx',
-                [new AbstractMongoCollectionsCreator.MongoResolvedIndexField('location.state', 1, null, null, null, null)],
+                [new AbstractMongoCollectionsCreator.MongoResolvedIndexField('description', null, 7, 'text', null, null)],
                 false,
                 false,
                 false,
@@ -197,6 +211,7 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         command.getString('comment') == 'create embedded index'
         command.get('commitQuorum') == 'majority'
         command.getList('indexes', Object).size() == 1
+        command.getList('indexes', Document)[0].get('weights', Document) == new Document('description', 7)
     }
 
     void 'converts numeric and symbolic commit quorum values'() {
@@ -269,5 +284,23 @@ class AbstractMongoCollectionsCreatorSpec extends Specification {
         collation.getString('caseFirst') == 'upper'
         collation.getString('alternate') == 'non-ignorable'
         collation.getString('maxVariable') == 'punct'
+    }
+
+    void 'matches desired string collation values against server values'() {
+        given:
+        def fields = [new AbstractMongoCollectionsCreator.MongoResolvedIndexField('name', 1, null, null, null, null)]
+        def existing = new AbstractMongoCollectionsCreator.MongoResolvedIndex(
+                'name_idx', fields, false, false, false, null, null,
+                '{ "locale": "en", "strength": 2, "caseFirst": "upper" }',
+                null, null, null, null, null, null, null, null, null, null, null
+        )
+        def desired = new AbstractMongoCollectionsCreator.MongoResolvedIndex(
+                'name_idx', fields, false, false, false, null, null,
+                '{ "locale": "en", "strength": "secondary", "caseFirst": "UPPER" }',
+                null, null, null, null, null, null, null, null, null, null, null
+        )
+
+        expect:
+        existing.matchesManagedOptions(desired)
     }
 }

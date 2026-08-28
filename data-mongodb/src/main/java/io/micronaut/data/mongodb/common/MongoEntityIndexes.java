@@ -435,44 +435,42 @@ public final class MongoEntityIndexes {
                 throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same hidden option");
             }
             String declaredComment = textAnnotation.stringValue(ATTR_COMMENT).filter(s -> !s.isEmpty()).orElse(null);
-            if (state.comment == null) {
-                state.comment = declaredComment;
-            } else if (!Objects.equals(state.comment, declaredComment)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same comment option");
-            }
             String declaredStorageEngine = parseJsonOption(textAnnotation.stringValue(ATTR_STORAGE_ENGINE).filter(s -> !s.isEmpty()).orElse(null), ATTR_STORAGE_ENGINE, entity.getName());
-            if (state.storageEngine == null) {
-                state.storageEngine = declaredStorageEngine;
-            } else if (!Objects.equals(state.storageEngine, declaredStorageEngine)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same storageEngine option");
-            }
             String declaredDefaultLanguage = textAnnotation.stringValue(ATTR_DEFAULT_LANGUAGE).filter(s -> !s.isEmpty()).orElse(null);
-            if (state.defaultLanguage == null) {
-                state.defaultLanguage = declaredDefaultLanguage;
-            } else if (!Objects.equals(state.defaultLanguage, declaredDefaultLanguage)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same defaultLanguage option");
-            }
             String declaredLanguageOverride = textAnnotation.stringValue(ATTR_LANGUAGE_OVERRIDE).filter(s -> !s.isEmpty()).orElse(null);
-            if (state.languageOverride == null) {
-                state.languageOverride = declaredLanguageOverride;
-            } else if (!Objects.equals(state.languageOverride, declaredLanguageOverride)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same languageOverride option");
-            }
             Integer declaredTextIndexVersion = textAnnotation.intValue(ATTR_TEXT_INDEX_VERSION).isPresent() && textAnnotation.intValue(ATTR_TEXT_INDEX_VERSION).getAsInt() >= 0
                     ? textAnnotation.intValue(ATTR_TEXT_INDEX_VERSION).getAsInt() : null;
             if (declaredTextIndexVersion != null && declaredTextIndexVersion <= 0) {
                 throw new IllegalStateException("Mongo text index version must be greater than zero for entity [" + entity.getName() + "]");
             }
-            if (state.textIndexVersion == null) {
-                state.textIndexVersion = declaredTextIndexVersion;
-            } else if (!Objects.equals(state.textIndexVersion, declaredTextIndexVersion)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
-            }
             String declaredCommitQuorum = textAnnotation.stringValue(ATTR_COMMIT_QUORUM).filter(s -> !s.isEmpty()).orElse(null);
-            if (state.commitQuorum == null) {
+            if (!state.optionsInitialized) {
+                state.comment = declaredComment;
+                state.storageEngine = declaredStorageEngine;
+                state.defaultLanguage = declaredDefaultLanguage;
+                state.languageOverride = declaredLanguageOverride;
+                state.textIndexVersion = declaredTextIndexVersion;
                 state.commitQuorum = declaredCommitQuorum;
-            } else if (!Objects.equals(state.commitQuorum, declaredCommitQuorum)) {
-                throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same commitQuorum option");
+                state.optionsInitialized = true;
+            } else {
+                if (!Objects.equals(state.comment, declaredComment)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same comment option");
+                }
+                if (!Objects.equals(state.storageEngine, declaredStorageEngine)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same storageEngine option");
+                }
+                if (!Objects.equals(state.defaultLanguage, declaredDefaultLanguage)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same defaultLanguage option");
+                }
+                if (!Objects.equals(state.languageOverride, declaredLanguageOverride)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same languageOverride option");
+                }
+                if (!Objects.equals(state.textIndexVersion, declaredTextIndexVersion)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same textIndexVersion option");
+                }
+                if (!Objects.equals(state.commitQuorum, declaredCommitQuorum)) {
+                    throw new IllegalStateException("Mongo text indexed fields on entity [" + entity.getName() + "] must use the same commitQuorum option");
+                }
             }
             state.fields.add(new ResolvedIndexField(toPersistedPath(associations, property), null, weight, "text", null, null));
         });
@@ -727,6 +725,7 @@ public final class MongoEntityIndexes {
 
     private static final class TextIndexState {
         private final List<ResolvedIndexField> fields = new ArrayList<>();
+        private boolean optionsInitialized;
         private @Nullable String name;
         private @Nullable Boolean hidden;
         private @Nullable String storageEngine;

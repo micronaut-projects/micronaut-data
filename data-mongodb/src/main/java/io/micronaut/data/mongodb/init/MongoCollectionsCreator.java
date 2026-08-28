@@ -21,7 +21,6 @@ import com.mongodb.client.MongoDatabase;
 import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
-import io.micronaut.context.env.Environment;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
@@ -57,12 +56,11 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
     @PostConstruct
     void initialize(BeanLocator beanLocator,
                     RuntimeEntityRegistry runtimeEntityRegistry,
-                    Environment environment,
                     List<AbstractMongoConfiguration> mongoConfigurations,
                     MongoDataConfiguration mongoDataConfiguration,
                     MongoCollectionNameProvider mongoCollectionNameProvider) {
 
-        super.initialize(runtimeEntityRegistry, environment, mongoConfigurations, mongoDataConfiguration, mongoConfiguration -> {
+        super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoDataConfiguration, mongoConfiguration -> {
             MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
             MongoDatabaseNameProvider mongoDatabaseNameProvider = getMongoFactory(MongoDatabaseNameProvider.class, beanLocator, mongoConfiguration);
             Map<String, Set<String>> databaseCollections = new HashMap<>();
@@ -74,8 +72,8 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 }
 
                 @Override
-                public MongoDatabase find(PersistentEntity persistentEntity) {
-                    return mongoClient.getDatabase(mongoDatabaseNameProvider.provide(persistentEntity));
+                public MongoDatabase find(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass) {
+                    return mongoClient.getDatabase(mongoDatabaseNameProvider.provide(persistentEntity, repositoryClass));
                 }
 
                 @Override

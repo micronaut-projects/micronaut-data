@@ -31,27 +31,31 @@ import io.micronaut.configuration.mongo.core.AbstractMongoConfiguration;
 import io.micronaut.configuration.mongo.core.DefaultMongoConfiguration;
 import io.micronaut.configuration.mongo.core.NamedMongoConfiguration;
 import io.micronaut.context.BeanLocator;
-import io.micronaut.context.env.Environment;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.mongodb.annotation.index.MongoClusteredIndex;
 import io.micronaut.data.mongodb.common.MongoEntityIndexes;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration.IndexCreationFailurePolicy;
 import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -63,6 +67,8 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -126,14 +132,12 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
      * Initialize the collections.
      *
      * @param runtimeEntityRegistry      The entity registry
-     * @param environment                The environment
      * @param mongoConfigurations        The configuration
      * @param mongoDataConfiguration     The Mongo data configuration
      * @param databaseOperationsProvider The database provider
      * @param mongoCollectionNameProvider The Mongo collection name provider
      */
     protected void initialize(RuntimeEntityRegistry runtimeEntityRegistry,
-                              Environment environment,
                               List<AbstractMongoConfiguration> mongoConfigurations,
                               MongoDataConfiguration mongoDataConfiguration,
                               DatabaseOperationsProvider<Dtbs> databaseOperationsProvider,
@@ -147,7 +151,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
 
         for (AbstractMongoConfiguration mongoConfiguration : mongoConfigurations) {
-            List<String> packageNames = environment.getProperty("mongodb.package-names", List.class).orElseGet(List::of);
+            Collection<String> packageNames = mongoConfiguration.getPackageNames();
             Collection<BeanIntrospection<Object>> introspections;
             if (CollectionUtils.isNotEmpty(packageNames)) {
                 introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packageNames.toArray(new String[0]));
@@ -161,58 +165,83 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     .toArray(PersistentEntity[]::new);
 
             DatabaseOperations<Dtbs> databaseOperations = databaseOperationsProvider.get(mongoConfiguration);
+            // Repository-aware routing is required for index bootstrap. Preserve the legacy
+            // entity-only database lookup when collection creation is enabled by itself.
+            Map<Class<?>, List<Class<?>>> repositoriesByEntity = createIndexes
+                    ? resolveRepositoriesByEntity(runtimeEntityRegistry, mongoConfiguration)
+                    : Map.of();
             int indexProcessedCount = 0;
             int indexFailureCount = 0;
             String databaseName = "<unknown>";
 
             for (PersistentEntity entity : entities) {
-                Dtbs database = databaseOperations.find(entity);
-                databaseName = databaseOperations.getDatabaseName(database);
-                Set<String> collections = databaseOperations.listCollectionNames(database);
-                String persistedName = mongoCollectionNameProvider.provide(entity);
-                MongoResolvedCollectionOptions desiredCollectionOptions = resolveCollectionOptions(entity);
-                boolean collectionExists = collections.contains(persistedName);
-                if (collectionExists && desiredCollectionOptions != null) {
-                    MongoResolvedCollectionOptions existingCollectionOptions = databaseOperations.getCollectionOptions(database, persistedName);
-                    if (!desiredCollectionOptions.matches(existingCollectionOptions)) {
-                        throw new IllegalStateException("Conflicting existing MongoDB collection options for entity [" + entity.getName() + "] and collection [" + persistedName + "]: desired " + desiredCollectionOptions.describe() + ", existing " + (existingCollectionOptions == null ? "null" : existingCollectionOptions.describe()));
+                Map<String, Dtbs> databases = new LinkedHashMap<>();
+                List<Class<?>> repositoryClasses = repositoriesByEntity.get(((RuntimePersistentEntity<?>) entity).getIntrospection().getBeanType());
+                if (CollectionUtils.isEmpty(repositoryClasses)) {
+                    Dtbs database = databaseOperations.find(entity, null);
+                    databases.put(databaseOperations.getDatabaseName(database), database);
+                } else {
+                    for (Class<?> repositoryClass : repositoryClasses) {
+                        Dtbs database = databaseOperations.find(entity, repositoryClass);
+                        databases.putIfAbsent(databaseOperations.getDatabaseName(database), database);
                     }
                 }
-                if (!collectionExists && createCollections) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));
-                    }
-                    databaseOperations.createCollection(database, persistedName, desiredCollectionOptions);
-                    collections.add(persistedName);
-                }
-                if (createIndexes) {
-                    if (collectionExists || createCollections) {
-                        try {
-                            createIndexes(databaseOperations, database, entity, persistedName);
-                            indexProcessedCount++;
-                        } catch (RuntimeException e) {
-                            if (indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
-                                indexFailureCount++;
-                                LOG.warn("MongoDB index initialization failed for entity: {} in collection: {} in database: {}. Continuing due to policy {}.",
-                                        entity.getName(),
-                                        persistedName,
-                                        databaseOperations.getDatabaseName(database),
-                                        indexCreationFailurePolicy,
-                                        e);
-                            } else {
-                                throw e;
-                            }
+
+                for (Dtbs database : databases.values()) {
+                    databaseName = databaseOperations.getDatabaseName(database);
+                    Set<String> collections = databaseOperations.listCollectionNames(database);
+                    String persistedName = mongoCollectionNameProvider.provide(entity);
+                    MongoResolvedCollectionOptions desiredCollectionOptions = resolveCollectionOptions(entity);
+                    boolean collectionExists = collections.contains(persistedName);
+                    RuntimeException collectionOptionsConflict = null;
+                    if (collectionExists && desiredCollectionOptions != null) {
+                        MongoResolvedCollectionOptions existingCollectionOptions = databaseOperations.getCollectionOptions(database, persistedName);
+                        if (!desiredCollectionOptions.matches(existingCollectionOptions)) {
+                            collectionOptionsConflict = new IllegalStateException("Conflicting existing MongoDB collection options for entity [" + entity.getName() + "] and collection [" + persistedName + "]: desired " + desiredCollectionOptions.describe() + ", existing " + (existingCollectionOptions == null ? "null" : existingCollectionOptions.describe()));
                         }
-                    } else if (LOG.isDebugEnabled()) {
-                        LOG.debug("Skipping MongoDB index initialization for entity: {} in collection: {} in database: {} because collection does not exist and {} is disabled.",
-                                entity.getName(),
-                                persistedName,
-                                databaseOperations.getDatabaseName(database),
-                                MongoDataConfiguration.CREATE_COLLECTIONS_PROPERTY);
                     }
-                }
-                if (createCollections) {
-                    createJoinCollections(databaseOperations, database, collections, entity);
+                    if (collectionOptionsConflict != null && !createIndexes) {
+                        throw collectionOptionsConflict;
+                    }
+                    if (!collectionExists && createCollections) {
+                        if (LOG.isInfoEnabled()) {
+                            LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));
+                        }
+                        databaseOperations.createCollection(database, persistedName, desiredCollectionOptions);
+                        collections.add(persistedName);
+                    }
+                    if (createIndexes) {
+                        if (collectionExists || createCollections) {
+                            try {
+                                if (collectionOptionsConflict != null) {
+                                    throw collectionOptionsConflict;
+                                }
+                                createIndexes(databaseOperations, database, entity, persistedName);
+                                indexProcessedCount++;
+                            } catch (RuntimeException e) {
+                                if (indexCreationFailurePolicy == IndexCreationFailurePolicy.WARN_AND_CONTINUE) {
+                                    indexFailureCount++;
+                                    LOG.warn("MongoDB index initialization failed for entity: {} in collection: {} in database: {}. Continuing due to policy {}.",
+                                            entity.getName(),
+                                            persistedName,
+                                            databaseOperations.getDatabaseName(database),
+                                            indexCreationFailurePolicy,
+                                            e);
+                                } else {
+                                    throw e;
+                                }
+                            }
+                        } else if (LOG.isDebugEnabled()) {
+                            LOG.debug("Skipping MongoDB index initialization for entity: {} in collection: {} in database: {} because collection does not exist and {} is disabled.",
+                                    entity.getName(),
+                                    persistedName,
+                                    databaseOperations.getDatabaseName(database),
+                                    MongoDataConfiguration.CREATE_COLLECTIONS_PROPERTY);
+                        }
+                    }
+                    if (createCollections) {
+                        createJoinCollections(databaseOperations, database, collections, entity);
+                    }
                 }
             }
             if (createIndexes) {
@@ -231,6 +260,28 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 }
             }
         }
+    }
+
+    private Map<Class<?>, List<Class<?>>> resolveRepositoriesByEntity(RuntimeEntityRegistry runtimeEntityRegistry,
+                                                                      AbstractMongoConfiguration mongoConfiguration) {
+        Collection<BeanDefinition<GenericRepository>> beanDefinitions = runtimeEntityRegistry.getApplicationContext()
+                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(MongoRepository.class));
+        String server = mongoConfiguration instanceof NamedMongoConfiguration namedMongoConfiguration
+                ? namedMongoConfiguration.getServerName() : null;
+        Map<Class<?>, List<Class<?>>> repositoriesByEntity = new HashMap<>();
+        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
+            String targetServer = beanDefinition.stringValue(Repository.class).orElse(null);
+            if (targetServer != null && !targetServer.isEmpty() && !targetServer.equalsIgnoreCase(server)) {
+                continue;
+            }
+            List<Argument<?>> typeArguments = beanDefinition.getTypeArguments(GenericRepository.class);
+            if (typeArguments.isEmpty()) {
+                continue;
+            }
+            repositoriesByEntity.computeIfAbsent(typeArguments.get(0).getType(), ignored -> new ArrayList<>())
+                    .add(beanDefinition.getBeanType());
+        }
+        return repositoriesByEntity;
     }
 
     private void createJoinCollections(DatabaseOperations<Dtbs> databaseOperations,
@@ -382,7 +433,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         return new MongoResolvedCollectionOptions(
                 clustered.getString("name"),
                 clustered.getBoolean("unique", true),
-                options.getInteger("expireAfterSeconds")
+                toInteger(options.get("expireAfterSeconds"))
         );
     }
 
@@ -397,7 +448,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 indexDocument.getBoolean("unique", false),
                 indexDocument.getBoolean("sparse", false),
                 indexDocument.getBoolean("hidden", false),
-                indexDocument.getInteger("expireAfterSeconds"),
+                toInteger(indexDocument.get("expireAfterSeconds")),
                 normalizeJsonValue(indexDocument.get("partialFilterExpression")),
                 normalizeJsonValue(indexDocument.get("collation")),
                 toInteger(indexDocument.get("bits")),
@@ -559,6 +610,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
         if (index.textIndexVersion() != null) {
             indexDocument.append("textIndexVersion", index.textIndexVersion());
+        }
+        Document weights = new Document();
+        for (MongoResolvedIndexField field : index.fields()) {
+            if (field.weight() != null) {
+                weights.append(field.path(), field.weight());
+            }
+        }
+        if (!weights.isEmpty()) {
+            indexDocument.append("weights", weights);
         }
         if (index.sphereVersion() != null) {
             indexDocument.append("2dsphereIndexVersion", index.sphereVersion());
@@ -792,12 +852,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         String getDatabaseName(Dtbs database);
 
         /**
-         * Find database that should be used for the given persistent entity.
+         * Find database that should be used for the given persistent entity and repository.
          *
          * @param persistentEntity The persistent entity
+         * @param repositoryClass The repository class, or {@code null} when the entity has no repository
          * @return The database
          */
-        Dtbs find(PersistentEntity persistentEntity);
+        Dtbs find(PersistentEntity persistentEntity, @Nullable Class<?> repositoryClass);
 
         /**
          * List collections in the given database.
@@ -932,7 +993,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 return false;
             }
             try {
-                Document desired = Document.parse(desiredCollation);
+                Document desired = toCollationDocument(Document.parse(desiredCollation));
                 Document existing = Document.parse(existingCollation);
                 for (String key : desired.keySet()) {
                     if (!Objects.equals(existing.get(key), desired.get(key))) {

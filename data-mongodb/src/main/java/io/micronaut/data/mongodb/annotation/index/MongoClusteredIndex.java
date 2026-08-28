@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * Declares MongoDB clustered collection options for an entity collection.
  *
  * @author radovanradic
- * @since 5.1.0
+ * @since 5.2.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})

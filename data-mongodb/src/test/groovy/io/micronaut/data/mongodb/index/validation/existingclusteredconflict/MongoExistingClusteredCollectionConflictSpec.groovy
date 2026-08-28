@@ -39,6 +39,27 @@ class MongoExistingClusteredCollectionConflictSpec extends Specification impleme
         assert e.message.contains('clusteredIndexName')
     }
 
+    void 'continues when existing clustered collection options conflict under warn policy'() {
+        given:
+        prepareExistingClusteredCollection('existing_clustered_conflict_entities',
+                new Document('key', new Document('_id', 1))
+                        .append('name', 'different_clustered_name')
+                        .append('unique', true)
+        )
+
+        when:
+        ApplicationContext context = ApplicationContext.run(getProperties() + [
+                'micronaut.data.mongodb.create-indexes'               : 'true',
+                'micronaut.data.mongodb.create-indexes-failure-policy': 'WARN_AND_CONTINUE'
+        ])
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        context?.close()
+    }
+
     protected void prepareExistingClusteredCollection(String collectionName, Document clusteredIndex) {
         ApplicationContext preContext = ApplicationContext.run(getProperties() + [
                 'micronaut.data.mongodb.create-indexes': 'false',
