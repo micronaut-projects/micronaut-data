@@ -45,8 +45,11 @@ public final class JakartaDataOrderByMapper implements NamedAnnotationMapper {
         AnnotationValueBuilder<OrderBy> builder = AnnotationValue.builder(OrderBy.class).members(annotation.getValues());
         // Jakarta Data names the "let the database decide" constant UNSPECIFIED, Micronaut Data names it NONE
         annotation.stringValue("nullOrdering")
-            .ifPresent(nullOrdering -> builder.member("nullOrdering",
-                "UNSPECIFIED".equals(nullOrdering) ? Sort.Order.NullOrdering.NONE : Sort.Order.NullOrdering.valueOf(nullOrdering)));
+            .ifPresent(nullOrdering -> builder.member("nullOrdering", switch (nullOrdering) {
+                case "FIRST" -> Sort.Order.NullOrdering.FIRST;
+                case "LAST" -> Sort.Order.NullOrdering.LAST;
+                default -> Sort.Order.NullOrdering.NONE;
+            }));
         return List.of(builder.build());
     }
 }
