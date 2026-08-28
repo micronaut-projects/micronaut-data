@@ -174,6 +174,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     }
 
     private void applyPageable(Limit queryLimit, Sort sort, List<Bson> pipeline) {
+        if (queryLimit.isLimited()) {
+            // The criteria query builder bakes the limit into the pipeline from the very same
+            // parameter we are about to apply, so drop its stages rather than paginating twice
+            removeTrailingPaginationStages(pipeline);
+        }
         if (sort.isSorted()) {
             BsonDocument existingSortBson = null;
             for (Bson p : pipeline) {
@@ -205,6 +210,23 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
             if (maxResults > 0) {
                 pipeline.add(new BsonDocument().append("$limit", new BsonInt32(maxResults)));
             }
+        }
+    }
+
+    /**
+     * Removes the {@code $skip} and {@code $limit} stages the query builder appended to the end of the
+     * pipeline. Only trailing stages are removed so that pagination inside a user supplied aggregation
+     * is left alone.
+     *
+     * @param pipeline The pipeline
+     */
+    private void removeTrailingPaginationStages(List<Bson> pipeline) {
+        for (int i = pipeline.size() - 1; i >= 0; i--) {
+            BsonDocument stage = pipeline.get(i).toBsonDocument();
+            if (stage == null || !(stage.containsKey("$skip") || stage.containsKey("$limit"))) {
+                return;
+            }
+            pipeline.remove(i);
         }
     }
 

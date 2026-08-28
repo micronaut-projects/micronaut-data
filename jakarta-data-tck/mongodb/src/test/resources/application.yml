@@ -7,3 +7,8 @@ micronaut:
 
 
 mongodb.uuid-representation: STANDARD
+
+test-resources:
+  containers:
+    mongodb:
+      image-name: mongo:7.0
