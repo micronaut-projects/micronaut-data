@@ -123,6 +123,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
+    private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
@@ -167,29 +168,38 @@ public final class MongoQueryBuilder implements QueryBuilder {
         List<Order> orders = selectQueryDefinition.order();
         if (!orders.isEmpty()) {
             Map<String, Object> sortObj = new LinkedHashMap<>();
+            Map<String, Object> computedFields = new LinkedHashMap<>();
             Map<String, Object> nullRankFields = new LinkedHashMap<>();
-            orders.forEach(order -> {
-                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath = requireProperty(order.getExpression());
-                PersistentProperty property = persistentPropertyPath.getProperty();
-                PersistentEntity owner = property.getOwner();
-                if (owner.hasIdentity()) {
-                    PersistentProperty identity = owner.getIdentity();
-                    String fieldName = identity.equals(property) ? MONGO_ID_FIELD : persistentPropertyPath.getPathAsString();
-                    Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-                    if (nullPrecedence != Nulls.NONE) {
-                        String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
-                        nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
-                        sortObj.put(rankField, 1);
-                    }
-                    sortObj.put(fieldName, order.isAscending() ? 1 : -1);
+            for (Order order : orders) {
+                Expression<?> orderExpression = order.getExpression();
+                String fieldName;
+                if (orderExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                    fieldName = asSortFieldName(persistentPropertyPath);
+                } else {
+                    // Ordering by a computed expression, which MongoDB can only do against a field
+                    fieldName = SORT_EXPRESSION_FIELD_PREFIX + computedFields.size();
+                    computedFields.put(fieldName, asAggregationExpression(orderExpression, queryState));
                 }
-            });
+                Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+                if (nullPrecedence != Nulls.NONE) {
+                    String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
+                    nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
+                    sortObj.put(rankField, 1);
+                }
+                sortObj.put(fieldName, order.isAscending() ? 1 : -1);
+            }
+            if (!computedFields.isEmpty()) {
+                pipeline.add(Map.of("$addFields", computedFields));
+            }
             if (!nullRankFields.isEmpty()) {
+                // A separate stage, as $addFields cannot reference a field defined by the same stage
                 pipeline.add(Map.of("$addFields", nullRankFields));
             }
             pipeline.add(Map.of("$sort", sortObj));
-            if (!nullRankFields.isEmpty()) {
-                pipeline.add(Map.of("$unset", new ArrayList<>(nullRankFields.keySet())));
+            List<String> temporaryFields = new ArrayList<>(computedFields.keySet());
+            temporaryFields.addAll(nullRankFields.keySet());
+            if (!temporaryFields.isEmpty()) {
+                pipeline.add(Map.of("$unset", temporaryFields));
             }
         } else {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
@@ -221,6 +231,88 @@ public final class MongoQueryBuilder implements QueryBuilder {
             q = toJsonString(pipeline);
         }
         return QueryResult.of(q, queryState.getParameterBindings());
+    }
+
+    /**
+     * Renders a criteria expression that is ordered by into the equivalent MongoDB aggregation expression.
+     *
+     * @param expression The expression
+     * @param queryState The query state, used to bind any parameters the expression carries
+     * @return The aggregation expression
+     */
+    private Object asAggregationExpression(Expression<?> expression, QueryState queryState) {
+        if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
+            return "$" + asSortFieldName(propertyPath);
+        }
+        if (expression instanceof LiteralExpression<?> literalExpression) {
+            Object value = literalExpression.getValue();
+            if (value == null) {
+                throw new UnsupportedOperationException("Ordering by a null literal is not supported by Micronaut Data MongoDB.");
+            }
+            return value;
+        }
+        if (expression instanceof BinaryExpression<?> binaryExpression) {
+            String operator = switch (binaryExpression.getType()) {
+                case SUM -> "$add";
+                case DIFF -> "$subtract";
+                case PROD -> "$multiply";
+                case QUOT -> "$divide";
+                case CONCAT -> "$concat";
+            };
+            return Map.of(operator, List.of(
+                asAggregationExpression(binaryExpression.getLeft(), queryState),
+                asAggregationExpression(binaryExpression.getRight(), queryState)
+            ));
+        }
+        if (expression instanceof FunctionExpression<?> functionExpression) {
+            return asAggregationFunction(functionExpression, queryState);
+        }
+        if (expression instanceof BindingParameter bindingParameter) {
+            return Map.of(QUERY_PARAMETER_PLACEHOLDER, queryState.pushParameter(bindingParameter, newBindingContext(null)));
+        }
+        throw new UnsupportedOperationException("Ordering by expression: " + expression + " is not supported by Micronaut Data MongoDB.");
+    }
+
+    private Object asAggregationFunction(FunctionExpression<?> functionExpression, QueryState queryState) {
+        List<Expression<?>> arguments = functionExpression.getExpressions();
+        String name = functionExpression.getName().toUpperCase(Locale.ROOT);
+        if (arguments.size() == 2 && ("LEFT".equals(name) || "RIGHT".equals(name))) {
+            Object value = asAggregationExpression(arguments.get(0), queryState);
+            Object length = asAggregationExpression(arguments.get(1), queryState);
+            Object start = "LEFT".equals(name)
+                ? 0
+                : Map.of("$subtract", List.of(Map.of("$strLenCP", value), length));
+            return Map.of("$substrCP", List.of(value, start, length));
+        }
+        if (arguments.size() == 1) {
+            String operator = switch (name) {
+                case "LOWER" -> "$toLower";
+                case "UPPER" -> "$toUpper";
+                case "LENGTH" -> "$strLenCP";
+                default -> null;
+            };
+            if (operator != null) {
+                return Map.of(operator, asAggregationExpression(arguments.get(0), queryState));
+            }
+        }
+        throw new UnsupportedOperationException("Function: " + functionExpression.getName() + " is not supported by Micronaut Data MongoDB.");
+    }
+
+    /**
+     * Resolves the field a property path sorts on, mapping an identity property onto MongoDB's {@code _id}.
+     * A path into an association keeps its prefix, so the identity of an associated entity maps onto
+     * {@code <association>._id} rather than the root's {@code _id}.
+     *
+     * @param propertyPath The property path
+     * @return The field name to sort on
+     */
+    private String asSortFieldName(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> criteriaPath) {
+        PersistentPropertyPath propertyPath = criteriaPath.getPropertyPath();
+        StringBuilder fieldName = new StringBuilder();
+        for (Association association : propertyPath.getAssociations()) {
+            fieldName.append(getPropertyPersistName(association)).append('.');
+        }
+        return fieldName.append(getPropertyPersistName(propertyPath.getProperty())).toString();
     }
 
     /**
