@@ -41,12 +41,12 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
@@ -554,6 +554,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         for (Join<K, ?> join : root.getJoins()) {
             // First, we check if the order is for one of the joined entities
             for (Sort.Order order : sort.getOrderBy()) {
+                if (order instanceof ExpressionOrder) {
+                    // Ordering by an expression rather than by an attribute path of a joined entity
+                    continue;
+                }
                 Iterator<String> orderIterator = StringUtils.splitOmitEmptyStrings(order.getProperty(), '.').iterator();
                 if (!orderIterator.hasNext()) {
                     continue;
@@ -575,6 +579,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
         for (Sort.Order order : orders) {
+            if (order instanceof ExpressionOrder expressionOrder) {
+                selection.add(expressionOrder.toExpression(root, criteriaBuilder));
+                continue;
+            }
             // Remaining orders must be for the root entity
             Path<?> path = root;
             for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {

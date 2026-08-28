@@ -25,8 +25,8 @@ import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.jd.SpecificationConstraint;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -149,7 +149,6 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         }
         return PageRequest.ofPage(pageable.getNumber() + 1, pageable.getSize() == -1 ? Integer.MAX_VALUE : pageable.getSize(), pageable.requestTotal());
     }
-
 
     private static Sort.Order toOrder(jakarta.data.Sort<?> sort, JakartaDataRestrictionsConverter restrictionsConverter) {
         Sort.Order.Direction direction = sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC;
