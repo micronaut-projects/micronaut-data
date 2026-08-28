@@ -549,6 +549,42 @@ interface MyRepository {
         Person | 'desc'    | ["name", "someId"] | 'person_.`name` DESC,person_.`some_id` DESC'
     }
 
+    @Unroll
+    void "test encode order by with null ordering #nullOrdering"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", direction, false, nullOrdering))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == " ORDER BY ${statement}"
+
+        where:
+        direction                     | nullOrdering                        | statement
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.FIRST       | 'person_.`name` ASC NULLS FIRST'
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.LAST        | 'person_.`name` ASC NULLS LAST'
+        Sort.Order.Direction.DESC     | Sort.Order.NullOrdering.FIRST       | 'person_.`name` DESC NULLS FIRST'
+        Sort.Order.Direction.DESC     | Sort.Order.NullOrdering.LAST        | 'person_.`name` DESC NULLS LAST'
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.NONE        | 'person_.`name` ASC'
+    }
+
+    void "test encode order by with null ordering only on the orders that ask for it"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(
+                new Sort.Order("name", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.LAST),
+                Sort.Order.desc("someId")
+        )
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == ' ORDER BY person_.`name` ASC NULLS LAST,person_.`some_id` DESC'
+    }
+
     void 'test encode order by uppercase mapped column'() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Owner)

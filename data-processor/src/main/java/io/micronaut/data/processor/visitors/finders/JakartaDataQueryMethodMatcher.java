@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
@@ -41,6 +42,7 @@ import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
@@ -298,7 +300,14 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
         }
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         List<Selection<?>> selections = projections.stream()
-            .map(projection -> (Selection<?>) root.get(projection))
+            .map(projection -> {
+                // A projection may name a path into an embedded or associated entity
+                Path<?> path = root;
+                for (String segment : StringUtils.splitOmitEmptyStrings(projection, '.')) {
+                    path = path.get(segment);
+                }
+                return (Selection<?>) path;
+            })
             .collect(Collectors.toList());
         if (selections.size() == 1) {
             criteriaQuery.select((Selection) selections.getFirst());
