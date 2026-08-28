@@ -127,7 +127,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Pageable pageable = super.getPageable(context);
         List<Sort.Order> orders = getOrders(context);
         if (!orders.isEmpty()) {
-            pageable = pageable.orders(orders);
+            // The static @OrderBy criteria take precedence over any dynamically supplied sort criteria
+            List<Sort.Order> combined = new ArrayList<>(orders);
+            combined.addAll(pageable.getSort().getOrderBy());
+            pageable = pageable.withSort(Sort.of(combined));
         }
         return pageable;
     }
