@@ -26,91 +26,107 @@ import jakarta.persistence.criteria.Nulls
 import spock.lang.Specification
 
 /**
- * Covers how MongoDB sorts are built, which MongoDB can only express against a field: an explicit
- * null ordering and an ordering over a computed expression both need a field computing first.
+ * Covers how MongoDB sorts are built. MongoDB can only sort against a field, so both an explicit
+ * null ordering and an ordering over a computed expression need a field computing first.
  */
 class MongoSortCriteriaSpec extends Specification {
 
-    PersistentEntityCriteriaBuilder criteriaBuilder
-    PersistentEntityCriteriaQuery criteriaQuery
-    PersistentEntityRoot entityRoot
-
-    void setup() {
-        criteriaBuilder = new RuntimeCriteriaBuilder()
-        criteriaQuery = criteriaBuilder.createQuery()
-        entityRoot = criteriaQuery.from(Test)
-    }
-
     void "test null ordering ranks null and missing values"() {
-        when: "nulls are asked to sort last"
-        criteriaQuery.orderBy(criteriaBuilder.sort(entityRoot.get("name"), true, false, Nulls.LAST))
-
-        then:
-        query == "[{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$name'},['missing','null']]},1,0]}}}," +
+        expect: "nulls asked to sort last are ranked after everything else"
+        orderedBy { cb, root -> cb.sort(root.get("name"), true, false, Nulls.LAST) } ==
+                "[{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$name'},['missing','null']]},1,0]}}}," +
                 "{\$sort:{__micronaut_nulls_0:1,name:1}}," +
                 "{\$unset:['__micronaut_nulls_0']}]"
-    }
 
-    void "test null ordering first is independent of the sort direction"() {
-        when:
-        criteriaQuery.orderBy(criteriaBuilder.sort(entityRoot.get("name"), false, false, Nulls.FIRST))
-
-        then:
-        query == "[{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$name'},['missing','null']]},0,1]}}}," +
+        and: "nulls first is ranked the other way round, independently of the sort direction"
+        orderedBy { cb, root -> cb.sort(root.get("name"), false, false, Nulls.FIRST) } ==
+                "[{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$name'},['missing','null']]},0,1]}}}," +
                 "{\$sort:{__micronaut_nulls_0:1,name:-1}}," +
                 "{\$unset:['__micronaut_nulls_0']}]"
-    }
 
-    void "test an unspecified null ordering leaves the sort alone"() {
-        when:
-        criteriaQuery.orderBy(criteriaBuilder.sort(entityRoot.get("name"), true, false, Nulls.NONE))
-
-        then:
-        query == "[{\$sort:{name:1}}]"
+        and: "an unspecified null ordering leaves the sort alone"
+        orderedBy { cb, root -> cb.sort(root.get("name"), true, false, Nulls.NONE) } == "[{\$sort:{name:1}}]"
     }
 
     void "test ordering by an arithmetic expression computes a field to sort on"() {
-        when:
-        criteriaQuery.orderBy(criteriaBuilder.desc(criteriaBuilder.quot(entityRoot.get("amount"), entityRoot.get("budget"))))
+        expect:
+        ascendingBy { cb, root -> cb.sum(root.get("amount"), root.get("budget")) } ==
+                computedSort("\$add:['\$amount','\$budget']")
+        ascendingBy { cb, root -> cb.diff(root.get("amount"), root.get("budget")) } ==
+                computedSort("\$subtract:['\$amount','\$budget']")
+        ascendingBy { cb, root -> cb.prod(root.get("amount"), root.get("budget")) } ==
+                computedSort("\$multiply:['\$amount','\$budget']")
+        ascendingBy { cb, root -> cb.quot(root.get("amount"), root.get("budget")) } ==
+                computedSort("\$divide:['\$amount','\$budget']")
+        ascendingBy { cb, root -> cb.concat(root.get("name"), root.get("name")) } ==
+                computedSort("\$concat:['\$name','\$name']")
+    }
 
-        then:
-        query == "[{\$addFields:{__micronaut_sort_0:{\$divide:['\$amount','\$budget']}}}," +
+    void "test ordering by a string expression computes a field to sort on"() {
+        expect:
+        ascendingBy { cb, root -> cb.lower(root.get("name")) } == computedSort("\$toLower:'\$name'")
+        ascendingBy { cb, root -> cb.upper(root.get("name")) } == computedSort("\$toUpper:'\$name'")
+        ascendingBy { cb, root -> cb.length(root.get("name")) } == computedSort("\$strLenCP:'\$name'")
+    }
+
+    void "test ordering by the left and right functions uses a substring"() {
+        expect: "left takes the leading characters"
+        ascendingBy { cb, root -> cb.function("LEFT", String, root.get("name"), cb.literal(2)) } ==
+                computedSort("\$substrCP:['\$name',0,{\$mn_qp:0}]")
+
+        and: "right offsets by the length of the value, binding the same parameter once"
+        ascendingBy { cb, root -> cb.function("RIGHT", String, root.get("name"), cb.literal(2)) } ==
+                computedSort("\$substrCP:['\$name',{\$subtract:[{\$strLenCP:'\$name'},{\$mn_qp:0}]},{\$mn_qp:0}]")
+    }
+
+    void "test a descending expression order keeps the direction"() {
+        expect:
+        orderedBy { cb, root -> cb.desc(cb.quot(root.get("amount"), root.get("budget"))) } ==
+                "[{\$addFields:{__micronaut_sort_0:{\$divide:['\$amount','\$budget']}}}," +
                 "{\$sort:{__micronaut_sort_0:-1}}," +
                 "{\$unset:['__micronaut_sort_0']}]"
     }
 
-    void "test ordering by a string function computes a field to sort on"() {
-        when:
-        criteriaQuery.orderBy(criteriaBuilder.asc(criteriaBuilder.lower(entityRoot.get("name"))))
-
-        then:
-        query == "[{\$addFields:{__micronaut_sort_0:{\$toLower:'\$name'}}}," +
-                "{\$sort:{__micronaut_sort_0:1}}," +
-                "{\$unset:['__micronaut_sort_0']}]"
-    }
-
     void "test an expression and a null ordering are computed by separate stages"() {
-        when: "a computed field cannot be ranked by the stage that defines it"
-        criteriaQuery.orderBy(criteriaBuilder.sort(criteriaBuilder.lower(entityRoot.get("name")), true, false, Nulls.LAST))
-
-        then:
-        query == "[{\$addFields:{__micronaut_sort_0:{\$toLower:'\$name'}}}," +
+        expect: "a computed field cannot be ranked by the stage that defines it"
+        orderedBy { cb, root -> cb.sort(cb.lower(root.get("name")), true, false, Nulls.LAST) } ==
+                "[{\$addFields:{__micronaut_sort_0:{\$toLower:'\$name'}}}," +
                 "{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$__micronaut_sort_0'},['missing','null']]},1,0]}}}," +
                 "{\$sort:{__micronaut_nulls_0:1,__micronaut_sort_0:1}}," +
                 "{\$unset:['__micronaut_sort_0','__micronaut_nulls_0']}]"
     }
 
+    void "test ordering by an unsupported function is rejected"() {
+        when:
+        ascendingBy { cb, root -> cb.function("SOUNDEX", String, root.get("name")) }
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("SOUNDEX")
+    }
+
     void "test ordering by an unsupported expression is rejected"() {
         when:
-        criteriaQuery.orderBy(criteriaBuilder.asc(criteriaBuilder.count(entityRoot)))
-        query
+        ascendingBy { cb, root -> cb.count(root) }
 
         then:
         def e = thrown(UnsupportedOperationException)
         e.message.contains("is not supported by Micronaut Data MongoDB")
     }
 
-    private String getQuery() {
+    private static String computedSort(String expression) {
+        "[{\$addFields:{__micronaut_sort_0:{$expression}}},{\$sort:{__micronaut_sort_0:1}},{\$unset:['__micronaut_sort_0']}]"
+    }
+
+    private static String ascendingBy(Closure<?> expression) {
+        orderedBy { cb, root -> cb.asc(expression.call(cb, root)) }
+    }
+
+    private static String orderedBy(Closure<?> order) {
+        PersistentEntityCriteriaBuilder criteriaBuilder = new RuntimeCriteriaBuilder()
+        PersistentEntityCriteriaQuery criteriaQuery = criteriaBuilder.createQuery()
+        PersistentEntityRoot entityRoot = criteriaQuery.from(Test)
+        criteriaQuery.orderBy(order.call(criteriaBuilder, entityRoot))
         criteriaQuery.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 }
