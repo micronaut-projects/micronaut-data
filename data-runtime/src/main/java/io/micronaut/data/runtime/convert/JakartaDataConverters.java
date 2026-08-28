@@ -81,7 +81,7 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         conversionService.addConverter(jakarta.data.page.PageRequest.class, Pageable.class, pageRequest -> {
             if (pageRequest.mode() == PageRequest.Mode.CURSOR_NEXT || pageRequest.mode() == PageRequest.Mode.CURSOR_PREVIOUS) {
                 return CursoredPageable.from(
-                    (int) (pageRequest.page() - 1),
+                    (int) (pageRequest.pageNumber() - 1),
                     pageRequest.cursor().map(cursor -> Pageable.Cursor.of((List<Object>) cursor.elements())).orElse(null),
                     pageRequest.mode() == PageRequest.Mode.CURSOR_NEXT ? Pageable.Mode.CURSOR_NEXT : Pageable.Mode.CURSOR_PREVIOUS,
                     pageRequest.size(),
@@ -89,7 +89,7 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
                     pageRequest.requestTotal()
                 );
             } else {
-                Pageable pageable = Pageable.from((int) (pageRequest.page() - 1), pageRequest.size());
+                Pageable pageable = Pageable.from((int) (pageRequest.pageNumber() - 1), pageRequest.size());
                 if (pageRequest.requestTotal()) {
                     pageable = pageable.withTotal();
                 } else {

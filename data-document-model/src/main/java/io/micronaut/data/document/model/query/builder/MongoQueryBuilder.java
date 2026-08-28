@@ -124,6 +124,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String MONGO_ID_FIELD = "_id";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
+    private static final String STR_LEN_CP = "$strLenCP";
+    private static final String TO_LOWER = "$toLower";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
@@ -281,14 +283,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Object length = asAggregationExpression(arguments.get(1), queryState);
             Object start = "LEFT".equals(name)
                 ? 0
-                : Map.of("$subtract", List.of(Map.of("$strLenCP", value), length));
+                : Map.of("$subtract", List.of(Map.of(STR_LEN_CP, value), length));
             return Map.of("$substrCP", List.of(value, start, length));
         }
         if (arguments.size() == 1) {
             String operator = switch (name) {
-                case "LOWER" -> "$toLower";
+                case "LOWER" -> TO_LOWER;
                 case "UPPER" -> "$toUpper";
-                case "LENGTH" -> "$strLenCP";
+                case "LENGTH" -> STR_LEN_CP;
                 default -> null;
             };
             if (operator != null) {
@@ -1084,7 +1086,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     query.put("$expr", Map.of(
                         op,
                         asList(
-                            Map.of("$strLenCP", "$" + propertyPath.getPath()),
+                            Map.of(STR_LEN_CP, "$" + propertyPath.getPath()),
                             valueRepresentation(queryState, propertyPath, propertyPath, value)
                         )
                     ));
@@ -1348,8 +1350,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 && to instanceof UnaryExpression<?> toExp && toExp.getType() == UnaryExpressionType.LOWER) {
                 PersistentPropertyPath propertyPath = requireProperty(valueExp.getExpression()).getPropertyPath();
                 propertyName = getPropertyPersistName(propertyPath);
-                firstCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, fromExp.getExpression()));
-                secondCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, toExp.getExpression()));
+                firstCondition = Map.of(TO_LOWER, valueRepresentation(queryState, propertyPath, fromExp.getExpression()));
+                secondCondition = Map.of(TO_LOWER, valueRepresentation(queryState, propertyPath, toExp.getExpression()));
             } else {
                 PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
                 propertyName = getPropertyPersistName(propertyPath);

@@ -300,7 +300,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
         }
         Root<?> root = criteriaQuery.getRoots().iterator().next();
         List<Selection<?>> selections = projections.stream()
-            .map(projection -> {
+            .<Selection<?>>map(projection -> {
                 // A projection may name a path into an embedded or associated entity
                 Path<?> path = root;
                 for (String segment : StringUtils.splitOmitEmptyStrings(projection, '.')) {
@@ -308,7 +308,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 }
                 return (Selection<?>) path;
             })
-            .collect(Collectors.toList());
+            .toList();
         if (selections.size() == 1) {
             criteriaQuery.select((Selection) selections.getFirst());
         } else {

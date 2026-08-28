@@ -38,7 +38,6 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link MongoPreparedQuery}.
@@ -52,6 +51,9 @@ import java.util.stream.Collectors;
 final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R> {
 
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
+    private static final String SORT_STAGE = "$sort";
+    private static final String SKIP_STAGE = "$skip";
+    private static final String LIMIT_STAGE = "$limit";
 
     private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
     private final MongoStoredQuery<E, R> mongoStoredQuery;
@@ -227,7 +229,7 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
             for (Bson p : pipeline) {
                 BsonDocument sortBsonDocument = p.toBsonDocument();
                 if (sortBsonDocument != null) {
-                    BsonValue bsonValue = sortBsonDocument.get("$sort");
+                    BsonValue bsonValue = sortBsonDocument.get(SORT_STAGE);
                     if (bsonValue != null) {
                         existingSortBson = bsonValue.asDocument();
                         if (existingSortBson != null) {
@@ -241,11 +243,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
             if (existingSortBson != null) {
                 existingSortBson.putAll(sortBson.toBsonDocument());
             } else {
-                BsonDocument sortStage = new BsonDocument().append("$sort", sortBson.toBsonDocument());
-                addStageToPipelineBefore(pipeline, sortStage, "$limit", "$skip");
+                BsonDocument sortStage = new BsonDocument().append(SORT_STAGE, sortBson.toBsonDocument());
+                addStageToPipelineBefore(pipeline, sortStage, LIMIT_STAGE, SKIP_STAGE);
             }
             if (!nullRankFields.isEmpty()) {
-                addStageToPipelineBefore(pipeline, new BsonDocument().append("$addFields", nullRankFields), "$sort");
+                addStageToPipelineBefore(pipeline, new BsonDocument().append("$addFields", nullRankFields), SORT_STAGE);
                 BsonArray unset = new BsonArray();
                 nullRankFields.keySet().forEach(field -> unset.add(new BsonString(field)));
                 pipeline.add(new BsonDocument().append("$unset", unset));
@@ -254,11 +256,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
         if (queryLimit.isLimited()) {
             int offset = (int) queryLimit.offset();
             if (offset > 0) {
-                pipeline.add(new BsonDocument().append("$skip", new BsonInt32(offset)));
+                pipeline.add(new BsonDocument().append(SKIP_STAGE, new BsonInt32(offset)));
             }
             int maxResults = queryLimit.maxResults();
             if (maxResults > 0) {
-                pipeline.add(new BsonDocument().append("$limit", new BsonInt32(maxResults)));
+                pipeline.add(new BsonDocument().append(LIMIT_STAGE, new BsonInt32(maxResults)));
             }
         }
     }
@@ -273,7 +275,7 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     private void removeTrailingPaginationStages(List<Bson> pipeline) {
         for (int i = pipeline.size() - 1; i >= 0; i--) {
             BsonDocument stage = pipeline.get(i).toBsonDocument();
-            if (stage == null || !(stage.containsKey("$skip") || stage.containsKey("$limit"))) {
+            if (stage == null || !(stage.containsKey(SKIP_STAGE) || stage.containsKey(LIMIT_STAGE))) {
                 return;
             }
             pipeline.remove(i);

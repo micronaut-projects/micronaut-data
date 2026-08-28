@@ -34,7 +34,7 @@ import java.util.function.BiFunction;
 @Internal
 public final class ExpressionOrder extends Sort.Order {
 
-    private final BiFunction<Root<?>, CriteriaBuilder, Expression<?>> expressionFactory;
+    private final transient BiFunction<Root<?>, CriteriaBuilder, Expression<Object>> expressionFactory;
 
     /**
      * Default constructor.
@@ -49,7 +49,7 @@ public final class ExpressionOrder extends Sort.Order {
                            Direction direction,
                            boolean ignoreCase,
                            NullOrdering nullOrdering,
-                           BiFunction<Root<?>, CriteriaBuilder, Expression<?>> expressionFactory) {
+                           BiFunction<Root<?>, CriteriaBuilder, Expression<Object>> expressionFactory) {
         super(description, direction, ignoreCase, nullOrdering);
         this.expressionFactory = expressionFactory;
     }
@@ -61,7 +61,19 @@ public final class ExpressionOrder extends Sort.Order {
      * @param criteriaBuilder The criteria builder
      * @return The expression to order by
      */
-    public Expression<?> toExpression(Root<?> root, CriteriaBuilder criteriaBuilder) {
+    public Expression<Object> toExpression(Root<?> root, CriteriaBuilder criteriaBuilder) {
         return expressionFactory.apply(root, criteriaBuilder);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // The description carried by this order is the rendering of its expression, so comparing
+        // the superclass state already tells orders over different expressions apart
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }
