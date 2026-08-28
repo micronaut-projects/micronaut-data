@@ -25,6 +25,7 @@ import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -62,18 +63,19 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
 
     @Override
     public void register(MutableConversionService conversionService) {
-        conversionService.addConverter(Restriction.class, PredicateSpecification.class, new JakartaDataRestrictionsConverter(dateTimeProvider));
+        JakartaDataRestrictionsConverter restrictionsConverter = new JakartaDataRestrictionsConverter(dateTimeProvider);
+        conversionService.addConverter(Restriction.class, PredicateSpecification.class, restrictionsConverter);
         conversionService.addConverter(SpecificationConstraint.class, PredicateSpecification.class, new JakartaDataConstraintConverter(dateTimeProvider, runtimeEntityRegistry));
         conversionService.addConverter(Limit.class, io.micronaut.data.model.Limit.class,
             limit -> io.micronaut.data.model.Limit.of(limit.maxResults(), (int) limit.startAt() - 1));
         conversionService.addConverter(Order.class, Sort.class, order -> Sort.of(
-            ((Order<?>) order).sorts().stream().map(JakartaDataConverters::toOrder).toList()
+            ((Order<?>) order).sorts().stream().map(sort -> toOrder(sort, restrictionsConverter)).toList()
         ));
         conversionService.addConverter(jakarta.data.Sort.class, Sort.class,
-            sort -> Sort.of(toOrder(sort))
+            sort -> Sort.of(toOrder(sort, restrictionsConverter))
         );
-        conversionService.addConverter(jakarta.data.Sort[].class, Sort.class, sort -> Sort.of(
-                Arrays.stream(sort).map(JakartaDataConverters::toOrder).toList()
+        conversionService.addConverter(jakarta.data.Sort[].class, Sort.class, sorts -> Sort.of(
+                Arrays.stream(sorts).map(sort -> toOrder(sort, restrictionsConverter)).toList()
             )
         );
         conversionService.addConverter(jakarta.data.page.PageRequest.class, Pageable.class, pageRequest -> {
@@ -149,16 +151,25 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
     }
 
 
-    private static Sort.Order toOrder(jakarta.data.Sort<?> sort) {
-        return new Sort.Order(
-            sort.property(),
-            sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-            sort.ignoreCase(),
-            switch (sort.nullOrdering()) {
-                case FIRST -> Sort.Order.NullOrdering.FIRST;
-                case LAST -> Sort.Order.NullOrdering.LAST;
-                case UNSPECIFIED -> Sort.Order.NullOrdering.NONE;
-            }
-        );
+    private static Sort.Order toOrder(jakarta.data.Sort<?> sort, JakartaDataRestrictionsConverter restrictionsConverter) {
+        Sort.Order.Direction direction = sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC;
+        Sort.Order.NullOrdering nullOrdering = switch (sort.nullOrdering()) {
+            case FIRST -> Sort.Order.NullOrdering.FIRST;
+            case LAST -> Sort.Order.NullOrdering.LAST;
+            case UNSPECIFIED -> Sort.Order.NullOrdering.NONE;
+        };
+        jakarta.data.expression.Expression<?, ?> expression = sort.expression();
+        String property = sort.property();
+        if (property == null) {
+            // Sorting by an expression rather than by an attribute name
+            return new ExpressionOrder(
+                String.valueOf(expression),
+                direction,
+                sort.ignoreCase(),
+                nullOrdering,
+                (root, criteriaBuilder) -> restrictionsConverter.toCriteriaExpression(root, criteriaBuilder, expression)
+            );
+        }
+        return new Sort.Order(property, direction, sort.ignoreCase(), nullOrdering);
     }
 }

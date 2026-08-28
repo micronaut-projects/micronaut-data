@@ -41,6 +41,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
@@ -805,12 +806,18 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     private List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
         List<Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<?> path = root;
-            for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
-                path = path.get(orderPath);
+            Expression<?> orderExpression;
+            if (order instanceof ExpressionOrder expressionOrder) {
+                orderExpression = expressionOrder.toExpression(root, cb);
+            } else {
+                Path<?> path = root;
+                for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                    path = path.get(orderPath);
 
+                }
+                orderExpression = path;
             }
-            Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) path) : path;
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) orderExpression) : orderExpression;
             Nulls nullPrecedence = switch (order.getNullOrdering()) {
                 case FIRST -> Nulls.FIRST;
                 case LAST -> Nulls.LAST;
