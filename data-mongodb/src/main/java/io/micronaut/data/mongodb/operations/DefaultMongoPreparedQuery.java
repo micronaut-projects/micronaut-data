@@ -29,8 +29,10 @@ import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParame
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
@@ -48,6 +50,8 @@ import java.util.stream.Collectors;
  */
 @Internal
 final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements DelegatePreparedQuery<E, R>, MongoPreparedQuery<E, R> {
+
+    private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
 
     private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
     private final MongoStoredQuery<E, R> mongoStoredQuery;
@@ -133,17 +137,56 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     }
 
     private Bson getSort(Sort sort) {
+        List<Bson> sorts = new ArrayList<>();
+        int nullRankIndex = 0;
+        for (Sort.Order order : sort.getOrderBy()) {
+            String property = resolveSortField(order);
+            if (order.getNullOrdering() != Sort.Order.NullOrdering.NONE) {
+                // Sorting the rank ascending places the nulls where the caller asked for them
+                sorts.add(Sorts.ascending(NULL_RANK_FIELD_PREFIX + nullRankIndex++));
+            }
+            sorts.add(order.isAscending() ? Sorts.ascending(property) : Sorts.descending(property));
+        }
+        return Sorts.orderBy(sorts);
+    }
+
+    private String resolveSortField(Sort.Order order) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
-        return sort.getOrderBy()
-            .stream()
-            .map(order -> {
-                String property = order.getProperty();
-                if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getName().contains(property)) {
-                    property = MongoUtils.ID;
-                }
-                return order.isAscending() ? Sorts.ascending(property) : Sorts.descending(property);
-            })
-            .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
+        String property = order.getProperty();
+        if (persistentEntity.hasIdentity() && persistentEntity.getIdentity().getName().contains(property)) {
+            return MongoUtils.ID;
+        }
+        return property;
+    }
+
+    /**
+     * Builds the {@code $addFields} document ranking each document by whether the field it is sorted on is
+     * null or missing. MongoDB always orders null and missing values first when ascending and last when
+     * descending, so an explicit null ordering has to be expressed as a computed field to sort on first.
+     *
+     * @param sort The sort
+     * @return The fields to add, empty when no order asks for an explicit null ordering
+     */
+    private BsonDocument getNullRankFields(Sort sort) {
+        BsonDocument nullRankFields = new BsonDocument();
+        int nullRankIndex = 0;
+        for (Sort.Order order : sort.getOrderBy()) {
+            Sort.Order.NullOrdering nullOrdering = order.getNullOrdering();
+            if (nullOrdering == Sort.Order.NullOrdering.NONE) {
+                continue;
+            }
+            int nullRank = nullOrdering == Sort.Order.NullOrdering.FIRST ? 0 : 1;
+            nullRankFields.append(NULL_RANK_FIELD_PREFIX + nullRankIndex++, new BsonDocument().append("$cond",
+                new BsonArray(List.of(
+                    new BsonDocument().append("$in", new BsonArray(List.of(
+                        new BsonDocument().append("$type", new BsonString("$" + resolveSortField(order))),
+                        new BsonArray(List.of(new BsonString("missing"), new BsonString("null")))
+                    ))),
+                    new BsonInt32(nullRank),
+                    new BsonInt32(1 - nullRank)
+                ))));
+        }
+        return nullRankFields;
     }
 
     @Override
@@ -193,12 +236,19 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
                     }
                 }
             }
+            BsonDocument nullRankFields = getNullRankFields(sort);
             Bson sortBson = getSort(sort);
             if (existingSortBson != null) {
                 existingSortBson.putAll(sortBson.toBsonDocument());
             } else {
                 BsonDocument sortStage = new BsonDocument().append("$sort", sortBson.toBsonDocument());
                 addStageToPipelineBefore(pipeline, sortStage, "$limit", "$skip");
+            }
+            if (!nullRankFields.isEmpty()) {
+                addStageToPipelineBefore(pipeline, new BsonDocument().append("$addFields", nullRankFields), "$sort");
+                BsonArray unset = new BsonArray();
+                nullRankFields.keySet().forEach(field -> unset.add(new BsonString(field)));
+                pipeline.add(new BsonDocument().append("$unset", unset));
             }
         }
         if (queryLimit.isLimited()) {

@@ -38,6 +38,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
@@ -66,6 +67,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
@@ -120,6 +122,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
+    private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String REGEX = "$regex";
     private static final String NOT = "$not";
     private static final String OPTIONS = "$options";
@@ -164,20 +167,30 @@ public final class MongoQueryBuilder implements QueryBuilder {
         List<Order> orders = selectQueryDefinition.order();
         if (!orders.isEmpty()) {
             Map<String, Object> sortObj = new LinkedHashMap<>();
+            Map<String, Object> nullRankFields = new LinkedHashMap<>();
             orders.forEach(order -> {
                 io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath = requireProperty(order.getExpression());
                 PersistentProperty property = persistentPropertyPath.getProperty();
                 PersistentEntity owner = property.getOwner();
                 if (owner.hasIdentity()) {
                     PersistentProperty identity = owner.getIdentity();
-                    if (identity.equals(property)) {
-                        sortObj.put(MONGO_ID_FIELD, order.isAscending() ? 1 : -1);
-                    } else {
-                        sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                    String fieldName = identity.equals(property) ? MONGO_ID_FIELD : persistentPropertyPath.getPathAsString();
+                    Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+                    if (nullPrecedence != Nulls.NONE) {
+                        String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
+                        nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
+                        sortObj.put(rankField, 1);
                     }
+                    sortObj.put(fieldName, order.isAscending() ? 1 : -1);
                 }
             });
+            if (!nullRankFields.isEmpty()) {
+                pipeline.add(Map.of("$addFields", nullRankFields));
+            }
             pipeline.add(Map.of("$sort", sortObj));
+            if (!nullRankFields.isEmpty()) {
+                pipeline.add(Map.of("$unset", new ArrayList<>(nullRankFields.keySet())));
+            }
         } else {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
@@ -208,6 +221,24 @@ public final class MongoQueryBuilder implements QueryBuilder {
             q = toJsonString(pipeline);
         }
         return QueryResult.of(q, queryState.getParameterBindings());
+    }
+
+    /**
+     * Builds the expression ranking documents by whether the sorted field is null or missing, so that an
+     * ascending sort on the rank places nulls where the caller asked for them. MongoDB's own ordering
+     * always puts null and missing values first in ascending order and last in descending order.
+     *
+     * @param fieldName      The field being sorted on
+     * @param nullPrecedence Where null values belong
+     * @return The rank expression
+     */
+    private static Map<String, Object> nullRankExpression(String fieldName, Nulls nullPrecedence) {
+        int nullRank = nullPrecedence == Nulls.FIRST ? 0 : 1;
+        return Map.of("$cond", List.of(
+            Map.of("$in", List.of(Map.of("$type", "$" + fieldName), List.of("missing", "null"))),
+            nullRank,
+            1 - nullRank
+        ));
     }
 
     private void addLookups(Collection<JoinPath> joins, QueryState queryState) {
