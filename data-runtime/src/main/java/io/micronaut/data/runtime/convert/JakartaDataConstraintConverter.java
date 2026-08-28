@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.jd.SpecificationConstraint;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -162,7 +163,29 @@ final class JakartaDataConstraintConverter<E> implements TypeConverter<Specifica
         }
         RuntimePersistentEntity<? extends E> entity = runtimeEntityRegistry.get().getEntity(root.getJavaType());
         String propertyName = argument.getName();
-        return getPropertyByPath(root, entity.getPath(propertyName).orElseThrow(() -> new IllegalStateException("Cannot find property: " + propertyName + " in entity: " + entity.getName())));
+        return getPropertyByPath(root, entity.getPath(propertyName)
+            // Jakarta Data allows an underscore in a parameter name to delimit the segments of a nested attribute path
+            .or(() -> entity.getPath(underscoreToCamelCase(propertyName)))
+            .orElseThrow(() -> new IllegalStateException("Cannot find property: " + propertyName + " in entity: " + entity.getName())));
+    }
+
+    /**
+     * Converts an underscore delimited nested attribute name such as {@code capital_population}
+     * into the camel case form {@code capitalPopulation} understood by
+     * {@link io.micronaut.data.model.PersistentEntity#getPath(String)}.
+     *
+     * @param propertyName The parameter name
+     * @return The camel case form, or the name unchanged when it has no underscore
+     */
+    private static String underscoreToCamelCase(String propertyName) {
+        if (propertyName.indexOf('_') == -1) {
+            return propertyName;
+        }
+        StringBuilder camelCase = new StringBuilder(propertyName.length());
+        for (String segment : StringUtils.splitOmitEmptyStrings(propertyName, '_')) {
+            camelCase.append(camelCase.isEmpty() ? NameUtils.decapitalize(segment) : NameUtils.capitalize(segment));
+        }
+        return camelCase.toString();
     }
 
     private <V> Path<V> getPropertyByPath(Root<E> root, String propertyName) {
