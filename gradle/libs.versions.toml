@@ -25,7 +25,7 @@ micronaut-sourcegen = "2.1.0"
 groovy = "5.1.0"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-data = "1.1.0-M3"
+managed-jakarta-data = "1.1.0-M4"
 managed-pg-vector = "0.1.6"
 
 spring-data = "4.1.1"
