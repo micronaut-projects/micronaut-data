@@ -34,7 +34,7 @@ import java.util.function.BiFunction;
 @Internal
 public final class ExpressionOrder extends Sort.Order {
 
-    private final transient BiFunction<Root<?>, CriteriaBuilder, Expression<Object>> expressionFactory;
+    private final BiFunction<Root<?>, CriteriaBuilder, Expression<Object>> expressionFactory;
 
     /**
      * Default constructor.

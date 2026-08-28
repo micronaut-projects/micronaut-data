@@ -266,6 +266,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 asAggregationExpression(binaryExpression.getRight(), queryState)
             ));
         }
+        if (expression instanceof UnaryExpression<?> unaryExpression) {
+            String operator = switch (unaryExpression.getType()) {
+                case LOWER -> TO_LOWER;
+                case UPPER -> "$toUpper";
+                case LENGTH -> STR_LEN_CP;
+                default -> throw new UnsupportedOperationException(
+                    "Ordering by expression: " + unaryExpression + " is not supported by Micronaut Data MongoDB.");
+            };
+            return Map.of(operator, asAggregationExpression(unaryExpression.getExpression(), queryState));
+        }
         if (expression instanceof FunctionExpression<?> functionExpression) {
             return asAggregationFunction(functionExpression, queryState);
         }
