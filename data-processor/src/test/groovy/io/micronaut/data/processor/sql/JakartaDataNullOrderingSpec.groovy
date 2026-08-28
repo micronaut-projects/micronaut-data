@@ -50,6 +50,10 @@ interface RestaurantRepoNulls {
     @OrderBy("name")
     List<Restaurant> findUnspecified();
 
+    @Find
+    @OrderBy(value = "name", nullOrdering = Sort.Nulls.UNSPECIFIED)
+    List<Restaurant> findExplicitlyUnspecified();
+
     @Query("WHERE name IS NOT NULL")
     @OrderBy(value = "name", nullOrdering = Sort.Nulls.LAST)
     List<Restaurant> queryNullsLast();
@@ -60,6 +64,7 @@ interface RestaurantRepoNulls {
         getQuery(repository.getRequiredMethod("findNullsLast")).endsWith('ORDER BY restaurant_.`name` ASC NULLS LAST')
         getQuery(repository.getRequiredMethod("findDescNullsFirst")).endsWith('ORDER BY restaurant_.`name` DESC NULLS FIRST')
         getQuery(repository.getRequiredMethod("findUnspecified")).endsWith('ORDER BY restaurant_.`name` ASC')
+        getQuery(repository.getRequiredMethod("findExplicitlyUnspecified")).endsWith('ORDER BY restaurant_.`name` ASC')
         getQuery(repository.getRequiredMethod("queryNullsLast")).endsWith('ORDER BY restaurant_.`name` ASC NULLS LAST')
     }
 }

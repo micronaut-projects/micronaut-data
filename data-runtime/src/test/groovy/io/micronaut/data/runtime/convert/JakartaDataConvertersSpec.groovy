@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.convert
 
 import io.micronaut.core.convert.DefaultMutableConversionService
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.entities.Book
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder
 import jakarta.data.Order
 import spock.lang.Specification
@@ -89,7 +91,7 @@ class JakartaDataConvertersSpec extends Specification {
 
     void "test sorting by an expression produces an order that carries the expression"() {
         when: "the sort names an expression rather than an attribute"
-        Sort sort = convertSort(jakarta.data.Sort.asc(_TestEntity.length))
+        Sort sort = convertSort(jakarta.data.Sort.asc(_Book.titleLength))
 
         then: "the order is one only the criteria paths can resolve"
         sort.orderBy[0] instanceof ExpressionOrder
@@ -102,6 +104,24 @@ class JakartaDataConvertersSpec extends Specification {
         !(sort.orderBy[0] instanceof ExpressionOrder)
     }
 
+    void "test an expression order resolves its expression against a criteria root"() {
+        given:
+        def criteriaBuilder = new RuntimeCriteriaBuilder()
+        def criteriaQuery = criteriaBuilder.createQuery()
+        def root = criteriaQuery.from(Book)
+
+        when:
+        ExpressionOrder order = convertSort(jakarta.data.Sort.asc(_Book.titleLength)).orderBy[0] as ExpressionOrder
+
+        then: "the expression is only built once a root is available"
+        order.toExpression(root, criteriaBuilder) != null
+
+        and: "equality still distinguishes orders, which are named after their expression"
+        order == convertSort(jakarta.data.Sort.asc(_Book.titleLength)).orderBy[0]
+        order.hashCode() == convertSort(jakarta.data.Sort.asc(_Book.titleLength)).orderBy[0].hashCode()
+        order != convertSort(jakarta.data.Sort.desc(_Book.titleLength)).orderBy[0]
+    }
+
     private io.micronaut.data.model.Limit convertLimit(jakarta.data.Limit limit) {
         conversionService.convertRequired(limit, io.micronaut.data.model.Limit)
     }
@@ -110,13 +130,9 @@ class JakartaDataConvertersSpec extends Specification {
         conversionService.convertRequired(sort, Sort)
     }
 
-    static class TestEntity {
-        String name
-    }
-
-    static class _TestEntity {
-        static final jakarta.data.metamodel.TextAttribute<TestEntity> name =
-                jakarta.data.metamodel.TextAttribute.of(TestEntity, "name")
-        static final jakarta.data.expression.NumericExpression<TestEntity, Integer> length = name.length()
+    static class _Book {
+        static final jakarta.data.metamodel.TextAttribute<Book> title =
+                jakarta.data.metamodel.TextAttribute.of(Book, "title")
+        static final jakarta.data.expression.NumericExpression<Book, Integer> titleLength = title.length()
     }
 }
