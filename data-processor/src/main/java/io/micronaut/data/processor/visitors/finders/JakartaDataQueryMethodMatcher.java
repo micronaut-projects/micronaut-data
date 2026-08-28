@@ -211,6 +211,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
 
                 SourcePersistentEntityCriteriaQuery<?> criteriaQueryInternal = (SourcePersistentEntityCriteriaQuery) criteriaQuery;
 
+                applyProjections(matchContext, criteriaQueryInternal);
+
                 MethodResult result = analyzeMethodResult(
                     matchContext,
                     criteriaQueryInternal.getQueryResultTypeName(),
@@ -269,6 +271,37 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                     .queryResult(queryResult);
             }
         };
+    }
+
+    /**
+     * Applies the projections declared by {@link Projection} (mapped from Jakarta Data {@code @Select})
+     * to a JDQL query that doesn't already select something explicitly.
+     *
+     * @param matchContext The match context
+     * @param criteriaQuery The criteria query
+     */
+    private static void applyProjections(MethodMatchContext matchContext,
+                                         SourcePersistentEntityCriteriaQuery<?> criteriaQuery) {
+        if (criteriaQuery.getSelection() != null) {
+            return;
+        }
+        List<String> projections = matchContext.getMethodElement().getAnnotationValuesByType(Projection.class)
+            .stream()
+            .flatMap(av -> av.stringValue().stream())
+            .filter(value -> !value.isBlank())
+            .toList();
+        if (projections.isEmpty()) {
+            return;
+        }
+        Root<?> root = criteriaQuery.getRoots().iterator().next();
+        List<Selection<?>> selections = projections.stream()
+            .map(projection -> (Selection<?>) root.get(projection))
+            .collect(Collectors.toList());
+        if (selections.size() == 1) {
+            criteriaQuery.select((Selection) selections.getFirst());
+        } else {
+            criteriaQuery.multiselect(selections);
+        }
     }
 
     @Override
