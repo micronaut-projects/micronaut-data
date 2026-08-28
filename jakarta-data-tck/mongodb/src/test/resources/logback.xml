@@ -14,7 +14,7 @@
     </root>
 
     <logger name="org.jboss.arquillian" level="debug"/>
-    <logger name="io.micronaut.data.query" level="TRACE"/>
+<!--    <logger name="io.micronaut.data.query" level="TRACE"/>-->
     <logger name="io.micronaut" level="info"/>
 
 </configuration>
