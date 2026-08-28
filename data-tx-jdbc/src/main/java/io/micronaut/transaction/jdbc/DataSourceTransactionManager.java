@@ -81,6 +81,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * @param connectionOperations          The connection operations
      * @param synchronousConnectionManager  The synchronous connection operations
      * @param transactionExecutionListeners The transaction execution listeners
+     * @param sessionlessTransactionHandler The sessionless transaction handler for this datasource, if any
      */
     @Inject
     public DataSourceTransactionManager(@NonNull DataSource dataSource,
@@ -173,6 +174,9 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     }
 
     @Override
+    // Sonar java:S3776 -- the branching is the JDBC begin protocol itself (read-only, isolation,
+    // autocommit, listeners, sessionless registration); splitting it would obscure the ordering.
+    @SuppressWarnings("java:S3776")
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
         Connection connection = status.getConnection();

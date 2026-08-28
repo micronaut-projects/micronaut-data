@@ -19,6 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.transaction.support.AbstractDataSourceTransactionManagerCondition;
 
+/**
+ * Matches when the datasource is managed by the Micronaut JDBC transaction manager.
+ *
+ * @since 5.2
+ */
 @Internal
 @Introspected
 public final class JdbcTransactionManagerCondition extends AbstractDataSourceTransactionManagerCondition {

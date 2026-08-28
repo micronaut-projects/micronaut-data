@@ -21,32 +21,31 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Propagated Oracle sessionless transaction state.
  */
 final class OracleSessionlessTransactionState implements PropagatedContextElement {
 
-    private volatile byte @Nullable [] gtrid;
+    // An AtomicReference rather than a volatile array: volatile publishes the reference but not the
+    // array contents, and the compare-and-set makes the absent check and the write a single step.
+    private final AtomicReference<byte @Nullable []> gtrid = new AtomicReference<>();
 
     Optional<byte[]> getGtrid() {
-        return Optional.ofNullable(gtrid).map(byte[]::clone);
+        return Optional.ofNullable(gtrid.get()).map(byte[]::clone);
     }
 
     void setGtrid(byte[] gtrid) {
-        this.gtrid = copy(gtrid);
+        this.gtrid.set(copy(gtrid));
     }
 
     boolean setGtridIfAbsent(byte[] gtrid) {
-        if (this.gtrid != null) {
-            return false;
-        }
-        this.gtrid = copy(gtrid);
-        return true;
+        return this.gtrid.compareAndSet(null, copy(gtrid));
     }
 
     void clearGtrid() {
-        gtrid = null;
+        gtrid.set(null);
     }
 
     static Optional<OracleSessionlessTransactionState> current() {

@@ -336,11 +336,14 @@ class RecoverableSpec {
         @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND)
         @OracleTransactional.Recoverable
         void suspend() {
+            // Intentionally empty: the advice rejects this annotation combination before the body runs,
+            // so reaching this point at all would mean the validation failed.
         }
 
         @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
         @OracleTransactional.Recoverable
         void resume() {
+            // Intentionally empty: see suspend().
         }
     }
 

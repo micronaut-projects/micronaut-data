@@ -337,6 +337,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
     }
 
+    // Sonar java:S3776 -- the branching mirrors the commit state machine (rollback-only checks,
+    // synchronization ordering, and the distinct recovery paths per exception type); the sequence
+    // is only correct read as a whole.
+    @SuppressWarnings("java:S3776")
     private void commitInternal(T tx) {
         if (tx.isCompleted()) {
             throw new IllegalTransactionStateException("Transaction is already completed - do not call commit or rollback more than once per transaction");
