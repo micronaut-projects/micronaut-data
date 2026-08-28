@@ -21,6 +21,7 @@ import io.micronaut.data.document.mongodb.entities.Test
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.Nulls
 import spock.lang.Specification
@@ -94,6 +95,21 @@ class MongoSortCriteriaSpec extends Specification {
                 "{\$addFields:{__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$__micronaut_sort_0'},['missing','null']]},1,0]}}}," +
                 "{\$sort:{__micronaut_nulls_0:1,__micronaut_sort_0:1}}," +
                 "{\$unset:['__micronaut_sort_0','__micronaut_nulls_0']}]"
+    }
+
+    void "test ordering by an expression over a literal inlines the literal"() {
+        expect:
+        ascendingBy { cb, root -> cb.prod(root.get("amount"), new LiteralExpression<Integer>(2)) } ==
+                computedSort("\$multiply:['\$amount',2]")
+    }
+
+    void "test ordering by a null literal is rejected"() {
+        when:
+        ascendingBy { cb, root -> cb.prod(root.get("amount"), new LiteralExpression<Integer>((Integer) null)) }
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("null literal")
     }
 
     void "test ordering by an unsupported function is rejected"() {
