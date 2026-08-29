@@ -49,7 +49,6 @@ import jakarta.persistence.criteria.Expression;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -141,7 +140,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         }
         new ConjunctionPredicate(Arrays.stream(persistentEntity.getCompositeIdentity())
             .map(prop -> {
-                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(Collections.emptyList(), prop, prop.getName());
+                PersistentPropertyPath propertyPath = PersistentPropertyPath.of(List.of(), prop, prop.getName());
                 return new BinaryPredicate(
                     new DefaultPersistentPropertyPath<>(propertyPath),
                     new BoundPathParameterExpression<>(parameterExpression, propertyPath),
@@ -326,7 +325,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         if (isComputedExpression(expression)) {
             PersistentPropertyPath ctx = requirePropertyOperand(expression);
             Object valueExpr = requireExprOperand(expression, ctx);
-            List<Object> resolvedValues = values == null ? Collections.emptyList() : values.stream()
+            List<Object> resolvedValues = values == null ? List.of() : values.stream()
                 .map(val -> val instanceof Expression<?> valueExpression
                     ? requireExprOperand(valueExpression, ctx)
                     : valueRepresentation(queryState, ctx, val))
@@ -358,7 +357,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                 int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
                 resolvedValues = List.of(NitriteInternalKeys.QUERY_PARAMETER_PREFIX + index);
             } else {
-                resolvedValues = Collections.singletonList(valueRepresentation(queryState, propertyPath, singleValue));
+                resolvedValues = List.of(valueRepresentation(queryState, propertyPath, singleValue));
             }
         } else {
             resolvedValues = values.stream()
@@ -532,7 +531,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         ((IPredicate) negated).visitPredicate(this);
         if (query.isEmpty()) {
             query = preQuery;
-            query.put(NOT, Collections.emptyMap());
+            query.put(NOT, Map.of());
             return;
         }
         // Defensive: a single negated predicate emits exactly one top-level entry; a multi-entry
@@ -651,14 +650,14 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                 .map(expression -> requireExprOperand(expression, bindingContextPath))
                 .toList());
             case "LENGTH" -> Map.of(STR_LEN_CP, requireExprOperand(expressions.getFirst(), bindingContextPath));
-            case "LOWER" -> Map.of(TO_LOWER, requireExprOperand(expressions.get(0), bindingContextPath));
-            case "UPPER" -> Map.of(TO_UPPER, requireExprOperand(expressions.get(0), bindingContextPath));
+            case "LOWER" -> Map.of(TO_LOWER, requireExprOperand(expressions.getFirst(), bindingContextPath));
+            case "UPPER" -> Map.of(TO_UPPER, requireExprOperand(expressions.getFirst(), bindingContextPath));
             case "LEFT" -> Map.of(SUBSTR_CP, List.of(
-                requireExprOperand(expressions.get(0), bindingContextPath),
+                requireExprOperand(expressions.getFirst(), bindingContextPath),
                 0,
                 requireExprOperand(expressions.get(1), bindingContextPath)));
             case "RIGHT" -> Map.of(RIGHT, List.of(
-                requireExprOperand(expressions.get(0), bindingContextPath),
+                requireExprOperand(expressions.getFirst(), bindingContextPath),
                 requireExprOperand(expressions.get(1), bindingContextPath)));
             default -> throw new IllegalStateException(
                 "Unsupported function expression: " + functionExpression.getName());
@@ -884,7 +883,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
      */
     static BindingParameter.BindingContext newBindingContext(@Nullable final PersistentProperty property) {
         return newBindingContext(
-            property == null ? null : PersistentPropertyPath.of(Collections.emptyList(), property, property.getName()));
+            property == null ? null : PersistentPropertyPath.of(List.of(), property, property.getName()));
     }
 
     static BindingParameter.BindingContext newBindingContext(

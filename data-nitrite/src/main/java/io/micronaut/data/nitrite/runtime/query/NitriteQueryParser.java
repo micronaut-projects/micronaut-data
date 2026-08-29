@@ -215,19 +215,14 @@ public final class NitriteQueryParser {
         if (value instanceof String s) {
             return List.of(s);
         }
-        List<String> fields = new ArrayList<>();
         if (value instanceof Map<?, ?> projection) {
-            for (Map.Entry<?, ?> entry : projection.entrySet()) {
-                if ("_id".equals(entry.getKey())) {
-                    continue;
-                }
-                Object projected = entry.getValue();
-                if (Integer.valueOf(1).equals(projected) || Boolean.TRUE.equals(projected)) {
-                    fields.add(entry.getKey().toString());
-                }
-            }
+            return projection.entrySet().stream()
+                .filter(entry -> !"_id".equals(entry.getKey()))
+                .filter(entry -> Integer.valueOf(1).equals(entry.getValue()) || Boolean.TRUE.equals(entry.getValue()))
+                .map(entry -> entry.getKey().toString())
+                .toList();
         }
-        return fields;
+        return List.of();
     }
 
     /**

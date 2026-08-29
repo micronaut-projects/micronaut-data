@@ -72,6 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Mapper for converting entities to Nitrite Documents and back.
@@ -102,7 +103,7 @@ public final class NitriteEntityMapper {
   private final RuntimeEntityRegistry runtimeEntityRegistry;
   private @Nullable NitriteOperationsHelper helper;
   private final @Nullable Class<?> geometryClass;
-  private final ConcurrentHashMap<Class<?>, NitriteEntityMeta<?>> entityMetaCache = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<?>, NitriteEntityMeta<?>> entityMetaCache = new ConcurrentHashMap<>();
 
   /**
    * Create a new mapper.
@@ -243,10 +244,9 @@ public final class NitriteEntityMapper {
    */
   public <T> @Nullable Object getEntityIdValue(final NitriteEntityMeta<T> meta, final T entity) {
     if (meta.persistentEntity().hasCompositeIdentity()) {
-      for (RuntimePersistentProperty<T> identityProperty : meta.persistentEntity().getRuntimeIdentityProperties()) {
-        if (identityProperty.getProperty().get(entity) == null) {
-          return null;
-        }
+      if (meta.persistentEntity().getRuntimeIdentityProperties().stream()
+          .anyMatch(identityProperty -> identityProperty.getProperty().get(entity) == null)) {
+        return null;
       }
       return entity;
     }
@@ -429,7 +429,7 @@ public final class NitriteEntityMapper {
    */
   public <E> Filter eqWithNumericCoercion(final RuntimePersistentEntity<E> entity, final String field, final @Nullable Object value, final String dottedPath) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, (value != null ? value.getClass().getName() : "null"), dottedPath);
+      LOG.debug("eqWithNumericCoercion: field={}, value={}, type={}, dottedPath={}", field, value, value != null ? value.getClass().getName() : "null", dottedPath);
     }
 
     if (value == null) {
@@ -443,12 +443,10 @@ public final class NitriteEntityMapper {
     if (entity != null) {
       RuntimePersistentProperty<E> property = entity.getPropertyByName(field);
       if (property == null) {
-        for (RuntimePersistentProperty<E> p : entity.getPersistentProperties()) {
-          if (p.getPersistedName().equals(field)) {
-            property = p;
-            break;
-          }
-        }
+        property = entity.getPersistentProperties().stream()
+            .filter(p -> p.getPersistedName().equals(field))
+            .findFirst()
+            .orElse(null);
       }
 
       if (property != null) {
@@ -726,12 +724,11 @@ public final class NitriteEntityMapper {
    */
   public List<CompositeJoinColumn> getCompositeJoinColumns(final Class<?> type, final String propertyName) {
     NitriteEntityMeta<?> meta = getOrBuildMeta(type);
-    for (WritablePropertyMeta<?> property : meta.writableProps()) {
-      if (property.prop().getName().equals(propertyName)) {
-        return property.compositeJoinColumns();
-      }
-    }
-    return List.of();
+    return meta.writableProps().stream()
+        .filter(property -> property.prop().getName().equals(propertyName))
+        .map(WritablePropertyMeta::compositeJoinColumns)
+        .findFirst()
+        .orElseGet(List::of);
   }
 
   /**
@@ -1261,7 +1258,7 @@ public final class NitriteEntityMapper {
             if (idProp != null && idProp.getName().equals(name)) {
                 storedName = ID_FIELD;
             }
-            Object val = storedName.equals(ID_FIELD)
+            Object val = ID_FIELD.equals(storedName)
                 ? docGet(doc, storedName, name, "_id")
                 : docGet(doc, storedName, name);
             if (val == null) {
@@ -1329,7 +1326,7 @@ public final class NitriteEntityMapper {
         }
 
         BeanProperty<T, Object> property = prop.getProperty();
-        Object value = storedName.equals(ID_FIELD)
+        Object value = ID_FIELD.equals(storedName)
             ? docGet(doc, storedName, prop.getName(), "_id")
             : docGet(doc, storedName, prop.getName());
 
@@ -1483,13 +1480,7 @@ public final class NitriteEntityMapper {
         if (helper == null) {
             return null;
         }
-        List<CompositeJoinColumn> joinColumns = List.of();
-        for (WritablePropertyMeta<T> wpm : getOrBuildMeta(type).writableProps()) {
-            if (wpm.prop().getName().equals(prop.getName())) {
-                joinColumns = wpm.compositeJoinColumns();
-                break;
-            }
-        }
+        List<CompositeJoinColumn> joinColumns = getCompositeJoinColumns(type, prop.getName());
         if (joinColumns.isEmpty()) {
             return null;
         }
@@ -1506,7 +1497,7 @@ public final class NitriteEntityMapper {
             filters.add(NitriteFilterUtils.eq(referencedField, localValue));
         }
         Class<Object> associatedType = castClass(associatedEntity.getIntrospection().getBeanType());
-        Filter filter = filters.size() == 1 ? filters.get(0) : Filter.and(filters.toArray(new Filter[0]));
+        Filter filter = filters.size() == 1 ? filters.getFirst() : Filter.and(filters.toArray(new Filter[0]));
         Document associatedDoc = helper.getCollection(associatedType).find(filter).firstOrNull();
         return associatedDoc == null ? null : fromDocumentInternal(associatedDoc, associatedType, visited);
     }
@@ -1524,15 +1515,19 @@ public final class NitriteEntityMapper {
         if (property != null) {
             return property;
         }
-        for (RuntimePersistentProperty<?> candidate : entity.getRuntimeIdentityProperties()) {
-            if (candidate.getPersistedName().equals(name)) {
-                return candidate;
-            }
+        RuntimePersistentProperty<?> candidate = entity.getRuntimeIdentityProperties().stream()
+            .filter(candidateProperty -> candidateProperty.getPersistedName().equals(name))
+            .findFirst()
+            .orElse(null);
+        if (candidate != null) {
+            return candidate;
         }
-        for (RuntimePersistentProperty<?> candidate : entity.getPersistentProperties()) {
-            if (candidate.getPersistedName().equals(name)) {
-                return candidate;
-            }
+        candidate = entity.getPersistentProperties().stream()
+            .filter(candidateProperty -> candidateProperty.getPersistedName().equals(name))
+            .findFirst()
+            .orElse(null);
+        if (candidate != null) {
+            return candidate;
         }
         return null;
     }

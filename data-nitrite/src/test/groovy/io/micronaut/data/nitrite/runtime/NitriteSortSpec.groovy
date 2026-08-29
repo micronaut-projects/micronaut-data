@@ -66,8 +66,8 @@ class NitriteSortSpec extends Specification implements NitriteTestPropertyProvid
         def pageable = CursoredPageable.from(2, Sort.of(Sort.Order.asc("name")))
 
         when:
-        CursoredPage<NitriteMpPerson> first = (CursoredPage<NitriteMpPerson>) personRepository.findAll(pageable)
-        CursoredPage<NitriteMpPerson> second = (CursoredPage<NitriteMpPerson>) personRepository.findAll(first.nextPageable())
+        CursoredPage<NitriteMpPerson> first = personRepository.findAll(pageable)
+        CursoredPage<NitriteMpPerson> second = personRepository.findAll(first.nextPageable())
 
         then:
         first.content.size() == 2

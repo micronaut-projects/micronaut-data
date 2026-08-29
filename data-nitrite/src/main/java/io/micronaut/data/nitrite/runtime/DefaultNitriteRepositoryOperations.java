@@ -609,7 +609,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         List<Sort.Order> requestedOrders = new ArrayList<>(orders.values());
         Sort.Order.Direction direction = requestedOrders.isEmpty()
             ? Sort.Order.Direction.ASC
-            : requestedOrders.get(requestedOrders.size() - 1).getDirection();
+            : requestedOrders.getLast().getDirection();
         for (PersistentProperty identity : entity.getIdentityProperties()) {
             if (requestedOrders.stream().anyMatch(order -> isIdentitySort(order.getProperty(), entity, identity))) {
                 continue;
@@ -630,8 +630,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         }
         return propertyName.equals(identity.getName())
             || propertyName.equals(identity.getPersistedName())
-            || propertyName.equals("_id")
-            || propertyName.equals(NitriteEntityMapper.ID_FIELD);
+            || "_id".equals(propertyName)
+            || NitriteEntityMapper.ID_FIELD.equals(propertyName);
     }
 
     private String normalizeSortProperty(String property, @Nullable RuntimePersistentEntity<?> entity) {
@@ -665,19 +665,21 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             if (parsed instanceof Map<?, ?> m) {
                 sortObj = m.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> s ? s : null;
             } else if (parsed instanceof List<?> pipeline) {
-                for (Object stage : pipeline) {
-                    if (stage instanceof Map<?, ?> sm && sm.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> s) {
-                        sortObj = s;
-                        break;
-                    }
-                }
+                sortObj = pipeline.stream()
+                    .filter(Map.class::isInstance)
+                    .map(stage -> ((Map<?, ?>) stage).get(NitriteQueryOperators.SORT))
+                    .filter(Map.class::isInstance)
+                    .map(Map.class::cast)
+                    .findFirst()
+                    .orElse(null);
             }
             if (sortObj != null) {
-                List<Sort.Order> orders = new ArrayList<>();
-                for (Map.Entry<?, ?> e : sortObj.entrySet()) {
-                    int dir = e.getValue() instanceof Number n ? n.intValue() : 1;
-                    orders.add(dir >= 1 ? Sort.Order.asc(e.getKey().toString()) : Sort.Order.desc(e.getKey().toString()));
-                }
+                List<Sort.Order> orders = sortObj.entrySet().stream()
+                    .map(e -> {
+                        int dir = e.getValue() instanceof Number n ? n.intValue() : 1;
+                        return dir >= 1 ? Sort.Order.asc(e.getKey().toString()) : Sort.Order.desc(e.getKey().toString());
+                    })
+                    .toList();
                 return orders.isEmpty() ? null : Sort.of(orders);
             }
         } catch (Exception ignored) {
@@ -694,13 +696,12 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (hints == null || hints.isEmpty() || !(hints.get("sort") instanceof String sortStr) || sortStr.isEmpty()) {
             return null;
         }
-        List<Sort.Order> orders = new ArrayList<>();
-        for (String part : sortStr.split(",", -1)) {
-            String[] parts = part.trim().split(":", -1);
-            if (parts.length == 2) {
-                orders.add(Sort.Order.Direction.valueOf(parts[1]) == Sort.Order.Direction.ASC ? Sort.Order.asc(parts[0]) : Sort.Order.desc(parts[0]));
-            }
-        }
+        List<Sort.Order> orders = Stream.of(sortStr.split(",", -1))
+            .map(part -> part.trim().split(":", -1))
+            .filter(parts -> parts.length == 2)
+            .map(parts -> Sort.Order.Direction.valueOf(parts[1]) == Sort.Order.Direction.ASC
+                ? Sort.Order.asc(parts[0]) : Sort.Order.desc(parts[0]))
+            .toList();
         return orders.isEmpty() ? null : Sort.of(orders);
     }
 
@@ -1079,12 +1080,11 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 return entity.getPropertyPath(identity.getName());
             }
         }
-        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-            if (property.getPersistedName().equals(persistedName)) {
-                return entity.getPropertyPath(property.getName());
-            }
-        }
-        return null;
+        return entity.getPersistentProperties().stream()
+            .filter(property -> property.getPersistedName().equals(persistedName))
+            .map(property -> entity.getPropertyPath(property.getName()))
+            .findFirst()
+            .orElse(null);
     }
 
     @Override

@@ -58,7 +58,6 @@ import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,7 +140,7 @@ public final class NitriteQueryExecutor {
         this.filterBuilder = filterBuilder;
         this.generatedQueryParser = new GeneratedQueryParser(
             (entity, propertyPath, operators) ->
-                filterBuilder.buildFieldFilter(entity, propertyPath, operators, EMPTY_PARAMS, Collections.emptyMap()));
+                filterBuilder.buildFieldFilter(entity, propertyPath, operators, EMPTY_PARAMS, Map.of()));
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
         this.findOptionsFactory = findOptionsFactory;
@@ -293,7 +292,7 @@ public final class NitriteQueryExecutor {
         // Handle DTO projection
         if (nq.isDtoProjection()) {
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
-            return projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), Collections.emptyList(), entity, nq.getResultType(), true);
+            return projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), List.of(), entity, nq.getResultType(), true);
         }
 
         // Handle native single-field projection (result type differs from root entity)
@@ -317,7 +316,7 @@ public final class NitriteQueryExecutor {
         // Fetch joined associations if specified
         Set<JoinPath> joinPaths = nq.getJoinPaths();
         if (joinPaths != null && !joinPaths.isEmpty()) {
-            joinFetcher.fetch(Collections.singletonList(entity), joinPaths, nq.getRootEntity());
+            joinFetcher.fetch(List.of(entity), joinPaths, nq.getRootEntity());
         }
 
         return entity;
@@ -388,9 +387,9 @@ public final class NitriteQueryExecutor {
                 (queryStr != null && queryStr.contains(NitriteQueryOperators.COUNT));
             if (isCountQuery) {
                 if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
-                    return Collections.singletonList((R) handleDistinctCount(coll, filter, queryStr));
+                    return List.of((R) handleDistinctCount(coll, filter, queryStr));
                 }
-                return Collections.singletonList((R) Long.valueOf(coll.find(filter).size()));
+                return List.of((R) Long.valueOf(coll.find(filter).size()));
             }
         }
 
@@ -441,7 +440,7 @@ public final class NitriteQueryExecutor {
             String fieldName = aggregationHandler.extractFieldName(methodName);
             if (aggFunc != null && fieldName != null) {
                 Object result = aggregationHandler.aggregate(docs, persistedField(fieldName, nq), aggFunc);
-                return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+                return List.of(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
             }
         }
 
@@ -458,7 +457,7 @@ public final class NitriteQueryExecutor {
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
             List<R> results = new ArrayList<>();
             for (Document doc : cursor) {
-                R result = projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), Collections.emptyList(), entity, nq.getResultType(), true);
+                R result = projectionMapper.mapDocument(remapDtoProjectionDocument(doc, nq), List.of(), entity, nq.getResultType(), true);
                 if (result != null) {
                     results.add(result);
                 }
@@ -471,12 +470,12 @@ public final class NitriteQueryExecutor {
             projectedFields = null;
             String projectField = queryParser.extractProjectionField(query);
             if (projectField != null) {
-                projectedFields = Collections.singletonList(projectField);
+                projectedFields = List.of(projectField);
             }
             if (projectedFields == null) {
                 String fieldName = nativeProjectionHandler.extractFieldName(query, methodName);
                 if (fieldName != null) {
-                    projectedFields = Collections.singletonList(fieldName);
+                    projectedFields = List.of(fieldName);
                 }
             }
 

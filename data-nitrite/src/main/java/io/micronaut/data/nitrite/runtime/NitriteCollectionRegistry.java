@@ -74,7 +74,7 @@ final class NitriteCollectionRegistry {
     String getCollectionName(Class<?> type) {
         return collectionNameCache.computeIfAbsent(type, t -> {
             MappedEntity mappedEntity = t.getAnnotation(MappedEntity.class);
-            return (mappedEntity != null && !mappedEntity.value().isEmpty()) ? mappedEntity.value() : t.getSimpleName();
+            return mappedEntity != null && !mappedEntity.value().isEmpty() ? mappedEntity.value() : t.getSimpleName();
         });
     }
 

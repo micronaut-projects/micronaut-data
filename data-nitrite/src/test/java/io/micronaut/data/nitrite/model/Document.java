@@ -31,7 +31,7 @@ public class Document {
   public Document(String title, List<String> tags, Boolean published) {
     this.title = title;
     // Defensive copy to prevent external modification
-    this.tags = (tags != null) ? new ArrayList<>(tags) : new ArrayList<>();
+    this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
     this.published = published;
   }
 
@@ -78,7 +78,7 @@ public class Document {
    */
   public List<String> getTags() {
     // Return unmodifiable view to prevent external modification
-    return (tags != null) ? Collections.unmodifiableList(tags) : Collections.emptyList();
+    return tags != null ? Collections.unmodifiableList(tags) : List.of();
   }
 
   /**
@@ -88,7 +88,7 @@ public class Document {
    */
   public void setTags(List<String> tags) {
     // Defensive copy to prevent external modification
-    this.tags = (tags != null) ? new ArrayList<>(tags) : new ArrayList<>();
+    this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
   }
 
   /**

@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -82,10 +83,9 @@ public final class JoinFetcher {
         if (entities == null || entities.isEmpty() || joinPaths == null || joinPaths.isEmpty()) {
             return;
         }
-        List<String> paths = new ArrayList<>(joinPaths.size());
-        for (JoinPath jp : joinPaths) {
-            paths.add(jp.getPath());
-        }
+        List<String> paths = joinPaths.stream()
+            .map(JoinPath::getPath)
+            .toList();
         fetchForEntity(entities, entityFactory.apply(entityType), paths);
     }
 
@@ -127,13 +127,11 @@ public final class JoinFetcher {
         }
 
         RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
-        List<Object> parentIds = new ArrayList<>();
-        for (Object entity : entities) {
-            Object idValue = ((BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
-            if (idValue != null) {
-                parentIds.add(entityMapper.toFilterValue(idValue));
-            }
-        }
+        List<Object> parentIds = entities.stream()
+            .map(entity -> ((BeanProperty<Object, Object>) idProp.getProperty()).get(entity))
+            .filter(Objects::nonNull)
+            .map(entityMapper::toFilterValue)
+            .toList();
         if (parentIds.isEmpty()) {
             return List.of();
         }
@@ -164,11 +162,7 @@ public final class JoinFetcher {
                 Document doc = pair.getSecond();
                 Object val = doc.get(finalBackFieldName);
                 if (val instanceof Collection<?> coll) {
-                    for (Object id : parentIds) {
-                        if (coll.contains(id)) {
-                            return true;
-                        }
-                    }
+                    return parentIds.stream().anyMatch(coll::contains);
                 }
                 return false;
             };

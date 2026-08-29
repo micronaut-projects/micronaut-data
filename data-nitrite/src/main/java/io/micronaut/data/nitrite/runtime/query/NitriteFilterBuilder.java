@@ -138,32 +138,28 @@ public final class NitriteFilterBuilder {
         for (Map.Entry<String, Object> entry : filterObj.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (key != null && (key.equals(SORT) || key.equals(SET)
-                    || key.equals(INC) || key.equals(MUL)
-                    || key.equals(LIMIT) || key.equals(SKIP)
-                    || key.equals(COUNT) || key.equals(PROJECT))) {
+            if (key != null && (SORT.equals(key) || SET.equals(key)
+                    || INC.equals(key) || MUL.equals(key)
+                    || LIMIT.equals(key) || SKIP.equals(key)
+                    || COUNT.equals(key) || PROJECT.equals(key))) {
                 continue;
             }
             switch (key) {
                 case AND -> {
                     if (value instanceof List<?> list) {
-                        List<NitriteFilterAST> ands = new ArrayList<>();
-                        for (Object item : list) {
-                            if (item instanceof Map<?, ?> m) {
-                                ands.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
-                            }
-                        }
+                        List<NitriteFilterAST> ands = list.stream()
+                            .filter(Map.class::isInstance)
+                            .map(item -> (NitriteFilterAST) compile(entity, toStringObjectMap((Map<?, ?>) item)))
+                            .toList();
                         compiledFilters.add(new NitriteFilterAST.AndNode(ands));
                     }
                 }
                 case OR -> {
                     if (value instanceof List<?> list) {
-                        List<NitriteFilterAST> ors = new ArrayList<>();
-                        for (Object item : list) {
-                            if (item instanceof Map<?, ?> m) {
-                                ors.add((NitriteFilterAST) compile(entity, toStringObjectMap(m)));
-                            }
-                        }
+                        List<NitriteFilterAST> ors = list.stream()
+                            .filter(Map.class::isInstance)
+                            .map(item -> (NitriteFilterAST) compile(entity, toStringObjectMap((Map<?, ?>) item)))
+                            .toList();
                         compiledFilters.add(new NitriteFilterAST.OrNode(ors));
                     }
                 }
@@ -179,7 +175,7 @@ public final class NitriteFilterBuilder {
                         String op = (String) exprEntry.getKey();
                         if (exprEntry.getValue() instanceof List<?> operands && operands.size() == 2) {
                             compiledFilters.add(new NitriteFilterAST.ExprNode(
-                                op, compileExprValue(entity, operands.get(0)), compileExprValue(entity, operands.get(1))));
+                                op, compileExprValue(entity, operands.getFirst()), compileExprValue(entity, operands.get(1))));
                         }
                     }
                 }
@@ -206,11 +202,9 @@ public final class NitriteFilterBuilder {
             return new NitriteFilterAST.ExprValueNode.FieldRef(normalizeExprField(entity, s.substring(1)));
         }
         if (node instanceof List<?> list) {
-            List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(list.size());
-            for (Object item : list) {
-                compiled.add(compileExprValue(entity, item));
-            }
-            return new NitriteFilterAST.ExprValueNode.ListValue(compiled);
+            return new NitriteFilterAST.ExprValueNode.ListValue(list.stream()
+                .map(item -> compileExprValue(entity, item))
+                .toList());
         }
         if (node instanceof Map<?, ?> m && m.size() == 1) {
             Map.Entry<?, ?> entry = m.entrySet().iterator().next();
@@ -224,33 +218,31 @@ public final class NitriteFilterBuilder {
                 return new NitriteFilterAST.ExprValueNode.ToUpper(compileExprValue(entity, entry.getValue()));
             }
             if (MULTIPLY.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
-                List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
-                for (Object operand : operands) {
-                    compiled.add(compileExprValue(entity, operand));
-                }
+                List<NitriteFilterAST.ExprValueNode> compiled = operands.stream()
+                    .map(operand -> compileExprValue(entity, operand))
+                    .toList();
                 return new NitriteFilterAST.ExprValueNode.Multiply(compiled);
             }
             if (CONCAT.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands) {
-                List<NitriteFilterAST.ExprValueNode> compiled = new ArrayList<>(operands.size());
-                for (Object operand : operands) {
-                    compiled.add(compileExprValue(entity, operand));
-                }
+                List<NitriteFilterAST.ExprValueNode> compiled = operands.stream()
+                    .map(operand -> compileExprValue(entity, operand))
+                    .toList();
                 return new NitriteFilterAST.ExprValueNode.Concat(compiled);
             }
             if (SUBSTR_CP.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 3) {
                 return new NitriteFilterAST.ExprValueNode.Substr(
-                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.getFirst()),
                     compileExprValue(entity, operands.get(1)),
                     compileExprValue(entity, operands.get(2)));
             }
             if (RIGHT.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 2) {
                 return new NitriteFilterAST.ExprValueNode.Right(
-                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.getFirst()),
                     compileExprValue(entity, operands.get(1)));
             }
             if (DIVIDE.equals(entry.getKey()) && entry.getValue() instanceof List<?> operands && operands.size() == 2) {
                 return new NitriteFilterAST.ExprValueNode.Divide(
-                    compileExprValue(entity, operands.get(0)),
+                    compileExprValue(entity, operands.getFirst()),
                     compileExprValue(entity, operands.get(1)));
             }
             if (TO_DOUBLE.equals(entry.getKey())) {
@@ -300,7 +292,7 @@ public final class NitriteFilterBuilder {
                 operatorValues.put(entry.getKey(), valueResolver.compileValue(entry.getValue()));
             }
         } else {
-            operators = Collections.singletonMap(EQ, rawValue);
+            operators = Map.of(EQ, rawValue);
             operatorValues.put(EQ, valueResolver.compileValue(rawValue));
         }
 
@@ -315,10 +307,9 @@ public final class NitriteFilterBuilder {
             }
             return new NitriteFilterAST.SimpleEqualityNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, eqValue);
         }
-        List<NitriteFilterAST.OperatorBinding> bindings = new ArrayList<>(operatorValues.size());
-        for (Map.Entry<String, CompiledValue> entry : operatorValues.entrySet()) {
-            bindings.add(new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()));
-        }
+        List<NitriteFilterAST.OperatorBinding> bindings = operatorValues.entrySet().stream()
+            .map(entry -> new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()))
+            .toList();
         return new NitriteFilterAST.SimpleOperatorNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, bindings);
     }
 
@@ -441,7 +432,7 @@ public final class NitriteFilterBuilder {
         r.put(NOT_NULL, (e, f, v, p, n) -> Boolean.TRUE.equals(v) ? NitriteFilterUtils.isNotNullFilter(f) : NitriteFilterUtils.isNullFilter(f));
         r.put(BETWEEN, (e, f, v, p, n) -> {
             if (v instanceof List<?> list && list.size() == 2) {
-                Object v1 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(0), p, n)));
+                Object v1 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.getFirst(), p, n)));
                 Object v2 = entityMapper.toFilterValue(valueResolver.preConvertForFilter(valueResolver.resolveValue(list.get(1), p, n)));
                 return buildBetweenFilter(e, f, v1, v2);
             }
@@ -553,11 +544,9 @@ public final class NitriteFilterBuilder {
         if (values.isEmpty() || !isCharacterProperty(entity, field)) {
             return values;
         }
-        List<Comparable<?>> coerced = new ArrayList<>(values.size());
-        for (Comparable<?> value : values) {
-            coerced.add((Comparable<?>) coerceCharacter(value));
-        }
-        return coerced;
+        return values.stream()
+            .<Comparable<?>>map(value -> (Comparable<?>) coerceCharacter(value))
+            .toList();
     }
 
     /**
@@ -582,10 +571,12 @@ public final class NitriteFilterBuilder {
         if (entity == null) {
             return null;
         }
-        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-            if (property.getName().equals(field) || property.getPersistedName().equals(field)) {
-                return property;
-            }
+        RuntimePersistentProperty<?> property = entity.getPersistentProperties().stream()
+            .filter(candidate -> candidate.getName().equals(field) || candidate.getPersistedName().equals(field))
+            .findFirst()
+            .orElse(null);
+        if (property != null) {
+            return property;
         }
         try {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
@@ -659,17 +650,16 @@ public final class NitriteFilterBuilder {
             final Object[] params,
             final Map<String, Object> namedParameters) {
 
-        List<Filter> fieldFilters = new ArrayList<>();
-        for (Map.Entry<String, Object> opEntry : operators.entrySet()) {
-            String op = opEntry.getKey();
-            Object value = valueResolver.resolveValue(opEntry.getValue(), params, namedParameters);
-            Object finalValue = entityMapper.toNitriteFilterValue(
-                valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
-            Filter f = buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
-            if (f != null && !Filter.ALL.equals(f)) {
-                fieldFilters.add(f);
-            }
-        }
+        List<Filter> fieldFilters = operators.entrySet().stream()
+            .map(opEntry -> {
+                String op = opEntry.getKey();
+                Object value = valueResolver.resolveValue(opEntry.getValue(), params, namedParameters);
+                Object finalValue = entityMapper.toNitriteFilterValue(
+                    valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
+                return buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
+            })
+            .filter(f -> f != null && !Filter.ALL.equals(f))
+            .toList();
         return fieldFilters.size() == 1 ? fieldFilters.getFirst() : Filter.and(fieldFilters.toArray(new Filter[0]));
     }
 

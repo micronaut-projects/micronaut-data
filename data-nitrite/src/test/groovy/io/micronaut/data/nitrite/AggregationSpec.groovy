@@ -58,7 +58,7 @@ class AggregationSpec extends Specification {
         Optional<Double> result = repository.findMaxAmountByStatus(Event.Status.PENDING)
 
         then:
-        !result.isPresent()
+        result.isEmpty()
     }
 
     // -----------------------------------------------------------------------

@@ -4,6 +4,7 @@ import io.micronaut.data.nitrite.runtime.ValueConverter
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.net.URI
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.time.*
@@ -40,9 +41,9 @@ class NitriteTypeRegistryUnitSpec extends Specification {
         "ZonedDateTime"     | ZDT                             | ZDT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         "OffsetDateTime"    | ODT                             | ODT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         "UUID"              | TEST_UUID                       | TEST_UUID.toString()
-        "URL"               | new URL("https://example.com") | "https://example.com"
+        "URL"               | URI.create("https://example.com").toURL() | "https://example.com"
         "URI"               | new URI("urn:isbn:0451450523") | "urn:isbn:0451450523"
-        "Charset"           | Charset.forName("UTF-8")        | "UTF-8"
+        "Charset"           | StandardCharsets.UTF_8        | "UTF-8"
         "ZoneId"            | ZoneId.of("Europe/Paris")       | "Europe/Paris"
     }
 

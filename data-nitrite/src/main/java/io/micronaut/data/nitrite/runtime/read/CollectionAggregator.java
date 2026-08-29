@@ -105,7 +105,7 @@ public final class CollectionAggregator {
         // Handle numeric aggregation
         if (first instanceof Number) {
             // Exact numeric inputs stay exact rather than being coerced through double.
-            List<Number> numValues = values.stream().map(v -> (Number) v).toList();
+            List<Number> numValues = values.stream().map(Number.class::cast).toList();
             return switch (aggFunc) {
                 case "Max" -> numValues.stream().max(CollectionAggregator::compareNumbers).orElse(null);
                 case "Min" -> numValues.stream().min(CollectionAggregator::compareNumbers).orElse(null);
@@ -117,7 +117,7 @@ public final class CollectionAggregator {
 
         // Handle LocalDate aggregation (stored as epoch day; values may be pre-converted)
         if (first instanceof LocalDate) {
-            List<LocalDate> dates = values.stream().map(v -> (LocalDate) v).toList();
+            List<LocalDate> dates = values.stream().map(LocalDate.class::cast).toList();
             return switch (aggFunc) {
                 case "Max" -> dates.stream().max(LocalDate::compareTo).orElse(null);
                 case "Min" -> dates.stream().min(LocalDate::compareTo).orElse(null);
@@ -127,7 +127,7 @@ public final class CollectionAggregator {
 
         // Handle LocalDateTime aggregation (stored as epoch nanos; values may be pre-converted)
         if (first instanceof LocalDateTime) {
-            List<LocalDateTime> dateTimes = values.stream().map(v -> (LocalDateTime) v).toList();
+            List<LocalDateTime> dateTimes = values.stream().map(LocalDateTime.class::cast).toList();
             return switch (aggFunc) {
                 case "Max" -> dateTimes.stream().max(LocalDateTime::compareTo).orElse(null);
                 case "Min" -> dateTimes.stream().min(LocalDateTime::compareTo).orElse(null);
@@ -153,9 +153,9 @@ public final class CollectionAggregator {
 
         // Generic fallback for other Comparable types
         if (first instanceof Comparable) {
-            if (aggFunc.equals("Max")) {
+            if ("Max".equals(aggFunc)) {
                 return values.stream().max((a, b) -> ((Comparable<Object>) a).compareTo(b)).orElse(null);
-            } else if (aggFunc.equals("Min")) {
+            } else if ("Min".equals(aggFunc)) {
                 return values.stream().min((a, b) -> ((Comparable<Object>) a).compareTo(b)).orElse(null);
             }
         }
@@ -179,7 +179,7 @@ public final class CollectionAggregator {
      * @return the aggregated value
      */
     private static Number aggregateNumbers(List<Number> values, boolean average) {
-        boolean decimal = values.stream().anyMatch(value -> value instanceof BigDecimal);
+        boolean decimal = values.stream().anyMatch(BigDecimal.class::isInstance);
         boolean floating = values.stream()
             .anyMatch(value -> value instanceof Double || value instanceof Float);
         if (floating && !decimal) {

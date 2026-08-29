@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +130,7 @@ final class AssociationFilterResolver {
                 return null;
             }
             // For dotted paths (e.g. "children.name"), extract target from the resolved terminal.
-            String targetPropertyName = (field.contains(".") && resolution.terminal() != null)
+            String targetPropertyName = field.contains(".") && resolution.terminal() != null
                 ? resolution.terminal().getName()
                 : null;
             return buildReverseLookupFilter(entity, headAssoc, targetPropertyName, value, params, namedParameters);
@@ -160,12 +159,10 @@ final class AssociationFilterResolver {
 
         RuntimePersistentProperty<?> targetProperty = associatedEntity.getPropertyByName(targetPropertyName);
         if (targetProperty == null) {
-            for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
-                if (p.getPersistedName().equals(targetPropertyName)) {
-                    targetProperty = p;
-                    break;
-                }
-            }
+            targetProperty = associatedEntity.getPersistentProperties().stream()
+                .filter(p -> p.getPersistedName().equals(targetPropertyName))
+                .findFirst()
+                .orElse(null);
         }
         if (targetProperty == null) {
             return null;
@@ -177,8 +174,7 @@ final class AssociationFilterResolver {
         }
         String backRefPersistedName = backRefProp.getPersistedName();
 
-        Map<String, Object> subFilterMap = Collections.singletonMap(
-            targetProperty.getPersistedName(), Collections.singletonMap(EQ, value));
+        Map<String, Object> subFilterMap = Map.of(targetProperty.getPersistedName(), Map.of(EQ, value));
 
         List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
             associatedEntity.getIntrospection().getBeanType(), mappedBy);
@@ -212,17 +208,15 @@ final class AssociationFilterResolver {
             return null;
         }
         RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
-        List<Map<String, Object>> orClauses = new ArrayList<>();
-        for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
-            if (p.getType().isInstance(value)) {
-                orClauses.add(Collections.singletonMap(p.getPersistedName(), Collections.singletonMap(EQ, value)));
-            }
-        }
+        List<Map<String, Object>> orClauses = associatedEntity.getPersistentProperties().stream()
+            .filter(p -> p.getType().isInstance(value))
+            .map(p -> Map.<String, Object>of(p.getPersistedName(), Map.of(EQ, value)))
+            .toList();
         if (orClauses.isEmpty()) {
             return null;
         }
 
-        Map<String, Object> subFilterMap = Collections.singletonMap(OR, orClauses);
+        Map<String, Object> subFilterMap = Map.of(OR, orClauses);
         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, null, false, params, namedParameters);
         if (matchingIds.isEmpty()) {
@@ -271,7 +265,7 @@ final class AssociationFilterResolver {
                 for (Map.Entry<String, Object> entry : operators.entrySet()) {
                     resolvedOperators.put(entry.getKey(), valueResolver.resolveValue(entry.getValue(), params, namedParameters));
                 }
-                Map<String, Object> subFilterMap = Collections.singletonMap(remaining, resolvedOperators);
+                Map<String, Object> subFilterMap = Map.of(remaining, resolvedOperators);
 
                 String mappedBy = assoc.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
                 if (mappedBy == null) {
@@ -285,11 +279,7 @@ final class AssociationFilterResolver {
                             Document doc = pair.getSecond();
                             Object val = doc.get(fieldName);
                             if (val instanceof Collection<?> coll) {
-                                for (Object id : matchingIds) {
-                                    if (coll.contains(id)) {
-                                        return true;
-                                    }
-                                }
+                                return matchingIds.stream().anyMatch(coll::contains);
                             }
                             return false;
                         };
@@ -331,7 +321,7 @@ final class AssociationFilterResolver {
                 for (Map.Entry<String, Object> entry : operators.entrySet()) {
                     resolvedOperators.put(entry.getKey(), valueResolver.resolveValue(entry.getValue(), params, namedParameters));
                 }
-                Map<String, Object> subFilterMap = Collections.singletonMap(remaining, resolvedOperators);
+                Map<String, Object> subFilterMap = Map.of(remaining, resolvedOperators);
                 if (associatedEntity.hasCompositeIdentity()) {
                     return buildCompositeForwardLookupFilter(
                         entity, firstPart, associatedEntity, subFilterMap, params, namedParameters);

@@ -321,10 +321,10 @@ public final class GeneratedQueryParser {
         if (value.length() >= 2 && value.startsWith("'") && value.endsWith("'")) {
             return value.substring(1, value.length() - 1).replace("\\'", "'").replace("''", "'");
         }
-        if (value.equalsIgnoreCase("NULL")) {
+        if ("NULL".equalsIgnoreCase(value)) {
             return null;
         }
-        if (value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("FALSE")) {
+        if ("TRUE".equalsIgnoreCase(value) || "FALSE".equalsIgnoreCase(value)) {
             return Boolean.parseBoolean(value);
         }
         try {

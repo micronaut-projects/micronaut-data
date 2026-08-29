@@ -193,7 +193,7 @@ class NitriteDocumentRepositorySpec extends Specification implements NitriteTest
             def limitedPeople1 = criteriaPersonRepository.findAll(new QuerySpecification<NitriteMpPerson>() {
                 @Override
                 Predicate toPredicate(Root<NitriteMpPerson> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-                    return root.get("id").in(people.get(0).getId(), people.get(1).getId(), people.get(2).getId())
+                    return root.get("id").in(people.getFirst().getId(), people.get(1).getId(), people.get(2).getId())
                 }
             })
         then:
@@ -204,7 +204,7 @@ class NitriteDocumentRepositorySpec extends Specification implements NitriteTest
                 @Override
                 Predicate toPredicate(Root<NitriteMpPerson> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                     return criteriaBuilder.in(root.get("id"))
-                            .value(people.get(0).getId())
+                            .value(people.getFirst().getId())
                             .value(people.get(1).getId())
                             .value(people.get(2).getId())
                 }

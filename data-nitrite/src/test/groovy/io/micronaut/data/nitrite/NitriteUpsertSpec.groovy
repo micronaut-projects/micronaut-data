@@ -13,7 +13,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 
 /**
  * Consolidated regression tests for Nitrite save() upsert behavior.
@@ -86,7 +86,7 @@ class NitriteUpsertSpec extends Specification {
     // ========== Helper Methods ==========
 
     private ApplicationContext createContext(String mode, String testName) {
-        Files.createDirectories(Paths.get("build/test-db"))
+        Files.createDirectories(Path.of("build/test-db"))
         def props = [
             "micronaut.nitrite.default.storage-mode": mode,
             "micronaut.nitrite.default.db-path": "build/test-db/${testName}.db"

@@ -141,7 +141,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test extended string predicate #desc produces #expected"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(build.call(entityRoot, builder))
             String predicateQuery = getQuery(criteriaQuery)
 
@@ -202,7 +202,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test regexp with parameter expression"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(builder.regex(entityRoot.get("name"), criteriaBuilder.parameter(String)))
         expect:
             getQuery(criteriaQuery) == '''{name:{$regex:{$mn_qp:0}}}'''
@@ -211,7 +211,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test arrayContains with single non-iterable value"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(builder.arrayContains(entityRoot.get("colors"), criteriaBuilder.literal("red")))
         expect:
             getQuery(criteriaQuery) == '''{colors:{$all:[{$mn_qp:0}]}}'''
@@ -239,7 +239,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test equalStringIgnoreCase covers visitEquals ignoreCase branch"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(builder.equalStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
 
         expect:
@@ -249,7 +249,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test notEqualStringIgnoreCase covers visitNotEquals ignoreCase branch"() {
         given:
             PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(builder.notEqualStringIgnoreCase(entityRoot.get("name"), criteriaBuilder.literal("Al")))
 
         expect:
@@ -719,7 +719,7 @@ class NitriteCriteriaUnitSpec extends Specification {
     void "test containsString with non-property-path left covers handleRegexExpression early return"() {
         given:
             createRoot(criteriaQuery)
-            def builder = (PersistentEntityCriteriaBuilder) criteriaBuilder
+            def builder = criteriaBuilder
             criteriaQuery.where(builder.containsString(criteriaBuilder.literal("someField"), criteriaBuilder.literal("Al")))
 
         expect:

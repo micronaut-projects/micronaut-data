@@ -187,7 +187,7 @@ public final class NitriteCriteriaExecutor {
         }
         R result = mapDocument(read.documents().getFirst(), plan, resultType);
         if (result != null && plan.projectedFields().isEmpty()) {
-            fetchRemainingJoins(Collections.singletonList(result), plan, read.nativeJoinPaths());
+            fetchRemainingJoins(List.of(result), plan, read.nativeJoinPaths());
         }
         return result;
     }
@@ -369,14 +369,10 @@ public final class NitriteCriteriaExecutor {
     }
 
     private <T> List<T> mapDocuments(List<Document> documents, CriteriaReadPlan plan, Class<T> type) {
-        List<T> results = new ArrayList<>(documents.size());
-        for (Document document : documents) {
-            T result = mapDocument(document, plan, type);
-            if (result != null) {
-                results.add(result);
-            }
-        }
-        return results;
+        return documents.stream()
+            .map(document -> mapDocument(document, plan, type))
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     private <T> void fetchRemainingJoins(
@@ -464,11 +460,9 @@ public final class NitriteCriteriaExecutor {
             return List.of();
         }
         if (selection.isCompoundSelection()) {
-            List<String> aliases = new ArrayList<>();
-            for (Selection<?> item : selection.getCompoundSelectionItems()) {
-                aliases.add(item.getAlias());
-            }
-            return aliases;
+            return selection.getCompoundSelectionItems().stream()
+                .map(Selection::getAlias)
+                .toList();
         }
         return Collections.singletonList(selection.getAlias());
     }
@@ -479,13 +473,11 @@ public final class NitriteCriteriaExecutor {
             return List.of();
         }
         if (selection.isCompoundSelection()) {
-            List<Class<?>> javaTypes = new ArrayList<>();
-            for (Selection<?> item : selection.getCompoundSelectionItems()) {
-                javaTypes.add(item.getJavaType());
-            }
-            return javaTypes;
+            return selection.getCompoundSelectionItems().stream()
+                .<Class<?>>map(item -> (Class<?>) item.getJavaType())
+                .toList();
         }
-        return Collections.singletonList(selection.getJavaType());
+        return List.of(selection.getJavaType());
     }
 
     private static Window runtimeFilterWindow(NitriteRuntimeFilter runtimeFilter, int offset, int limit) {
@@ -541,7 +533,7 @@ public final class NitriteCriteriaExecutor {
             if (root == null) {
                 continue;
             }
-            List<Object> single = Collections.singletonList(root);
+            List<Object> single = List.of(root);
             joinFetcher.fetch(single, joinPaths, entityType);
             if (innerPaths.stream().allMatch(joinPath -> hasJoinedValues(root, joinPath))) {
                 retained.add(document);
@@ -640,7 +632,7 @@ public final class NitriteCriteriaExecutor {
             }
             return Collections.unmodifiableMap(resolvedValues);
         }
-        return Collections.emptyMap();
+        return Map.of();
     }
 
     /**
@@ -691,7 +683,7 @@ public final class NitriteCriteriaExecutor {
         for (int i = 0; i < bindings.size(); i++) {
             params[i] = bindings.get(i).getValue();
         }
-        return filterBuilder.buildFilterFromJson(entityFactory.apply(entityType), filterMap, params, Collections.emptyMap());
+        return filterBuilder.buildFilterFromJson(entityFactory.apply(entityType), filterMap, params, Map.of());
     }
 
     private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
@@ -767,7 +759,7 @@ public final class NitriteCriteriaExecutor {
                     entityFactory.apply(entityType),
                     filterMap,
                     params,
-                    Collections.emptyMap());
+                Map.of());
         } catch (Exception e) {
             throw new IllegalStateException(
                 "Failed to build Nitrite filter from criteria query: " + queryResult.getQuery(), e);
@@ -838,13 +830,10 @@ public final class NitriteCriteriaExecutor {
                 if (parsedQuery instanceof Map<?, ?> m) {
                     stages = List.of(m);
                 } else if (parsedQuery instanceof List<?> pipeline) {
-                    List<Map<?, ?>> pipelineStages = new ArrayList<>();
-                    for (Object s : pipeline) {
-                        if (s instanceof Map<?, ?> sm) {
-                            pipelineStages.add(sm);
-                        }
-                    }
-                    stages = pipelineStages;
+                    stages = pipeline.stream()
+                        .filter(Map.class::isInstance)
+                        .<Map<?, ?>>map(s -> (Map<?, ?>) s)
+                        .toList();
                 } else {
                     return options;
                 }

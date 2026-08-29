@@ -207,7 +207,7 @@ public final class NitriteQueryBinder {
                                                           Function<Object, Object> toFilterValue) {
         Object[] params = q.getParameterArray();
         if (params == null || params.length == 0) {
-            return Collections.emptyMap();
+            return Map.of();
         }
         Map<String, Object> result = new HashMap<>();
         List<QueryParameterBinding> bindings = q.getQueryBindings();
@@ -286,7 +286,7 @@ public final class NitriteQueryBinder {
             return toFilterValue.apply(bindingValue);
         }
         int idx = binding.getParameterIndex();
-        Object base = (methodParams != null && idx >= 0 && idx < methodParams.length) ? methodParams[idx] : null;
+        Object base = methodParams != null && idx >= 0 && idx < methodParams.length ? methodParams[idx] : null;
         String[] parameterBindingPath = binding.getParameterBindingPath();
         String[] path = parameterBindingPath != null ? parameterBindingPath : binding.getPropertyPath();
         if (path == null || path.length == 0 || isDirectBindableScalar(base)

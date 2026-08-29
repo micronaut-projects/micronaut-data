@@ -79,8 +79,8 @@ class NitriteCompositeIdMappingSpec extends Specification {
         ])
 
         when:
-        CursoredPage<CompositeIdEntity> first = (CursoredPage<CompositeIdEntity>) parentRepository.findAll(CursoredPageable.from(1, null))
-        CursoredPage<CompositeIdEntity> second = (CursoredPage<CompositeIdEntity>) parentRepository.findAll(first.nextPageable())
+        CursoredPage<CompositeIdEntity> first = parentRepository.findAll(CursoredPageable.from(1, null))
+        CursoredPage<CompositeIdEntity> second = parentRepository.findAll(first.nextPageable())
 
         then:
         first.content.size() == 1

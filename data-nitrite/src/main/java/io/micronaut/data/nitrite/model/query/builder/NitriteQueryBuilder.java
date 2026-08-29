@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +83,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
     @Override
     public QueryResult buildInsert(
         final AnnotationMetadata repositoryMetadata, final InsertQueryDefinition definition) {
-        return QueryResult.of("", Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
+        return QueryResult.of("", List.of(), List.of(), Map.of());
     }
 
     @Override
@@ -152,9 +151,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             String queryString = NitriteQuerySerializer.toJsonString(pipeline);
             return QueryResult.of(
                 queryString,
-                Collections.emptyList(),
+                List.of(),
                 queryState.getParameterBindings(),
-                Collections.emptyMap(),
+                Map.of(),
                 query.limit(),
                 query.offset(),
                 query.getJoinPaths());
@@ -180,9 +179,9 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         String queryString = topLevel.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(topLevel);
         return QueryResult.of(
             queryString,
-            Collections.emptyList(),
+            List.of(),
             queryState.getParameterBindings(),
-            Collections.emptyMap(),
+            Map.of(),
             query.limit(),
             query.offset(),
             query.getJoinPaths());
@@ -310,7 +309,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
 
             @Override
             public List<String> getQueryParts() {
-                return Collections.emptyList();
+                return List.of();
             }
 
             @Override
@@ -365,7 +364,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             predicateObj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(predicateObj);
         return QueryResult.of(
             queryString,
-            Collections.emptyList(),
+            List.of(),
             queryState.getParameterBindings());
     }
 
