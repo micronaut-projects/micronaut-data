@@ -43,7 +43,7 @@ interface CoroutineTransactionOperations<C> {
      * @param <R> The result type
      * @return The result
      */
-    suspend fun <R> execute(definition: TransactionDefinition, handler: suspend (CoroutineTransactionStatus<C>) -> R): R
+    suspend fun <R : Any> execute(definition: TransactionDefinition, handler: suspend (CoroutineTransactionStatus<C>) -> R): R
 
     /**
      * Execute the given handler with a new transaction.
@@ -51,6 +51,6 @@ interface CoroutineTransactionOperations<C> {
      * @param <R> The result type
      * @return The result
      */
-    suspend fun <R> execute(handler: suspend (CoroutineTransactionStatus<C>) -> R) = execute(TransactionDefinition.DEFAULT, handler)
+    suspend fun <R : Any> execute(handler: suspend (CoroutineTransactionStatus<C>) -> R) = execute(TransactionDefinition.DEFAULT, handler)
 
 }
