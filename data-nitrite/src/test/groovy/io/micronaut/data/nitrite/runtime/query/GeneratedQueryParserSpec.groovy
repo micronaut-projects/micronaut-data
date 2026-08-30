@@ -57,6 +57,67 @@ class GeneratedQueryParserSpec extends Specification {
         collection.find(filter).toList().collect { it.get("type") as String }.sort()
     }
 
+    /*
+     * The predicate is compiled once per (entity, query) and bound per call, so what must hold is
+     * that a parser reused across calls still answers per-parameter, and that a repeat of the same
+     * query is not parsed again.
+     */
+    void "a compiled predicate binds fresh parameters on every execution"() {
+        given: "one parser, reused - as the runtime reuses it for the life of a StoredQuery"
+        def parser = parser()
+        def entity = runtimeEntityRegistry.getEntity(Event)
+        def query = "UPDATE Event SET payload = :p1 WHERE type = :p2"
+
+        expect: "each execution binds its own parameter rather than the first one it saw"
+        matches(parser, query, entity, "x", "alpha") == ["alpha"]
+        matches(parser, query, entity, "x", "beta") == ["beta"]
+        matches(parser, query, entity, "x", "alpha") == ["alpha"]
+    }
+
+    void "a query text is parsed once and reused"() {
+        given:
+        def parser = parser()
+        def entity = runtimeEntityRegistry.getEntity(Event)
+        def query = "UPDATE Event SET payload = :p1 WHERE priority > :p2"
+
+        when: "the same query runs twice"
+        matches(parser, query, entity, "x", 25)
+        matches(parser, query, entity, "x", 25)
+
+        then: "only one compiled predicate is held for it"
+        parser.@compiledWhere.size() == 1
+
+        when: "a different query runs on the same parser"
+        matches(parser, query.replace("priority >", "priority <"), entity, "x", 25)
+
+        then: "it is compiled separately rather than colliding with the first"
+        parser.@compiledWhere.size() == 2
+    }
+
+    void "a predicate that cannot be parsed still fails on every execution"() {
+        given: "a failure must not be cached as a successful compile"
+        def parser = parser()
+        def entity = runtimeEntityRegistry.getEntity(Event)
+        def query = "UPDATE Event SET payload = :p1 WHERE priority + 1 = :p2"
+
+        when:
+        parser.parseWhere(query, entity, ["x", 1] as Object[])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        parser.parseWhere(query, entity, ["x", 1] as Object[])
+
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    private List<String> matches(GeneratedQueryParser parser, String query, entity, Object... params) {
+        def filter = parser.parseWhere(query, entity, params as Object[])
+        collection.find(filter).toList().collect { it.get("type") as String }.sort()
+    }
+
     void "an alias qualified comparison resolves to the persisted field"() {
         expect:
         typesMatching("UPDATE Event event_ SET event_.payload = :p1 WHERE event_.type = :p2", "x", "beta") == ["beta"]

@@ -88,11 +88,8 @@ public final class NitriteEntityMapper {
    */
   public static final String ID_FIELD = "id";
 
-  /**
-   * A filter no document satisfies, used where an identity is absent or incomplete: without it a
-   * missing identity would degrade into a filter that matches the whole collection.
-   */
-  private static final Filter MATCH_NONE = pair -> false;
+  /** Nitrite's own document key field. */
+  private static final String DOC_ID_FIELD = "_id";
 
   private static final Logger LOG = LoggerFactory.getLogger(NitriteEntityMapper.class);
   private static final String GEOMETRY_CLASS = "org.locationtech.jts.geom.Geometry";
@@ -346,7 +343,7 @@ public final class NitriteEntityMapper {
       // A composite identity is stored as its individual fields, never as the "id" field the
       // single-identity path below filters on, so that path would match every document here.
       if (id == null) {
-        return MATCH_NONE;
+        return matchNone();
       }
       List<Filter> filters = new ArrayList<>();
       for (RuntimePersistentProperty<T> identityProperty : meta.persistentEntity().getRuntimeIdentityProperties()) {
@@ -354,7 +351,7 @@ public final class NitriteEntityMapper {
         if (identityValue == null) {
           // Half a composite identity identifies nothing; filtering on the fields that are set
           // would match unrelated documents that happen to share them.
-          return MATCH_NONE;
+          return matchNone();
         }
         String persistedName = identityProperty.getPersistedName();
         filters.add(eqWithNumericCoercion(
@@ -383,7 +380,32 @@ public final class NitriteEntityMapper {
         };
       }
     }
+    if (idProperty != null && id != null) {
+      Long documentKey = documentKeyOf(idProperty, toFilterValue(id));
+      if (documentKey != null) {
+        // Documents written with a Long identity carry it as their "_id", so this equality is
+        // planned as a single map get rather than a collection scan.
+        return NitriteFilterUtils.eq(DOC_ID_FIELD, documentKey);
+      }
+    }
     return eqWithNumericCoercion(meta.persistentEntity(), idField, toFilterValue(id), idField);
+  }
+
+  /**
+   * The Nitrite document key for an identity value, or {@code null} when the identity is not stored
+   * as the document key. Only a {@code Long} identity is: NitriteId is backed by a long, and a
+   * narrower or wider identity would either collide with generated keys or not round-trip.
+   *
+   * @param idProperty the identity property
+   * @param normalizedId the identity value, already normalized for storage
+   * @return the document key, or {@code null}
+   */
+  private static @Nullable Long documentKeyOf(RuntimePersistentProperty<?> idProperty, @Nullable Object normalizedId) {
+    Class<?> idType = idProperty.getType();
+    if (idType != Long.class && idType != long.class) {
+      return null;
+    }
+    return normalizedId instanceof Long value ? value : null;
   }
 
   /**
@@ -472,13 +494,14 @@ public final class NitriteEntityMapper {
       }
     }
 
-    return switch (n) {
-      case Integer _, Double _, Float _ -> base;
-        default        -> Filter.or(base,
-          NitriteFilterUtils.eq(dottedPath, n.longValue()),
-          NitriteFilterUtils.eq(dottedPath, n.intValue()),
-          NitriteFilterUtils.eq(dottedPath, n.doubleValue()));
-    };
+    /*
+     * One equality is enough even when the stored number has a different width: Nitrite compares
+     * numerically on both sides - ObjectUtils.deepEquals via Numbers.compare on a scan, and DBValue
+     * normalisation via Comparables.compare on an index. Widening this into an `or` of several
+     * equalities would also cost the index, since FindOptimizer falls back to a collection scan for
+     * an `or` whose sub-plans are not all index-supported.
+     */
+    return base;
   }
 
   /**
@@ -537,6 +560,14 @@ public final class NitriteEntityMapper {
     if (idProperty != null && idValue != null && !embeddedIdProperty) {
       normalizedId = normalizeIdentityValue(idProperty, idValue);
       doc.put(ID_FIELD, normalizedId);
+      Long documentKey = documentKeyOf(idProperty, normalizedId);
+      if (documentKey != null) {
+        // Nitrite honours a "_id" already present on the document, and a Long identity is a valid
+        // NitriteId value - a generated one comes from NitriteId.newId() to begin with. Storing the
+        // identity as the document key lets idEqualsFilter plan a lookup as a single map get
+        // instead of a collection scan, without a secondary index to maintain on every write.
+        doc.put(DOC_ID_FIELD, documentKey);
+      }
     }
     if (idProperty != null && embeddedIdProperty && idValue != null) {
       try {
@@ -1560,4 +1591,15 @@ public final class NitriteEntityMapper {
         }
         return null;
     }
+
+  /**
+   * A filter no document satisfies, used where an identity is absent or incomplete: without it a
+   * missing identity would degrade into a filter that matches the whole collection.
+   *
+   * @return a filter matching nothing
+   */
+  private static Filter matchNone() {
+    return NitriteFilterUtils.matchNone();
+  }
+
 }

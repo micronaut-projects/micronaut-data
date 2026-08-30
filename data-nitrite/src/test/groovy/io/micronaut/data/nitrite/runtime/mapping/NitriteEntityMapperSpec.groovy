@@ -61,16 +61,16 @@ class NitriteEntityMapperSpec extends Specification {
         value << [10L, (short) 10, (byte) 10, 10.0f, 10.0d, 10 as Integer]
     }
 
-    def "a numeric equality is left alone when the type cannot be narrowed"() {
+    def "an eq filter on a widened numeric property is a single indexable equality, not an or-fan-out"() {
         given:
         def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
         def entity = runtimeEntityRegistry.getEntity(Person)
 
-        expect: "with no entity, or a field it does not declare, every numeric width is tried in turn"
-        mapper.eqWithNumericCoercion(null, "age", 10L, "age").toString().contains("||")
-        mapper.eqWithNumericCoercion(entity, "unknown", 10L, "unknown").toString().contains("||")
+        expect: "with no entity, or a field it does not declare, one equality is emitted"
+        !mapper.eqWithNumericCoercion(null, "age", 10L, "age").toString().contains("||")
+        !mapper.eqWithNumericCoercion(entity, "unknown", 10L, "unknown").toString().contains("||")
 
-        and: "a non-numeric value needs no widening"
+        and: "a non-numeric value is unaffected"
         !mapper.eqWithNumericCoercion(entity, "name", "hello", "name").toString().contains("||")
 
         and: "a null value becomes an is-null test rather than an equality"

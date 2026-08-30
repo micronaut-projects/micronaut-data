@@ -21,7 +21,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

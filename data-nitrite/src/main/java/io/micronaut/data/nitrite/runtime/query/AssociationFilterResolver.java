@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,6 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.OR;
 final class AssociationFilterResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AssociationFilterResolver.class);
-    private static final Filter NONE = element -> false;
 
     private final NitriteEntityMapper entityMapper;
     private final @Nullable SubQueryExecutor subQueryExecutor;
@@ -191,12 +189,12 @@ final class AssociationFilterResolver {
         List<Object> matchingValues = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, backRefPersistedName, false, params, namedParameters);
         if (matchingValues.isEmpty()) {
-            return NONE;
+            return none();
         }
 
         // The identity is stored under the canonical document field, not the mapped identity name.
         Comparable<?>[] ids = toComparableArray(matchingValues);
-        return ids.length == 0 ? NONE : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
+        return ids.length == 0 ? none() : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
     }
 
     private @Nullable Filter buildForwardLookupFilter(
@@ -220,11 +218,11 @@ final class AssociationFilterResolver {
         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
             associatedEntity, subFilterMap, null, false, params, namedParameters);
         if (matchingIds.isEmpty()) {
-            return NONE;
+            return none();
         }
 
         Comparable<?>[] ids = toComparableArray(matchingIds);
-        return ids.length == 0 ? NONE : NitriteFilterUtils.in(field, ids);
+        return ids.length == 0 ? none() : NitriteFilterUtils.in(field, ids);
     }
 
     @Nullable Filter buildNestedFilter(
@@ -273,23 +271,20 @@ final class AssociationFilterResolver {
                         List<Object> matchingIds = subQueryExecutor.executeSubQuery(
                             associatedEntity, subFilterMap, null, false, params, namedParameters);
                         if (matchingIds.isEmpty()) {
-                            return NONE;
+                            return none();
                         }
-                        return pair -> {
-                            Document doc = pair.getSecond();
-                            Object val = doc.get(fieldName);
-                            if (val instanceof Collection<?> coll) {
-                                return matchingIds.stream().anyMatch(coll::contains);
-                            }
-                            return false;
-                        };
+                        /*
+                         * The owning side stores the association as an array, which InFilter
+                         * matches by element containment, the same way its index path does.
+                         */
+                        return NitriteFilterUtils.in(fieldName, toComparableArray(matchingIds));
                     }
-                    return NONE;
+                    return none();
                 }
 
                 RuntimePersistentProperty<?> backRefProp = associatedEntity.getPropertyByName(mappedBy);
                 if (backRefProp == null) {
-                    return NONE;
+                    return none();
                 }
                 String backRefPersistedName = backRefProp.getPersistedName();
 
@@ -308,13 +303,13 @@ final class AssociationFilterResolver {
                 List<Object> matchingValues = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, backRefPersistedName, false, params, namedParameters);
                 if (matchingValues.isEmpty()) {
-                    return NONE;
+                    return none();
                 }
 
                 // The identity is stored under the canonical document field, not under the mapped
                 // identity name, so an entity whose id carries a mapped name is matched here too.
                 Comparable<?>[] ids = toComparableArray(matchingValues);
-                return ids.length == 0 ? NONE : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
+                return ids.length == 0 ? none() : NitriteFilterUtils.in(NitriteEntityMapper.ID_FIELD, ids);
 
             } else if (isManyToOne && subQueryExecutor != null) {
                 Map<String, Object> resolvedOperators = new LinkedHashMap<>();
@@ -329,10 +324,10 @@ final class AssociationFilterResolver {
                 List<Object> matchingIds = subQueryExecutor.executeSubQuery(
                     associatedEntity, subFilterMap, null, false, params, namedParameters);
                 if (matchingIds.isEmpty()) {
-                    return NONE;
+                    return none();
                 }
                 Comparable<?>[] ids = toComparableArray(matchingIds);
-                return ids.length == 0 ? NONE : NitriteFilterUtils.in(fieldName, ids);
+                return ids.length == 0 ? none() : NitriteFilterUtils.in(fieldName, ids);
             } else {
                 return operatorFiltersForPath.build(entity, fieldName + "." + remaining, operators, params, namedParameters);
             }
@@ -352,7 +347,7 @@ final class AssociationFilterResolver {
         List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
             entity.getIntrospection().getBeanType(), associationName);
         if (joinColumns.isEmpty()) {
-            return NONE;
+            return none();
         }
 
         SubQueryExecutor executor = Objects.requireNonNull(subQueryExecutor);
@@ -382,7 +377,7 @@ final class AssociationFilterResolver {
             }
         }
         if (matchingRows.isEmpty()) {
-            return NONE;
+            return none();
         }
         return matchingRows.size() == 1
             ? matchingRows.getFirst()
@@ -427,7 +422,7 @@ final class AssociationFilterResolver {
             }
         }
         if (matchingRows.isEmpty()) {
-            return NONE;
+            return none();
         }
         return matchingRows.size() == 1
             ? matchingRows.getFirst()
@@ -458,6 +453,13 @@ final class AssociationFilterResolver {
             .filter(Objects::nonNull)
             .map(id -> id instanceof Comparable<?> c ? c : id.toString())
             .toArray(Comparable<?>[]::new);
+    }
+
+    /**
+     * @return a filter matching nothing, for a sub-query that selected no rows
+     */
+    private static Filter none() {
+        return NitriteFilterUtils.matchNone();
     }
 
     @FunctionalInterface

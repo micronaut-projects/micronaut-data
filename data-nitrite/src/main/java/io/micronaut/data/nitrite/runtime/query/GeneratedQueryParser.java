@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,7 +91,23 @@ public final class GeneratedQueryParser {
     private static final Pattern ASSIGNMENT_PATTERN = Pattern.compile(
         "([A-Za-z0-9_.]+)\\s*=\\s*(.+)", Pattern.DOTALL);
 
+    /** The compiled form of a query carrying no {@code WHERE} clause. */
+    private static final CompiledPredicate NO_PREDICATE = params -> null;
+
     private final LeafFilterFactory leafFilterFactory;
+
+    /**
+     * Predicates compiled from a query string, keyed by entity and query text.
+     *
+     * <p>A generated query's text is fixed for the life of its {@code StoredQuery}; only its bound
+     * parameters change. Keyword scanning, conjunction splitting and every regex therefore run once
+     * per distinct query rather than once per execution, matching how the JSON path compiles a
+     * {@code CompiledNitriteFilter} once and binds it per call.
+     *
+     * <p>The cache is bounded by the number of distinct repository queries in the application,
+     * which is fixed at compile time.
+     */
+    private final Map<String, CompiledPredicate> compiledWhere = new ConcurrentHashMap<>();
 
     /**
      * Create a new parser.
@@ -113,11 +130,27 @@ public final class GeneratedQueryParser {
      * @return the filter, or {@code null} when the query carries no {@code WHERE} clause
      */
     public @Nullable Filter parseWhere(String query, RuntimePersistentEntity<?> entity, Object[] params) {
-        int whereStart = indexOfKeyword(query, WHERE_KEYWORD);
-        if (whereStart < 0) {
-            return null;
-        }
-        return parsePredicate(stripTrailingClauses(query.substring(whereStart + WHERE_KEYWORD.length())), entity, params);
+        return compileWhere(query, entity).bind(params);
+    }
+
+    /**
+     * Parses the {@code WHERE} clause once and returns it ready to bind. A query text that cannot be
+     * parsed throws here rather than being cached, so the failure is reported on every execution as
+     * it was before.
+     *
+     * @param query  the full query string
+     * @param entity the root entity
+     * @return the compiled predicate, or {@link #NO_PREDICATE} when there is no {@code WHERE} clause
+     */
+    private CompiledPredicate compileWhere(String query, RuntimePersistentEntity<?> entity) {
+        return compiledWhere.computeIfAbsent(entity.getName() + '\u0000' + query, key -> {
+            int whereStart = indexOfKeyword(query, WHERE_KEYWORD);
+            if (whereStart < 0) {
+                return NO_PREDICATE;
+            }
+            return compilePredicate(
+                stripTrailingClauses(query.substring(whereStart + WHERE_KEYWORD.length())), entity);
+        });
     }
 
     /**
@@ -199,57 +232,82 @@ public final class GeneratedQueryParser {
         return assignments;
     }
 
-    private Filter parsePredicate(String expression, RuntimePersistentEntity<?> entity, Object[] params) {
+    /**
+     * Parses one predicate into a form that still needs its parameters. Every decision that depends
+     * only on the query text - the splitting, the regex match, the operator, the field reference -
+     * is made here; the returned {@link CompiledPredicate} does no more than resolve operands and
+     * hand them to the {@link LeafFilterFactory}.
+     *
+     * @param expression the predicate text
+     * @param entity     the root entity
+     * @return the compiled predicate
+     */
+    private CompiledPredicate compilePredicate(String expression, RuntimePersistentEntity<?> entity) {
         String predicate = stripOuterParentheses(expression.trim());
 
         List<String> operands = splitTopLevel(predicate, " OR ");
         if (operands.size() > 1) {
-            return Filter.or(operands.stream()
-                .map(part -> parsePredicate(part, entity, params))
-                .toArray(Filter[]::new));
+            List<CompiledPredicate> parts = operands.stream()
+                .map(part -> compilePredicate(part, entity))
+                .toList();
+            return params -> Filter.or(parts.stream().map(part -> part.bind(params)).toArray(Filter[]::new));
         }
         operands = splitConjunctions(predicate);
         if (operands.size() > 1) {
-            return Filter.and(operands.stream()
-                .map(part -> parsePredicate(part, entity, params))
-                .toArray(Filter[]::new));
+            List<CompiledPredicate> parts = operands.stream()
+                .map(part -> compilePredicate(part, entity))
+                .toList();
+            return params -> Filter.and(parts.stream().map(part -> part.bind(params)).toArray(Filter[]::new));
         }
 
         Matcher nullMatcher = NULL_PATTERN.matcher(predicate);
         if (nullMatcher.matches()) {
-            return leafFilter(entity, nullMatcher.group(1), predicate,
-                nullMatcher.group(2) == null ? NULL : NOT_NULL, true);
+            String reference = nullMatcher.group(1);
+            String operator = nullMatcher.group(2) == null ? NULL : NOT_NULL;
+            return params -> leafFilter(entity, reference, predicate, operator, true);
         }
 
         Matcher betweenMatcher = BETWEEN_PATTERN.matcher(predicate);
         if (betweenMatcher.matches()) {
-            List<Object> range = new ArrayList<>(2);
-            range.add(resolveOperand(betweenMatcher.group(2), params, predicate));
-            range.add(resolveOperand(betweenMatcher.group(3), params, predicate));
-            return leafFilter(entity, betweenMatcher.group(1), predicate, BETWEEN, range);
+            String reference = betweenMatcher.group(1);
+            String lower = betweenMatcher.group(2);
+            String upper = betweenMatcher.group(3);
+            return params -> {
+                List<Object> range = new ArrayList<>(2);
+                range.add(resolveOperand(lower, params, predicate));
+                range.add(resolveOperand(upper, params, predicate));
+                return leafFilter(entity, reference, predicate, BETWEEN, range);
+            };
         }
 
         Matcher inMatcher = IN_PATTERN.matcher(predicate);
         if (inMatcher.matches()) {
-            Object values = toValueList(resolveOperand(inMatcher.group(3), params, predicate));
-            return leafFilter(entity, inMatcher.group(1), predicate,
-                inMatcher.group(2) == null ? IN : NIN, values);
+            String reference = inMatcher.group(1);
+            String operand = inMatcher.group(3);
+            String operator = inMatcher.group(2) == null ? IN : NIN;
+            return params -> leafFilter(entity, reference, predicate, operator,
+                toValueList(resolveOperand(operand, params, predicate)));
         }
 
         Matcher likeMatcher = LIKE_PATTERN.matcher(predicate);
         if (likeMatcher.matches()) {
-            Object pattern = resolveOperand(likeMatcher.group(3), params, predicate);
-            if (likeMatcher.group(2) == null) {
-                return leafFilter(entity, likeMatcher.group(1), predicate, LIKE, pattern);
-            }
-            return leafFilter(entity, likeMatcher.group(1), predicate, NOT, Map.of(LIKE, pattern));
+            String reference = likeMatcher.group(1);
+            String operand = likeMatcher.group(3);
+            boolean negated = likeMatcher.group(2) != null;
+            return params -> {
+                Object pattern = resolveOperand(operand, params, predicate);
+                return negated
+                    ? leafFilter(entity, reference, predicate, NOT, Map.of(LIKE, pattern))
+                    : leafFilter(entity, reference, predicate, LIKE, pattern);
+            };
         }
 
         Matcher matcher = COMPARISON_PATTERN.matcher(predicate);
         if (!matcher.matches()) {
             throw unsupported(predicate, "predicate");
         }
-        Object value = resolveOperand(matcher.group(3), params, predicate);
+        String reference = matcher.group(1);
+        String operand = matcher.group(3);
         String operator = switch (matcher.group(2)) {
             case "=" -> EQ;
             case "!=", "<>" -> NE;
@@ -258,7 +316,8 @@ public final class GeneratedQueryParser {
             case "<" -> LT;
             default -> LTE;
         };
-        return leafFilter(entity, matcher.group(1), predicate, operator, value);
+        return params -> leafFilter(entity, reference, predicate, operator,
+            resolveOperand(operand, params, predicate));
     }
 
     /**
@@ -528,4 +587,12 @@ public final class GeneratedQueryParser {
          */
         @Nullable Filter build(RuntimePersistentEntity<?> entity, String propertyPath, Map<String, Object> operators);
     }
+    /**
+     * A predicate whose text has been parsed and whose parameters have not yet been bound.
+     */
+    @FunctionalInterface
+    private interface CompiledPredicate {
+        @Nullable Filter bind(Object[] params);
+    }
+
 }

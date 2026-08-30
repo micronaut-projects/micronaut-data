@@ -84,6 +84,7 @@ import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
+import org.dizitart.no2.collection.NitriteId;
 import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
@@ -459,10 +460,15 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 return;
             }
             Class<?> idType = idProperty.getType();
+            /*
+             * A Long identity is taken from NitriteId.newId(), which is backed by a snowflake
+             * generator and stays unique across restarts and across JVMs. A process-local counter
+             * would not: two processes starting together would issue the same values.
+             */
             Object generatedId = switch (idType) {
                 case Class<?> c when c == UUID.class -> UUID.randomUUID();
                 case Class<?> c when c == Long.class || c == long.class ->
-                    ID_GENERATOR.incrementAndGet();
+                    NitriteId.newId().getIdValue();
                 case Class<?> c when c == Integer.class || c == int.class ->
                     (int) (ID_GENERATOR.incrementAndGet() % Integer.MAX_VALUE);
                 default -> UUID.randomUUID().toString();

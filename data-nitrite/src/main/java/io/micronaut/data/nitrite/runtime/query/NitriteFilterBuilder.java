@@ -88,8 +88,6 @@ import static io.micronaut.data.nitrite.model.query.NitriteQueryOperators.WITHIN
 @Internal
 public final class NitriteFilterBuilder {
 
-    private static final Filter NONE = element -> false;
-
     private final NitriteEntityMapper entityMapper;
     private final ValueResolver valueResolver;
     private final SpatialFilterFactory spatialFactory;
@@ -496,12 +494,12 @@ public final class NitriteFilterBuilder {
 
     private Filter buildInFilter(RuntimePersistentEntity<?> entity, String field, @Nullable Object finalValue, Object[] params, Map<String, Object> namedParameters) {
         if (finalValue == null) {
-            return NONE;
+            return none();
         }
         List<Comparable<?>> values = coerceCollectionValues(entity, field, valueResolver.resolveCollection(finalValue, params, namedParameters));
         boolean hasNull = values.contains(null);
         Comparable<?>[] nonNullArray = values.stream().filter(Objects::nonNull).toArray(Comparable[]::new);
-        Filter inFilter = nonNullArray.length == 0 ? NONE : NitriteFilterUtils.in(field, nonNullArray);
+        Filter inFilter = nonNullArray.length == 0 ? none() : NitriteFilterUtils.in(field, nonNullArray);
         return hasNull ? Filter.or(inFilter, NitriteFilterUtils.isNullFilter(field)) : inFilter;
     }
 
@@ -599,7 +597,7 @@ public final class NitriteFilterBuilder {
     private Filter buildRangeFilter(RuntimePersistentEntity<?> entity, String field, String op, @Nullable Object value) {
         Object coerced = coerceValue(entity, field, value);
         if (coerced == null) {
-            return NONE;
+            return none();
         }
         if (!(coerced instanceof Comparable<?> comparable)) {
             throw malformedOperand(op, field, "value is not comparable: " + coerced.getClass().getName());
@@ -617,7 +615,7 @@ public final class NitriteFilterBuilder {
         Object coercedLower = coerceValue(entity, field, lower);
         Object coercedUpper = coerceValue(entity, field, upper);
         if (coercedLower == null || coercedUpper == null) {
-            return NONE;
+            return none();
         }
         if (!(coercedLower instanceof Comparable<?> lowerComparable)
             || !(coercedUpper instanceof Comparable<?> upperComparable)) {
@@ -674,6 +672,13 @@ public final class NitriteFilterBuilder {
     @SuppressWarnings("unchecked")
     private Map<String, Object> toStringObjectMap(Map<?, ?> map) {
         return (Map<String, Object>) map;
+    }
+
+    /**
+     * @return a filter matching nothing, for a predicate that cannot be satisfied
+     */
+    private static Filter none() {
+        return NitriteFilterUtils.matchNone();
     }
 
     /**

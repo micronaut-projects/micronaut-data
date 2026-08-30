@@ -20,6 +20,8 @@ import io.micronaut.core.annotation.Nullable;
 import org.dizitart.no2.filters.Filter;
 import org.dizitart.no2.filters.FluentFilter;
 
+import static org.dizitart.no2.common.Constants.DOC_ID;
+
 /**
  * Constructs the leaf Nitrite filters this module needs.
  *
@@ -37,6 +39,28 @@ public final class NitriteFilterUtils {
 
     private NitriteFilterUtils() {
         // Utility class
+    }
+
+    /**
+     * A filter that matches no document, without reading any.
+     *
+     * <p>Expressed as an equality on Nitrite's reserved {@code _id} field so that the planner can
+     * satisfy it without reading anything: it reaches {@code FindPlan.byIdFilter}, which resolves to
+     * a single map lookup and, for an id that cannot exist, an empty stream. A predicate written as
+     * a plain lambda is not a {@code NitriteFilter} and would instead be evaluated against every
+     * document in the collection.
+     *
+     * <p>{@link Long#MIN_VALUE} is the impossible id: {@code NitriteId} values come from a snowflake
+     * generator and are always positive.
+     *
+     * <p>A new instance is returned per call because Nitrite mutates a filter while planning it,
+     * setting the config and collection name on it; a shared constant would be written to
+     * concurrently by unrelated queries.
+     *
+     * @return a filter matching nothing.
+     */
+    public static Filter matchNone() {
+        return eq(DOC_ID, Long.MIN_VALUE);
     }
 
     /**

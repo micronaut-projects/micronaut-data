@@ -686,10 +686,6 @@ public final class NitriteCriteriaExecutor {
         return filterBuilder.buildFilterFromJson(entityFactory.apply(entityType), filterMap, params, Map.of());
     }
 
-    private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit) {
-        return buildFindOptionsFromRuntimeFilter(runtimeFilter, persistentEntity, offset, limit, true);
-    }
-
     /**
      * @param applyWindow false to leave skip/limit off the options, so the caller can page the
      *                    result itself after an INNER join has restricted it
@@ -799,10 +795,6 @@ public final class NitriteCriteriaExecutor {
             // The normal query path reports malformed criteria queries.
         }
         return null;
-    }
-
-    private FindOptions buildFindOptions(RuntimePersistentEntity<?> persistentEntity, int offset, int limit, @Nullable Object parsedQuery) {
-        return buildFindOptions(persistentEntity, offset, limit, parsedQuery, true);
     }
 
     /**

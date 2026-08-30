@@ -10,8 +10,11 @@ import io.micronaut.data.nitrite.runtime.query.ast.NitriteFilterAST
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.data.nitrite.model.Product
 import jakarta.inject.Inject
 import org.dizitart.no2.collection.Document
+import org.dizitart.no2.collection.NitriteId
+import org.dizitart.no2.common.tuples.Pair
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
@@ -62,7 +65,30 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
         def noneFilter = builder.buildFieldFilter(null, "name", [("\$between"): [null, null]], null, null)
 
         then: "the range is unsatisfiable rather than unbounded, so nothing matches"
-        !noneFilter.apply(null)
+        !noneFilter.apply(Pair.pair(NitriteId.newId(), Document.createDocument()))
+    }
+
+    void "a generated Long identity is unique across generator instances"() {
+        given:
+        def entity = new Product()
+
+        when: "a batch of identities is generated"
+        def ids = (1..500).collect {
+            def product = new Product()
+            operations.generateIdIfNecessary(product, Product)
+            product.id
+        }
+
+        then: "every one is distinct and positive"
+        ids.every { it > 0L }
+        ids.toSet().size() == ids.size()
+
+        and: "the value is a Nitrite id, not a wall-clock counter - the old seed put the first id\n" +
+                "within a handful of increments of System.currentTimeMillis()"
+        Math.abs(ids.first() - System.currentTimeMillis()) > 1000L
+
+        cleanup:
+        entity
     }
 
     void "a toDouble expression coerces the stored value, or yields null when it cannot"() {

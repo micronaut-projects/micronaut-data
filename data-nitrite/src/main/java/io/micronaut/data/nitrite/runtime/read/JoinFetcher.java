@@ -154,23 +154,14 @@ public final class JoinFetcher {
             .map(id -> id instanceof Comparable<?> c ? c : id.toString())
             .toArray(Comparable<?>[]::new);
 
-        Filter filter;
-        if (kind == Relation.Kind.MANY_TO_MANY) {
-            // For MANY_TO_MANY, backFieldName is a collection in the document.
-            // Standard Nitrite 'in' does not reliably match array-valued fields; use a custom filter.
-            filter = pair -> {
-                Document doc = pair.getSecond();
-                Object val = doc.get(finalBackFieldName);
-                if (val instanceof Collection<?> coll) {
-                    return parentIds.stream().anyMatch(coll::contains);
-                }
-                return false;
-            };
-        } else {
-            filter = parentIds.size() == 1
-                ? NitriteFilterUtils.eq(finalBackFieldName, parentIds.getFirst())
-                : NitriteFilterUtils.in(finalBackFieldName, comparableIds);
-        }
+        /*
+         * A MANY_TO_MANY back-reference is a collection in the document; both arms handle that,
+         * because EqualsFilter and InFilter each fall through to element containment for an
+         * Iterable field, mirroring the index path, which treats arrays element-wise.
+         */
+        Filter filter = parentIds.size() == 1
+            ? NitriteFilterUtils.eq(finalBackFieldName, parentIds.getFirst())
+            : NitriteFilterUtils.in(finalBackFieldName, comparableIds);
 
         Map<Object, List<Object>> resultsByParentId = new HashMap<>();
         List<Object> fetchedChildren = new ArrayList<>();
