@@ -1,9 +1,23 @@
 An upsert is a native database operation that inserts a row when no matching row exists, or updates the existing row when a match is found.
 Micronaut Data supports explicitly declared upsert operations for SQL repositories.
 
+IMPORTANT: Upsert support is implemented for explicit SQL repositories.
+It is not implemented for repositories that rely on implicit query execution, such as MongoDB or Azure Cosmos repositories.
+
+== Declaring Upsert Methods
+
 Upsert methods are opt-in.
 They are not inherited from api:data.repository.CrudRepository[].
 Declare an upsert method only on repositories that need this behavior.
+
+Upsert methods must accept exactly one entity parameter or one iterable entity parameter.
+A method cannot mix a single entity parameter and an iterable entity parameter.
+The return type may be `void`, a number type, the entity type, or an iterable/reactive/asynchronous container that produces the entity type for the corresponding operation.
+A numeric return value represents the affected-row count reported by the database; its precise value can vary by dialect and driver.
+
+Convention-based upsert methods must be named exactly `upsert` or `upsertAll`.
+Derived names such as `upsertByEmail` are not supported because upsert matching is controlled by the entity identity or `conflictsOn`, not by a method-name predicate.
+Use ann:data.annotation.Upsert[] for custom method names.
 
 The default conflict target is the entity identity.
 The following JDBC example uses the caller-provided flight number as the identity:
@@ -28,14 +42,7 @@ The following R2DBC example returns a `Mono` for one flight and a `Flux` for an 
 
 snippet::example.FlightRepository[project-base="doc-examples/r2dbc-example", source="main", tags="upsert-repository"]
 
-Upsert methods must accept exactly one entity parameter or one iterable entity parameter.
-A method cannot mix a single entity parameter and an iterable entity parameter.
-The return type may be `void`, a number type, the entity type, or an iterable/reactive/asynchronous container that produces the entity type for the corresponding operation.
-
-IMPORTANT: Upsert support is implemented for explicit SQL repositories.
-It is not implemented for repositories that rely on implicit query execution, such as MongoDB or Azure Cosmos repositories.
-
-== Conflict Properties
+== Conflict Targets
 
 When `conflictsOn` is not specified, Micronaut Data uses the entity identity properties to decide whether the upsert should update an existing row.
 
@@ -47,9 +54,10 @@ Micronaut Data does not infer the conflict target from every unique constraint o
 The database schema should still define a primary key or unique constraint that matches the conflict target used by the repository method.
 That database constraint is what makes the operation reliable under concurrent writes.
 
-Non-conflict persistent properties are updated when a matching row is found.
+Updatable, non-conflict persistent properties are updated when a matching row is found.
 Identifier properties and conflict properties are preserved as needed by the generated statement.
 All bindable columns required by the generated statement are available to the insert branch.
+Properties annotated with `@AutoPopulated(updatable = false)`, including ann:data.annotation.DateCreated[], remain available to the insert branch but are omitted from the matched update branch.
 
 == Supported SQL Dialects
 
@@ -60,12 +68,12 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 |Dialect |Generated SQL shape |Notes
 
 |`Dialect.H2`
-|`MERGE INTO <table> (...) KEY(...) VALUES (...)`
-|The `KEY` columns are the identity columns or the configured conflict properties.
+|`MERGE INTO <table> target USING (VALUES (...)) source (...) ON (...) WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED THEN INSERT ...`
+|The explicit matched and unmatched branches allow insert-only properties to be omitted from updates. The match condition uses the identity columns or configured conflict properties.
 
 |`Dialect.MYSQL`
 |`INSERT INTO <table> (...) VALUES (...) ON DUPLICATE KEY UPDATE ...`
-|Used for MySQL-compatible databases, including MariaDB. The database detects duplicate rows from primary key or unique constraints, so the schema should match the selected conflict properties.
+|Used for MySQL-compatible databases, including MariaDB. Unlike dialects with an explicit conflict target, `ON DUPLICATE KEY UPDATE` reacts to a conflict on any primary-key or unique constraint. The schema should avoid unrelated unique constraints that could select a row other than the one identified by `conflictsOn`.
 
 |`Dialect.POSTGRES`
 |`INSERT INTO <table> (...) VALUES (...) ON CONFLICT (...) DO UPDATE SET ...`
@@ -88,9 +96,21 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 |This is the generic SQL `MERGE` form. Actual support depends on the database used with the ANSI dialect.
 |===
 
-== Single and Batch Upsert
+== Execution and Return Values
+
+=== Single-Entity Upsert
 
 A single-entity upsert method, such as `FlightRepository.upsert(Flight)`, executes the generated upsert statement for one entity.
+
+=== Generated Identity Values
+
+When the default identity conflict target is used, generated identity properties are rejected because Micronaut Data needs a non-generated value to match an existing row.
+When `conflictsOn` is used, the identity can be generated by the database because another property, such as `email`, is used to find the row.
+
+For a single-entity operation, Micronaut Data applies a generated identity to the entity when the database and driver return it.
+For an iterable operation, the execution rules described below prevent a generated identity from being assigned to the wrong input entity.
+
+=== Iterable Upsert and Batch Execution
 
 An iterable upsert method, such as `FlightRepository.upsertAll(Iterable<Flight>)`, applies the same upsert operation to each entity.
 
@@ -99,15 +119,72 @@ Depending on the dialect, driver, and repository implementation, Micronaut Data 
 Each entity still has its own bind values.
 Returned entities are produced in the same logical order as the input values.
 
-If one item in a batch fails, transaction behavior depends on the transaction boundary configured by the application and on the database driver.
-Use an explicit transaction when all items must commit or roll back together.
+When the identity is assigned by the application, or the entity does not have a generated identity, Micronaut Data uses the available JDBC or R2DBC batch API.
+The driver still decides whether that batch is sent in one network exchange or as multiple database commands.
 
-== Generated Identity Values
+When an upsert has a database-generated identity, a generic batch result does not identify which item in a mixed insert/update batch produced each generated value.
+Micronaut Data therefore executes those items one at a time unless the dialect has an explicit returning mechanism that reliably correlates one returned identity with each input entity.
 
-When the default identity conflict target is used, generated identity properties are rejected because Micronaut Data needs a non-generated value to match an existing row.
-When `conflictsOn` is used, the identity can be generated by the database because another property, such as `email`, is used to find the row.
+[cols="1,2,2"]
+|===
+|Dialect |JDBC with generated identity |R2DBC with generated identity
 
-== Optimistic Locking
+|H2
+|One statement per entity
+|One statement per entity
+
+|MySQL and MariaDB
+|One statement per entity
+|One statement per entity
+
+|PostgreSQL
+|One statement per entity
+|One statement per entity
+
+|SQLite
+|One statement per entity
+|Not applicable
+
+|SQL Server
+|One statement per entity when returning generated identities, preserving the association between each `OUTPUT inserted.<id-column>` value and its input entity
+|One statement per entity for the same reason
+
+|Oracle
+|Uses JDBC batch execution when explicit `RETURNING ... INTO` metadata is generated; otherwise one statement per entity
+|One statement per entity when returning generated identities
+
+|ANSI
+|One statement per entity
+|One statement per entity
+|===
+
+=== Transaction Boundaries
+
+If an item in an `upsertAll` operation fails, previously executed items may remain persisted.
+The exact behavior depends on the transaction boundary and database driver, regardless of whether Micronaut Data uses batch or per-entity execution.
+Execute `upsertAll` within an explicit transaction when all items must commit or roll back together.
+
+== Integration with Other Micronaut Data Features
+
+=== Lifecycle Events and Auto-Populated Properties
+
+A native upsert does not reveal whether it will insert or update a row before the statement executes.
+Micronaut Data therefore defines upsert lifecycle behavior using the update lifecycle rather than attempting to invoke both persist and update callbacks.
+
+Before the update lifecycle runs, Micronaut Data prepares framework-managed values needed by the insert branch.
+This populates ann:data.annotation.DateCreated[] and other insert-required properties marked with `@AutoPopulated(updatable = false)`.
+The normal update preparation then populates values such as ann:data.annotation.DateUpdated[].
+
+The resulting lifecycle contract is:
+
+* ann:data.annotation.event.PreUpdate[] and ann:data.annotation.event.PostUpdate[] callbacks run for an upsert, regardless of which database branch is selected.
+* ann:data.annotation.event.PrePersist[] and ann:data.annotation.event.PostPersist[] callbacks do not run.
+* Relation cascades use `Cascade.UPDATE`; persist-only cascades are not applied.
+* Non-updatable auto-populated properties are bound for inserts but are not included in the matched update assignments.
+
+This behavior ensures that a newly inserted row receives creation and update timestamps while an existing row retains its original creation timestamp.
+
+=== Optimistic Locking
 
 Optimistic locking is not supported by the native upsert implementation.
 Entities with ann:data.annotation.Version[] are rejected for upsert methods.
@@ -134,10 +211,9 @@ However, this makes the `WHEN NOT MATCHED` branch ambiguous:
 Because a native upsert cannot portably distinguish those two cases, Micronaut Data does not enforce optimistic locking in the native upsert path.
 Use an update or save operation when version checking is required.
 
-== Pessimistic Locking
+=== Pessimistic Locking
 
-Pessimistic locking is supported by finder methods such as `find*ForUpdate`.
-It is separate from upsert.
+Pessimistic locking is available through finder methods such as `find*ForUpdate`; an upsert does not acquire a preceding row lock itself.
 
 If `find*ForUpdate` is executed before an upsert operation in the same transaction:
 
@@ -148,6 +224,6 @@ For a simple "insert or update this entity" operation, using `find*ForUpdate` be
 It should not fail, but it usually adds an extra query and lock without much benefit.
 It only makes sense when the application needs to read the existing row under lock, make decisions from its current state, and then write.
 
-== JSON Duality Views
+=== JSON Entity Representation
 
 Upsert is not currently supported for entities that use JSON entity representation, including Oracle JSON Duality view entities mapped with ann:data.annotation.JsonView[].
