@@ -1275,6 +1275,48 @@ class Test {
         getParameterPropertyPaths(putAllMethod) == ["name", "id"] as String[]
     }
 
+    void "test upsert method rejects criteria suffix"() {
+        when:
+        buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect=Dialect.H2)
+interface MyInterface extends GenericRepository<Test, Long> {
+    Test upsertByName(Test test);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Upsert method name must be 'upsert' or 'upsertAll'; use @Upsert for custom method names: ByName")
+    }
+
     @Unroll
     void "test build upsert fails for unsupported explicit upsert - #description"() {
         when:

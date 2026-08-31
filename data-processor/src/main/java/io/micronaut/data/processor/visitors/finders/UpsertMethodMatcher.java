@@ -57,6 +57,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
         super(MethodNameParser.builder()
             .match(QueryMatchId.PREFIX, "upsert")
             .tryMatch(QueryMatchId.ALL_OR_ONE, ALL)
+            .failOnRest("Upsert method name must be 'upsert' or 'upsertAll'; use @Upsert for custom method names")
             .build());
     }
 
