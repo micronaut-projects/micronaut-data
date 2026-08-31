@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
@@ -37,6 +38,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -95,6 +98,25 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
+    void rollbackFailureDoesNotOverrideCommitFailure() {
+        txManager.failCommit = true;
+        txManager.failRollback = true;
+
+        TransactionSystemException exception = null;
+        try {
+            txManager.executeWrite(status -> null);
+        } catch (TransactionSystemException e) {
+            exception = e;
+        }
+
+        assertInstanceOf(TransactionSystemException.class, exception);
+        assertEquals("simulated commit failure", exception.getMessage());
+        assertEquals(1, exception.getSuppressed().length);
+        assertSame(txManager.rollbackFailure, exception.getSuppressed()[0]);
+        assertEquals(List.of("doBegin", "doCommit", "doRollback"), txManager.calls);
+    }
+
+    @Test
     void newTransactionBeforeCommitFailureDispatchesToDoRollback() {
         try {
             txManager.executeWrite(status -> {
@@ -138,17 +160,17 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
-    void unsupportedOracleSessionlessPropagationIsRejectedBeforeTransactionalWork() {
-        assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation.SUSPEND);
-        assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+    void unsupportedOracleSessionlessModeIsRejectedBeforeTransactionalWork() {
+        assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
+        assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
 
         assertEquals(List.of(), txManager.calls);
     }
 
     @Test
-    void unsupportedOracleSessionlessPropagationIsRejectedBeforeProgrammaticTransactionCreation() {
-        assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation.SUSPEND);
-        assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation.REQUIRES_SUSPENDED);
+    void unsupportedOracleSessionlessModeIsRejectedBeforeProgrammaticTransactionCreation() {
+        assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
+        assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
 
         assertEquals(List.of(), txManager.calls);
     }
@@ -164,26 +186,32 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
-    private void assertUnsupportedOracleSessionlessPropagation(TransactionDefinition.Propagation propagation) {
+    private void assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless mode) {
         TransactionSuspensionNotSupportedException exception = assertThrows(
             TransactionSuspensionNotSupportedException.class,
-            () -> txManager.execute(TransactionDefinition.of(propagation), status -> null)
+            () -> txManager.execute(oracleSessionlessDefinition(mode), status -> null)
         );
         assertEquals(
-            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
             exception.getMessage()
         );
     }
 
-    private void assertUnsupportedProgrammaticOracleSessionlessPropagation(TransactionDefinition.Propagation propagation) {
+    private void assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless mode) {
         TransactionSuspensionNotSupportedException exception = assertThrows(
             TransactionSuspensionNotSupportedException.class,
-            () -> txManager.getTransaction(TransactionDefinition.of(propagation))
+            () -> txManager.getTransaction(oracleSessionlessDefinition(mode))
         );
         assertEquals(
-            "Propagation '" + propagation + "' requires Oracle sessionless transaction support",
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
             exception.getMessage()
         );
+    }
+
+    private static TransactionDefinition oracleSessionlessDefinition(OracleTransactional.Sessionless mode) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, mode);
+        return definition;
     }
 
     /**
@@ -193,6 +221,9 @@ class DoRollbackOnCommitExceptionTest {
 
         final List<String> calls = new ArrayList<>();
         boolean failNestedCommit;
+        boolean failCommit;
+        boolean failRollback;
+        RuntimeException rollbackFailure;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);
@@ -212,11 +243,18 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doCommit(DefaultTransactionStatus<String> tx) {
             calls.add("doCommit");
+            if (failCommit) {
+                throw new TransactionSystemException("simulated commit failure");
+            }
         }
 
         @Override
         protected void doRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doRollback");
+            if (failRollback) {
+                rollbackFailure = new TransactionSystemException("simulated rollback failure");
+                throw rollbackFailure;
+            }
         }
 
         @Override

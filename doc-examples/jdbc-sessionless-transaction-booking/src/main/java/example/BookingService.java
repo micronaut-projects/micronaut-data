@@ -1,7 +1,6 @@
 package example;
 
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.annotation.OracleTransactional;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -13,12 +12,12 @@ public class BookingService {
         this.seatRepository = seatRepository;
     }
 
-    @Transactional(propagation = TransactionDefinition.Propagation.SUSPEND)
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 60)
     public Long holdSeat(Seat seat) {
         return seatRepository.save(seat).getId();
     }
 
-    @Transactional(propagation = TransactionDefinition.Propagation.REQUIRES_SUSPENDED)
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
     public void ticketSeat(Long id) {
         Seat seat = seatRepository.findById(id).orElseThrow(() -> new RuntimeException("Seat not found"));
         seat.setStatus("TICKETED");

@@ -5,11 +5,9 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 @MicronautTest
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
 class BookRepositorySpec extends AbstractAzureCosmosSpec {
 
     // tag::inject[]

@@ -16,10 +16,12 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.OrderUtil;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.support.TransactionResourceCommit;
+import io.micronaut.transaction.support.TransactionSynchronization;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import io.micronaut.core.order.OrderUtil;
-import io.micronaut.transaction.support.TransactionSynchronization;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,8 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     private boolean manualRollbackOnly = false;
     private boolean globalRollbackOnly = false;
     private boolean completed = false;
+    @Nullable
+    private TransactionResourceCommit transactionResourceCommit;
 
     /**
      * Set global rollback only.
@@ -76,7 +80,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerBeforeCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false));
+                propagate(() -> synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false)));
             }
         }
     }
@@ -85,7 +89,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerAfterCommit() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.afterCommit();
+                propagate(synchronization::afterCommit);
             }
         }
     }
@@ -94,9 +98,26 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     public void triggerBeforeCompletion() {
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.beforeCompletion();
+                propagate(synchronization::beforeCompletion);
             }
         }
+    }
+
+    @Override
+    public void registerResourceCommit(TransactionResourceCommit resourceCommit) {
+        if (transactionResourceCommit != null) {
+            throw new TransactionUsageException("A transaction resource commit callback is already registered");
+        }
+        transactionResourceCommit = resourceCommit;
+    }
+
+    @Override
+    public boolean triggerResourceCommit() {
+        if (transactionResourceCommit == null) {
+            return false;
+        }
+        transactionResourceCommit.commit();
+        return true;
     }
 
     @Override
@@ -104,7 +125,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         completed = true;
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {
-                synchronization.afterCompletion(status);
+                propagate(() -> synchronization.afterCompletion(status));
             }
         }
     }

@@ -36,6 +36,8 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
@@ -75,6 +77,7 @@ import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOp
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
+import io.micronaut.data.r2dbc.exceptions.R2dbcExceptionUtils;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameByIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareReadableR2dbcResultReader;
@@ -486,6 +489,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return dataAccessException;
                 }
             }
+        }
+        if (R2dbcExceptionUtils.isUniqueConstraintViolation(r2dbcException)) {
+            return new EntityExistsException("Entity already exists: " + r2dbcException.getMessage(), r2dbcException);
+        }
+        if (R2dbcExceptionUtils.isIntegrityConstraintViolation(r2dbcException)) {
+            return new DataIntegrityViolationException("Data integrity violation: " + r2dbcException.getMessage(), r2dbcException);
         }
         return null;
     }
@@ -1368,27 +1377,33 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             Statement statement = prepare(ctx.connection);
             setParameters(statement, storedQuery);
-            if (hasGeneratedId) {
+            // DELETE_RETURNING is handled by the dedicated deleteReturning/deleteAllReturning paths.
+            if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING
+                || storedQuery.getOperationType() == OperationType.UPDATE_RETURNING) {
                 data = data.flatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
                     }
-                    if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
-                        SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
-                        if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
-                            return Mono.error(new DataAccessException("Expected entity mapper for INSERT_RETURNING operation: " + storedQuery.getQuery()));
-                        }
-                        @SuppressWarnings("unchecked")
-                        SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(storedQuery)
-                            ? getOracleReturningEntityMapper(storedQuery)
-                            : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
-                        Mono<T> result = isOracleReturningQuery(storedQuery)
-                            ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
-                            : executeAndMapEachRowSingle(statement, ctx.dialect, row -> entityTypeMapper.readEntity(row));
-                        return result.map(entity -> {
-                            d.entity = entity;
-                            return d;
-                        });
+                    SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
+                    if (!(mapper instanceof SqlResultEntityTypeMapper<?, ?> rawEntityTypeMapper)) {
+                        return Mono.error(new DataAccessException("Expected entity mapper for returning operation: " + storedQuery.getQuery()));
+                    }
+                    @SuppressWarnings("unchecked")
+                    SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(storedQuery)
+                        ? getOracleReturningEntityMapper(storedQuery)
+                        : (SqlResultEntityTypeMapper<Readable, T>) (SqlResultEntityTypeMapper<?, ?>) rawEntityTypeMapper;
+                    Mono<T> result = isOracleReturningQuery(storedQuery)
+                        ? executeAndMapOracleReturningSingle(statement, ctx.dialect, entityTypeMapper::readEntity)
+                        : executeAndMapEachRowSingle(statement, ctx.dialect, row -> entityTypeMapper.readEntity(row));
+                    return result.map(entity -> {
+                        d.entity = entity;
+                        return d;
+                    });
+                });
+            } else if (hasGeneratedId) {
+                data = data.flatMap(d -> {
+                    if (d.vetoed) {
+                        return Mono.just(d);
                     }
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     Function<Object, Data> idMapper = id -> {

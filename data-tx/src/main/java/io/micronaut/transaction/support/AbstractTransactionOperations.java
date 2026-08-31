@@ -135,7 +135,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             );
         }
         T existingTransaction = existingTransactionOptional.get();
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW ||  definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             return connectionOperations.execute(
@@ -160,7 +160,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
-        TransactionUtil.validateOracleSessionlessPropagation(definition, supportsOracleSessionlessTransactions());
+        validateTransactionDefinition(definition);
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);
@@ -195,7 +195,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
         }
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = null;
@@ -355,6 +355,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
     }
 
+    // Sonar java:S3776 -- the branching mirrors the commit state machine (rollback-only checks,
+    // synchronization ordering, and the distinct recovery paths per exception type); the sequence
+    // is only correct read as a whole.
+    @SuppressWarnings("java:S3776")
     private void commitInternal(T tx) {
         if (tx.isCompleted()) {
             throw new IllegalTransactionStateException("Transaction is already completed - do not call commit or rollback more than once per transaction");
@@ -380,7 +384,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 beforeCompletionInvoked = true;
 
                 if (tx.isNewTransaction()) {
-                    doCommit(tx);
+                    if (!tx.triggerResourceCommit()) {
+                        doCommit(tx);
+                    }
                 } else if (tx.isNestedTransaction()) {
                     doNestedCommit(tx);
                 }
@@ -460,14 +466,23 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.setRollbackOnly();
             }
         } catch (RuntimeException | Error rbex) {
-            logger.error("Commit exception overridden by rollback exception", ex);
+            logger.error("Rollback after commit exception also failed", rbex);
+            // Keep the original commit failure as the primary signal and treat the
+            // rollback failure as secondary; otherwise later cleanup on a broken
+            // connection can hide the error that callers need to see.
+            ex.addSuppressed(rbex);
             tx.triggerAfterCompletion(TransactionSynchronization.Status.UNKNOWN);
-            throw rbex;
+            return;
         }
         tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
     }
 
-    private void checkNeverTransactionPropagation(TransactionDefinition definition) {
+    private void validateExistingTransaction(TransactionDefinition definition) {
+        var mode = TransactionUtil.getOracleSessionlessMode(definition);
+        if (mode != null) {
+            throw new TransactionUsageException("Existing transaction found for Oracle sessionless transaction mode '" + mode
+                + "'; a new transaction boundary is required");
+        }
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.NEVER) {
             throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
         }
@@ -481,7 +496,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
     private T createTransaction(@NonNull TransactionDefinition definition, @NonNull ConnectionStatus<C> connectionStatus) {
         return switch (definition.getPropagationBehavior()) {
-            case REQUIRED, REQUIRES_NEW, NESTED, SUSPEND, REQUIRES_SUSPENDED ->
+            case REQUIRED, REQUIRES_NEW, NESTED ->
                 createNewTransactionStatus(connectionStatus, definition); // Nested propagation applies only for the existing TX
             case SUPPORTS, NOT_SUPPORTED, NEVER ->
                 createNoTxTransactionStatus(connectionStatus, definition);

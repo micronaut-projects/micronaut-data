@@ -26,14 +26,18 @@ import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
+import io.micronaut.transaction.recovery.RecoverableTransactionContext;
+import io.micronaut.transaction.sessionless.SessionlessTransactionHandler;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
+import io.micronaut.transaction.support.TransactionResourceCommit;
 import jakarta.inject.Inject;
 
 import javax.sql.DataSource;
@@ -65,6 +69,8 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
 
     private final DataSource dataSource;
     private final List<TransactionExecutionListener<Connection>> transactionExecutionListeners;
+    @Nullable
+    private final SessionlessTransactionHandler sessionlessTransactionHandler;
 
     private boolean enforceReadOnly = false;
 
@@ -75,18 +81,36 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
      * @param connectionOperations          The connection operations
      * @param synchronousConnectionManager  The synchronous connection operations
      * @param transactionExecutionListeners The transaction execution listeners
+     * @param sessionlessTransactionHandler The sessionless transaction handler for this datasource, if any
      */
     @Inject
     public DataSourceTransactionManager(@NonNull DataSource dataSource,
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager,
-                                        List<TransactionExecutionListener<Connection>> transactionExecutionListeners) {
+                                        List<TransactionExecutionListener<Connection>> transactionExecutionListeners,
+                                        @Parameter @Nullable SessionlessTransactionHandler sessionlessTransactionHandler) {
         super(connectionOperations, synchronousConnectionManager);
         Objects.requireNonNull(dataSource, "DataSource cannot be null");
         dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.dataSource = dataSource;
         this.transactionExecutionListeners = new ArrayList<>(transactionExecutionListeners);
         OrderUtil.sort(this.transactionExecutionListeners);
+        this.sessionlessTransactionHandler = sessionlessTransactionHandler;
+    }
+
+    /**
+     * Create a new DataSourceTransactionManager instance.
+     *
+     * @param dataSource                    The JDBC DataSource to manage transactions for
+     * @param connectionOperations          The connection operations
+     * @param synchronousConnectionManager  The synchronous connection operations
+     * @param transactionExecutionListeners The transaction execution listeners
+     */
+    public DataSourceTransactionManager(@NonNull DataSource dataSource,
+                                        @Parameter ConnectionOperations<Connection> connectionOperations,
+                                        @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager,
+                                        List<TransactionExecutionListener<Connection>> transactionExecutionListeners) {
+        this(dataSource, connectionOperations, synchronousConnectionManager, transactionExecutionListeners, null);
     }
 
     /**
@@ -100,6 +124,11 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
         this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
+    }
+
+    @Override
+    protected boolean supportsSessionlessTransactions(TransactionDefinition definition) {
+        return sessionlessTransactionHandler != null && sessionlessTransactionHandler.supports(definition);
     }
 
     /**
@@ -145,6 +174,9 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
     }
 
     @Override
+    // Sonar java:S3776 -- the branching is the JDBC begin protocol itself (read-only, isolation,
+    // autocommit, listeners, sessionless registration); splitting it would obscure the ordering.
+    @SuppressWarnings("java:S3776")
     protected void doBegin(DefaultTransactionStatus<Connection> status) {
         TransactionDefinition definition = status.getTransactionDefinition();
         Connection connection = status.getConnection();
@@ -169,13 +201,27 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
                 @Override
                 public void executionComplete() {
                     for (Runnable runnable : onComplete) {
-                        runnable.run();
+                        try {
+                            runnable.run();
+                        } catch (ConnectionException e) {
+                            if (isRecoveryCommitAttempt(status)) {
+                                logger.debug("Skipping JDBC Connection [{}] state restore after a recoverable commit attempt", connection, e);
+                                continue;
+                            }
+                            throw e;
+                        }
                     }
                 }
             });
         }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
+        }
+        if (sessionlessTransactionHandler != null && sessionlessTransactionHandler.supports(definition)) {
+            TransactionResourceCommit resourceCommit = sessionlessTransactionHandler.begin(status, definition);
+            if (resourceCommit != null) {
+                status.registerResourceCommit(resourceCommit);
+            }
         }
     }
 
@@ -185,11 +231,21 @@ public class DataSourceTransactionManager extends AbstractDefaultTransactionOper
         if (logger.isDebugEnabled()) {
             logger.debug("Committing JDBC transaction on Connection [{}]", connection);
         }
+        // The recovery context is configured only for a new recoverable transaction.
+        // Capture the LTXID directly before JDBC commit, after application
+        // synchronizations have completed successfully.
+        RecoverableTransactionContext.find().ifPresent(context -> context.captureRecoveryToken(status));
         try {
             connection.commit();
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not commit JDBC transaction", ex);
         }
+    }
+
+    private static boolean isRecoveryCommitAttempt(DefaultTransactionStatus<Connection> status) {
+        return RecoverableTransactionContext.find()
+            .map(context -> context.hasCapturedToken(status))
+            .orElse(false);
     }
 
     @Override

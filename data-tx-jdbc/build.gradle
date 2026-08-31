@@ -25,7 +25,14 @@ dependencies {
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnSql.ojdbc11
+    testImplementation mnTest.micronaut.test.junit5
+    testImplementation(mnTest.junit.platform.suite)
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly(libs.jupiter.engine)
+}
+
+test {
+    useJUnitPlatform()
 }

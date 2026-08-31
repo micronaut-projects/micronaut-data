@@ -9,12 +9,16 @@ import io.micronaut.data.model.geo.MultiPoint
 import io.micronaut.data.model.geo.MultiPolygon
 import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
+import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverJson
+import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWkt
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
 import io.micronaut.data.tck.jdbc.entities.geo.HotelWkt
 import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
+import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
+import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -24,8 +28,8 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue
 import static org.junit.jupiter.api.Assertions.assertNull
+import static org.junit.jupiter.api.Assumptions.assumeTrue
 
 abstract class AbstractGeoSpec extends Specification {
 
@@ -39,6 +43,10 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract HotelWktRepository getHotelWktRepository()
 
+    abstract DeliveryDriverJsonRepository getDeliveryDriverJsonRepository()
+
+    abstract DeliveryDriverWktRepository getDeliveryDriverWktRepository()
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
@@ -49,9 +57,11 @@ abstract class AbstractGeoSpec extends Specification {
         getSchoolRepository()?.deleteAll()
         getHotelJsonRepository()?.deleteAll()
         getHotelWktRepository()?.deleteAll()
+        getDeliveryDriverJsonRepository()?.deleteAll()
+        getDeliveryDriverWktRepository()?.deleteAll()
     }
 
-    void "test creating, reading and updating when json conversion used on embedded geometry type"() {
+    void "test creates, reads, and updates embedded geometry with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -94,7 +104,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test creating, reading and updating when json conversion used on geometry type"() {
+    void "test creates, reads, and updates geometry with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -151,7 +161,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test delete when json conversion used on geometry type"() {
+    void "test updates geometry to null with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
         assumeTrue(supportsDeletingGeometryTypes())
 
@@ -206,7 +216,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test crud when wkt conversion used on geometry type"() {
+    void "test creates, reads, updates, and clears geometry with WKT conversion"() {
         given:
         GeometryEntityWkt entity = new GeometryEntityWkt()
         entity.setPoint(createPoint(1))
@@ -280,7 +290,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test findByLocationGeoWithin when json conversion is used"() {
+    void "test findByLocationGeoWithin with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -311,7 +321,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoIntersects when json conversion used"() {
+    void "test findByLocationGeoIntersects with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -337,30 +347,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationNear when json conversion used"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
-        given:
-        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(11.0, 11.0))
-        HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
-        HotelJson farAway = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
-
-        Point center = new Point(10.0, 10.0)
-
-        when:
-        getHotelJsonRepository().saveAll(List.of(nearby1, nearby2, farAway))
-        List<HotelJson> result = getHotelJsonRepository().findByLocationNear(center, 3d)
-        List<String> names = result.stream()
-                .map(HotelJson::getName)
-                .toList()
-
-        then:
-        names.size() == 2
-        names.contains("Grand Plaza Hotel")
-        names.contains("Sunset Resort")
-    }
-
-    void "test findByLocationGeoWithin when wkt conversion used"() {
+    void "test findByLocationGeoWithin with WKT conversion"() {
         given:
         HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelWkt inside2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
@@ -389,7 +376,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoIntersects when wkt conversion used"() {
+    void "test findByLocationGeoIntersects with WKT conversion"() {
         given:
         HotelWkt onRoute1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelWkt onRoute2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
@@ -413,7 +400,30 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationNear when wkt conversion used"() {
+    void "test findByLocationNear with projected CRS and JSON conversion"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(11.0, 11.0))
+        HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
+        HotelJson farAway = new HotelJson("Mountain View Hotel", new Point(30.0, 30.0))
+
+        Point center = new Point(10.0, 10.0)
+
+        when:
+        getHotelJsonRepository().saveAll(List.of(nearby1, nearby2, farAway))
+        List<HotelJson> result = getHotelJsonRepository().findByLocationNear(center, 3d)
+        List<String> names = result.stream()
+                .map(HotelJson::getName)
+                .toList()
+
+        then:
+        names.size() == 2
+        names.contains("Grand Plaza Hotel")
+        names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationNear with projected CRS and WKT conversion"() {
         given:
         HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
@@ -432,6 +442,56 @@ abstract class AbstractGeoSpec extends Specification {
         names.size() == 2
         names.contains("Grand Plaza Hotel")
         names.contains("Sunset Resort")
+    }
+
+    void "test findByLocationNear with geographic CRS and JSON conversion"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        DeliveryDriverJson nearby = new DeliveryDriverJson("Nearby Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverJson closest = new DeliveryDriverJson("Closest Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverJson busy = new DeliveryDriverJson("Busy Driver", DeliveryDriverJson.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverJson far = new DeliveryDriverJson("Far Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverJsonRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverJson> candidates = getDeliveryDriverJsonRepository().findByStatusAndLocationNear(
+                DeliveryDriverJson.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+        List<String> names = candidates.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
+    }
+
+    void "test findByLocationNear with geographic CRS and WKT conversion"() {
+        given:
+        DeliveryDriverWkt nearby = new DeliveryDriverWkt("Nearby Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
+        DeliveryDriverWkt closest = new DeliveryDriverWkt("Closest Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
+        DeliveryDriverWkt busy = new DeliveryDriverWkt("Busy Driver", DeliveryDriverWkt.Status.BUSY, new Point(-73.9850d, 40.7488d))
+        DeliveryDriverWkt far = new DeliveryDriverWkt("Far Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9000d, 40.8000d))
+
+        Point orderLocation = new Point(-73.9857, 40.7484)
+
+        when:
+        getDeliveryDriverWktRepository().saveAll(List.of(nearby, closest, busy, far))
+        List<DeliveryDriverWkt> candidates = getDeliveryDriverWktRepository().findByStatusAndLocationNear(
+                DeliveryDriverWkt.Status.AVAILABLE,
+                orderLocation,
+                5_000d
+        )
+        List<String> names = candidates.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Nearby Driver")
+        names.contains("Closest Driver")
     }
 
     protected boolean supportsGeometryJsonConversion() {

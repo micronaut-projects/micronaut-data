@@ -37,8 +37,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.transaction.TransactionDefinition
-import io.micronaut.transaction.annotation.Transactional
+import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionHttpConfiguration
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations
 import jakarta.inject.Inject
@@ -224,7 +223,7 @@ class ExpenseReportService {
         this.expenseReportRepository = expenseReportRepository
     }
 
-    @Transactional(propagation = TransactionDefinition.Propagation.SUSPEND, timeout = 3600)
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 3600)
     Long submitReport(String employeeId, String category, BigDecimal amount) {
         ExpenseReport report = expenseReportRepository.save(new ExpenseReport(
             employeeId: employeeId,
@@ -235,12 +234,12 @@ class ExpenseReportService {
         report.id
     }
 
-    @Transactional(propagation = TransactionDefinition.Propagation.REQUIRES_SUSPENDED)
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
     void approveReport(Long id) {
         expenseReportRepository.updateStatus(id, "APPROVED")
     }
 
-    @Transactional(propagation = TransactionDefinition.Propagation.REQUIRES_SUSPENDED)
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
     void rejectReport(Long id) {
         expenseReportRepository.updateStatus(id, "REJECTED")
         throw new ExpenseRejectedException("Expense report failed policy check")
