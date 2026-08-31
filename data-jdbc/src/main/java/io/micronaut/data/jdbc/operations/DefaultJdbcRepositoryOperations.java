@@ -774,9 +774,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return executeWrite(connection -> {
             SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
+            boolean upsert = isUpsertOperation(storedQuery);
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(),
-                operation.getEntity(), isUpsertOperation(storedQuery));
-            op.update();
+                operation.getEntity(), upsert);
+            if (upsert) {
+                op.upsert();
+            } else {
+                op.update();
+            }
             return op.getEntity();
         }, operation.getAnnotationMetadata());
     }
@@ -788,19 +793,27 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            boolean useGeneratedIdMechanics = isUpsertOperation(storedQuery);
+            boolean upsert = isUpsertOperation(storedQuery);
             if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                 return operation.split()
                     .stream()
                     .map(updateOp -> {
-                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, updateOp.getEntity(), useGeneratedIdMechanics);
-                        op.update();
+                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, updateOp.getEntity(), upsert);
+                        if (upsert) {
+                            op.upsert();
+                        } else {
+                            op.update();
+                        }
                         return op.getEntity();
                     })
                     .toList();
             }
-            JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, useGeneratedIdMechanics);
-            op.update();
+            JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, upsert);
+            if (upsert) {
+                op.upsert();
+            } else {
+                op.update();
+            }
             return op.getEntities();
         }, operation.getAnnotationMetadata());
     }

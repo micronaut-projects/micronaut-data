@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -89,12 +90,11 @@ final class SqlUpsertQueryBuilder {
         UpsertData data = buildUpsertData(entity, definition.conflictProperties());
         String tableName = sqlQueryBuilder.getTableName(entity);
         String query = switch (dialect) {
-            case H2 -> buildH2Upsert(tableName, data);
+            case H2, ANSI -> buildAnsiUpsert(tableName, data);
             case MYSQL -> buildMySqlUpsert(tableName, data);
             case POSTGRES, SQLITE -> buildPostgresUpsert(tableName, data);
             case SQL_SERVER -> buildSqlServerUpsert(tableName, data);
             case ORACLE -> buildOracleUpsert(tableName, data);
-            case ANSI -> buildAnsiUpsert(tableName, data);
         };
 
         List<QueryParameterBinding> parameterBindings = buildParameterBindings(data);
@@ -342,10 +342,6 @@ final class SqlUpsertQueryBuilder {
         return String.join(".", path);
     }
 
-    private String buildH2Upsert(String tableName, UpsertData data) {
-        return "MERGE INTO " + tableName + " (" + data.columnNames() + ") KEY(" + data.conflictColumnNames() + ") VALUES (" + data.valueExpressions() + CLOSE_BRACKET;
-    }
-
     private String buildMySqlUpsert(String tableName, UpsertData data) {
         List<UpsertColumn> updateColumns = data.updateColumnsOrConflict();
         return buildInsertStatement(tableName, data)
@@ -469,6 +465,7 @@ final class SqlUpsertQueryBuilder {
         private List<UpsertColumn> updateColumns() {
             return columns.stream()
                 .filter(column -> !column.identity() && !column.conflict())
+                .filter(UpsertColumn::updatable)
                 .toList();
         }
 
@@ -486,6 +483,12 @@ final class SqlUpsertQueryBuilder {
                                 List<String> path,
                                 boolean identity,
                                 boolean conflict) {
+
+        private boolean updatable() {
+            return property.getAnnotationMetadata()
+                .booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE)
+                .orElse(true);
+        }
     }
 
     private record UpsertReturningColumn(String column,

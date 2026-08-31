@@ -1033,9 +1033,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
+                boolean upsert = isUpsertOperation(storedQuery);
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(),
-                    operation.getEntity(), isUpsertOperation(storedQuery));
-                op.update();
+                    operation.getEntity(), upsert);
+                if (upsert) {
+                    op.upsert();
+                } else {
+                    op.update();
+                }
                 return op.getEntity();
             });
         }
@@ -1140,19 +1145,27 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
-                boolean useGeneratedIdMechanics = isUpsertOperation(storedQuery);
+                boolean upsert = isUpsertOperation(storedQuery);
                 if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(updateOp -> {
-                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, updateOp.getEntity(), useGeneratedIdMechanics);
-                                op.update();
+                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, updateOp.getEntity(), upsert);
+                                if (upsert) {
+                                    op.upsert();
+                                } else {
+                                    op.update();
+                                }
                                 return op.getEntity();
                             })
                     );
                 }
-                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, useGeneratedIdMechanics);
-                op.update();
+                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, upsert);
+                if (upsert) {
+                    op.upsert();
+                } else {
+                    op.update();
+                }
                 return op.getEntities();
             });
         }

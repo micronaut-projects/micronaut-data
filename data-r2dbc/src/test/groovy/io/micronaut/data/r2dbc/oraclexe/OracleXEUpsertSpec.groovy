@@ -16,11 +16,13 @@
 package io.micronaut.data.r2dbc.oraclexe
 
 import io.micronaut.data.r2dbc.oraclexe.upsert.CustomerProfileSequence
+import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXEAutoPopulatedUpsertRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXECustomerProfileRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXECustomerProfileSequenceRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXECustomerProfileUuidRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXEProductReviewRepository
 import io.micronaut.data.r2dbc.oraclexe.upsert.OracleXEWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -47,6 +49,11 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleXETestPrope
     @Override
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(OracleXEWarehouseInventoryRepository)
+    }
+
+    @Override
+    AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository() {
+        return context.getBean(OracleXEAutoPopulatedUpsertRepository)
     }
 
     OracleXECustomerProfileSequenceRepository getCustomerProfileSequenceRepository() {

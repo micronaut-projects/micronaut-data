@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.r2dbc.mariadb
 
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlAutoPopulatedUpsertRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlCustomerProfileRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlCustomerProfileUuidRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlProductReviewRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -45,6 +47,11 @@ class MariaDbUpsertSpec extends AbstractUpsertSpec implements MariaDbTestPropert
     @Override
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(MySqlWarehouseInventoryRepository)
+    }
+
+    @Override
+    AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository() {
+        return context.getBean(MySqlAutoPopulatedUpsertRepository)
     }
 
     @Override

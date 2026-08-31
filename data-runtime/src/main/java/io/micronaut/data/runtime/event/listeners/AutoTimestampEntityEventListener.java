@@ -29,6 +29,7 @@ import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.UpsertEntityEventListener;
 import jakarta.inject.Singleton;
 
 import java.lang.annotation.Annotation;
@@ -46,7 +47,7 @@ import java.util.function.Predicate;
  * @since 2.3.0
  */
 @Singleton
-public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
+public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated>, UpsertEntityEventListener<Object> {
 
     private final DateTimeProvider<?> dateTimeProvider;
     private final DataConversionService conversionService;
@@ -78,14 +79,19 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        autoTimestampIfNecessary(context, false);
+        autoTimestampIfNecessary(context, TimestampEvent.PERSIST);
         return true;
     }
 
     @Override
     public boolean preUpdate(@NonNull EntityEventContext<Object> context) {
-        autoTimestampIfNecessary(context, true);
+        autoTimestampIfNecessary(context, TimestampEvent.UPDATE);
         return true;
+    }
+
+    @Override
+    public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+        autoTimestampIfNecessary(context, TimestampEvent.UPSERT_PREPARE);
     }
 
     @Override
@@ -148,18 +154,20 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return hasDateUpdated && !isUpdate && annotationMetadata.booleanValue(DateUpdated.class, DateUpdated.SKIP_IF_PRESENT).orElse(false);
     }
 
-    private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
+    private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, TimestampEvent event) {
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
         // 1) Top-level properties
         AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
             final AnnotationMetadata am = prop.getAnnotationMetadata();
-            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
+            boolean updatable = am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true);
+            if ((event == TimestampEvent.UPDATE && !updatable) || (event == TimestampEvent.UPSERT_PREPARE && updatable)) {
                 return null;
             }
             final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
             final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
             Object current = prop.getProperty().get(context.getEntity());
+            boolean isUpdate = event == TimestampEvent.UPDATE;
             if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, current)) {
                 return null;
             }
@@ -174,13 +182,15 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!hasDateCreated && !hasDateUpdated) {
                 return current;
             }
-            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
+            boolean updatable = am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true);
+            if ((event == TimestampEvent.UPDATE && !updatable) || (event == TimestampEvent.UPSERT_PREPARE && updatable)) {
                 return current;
             }
             BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
+            boolean isUpdate = event == TimestampEvent.UPDATE;
             if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, prop.get(current))) {
                 return current;
             }
@@ -194,6 +204,12 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 return current;
             }
         });
+    }
+
+    private enum TimestampEvent {
+        PERSIST,
+        UPDATE,
+        UPSERT_PREPARE
     }
 
     @Nullable

@@ -16,10 +16,12 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
+import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -27,6 +29,8 @@ import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.time.LocalDateTime
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue
 
@@ -39,6 +43,8 @@ abstract class AbstractUpsertSpec extends Specification {
     abstract CustomerProfileUuidRepository getCustomerProfileUuidRepository()
 
     abstract WarehouseInventoryRepository getWarehouseInventoryRepository()
+
+    abstract AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -55,10 +61,59 @@ abstract class AbstractUpsertSpec extends Specification {
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
         warehouseInventoryRepository.deleteAll()
+        autoPopulatedUpsertRepository.deleteAll()
         cleanupAdditionalRepositories()
     }
 
     protected void cleanupAdditionalRepositories() {
+    }
+
+    void "upsert populates auto-populated timestamps on insert"() {
+        given:
+        AutoPopulatedUpsertEntity entity = new AutoPopulatedUpsertEntity(1L, "initial")
+
+        when:
+        autoPopulatedUpsertRepository.upsert(entity)
+
+        then:
+        entity.created != null
+        entity.updated != null
+        entity.prePersistCalls == 0
+        entity.preUpdateCalls == 1
+        entity.postPersistCalls == 0
+        entity.postUpdateCalls == 1
+    }
+
+    void "upsertAll populates auto-populated timestamps on insert"() {
+        given:
+        AutoPopulatedUpsertEntity first = new AutoPopulatedUpsertEntity(1L, "first")
+        AutoPopulatedUpsertEntity second = new AutoPopulatedUpsertEntity(2L, "second")
+
+        when:
+        autoPopulatedUpsertRepository.upsertAll([first, second])
+
+        then:
+        [first, second].every {
+            it.created != null && it.updated != null &&
+                it.prePersistCalls == 0 && it.preUpdateCalls == 1 &&
+                it.postPersistCalls == 0 && it.postUpdateCalls == 1
+        }
+    }
+
+    void "upsert preserves date created on update"() {
+        given:
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
+        LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).get().created
+        AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified")
+
+        when:
+        autoPopulatedUpsertRepository.upsert(replacement)
+        AutoPopulatedUpsertEntity found = autoPopulatedUpsertRepository.findById(1L).get()
+
+        then:
+        created != null
+        found.created == created
+        found.updated != null
     }
 
     void "#methodName inserts and updates product review by assigned ID"() {

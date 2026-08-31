@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.sqlite;
 
+import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity;
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview;
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory;
@@ -23,6 +24,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,11 +43,60 @@ class SQLiteUpsertTest {
     @Inject
     SQLiteWarehouseInventoryRepository warehouseInventoryRepository;
 
+    @Inject
+    SQLiteAutoPopulatedUpsertRepository autoPopulatedUpsertRepository;
+
     @AfterEach
     void cleanup() {
+        autoPopulatedUpsertRepository.deleteAll();
         warehouseInventoryRepository.deleteAll();
         customerProfileRepository.deleteAll();
         productReviewRepository.deleteAll();
+    }
+
+    @Test
+    void upsertPopulatesAutoPopulatedTimestampsOnInsert() {
+        AutoPopulatedUpsertEntity entity = new AutoPopulatedUpsertEntity(1L, "initial");
+
+        autoPopulatedUpsertRepository.upsert(entity);
+
+        assertNotNull(entity.getCreated());
+        assertNotNull(entity.getUpdated());
+        assertEquals(0, entity.getPrePersistCalls());
+        assertEquals(1, entity.getPreUpdateCalls());
+        assertEquals(0, entity.getPostPersistCalls());
+        assertEquals(1, entity.getPostUpdateCalls());
+    }
+
+    @Test
+    void upsertAllPopulatesAutoPopulatedTimestampsOnInsert() {
+        AutoPopulatedUpsertEntity first = new AutoPopulatedUpsertEntity(1L, "first");
+        AutoPopulatedUpsertEntity second = new AutoPopulatedUpsertEntity(2L, "second");
+
+        autoPopulatedUpsertRepository.upsertAll(List.of(first, second));
+
+        for (AutoPopulatedUpsertEntity entity : List.of(first, second)) {
+            assertNotNull(entity.getCreated());
+            assertNotNull(entity.getUpdated());
+            assertEquals(0, entity.getPrePersistCalls());
+            assertEquals(1, entity.getPreUpdateCalls());
+            assertEquals(0, entity.getPostPersistCalls());
+            assertEquals(1, entity.getPostUpdateCalls());
+        }
+    }
+
+    @Test
+    void upsertPreservesDateCreatedOnUpdate() {
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"));
+        LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).orElseThrow().getCreated();
+        AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified");
+
+        autoPopulatedUpsertRepository.upsert(replacement);
+        AutoPopulatedUpsertEntity found = autoPopulatedUpsertRepository.findById(1L).orElseThrow();
+
+        assertNotNull(created);
+        assertEquals(created, found.getCreated());
+        assertNotNull(found.getUpdated());
     }
 
     @Test

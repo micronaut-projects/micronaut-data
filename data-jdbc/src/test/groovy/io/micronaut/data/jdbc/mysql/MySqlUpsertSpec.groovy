@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.jdbc.mysql
 
+import io.micronaut.data.jdbc.mysql.upsert.MySqlAutoPopulatedUpsertRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlCustomerProfileRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlCustomerProfileUuidRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlProductReviewRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlWarehouseInventoryRepository
+import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -45,6 +47,11 @@ class MySqlUpsertSpec extends AbstractUpsertSpec implements MySQLTestPropertyPro
     @Override
     WarehouseInventoryRepository getWarehouseInventoryRepository() {
         return context.getBean(MySqlWarehouseInventoryRepository)
+    }
+
+    @Override
+    AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository() {
+        return context.getBean(MySqlAutoPopulatedUpsertRepository)
     }
 
     @Override
