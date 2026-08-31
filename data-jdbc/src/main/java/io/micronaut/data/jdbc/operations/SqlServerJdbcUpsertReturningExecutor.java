@@ -51,9 +51,9 @@ final class SqlServerJdbcUpsertReturningExecutor implements JdbcUpsertReturningE
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
                         returnedIds.add(idReader.read(resultSet));
+                        rowsUpdated++;
                     }
                 }
-                rowsUpdated++;
                 statement.clearParameters();
             }
         }
