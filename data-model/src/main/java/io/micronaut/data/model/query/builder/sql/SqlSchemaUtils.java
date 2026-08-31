@@ -257,7 +257,7 @@ public final class SqlSchemaUtils {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, addColumn);
         }
 
-        List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
+        List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities, namingStrategy);
         List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
         validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
@@ -718,17 +718,22 @@ public final class SqlSchemaUtils {
         return property.isRequired();
     }
 
-    private static List<SqlSequenceMapping> getSqlSequenceMappings(List<PersistentProperty> identities) {
+    private static List<SqlSequenceMapping> getSqlSequenceMappings(List<PersistentProperty> identities,
+                                                                   NamingStrategy namingStrategy) {
         List<SqlSequenceMapping> sequences = new ArrayList<>();
         for (PersistentProperty identity : identities) {
-            if (identity.isGenerated()) {
-                GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (!property.isGenerated()) {
+                    return;
+                }
+                GeneratedValue.Type idGeneratorType = property.getAnnotationMetadata()
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElse(null);
-                final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
-                final String definedSequenceName = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref").orElse(null);
-                sequences.add(new SqlSequenceMapping(generatedDefinition, definedSequenceName, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
-            }
+                String generatedDefinition = property.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
+                String definedSequenceName = property.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref").orElse(null);
+                String columnName = namingStrategy.mappedName(associations, property);
+                sequences.add(new SqlSequenceMapping(columnName, generatedDefinition, definedSequenceName, property.getDataType(), Optional.ofNullable(idGeneratorType)));
+            });
         }
         return sequences;
     }

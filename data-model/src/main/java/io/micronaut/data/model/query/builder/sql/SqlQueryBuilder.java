@@ -971,7 +971,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
                 boolean isSequence = idGeneratorType == SEQUENCE;
                 if (isSequence) {
-                    addToCollectionIfNotContains(createStatements, createSequenceStmt(table.schema(), table.name(), sequence.definedName(), escape));
+                    addToCollectionIfNotContains(createStatements, createSequenceStmt(table, sequence, escape));
                 }
             }
         }
@@ -1068,8 +1068,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return indexBuilder.toString();
     }
 
-    private String createSequenceStmt(@Nullable String schema, String tableName, @Nullable String definedName, boolean escape) {
-        final String sequenceName = getObjectName(schema, StringUtils.isNotEmpty(definedName) ? Objects.requireNonNull(definedName) : tableName + SqlQueryBuilderUtils.SEQ_SUFFIX, escape, true);
+    private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
+        String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
         String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
         if (isSqlServer) {
@@ -1158,7 +1158,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     if (isPk) {
                         column += " NOT NULL";
                     }
-                    column += " DEFAULT NEXT VALUE FOR " + getDefaultSequenceName(table, escape);
+                    column += " DEFAULT NEXT VALUE FOR " + getDefaultSequenceName(table, columnMapping, escape);
                 } else {
                     column += " IDENTITY(1,1) NOT NULL";
                 }
@@ -1201,10 +1201,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return column;
     }
 
-    private String getDefaultSequenceName(SqlTableMapping table, boolean escape) {
-        List<SqlSequenceMapping> sequences = table.sequences();
-        String definedName = CollectionUtils.isNotEmpty(sequences) && sequences.size() == 1 ? sequences.getFirst().definedName() : null;
-        return getObjectName(table.schema(), StringUtils.isNotEmpty(definedName) ? Objects.requireNonNull(definedName) : table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX, escape, true);
+    private String getDefaultSequenceName(SqlTableMapping table, SqlColumnMapping column, boolean escape) {
+        SqlSequenceMapping sequence = table.sequences().stream()
+            .filter(candidate -> candidate.columnName().equals(column.getName()))
+            .findFirst()
+            .orElseThrow(() -> new MappingException("No sequence mapping found for generated column: " + column.getName()));
+        return getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
+    }
+
+    private String resolveSequenceName(SqlTableMapping table, SqlSequenceMapping sequence) {
+        if (StringUtils.isNotEmpty(sequence.definedName())) {
+            return Objects.requireNonNull(sequence.definedName());
+        }
+        if (sequence.definition() != null && dialect == Dialect.SQL_SERVER) {
+            throw new MappingException(
+                "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: " + sequence.columnName()
+            );
+        }
+        return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
     }
 
     private List<String> resolveJoinTableAssociatedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
