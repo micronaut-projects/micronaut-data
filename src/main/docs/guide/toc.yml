@@ -74,7 +74,6 @@ dbc:
     title: JDBC
     jdbcQuickStart: Quick Start
     jdbcConfiguration: Configuration
-    oracleSessionlessTransactions: Oracle Sessionless Transactions
   r2dbc:
     title: R2DBC
     r2dbcQuickStart: Quick Start
