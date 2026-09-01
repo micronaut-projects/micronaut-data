@@ -157,7 +157,7 @@ final class SqlUpsertQueryBuilder {
             return data.parameterBindings();
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(data.parameterBindings());
-        for (UpsertColumn updateColumn : data.updateColumnsOrConflict()) {
+        for (UpsertColumn updateColumn : data.updateColumns()) {
             parameterBindings.add(sqlQueryBuilder.createParameterBinding(String.valueOf(parameterBindings.size() + 1), updateColumn.property(), updateColumn.path().toArray(new String[0])));
         }
         return parameterBindings;
@@ -343,12 +343,19 @@ final class SqlUpsertQueryBuilder {
     }
 
     private String buildMySqlUpsert(String tableName, UpsertData data) {
-        List<UpsertColumn> updateColumns = data.updateColumnsOrConflict();
-        return buildInsertStatement(tableName, data)
-            + " ON DUPLICATE KEY UPDATE "
-            + updateColumns.stream()
+        List<UpsertColumn> updateColumns = data.updateColumns();
+        String updateClause;
+        if (updateColumns.isEmpty()) {
+            String conflictColumn = data.conflictColumns().getFirst().column();
+            updateClause = conflictColumn + "=" + conflictColumn;
+        } else {
+            updateClause = updateColumns.stream()
                 .map(column -> column.column() + "=" + column.value())
                 .collect(Collectors.joining(String.valueOf(COMMA)));
+        }
+        return buildInsertStatement(tableName, data)
+            + " ON DUPLICATE KEY UPDATE "
+            + updateClause;
     }
 
     private String buildPostgresUpsert(String tableName, UpsertData data) {
@@ -469,10 +476,6 @@ final class SqlUpsertQueryBuilder {
                 .toList();
         }
 
-        private List<UpsertColumn> updateColumnsOrConflict() {
-            List<UpsertColumn> updateColumns = updateColumns();
-            return updateColumns.isEmpty() ? List.of(conflictColumns().getFirst()) : updateColumns;
-        }
     }
 
     private record UpsertColumn(String column,

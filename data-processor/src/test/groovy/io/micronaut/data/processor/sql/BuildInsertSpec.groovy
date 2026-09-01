@@ -901,6 +901,43 @@ class Test {
         getParameterPropertyPaths(upsertMethod) == ["name", "created", "updated", "id"] as String[]
     }
 
+    void "test build MySQL upsert without mutable columns uses conflict column no-op"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', '''
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    Test upsert(Test test);
+}
+
+@MappedEntity("upsert_test")
+class Test {
+    @Id
+    private Long id;
+    @DateCreated
+    private LocalDateTime created;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public LocalDateTime getCreated() { return created; }
+    public void setCreated(LocalDateTime created) { this.created = created; }
+}
+''')
+
+        when:
+        def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getQuery(upsertMethod) == 'INSERT INTO `upsert_test` (`created`,`id`) VALUES (?,?) ON DUPLICATE KEY UPDATE `id`=`id`'
+        getParameterPropertyPaths(upsertMethod) == ["created", "id"] as String[]
+    }
+
     @Unroll
     void "test build upsert with conflict properties for dialect - #dialect"() {
         given:
