@@ -76,6 +76,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#getDialect()" tabindex="0">getDialect()</a></li>
+<li><a href="#supportsNullOrdering()" tabindex="0">supportsNullOrdering()</a></li>
 <li><a href="#isDialectVersionAtLeast(java.lang.String)" tabindex="0">isDialectVersionAtLeast(String)</a></li>
 <li><a href="#getDialectVersion()" tabindex="0">getDialectVersion()</a></li>
 <li><a href="#getDialectOptions()" tabindex="0">getDialectOptions()</a></li>
@@ -428,6 +429,12 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether queries should be escaped for the given entity.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsNullOrdering()" class="member-name-link">supportsNullOrdering</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the dialect understands the standard <code>NULLS FIRST</code> and <code>NULLS LAST</code> suffixes on an
+<code>ORDER BY</code> item.</div>
+</div>
 </div>
 </div>
 </div>
@@ -576,6 +583,23 @@ to render the projection for SQL RETURNING clauses (INSERT/UPDATE/DELETE).</div>
 <dd><code><a href="AbstractSqlLikeQueryBuilder.html#getDialect()">getDialect</a></code>&nbsp;in class&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></code></dd>
 <dt>Returns:</dt>
 <dd>The dialect being used by the builder.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="supportsNullOrdering()">
+<h3>supportsNullOrdering</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsNullOrdering</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html#supportsNullOrdering()">AbstractSqlLikeQueryBuilder</a></code></span></div>
+<div class="block">Whether the dialect understands the standard <code>NULLS FIRST</code> and <code>NULLS LAST</code> suffixes on an
+<code>ORDER BY</code> item. Dialects that do not get an equivalent <code>CASE</code> expression sorted on first.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractSqlLikeQueryBuilder.html#supportsNullOrdering()">supportsNullOrdering</a></code>&nbsp;in class&nbsp;<code><a href="AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dt>Returns:</dt>
+<dd>Whether the suffixes are supported</dd>
 </dl>
 </div>
 </section>

@@ -65,6 +65,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#createCriteriaDelete(java.lang.Class)" tabindex="0">createCriteriaDelete(Class)</a></li>
 <li><a href="#createCriteriaInsert(java.lang.Class)" tabindex="0">createCriteriaInsert(Class)</a></li>
 <li><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean)" tabindex="0">sort(Expression, boolean, boolean)</a></li>
+<li><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" tabindex="0">sort(Expression, boolean, boolean, Nulls)</a></li>
 <li><a href="#or(java.lang.Iterable)" tabindex="0">or(Iterable)</a></li>
 <li><a href="#and(java.lang.Iterable)" tabindex="0">and(Iterable)</a></li>
 <li><a href="#isEmptyString(jakarta.persistence.criteria.Expression)" tabindex="0">isEmptyString(Expression)</a></li>
@@ -281,16 +282,24 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create an ordering.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Checks if the expression x starts with the expression y.</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default jakarta.persistence.criteria.Order</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#sort(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" class="member-name-link">sort</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ boolean&nbsp;ascending,
+ boolean&nbsp;ignoreCase,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Create an ordering with an explicit null precedence.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithString</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Checks if the expression x starts with the expression y.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">startsWithStringIgnoreCase</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Checks if the expression x starts with the expression y ignoring case.</div>
 </div>
 </div>
@@ -404,6 +413,29 @@ extends jakarta.persistence.criteria.CriteriaBuilder</span></div>
 <dd><code>ignoreCase</code> - If ignore case should be used</dd>
 <dt>Returns:</dt>
 <dd>ascending ordering corresponding to the expression</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="sort(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)">
+<h3>sort</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Order</span>&nbsp;<span class="element-name">sort</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;x,
+ boolean&nbsp;ascending,
+ boolean&nbsp;ignoreCase,
+ jakarta.persistence.criteria.Nulls&nbsp;nullPrecedence)</span></div>
+<div class="block">Create an ordering with an explicit null precedence.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>x</code> - expression used to define the ordering</dd>
+<dd><code>ascending</code> - If ascending should be use</dd>
+<dd><code>ignoreCase</code> - If ignore case should be used</dd>
+<dd><code>nullPrecedence</code> - Where to place null values relative to non-null values</dd>
+<dt>Returns:</dt>
+<dd>ordering corresponding to the expression</dd>
+<dt>Since:</dt>
+<dd>5.2</dd>
 </dl>
 </div>
 </section>

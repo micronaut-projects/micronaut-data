@@ -145,6 +145,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#isAliasForBatch(io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata)" tabindex="0">isAliasForBatch(PersistentEntity, AnnotationMetadata)</a></li>
 <li><a href="#appendDeleteClause(java.lang.StringBuilder)" tabindex="0">appendDeleteClause(StringBuilder)</a></li>
 <li><a href="#buildOrderBy(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.Sort,boolean,java.lang.String)" tabindex="0">buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean, String)</a></li>
+<li><a href="#supportsNullOrdering()" tabindex="0">supportsNullOrdering()</a></li>
 <li><a href="#buildPropertyByName(java.lang.String,java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,boolean,java.lang.String)" tabindex="0">buildPropertyByName(String, String, PersistentEntity, AnnotationMetadata, boolean, String)</a></li>
 <li><a href="#asPath(java.util.List,io.micronaut.data.model.PersistentProperty)" tabindex="0">asPath(List, PersistentProperty)</a></li>
 <li><a href="#newBindingContext(io.micronaut.data.model.PersistentPropertyPath)" tabindex="0">newBindingContext(PersistentPropertyPath)</a></li>
@@ -734,8 +735,14 @@ JSON entity representations this will throw <a href="https://docs.oracle.com/en/
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsLimitQuery()" class="member-name-link">supportsLimitQuery</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#traverseEmbedded()" class="member-name-link">traverseEmbedded</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsNullOrdering()" class="member-name-link">supportsNullOrdering</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the dialect understands the standard <code>NULLS FIRST</code> and <code>NULLS LAST</code> suffixes on an
+<code>ORDER BY</code> item.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#traverseEmbedded()" class="member-name-link">traverseEmbedded</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -1982,6 +1989,22 @@ when executing an UPDATE or DELETE query with a RETURNING clause.</div>
 <dd><code>tableAlias</code> - The table alias</dd>
 <dt>Returns:</dt>
 <dd>The encoded query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="supportsNullOrdering()">
+<h3>supportsNullOrdering</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">supportsNullOrdering</span>()</div>
+<div class="block">Whether the dialect understands the standard <code>NULLS FIRST</code> and <code>NULLS LAST</code> suffixes on an
+<code>ORDER BY</code> item. Dialects that do not get an equivalent <code>CASE</code> expression sorted on first.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether the suffixes are supported</dd>
+<dt>Since:</dt>
+<dd>5.2</dd>
 </dl>
 </div>
 </section>

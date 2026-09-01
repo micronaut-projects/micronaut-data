@@ -8364,6 +8364,8 @@ definition.</div>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ExpressionOrder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Limit.DefaultLimit.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.<a href="io/micronaut/data/model/Limit.DefaultLimit.html" title="class in io.micronaut.data.model">Limit.DefaultLimit</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -9674,6 +9676,14 @@ in the computation of an entity <a href="io/micronaut/data/annotation/sql/Genera
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.ExpressionAppender.html#%3Cinit%3E(io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryState,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">ExpressionAppender(AbstractSqlLikeQueryBuilder.QueryState, AnnotationMetadata)</a> - Constructor for class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.ExpressionAppender.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.ExpressionAppender</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">ExpressionOrder</a> - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/package-summary.html">io.micronaut.data.model.jpa.criteria.impl</a></dt>
+<dd>
+<div class="block">A <a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model"><code>Sort.Order</code></a> that orders by an arbitrary expression rather than by an attribute name.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.Sort.Order.Direction,boolean,io.micronaut.data.model.Sort.Order.NullOrdering,java.util.function.BiFunction)" class="member-name-link">ExpressionOrder(String, Sort.Order.Direction, boolean, Sort.Order.NullOrdering, BiFunction)</a> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ExpressionOrder</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/ExpressionType.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">ExpressionType&lt;E&gt;</a> - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
 <dd>
 <div class="block">The expression type.</div>
@@ -11466,6 +11476,10 @@ as a RxJava Single or a Reactor Mono.</div>
 <dt><a href="io/micronaut/data/annotation/First.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">First</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">The annotation indicates that how many results should be fetched by the repository method.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html#FIRST" class="member-name-link">FIRST</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a></dt>
+<dd>
+<div class="block">Null values are ordered before non-null values.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html#FIRST" class="member-name-link">FIRST</a> - Enum constant in enum class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html" title="enum class in io.micronaut.data.processor.visitors.finders">QueryMatchId</a></dt>
 <dd>&nbsp;</dd>
@@ -14583,8 +14597,14 @@ pagination.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/UuidEntity.html#getNullableValue()" class="member-name-link">getNullableValue()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.html#getNullOrdering()" class="member-name-link">getNullOrdering()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/DefaultOrder.html#getNullPrecedence()" class="member-name-link">getNullPrecedence()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/DefaultOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">DefaultOrder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/OrderByUtils.html#getNullPrecedence(io.micronaut.core.annotation.AnnotationValue)" class="member-name-link">getNullPrecedence(AnnotationValue)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/OrderByUtils.html" title="class in io.micronaut.data.processor.visitors.finders">OrderByUtils</a></dt>
+<dd>
+<div class="block">Reads the null precedence requested by an <a href="io/micronaut/data/annotation/OrderBy.html" title="annotation interface in io.micronaut.data.annotation"><code>OrderBy</code></a> annotation value.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Page.html#getNum()" class="member-name-link">getNum()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Page.html" title="class in io.micronaut.data.document.tck.entities">Page</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Page.html#getNum()" class="member-name-link">getNum()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Page.html" title="class in io.micronaut.data.tck.entities">Page</a></dt>
@@ -16816,6 +16836,8 @@ without dialect-specific quoting applied.</div>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ExpressionOrder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Limit.DefaultLimit.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.<a href="io/micronaut/data/model/Limit.DefaultLimit.html" title="class in io.micronaut.data.model">Limit.DefaultLimit</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -20995,6 +21017,10 @@ of the available methods.</div>
 <dd>
 <div class="block">Squared L2/Euclidean distance score function.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html#LAST" class="member-name-link">LAST</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a></dt>
+<dd>
+<div class="block">Null values are ordered after non-null values.</div>
+</dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#LAST" class="member-name-link">LAST</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQParser.html#LAST" class="member-name-link">LAST</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQParser.html" title="class in io.micronaut.data.jq">JQParser</a></dt>
@@ -23521,6 +23547,10 @@ exists.</div>
 <dd>
 <div class="block">No attempt to create or update database (or container) will be made.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html#NONE" class="member-name-link">NONE</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a></dt>
+<dd>
+<div class="block">Let the database decide, which is the default.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/config/SchemaGenerate.html#NONE" class="member-name-link">NONE</a> - Enum constant in enum class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SchemaGenerate.html" title="enum class in io.micronaut.data.runtime.config">SchemaGenerate</a></dt>
 <dd>
 <div class="block">Do nothing.</div>
@@ -23721,6 +23751,11 @@ exists.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#nullLiteral(java.lang.Class)" class="member-name-link">nullLiteral(Class)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/OrderBy.html#nullOrdering()" class="member-name-link">nullOrdering()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/OrderBy.html" title="annotation interface in io.micronaut.data.annotation">OrderBy</a></dt>
+<dd>
+<div class="block">Indicates where null values are placed relative to non-null values
+when sorting by this attribute.</div>
+</dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#NULLS" class="member-name-link">NULLS</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQParser.html#NULLS" class="member-name-link">NULLS</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQParser.html" title="class in io.micronaut.data.jq">JQParser</a></dt>
@@ -24321,6 +24356,10 @@ an external string representation suitable for transport propagation.</div>
 <dd>
 <div class="block">Constructs an order for the given property with the given direction.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.html#%3Cinit%3E(java.lang.String,io.micronaut.data.model.Sort.Order.Direction,boolean,io.micronaut.data.model.Sort.Order.NullOrdering)" class="member-name-link">Order(String, Sort.Order.Direction, boolean, Sort.Order.NullOrdering)</a> - Constructor for class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
+<dd>
+<div class="block">Constructs an order for the given property with the given direction and null ordering.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Order.html#%3Cinit%3E(java.lang.String,java.math.BigDecimal,java.lang.Double,java.lang.Integer,java.lang.Long)" class="member-name-link">Order(String, BigDecimal, Double, Integer, Long)</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Order.html" title="class in io.micronaut.data.tck.entities">Order</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html#ORDER" class="member-name-link">ORDER</a> - Enum constant in enum class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html" title="enum class in io.micronaut.data.processor.visitors.finders">QueryMatchId</a></dt>
@@ -24388,6 +24427,10 @@ an external string representation suitable for transport propagation.</div>
 <dt><a href="io/micronaut/data/annotation/OrderBy.List.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">OrderBy.List</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Enables multiple <code>OrderBy</code> annotations on the method.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/OrderByUtils.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">OrderByUtils</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
+<dd>
+<div class="block">Utils for reading <a href="io/micronaut/data/annotation/OrderBy.html" title="annotation interface in io.micronaut.data.annotation"><code>OrderBy</code></a> annotation values.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/OrderPk_.html#orderNo" class="member-name-link">orderNo</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/OrderPk_.html" title="class in io.micronaut.data.tck.entities">OrderPk_</a></dt>
 <dd>&nbsp;</dd>
@@ -31115,6 +31158,12 @@ pagination operations.</div>
 <dd>
 <div class="block">Create an ordering.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#sort(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" class="member-name-link">sort(Expression, boolean, boolean, Nulls)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html#sort(jakarta.persistence.criteria.Expression,boolean,boolean,jakarta.persistence.criteria.Nulls)" class="member-name-link">sort(Expression, boolean, boolean, Nulls)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></dt>
+<dd>
+<div class="block">Create an ordering with an explicit null precedence.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#sort(org.bson.conversions.Bson)" class="member-name-link">sort(Bson)</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Sort.html" class="type-name-link" title="interface in io.micronaut.data.model">Sort</a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
@@ -31134,6 +31183,10 @@ pagination operations.</div>
 <dt><a href="io/micronaut/data/model/Sort.Order.Direction.html" class="type-name-link" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a> - Enum Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">Represents the direction of the ordering.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" class="type-name-link" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a> - Enum Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">Represents where null values are placed relative to non-null values.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/model/SourceAssociation.html" class="type-name-link" title="class in io.micronaut.data.processor.model">SourceAssociation</a> - Class in <a href="io/micronaut/data/processor/model/package-summary.html">io.micronaut.data.processor.model</a></dt>
 <dd>
@@ -32105,6 +32158,13 @@ and materialize an instance using column naming conventions mapped by the entity
 <div class="block">Gets an indicator telling whether mapper can map parameter value to JSON for given
 SQL stored query and parameter and object being mapped.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#supportsNullOrdering()" class="member-name-link">supportsNullOrdering()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Whether the dialect understands the standard <code>NULLS FIRST</code> and <code>NULLS LAST</code> suffixes on an
+<code>ORDER BY</code> item.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#supportsNullOrdering()" class="member-name-link">supportsNullOrdering()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html#supportsRead(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery)" class="member-name-link">supportsRead(SqlPreparedQuery)</a> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a></dt>
 <dd>
 <div class="block">Gets an indicator telling whether reader can interpret results from the SQL prepared query.</div>
@@ -32850,6 +32910,10 @@ or none if timeouts are not supported.</div>
 <dt><a href="io/micronaut/data/model/vector/Vector.html#toDoubleArray()" class="member-name-link">toDoubleArray()</a> - Method in interface io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" title="interface in io.micronaut.data.model.vector">Vector</a></dt>
 <dd>
 <div class="block">Convert this vector to a new double array copy.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html#toExpression(jakarta.persistence.criteria.Root,jakarta.persistence.criteria.CriteriaBuilder)" class="member-name-link">toExpression(Root, CriteriaBuilder)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ExpressionOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ExpressionOrder</a></dt>
+<dd>
+<div class="block">Builds the criteria expression to order by.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#toFloat(byte%5B%5D)" class="member-name-link">toFloat(byte[])</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>
 <dd>
@@ -35388,6 +35452,10 @@ followed by the second, and so forth.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/search/ScoringFunction.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/ScoringFunction.html" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -35660,6 +35728,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/Sort.Order.Direction.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.NullOrdering.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.NullOrdering.html" title="enum class in io.micronaut.data.model">Sort.Order.NullOrdering</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
