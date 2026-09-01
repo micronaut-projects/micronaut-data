@@ -570,6 +570,57 @@ interface MyRepository {
         Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.NONE        | 'person_.`name` ASC'
     }
 
+    @Unroll
+    void "test encode order by null ordering on #dialect which has no NULLS syntax"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", direction, false, nullOrdering))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then: "the null ordering becomes a leading CASE, since NULLS FIRST/LAST would not parse"
+        query == " ORDER BY ${statement}"
+
+        where:
+        dialect            | direction                 | nullOrdering                  | statement
+        Dialect.MYSQL      | Sort.Order.Direction.ASC  | Sort.Order.NullOrdering.LAST  | 'CASE WHEN person_.`name` IS NULL THEN 1 ELSE 0 END,person_.`name` ASC'
+        Dialect.MYSQL      | Sort.Order.Direction.DESC | Sort.Order.NullOrdering.FIRST | 'CASE WHEN person_.`name` IS NULL THEN 0 ELSE 1 END,person_.`name` DESC'
+        Dialect.SQL_SERVER | Sort.Order.Direction.ASC  | Sort.Order.NullOrdering.LAST  | 'CASE WHEN person_.[name] IS NULL THEN 1 ELSE 0 END,person_.[name] ASC'
+        Dialect.SQL_SERVER | Sort.Order.Direction.DESC | Sort.Order.NullOrdering.FIRST | 'CASE WHEN person_.[name] IS NULL THEN 0 ELSE 1 END,person_.[name] DESC'
+    }
+
+    @Unroll
+    void "test encode order by without a null ordering is untouched on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        expect: "no null ordering means no CASE and no NULLS suffix"
+        !new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null).contains("CASE")
+        !new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null).contains("NULLS")
+
+        where:
+        dialect << [Dialect.MYSQL, Dialect.SQL_SERVER, Dialect.POSTGRES, Dialect.ORACLE, Dialect.H2, Dialect.ANSI]
+    }
+
+    @Unroll
+    void "test encode order by null ordering uses the NULLS syntax on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.LAST))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query.endsWith(" ASC NULLS LAST")
+        !query.contains("CASE")
+
+        where:
+        dialect << [Dialect.POSTGRES, Dialect.ORACLE, Dialect.H2, Dialect.ANSI]
+    }
+
     void "test encode order by with null ordering only on the orders that ask for it"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Person)

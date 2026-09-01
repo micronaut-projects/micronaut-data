@@ -1271,15 +1271,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias));
+            String propertyRef = buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias);
+            Sort.Order.NullOrdering nullOrdering = order.getNullOrdering();
+            boolean emulateNullOrdering = nullOrdering != Sort.Order.NullOrdering.NONE && !supportsNullOrdering();
+            if (emulateNullOrdering) {
+                // Sorting the null rank first puts the nulls where the caller asked for them
+                int nullRank = nullOrdering == Sort.Order.NullOrdering.FIRST ? 0 : 1;
+                buff.append("CASE WHEN ").append(propertyRef).append(" IS NULL THEN ").append(nullRank)
+                    .append(" ELSE ").append(1 - nullRank).append(" END,");
+                if (ignoreCase) {
+                    buff.append("LOWER(");
+                }
+            }
+            buff.append(propertyRef);
             if (ignoreCase) {
                 buff.append(")");
             }
             buff.append(SPACE).append(order.getDirection());
-            switch (order.getNullOrdering()) {
-                case FIRST -> buff.append(" NULLS FIRST");
-                case LAST -> buff.append(" NULLS LAST");
-                default -> { /* let the database decide */ }
+            if (!emulateNullOrdering) {
+                switch (nullOrdering) {
+                    case FIRST -> buff.append(" NULLS FIRST");
+                    case LAST -> buff.append(" NULLS LAST");
+                    default -> { /* let the database decide */ }
+                }
             }
             if (i.hasNext()) {
                 buff.append(",");
@@ -1287,6 +1301,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         return buff.toString();
+    }
+
+    /**
+     * Whether the dialect understands the standard {@code NULLS FIRST} and {@code NULLS LAST} suffixes on an
+     * {@code ORDER BY} item. Dialects that do not get an equivalent {@code CASE} expression sorted on first.
+     *
+     * @return Whether the suffixes are supported
+     * @since 5.2
+     */
+    protected boolean supportsNullOrdering() {
+        return true;
     }
 
     /**

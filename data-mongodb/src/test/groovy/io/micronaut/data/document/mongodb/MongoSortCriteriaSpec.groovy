@@ -97,6 +97,16 @@ class MongoSortCriteriaSpec extends Specification {
                 "{\$unset:['__micronaut_sort_0','__micronaut_nulls_0']}]"
     }
 
+    void "test a computed field and a null rank over a plain property share one stage"() {
+        expect: "only a rank over a computed field needs a stage of its own"
+        orderedBy { cb, root ->
+            [cb.asc(cb.lower(root.get("name"))), cb.sort(root.get("age"), true, false, Nulls.LAST)]
+        } == "[{\$addFields:{__micronaut_sort_0:{\$toLower:'\$name'}," +
+                "__micronaut_nulls_0:{\$cond:[{\$in:[{\$type:'\$age'},['missing','null']]},1,0]}}}," +
+                "{\$sort:{__micronaut_sort_0:1,__micronaut_nulls_0:1,age:1}}," +
+                "{\$unset:['__micronaut_sort_0','__micronaut_nulls_0']}]"
+    }
+
     void "test ordering by an expression over a literal inlines the literal"() {
         expect:
         ascendingBy { cb, root -> cb.prod(root.get("amount"), new LiteralExpression<Integer>(2)) } ==
@@ -142,7 +152,8 @@ class MongoSortCriteriaSpec extends Specification {
         PersistentEntityCriteriaBuilder criteriaBuilder = new RuntimeCriteriaBuilder()
         PersistentEntityCriteriaQuery criteriaQuery = criteriaBuilder.createQuery()
         PersistentEntityRoot entityRoot = criteriaQuery.from(Test)
-        criteriaQuery.orderBy(order.call(criteriaBuilder, entityRoot))
+        def orders = order.call(criteriaBuilder, entityRoot)
+        criteriaQuery.orderBy(orders instanceof List ? orders : [orders])
         criteriaQuery.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 }

@@ -172,6 +172,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Map<String, Object> sortObj = new LinkedHashMap<>();
             Map<String, Object> computedFields = new LinkedHashMap<>();
             Map<String, Object> nullRankFields = new LinkedHashMap<>();
+            boolean nullRanksOverComputedFields = false;
             for (Order order : orders) {
                 Expression<?> orderExpression = order.getExpression();
                 String fieldName;
@@ -187,14 +188,20 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
                     nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
                     sortObj.put(rankField, 1);
+                    nullRanksOverComputedFields |= computedFields.containsKey(fieldName);
                 }
                 sortObj.put(fieldName, order.isAscending() ? 1 : -1);
+            }
+            if (!computedFields.isEmpty() && !nullRanksOverComputedFields) {
+                // Nothing ranks a computed field, so one stage can define them all
+                computedFields.putAll(nullRankFields);
+                nullRankFields.clear();
             }
             if (!computedFields.isEmpty()) {
                 pipeline.add(Map.of("$addFields", computedFields));
             }
             if (!nullRankFields.isEmpty()) {
-                // A separate stage, as $addFields cannot reference a field defined by the same stage
+                // A second stage, as $addFields cannot reference a field defined by the same stage
                 pipeline.add(Map.of("$addFields", nullRankFields));
             }
             pipeline.add(Map.of("$sort", sortObj));
