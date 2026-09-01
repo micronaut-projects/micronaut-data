@@ -605,6 +605,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
+    private boolean shouldReadGeneratedId(SqlStoredQuery<?, ?> storedQuery, boolean hasGeneratedId) {
+        return hasGeneratedId
+            && (!isUpsertOperation(storedQuery) || !storedQuery.getResultDataType().isNumeric());
+    }
+
     private <T> int bindUpsertParameters(R2dbcOperationContext ctx,
                                          Statement statement,
                                          SqlStoredQuery<T, ?> storedQuery,
@@ -1356,7 +1361,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             LOG.debug(storedQuery.getQuery());
             Statement statement = connection.createStatement(storedQuery.getQuery());
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     return statement;
                 } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
@@ -1377,7 +1382,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
                             OracleR2dbcReturningSupport.bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
-                        } else if (hasGeneratedId && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                        } else if (shouldReadGeneratedId(storedQuery, hasGeneratedId)
+                            && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                             stmt.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
                         }
                         return Mono.just(d);
@@ -1424,7 +1430,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         return d;
                     });
                 });
-            } else if (hasGeneratedId) {
+            } else if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 data = data.flatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
@@ -1584,7 +1590,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 return;
             }
             Statement statement;
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     statement.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
@@ -1595,7 +1601,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
             setParameters(statement, storedQuery);
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 entities = entities
                     .flatMap(list -> {
                         List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
