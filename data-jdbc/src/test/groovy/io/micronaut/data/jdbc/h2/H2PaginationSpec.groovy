@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
@@ -47,5 +49,23 @@ class H2PaginationSpec extends AbstractPageSpec {
     @Override
     void init() {
         pr.deleteAll()
+    }
+
+    void "test native query pagination rejects unsafe sort property"() {
+        when:
+        pr.findPeopleNative("A%", Pageable.from(0, 10).order("(SELECT password FROM users)"))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.cause.message == "Invalid native query sort property: (SELECT password FROM users)"
+    }
+
+    void "test native query pagination accepts safe sort property"() {
+        when:
+        def page = pr.findPeopleNative("A%", Pageable.from(0, 10).order("name"))
+
+        then:
+        page.content.size() == 10
+        page.totalSize == 50
     }
 }

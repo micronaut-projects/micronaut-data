@@ -31,6 +31,7 @@ import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.*
@@ -368,6 +369,94 @@ interface MyRepository {
         Person | 'asc'     | ["name", "someId"] | 'person_.name ASC,person_.some_id ASC'
         Person | 'desc'    | ["name"]           | 'person_.name DESC'
         Person | 'desc'    | ["name", "someId"] | 'person_.name DESC,person_.some_id DESC'
+    }
+
+    @Unroll
+    void "test encode native order by identifier #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        String query = new SqlQueryBuilder2(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        query == " ORDER BY ${property} ASC"
+
+        where:
+        property << ['name', 'person_name', 'person.name', 'schema.table.column']
+    }
+
+    @Unroll
+    void "test non-native order by rejects non-existent property #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        new SqlQueryBuilder2(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Cannot sort on non-existent property path: ${property}"
+
+        where:
+        property << ['notAProperty', 'person.notAProperty']
+    }
+
+    @Unroll
+    void "test reject unsafe native order by property #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        new SqlQueryBuilder2(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Invalid native query sort property: ${property}"
+
+        where:
+        property << [
+                '(SELECT password FROM users)',
+                'name DESC',
+                'name, id',
+                'name; DELETE FROM person',
+                'name--',
+                'name/*comment*/',
+                'LOWER(name)',
+                'person..name',
+                '',
+                '1name',
+                "name\n"
+        ]
+    }
+
+    void "test reject unsafe case-insensitive native order by property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order('LOWER(name)', Sort.Order.Direction.ASC, true))
+
+        when:
+        new SqlQueryBuilder2(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Invalid native query sort property: LOWER(name)'
+    }
+
+    void "test legacy builder rejects unsafe native order by property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc('(SELECT password FROM users)'))
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, true)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Invalid native query sort property: (SELECT password FROM users)'
     }
 
     void "test encode insert statement"() {

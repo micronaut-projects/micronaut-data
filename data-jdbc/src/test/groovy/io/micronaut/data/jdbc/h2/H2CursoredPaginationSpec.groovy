@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -36,6 +38,37 @@ class H2CursoredPaginationSpec extends AbstractCursoredPageSpec implements H2Tes
     @Override
     BookRepository getBookRepository() {
         return context.getBean(H2BookRepository)
+    }
+
+    void "test native query cursored pagination rejects unsafe sort property"() {
+        given:
+        def pageable = Pageable.afterCursor(
+                Pageable.Cursor.of("AAAAA00", 1L),
+                1,
+                10,
+                Sort.of(Sort.Order.asc("(SELECT password FROM users)"))
+        )
+
+        when:
+        getPersonRepository().findPeopleNative("A%", pageable)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.cause.message == "Invalid native query sort property: (SELECT password FROM users)"
+    }
+
+    void "test native query cursored pagination accepts safe sort property"() {
+        given:
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        def firstPage = getPersonRepository().findPeopleNative("A%", CursoredPageable.from(10, sort))
+        def secondPage = getPersonRepository().findPeopleNative("A%", firstPage.nextPageable())
+
+        then:
+        firstPage.content.size() == 10
+        secondPage.content.size() == 10
+        firstPage.content.id != secondPage.content.id
     }
 
     void "test pageable list with row removal XX"() {

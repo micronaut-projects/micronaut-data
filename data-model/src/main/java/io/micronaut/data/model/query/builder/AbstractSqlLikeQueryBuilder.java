@@ -67,6 +67,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -117,6 +118,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String JSON_COLUMN = "column";
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+
+    private static final Pattern NATIVE_QUERY_SORT_PROPERTY_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*");
 
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -1995,7 +1998,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param entity The root entity
      * @param annotationMetadata The annotation metadata
      * @param sort   The sort
-     * @param nativeQuery Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @param nativeQuery Whether the query is native query, in which case sort field names must be dot-separated, unquoted ASCII SQL identifiers
      * @return The encoded query
      */
     @NonNull
@@ -2045,7 +2048,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param query The query
      * @param entity The root entity
      * @param annotationMetadata The annotation metadata
-     * @param nativeQuery Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @param nativeQuery Whether the query is native query, in which case the property name must be a dot-separated, unquoted ASCII SQL identifier
      * @return The encoded query
      */
     public String buildPropertyByName(
@@ -2054,6 +2057,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             boolean nativeQuery
     ) {
         if (nativeQuery) {
+            if (!NATIVE_QUERY_SORT_PROPERTY_PATTERN.matcher(propertyName).matches()) {
+                throw new IllegalArgumentException("Invalid native query sort property: " + propertyName);
+            }
             return propertyName;
         }
 

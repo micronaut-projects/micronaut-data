@@ -358,13 +358,20 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @NonNull
     private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
+        List<Order> orders = cursoredPageable.getSort().getOrderBy();
+        List<String> cursorPropertyNames = new ArrayList<>(orders.size());
+        for (Order order : orders) {
+            cursorPropertyNames.add(sqlStoredQuery.getQueryBuilder().buildPropertyByName(
+                order.getProperty(), query, persistentEntity, getAnnotationMetadata(), isNative(), tableAlias
+            ));
+        }
+        // Initialize cursor properties even on the first page. DTO cursor validation uses this metadata.
         List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
         if (optionalCursor.isEmpty()) {
             return "";
         }
         Cursor cursor = optionalCursor.get();
-        List<Order> orders = cursoredPageable.getSort().getOrderBy();
         if (orders.size() != cursor.size()) {
             throw new IllegalArgumentException("The cursor must match the sorting size");
         }
@@ -392,8 +399,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         for (int i = 0; i < orders.size(); ++i) {
             builder.append("(");
             for (int j = 0; j <= i; ++j) {
-                String propertyName = orders.get(j).getProperty();
-                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, persistentEntity, getAnnotationMetadata(), isNative(), tableAlias));
+                builder.append(cursorPropertyNames.get(j));
                 if (orders.get(i).isAscending()) {
                     builder.append(i == j ? " > " : " = ");
                 } else {
