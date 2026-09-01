@@ -249,11 +249,11 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         Long insertedId = inserted.id
-        CustomerProfile found = customerProfileRepository.findById(insertedId).get()
+        List<CustomerProfile> foundProfiles = customerProfileRepository.findAll()
 
         then:
-        assertCustomerProfile(found, inserted)
-        customerProfileRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfile(foundProfiles.getFirst(), inserted)
 
         when:
         cp.setDisplayName("test modified")
@@ -265,11 +265,11 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.displayName == "test modified"
 
         when:
-        found = customerProfileRepository.findById(insertedId).get()
+        foundProfiles = customerProfileRepository.findAll()
 
         then:
-        assertCustomerProfile(found, updated)
-        customerProfileRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfile(foundProfiles.getFirst(), updated)
 
         where:
         methodName     | upsertMethod
@@ -289,20 +289,20 @@ abstract class AbstractUpsertSpec extends Specification {
         cp.id != null
 
         when:
-        CustomerProfile found = customerProfileRepository.findById(cp.id).get()
+        List<CustomerProfile> foundProfiles = customerProfileRepository.findAll()
 
         then:
-        assertCustomerProfile(found, cp)
-        customerProfileRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfile(foundProfiles.getFirst(), cp)
 
         when:
         cp.setDisplayName("test modified")
         upsertMethod(cp)
-        found = customerProfileRepository.findById(cp.id).get()
+        foundProfiles = customerProfileRepository.findAll()
 
         then:
-        assertCustomerProfile(found, cp)
-        customerProfileRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfile(foundProfiles.getFirst(), cp)
 
         where:
         methodName             | upsertMethod
@@ -331,13 +331,12 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         Long firstId = inserted.get(0).id
         Long secondId = inserted.get(1).id
-        CustomerProfile found1 = customerProfileRepository.findById(firstId).get()
-        CustomerProfile found2 = customerProfileRepository.findById(secondId).get()
+        Map<Long, CustomerProfile> foundById = customerProfileRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfile(found1, inserted.get(0))
-        assertCustomerProfile(found2, inserted.get(1))
-        customerProfileRepository.count() == 2
+        foundById.size() == 2
+        assertCustomerProfile(foundById[firstId], inserted.get(0))
+        assertCustomerProfile(foundById[secondId], inserted.get(1))
 
         when:
         cp1.setDisplayName("test 1 modified")
@@ -360,17 +359,14 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.get(3).displayName == "test 4"
 
         when:
-        found1 = customerProfileRepository.findById(cp1.id).get()
-        found2 = customerProfileRepository.findById(cp2.id).get()
-        CustomerProfile found3 = customerProfileRepository.findById(cp3.id).get()
-        CustomerProfile found4 = customerProfileRepository.findById(cp4.id).get()
+        foundById = customerProfileRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfile(found1, updated.get(0))
-        assertCustomerProfile(found2, updated.get(1))
-        assertCustomerProfile(found3, updated.get(2))
-        assertCustomerProfile(found4, updated.get(3))
-        customerProfileRepository.count() == 4
+        foundById.size() == 4
+        assertCustomerProfile(foundById[firstId], updated.get(0))
+        assertCustomerProfile(foundById[secondId], updated.get(1))
+        assertCustomerProfile(foundById[updated.get(2).id], updated.get(2))
+        assertCustomerProfile(foundById[updated.get(3).id], updated.get(3))
 
         where:
         methodName        | upsertMethod
@@ -392,13 +388,12 @@ abstract class AbstractUpsertSpec extends Specification {
         cp2.id != null
 
         when:
-        CustomerProfile found1 = customerProfileRepository.findById(cp1.id).get()
-        CustomerProfile found2 = customerProfileRepository.findById(cp2.id).get()
+        Map<Long, CustomerProfile> foundById = customerProfileRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfile(found1, cp1)
-        assertCustomerProfile(found2, cp2)
-        customerProfileRepository.count() == 2
+        foundById.size() == 2
+        assertCustomerProfile(foundById[cp1.id], cp1)
+        assertCustomerProfile(foundById[cp2.id], cp2)
 
         when:
         cp1.setDisplayName("test 1 modified")
@@ -412,17 +407,14 @@ abstract class AbstractUpsertSpec extends Specification {
         cp4.id != null
 
         when:
-        found1 = customerProfileRepository.findById(cp1.id).get()
-        found2 = customerProfileRepository.findById(cp2.id).get()
-        CustomerProfile found3 = customerProfileRepository.findById(cp3.id).get()
-        CustomerProfile found4 = customerProfileRepository.findById(cp4.id).get()
+        foundById = customerProfileRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfile(found1, cp1)
-        assertCustomerProfile(found2, cp2)
-        assertCustomerProfile(found3, cp3)
-        assertCustomerProfile(found4, cp4)
-        customerProfileRepository.count() == 4
+        foundById.size() == 4
+        assertCustomerProfile(foundById[cp1.id], cp1)
+        assertCustomerProfile(foundById[cp2.id], cp2)
+        assertCustomerProfile(foundById[cp3.id], cp3)
+        assertCustomerProfile(foundById[cp4.id], cp4)
 
         where:
         methodName                | upsertMethod
@@ -447,11 +439,11 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         String insertedId = inserted.id
-        CustomerProfileUuid found = customerProfileUuidRepository.findById(insertedId).get()
+        List<CustomerProfileUuid> foundProfiles = customerProfileUuidRepository.findAll()
 
         then:
-        assertCustomerProfileUuid(found, inserted)
-        customerProfileUuidRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfileUuid(foundProfiles.getFirst(), inserted)
 
         when:
         cp.setDisplayName("test modified")
@@ -463,11 +455,11 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.displayName == "test modified"
 
         when:
-        found = customerProfileUuidRepository.findById(insertedId).get()
+        foundProfiles = customerProfileUuidRepository.findAll()
 
         then:
-        assertCustomerProfileUuid(found, updated)
-        customerProfileUuidRepository.count() == 1
+        foundProfiles.size() == 1
+        assertCustomerProfileUuid(foundProfiles.getFirst(), updated)
     }
 
     void "upsertAll by email conflict returns entities when uuid is used"() {
@@ -492,13 +484,12 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         String firstId = inserted.get(0).id
         String secondId = inserted.get(1).id
-        CustomerProfileUuid found1 = customerProfileUuidRepository.findById(firstId).get()
-        CustomerProfileUuid found2 = customerProfileUuidRepository.findById(secondId).get()
+        Map<String, CustomerProfileUuid> foundById = customerProfileUuidRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfileUuid(found1, inserted.get(0))
-        assertCustomerProfileUuid(found2, inserted.get(1))
-        customerProfileUuidRepository.count() == 2
+        foundById.size() == 2
+        assertCustomerProfileUuid(foundById[firstId], inserted.get(0))
+        assertCustomerProfileUuid(foundById[secondId], inserted.get(1))
 
         when:
         cp1.setDisplayName("test 1 modified")
@@ -521,17 +512,14 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.get(3).displayName == "test 4"
 
         when:
-        found1 = customerProfileUuidRepository.findById(cp1.id).get()
-        found2 = customerProfileUuidRepository.findById(cp2.id).get()
-        CustomerProfileUuid found3 = customerProfileUuidRepository.findById(cp3.id).get()
-        CustomerProfileUuid found4 = customerProfileUuidRepository.findById(cp4.id).get()
+        foundById = customerProfileUuidRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertCustomerProfileUuid(found1, updated.get(0))
-        assertCustomerProfileUuid(found2, updated.get(1))
-        assertCustomerProfileUuid(found3, updated.get(2))
-        assertCustomerProfileUuid(found4, updated.get(3))
-        customerProfileUuidRepository.count() == 4
+        foundById.size() == 4
+        assertCustomerProfileUuid(foundById[firstId], updated.get(0))
+        assertCustomerProfileUuid(foundById[secondId], updated.get(1))
+        assertCustomerProfileUuid(foundById[updated.get(2).id], updated.get(2))
+        assertCustomerProfileUuid(foundById[updated.get(3).id], updated.get(3))
     }
 
     void "upsert by sku and warehouse conflict properties"() {
@@ -549,11 +537,11 @@ abstract class AbstractUpsertSpec extends Specification {
 
         when:
         Long insertedId = inserted.id
-        WarehouseInventory found = warehouseInventoryRepository.findById(insertedId).get()
+        List<WarehouseInventory> foundInventory = warehouseInventoryRepository.findAll()
 
         then:
-        assertWarehouseInventory(found, inserted)
-        warehouseInventoryRepository.count() == 1
+        foundInventory.size() == 1
+        assertWarehouseInventory(foundInventory.getFirst(), inserted)
 
         when:
         wh.setQuantity(18)
@@ -566,11 +554,11 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.quantity == 18
 
         when:
-        found = warehouseInventoryRepository.findById(insertedId).get()
+        foundInventory = warehouseInventoryRepository.findAll()
 
         then:
-        assertWarehouseInventory(found, updated)
-        warehouseInventoryRepository.count() == 1
+        foundInventory.size() == 1
+        assertWarehouseInventory(foundInventory.getFirst(), updated)
     }
 
     void "upsertAll by sku and warehouse conflict properties"() {
@@ -593,13 +581,12 @@ abstract class AbstractUpsertSpec extends Specification {
         when:
         Long firstId = inserted.get(0).id
         Long secondId = inserted.get(1).id
-        WarehouseInventory found1 = warehouseInventoryRepository.findById(firstId).get()
-        WarehouseInventory found2 = warehouseInventoryRepository.findById(secondId).get()
+        Map<Long, WarehouseInventory> foundById = warehouseInventoryRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertWarehouseInventory(found1, inserted.get(0))
-        assertWarehouseInventory(found2, inserted.get(1))
-        warehouseInventoryRepository.count() == 2
+        foundById.size() == 2
+        assertWarehouseInventory(foundById[firstId], inserted.get(0))
+        assertWarehouseInventory(foundById[secondId], inserted.get(1))
 
         when:
         wh1.setQuantity(7)
@@ -614,13 +601,12 @@ abstract class AbstractUpsertSpec extends Specification {
         updated.get(1).quantity == 11
 
         when:
-        found1 = warehouseInventoryRepository.findById(wh1.id).get()
-        found2 = warehouseInventoryRepository.findById(wh2.id).get()
+        foundById = warehouseInventoryRepository.findAll().collectEntries { [(it.id): it] }
 
         then:
-        assertWarehouseInventory(found1, updated.get(0))
-        assertWarehouseInventory(found2, updated.get(1))
-        warehouseInventoryRepository.count() == 2
+        foundById.size() == 2
+        assertWarehouseInventory(foundById[firstId], updated.get(0))
+        assertWarehouseInventory(foundById[secondId], updated.get(1))
     }
 
     protected boolean supportsGeneratedUuidReturning() {
