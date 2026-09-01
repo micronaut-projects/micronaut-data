@@ -1482,6 +1482,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     ))
                     .map(generatedId -> {
                         d.entity = updateEntityId(identityProperty, d.entity, generatedId);
+                        d.rowsUpdated = 1;
                         return d;
                     });
             });
@@ -1656,7 +1657,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
             }
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
-            entities = entities.flatMap(list -> Flux.fromIterable(list)
+            Mono<List<Data>> upsertedEntities = entities.flatMap(list -> Flux.fromIterable(list)
                 .concatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
@@ -1673,7 +1674,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             return d;
                         });
                 })
-                .collectList());
+                .collectList())
+                .cache();
+            entities = upsertedEntities;
+            rowsUpdated = upsertedEntities.map(list -> list.stream().filter(this::notVetoed).count());
         }
     }
 
