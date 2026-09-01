@@ -8,3 +8,6 @@ include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/a
 
 NOTE: You can use property `schema-generate-names` to specify multiple schemas to be created and initialized for testing.
 
+The `schema-generate-names` property is optional. If it is omitted, schema generation uses the datasource's default schema. Configure it when schema generation should create and initialize the mapped tables in each named tenant schema, for example, in tests or demos. For production applications, use a database migration tool to create the tenant schemas and their tables.
+
+Tenant values resolved in `SCHEMA` mode are logical schema names. Pass the name without database-specific quoting, such as `tenant-a`; do not pass values already wrapped in `"..."`, backticks, or square brackets. Micronaut Data applies the appropriate identifier quoting for the configured dialect when switching or creating schemas. A tenant resolver only selects the schema name: applications must still ensure that it returns only schemas the current caller is allowed to access.

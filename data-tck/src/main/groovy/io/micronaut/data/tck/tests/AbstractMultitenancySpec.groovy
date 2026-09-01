@@ -22,6 +22,7 @@ import io.micronaut.context.env.Environment
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.annotation.Connectable
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.http.annotation.Controller
@@ -29,6 +30,9 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Header
 import io.micronaut.http.annotation.Post
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.client.HttpClient
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.scheduling.TaskExecutors
@@ -106,6 +110,34 @@ abstract class AbstractMultitenancySpec extends Specification {
             embeddedServer?.stop()
     }
 
+    def "test schema multitenancy rejects an injected tenant identifier"() {
+        if (!supportsSchemaMultitenancy()) {
+            return
+        }
+        setup:
+            EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, commonProperties + getDataSourceProperties('default') + [
+                    'spec.name'                                               : 'multitenancy',
+                    'micronaut.data.multi-tenancy.mode'                       : 'SCHEMA',
+                    'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true'
+            ], Environment.TEST)
+            def context = embeddedServer.applicationContext
+            HttpClient httpClient = HttpClient.create(embeddedServer.getURL())
+            String payload = 'PUBLIC; CREATE TABLE PWNED(id int); --'
+            boolean failed = false
+        when:
+            try {
+                httpClient.toBlocking().exchange(HttpRequest.GET('/books').header('tenantId', payload))
+            } catch (HttpClientResponseException | DataAccessException ignored) {
+                failed = true
+            }
+        then:
+            failed
+            assertNoInjectedTable(context, 'PWNED')
+        cleanup:
+            httpClient?.close()
+            embeddedServer?.stop()
+    }
+
     private Map<String, String> getCommonProperties() {
         def dynamicProperties = properties + extraProperties
         ServiceLoader.load(TestPropertyProviderFactory).stream()
@@ -162,6 +194,16 @@ abstract class AbstractMultitenancySpec extends Specification {
     protected abstract long getDataSourceBooksCount(BeanContext beanContext, String ds);
 
     protected abstract long getSchemaBooksCount(BeanContext beanContext, String schemaName);
+
+    /**
+     * Verifies that an injected schema-switch statement did not create a table.
+     * Backends without schema metadata support may leave this hook as a no-op.
+     *
+     * @param beanContext The test application context
+     * @param tableName The table that must not exist
+     */
+    protected void assertNoInjectedTable(BeanContext beanContext, String tableName) {
+    }
 
 }
 
