@@ -1,9 +1,14 @@
 package example;
 
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Header;
+import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Inject;
@@ -36,6 +41,10 @@ class BookJdbcSchemaMultiTenancySpec {
 
     @Inject
     JdbcSchemaHandler jdbcSchemaHandler;
+
+    @Inject
+    @Client("/")
+    HttpClient httpClient;
 
     @AfterEach
     public void cleanup() {
@@ -72,6 +81,25 @@ class BookJdbcSchemaMultiTenancySpec {
         assertEquals(0, fooBookClient.findAll().size());
     }
 
+    @Test
+    void invalidTenantIdCannotExecuteSql() throws SQLException {
+        String payload = "PUBLIC; CREATE TABLE PWNED(id int); --";
+        boolean failed = false;
+
+        try {
+            httpClient.toBlocking().exchange(
+                HttpRequest.GET("/books").header("tenantId", payload),
+                Argument.listOf(BookDto.class)
+            );
+        } catch (HttpClientResponseException | DataAccessException ignored) {
+            // The quoted schema does not exist, so the repository operation is expected to fail.
+            failed = true;
+        }
+
+        assertTrue(failed);
+        assertEquals(0, getTableCount("PWNED"));
+    }
+
     private long getBooksCount(String schemaName) throws SQLException {
         if (dataSource instanceof DelegatingDataSource) {
             dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
@@ -83,6 +111,22 @@ class BookJdbcSchemaMultiTenancySpec {
                     resultSet.next();
                     return resultSet.getLong(1);
                 }
+            }
+        }
+    }
+
+    private long getTableCount(String tableName) throws SQLException {
+        DataSource targetDataSource = dataSource;
+        if (targetDataSource instanceof DelegatingDataSource) {
+            // Bypass the tenant connection advice while inspecting the default schema.
+            targetDataSource = ((DelegatingDataSource) targetDataSource).getTargetDataSource();
+        }
+        try (Connection connection = targetDataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?")) {
+            ps.setString(1, tableName);
+            try (ResultSet resultSet = ps.executeQuery()) {
+                resultSet.next();
+                return resultSet.getLong(1);
             }
         }
     }
@@ -101,4 +145,3 @@ interface BarBookClient extends BookClient {
 }
 
 // end::clients[]
-

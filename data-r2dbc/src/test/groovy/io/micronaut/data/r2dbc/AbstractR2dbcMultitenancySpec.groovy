@@ -59,4 +59,18 @@ abstract class AbstractR2dbcMultitenancySpec extends AbstractMultitenancySpec {
                 .block()
     }
 
+    @Override
+    protected void assertNoInjectedTable(BeanContext beanContext, String tableName) {
+        DataR2dbcConfiguration conf = beanContext.getBean(DataR2dbcConfiguration)
+        ConnectionFactory connectionFactory = beanContext.getBean(ConnectionFactory)
+        String query = conf.dialect == io.micronaut.data.model.query.builder.sql.Dialect.ORACLE
+            ? "select count(*) from all_tables where table_name = '${tableName.toUpperCase(Locale.ENGLISH)}'"
+            : "select count(*) from INFORMATION_SCHEMA.TABLES where TABLE_NAME = '${tableName}'"
+        def count = Mono.from(connectionFactory.create())
+                .flatMap(c -> Mono.from(c.createStatement(query).execute()))
+                .flatMap(r -> Mono.from(r.<Long>map({ read -> (read.get(0) as Number).longValue() } as Function)))
+                .block()
+        assert count == 0
+    }
+
 }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.multitenancy.internal.SchemaNameUtils;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import jakarta.inject.Singleton;
@@ -38,26 +39,43 @@ final class DefaultR2dbcSchemaHandler implements R2dbcSchemaHandler {
 
     @Override
     public Publisher<Void> createSchema(Connection connection, Dialect dialect, String name) {
+        String schemaName;
+        try {
+            schemaName = SchemaNameUtils.render(dialect, name);
+        } catch (IllegalArgumentException e) {
+            return Mono.error(new DataAccessException("Invalid schema name: " + e.getMessage(), e));
+        }
         if (dialect == Dialect.ORACLE) {
-            return executeQuery(connection, "CREATE DATABASE " + name + ";");
+            return executeQuery(connection, "CREATE DATABASE " + schemaName + ";");
         } else {
-            return executeQuery(connection, "CREATE SCHEMA " + name + ";");
+            return executeQuery(connection, "CREATE SCHEMA " + schemaName + ";");
         }
     }
 
     @Override
     public Publisher<Void> useSchema(Connection connection, Dialect dialect, String name) {
+        String schemaName;
+        try {
+            schemaName = SchemaNameUtils.render(dialect, name);
+        } catch (IllegalArgumentException e) {
+            return Mono.error(new DataAccessException("Invalid schema name: " + e.getMessage(), e));
+        }
         switch (dialect) {
             case ORACLE:
-                return executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + name);
+                return executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + schemaName);
             case SQL_SERVER:
-                return executeQuery(connection, "USE " + name + ";");
+                return executeQuery(connection, "USE " + schemaName + ";");
             case POSTGRES:
-                return executeQuery(connection, "SET SCHEMA '" + name + "';");
+                // Keep the legacy string-literal form for simple names. SET SCHEMA does not
+                // accept a quoted identifier, so use search_path when identifier quoting is needed.
+                if (schemaName.equals(name)) {
+                    return executeQuery(connection, "SET SCHEMA '" + name + "';");
+                }
+                return executeQuery(connection, "SET search_path TO " + schemaName + ";");
             case MYSQL:
-                return executeQuery(connection, "USE " + name + ";");
+                return executeQuery(connection, "USE " + schemaName + ";");
             case H2:
-                return executeQuery(connection, "SET SCHEMA " + name + ";");
+                return executeQuery(connection, "SET SCHEMA " + schemaName + ";");
             default:
                 return Mono.error(new DataAccessException("Unsupported 'useSchema' for dialect:" + dialect));
         }
