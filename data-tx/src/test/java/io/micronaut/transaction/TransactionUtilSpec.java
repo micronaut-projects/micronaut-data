@@ -21,11 +21,14 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 public class TransactionUtilSpec {
 
@@ -40,10 +43,19 @@ public class TransactionUtilSpec {
                 OracleTransactional.Priority.MEDIUM,
                 priorityDefinition.getProperties().get(OracleTransactional.ORACLE_PRIORITY)
             );
+            Assertions.assertEquals(
+                OracleTransactional.Sessionless.SUSPEND,
+                priorityDefinition.getProperties().get(OracleTransactional.ORACLE_SESSIONLESS_MODE)
+            );
+            Assertions.assertEquals(
+                Duration.ofSeconds(3600),
+                priorityDefinition.getTimeout().orElseThrow()
+            );
 
             ExecutableMethod<AnnotatedService, Object> methodWithoutPriority = beanDefinition.getRequiredMethod("methodWithoutPriority");
             TransactionDefinition defaultDefinition = TransactionUtil.getTransactionDefinition("test", methodWithoutPriority);
             Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY));
+            Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_SESSIONLESS_MODE));
         }
     }
 
@@ -70,10 +82,49 @@ public class TransactionUtilSpec {
         Assertions.assertEquals("Invalid Oracle transaction priority: invalid", exception.getMessage());
     }
 
+    @Test
+    void testOracleSessionlessModeParsing() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " requires_suspended ");
+
+        Assertions.assertEquals(
+            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
+            TransactionUtil.getOracleSessionlessMode(definition)
+        );
+    }
+
+    @Test
+    void testInvalidOracleSessionlessModeFailsWithCannotCreateTransactionException() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, "invalid");
+
+        CannotCreateTransactionException exception = Assertions.assertThrows(
+            CannotCreateTransactionException.class,
+            () -> TransactionUtil.getOracleSessionlessMode(definition)
+        );
+        Assertions.assertEquals("Invalid Oracle sessionless transaction mode: invalid", exception.getMessage());
+    }
+
+    @Test
+    void testOracleSessionlessModeRequiresRequiredPropagation() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setPropagationBehavior(TransactionDefinition.Propagation.SUPPORTS);
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, OracleTransactional.Sessionless.SUSPEND);
+
+        TransactionUsageException exception = Assertions.assertThrows(
+            TransactionUsageException.class,
+            () -> TransactionUtil.validateOracleSessionlessMode(definition, true)
+        );
+        Assertions.assertEquals(
+            "Oracle sessionless transaction mode 'SUSPEND' requires propagation 'REQUIRED'",
+            exception.getMessage()
+        );
+    }
+
     @Singleton
     static class AnnotatedService {
 
-        @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+        @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM, sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 3600)
         void methodWithPriority() {
             // Does nothing, just to test TransactionUtil with OracleTransactional
         }
