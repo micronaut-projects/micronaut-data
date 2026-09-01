@@ -218,6 +218,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return dialect;
     }
 
+    @Override
+    protected boolean supportsNullOrdering() {
+        // MySQL and SQL Server have no NULLS FIRST / NULLS LAST syntax
+        return dialect != Dialect.MYSQL && dialect != Dialect.SQL_SERVER;
+    }
+
     /**
      * @param requiredVersion The required target dialect version
      * @return Whether the target dialect version meets the requirement
