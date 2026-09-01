@@ -57,11 +57,11 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     void cleanup() {
+        autoPopulatedUpsertRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
         warehouseInventoryRepository.deleteAll()
-        autoPopulatedUpsertRepository.deleteAll()
         cleanupAdditionalRepositories()
     }
 
@@ -70,10 +70,16 @@ abstract class AbstractUpsertSpec extends Specification {
 
     void "upsert populates auto-populated timestamps on insert"() {
         given:
+        ProductReview review = productReviewRepository.save(new ProductReview(100L, "initial title", "initial content"))
+        review.setTitle("updated title")
+        review.setContent("updated content")
         AutoPopulatedUpsertEntity entity = new AutoPopulatedUpsertEntity(1L, "initial")
+        entity.setReview(review)
 
         when:
         autoPopulatedUpsertRepository.upsert(entity)
+        AutoPopulatedUpsertEntity persistedEntity = autoPopulatedUpsertRepository.findById(1L).get()
+        ProductReview cascadedReview = productReviewRepository.findById(100L).get()
 
         then:
         entity.created != null
@@ -82,6 +88,36 @@ abstract class AbstractUpsertSpec extends Specification {
         entity.preUpdateCalls == 1
         entity.postPersistCalls == 0
         entity.postUpdateCalls == 1
+        persistedEntity.review.id == 100L
+        assertProductReview(cascadedReview, new ProductReview(100L, "updated title", "updated content"))
+    }
+
+    void "numeric upsert return reports one affected entity"() {
+        given:
+        CustomerProfile profile = new CustomerProfile("count@example.com", "initial")
+
+        when:
+        long inserted = customerProfileRepository.upsertCount(profile)
+
+        then:
+        inserted == 1
+        customerProfileRepository.count() == 1
+        CustomerProfile found = customerProfileRepository.findAll().first()
+        found.id != null
+        found.email == "count@example.com"
+        found.displayName == "initial"
+
+        when:
+        profile.setDisplayName("updated")
+        long updated = customerProfileRepository.upsertCount(profile)
+
+        then:
+        updated == 1
+        customerProfileRepository.count() == 1
+        CustomerProfile updatedProfile = customerProfileRepository.findAll().first()
+        updatedProfile.id == found.id
+        updatedProfile.email == "count@example.com"
+        updatedProfile.displayName == "updated"
     }
 
     void "upsertAll populates auto-populated timestamps on insert"() {

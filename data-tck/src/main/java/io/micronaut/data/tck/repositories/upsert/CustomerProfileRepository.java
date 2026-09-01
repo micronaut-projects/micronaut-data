@@ -30,6 +30,9 @@ public interface CustomerProfileRepository extends CrudRepository<CustomerProfil
     CustomerProfile upsert(CustomerProfile customerProfile);
 
     @Upsert(conflictsOn = "email")
+    long upsertCount(CustomerProfile customerProfile);
+
+    @Upsert(conflictsOn = "email")
     Mono<CustomerProfile> upsertMono(CustomerProfile profile);
 
     @Upsert(conflictsOn = "email")

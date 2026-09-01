@@ -18,12 +18,14 @@ package io.micronaut.data.tck.jdbc.entities.upsert;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 import jakarta.persistence.Id;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostUpdate;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
@@ -40,6 +42,10 @@ public class AutoPopulatedUpsertEntity {
 
     @DateUpdated
     private LocalDateTime updated;
+
+    @Nullable
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.UPDATE)
+    private ProductReview review;
 
     @Transient
     private int prePersistCalls;
@@ -111,6 +117,15 @@ public class AutoPopulatedUpsertEntity {
 
     public void setUpdated(LocalDateTime updated) {
         this.updated = updated;
+    }
+
+    @Nullable
+    public ProductReview getReview() {
+        return review;
+    }
+
+    public void setReview(@Nullable ProductReview review) {
+        this.review = review;
     }
 
     public int getPrePersistCalls() {
