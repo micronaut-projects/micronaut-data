@@ -103,7 +103,6 @@ public interface QueryBuilder {
      * @param offset The offset (0 if not set)
      * @return The encoded query
      */
-
     String buildLimitAndOffset(long limit, long offset);
 
     /**
@@ -114,19 +113,16 @@ public interface QueryBuilder {
         /**
          * @return The root
          */
-
         Root<?> root();
 
         /**
          * @return The selection
          */
-
         Selection<?> selection();
 
         /**
          * @return The order
          */
-
         List<Order> order();
 
         /**
@@ -195,7 +191,6 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-
         PersistentEntity persistentEntity();
 
         /**
@@ -215,7 +210,6 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-
         PersistentEntity persistentEntity();
 
         /**
@@ -242,7 +236,6 @@ public interface QueryBuilder {
         /**
          * @return The properties to update
          */
-
         Map<String, Object> propertiesToUpdate();
 
         /**
@@ -261,7 +254,6 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-
         PersistentEntity persistentEntity();
 
         /**
