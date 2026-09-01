@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.operations;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import jakarta.inject.Singleton;
 
 import java.sql.Connection;
@@ -39,14 +38,13 @@ final class SqlServerJdbcUpsertReturningExecutor implements JdbcUpsertReturningE
 
     @Override
     public <T> Result execute(Connection connection,
-                              SqlStoredQuery<T, ?> storedQuery,
                               List<Entity<T>> entities,
                               Binder<T> binder,
                               IdReader idReader) throws SQLException {
         List<Object> returnedIds = new ArrayList<>(entities.size());
         int rowsUpdated = 0;
-        try (PreparedStatement statement = connection.prepareStatement(storedQuery.getQuery())) {
-            for (Entity<T> entity : entities) {
+        for (Entity<T> entity : entities) {
+            try (PreparedStatement statement = connection.prepareStatement(entity.storedQuery().getQuery())) {
                 binder.bind(statement, entity);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
@@ -54,7 +52,6 @@ final class SqlServerJdbcUpsertReturningExecutor implements JdbcUpsertReturningE
                         rowsUpdated++;
                     }
                 }
-                statement.clearParameters();
             }
         }
         return new Result(rowsUpdated, returnedIds);

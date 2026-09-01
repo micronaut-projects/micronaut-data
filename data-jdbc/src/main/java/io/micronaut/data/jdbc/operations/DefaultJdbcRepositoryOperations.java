@@ -1183,12 +1183,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T> int bindUpsertParameters(JdbcOperationContext ctx,
-                                         SqlStoredQuery<T, ?> storedQuery,
                                          PreparedStatement statement,
                                          JdbcUpsertReturningExecutor.Entity<T> executionEntity) {
-        if (storedQuery instanceof SqlPreparedQuery<T, ?> preparedQuery) {
-            preparedQuery.prepare(executionEntity.entity());
-        }
+        SqlStoredQuery<T, ?> storedQuery = executionEntity.storedQuery();
         JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, statement, storedQuery);
         storedQuery.bindParameters(
             parameterBinder,
@@ -1197,6 +1194,18 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             executionEntity.previousValues()
         );
         return parameterBinder.currentIndex() - 1;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> SqlStoredQuery<T, ?> prepareStoredQuery(SqlStoredQuery<T, ?> storedQuery, T entity) {
+        if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+            SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
+            SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
+            DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
+            entityPreparedQuery.prepare(entity);
+            return entityPreparedQuery;
+        }
+        return storedQuery;
     }
 
     /**
@@ -1512,9 +1521,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
             JdbcUpsertReturningExecutor.Result result = executor.execute(
                 ctx.connection,
-                storedQuery,
-                List.of(new JdbcUpsertReturningExecutor.Entity<>(entity, previousValues)),
-                (statement, executionEntity) -> bindUpsertParameters(ctx, storedQuery, statement, executionEntity),
+                List.of(new JdbcUpsertReturningExecutor.Entity<>(
+                    entity,
+                    previousValues,
+                    prepareStoredQuery(storedQuery, entity)
+                )),
+                (statement, executionEntity) -> bindUpsertParameters(ctx, statement, executionEntity),
                 resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
             );
 
@@ -1715,7 +1727,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             for (Data data : entities) {
                 if (!data.vetoed) {
                     notVetoedEntities.add(data);
-                    executionEntities.add(new JdbcUpsertReturningExecutor.Entity<>(data.entity, data.previousValues));
+                    executionEntities.add(new JdbcUpsertReturningExecutor.Entity<>(
+                        data.entity,
+                        data.previousValues,
+                        prepareStoredQuery(storedQuery, data.entity)
+                    ));
                 }
             }
 
@@ -1732,9 +1748,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                 JdbcUpsertReturningExecutor.Result result = executor.execute(
                     ctx.connection,
-                    storedQuery,
                     executionEntities,
-                    (statement, executionEntity) -> bindUpsertParameters(ctx, storedQuery, statement, executionEntity),
+                    (statement, executionEntity) -> bindUpsertParameters(ctx, statement, executionEntity),
                     resultSet -> getGeneratedIdentity(resultSet, identity, storedQuery.getDialect())
                 );
 

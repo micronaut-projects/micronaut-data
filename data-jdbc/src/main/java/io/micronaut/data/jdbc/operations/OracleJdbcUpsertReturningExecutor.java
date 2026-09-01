@@ -32,11 +32,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * Oracle DML-returning execution used by generated-id upserts, including real JDBC batches.
+ * Oracle DML-returning execution used by generated-id upserts.
+ *
+ * <p>Oracle DML returning cannot be combined with JDBC batch updates. Each entity is therefore
+ * executed separately so its returned identity remains associated with the entity that produced it.</p>
  */
 @Singleton
 @Requires(classes = OraclePreparedStatement.class)
@@ -49,34 +51,30 @@ final class OracleJdbcUpsertReturningExecutor implements JdbcUpsertReturningExec
 
     @Override
     public <T> Result execute(Connection connection,
-                              SqlStoredQuery<T, ?> storedQuery,
                               List<Entity<T>> entities,
                               Binder<T> binder,
                               IdReader idReader) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(storedQuery.getQuery())) {
-            OraclePreparedStatement oracleStatement = statement.unwrap(OraclePreparedStatement.class);
-            boolean returnParametersRegistered = false;
-            for (Entity<T> entity : entities) {
+        int rowsUpdated = 0;
+        List<Object> returnedIds = new ArrayList<>(entities.size());
+        for (Entity<T> entity : entities) {
+            SqlStoredQuery<T, ?> storedQuery = entity.storedQuery();
+            try (PreparedStatement statement = connection.prepareStatement(storedQuery.getQuery())) {
+                OraclePreparedStatement oracleStatement = statement.unwrap(OraclePreparedStatement.class);
                 int inputCount = binder.bind(statement, entity);
-                if (!returnParametersRegistered) {
-                    registerReturnParameters(oracleStatement, storedQuery, inputCount);
-                    returnParametersRegistered = true;
-                }
-                if (entities.size() > 1) {
-                    statement.addBatch();
-                }
-            }
-            int rowsUpdated = entities.size() == 1
-                ? oracleStatement.executeUpdate()
-                : Arrays.stream(statement.executeBatch()).sum();
-            List<Object> returnedIds = new ArrayList<>(entities.size());
-            try (ResultSet resultSet = oracleStatement.getReturnResultSet()) {
-                while (resultSet.next()) {
+                registerReturnParameters(oracleStatement, storedQuery, inputCount);
+                rowsUpdated += oracleStatement.executeUpdate();
+                try (ResultSet resultSet = oracleStatement.getReturnResultSet()) {
+                    if (!resultSet.next()) {
+                        throw new DataAccessException("Oracle upsert RETURNING clause produced no generated ID for entity: " + entity.entity());
+                    }
                     returnedIds.add(idReader.read(resultSet));
+                    if (resultSet.next()) {
+                        throw new DataAccessException("Oracle upsert RETURNING clause produced multiple generated IDs for entity: " + entity.entity());
+                    }
                 }
             }
-            return new Result(rowsUpdated, returnedIds);
         }
+        return new Result(rowsUpdated, returnedIds);
     }
 
     private void registerReturnParameters(OraclePreparedStatement statement,

@@ -42,7 +42,6 @@ interface JdbcUpsertReturningExecutor {
      * Executes one or more upsert statements and reads their returned generated values.
      *
      * @param connection The connection
-     * @param storedQuery The stored query
      * @param entities The entities to execute
      * @param binder The parameter binder
      * @param idReader The generated identity reader
@@ -51,7 +50,6 @@ interface JdbcUpsertReturningExecutor {
      * @throws SQLException If statement execution fails
      */
     <T> Result execute(Connection connection,
-                       SqlStoredQuery<T, ?> storedQuery,
                        List<Entity<T>> entities,
                        Binder<T> binder,
                        IdReader idReader) throws SQLException;
@@ -61,9 +59,12 @@ interface JdbcUpsertReturningExecutor {
      *
      * @param entity The entity
      * @param previousValues The previous values
+     * @param storedQuery The query prepared for this entity
      * @param <T> The entity type
      */
-    record Entity<T>(T entity, @Nullable Map<QueryParameterBinding, Object> previousValues) {
+    record Entity<T>(T entity,
+                     @Nullable Map<QueryParameterBinding, Object> previousValues,
+                     SqlStoredQuery<T, ?> storedQuery) {
     }
 
     /**
