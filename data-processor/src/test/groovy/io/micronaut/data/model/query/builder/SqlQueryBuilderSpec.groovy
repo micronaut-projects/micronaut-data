@@ -591,6 +591,27 @@ interface MyRepository {
     }
 
     @Unroll
+    void "test encode order by ignoring case together with a null ordering on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true, Sort.Order.NullOrdering.LAST))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then: "LOWER wraps only the sorted value, and its parentheses balance"
+        query == " ORDER BY ${statement}"
+        query.count("(") == query.count(")")
+
+        where:
+        dialect            | statement
+        Dialect.MYSQL      | 'CASE WHEN person_.`name` IS NULL THEN 1 ELSE 0 END,LOWER(person_.`name`) ASC'
+        Dialect.SQL_SERVER | 'CASE WHEN person_.[name] IS NULL THEN 1 ELSE 0 END,LOWER(person_.[name]) ASC'
+        Dialect.POSTGRES   | 'LOWER(person_."name") ASC NULLS LAST'
+        Dialect.H2         | 'LOWER(person_.`name`) ASC NULLS LAST'
+    }
+
+    @Unroll
     void "test encode order by without a null ordering is untouched on #dialect"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Person)

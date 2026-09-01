@@ -1268,20 +1268,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Sort.Order order = i.next();
             String property = order.getProperty();
             boolean ignoreCase = order.isIgnoreCase();
-            if (ignoreCase) {
-                buff.append("LOWER(");
-            }
             String propertyRef = buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias);
             Sort.Order.NullOrdering nullOrdering = order.getNullOrdering();
             boolean emulateNullOrdering = nullOrdering != Sort.Order.NullOrdering.NONE && !supportsNullOrdering();
             if (emulateNullOrdering) {
-                // Sorting the null rank first puts the nulls where the caller asked for them
+                // Sorting the null rank first puts the nulls where the caller asked for them. Whether the
+                // value is null does not depend on its case, so the rank tests the property as it is
                 int nullRank = nullOrdering == Sort.Order.NullOrdering.FIRST ? 0 : 1;
                 buff.append("CASE WHEN ").append(propertyRef).append(" IS NULL THEN ").append(nullRank)
                     .append(" ELSE ").append(1 - nullRank).append(" END,");
-                if (ignoreCase) {
-                    buff.append("LOWER(");
-                }
+            }
+            if (ignoreCase) {
+                buff.append("LOWER(");
             }
             buff.append(propertyRef);
             if (ignoreCase) {
