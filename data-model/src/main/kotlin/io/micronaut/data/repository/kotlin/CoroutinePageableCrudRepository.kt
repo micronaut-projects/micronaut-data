@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
  * @author Denis Stepanov
  * @since 3.4.0
  */
-interface CoroutinePageableCrudRepository<E, ID> : CoroutineCrudRepository<E, ID> {
+interface CoroutinePageableCrudRepository<E : Any, ID : Any> : CoroutineCrudRepository<E, ID> {
 
     /**
      * Find all results for the given sort order.
