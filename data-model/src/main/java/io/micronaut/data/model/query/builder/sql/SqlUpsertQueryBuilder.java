@@ -391,6 +391,7 @@ final class SqlUpsertQueryBuilder {
                 .collect(Collectors.joining(String.valueOf(COMMA)));
     }
 
+    @SuppressWarnings("java:S1192")
     private String buildSqlServerUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " WITH (HOLDLOCK) AS target "
             + "USING (VALUES (" + data.sourceValueExpressions() + ")) AS source (" + data.sourceColumns() + ") "
@@ -399,6 +400,7 @@ final class SqlUpsertQueryBuilder {
             + upsertInsertClause(data);
     }
 
+    @SuppressWarnings("java:S1192")
     private String buildOracleUpsert(String tableName, UpsertData data) {
         String sourceSelect = data.columns().stream()
             .filter(UpsertColumn::sourceColumn)
@@ -411,6 +413,7 @@ final class SqlUpsertQueryBuilder {
             + upsertInsertClause(data);
     }
 
+    @SuppressWarnings("java:S1192")
     private String buildAnsiUpsert(String tableName, UpsertData data) {
         return "MERGE INTO " + tableName + " target "
             + "USING (VALUES (" + data.sourceValueExpressions() + ")) source (" + data.sourceColumns() + ") "
