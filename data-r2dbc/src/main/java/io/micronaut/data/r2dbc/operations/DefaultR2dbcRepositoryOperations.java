@@ -1490,6 +1490,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     ))
                     .map(generatedId -> {
                         d.entity = updateEntityId(identityProperty, d.entity, generatedId);
+                        // The executor emits only after it has read exactly one generated identity.
                         d.rowsUpdated = 1;
                         return d;
                     });
@@ -1625,9 +1626,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             while (resultIterator.hasNext()) {
                                 Data d = resultIterator.next();
                                 if (!iterator.hasNext()) {
-                                    if (!isUpsertOperation(storedQuery)) {
-                                        throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
-                                    }
+                                    throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
                                 } else {
                                     Object id = iterator.next();
                                     d.entity = updateEntityId(identity.getProperty(), d.entity, id);
@@ -1665,10 +1664,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
             }
             BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
-            Mono<List<Data>> upsertedEntities = entities.flatMap(list -> Flux.fromIterable(list)
+            Mono<Tuple2<List<Data>, Long>> upsertedEntities = entities.flatMap(list -> Flux.fromIterable(list)
                 .concatMap(d -> {
                     if (d.vetoed) {
-                        return Mono.just(d);
+                        return Mono.just(Tuples.of(d, 0L));
                     }
                     SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
                     Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
@@ -1679,13 +1678,18 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         ))
                         .map(generatedId -> {
                             d.entity = updateEntityId(identityProperty, d.entity, generatedId);
-                            return d;
+                            // The executor emits only after it has read exactly one generated identity.
+                            return Tuples.of(d, 1L);
                         });
                 })
-                .collectList())
+                .collectList()
+                .map(results -> Tuples.of(
+                    results.stream().map(Tuple2::getT1).toList(),
+                    results.stream().mapToLong(Tuple2::getT2).sum()
+                )))
                 .cache();
-            entities = upsertedEntities;
-            rowsUpdated = upsertedEntities.map(list -> list.stream().filter(this::notVetoed).count());
+            entities = upsertedEntities.map(Tuple2::getT1);
+            rowsUpdated = upsertedEntities.map(Tuple2::getT2);
         }
     }
 

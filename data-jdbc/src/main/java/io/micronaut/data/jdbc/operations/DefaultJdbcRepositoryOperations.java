@@ -1711,9 +1711,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             continue;
                         }
                         if (!iterator.hasNext()) {
-                            if (!isUpsertOperation(storedQuery)) {
-                                throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
-                            }
+                            throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
                         } else {
                             Object id = iterator.next();
                             d.entity = updateEntityId(identity.getProperty(), d.entity, id);
