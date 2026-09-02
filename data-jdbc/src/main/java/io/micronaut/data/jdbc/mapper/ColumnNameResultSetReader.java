@@ -64,12 +64,18 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
         return conversionService;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>A failure to resolve the ordinal is not reported here: the caller falls back to reading the column by
+     * name, and a failure that is not a missing column, such as a closed result set, surfaces from that read with
+     * the message of the underlying driver rather than being swallowed.</p>
+     */
     @Override
     public int findColumnIndex(ResultSet resultSet, String columnName) {
         try {
             return resultSet.findColumn(columnName);
         } catch (SQLException e) {
-            // The column is missing or the driver cannot resolve it, the caller keeps reading by name
             return -1;
         }
     }
