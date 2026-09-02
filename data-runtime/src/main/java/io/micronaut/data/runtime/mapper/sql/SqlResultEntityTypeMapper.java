@@ -106,13 +106,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     private final Map<String, ColumnRef> columnRefsByName = new HashMap<>();
     /**
-     * The result set the currently resolved column ordinals were resolved from, compared by identity so that a
-     * mapper handed a different result set resolves the ordinals again. The reference is held for as long as the
-     * mapper lives, which is one query execution; an identity hash code is deliberately not used instead, because
-     * two result sets sharing a hash code would silently read the columns of one with the ordinals of the other.
+     * What the currently resolved column ordinals belong to, from {@link ResultReader#columnResolutionKey}, compared
+     * by identity so that a mapper handed a different result set resolves the ordinals again. The reference is held
+     * for as long as the mapper lives, which is one query execution; an identity hash code is deliberately not used
+     * instead, because two result sets sharing a hash code would silently read the columns of one with the ordinals
+     * of the other.
      */
     @Nullable
-    private RS resolvedResultSet;
+    private Object resolvedKey;
+    /**
+     * The result set the {@link #resolvedKey} was last taken from. For JDBC it never changes, and for R2DBC it
+     * changes once per row, so the key is asked for once per row rather than once per column read.
+     */
+    @Nullable
+    private RS resolvedKeySource;
     /**
      * Incremented whenever a different result set is mapped, which invalidates every resolved ordinal.
      */
@@ -800,10 +807,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     @Nullable
     private Integer resolveColumnIndex(RS rs, ColumnRef column) {
-        if (rs != resolvedResultSet) {
-            // The ordinals are only valid for the result set they were resolved from
-            resolvedResultSet = rs;
-            resolvedGeneration++;
+        if (rs != resolvedKeySource) {
+            resolvedKeySource = rs;
+            Object key = resultReader.columnResolutionKey(rs);
+            if (key != resolvedKey) {
+                // The ordinals are only valid for the result set they were resolved from
+                resolvedKey = key;
+                resolvedGeneration++;
+            }
         }
         if (column.generation != resolvedGeneration) {
             int index = resultReader.findColumnIndex(rs, column.name);

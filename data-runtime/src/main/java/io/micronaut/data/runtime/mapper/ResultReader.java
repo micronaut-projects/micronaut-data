@@ -135,6 +135,22 @@ public interface ResultReader<RS, IDX> {
     }
 
     /**
+     * The object the resolved column ordinals belong to, compared by identity by callers that cache them. It is the
+     * result set itself when the result set spans every row, which is the case for JDBC. Readers whose result set
+     * object is a single row, which is the case for R2DBC, return something shared by the rows of one result, such
+     * as the row metadata, so that the ordinals survive from one row to the next.
+     * <p>
+     * Returning a different object per row is safe: the ordinals are then resolved again for each row.
+     *
+     * @param resultSet The result set
+     * @return The object the resolved ordinals belong to
+     * @since 5.2.0
+     */
+    default Object columnResolutionKey(RS resultSet) {
+        return resultSet;
+    }
+
+    /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
      * @param index The name

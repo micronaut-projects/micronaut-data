@@ -15,26 +15,15 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.r2dbc.spi.Clob;
-import io.r2dbc.spi.R2dbcTransientResourceException;
+import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
-import reactor.core.publisher.Mono;
+import io.r2dbc.spi.RowMetadata;
+import org.jspecify.annotations.Nullable;
 
-import java.math.BigDecimal;
-import java.sql.Time;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -43,8 +32,9 @@ import java.util.Locale;
  * @author graemerocher
  * @since 1.0.0
  */
-public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
-    private final ConversionService conversionService;
+public class ColumnNameR2dbcResultReader extends AbstractR2dbcResultReader<String> {
+
+    private final ColumnOrdinalR2dbcResultReader columnOrdinalReader;
 
     public ColumnNameR2dbcResultReader() {
         this(null);
@@ -57,246 +47,28 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
      * @since 3.1
      */
     public ColumnNameR2dbcResultReader(@Nullable DataConversionService conversionService) {
-        // Backwards compatibility should be removed in the next version
-        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
-    }
-
-    @Override
-    public ConversionService getConversionService() {
-        return conversionService;
-    }
-
-    @Nullable
-    @Override
-    public Object readDynamic(@NonNull Row resultSet, @NonNull String index, @NonNull DataType dataType) {
-        switch (dataType) {
-            case UUID:
-                return readUUID(resultSet, index);
-            case STRING:
-            case JSON:
-                return readString(resultSet, index);
-            case LONG:
-                return resultSet.get(index, Long.class);
-            case INTEGER:
-                Object o = resultSet.get(index);
-                if (o == null) {
-                    return null;
-                }
-                if (o instanceof Integer) {
-                    return o;
-                }
-                if (o instanceof Number number) {
-                    return number.intValue();
-                }
-                return convertRequired(o, Integer.class);
-            case BOOLEAN:
-                return resultSet.get(index, Boolean.class);
-            case BYTE:
-                return resultSet.get(index, Byte.class);
-            case TIMESTAMP:
-                return readDynamic(resultSet, index, Instant.class);
-            case DATE:
-                return readDynamic(resultSet, index, LocalDate.class);
-            case TIME:
-                return readDynamic(resultSet, index, Time.class);
-            case CHARACTER:
-                return readDynamic(resultSet, index, Character.class);
-            case FLOAT:
-                return readDynamic(resultSet, index, Float.class);
-            case SHORT:
-                return readDynamic(resultSet, index, Short.class);
-            case DOUBLE:
-                return resultSet.get(index, Double.class);
-            case BYTE_ARRAY:
-                return readBytes(resultSet, index);
-            case BIGDECIMAL:
-                return resultSet.get(index, BigDecimal.class);
-            case OBJECT:
-            default:
-                return getRequiredValue(resultSet, index, Object.class);
-        }
-    }
-
-    @Nullable
-    private <T> T readDynamic(@NonNull Row resultSet, @NonNull String index, Class<T> type) {
-        Object o = resultSet.get(index);
-        if (o == null) {
-            return null;
-        }
-        if (type.isInstance(o)) {
-            return (T) o;
-        }
-        return convertRequired(o, type);
-    }
-
-    @Override
-    public long readLong(Row resultSet, String name) {
-        Long l = resultSet.get(name, Long.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public char readChar(Row resultSet, String name) {
-        Character character = resultSet.get(name, Character.class);
-        if (character != null) {
-            return character;
-        }
-        return 0;
+        super(conversionService);
+        this.columnOrdinalReader = new ColumnOrdinalR2dbcResultReader(conversionService);
     }
 
     @Override
     @Nullable
-    public Date readDate(Row resultSet, String name) {
-        final LocalDate localDate = resultSet.get(name, LocalDate.class);
-        if (localDate != null) {
-            return java.sql.Date.valueOf(localDate);
-        }
-        return null;
+    protected Object getValue(Row row, String name) {
+        return row.get(name);
     }
 
     @Override
     @Nullable
-    public Date readTimestamp(Row resultSet, String index) {
-        final LocalDateTime localDateTime = resultSet.get(index, LocalDateTime.class);
-        if (localDateTime != null) {
-            return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
+    protected <T> T getValue(Row row, String name, Class<T> type) {
+        return row.get(name, type);
     }
 
+    @Override
     @Nullable
-    @Override
-    public String readString(Row resultSet, String name) {
-        Object o = resultSet.get(name);
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof String string) {
-            return string;
-        }
-        if (o instanceof Clob clob) {
-            CharSequence charSequence = Mono.from(clob.stream()).block();
-            return charSequence == null ? null : charSequence.toString();
-        }
-        // Try to get it as a string otherwise Postgres can return an internal class
-        try {
-            return resultSet.get(name, String.class);
-        } catch (Exception e) {
-            // Ignore
-        }
-        return convertRequired(o, String.class);
-    }
-
-    @Override
-    public int readInt(Row resultSet, String name) {
-        Integer l = resultSet.get(name, Integer.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public boolean readBoolean(Row resultSet, String name) {
-        Boolean l = resultSet.get(name, Boolean.class);
-        if (l != null) {
-            return l;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public float readFloat(Row resultSet, String name) {
-        Float l = resultSet.get(name, Float.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public byte readByte(Row resultSet, String name) {
-        Byte l = resultSet.get(name, Byte.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public short readShort(Row resultSet, String name) {
-        Short l = resultSet.get(name, Short.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public double readDouble(Row resultSet, String name) {
-        Double l = resultSet.get(name, Double.class);
-        if (l != null) {
-            return l;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public BigDecimal readBigDecimal(Row resultSet, String name) {
-        return resultSet.get(name, BigDecimal.class);
-    }
-
-    @Override
-    public byte @Nullable [] readBytes(Row resultSet, String name) {
-        try {
-            return resultSet.get(name, byte[].class);
-        } catch (Exception e) {
-            // Ignore and fallback to generic handling (Oracle, H2, etc.)
-        }
-        return R2dbcBytesReader.toBytes(resultSet.get(name), this);
-    }
-
-    @Nullable
-    @Override
-    public <T> T getRequiredValue(Row resultSet, String name, Class<T> type) throws DataAccessException {
-        try {
-            T value = getTypedValue(resultSet, name, type);
-            if (value != null) {
-                return value;
-            }
-            Object raw = getRawValue(resultSet, name);
-            if (raw == null) {
-                return null;
-            }
-            if (type.isInstance(raw)) {
-                return type.cast(raw);
-            }
-            return conversionService.convert(raw, type).orElse(null);
-        } catch (IllegalArgumentException | ConversionErrorException |
-                 R2dbcTransientResourceException e) {
-            try {
-                return conversionService.convert(resultSet.get(name), type).orElse(null);
-            } catch (Exception exception) {
-                throw exceptionForColumn(name, e);
-            }
-        }
-    }
-
-    @Nullable
-    private static <T> T getTypedValue(Row resultSet, String name, Class<T> type) {
+    protected <T> T getRequiredTypedValue(Row row, String name, Class<T> type) {
         IllegalArgumentException lowerCaseFailure = null;
         try {
-            return resultSet.get(name, type);
+            return row.get(name, type);
         } catch (IllegalArgumentException e) {
             lowerCaseFailure = e;
         }
@@ -305,18 +77,19 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             throw lowerCaseFailure;
         }
         try {
-            return resultSet.get(upperName, type);
+            return row.get(upperName, type);
         } catch (IllegalArgumentException e) {
             e.addSuppressed(lowerCaseFailure);
             throw e;
         }
     }
 
+    @Override
     @Nullable
-    private static Object getRawValue(Row resultSet, String name) {
+    protected Object getRequiredRawValue(Row row, String name) {
         IllegalArgumentException lowerCaseFailure = null;
         try {
-            return resultSet.get(name);
+            return row.get(name);
         } catch (IllegalArgumentException e) {
             lowerCaseFailure = e;
         }
@@ -325,20 +98,57 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             throw lowerCaseFailure;
         }
         try {
-            return resultSet.get(upperName);
+            return row.get(upperName);
         } catch (IllegalArgumentException e) {
             e.addSuppressed(lowerCaseFailure);
             throw e;
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The ordinal is resolved from the row metadata, matching the column name the way the drivers do, ignoring
+     * case. A column that cannot be matched is reported as {@code -1} so that the caller keeps reading it by name.</p>
+     */
     @Override
-    public boolean next(Row resultSet) {
-        // not used
-        return false;
+    public int findColumnIndex(Row resultSet, String columnName) {
+        try {
+            List<? extends ColumnMetadata> columns = resultSet.getMetadata().getColumnMetadatas();
+            for (int i = 0; i < columns.size(); i++) {
+                if (columns.get(i).getName().equalsIgnoreCase(columnName)) {
+                    return i;
+                }
+            }
+        } catch (Exception e) {
+            // The metadata is unavailable, the caller keeps reading by name
+        }
+        return -1;
     }
 
-    private DataAccessException exceptionForColumn(String name, Exception e) {
+    @Override
+    public ResultReader<Row, Integer> getColumnIndexReader() {
+        return columnOrdinalReader;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>An R2DBC {@link Row} is only valid for the row being consumed, so the resolved ordinals are tied to the
+     * {@link RowMetadata} instead, which the drivers share between the rows of one result. A driver that returns
+     * fresh metadata per row simply causes the ordinals to be resolved again for each row.</p>
+     */
+    @Override
+    public Object columnResolutionKey(Row resultSet) {
+        try {
+            return resultSet.getMetadata();
+        } catch (Exception e) {
+            return resultSet;
+        }
+    }
+
+    @Override
+    protected DataAccessException exceptionForColumn(String name, Exception e) {
         return new DataAccessException("Error reading object for name [" + name + "] from result set: " + e.getMessage(), e);
     }
 }
