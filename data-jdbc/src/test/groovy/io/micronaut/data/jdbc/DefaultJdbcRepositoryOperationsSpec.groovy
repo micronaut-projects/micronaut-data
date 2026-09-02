@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.ConnectionStatus
@@ -24,6 +25,8 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
@@ -75,6 +78,73 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             fallbackExecutor.isShutdown()
+    }
+
+    void "batch capability metadata failures are not cached"() {
+        given:
+            DefaultJdbcRepositoryOperations operations = newOperations(null)
+            DatabaseMetaData metaData = Mock {
+                getDatabaseProductName() >> "MySQL"
+                getDriverName() >> "MySQL Connector/J"
+                supportsBatchUpdates() >> true
+                supportsGetGeneratedKeys() >> true
+            }
+            Connection connection = Mock()
+            RuntimePersistentProperty<?> identity = Mock {
+                isGenerated() >> true
+            }
+            RuntimePersistentEntity<?> persistentEntity = Mock {
+                hasIdentity() >> true
+                getIdentity() >> identity
+            }
+            def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                    AnnotationMetadata.EMPTY_METADATA,
+                    null,
+                    Object,
+                    Dialect.MYSQL,
+                    connection
+            )
+
+        when:
+            boolean firstAttempt = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+            1 * connection.getMetaData() >> { throw new SQLException("temporary metadata failure") }
+            !firstAttempt
+
+        when:
+            boolean secondAttempt = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+            1 * connection.getMetaData() >> metaData
+            secondAttempt
+    }
+
+    void "sqlite batch insert stays disabled even when generated keys are not required"() {
+        given:
+        DefaultJdbcRepositoryOperations operations = newOperations(null)
+        RuntimePersistentProperty<?> identity = Mock {
+            isGenerated() >> false
+        }
+        RuntimePersistentEntity<?> persistentEntity = Mock {
+            hasIdentity() >> true
+            getIdentity() >> identity
+        }
+        Connection connection = Mock()
+        def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                AnnotationMetadata.EMPTY_METADATA,
+                null,
+                Object,
+                Dialect.SQLITE,
+                connection
+        )
+
+        when:
+        boolean supported = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+        !supported
+        0 * connection._
     }
 
     void "binds datasource dialect options"() {

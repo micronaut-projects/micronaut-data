@@ -105,6 +105,7 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SqlBatchSupport;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -142,6 +143,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -179,6 +181,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+    private final AtomicReference<JdbcBatchCapabilities> jdbcBatchCapabilities = new AtomicReference<>();
     private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
     // This @EachBean(DataSource.class) instance caches the successfully resolved version per datasource.
     private final SynchronizedLazyValue<DatabaseVersion> databaseVersion = new SynchronizedLazyValue<>();
@@ -866,7 +869,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
+            boolean requiresGeneratedKeys = SqlBatchSupport.requiresBatchGeneratedKeys(persistentEntity, operation);
+            if (!isSupportsBatchInsert(ctx, persistentEntity, storedQuery, requiresGeneratedKeys)) {
                 return operation.split().stream()
                     .map(persistOp -> {
                         JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
@@ -875,7 +879,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     })
                     .toList();
             } else {
-                JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, true);
+                JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, true, requiresGeneratedKeys);
                 op.persist();
                 return op.getEntities();
             }
@@ -1177,7 +1181,67 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
-        return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
+        boolean requiresGeneratedKeys = persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
+        return isSupportsBatchInsert(jdbcOperationContext, persistentEntity, requiresGeneratedKeys);
+    }
+
+    private boolean isSupportsBatchInsert(JdbcOperationContext ctx,
+                                          RuntimePersistentEntity<?> persistentEntity,
+                                          SqlStoredQuery<?, ?> storedQuery,
+                                          boolean requiresGeneratedKeys) {
+        if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING) {
+            return false;
+        }
+        return isSupportsBatchInsert(ctx, persistentEntity, requiresGeneratedKeys);
+    }
+
+    private boolean isSupportsBatchInsert(JdbcOperationContext ctx,
+                                          RuntimePersistentEntity<?> persistentEntity,
+                                          boolean requiresGeneratedKeys) {
+        // JDBC metadata is only needed for the MySQL dialect, where Micronaut Data must
+        // distinguish MySQL from MariaDB and account for their generated-key batch behavior.
+        if (ctx.dialect != Dialect.MYSQL) {
+            return isSupportsBatchInsert(persistentEntity, ctx.dialect);
+        }
+        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities(ctx);
+        return SqlBatchSupport.isSupportsJdbcBatchInsert(
+            persistentEntity,
+            ctx.dialect,
+            capabilities.databaseProductName(),
+            capabilities.driverName(),
+            capabilities.supportsBatchUpdates(),
+            capabilities.supportsGetGeneratedKeys(),
+            requiresGeneratedKeys
+        );
+    }
+
+    private JdbcBatchCapabilities jdbcBatchCapabilities(JdbcOperationContext ctx) {
+        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities.get();
+        if (capabilities == null) {
+            capabilities = resolveJdbcBatchCapabilities(ctx);
+            if (capabilities == null) {
+                return JdbcBatchCapabilities.UNKNOWN;
+            }
+            if (!jdbcBatchCapabilities.compareAndSet(null, capabilities)) {
+                capabilities = Objects.requireNonNull(jdbcBatchCapabilities.get());
+            }
+        }
+        return capabilities;
+    }
+
+    @Nullable
+    private JdbcBatchCapabilities resolveJdbcBatchCapabilities(JdbcOperationContext ctx) {
+        try {
+            DatabaseMetaData metaData = ctx.connection.getMetaData();
+            return new JdbcBatchCapabilities(
+                metaData.getDatabaseProductName(),
+                metaData.getDriverName(),
+                metaData.supportsBatchUpdates(),
+                metaData.supportsGetGeneratedKeys()
+            );
+        } catch (SQLException ignored) {
+            return null;
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -1213,6 +1277,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @SuppressWarnings("unchecked")
     private DataConversionService jdbcDataConversionService() {
         return conversionService;
+    }
+
+    private record JdbcBatchCapabilities(@Nullable String databaseProductName,
+                                         @Nullable String driverName,
+                                         @Nullable Boolean supportsBatchUpdates,
+                                         @Nullable Boolean supportsGetGeneratedKeys) {
+
+        private static final JdbcBatchCapabilities UNKNOWN = new JdbcBatchCapabilities(null, null, null, null);
     }
 
     private final class JdbcParameterBinder implements BindableParametersStoredQuery.Binder {
@@ -1530,6 +1602,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final class JdbcEntitiesOperations<T> extends AbstractSyncEntitiesOperations<JdbcOperationContext, T, SQLException> {
 
         private final SqlStoredQuery<T, ?> storedQuery;
+        private final boolean requiresGeneratedKeys;
         private int rowsUpdated;
 
         private JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery) {
@@ -1537,11 +1610,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         private JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
+            this(ctx, persistentEntity, entities, storedQuery, insert, insert && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated());
+        }
+
+        private JdbcEntitiesOperations(JdbcOperationContext ctx,
+                                       RuntimePersistentEntity<T> persistentEntity,
+                                       Iterable<T> entities,
+                                       SqlStoredQuery<T, ?> storedQuery,
+                                       boolean insert,
+                                       boolean requiresGeneratedKeys) {
             super(ctx,
                 DefaultJdbcRepositoryOperations.this.cascadeOperations,
                 DefaultJdbcRepositoryOperations.this.conversionService,
                 entityEventRegistry, persistentEntity, entities, insert);
             this.storedQuery = storedQuery;
+            this.requiresGeneratedKeys = requiresGeneratedKeys;
         }
 
         @Override
@@ -1557,7 +1640,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         private PreparedStatement prepare(Connection connection) throws SQLException {
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
-                if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+                if (requiresGeneratedKeys && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
@@ -1568,7 +1651,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                     return connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
-                    return connection.prepareStatement(storedQuery.getQuery(), hasGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return connection.prepareStatement(storedQuery.getQuery(), requiresGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 }
             } else {
                 return connection.prepareStatement(storedQuery.getQuery());
@@ -1597,7 +1680,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);
                 rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
-                if (hasGeneratedId) {
+                if (requiresGeneratedKeys) {
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     List<Object> ids = new ArrayList<>();
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
