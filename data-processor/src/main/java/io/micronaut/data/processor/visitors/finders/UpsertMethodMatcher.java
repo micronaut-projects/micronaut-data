@@ -149,7 +149,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             PersistentPropertyPath propertyPath;
             try {
                 propertyPath = rootEntity.getPropertyPath(conflictProperty);
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
                 return "invalid conflict property path: " + conflictProperty;
             }
             if (propertyPath == null) {

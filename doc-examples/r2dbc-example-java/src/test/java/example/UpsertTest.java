@@ -10,7 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @MicronautTest(transactional = false)
-public class UpsertTest {
+class UpsertTest {
 
     @Inject
     FlightRepository flightRepository;
