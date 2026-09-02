@@ -22,9 +22,12 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.UUID
 
 class PostgresOneToOneEmbeddedIdJoinColumnSpec extends Specification implements PostgresTestPropertyProvider {
+
+    private static final Duration BLOCK_TIMEOUT = Duration.ofSeconds(5)
 
     @AutoCleanup
     @Shared
@@ -65,8 +68,8 @@ class PostgresOneToOneEmbeddedIdJoinColumnSpec extends Specification implements 
         def id = new R2dbcAssetId(containerId: UUID.randomUUID(), assetId: 1)
 
         when:
-        assetRepository.save(new R2dbcAsset(id: id, title: 'title')).block()
-        def saved = assetRepository.findById(id).block()
+        assetRepository.save(new R2dbcAsset(id: id, title: 'title')).block(BLOCK_TIMEOUT)
+        def saved = assetRepository.findById(id).block(BLOCK_TIMEOUT)
 
         then:
         saved != null
@@ -84,7 +87,7 @@ class PostgresOneToOneEmbeddedIdJoinColumnSpec extends Specification implements 
         ])
 
         when:
-        def asset = assetRepository.findById(id).block()
+        def asset = assetRepository.findById(id).block(BLOCK_TIMEOUT)
 
         then:
         asset != null
@@ -107,7 +110,7 @@ class PostgresOneToOneEmbeddedIdJoinColumnSpec extends Specification implements 
                     .then()
             },
             Connection::close
-        ).block()
+        ).block(BLOCK_TIMEOUT)
     }
 }
 

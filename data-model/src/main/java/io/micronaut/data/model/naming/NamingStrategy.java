@@ -227,7 +227,7 @@ public interface NamingStrategy {
                 : !referencedColumnName.equals(property.getPersistedName())) {
                 continue;
             }
-            if (joinColumnName != null && !joinColumnName.isBlank()) {
+            if (joinColumnName != null) {
                 return joinColumnName;
             }
         }

@@ -90,6 +90,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1303,6 +1304,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         } else {
 
             NamingStrategy namingStrategy = getNamingStrategy(entity);
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
@@ -1366,7 +1368,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                     String unescapedColumnName = getMappedName(namingStrategy, associations, property);
-                    if (SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, unescapedColumnName)) {
+                    if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, unescapedColumnName)) {
                         PersistentPropertyPath identityPath = identityPathsByColumn.get(unescapedColumnName);
                         if (identityPath == null) {
                             throw new MappingException("Shared identity insert mapping for column [" + unescapedColumnName + "] on entity ["

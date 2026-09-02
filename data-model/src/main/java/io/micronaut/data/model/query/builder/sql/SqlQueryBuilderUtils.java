@@ -39,10 +39,12 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -176,41 +178,34 @@ final class SqlQueryBuilderUtils {
      * Detects the shared-identity update/DDL/insert case where an explicit join column also maps to
      * one of the root entity identity columns.
      *
-     * @param entity The root entity being written
-     * @param namingStrategy The naming strategy for the entity
+     * @param identityColumns The physical columns belonging to the root entity identity
      * @param associations The property path associations that lead to {@code property}
      * @param property The associated identity property
      * @param columnName The owner-side physical column name
      * @return {@code true} if the relation path maps to a root identity column
      */
-    static boolean isSharedIdentityColumn(PersistentEntity entity,
-                                          NamingStrategy namingStrategy,
+    static boolean isSharedIdentityColumn(Set<String> identityColumns,
                                           List<Association> associations,
                                           PersistentProperty property,
                                           String columnName) {
         return isExplicitSharedIdentityJoinColumn(associations, property, columnName)
-            && isIdentityColumn(entity, namingStrategy, columnName);
+            && identityColumns.contains(columnName);
     }
 
     /**
-     * Checks whether the provided physical column belongs to the root entity identity.
+     * Resolves the physical columns belonging to the root entity identity.
      *
      * <p>This resolves embedded identities to their concrete columns so callers can distinguish true shared
      * identity columns from regular foreign-key columns that also reference an associated identity property.</p>
      */
-    static boolean isIdentityColumn(PersistentEntity entity, NamingStrategy namingStrategy, String columnName) {
+    static Set<String> getIdentityColumns(PersistentEntity entity, NamingStrategy namingStrategy) {
+        Set<String> identityColumns = new HashSet<>();
         for (PersistentProperty identity : entity.getIdentityProperties()) {
-            boolean[] match = {false};
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                if (columnName.equals(namingStrategy.mappedName(associations, property))) {
-                    match[0] = true;
-                }
+                identityColumns.add(namingStrategy.mappedName(associations, property));
             });
-            if (match[0]) {
-                return true;
-            }
         }
-        return false;
+        return identityColumns;
     }
 
     /**

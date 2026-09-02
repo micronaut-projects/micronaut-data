@@ -22,7 +22,11 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.time.Duration
+
 class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implements PostgresTestPropertyProvider {
+
+    private static final Duration BLOCK_TIMEOUT = Duration.ofSeconds(5)
 
     @AutoCleanup
     @Shared
@@ -59,13 +63,13 @@ class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implement
 
     void 'save shared-key one-to-one with sequence identity reuses the physical id column'() {
         when:
-        def saved = sharedSequenceAssetRepository.save(new SharedSequenceAsset(title: 'title')).block()
+        def saved = sharedSequenceAssetRepository.save(new SharedSequenceAsset(title: 'title')).block(BLOCK_TIMEOUT)
 
         then:
         saved != null
         saved.id == 1L
         saved.version != null
-        sharedSequenceAssetRepository.findById(saved.id).block()?.title == 'title'
+        sharedSequenceAssetRepository.findById(saved.id).block(BLOCK_TIMEOUT)?.title == 'title'
     }
 
     void 'fetch join shared-key one-to-one uses the shared id column'() {
@@ -76,7 +80,7 @@ class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implement
         ])
 
         when:
-        def asset = sharedSequenceAssetRepository.findById(7L).block()
+        def asset = sharedSequenceAssetRepository.findById(7L).block(BLOCK_TIMEOUT)
 
         then:
         asset != null
@@ -97,7 +101,7 @@ class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implement
                     .then()
             },
             Connection::close
-        ).block()
+        ).block(BLOCK_TIMEOUT)
     }
 }
 
