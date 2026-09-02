@@ -17,7 +17,7 @@ trait MongoTestPropertyProvider implements TestPropertyProvider {
     }
 
     List<String> getPackageNames() {
-        ['io.micronaut.data']
+        ['io.micronaut.data.document.mongodb', 'io.micronaut.data.document.tck.entities']
     }
 
 }
