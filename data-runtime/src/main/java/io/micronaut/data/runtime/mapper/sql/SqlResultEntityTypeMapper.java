@@ -87,6 +87,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final DatabaseConversionContextFactory conversionContextFactory;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
+    @Nullable
+    private final ResultReader<RS, Integer> columnIndexReader;
+    /**
+     * The column ordinals resolved for {@link #columnIndexesResultSet}, {@code -1} for columns that cannot be read by index.
+     */
+    private final Map<String, Integer> columnIndexes;
+    @Nullable
+    private RS columnIndexesResultSet;
     private boolean callNext = true;
 
     /**
@@ -186,6 +194,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         this.startingPrefix = startingPrefix;
         this.conversionContextFactory = conversionContextFactory;
+        this.columnIndexReader = resultReader.getColumnIndexReader();
+        this.columnIndexes = columnIndexReader == null ? Collections.emptyMap() : new HashMap<>();
     }
 
     @Override
@@ -235,7 +245,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = property.getDataType();
         String columnName = property.getPersistedName();
-        return resultReader.readDynamic(resultSet, columnName, dataType);
+        return readDynamic(resultSet, columnName, dataType);
     }
 
     @Nullable
@@ -254,7 +264,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             dataType = property.getDataType();
             columnName = property.getPersistedName();
         }
-        return resultReader.readDynamic(resultSet, columnName, dataType);
+        return readDynamic(resultSet, columnName, dataType);
     }
 
     @Override
@@ -739,13 +749,43 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             JsonDataType jsonDataType = prop.getJsonDataType();
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
         } else {
-            result = resultReader.readDynamic(rs, columnName, dataType);
+            result = readDynamic(rs, columnName, dataType);
         }
 
         if (converter != null && conversionContextFactory != null) {
             return converter.convertToEntityValue(result, conversionContextFactory.forArgument(prop.getArgument()));
         }
         return result;
+    }
+
+    /**
+     * Reads the column value by its ordinal when the result reader can resolve one, otherwise by the column name.
+     * The ordinal is resolved once per result set and column, so the driver doesn't have to resolve the column
+     * name for every row.
+     */
+    @Nullable
+    private Object readDynamic(RS rs, String columnName, DataType dataType) {
+        if (columnIndexReader != null) {
+            Integer columnIndex = resolveColumnIndex(rs, columnName);
+            if (columnIndex >= 0) {
+                return columnIndexReader.readDynamic(rs, columnIndex, dataType);
+            }
+        }
+        return resultReader.readDynamic(rs, columnName, dataType);
+    }
+
+    private Integer resolveColumnIndex(RS rs, String columnName) {
+        if (rs != columnIndexesResultSet) {
+            // The ordinals are only valid for the result set they were resolved from
+            columnIndexes.clear();
+            columnIndexesResultSet = rs;
+        }
+        Integer columnIndex = columnIndexes.get(columnName);
+        if (columnIndex == null) {
+            columnIndex = resultReader.findColumnIndex(rs, columnName);
+            columnIndexes.put(columnName, columnIndex);
+        }
+        return columnIndex;
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {

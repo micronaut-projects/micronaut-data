@@ -106,6 +106,35 @@ public interface ResultReader<RS, IDX> {
     boolean next(RS resultSet);
 
     /**
+     * Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+     * and read the values of subsequent rows by index using {@link #getColumnIndexReader()} instead of resolving
+     * the column name for every row.
+     * <p>
+     * The returned ordinal is only valid for the given result set and uses the index convention of the underlying
+     * driver (for example 1-based for JDBC). Readers that cannot resolve column ordinals return {@code -1}, in which
+     * case callers must keep reading by name.
+     *
+     * @param resultSet  The result set
+     * @param columnName The column name
+     * @return The column index or {@code -1} if the column cannot be resolved
+     * @since 5.2.0
+     */
+    default int findColumnIndex(RS resultSet, String columnName) {
+        return -1;
+    }
+
+    /**
+     * The reader capable of reading values by the ordinals resolved by {@link #findColumnIndex(Object, String)}.
+     *
+     * @return The column index reader or {@code null} if reading by column index is not supported
+     * @since 5.2.0
+     */
+    @Nullable
+    default ResultReader<RS, Integer> getColumnIndexReader() {
+        return null;
+    }
+
+    /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
      * @param index The name
