@@ -41,6 +41,7 @@ import java.util.Date;
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
     private final ConversionService conversionService;
+    private final ColumnIndexResultSetReader columnIndexReader;
 
     public ColumnNameResultSetReader() {
         this(null);
@@ -55,11 +56,33 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     public ColumnNameResultSetReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+        this.columnIndexReader = new ColumnIndexResultSetReader(conversionService);
     }
 
     @Override
     public ConversionService getConversionService() {
         return conversionService;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>A failure to resolve the ordinal is not reported here: the caller falls back to reading the column by
+     * name, and a failure that is not a missing column, such as a closed result set, surfaces from that read with
+     * the message of the underlying driver rather than being swallowed.</p>
+     */
+    @Override
+    public int findColumnIndex(ResultSet resultSet, String columnName) {
+        try {
+            return resultSet.findColumn(columnName);
+        } catch (SQLException e) {
+            return -1;
+        }
+    }
+
+    @Override
+    public ResultReader<ResultSet, Integer> getColumnIndexReader() {
+        return columnIndexReader;
     }
 
     @Nullable
