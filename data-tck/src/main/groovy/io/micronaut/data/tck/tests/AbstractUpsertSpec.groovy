@@ -31,6 +31,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue
 
@@ -57,6 +59,7 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     void cleanup() {
+        context.getBean(MockedDateTimeProvider).setValue(null)
         autoPopulatedUpsertRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
@@ -142,11 +145,14 @@ abstract class AbstractUpsertSpec extends Specification {
 
     void "upsert preserves date created on update"() {
         given:
+        MockedDateTimeProvider dateTimeProvider = context.getBean(MockedDateTimeProvider)
+        dateTimeProvider.setValue(OffsetDateTime.of(2026, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC))
         autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
         LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).get().created
         UUID requestId = autoPopulatedUpsertRepository.findById(1L).get().requestId
         AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified")
         replacement.tenantId = "another-tenant"
+        dateTimeProvider.setValue(OffsetDateTime.of(2026, 1, 2, 12, 0, 0, 0, ZoneOffset.UTC))
 
         when:
         autoPopulatedUpsertRepository.upsert(replacement)
@@ -155,6 +161,8 @@ abstract class AbstractUpsertSpec extends Specification {
         then:
         created != null
         found.created == created
+        replacement.created != created
+        replacement.created != found.created
         found.updated != null
         found.tenantId == "upsert-tenant"
         found.requestId != null

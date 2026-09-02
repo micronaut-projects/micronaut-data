@@ -167,6 +167,10 @@ The resulting lifecycle contract is:
 
 This behavior ensures that a newly inserted row receives creation and update timestamps while an existing row retains its original creation timestamp.
 
+Because the selected database branch is not known before execution, the supplied entity is prepared for the possible insert branch.
+When an upsert matches an existing row, a non-updatable auto-populated property on the supplied or returned entity can therefore differ from the value retained in the database.
+Reload the entity when the persisted value of such a property is required.
+
 === Optimistic Locking
 
 Optimistic locking is not supported by the native upsert implementation.
