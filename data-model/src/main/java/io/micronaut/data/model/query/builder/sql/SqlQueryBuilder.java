@@ -1361,7 +1361,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                     String unescapedColumnName = getMappedName(namingStrategy, associations, property);
                     if (SqlQueryBuilderUtils.isSharedIdentityColumn(entity, namingStrategy, associations, property, unescapedColumnName)) {
-                        PersistentPropertyPath identityPath = Objects.requireNonNull(identityPathsByColumn.get(unescapedColumnName));
+                        PersistentPropertyPath identityPath = identityPathsByColumn.get(unescapedColumnName);
+                        if (identityPath == null) {
+                            throw new MappingException("Shared identity insert mapping for column [" + unescapedColumnName + "] on entity ["
+                                + entity.getName() + "] did not resolve to a root identity property");
+                        }
                         addIdentityColumn.accept(identityPath.getAssociations(), identityPath.getProperty());
                         return;
                     }
@@ -1475,7 +1479,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collections.emptyMap());
     }
 
-    private void failOnConflictingInsertColumn(PersistentEntity entity, String columnName, String @Nullable [] existingPath, String[] path) {
+    private void failOnConflictingInsertColumn(PersistentEntity entity, String columnName, String[] existingPath, String[] path) {
         throw new MappingException("Conflicting insert mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
             + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
     }

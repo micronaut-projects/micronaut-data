@@ -223,7 +223,7 @@ public interface NamingStrategy {
                 joinColumnName = null;
             }
             if (referencedColumnName == null
-                ? !isImplicitIdentityProperty(associatedEntity, property, joinColumnName)
+                ? !PersistentEntityUtils.isImplicitIdentityProperty(associatedEntity, property, joinColumnName)
                 : !referencedColumnName.equals(property.getPersistedName())) {
                 continue;
             }
@@ -232,24 +232,6 @@ public interface NamingStrategy {
             }
         }
         return null;
-    }
-
-    private static boolean isImplicitIdentityProperty(PersistentEntity entity,
-                                                      PersistentProperty property,
-                                                      @Nullable String joinColumnName) {
-        boolean[] identityProperty = {false};
-        int[] identityPropertyCount = {0};
-        for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(List.of(), identity, (associations, candidate) -> {
-                identityPropertyCount[0]++;
-                if (candidate.equals(property)) {
-                    identityProperty[0] = true;
-                }
-            });
-        }
-        return identityProperty[0]
-            && (identityPropertyCount[0] == 1
-            || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));
     }
 
     default String mappedJoinTableColumn(PersistentEntity associated, List<Association> associations, PersistentProperty property) {

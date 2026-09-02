@@ -147,6 +147,33 @@ public final class PersistentEntityUtils {
         return count[0];
     }
 
+    /**
+     * Resolves whether the property is the implicit identity target for a join column without an
+     * explicit referenced column name.
+     *
+     * @param entity The associated entity
+     * @param property The property being matched
+     * @param joinColumnName The join column name, if one was explicitly provided
+     * @return {@code true} if the property is an implicit identity match
+     */
+    public static boolean isImplicitIdentityProperty(PersistentEntity entity,
+                                                     PersistentProperty property,
+                                                     @Nullable String joinColumnName) {
+        boolean[] identityProperty = {false};
+        int[] identityPropertyCount = {0};
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            traversePersistentProperties(List.of(), identity, (associations, candidate) -> {
+                identityPropertyCount[0]++;
+                if (candidate.equals(property)) {
+                    identityProperty[0] = true;
+                }
+            });
+        }
+        return identityProperty[0]
+            && (identityPropertyCount[0] == 1
+            || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));
+    }
+
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {

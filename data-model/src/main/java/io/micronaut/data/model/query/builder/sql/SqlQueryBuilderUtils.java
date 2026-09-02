@@ -34,7 +34,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
-import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -166,29 +165,11 @@ final class SqlQueryBuilderUtils {
             }
             if (columnName.equals(name) && (property.getPersistedName().equals(referencedColumnName)
                 || (referencedColumnName == null
-                && isImplicitIdentityProperty(foreignAssociation.getAssociatedEntity(), property, name)))) {
+                && PersistentEntityUtils.isImplicitIdentityProperty(foreignAssociation.getAssociatedEntity(), property, name)))) {
                 return true;
             }
         }
         return false;
-    }
-
-    private static boolean isImplicitIdentityProperty(PersistentEntity entity,
-                                                      PersistentProperty property,
-                                                      @Nullable String joinColumnName) {
-        boolean[] identityProperty = {false};
-        int[] identityPropertyCount = {0};
-        for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(List.of(), identity, (associations, candidate) -> {
-                identityPropertyCount[0]++;
-                if (candidate.equals(property)) {
-                    identityProperty[0] = true;
-                }
-            });
-        }
-        return identityProperty[0]
-            && (identityPropertyCount[0] == 1
-            || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));
     }
 
     /**
