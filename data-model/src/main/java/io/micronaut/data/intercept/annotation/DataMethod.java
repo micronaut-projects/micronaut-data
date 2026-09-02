@@ -79,6 +79,11 @@ public @interface DataMethod {
     String META_MEMBER_RESULT_DATA_TYPE = "resultDataType";
 
     /**
+     * The member that indicates whether an upsert should read a generated identity value.
+     */
+    String META_MEMBER_READ_GENERATED_ID = "readGeneratedId";
+
+    /**
      * The member name that holds the root entity type.
      */
     String META_MEMBER_ROOT_ENTITY = "rootEntity";
@@ -212,6 +217,11 @@ public @interface DataMethod {
      * @return The result data type.
      */
     DataType resultDataType() default DataType.OBJECT;
+
+    /**
+     * @return Whether an upsert should read a generated identity value.
+     */
+    boolean readGeneratedId() default false;
 
     /**
      * The parameter binding defines which method arguments bind to which

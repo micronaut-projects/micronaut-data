@@ -698,6 +698,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (methodInfo.isOptimisticLock()) {
                 annotationBuilder.member(DataMethod.META_MEMBER_OPTIMISTIC_LOCK, true);
             }
+            if (methodInfo.shouldReadGeneratedId()) {
+                annotationBuilder.member(DataMethod.META_MEMBER_READ_GENERATED_ID, true);
+            }
 
             if (!methodInfo.getParameterRoles().isEmpty()) {
                 // include the roles

@@ -39,6 +39,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -607,7 +608,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private boolean shouldReadGeneratedId(SqlStoredQuery<?, ?> storedQuery, boolean hasGeneratedId) {
         return hasGeneratedId
-            && (!isUpsertOperation(storedQuery) || !storedQuery.getResultDataType().isNumeric());
+            && (!isUpsertOperation(storedQuery)
+            || storedQuery.getAnnotationMetadata().isTrue(DataMethod.NAME, DataMethod.META_MEMBER_READ_GENERATED_ID));
     }
 
     private <T> int bindUpsertParameters(R2dbcOperationContext ctx,

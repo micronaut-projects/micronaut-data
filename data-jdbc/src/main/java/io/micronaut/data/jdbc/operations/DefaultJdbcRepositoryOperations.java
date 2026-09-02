@@ -39,6 +39,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.exceptions.JdbcExceptionUtils;
@@ -1182,6 +1183,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
     }
 
+    private boolean shouldReadGeneratedId(SqlStoredQuery<?, ?> storedQuery, boolean hasGeneratedId) {
+        return hasGeneratedId
+            && (!isUpsertOperation(storedQuery)
+            || storedQuery.getAnnotationMetadata().isTrue(DataMethod.NAME, DataMethod.META_MEMBER_READ_GENERATED_ID));
+    }
+
     private <T> int bindUpsertParameters(JdbcOperationContext ctx,
                                          PreparedStatement statement,
                                          JdbcUpsertReturningExecutor.Entity<T> executionEntity) {
@@ -1461,8 +1468,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlPreparedQuery.prepare(entity);
             }
             if (insert) {
+                boolean readGeneratedId = shouldReadGeneratedId(storedQuery, hasGeneratedId);
                 Dialect dialect = storedQuery.getDialect();
-                if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+                if (readGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
@@ -1473,7 +1481,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                     return connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
-                    return connection.prepareStatement(this.storedQuery.getQuery(), hasGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return connection.prepareStatement(this.storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 }
             } else {
                 return connection.prepareStatement(this.storedQuery.getQuery());
@@ -1591,7 +1599,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (PreparedStatement ps = prepare(ctx.connection, storedQuery)) {
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
-                if (hasGeneratedId) {
+                if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity) && ps instanceof CallableStatement callableStatement) {
                         Object id = callableStatement.getObject(storedQuery.getQueryBindings().size() + 1);
                         BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
@@ -1642,8 +1650,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private PreparedStatement prepare(Connection connection) throws SQLException {
             if (insert) {
+                boolean readGeneratedId = shouldReadGeneratedId(storedQuery, hasGeneratedId);
                 Dialect dialect = storedQuery.getDialect();
-                if (hasGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
+                if (readGeneratedId && (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER)) {
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
@@ -1654,7 +1663,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                     return connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
                 } else {
-                    return connection.prepareStatement(storedQuery.getQuery(), hasGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return connection.prepareStatement(storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 }
             } else {
                 return connection.prepareStatement(storedQuery.getQuery());
@@ -1687,7 +1696,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);
                 rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
-                if (hasGeneratedId) {
+                if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     List<Object> ids = new ArrayList<>();
                     try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
