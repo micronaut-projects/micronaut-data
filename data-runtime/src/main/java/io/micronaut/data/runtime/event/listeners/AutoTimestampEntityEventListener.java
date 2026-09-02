@@ -160,8 +160,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         // 1) Top-level properties
         AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
             final AnnotationMetadata am = prop.getAnnotationMetadata();
-            boolean updatable = am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true);
-            if ((event == TimestampEvent.UPDATE && !updatable) || (event == TimestampEvent.UPSERT_PREPARE && updatable)) {
+            if (!appliesTo(event, am)) {
                 return null;
             }
             final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
@@ -182,8 +181,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!hasDateCreated && !hasDateUpdated) {
                 return current;
             }
-            boolean updatable = am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true);
-            if ((event == TimestampEvent.UPDATE && !updatable) || (event == TimestampEvent.UPSERT_PREPARE && updatable)) {
+            if (!appliesTo(event, am)) {
                 return current;
             }
             BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
@@ -204,6 +202,15 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 return current;
             }
         });
+    }
+
+    private boolean appliesTo(TimestampEvent event, AnnotationMetadata annotationMetadata) {
+        boolean updatable = annotationMetadata.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true);
+        return switch (event) {
+            case PERSIST -> true;
+            case UPDATE -> updatable;
+            case UPSERT_PREPARE -> !updatable;
+        };
     }
 
     private enum TimestampEvent {
