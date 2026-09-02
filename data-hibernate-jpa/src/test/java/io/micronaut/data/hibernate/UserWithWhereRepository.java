@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.hibernate.entities.Audit;
 import io.micronaut.data.hibernate.entities.UserWithWhere;
 import io.micronaut.data.hibernate.entities.UserWithWhereSummary;
 import io.micronaut.data.model.Sort;
@@ -21,6 +22,8 @@ public interface UserWithWhereRepository extends CrudRepository<UserWithWhere, U
 
     @Query(value = "UPDATE users SET email = :email WHERE id = :id RETURNING email", nativeQuery = true)
     String updateAndReturnEmail(String email, UUID id);
+
+    Audit findAuditById(UUID id);
 
     @Query(value = "SELECT id AS \"id\", email AS \"email\", deleted AS \"deleted\" FROM users WHERE id = :id", nativeQuery = true)
     UserWithWhereSummary findSummaryById(UUID id);

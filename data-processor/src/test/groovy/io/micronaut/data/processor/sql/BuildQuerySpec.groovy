@@ -1550,6 +1550,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Address;
 import io.micronaut.data.tck.entities.Restaurant;
 import java.util.Optional;
 
@@ -1562,6 +1563,10 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
 
     Restaurant findByAddressStreet(String street);
 
+    Address findAddressById(Long id);
+
+    Optional<Address> findHqAddressById(Long id);
+
     String getMaxAddressStreetByName(String name);
 }
 
@@ -1570,12 +1575,232 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         def findByNameQuery = getQuery(repository.getRequiredMethod("findByName", String))
         def saveQuery = getQuery(repository.getRequiredMethod("save", Restaurant))
         def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
+        def findAddressByIdMethod = repository.getRequiredMethod("findAddressById", Long)
+        def findAddressByIdQuery = getQuery(findAddressByIdMethod)
+        def findHqAddressByIdMethod = repository.getRequiredMethod("findHqAddressById", Long)
+        def findHqAddressByIdQuery = getQuery(findHqAddressByIdMethod)
         def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
         expect:
         findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
         saveQuery == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
+        findAddressByIdQuery == 'SELECT restaurant_.`street`,restaurant_.`zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
+        findHqAddressByIdQuery == 'SELECT restaurant_.`hqaddress_street` AS street,restaurant_.`hqaddress_zip_code` AS zip_code FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
         getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        getResultDataType(findAddressByIdMethod) == DataType.ENTITY
+        getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
+    }
+
+    void "test embeddable type reused as ordinary DTO projection"() {
+        given:
+        def repository = buildRepository('test.ParcelRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@MappedEntity
+record Parcel(@Id Long id, String name, String street, String zipCode) {
+}
+
+@Embeddable
+class ShippingAddress {
+    private String street;
+    private String zipCode;
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ParcelRepository extends GenericRepository<Parcel, Long> {
+    ShippingAddress findByName(String name);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByName", String)) ==
+            'SELECT parcel_.`street`,parcel_.`zip_code` FROM `parcel` parcel_ WHERE (parcel_.`name` = ?)'
+    }
+
+    void "test embedded projection aliases nested embedded columns"() {
+        given:
+        def repository = buildRepository('test.VehicleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Jurisdiction;
+import io.micronaut.data.tck.entities.Registration;
+import io.micronaut.data.tck.entities.Vehicle;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface VehicleRepository extends GenericRepository<Vehicle, Long> {
+
+    Registration findFirstRegistrationById(Long id);
+
+    Registration findSecondRegistrationById(Long id);
+
+    Jurisdiction findFirstRegistrationJurisdictionById(Long id);
+
+    Jurisdiction findSecondRegistrationJurisdictionById(Long id);
+}
+
+""")
+
+        def findFirstRegistrationByIdQuery = getQuery(repository.getRequiredMethod("findFirstRegistrationById", Long))
+        def findSecondRegistrationByIdQuery = getQuery(repository.getRequiredMethod("findSecondRegistrationById", Long))
+        def findFirstRegistrationJurisdictionByIdQuery = getQuery(repository.getRequiredMethod("findFirstRegistrationJurisdictionById", Long))
+        def findSecondRegistrationJurisdictionByIdQuery = getQuery(repository.getRequiredMethod("findSecondRegistrationJurisdictionById", Long))
+
+        expect:
+        findFirstRegistrationByIdQuery == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationByIdQuery == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findFirstRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+    }
+
+    void "test embedded projection result preserves leaf aliases and read transformers"() {
+        given:
+        def repository = buildRepository('test.LocationRestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@Embeddable
+class LocationLabel {
+    @MappedProperty(alias = "ll")
+    private String label;
+
+    @DataTransformer(read = "LOWER(@.pref_normalized_code)")
+    @MappedProperty("normalized_code")
+    private String normalizedCode;
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getNormalizedCode() {
+        return normalizedCode;
+    }
+
+    public void setNormalizedCode(String normalizedCode) {
+        this.normalizedCode = normalizedCode;
+    }
+}
+
+@MappedEntity
+class LocationRestaurant {
+    @GeneratedValue
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("pref_")
+    private LocationLabel location;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocationLabel getLocation() {
+        return location;
+    }
+
+    public void setLocation(LocationLabel location) {
+        this.location = location;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LocationRestaurantRepository extends GenericRepository<LocationRestaurant, Long> {
+    LocationLabel findLocationById(Long id);
+}
+""")
+
+        def findLocationByIdMethod = repository.getRequiredMethod("findLocationById", Long)
+
+        expect:
+        getQuery(findLocationByIdMethod) == 'SELECT location_restaurant_.`pref_label` AS ll,LOWER(location_restaurant_.pref_normalized_code) AS normalized_code FROM `location_restaurant` location_restaurant_ WHERE (location_restaurant_.`id` = ?)'
+        getResultDataType(findLocationByIdMethod) == DataType.ENTITY
+    }
+
+    void "test invalid embedded projection result"() {
+        when:
+        buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import io.micronaut.data.tck.entities.ShipmentId;
+import java.util.Optional;
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+    Optional<ShipmentId> findAddressByName(String name);
+}
+""")
+        then:
+        Throwable ex = thrown()
+        ex.message.contains("method returns an incompatible type")
+    }
+
+    void "test nested embedded projection result"() {
+        given:
+        def repository = buildRepository('test.VehicleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Jurisdiction;
+import io.micronaut.data.tck.entities.Registration;
+import io.micronaut.data.tck.entities.Vehicle;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface VehicleRepository extends GenericRepository<Vehicle, Long> {
+
+    Registration findFirstRegistrationById(Long id);
+
+    Registration findSecondRegistrationById(Long id);
+
+    Jurisdiction findFirstRegistrationJurisdictionById(Long id);
+
+    Jurisdiction findSecondRegistrationJurisdictionById(Long id);
+}
+
+""")
+
+        def firstRegistrationMethod = repository.getRequiredMethod("findFirstRegistrationById", Long)
+        def secondRegistrationMethod = repository.getRequiredMethod("findSecondRegistrationById", Long)
+        def firstJurisdictionMethod = repository.getRequiredMethod("findFirstRegistrationJurisdictionById", Long)
+        def secondJurisdictionMethod = repository.getRequiredMethod("findSecondRegistrationJurisdictionById", Long)
+
+        expect:
+        getQuery(firstRegistrationMethod) == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondRegistrationMethod) == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(firstJurisdictionMethod) == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondJurisdictionMethod) == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getResultDataType(firstRegistrationMethod) == DataType.ENTITY
+        getResultDataType(secondRegistrationMethod) == DataType.ENTITY
+        getResultDataType(firstJurisdictionMethod) == DataType.ENTITY
+        getResultDataType(secondJurisdictionMethod) == DataType.ENTITY
     }
 
     void "test count query with joins"() {

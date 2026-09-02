@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -444,9 +445,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             false
         );
 
+        boolean embeddedSelection = isEmbeddedSelection(query);
+        boolean dto = result.isDto() && !embeddedSelection;
         ClassElement declaredReturnType = unwrapReactiveReturnType(matchContext.getReturnType());
         applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
-        applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType);
+        applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType, dto);
 
         final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
         QueryResult queryResult = criteriaQuery.build(annotationMetadata, matchContext.getQueryBuilder());
@@ -462,10 +465,33 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             result.resultType(),
             interceptorType
         )
-            .dto(result.isDto())
+            .dto(dto)
             .optimisticLock(optimisticLock)
+            .resultDataType(embeddedSelection ? DataType.ENTITY : null)
             .queryResult(queryResult)
             .countQueryResult(countQueryResult);
+    }
+
+    private boolean isEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
+        Selection<?> selection = query.getSelection();
+        if (isEmbeddedSelection(selection)) {
+            return true;
+        }
+        Optional<String> projection = findMatchPart(matches, QueryMatchId.PROJECTION);
+        if (projection.isEmpty()) {
+            return false;
+        }
+        Root<?> root = query.getRoots().iterator().next();
+        if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> propertyPath = findProperty(persistentEntityRoot, projection.get());
+            return propertyPath != null && propertyPath.getProperty() instanceof Embedded;
+        }
+        return false;
+    }
+
+    private boolean isEmbeddedSelection(@Nullable Selection<?> selection) {
+        return selection instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+            && propertyPath.getProperty() instanceof Embedded;
     }
 
     private static ClassElement unwrapReactiveReturnType(ClassElement returnType) {
@@ -585,8 +611,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                             SourcePersistentEntityCriteriaQuery<?> query,
                                             MethodResult result,
                                             SourcePersistentEntity persistentEntity,
-                                            ClassElement resultType) {
-        if (!result.isDto() || result.isRuntimeDtoConversion()) {
+                                            ClassElement resultType,
+                                            boolean dto) {
+        if (!dto || result.isRuntimeDtoConversion()) {
             return;
         }
         List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);

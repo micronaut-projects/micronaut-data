@@ -124,6 +124,20 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             !found.isPresent()
     }
 
+    void "test embedded audit projection retrieval"() {
+        when:
+            def id = UUID.randomUUID()
+            def saved = userWithWhereRepository.save(new UserWithWhere(id: id, email: "audit@somewhere.com", deleted: false))
+            def projectedAudit = userWithWhereRepository.findAuditById(id)
+        then:
+            saved
+            projectedAudit
+            projectedAudit.createdBy == "current"
+            projectedAudit.createdTime
+        cleanup:
+            userWithWhereRepository.deleteById(id)
+    }
+
     void "test merge"() {
         given:
             studentRepository.deleteAll()

@@ -861,9 +861,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
             return createQueryResultMapper(preparedQuery, column, jsonDataType, rsType, persistentEntity, loadListener);
         }
+        boolean isDtoProjection = isDtoProjection(preparedQuery);
         if (isEntityResult) {
             ResultReader<RS, String> resultReader =
-                preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader;
+                isDtoProjection ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader;
             return new SqlResultEntityTypeMapper<>(
                 getEntity(preparedQuery.getResultType()),
                 resultReader,
@@ -873,7 +874,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 conversionService,
                 conversionContextFactory);
         }
-        if (preparedQuery.isDtoProjection()) {
+        if (isDtoProjection) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
             RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
                 preparedQuery.getAnnotationMetadata(),
@@ -1037,7 +1038,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (storedQuery.isDtoProjection()) {
             return true;
         }
-        if (storedQuery.getResultDataType() == DataType.ENTITY) {
+        if (storedQuery.getResultDataType() != DataType.OBJECT) {
             return false;
         }
         Class<R> resultType = storedQuery.getResultType();
@@ -1055,8 +1056,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             return false;
         }
         try {
-            BeanIntrospection.getIntrospection(resultType);
-            return true;
+            BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(resultType);
+            // A TypeDef identifies an explicitly mapped scalar even when its data type is OBJECT.
+            return !introspection.hasStereotype(TypeDef.class);
         } catch (IntrospectionException e) {
             return false;
         }

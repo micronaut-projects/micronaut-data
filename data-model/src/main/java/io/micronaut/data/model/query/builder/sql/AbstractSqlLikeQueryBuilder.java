@@ -3161,6 +3161,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 if (property instanceof Association association && !property.isEmbedded()) {
                     appendAssociationProjection(new PersistentAssociationPath(propertyPath.getAssociations(), association));
+                } else if (computePropertyPaths() && property instanceof Embedded) {
+                    appendEmbeddedPropertyProjection(propertyPath);
                 } else {
                     appendPropertyProjection(findProperty(propertyPath.getPath()));
                 }
@@ -3392,6 +3394,82 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 query.setLength(query.length() - 1);
             }
             selectAllColumnsFromJoinPaths(queryState.baseQueryDefinition().getJoinPaths(), null);
+        }
+
+        /**
+         * Appends an embedded projection with column aliases matching the projected embeddable type.
+         *
+         * @param propertyPath The property path
+         */
+        private void appendEmbeddedPropertyProjection(PersistentPropertyPath propertyPath) {
+            PersistentProperty property = propertyPath.getProperty();
+            if (!(property instanceof Embedded embedded)) {
+                appendPropertyProjection(findProperty(propertyPath.getPath()));
+                return;
+            }
+
+            boolean escape = shouldEscape(propertyPath.findPropertyOwner().orElse(property.getOwner()));
+            NamingStrategy sourceNamingStrategy = getNamingStrategy(propertyPath);
+            NamingStrategy targetNamingStrategy = getNamingStrategy(embedded.getAssociatedEntity());
+            List<Association> projectedPath = new ArrayList<>(propertyPath.getAssociations());
+            projectedPath.add(embedded);
+            int[] propertiesCount = new int[1];
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> propertiesCount[0]++);
+            if (StringUtils.isNotEmpty(columnAlias) && propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> {
+                List<Association> relativeAssociations = getRelativeAssociations(projectedPath, associations);
+                String targetName = StringUtils.isNotEmpty(columnAlias)
+                    ? columnAlias
+                    : getEmbeddedProjectionTargetName(targetNamingStrategy, relativeAssociations, p);
+                appendEmbeddedProjectionProperty(associations, p, sourceNamingStrategy, queryState.rootAlias, escape, targetName);
+                query.append(COMMA);
+            });
+            if (propertiesCount[0] > 0) {
+                query.setLength(query.length() - 1);
+            }
+        }
+
+        private List<Association> getRelativeAssociations(List<Association> projectedPath, List<Association> associations) {
+            if (associations.size() <= projectedPath.size()) {
+                return Collections.emptyList();
+            }
+            return associations.subList(projectedPath.size(), associations.size());
+        }
+
+        private String getEmbeddedProjectionTargetName(NamingStrategy targetNamingStrategy,
+                                                       List<Association> relativeAssociations,
+                                                       PersistentProperty property) {
+            String columnAlias = getColumnAlias(property);
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                return columnAlias;
+            }
+            return getMappedName(targetNamingStrategy, relativeAssociations, property);
+        }
+
+        private void appendEmbeddedProjectionProperty(List<Association> associations,
+                                                      PersistentProperty property,
+                                                      NamingStrategy sourceNamingStrategy,
+                                                      @Nullable String tableAlias,
+                                                      boolean escape,
+                                                      String targetName) {
+            String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
+            if (transformed != null) {
+                query.append(transformed).append(AS_CLAUSE).append(targetName);
+                return;
+            }
+            String column = getMappedName(sourceNamingStrategy, associations, property);
+            String escapedColumn = escapeColumnIfNeeded(column, escape);
+            String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
+            if (isJsonOrWktGeometry(property)) {
+                query.append(getGeometryFunction(columnWithTableAlias, targetName, property));
+                return;
+            }
+            query.append(columnWithTableAlias);
+            if (!column.equals(targetName)) {
+                query.append(AS_CLAUSE).append(targetName);
+            }
         }
 
         /**
