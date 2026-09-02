@@ -52,6 +52,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import io.micronaut.data.processor.visitors.finders.OrderByUtils;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.MethodResult;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
@@ -285,7 +286,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             orders.add(cb.sort(
                 findOrderProperty(root, av.stringValue().orElseThrow()),
                 !av.booleanValue("descending").orElse(false),
-                av.booleanValue("ignoreCase").orElse(false)
+                av.booleanValue("ignoreCase").orElse(false),
+                OrderByUtils.getNullPrecedence(av)
             ));
         }
         if (!orders.isEmpty()) {

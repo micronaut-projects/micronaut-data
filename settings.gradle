@@ -108,6 +108,8 @@ include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
 include 'doc-examples:jdbc-multitenancy-discriminator-example-java'
 
+include 'doc-examples:jdbc-sessionless-transaction-booking'
+
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'

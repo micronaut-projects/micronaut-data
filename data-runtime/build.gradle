@@ -28,6 +28,7 @@ dependencies {
 
 	testImplementation(mnSql.jakarta.persistence.api)
 	testImplementation(libs.managed.javax.persistence.api)
+	testImplementation libs.managed.jakarta.data.api
 	testImplementation projects.micronautDataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http
