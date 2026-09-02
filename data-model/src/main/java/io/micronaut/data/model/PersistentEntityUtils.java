@@ -26,10 +26,14 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Persistent entity utils.
@@ -41,6 +45,7 @@ import java.util.function.Consumer;
 public final class PersistentEntityUtils {
 
     private static final String UNDERSCORE = "_";
+    private static final Map<PersistentEntity, IdentityPropertyInfo> IDENTITY_PROPERTY_INFO = new ConcurrentHashMap<>();
 
     private PersistentEntityUtils() {
     }
@@ -159,19 +164,22 @@ public final class PersistentEntityUtils {
     public static boolean isImplicitIdentityProperty(PersistentEntity entity,
                                                      PersistentProperty property,
                                                      @Nullable String joinColumnName) {
-        boolean[] identityProperty = {false};
-        int[] identityPropertyCount = {0};
+        IdentityPropertyInfo identityPropertyInfo = IDENTITY_PROPERTY_INFO.computeIfAbsent(entity, PersistentEntityUtils::resolveIdentityPropertyInfo);
+        return identityPropertyInfo.properties().contains(new IdentityPropertyKey(property.getOwner().getName(), property.getName()))
+            && (identityPropertyInfo.count() == 1
+            || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));
+    }
+
+    private static IdentityPropertyInfo resolveIdentityPropertyInfo(PersistentEntity entity) {
+        Set<IdentityPropertyKey> properties = new HashSet<>();
+        int[] count = {0};
         for (PersistentProperty identity : entity.getIdentityProperties()) {
-            traversePersistentProperties(List.of(), identity, (associations, candidate) -> {
-                identityPropertyCount[0]++;
-                if (candidate.equals(property)) {
-                    identityProperty[0] = true;
-                }
+            traversePersistentProperties(Collections.emptyList(), identity, (associations, candidate) -> {
+                count[0]++;
+                properties.add(new IdentityPropertyKey(candidate.getOwner().getName(), candidate.getName()));
             });
         }
-        return identityProperty[0]
-            && (identityPropertyCount[0] == 1
-            || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));
+        return new IdentityPropertyInfo(properties, count[0]);
     }
 
     public static void traversePersistentProperties(List<Association> associations,
@@ -296,5 +304,11 @@ public final class PersistentEntityUtils {
             }
         }
         return null;
+    }
+
+    private record IdentityPropertyInfo(Set<IdentityPropertyKey> properties, int count) {
+    }
+
+    private record IdentityPropertyKey(String ownerName, String propertyName) {
     }
 }

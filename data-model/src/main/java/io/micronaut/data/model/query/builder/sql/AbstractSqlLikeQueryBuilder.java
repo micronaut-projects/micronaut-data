@@ -958,7 +958,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
             .filter(e -> e.getValue() instanceof ReservationDelta || !generatedEntityUpdate
-                || hasNonReservableUpdateProperty(e.getKey(), namingStrategy, identityColumns))
+                || hasNonGeneratedOrSharedIdentityUpdateProperty(e.getKey(), namingStrategy, identityColumns))
             .toList();
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> hasReservableUpdateProperty(e.getKey()))) {
@@ -1124,15 +1124,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return value instanceof ReservationDelta;
     }
 
-    private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath,
-                                                    NamingStrategy namingStrategy,
-                                                    Set<String> identityColumns) {
+    private boolean hasNonGeneratedOrSharedIdentityUpdateProperty(QueryPropertyPath propertyPath,
+                                                                  NamingStrategy namingStrategy,
+                                                                  Set<String> identityColumns) {
         boolean[] found = {false};
         PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
             String columnName = getMappedName(namingStrategy, associations, property);
-            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, columnName)
-                || (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
-                && !property.getAnnotationMetadata().hasAnnotation(Reservable.class))) {
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, columnName)) {
+                // Keep a shared-identity relation in generated updates so the identity fallback can emit a valid SET clause.
+                found[0] = true;
+                return;
+            }
+            if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                && !property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                 found[0] = true;
             }
         });
