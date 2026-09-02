@@ -34,6 +34,14 @@ class DataConversionServiceSpec extends Specification {
     static def DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
     static Date now = new Date()
 
+    /**
+     * The instant a {@code LocalDate} converts to, which is midnight UTC rather than midnight in the default
+     * time zone. Spelling it out keeps the expectation the same in every time zone the test runs in.
+     */
+    static Date utcMidnight(String date) {
+        Date.from(LocalDate.parse(date).atStartOfDay(ZoneOffset.UTC).toInstant())
+    }
+
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
@@ -49,8 +57,8 @@ class DataConversionServiceSpec extends Specification {
             DATE_FORMAT.parse("1970-01-02")              || LocalDate      || LocalDate.parse("1970-01-02")
             DATE_FORMAT.parse("1970-01-02")              || LocalDateTime  || LocalDate.parse("1970-01-02").atStartOfDay()
             DATE_FORMAT.parse("1970-01-02")              || OffsetDateTime || LocalDate.parse("1970-01-02").atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime()
-            LocalDate.parse("1970-01-02")                || Date           || DATE_FORMAT.parse("1970-01-02")
-            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || DATE_FORMAT.parse("1970-01-02")
+            LocalDate.parse("1970-01-02")                || Date           || utcMidnight("1970-01-02")
+            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || utcMidnight("1970-01-02")
             new Date(now.getTime())                      || Instant        || Instant.ofEpochMilli(now.getTime())
             Instant.ofEpochMilli(now.getTime())          || Date           || new Date(now.getTime())
 
