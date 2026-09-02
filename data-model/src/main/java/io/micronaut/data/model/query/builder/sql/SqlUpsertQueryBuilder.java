@@ -323,29 +323,35 @@ final class SqlUpsertQueryBuilder {
             return conflictPropertyPaths;
         }
         for (String conflictProperty : conflictProperties) {
-            if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
-                throw new IllegalStateException("Upsert conflict property cannot be blank");
-            }
-            PersistentPropertyPath propertyPath;
-            try {
-                propertyPath = entity.getPropertyPath(conflictProperty);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalStateException("Invalid upsert conflict property path: " + conflictProperty, e);
-            }
-            if (propertyPath == null) {
-                throw new IllegalStateException("Upsert conflict property does not exist: " + conflictProperty);
-            }
-            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
-                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
-                    throw new IllegalStateException("Upsert requires a non-generated conflict property: " + conflictProperty);
-                }
-                String path = toPathString(associations, property);
-                if (!conflictPropertyPaths.contains(path)) {
-                    conflictPropertyPaths.add(path);
-                }
-            });
+            addConflictPropertyPaths(entity, conflictProperty, conflictPropertyPaths);
         }
         return conflictPropertyPaths;
+    }
+
+    private void addConflictPropertyPaths(PersistentEntity entity,
+                                          String conflictProperty,
+                                          List<String> conflictPropertyPaths) {
+        if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
+            throw new IllegalStateException("Upsert conflict property cannot be blank");
+        }
+        PersistentPropertyPath propertyPath;
+        try {
+            propertyPath = entity.getPropertyPath(conflictProperty);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid upsert conflict property path: " + conflictProperty, e);
+        }
+        if (propertyPath == null) {
+            throw new IllegalStateException("Upsert conflict property does not exist: " + conflictProperty);
+        }
+        PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+            if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                throw new IllegalStateException("Upsert requires a non-generated conflict property: " + conflictProperty);
+            }
+            String path = toPathString(associations, property);
+            if (!conflictPropertyPaths.contains(path)) {
+                conflictPropertyPaths.add(path);
+            }
+        });
     }
 
     private String toPathString(List<Association> associations, PersistentProperty property) {
