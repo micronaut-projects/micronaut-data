@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Persistent entity utils.
@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PersistentEntityUtils {
 
     private static final String UNDERSCORE = "_";
-    private static final Map<PersistentEntity, IdentityPropertyInfo> IDENTITY_PROPERTY_INFO = new ConcurrentHashMap<>();
+    private static final Map<PersistentEntity, IdentityPropertyInfo> IDENTITY_PROPERTY_INFO = new WeakHashMap<>();
 
     private PersistentEntityUtils() {
     }
@@ -164,7 +164,14 @@ public final class PersistentEntityUtils {
     public static boolean isImplicitIdentityProperty(PersistentEntity entity,
                                                      PersistentProperty property,
                                                      @Nullable String joinColumnName) {
-        IdentityPropertyInfo identityPropertyInfo = IDENTITY_PROPERTY_INFO.computeIfAbsent(entity, PersistentEntityUtils::resolveIdentityPropertyInfo);
+        IdentityPropertyInfo identityPropertyInfo;
+        synchronized (IDENTITY_PROPERTY_INFO) {
+            identityPropertyInfo = IDENTITY_PROPERTY_INFO.get(entity);
+            if (identityPropertyInfo == null) {
+                identityPropertyInfo = resolveIdentityPropertyInfo(entity);
+                IDENTITY_PROPERTY_INFO.put(entity, identityPropertyInfo);
+            }
+        }
         return identityPropertyInfo.properties().contains(new IdentityPropertyKey(property.getOwner().getName(), property.getName()))
             && (identityPropertyInfo.count() == 1
             || (joinColumnName != null && joinColumnName.equals(property.getPersistedName())));

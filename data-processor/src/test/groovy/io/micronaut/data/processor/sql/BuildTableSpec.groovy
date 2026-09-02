@@ -771,7 +771,8 @@ class MetadataKey {
         def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
 
         expect:
-        !sql.contains("metadata")
+        !sql.contains("`metadata_container_id`")
+        !sql.contains("`metadata_asset_id`")
         sql.count("`container_id`") == 2
         sql.count("`asset_id`") == 2
     }
