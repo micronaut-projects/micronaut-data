@@ -182,23 +182,35 @@ final class SqlUpsertQueryBuilder {
     private UpsertData buildUpsertData(PersistentEntity entity, List<String> conflictProperties) {
         boolean escape = sqlQueryBuilder.shouldEscape(entity);
         NamingStrategy namingStrategy = sqlQueryBuilder.getNamingStrategy(entity);
-        List<UpsertColumn> columns = new ArrayList<>();
-        List<String> values = new ArrayList<>();
-        List<QueryParameterBinding> parameterBindings = new ArrayList<>();
+        UpsertDataBuilder data = new UpsertDataBuilder(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
-        final String unescapedTableName = sqlQueryBuilder.getUnescapedTableName(entity);
-        final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                     return;
                 }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, false, conflictPropertyPaths);
+                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), namingStrategy, associations, property, escape, false, conflictPropertyPaths);
             });
         }
 
-        boolean identityConflict = conflictProperties.isEmpty();
+        addIdentityUpsertColumns(entity, conflictProperties.isEmpty(), data, namingStrategy, escape, conflictPropertyPaths);
+
+        if (data.columns().isEmpty()) {
+            throw new IllegalStateException("Upsert requires at least one bindable column for entity: " + entity.getName());
+        }
+        if (data.columns().stream().noneMatch(UpsertColumn::conflict)) {
+            throw new IllegalStateException("Upsert requires at least one bindable conflict column for entity: " + entity.getName());
+        }
+        return new UpsertData(data.columns(), data.parameterBindings());
+    }
+
+    private void addIdentityUpsertColumns(PersistentEntity entity,
+                                          boolean identityConflict,
+                                          UpsertDataBuilder data,
+                                          NamingStrategy namingStrategy,
+                                          boolean escape,
+                                          List<String> conflictPropertyPaths) {
         for (PersistentProperty identity : entity.getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
@@ -206,21 +218,23 @@ final class SqlUpsertQueryBuilder {
                         throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
                     }
                     if (dialect != Dialect.SQL_SERVER && SqlQueryBuilderUtils.isNotForeign(associations) && isSequenceGeneratedProperty(property)) {
-                        addGeneratedUpsertColumn(columns, namingStrategy, associations, property, escape, true, conflictPropertyPaths, sqlQueryBuilder.getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                        String sequence = sqlQueryBuilder.getSequenceStatement(
+                            SqlQueryBuilderUtils.getSchemaName(entity),
+                            sqlQueryBuilder.getUnescapedTableName(entity),
+                            property
+                        );
+                        addGeneratedUpsertColumn(data.columns(), namingStrategy, associations, property, escape, true, conflictPropertyPaths, sequence);
                     }
                     return;
                 }
-                addUpsertColumn(columns, values, parameterBindings, namingStrategy, associations, property, escape, true, conflictPropertyPaths);
+                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), namingStrategy, associations, property, escape, true, conflictPropertyPaths);
             });
         }
+    }
 
-        if (columns.isEmpty()) {
-            throw new IllegalStateException("Upsert requires at least one bindable column for entity: " + entity.getName());
-        }
-        if (columns.stream().noneMatch(UpsertColumn::conflict)) {
-            throw new IllegalStateException("Upsert requires at least one bindable conflict column for entity: " + entity.getName());
-        }
-        return new UpsertData(columns, parameterBindings);
+    private record UpsertDataBuilder(List<UpsertColumn> columns,
+                                     List<String> values,
+                                     List<QueryParameterBinding> parameterBindings) {
     }
 
     private void addUpsertColumn(List<UpsertColumn> columns,
