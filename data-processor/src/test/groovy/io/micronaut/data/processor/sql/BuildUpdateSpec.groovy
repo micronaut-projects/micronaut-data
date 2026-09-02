@@ -1061,6 +1061,340 @@ class SharedIdentityOnlyMetadata {
         getParameterPropertyPaths(method) == ["assetId", "assetId"] as String[]
     }
 
+    void "generated shared identity only entity update falls back to identity assignment"() {
+        given:
+        def repository = buildRepository('test.GeneratedSharedIdentityOnlyAssetRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface GeneratedSharedIdentityOnlyAssetRepository extends GenericRepository<GeneratedSharedIdentityOnlyAsset, Long> {
+    GeneratedSharedIdentityOnlyAsset update(GeneratedSharedIdentityOnlyAsset entity);
+}
+
+@MappedEntity("generated_shared_identity_only_asset")
+class GeneratedSharedIdentityOnlyAsset {
+    // Deliberately has no mutable scalar property: the shared relation is the only update candidate.
+    @Id
+    @GeneratedValue
+    @MappedProperty("asset_id")
+    private Long assetId;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "asset_id", referencedColumnName = "metadata_id")
+    private GeneratedSharedIdentityOnlyMetadata metadata;
+
+    Long getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    GeneratedSharedIdentityOnlyMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(GeneratedSharedIdentityOnlyMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("generated_shared_identity_only_metadata")
+class GeneratedSharedIdentityOnlyMetadata {
+    @Id
+    @GeneratedValue
+    @MappedProperty("metadata_id")
+    private Long metadataId;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        // The identity assignment is the existing no-op fallback that keeps generated entity updates valid.
+        getQuery(method) == 'UPDATE `generated_shared_identity_only_asset` SET `asset_id`=? WHERE (`asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["assetId", "assetId"] as String[]
+    }
+
+    void "shared identity only composite entity update binds each identity column"() {
+        given:
+        def repository = buildRepository('test.CompositeSharedIdentityOnlyAssetRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+import java.util.UUID;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface CompositeSharedIdentityOnlyAssetRepository extends GenericRepository<CompositeSharedIdentityOnlyAsset, CompositeSharedIdentityOnlyId> {
+    CompositeSharedIdentityOnlyAsset update(CompositeSharedIdentityOnlyAsset entity);
+}
+
+@Embeddable
+class CompositeSharedIdentityOnlyId {
+    @MappedProperty("container_id")
+    private UUID containerId;
+
+    @MappedProperty("asset_id")
+    private Integer assetId;
+
+    UUID getContainerId() {
+        return containerId;
+    }
+
+    void setContainerId(UUID containerId) {
+        this.containerId = containerId;
+    }
+
+    Integer getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Integer assetId) {
+        this.assetId = assetId;
+    }
+}
+
+@MappedEntity("composite_shared_identity_only_asset")
+class CompositeSharedIdentityOnlyAsset {
+    @EmbeddedId
+    private CompositeSharedIdentityOnlyId id;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "container_id", referencedColumnName = "container_id")
+    @JoinColumn(name = "asset_id", referencedColumnName = "asset_id")
+    private CompositeSharedIdentityOnlyMetadata metadata;
+
+    CompositeSharedIdentityOnlyId getId() {
+        return id;
+    }
+
+    void setId(CompositeSharedIdentityOnlyId id) {
+        this.id = id;
+    }
+
+    CompositeSharedIdentityOnlyMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(CompositeSharedIdentityOnlyMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("composite_shared_identity_only_metadata")
+class CompositeSharedIdentityOnlyMetadata {
+    @EmbeddedId
+    private CompositeSharedIdentityOnlyMetadataId metadataKey;
+
+    CompositeSharedIdentityOnlyMetadataId getMetadataKey() {
+        return metadataKey;
+    }
+
+    void setMetadataKey(CompositeSharedIdentityOnlyMetadataId metadataKey) {
+        this.metadataKey = metadataKey;
+    }
+}
+
+@Embeddable
+class CompositeSharedIdentityOnlyMetadataId {
+    @MappedProperty("container_id")
+    private UUID metadataContainer;
+
+    @MappedProperty("asset_id")
+    private Integer metadataAsset;
+
+    UUID getMetadataContainer() {
+        return metadataContainer;
+    }
+
+    void setMetadataContainer(UUID metadataContainer) {
+        this.metadataContainer = metadataContainer;
+    }
+
+    Integer getMetadataAsset() {
+        return metadataAsset;
+    }
+
+    void setMetadataAsset(Integer metadataAsset) {
+        this.metadataAsset = metadataAsset;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE `composite_shared_identity_only_asset` SET `container_id`=?,`asset_id`=? WHERE (`container_id` = ? AND `asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["id.containerId", "id.assetId", "id.containerId", "id.assetId"] as String[]
+    }
+
+    void "shared identity update resolves omitted referenced column name"() {
+        given:
+        def repository = buildRepository('test.OmittedReferencedColumnSharedIdentityAssetRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface OmittedReferencedColumnSharedIdentityAssetRepository extends GenericRepository<OmittedReferencedColumnSharedIdentityAsset, Long> {
+    OmittedReferencedColumnSharedIdentityAsset update(OmittedReferencedColumnSharedIdentityAsset entity);
+}
+
+@MappedEntity("omitted_referenced_column_shared_identity_asset")
+class OmittedReferencedColumnSharedIdentityAsset {
+    @Id
+    @MappedProperty("asset_id")
+    private Long assetId;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "asset_id", referencedColumnName = "")
+    private OmittedReferencedColumnSharedIdentityMetadata metadata;
+
+    Long getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    OmittedReferencedColumnSharedIdentityMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(OmittedReferencedColumnSharedIdentityMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("omitted_referenced_column_shared_identity_metadata")
+class OmittedReferencedColumnSharedIdentityMetadata {
+    @Id
+    @MappedProperty("metadata_id")
+    private Long metadataId;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE `omitted_referenced_column_shared_identity_asset` SET `asset_id`=? WHERE (`asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["assetId", "assetId"] as String[]
+    }
+
+    void "blank join column name falls back to derived naming"() {
+        given:
+        def repository = buildRepository('test.BlankJoinColumnNameAssetRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface BlankJoinColumnNameAssetRepository extends GenericRepository<BlankJoinColumnNameAsset, Long> {
+    BlankJoinColumnNameAsset update(BlankJoinColumnNameAsset entity);
+}
+
+@MappedEntity("blank_join_column_name_asset")
+class BlankJoinColumnNameAsset {
+    @Id
+    @MappedProperty("asset_id")
+    private Long assetId;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "", referencedColumnName = "metadata_id")
+    private BlankJoinColumnNameMetadata metadata;
+
+    private String title;
+
+    Long getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    BlankJoinColumnNameMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(BlankJoinColumnNameMetadata metadata) {
+        this.metadata = metadata;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+}
+
+@MappedEntity("blank_join_column_name_metadata")
+class BlankJoinColumnNameMetadata {
+    @Id
+    @MappedProperty("metadata_id")
+    private Long metadataId;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE `blank_join_column_name_asset` SET `metadata_id`=?,`title`=? WHERE (`asset_id` = ?)'
+        getParameterPropertyPaths(method) == ["metadata.metadataId", "title", "assetId"] as String[]
+    }
+
     void "test build update by ID"() {
         given:
         def repository = buildRepository('test.PersonRepository', """
