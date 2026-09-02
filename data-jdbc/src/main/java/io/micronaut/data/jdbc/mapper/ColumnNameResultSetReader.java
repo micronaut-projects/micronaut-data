@@ -41,6 +41,7 @@ import java.util.Date;
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
     private final ConversionService conversionService;
+    private final ColumnIndexResultSetReader columnIndexReader;
 
     public ColumnNameResultSetReader() {
         this(null);
@@ -55,11 +56,27 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     public ColumnNameResultSetReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+        this.columnIndexReader = new ColumnIndexResultSetReader(conversionService);
     }
 
     @Override
     public ConversionService getConversionService() {
         return conversionService;
+    }
+
+    @Override
+    public int findColumnIndex(ResultSet resultSet, String columnName) {
+        try {
+            return resultSet.findColumn(columnName);
+        } catch (SQLException e) {
+            // The column is missing or the driver cannot resolve it, the caller keeps reading by name
+            return -1;
+        }
+    }
+
+    @Override
+    public ResultReader<ResultSet, Integer> getColumnIndexReader() {
+        return columnIndexReader;
     }
 
     @Nullable
