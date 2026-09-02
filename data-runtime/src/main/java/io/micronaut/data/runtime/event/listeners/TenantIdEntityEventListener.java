@@ -26,6 +26,7 @@ import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.event.UpsertEntityEventListener;
 import io.micronaut.data.runtime.multitenancy.TenantResolver;
 import jakarta.inject.Singleton;
 
@@ -41,7 +42,7 @@ import java.util.function.Predicate;
  */
 @Requires(beans = TenantResolver.class)
 @Singleton
-public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<TenantId> {
+public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<TenantId>, UpsertEntityEventListener<Object> {
 
     private final TenantResolver tenantResolver;
     private final DataConversionService conversionService;
@@ -74,11 +75,21 @@ public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListene
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
+        populateTenantId(context);
+        return true;
+    }
+
+    @Override
+    public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+        populateTenantId(context);
+    }
+
+    private void populateTenantId(EntityEventContext<Object> context) {
         for (RuntimePersistentProperty<Object> property : getApplicableProperties(context)) {
             if (property.getAnnotationMetadata().hasStereotype(TenantId.class)) {
                 if (property.getProperty().get(context.getEntity()) != null) {
                     // Skip existing value
-                    return true;
+                    return;
                 }
                 Argument<Object> argument = property.getArgument();
                 Object newValue = tenantResolver.resolveTenantIdentifier();
@@ -89,7 +100,6 @@ public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListene
                 break;
             }
         }
-        return true;
     }
 
     @Override

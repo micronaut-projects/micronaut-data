@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.tck.jdbc.entities.upsert;
 
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.TenantId;
 import jakarta.persistence.Id;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostUpdate;
@@ -28,6 +30,7 @@ import jakarta.persistence.Transient;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @MappedEntity("auto_populated_upsert")
 public class AutoPopulatedUpsertEntity {
@@ -42,6 +45,12 @@ public class AutoPopulatedUpsertEntity {
 
     @DateUpdated
     private LocalDateTime updated;
+
+    @TenantId
+    private String tenantId;
+
+    @AutoPopulated
+    private UUID requestId;
 
     @Nullable
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.UPDATE)
@@ -117,6 +126,22 @@ public class AutoPopulatedUpsertEntity {
 
     public void setUpdated(LocalDateTime updated) {
         this.updated = updated;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public UUID getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(UUID requestId) {
+        this.requestId = requestId;
     }
 
     @Nullable

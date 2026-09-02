@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.event.UpsertEntityEventListener;
 
 import jakarta.inject.Singleton;
 
@@ -37,7 +38,7 @@ import java.util.function.Predicate;
  * @since 2.3.0
  */
 @Singleton
-public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener {
+public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener implements UpsertEntityEventListener<Object> {
 
     private static final Predicate<RuntimePersistentProperty<Object>> UUID_PREDICATE = p -> p.getType() == UUID.class;
 
@@ -55,6 +56,16 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
+        populateUuids(context);
+        return true;
+    }
+
+    @Override
+    public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+        populateUuids(context);
+    }
+
+    private void populateUuids(EntityEventContext<Object> context) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
         final Object entity = context.getEntity();
@@ -90,7 +101,6 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             }
         });
 
-        return true;
     }
 
     private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity) {

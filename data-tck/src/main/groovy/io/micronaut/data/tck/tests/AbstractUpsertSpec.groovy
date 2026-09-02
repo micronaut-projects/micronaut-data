@@ -50,7 +50,7 @@ abstract class AbstractUpsertSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    ApplicationContext context = ApplicationContext.run(properties + ['test.upsert.tenant.enabled': 'true'])
 
     ApplicationContext getApplicationContext() {
         return context
@@ -68,7 +68,7 @@ abstract class AbstractUpsertSpec extends Specification {
     protected void cleanupAdditionalRepositories() {
     }
 
-    void "upsert populates auto-populated timestamps on insert"() {
+    void "upsert prepares auto-populated properties, cascades updates, and invokes update lifecycle"() {
         given:
         ProductReview review = productReviewRepository.save(new ProductReview(100L, "initial title", "initial content"))
         review.setTitle("updated title")
@@ -84,15 +84,19 @@ abstract class AbstractUpsertSpec extends Specification {
         then:
         entity.created != null
         entity.updated != null
+        entity.tenantId == "upsert-tenant"
+        entity.requestId != null
         entity.prePersistCalls == 0
         entity.preUpdateCalls == 1
         entity.postPersistCalls == 0
         entity.postUpdateCalls == 1
         persistedEntity.review.id == 100L
+        persistedEntity.tenantId == "upsert-tenant"
+        persistedEntity.requestId == entity.requestId
         assertProductReview(cascadedReview, new ProductReview(100L, "updated title", "updated content"))
     }
 
-    void "numeric upsert return reports one affected entity"() {
+    void "numeric upsert return reports affected row count"() {
         given:
         CustomerProfile profile = new CustomerProfile("count@example.com", "initial")
 
@@ -140,7 +144,9 @@ abstract class AbstractUpsertSpec extends Specification {
         given:
         autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
         LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).get().created
+        UUID requestId = autoPopulatedUpsertRepository.findById(1L).get().requestId
         AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified")
+        replacement.tenantId = "another-tenant"
 
         when:
         autoPopulatedUpsertRepository.upsert(replacement)
@@ -150,6 +156,9 @@ abstract class AbstractUpsertSpec extends Specification {
         created != null
         found.created == created
         found.updated != null
+        found.tenantId == "upsert-tenant"
+        found.requestId != null
+        found.requestId != requestId
     }
 
     void "#methodName inserts and updates product review by assigned ID"() {
