@@ -184,17 +184,18 @@ final class SqlUpsertQueryBuilder {
         NamingStrategy namingStrategy = sqlQueryBuilder.getNamingStrategy(entity);
         UpsertDataBuilder data = new UpsertDataBuilder(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
+        UpsertColumnContext columnContext = new UpsertColumnContext(namingStrategy, escape, conflictPropertyPaths);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                     return;
                 }
-                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), namingStrategy, associations, property, escape, false, conflictPropertyPaths);
+                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), columnContext, associations, property, false);
             });
         }
 
-        addIdentityUpsertColumns(entity, conflictProperties.isEmpty(), data, namingStrategy, escape, conflictPropertyPaths);
+        addIdentityUpsertColumns(entity, conflictProperties.isEmpty(), data, columnContext);
 
         if (data.columns().isEmpty()) {
             throw new IllegalStateException("Upsert requires at least one bindable column for entity: " + entity.getName());
@@ -208,9 +209,7 @@ final class SqlUpsertQueryBuilder {
     private void addIdentityUpsertColumns(PersistentEntity entity,
                                           boolean identityConflict,
                                           UpsertDataBuilder data,
-                                          NamingStrategy namingStrategy,
-                                          boolean escape,
-                                          List<String> conflictPropertyPaths) {
+                                          UpsertColumnContext columnContext) {
         for (PersistentProperty identity : entity.getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
@@ -223,11 +222,11 @@ final class SqlUpsertQueryBuilder {
                             sqlQueryBuilder.getUnescapedTableName(entity),
                             property
                         );
-                        addGeneratedUpsertColumn(data.columns(), namingStrategy, associations, property, escape, true, conflictPropertyPaths, sequence);
+                        addGeneratedUpsertColumn(data.columns(), columnContext, associations, property, true, sequence);
                     }
                     return;
                 }
-                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), namingStrategy, associations, property, escape, true, conflictPropertyPaths);
+                addUpsertColumn(data.columns(), data.values(), data.parameterBindings(), columnContext, associations, property, true);
             });
         }
     }
@@ -237,22 +236,25 @@ final class SqlUpsertQueryBuilder {
                                      List<QueryParameterBinding> parameterBindings) {
     }
 
+    private record UpsertColumnContext(NamingStrategy namingStrategy,
+                                       boolean escape,
+                                       List<String> conflictPropertyPaths) {
+    }
+
     private void addUpsertColumn(List<UpsertColumn> columns,
                                  List<String> values,
                                  List<QueryParameterBinding> parameterBindings,
-                                 NamingStrategy namingStrategy,
+                                 UpsertColumnContext columnContext,
                                  List<Association> associations,
                                  PersistentProperty property,
-                                 boolean escape,
-                                 boolean identity,
-                                 List<String> conflictPropertyPaths) {
+                                 boolean identity) {
         sqlQueryBuilder.addWriteExpression(values, property);
         String key = String.valueOf(values.size());
         String[] path = sqlQueryBuilder.asStringPath(associations, property);
         parameterBindings.add(sqlQueryBuilder.createParameterBinding(key, property, path));
 
-        String columnName = sqlQueryBuilder.getMappedName(namingStrategy, associations, property);
-        if (escape) {
+        String columnName = sqlQueryBuilder.getMappedName(columnContext.namingStrategy(), associations, property);
+        if (columnContext.escape()) {
             columnName = sqlQueryBuilder.quote(columnName);
         }
 
@@ -264,21 +266,19 @@ final class SqlUpsertQueryBuilder {
             property,
             List.of(path),
             identity,
-            conflictPropertyPaths.contains(toPathString(path)));
+            columnContext.conflictPropertyPaths().contains(toPathString(path)));
         columns.add(column);
     }
 
     private void addGeneratedUpsertColumn(List<UpsertColumn> columns,
-                                          NamingStrategy namingStrategy,
+                                          UpsertColumnContext columnContext,
                                           List<Association> associations,
                                           PersistentProperty property,
-                                          boolean escape,
                                           boolean identity,
-                                          List<String> conflictPropertyPaths,
                                           String value) {
         String[] path = sqlQueryBuilder.asStringPath(associations, property);
-        String columnName = sqlQueryBuilder.getMappedName(namingStrategy, associations, property);
-        if (escape) {
+        String columnName = sqlQueryBuilder.getMappedName(columnContext.namingStrategy(), associations, property);
+        if (columnContext.escape()) {
             columnName = sqlQueryBuilder.quote(columnName);
         }
 
@@ -290,7 +290,7 @@ final class SqlUpsertQueryBuilder {
             property,
             List.of(path),
             identity,
-            conflictPropertyPaths.contains(toPathString(path)));
+            columnContext.conflictPropertyPaths().contains(toPathString(path)));
         columns.add(column);
     }
 
