@@ -34,6 +34,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -142,36 +143,51 @@ final class SqlQueryBuilderUtils {
     static boolean isExplicitSharedIdentityJoinColumn(List<Association> associations,
                                                       PersistentProperty property,
                                                       String columnName) {
-        Association foreignAssociation = null;
-        for (Association association : associations) {
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                foreignAssociation = association;
-                break;
-            }
-        }
+        Association foreignAssociation = findForeignAssociation(associations);
         if (foreignAssociation == null || foreignAssociation.isForeignKey()) {
             return false;
         }
         AnnotationValue<JoinColumns> joinColumns = foreignAssociation.getAnnotationMetadata().getAnnotation(JoinColumns.class);
-        if (joinColumns == null) {
-            return false;
+        return joinColumns != null && hasMatchingJoinColumn(joinColumns, foreignAssociation, property, columnName);
+    }
+
+    private static @Nullable Association findForeignAssociation(List<Association> associations) {
+        for (Association association : associations) {
+            if (association.getKind() != Relation.Kind.EMBEDDED) {
+                return association;
+            }
         }
+        return null;
+    }
+
+    private static boolean hasMatchingJoinColumn(AnnotationValue<JoinColumns> joinColumns,
+                                                 Association foreignAssociation,
+                                                 PersistentProperty property,
+                                                 String columnName) {
         for (AnnotationValue<?> joinColumn : joinColumns.getAnnotations(AnnotationMetadata.VALUE_MEMBER)) {
-            String name = joinColumn.stringValue("name").orElse(null);
-            String referencedColumnName = joinColumn.stringValue("referencedColumnName").orElse(null);
-            if (name != null && name.isBlank()) {
-                name = null;
-            }
-            if (referencedColumnName != null && referencedColumnName.isBlank()) {
-                referencedColumnName = null;
-            }
-            if (columnName.equals(name) && (property.getPersistedName().equals(referencedColumnName)
-                || (referencedColumnName == null
-                && PersistentEntityUtils.isImplicitIdentityProperty(foreignAssociation.getAssociatedEntity(), property, name)))) {
+            if (isMatchingJoinColumn(joinColumn, foreignAssociation, property, columnName)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isMatchingJoinColumn(AnnotationValue<?> joinColumn,
+                                                Association foreignAssociation,
+                                                PersistentProperty property,
+                                                String columnName) {
+        String name = normalizeJoinColumnValue(joinColumn.stringValue("name").orElse(null));
+        if (!columnName.equals(name)) {
+            return false;
+        }
+        String referencedColumnName = normalizeJoinColumnValue(joinColumn.stringValue("referencedColumnName").orElse(null));
+        return property.getPersistedName().equals(referencedColumnName)
+            || (referencedColumnName == null
+            && PersistentEntityUtils.isImplicitIdentityProperty(foreignAssociation.getAssociatedEntity(), property, name));
+    }
+
+    private static @Nullable String normalizeJoinColumnValue(@Nullable String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     /**
