@@ -100,6 +100,8 @@ class PostgresOneToOneSharedSequenceIdentitySpec extends Specification implement
                     }
                     .then()
             },
+            Connection::close,
+            { Connection connection, Throwable throwable -> connection.close() },
             Connection::close
         ).block(BLOCK_TIMEOUT)
     }

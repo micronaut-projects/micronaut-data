@@ -217,9 +217,8 @@ final class SqlQueryBuilderUtils {
     static Set<String> getIdentityColumns(PersistentEntity entity, NamingStrategy namingStrategy) {
         Set<String> identityColumns = new HashSet<>();
         for (PersistentProperty identity : entity.getIdentityProperties()) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                identityColumns.add(namingStrategy.mappedName(associations, property));
-            });
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity,
+                (associations, property) -> identityColumns.add(namingStrategy.mappedName(associations, property)));
         }
         return identityColumns;
     }

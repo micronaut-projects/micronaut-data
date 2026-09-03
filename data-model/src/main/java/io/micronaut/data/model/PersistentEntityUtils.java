@@ -166,11 +166,7 @@ public final class PersistentEntityUtils {
                                                      @Nullable String joinColumnName) {
         IdentityPropertyInfo identityPropertyInfo;
         synchronized (IDENTITY_PROPERTY_INFO) {
-            identityPropertyInfo = IDENTITY_PROPERTY_INFO.get(entity);
-            if (identityPropertyInfo == null) {
-                identityPropertyInfo = resolveIdentityPropertyInfo(entity);
-                IDENTITY_PROPERTY_INFO.put(entity, identityPropertyInfo);
-            }
+            identityPropertyInfo = IDENTITY_PROPERTY_INFO.computeIfAbsent(entity, PersistentEntityUtils::resolveIdentityPropertyInfo);
         }
         return identityPropertyInfo.properties().contains(new IdentityPropertyKey(property.getOwner().getName(), property.getName()))
             && (identityPropertyInfo.count() == 1
