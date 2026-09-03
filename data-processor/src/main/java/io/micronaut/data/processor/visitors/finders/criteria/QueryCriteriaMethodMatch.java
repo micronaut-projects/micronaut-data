@@ -118,26 +118,25 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
         SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
         // Predicates, projections, and ordering can introduce joins in addition to explicit @Join specifications.
-        PersistentEntityCriteriaQuery<Object> criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
-        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, criteriaQuery)) {
+        PersistentEntityCriteriaQuery<Object> defaultQuery = createDefaultQuery(matchContext, cb, joinSpecs);
+        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, defaultQuery)) {
             int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
-            PersistentEntityRoot<?> analyzedRoot = (PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next();
-            criteriaQuery = createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedRoot, pageableParameterIndex);
-        } else {
-            if (isPageable) {
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
-            } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
-                Element sortParameter = matchContext.findParameterInRole(TypeRole.SORT);
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(sortParameter), TypeRole.SORT);
-            } else if (matchContext.hasParameterInRole(TypeRole.LIMIT)) {
-                Element limitParameter = matchContext.findParameterInRole(TypeRole.LIMIT);
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
-            }
+            PersistentEntityRoot<?> analyzedRoot = (PersistentEntityRoot<?>) defaultQuery.getRoots().iterator().next();
+            return createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedRoot, pageableParameterIndex);
         }
-        return criteriaQuery;
+        if (isPageable) {
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) defaultQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
+        } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
+            Element sortParameter = matchContext.findParameterInRole(TypeRole.SORT);
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) defaultQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(sortParameter), TypeRole.SORT);
+        } else if (matchContext.hasParameterInRole(TypeRole.LIMIT)) {
+            Element limitParameter = matchContext.findParameterInRole(TypeRole.LIMIT);
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) defaultQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
+        }
+        return defaultQuery;
     }
 
     private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity,
@@ -228,6 +227,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         applyDistinct(mainQuery);
 
+        // Copy non-row-multiplying joins into the pagination subquery so pageable sort paths
+        // resolve against aliases in that scope. Row-multiplying joins remain on the filtered query.
         applyPaginationJoins(analyzedRoot, paginationRoot);
         applyJoinSpecs(filteredRoot, joinSpecs);
         applyJoinSpecs(mainRoot, joinSpecs);

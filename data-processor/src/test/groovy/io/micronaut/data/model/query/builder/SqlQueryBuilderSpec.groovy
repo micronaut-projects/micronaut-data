@@ -1311,6 +1311,7 @@ class LongPostgresAliasEntity {
     String name
 }
 
+// Deliberately under 63 characters but over PostgreSQL's 63-byte UTF-8 identifier limit.
 @MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")
 class MultibytePostgresAliasEntity {
     @Id
