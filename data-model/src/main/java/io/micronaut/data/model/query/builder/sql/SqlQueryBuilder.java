@@ -1573,7 +1573,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         DataType dt = property.getDataType();
         String transformer = getDataTransformerWriteValue(null, property).orElse(null);
         if (transformer != null) {
-            return transformer;
+            StringBuilder transformed = new StringBuilder();
+            appendTransformed(transformed, transformer,
+                () -> transformed.append(formatParameter(parameterIndex).name()));
+            return transformed.toString();
         }
         String param = formatParameter(parameterIndex).name();
         if (dt == DataType.JSON) {
