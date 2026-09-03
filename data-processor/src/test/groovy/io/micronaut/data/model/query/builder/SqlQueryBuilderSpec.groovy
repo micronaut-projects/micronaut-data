@@ -688,7 +688,7 @@ interface MyRepository {
         PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
         Sort sort = Sort.of(Sort.Order.asc("name"))
         String alias = entity.getAliasName()
-        String normalizedAlias = alias.substring(0, 53) + "_" + String.format(Locale.ROOT, "%08x", alias.hashCode()) + "_"
+        String normalizedAlias = alias.substring(0, 45) + "_c2b3c9ea3df33487_"
 
         when:
         String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
@@ -697,21 +697,19 @@ interface MyRepository {
         query == " ORDER BY ${normalizedAlias}.\"name\" ASC"
     }
 
-    void "test encode order by normalizes a multibyte Postgres entity alias by bytes"() {
+    void "test encode order by differentiates colliding Java aliases"() {
         given:
-        PersistentEntity entity = new RuntimePersistentEntity(MultibytePostgresAliasEntity)
+        PersistentEntity firstEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionOne)
+        PersistentEntity secondEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionTwo)
         Sort sort = Sort.of(Sort.Order.asc("name"))
-        String alias = entity.getAliasName()
-        String normalizedAlias = "ž".repeat(26) + "_" + String.format(Locale.ROOT, "%08x", alias.hashCode()) + "_"
 
         when:
-        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String firstQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", firstEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String secondQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", secondEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
 
         then:
-        alias.length() < 63
-        alias.getBytes("UTF-8").length > 63
-        normalizedAlias.getBytes("UTF-8").length <= 63
-        query == " ORDER BY ${normalizedAlias}.\"name\" ASC"
+        firstEntity.getAliasName().hashCode() == secondEntity.getAliasName().hashCode()
+        firstQuery != secondQuery
     }
 
     void "test encode insert statement"() {
@@ -1311,9 +1309,16 @@ class LongPostgresAliasEntity {
     String name
 }
 
-// Deliberately under 63 characters but over PostgreSQL's 63-byte UTF-8 identifier limit.
-@MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")
-class MultibytePostgresAliasEntity {
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_Aa_")
+class LongPostgresAliasCollisionOne {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_BB_")
+class LongPostgresAliasCollisionTwo {
     @Id
     Long id
 

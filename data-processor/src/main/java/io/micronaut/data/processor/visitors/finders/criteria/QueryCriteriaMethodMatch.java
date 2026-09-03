@@ -118,10 +118,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                                                 List<AnnotationValue<Join>> joinSpecs) {
         Element paginationParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);
         boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
-        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
         // Predicates, projections, and ordering can introduce joins in addition to explicit @Join specifications.
         PersistentEntityCriteriaQuery<Object> defaultQuery = createDefaultQuery(matchContext, cb, joinSpecs);
-        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, defaultQuery)) {
+        if (isPageable && isPageableWithJoins(matchContext, defaultQuery)) {
             int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
             PersistentEntityRoot<?> analyzedRoot = (PersistentEntityRoot<?>) defaultQuery.getRoots().iterator().next();
             return createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedRoot, pageableParameterIndex);
@@ -141,9 +140,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return defaultQuery;
     }
 
-    private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity,
-                                        MethodMatchContext matchContext,
+    private boolean isPageableWithJoins(MethodMatchContext matchContext,
                                         PersistentEntityCriteriaQuery<Object> criteriaQuery) {
+        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
         return requiresPaginationSubquery((PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next())
             && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
             // MySQL doesn't support subquery with limits

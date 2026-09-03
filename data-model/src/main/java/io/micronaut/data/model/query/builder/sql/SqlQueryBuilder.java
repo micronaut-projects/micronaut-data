@@ -76,9 +76,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -127,6 +124,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     private static final int MAX_POSTGRES_IDENTIFIER_LENGTH = 63;
+    // FNV-1a 64-bit parameters used to distinguish aliases sharing a truncated prefix.
+    private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
+    private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
 
     private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
 
@@ -261,21 +261,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String normalizeAlias(String alias) {
-        if (dialect == Dialect.POSTGRES && alias.getBytes(StandardCharsets.UTF_8).length > MAX_POSTGRES_IDENTIFIER_LENGTH) {
-            String hash = String.format(Locale.ROOT, "%08x", alias.hashCode());
-            boolean trailingUnderscore = alias.endsWith("_");
-            int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
-            String prefix = truncateToUtf8Bytes(alias, MAX_POSTGRES_IDENTIFIER_LENGTH - reserved);
-            String normalized = prefix + "_" + hash;
-            return trailingUnderscore ? normalized + "_" : normalized;
+        if (dialect != Dialect.POSTGRES || alias.length() <= MAX_POSTGRES_IDENTIFIER_LENGTH) {
+            return alias;
         }
-        return alias;
+        String hash = String.format(Locale.ROOT, "%016x", hashAlias(alias));
+        boolean trailingUnderscore = alias.endsWith("_");
+        int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
+        String prefix = alias.substring(0, MAX_POSTGRES_IDENTIFIER_LENGTH - reserved);
+        String normalized = prefix + "_" + hash;
+        return trailingUnderscore ? normalized + "_" : normalized;
     }
 
-    private static String truncateToUtf8Bytes(String value, int maxBytes) {
-        CharBuffer input = CharBuffer.wrap(value);
-        StandardCharsets.UTF_8.newEncoder().encode(input, ByteBuffer.allocate(maxBytes), true);
-        return value.substring(0, input.position());
+    private static long hashAlias(String value) {
+        long hash = ALIAS_HASH_OFFSET_BASIS;
+        for (int i = 0; i < value.length(); i++) {
+            hash ^= value.charAt(i);
+            hash *= ALIAS_HASH_PRIME;
+        }
+        return hash;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {
