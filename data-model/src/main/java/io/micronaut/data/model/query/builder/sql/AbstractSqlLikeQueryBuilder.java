@@ -1063,7 +1063,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         if (computesPropertyPaths && !jsonEntity && !needsTrimming[0] && generatedEntityUpdate
             && !sharedIdentityUpdateBindings.isEmpty()
-            && appendIdentityUpdateFallback(queryState, getNamingStrategy(entity), sharedIdentityUpdateBindings)) {
+            && appendIdentityUpdateFallback(queryState, namingStrategy, sharedIdentityUpdateBindings)) {
             needsTrimming[0] = true;
         }
         if (needsTrimming[0]) {
