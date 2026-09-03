@@ -279,10 +279,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static int utf8Length(String value) {
         int length = 0;
-        for (int i = 0; i < value.length();) {
+        for (int i = 0; i < value.length(); i = value.offsetByCodePoints(i, 1)) {
             int codePoint = value.codePointAt(i);
             length += utf8CodePointLength(codePoint);
-            i += Character.charCount(codePoint);
         }
         return length;
     }

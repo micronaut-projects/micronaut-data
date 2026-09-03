@@ -153,20 +153,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                                List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);
-            if (path == null) {
-                continue;
-            }
-            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
-            if (propertyPath == null) {
-                // Let applyJoinSpecs report the invalid path while building the regular query.
-                continue;
-            }
-            if (propertyPath.getProperty() instanceof Association association
-                && isRowMultiplyingJoin(association)) {
-                return true;
-            }
-            if (propertyPath.getAssociations().stream().anyMatch(this::isRowMultiplyingJoin)) {
-                return true;
+            if (path != null) {
+                // Invalid paths are left for applyJoinSpecs to report while building the regular query.
+                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+                if (propertyPath != null
+                    && ((propertyPath.getProperty() instanceof Association association
+                    && isRowMultiplyingJoin(association))
+                    || propertyPath.getAssociations().stream().anyMatch(this::isRowMultiplyingJoin))) {
+                    return true;
+                }
             }
         }
         return false;
