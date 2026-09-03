@@ -231,16 +231,6 @@ final class SqlUpsertQueryBuilder {
         }
     }
 
-    private record UpsertDataBuilder(List<UpsertColumn> columns,
-                                     List<String> values,
-                                     List<QueryParameterBinding> parameterBindings) {
-    }
-
-    private record UpsertColumnContext(NamingStrategy namingStrategy,
-                                       boolean escape,
-                                       List<String> conflictPropertyPaths) {
-    }
-
     private void addUpsertColumn(List<UpsertColumn> columns,
                                  List<String> values,
                                  List<QueryParameterBinding> parameterBindings,
@@ -451,6 +441,11 @@ final class SqlUpsertQueryBuilder {
             + CLOSE_BRACKET;
     }
 
+    private record UpsertDataBuilder(List<UpsertColumn> columns,
+                                     List<String> values,
+                                     List<QueryParameterBinding> parameterBindings) {
+    }
+
     private record UpsertData(List<UpsertColumn> columns,
                               List<QueryParameterBinding> parameterBindings) {
 
@@ -498,7 +493,11 @@ final class SqlUpsertQueryBuilder {
                 .filter(UpsertColumn::updatable)
                 .toList();
         }
+    }
 
+    private record UpsertColumnContext(NamingStrategy namingStrategy,
+                                       boolean escape,
+                                       List<String> conflictPropertyPaths) {
     }
 
     private record UpsertColumn(String column,
