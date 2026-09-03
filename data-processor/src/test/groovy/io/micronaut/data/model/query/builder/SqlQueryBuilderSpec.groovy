@@ -20,6 +20,8 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -697,6 +699,22 @@ interface MyRepository {
         query == " ORDER BY ${normalizedAlias}.\"name\" ASC"
     }
 
+    void "test encode order by normalizes a long declared Postgres association alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongDeclaredAssociationAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+        String declaredAlias = entity.getPropertyByName("author").getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        normalizedAlias.length() <= 63
+        normalizedAlias != declaredAlias
+        query.endsWith(".\"name\" ASC")
+    }
+
     void "test encode order by differentiates colliding Java aliases"() {
         given:
         PersistentEntity firstEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionOne)
@@ -1319,6 +1337,24 @@ class LongPostgresAliasCollisionOne {
 
 @MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_BB_")
 class LongPostgresAliasCollisionTwo {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasEntity {
+    @Id
+    Long id
+
+    @MappedProperty(alias = "this_is_an_intentionally_very_long_declared_association_alias_for_sorting_")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasAuthor {
     @Id
     Long id
 
