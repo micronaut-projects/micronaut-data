@@ -154,11 +154,13 @@ class LongJoinAliasAuthor {
         when:
         String query = getQuery(repository.getRequiredMethod("findAll"))
         def joinAliasMatcher = query =~ /JOIN [^ ]+ ([A-Za-z0-9_]+) ON/
-        String normalizedJoinAlias = joinAliasMatcher.find() ? joinAliasMatcher.group(1) : ""
 
         then:
+        joinAliasMatcher.find()
+        String normalizedJoinAlias = joinAliasMatcher.group(1)
         normalizedJoinAlias.length() <= 63
         normalizedJoinAlias != explicitAlias
+        normalizedJoinAlias.startsWith(explicitAlias.substring(0, 20))
         query.contains(" ${normalizedJoinAlias} ON")
     }
 
