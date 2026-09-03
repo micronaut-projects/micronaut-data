@@ -41,7 +41,8 @@ import java.util.function.Consumer;
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor. It
  * tracks accepted tasks so graceful shutdown can reject new work and wait for work already
  * submitted. Inserts and updates reload current entity state by ROWID; deletes are dispatched
- * without entity state because the deleted row can no longer be reloaded.</p>
+ * without entity state because the deleted row can no longer be reloaded. Failures while handling
+ * an individual row are logged and do not prevent later rows from being dispatched.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);

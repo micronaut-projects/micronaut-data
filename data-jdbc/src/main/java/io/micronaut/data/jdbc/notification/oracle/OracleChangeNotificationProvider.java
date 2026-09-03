@@ -43,10 +43,10 @@ import java.util.concurrent.Executor;
  * Oracle implementation of the generic JDBC change-notification provider.
  *
  * <p>This singleton is available only when Oracle JDBC is on the classpath. It recognizes Oracle
- * connections, translates generic listener methods to Oracle definitions, and maintains one
- * {@link OracleChangeNotificationManager} per participating datasource. The provider also
- * aggregates manager shutdown state so Micronaut graceful shutdown waits for all in-flight Oracle
- * notification dispatches.</p>
+ * connections during application startup, translates generic listener methods to Oracle
+ * definitions, and maintains one {@link OracleChangeNotificationManager} per participating
+ * datasource. The provider also aggregates manager shutdown state so Micronaut graceful shutdown
+ * waits for all in-flight Oracle notification dispatches.</p>
  */
 @Singleton
 @Requires(classes = OracleConnection.class)

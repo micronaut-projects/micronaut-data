@@ -23,7 +23,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Internal change event whose entity state is materialized inside the listener AOP invocation.
+ * Internal change event whose entity state is materialized by listener AOP advice immediately
+ * before listener invocation.
  *
  * <p>A failed materialization is not cached, allowing outer retry advice to invoke the loader
  * again. A successful result, including a {@code null} result, is cached so a later listener

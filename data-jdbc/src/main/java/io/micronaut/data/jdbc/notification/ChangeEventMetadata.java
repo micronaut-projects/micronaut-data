@@ -18,6 +18,9 @@ package io.micronaut.data.jdbc.notification;
 /**
  * Marker interface for database-provider-specific change event metadata.
  *
+ * <p>Applications obtain a provider-specific implementation through
+ * {@link ChangeEvent#metadata(Class)}.</p>
+ *
  * @since 5.2.0
  */
 public interface ChangeEventMetadata {

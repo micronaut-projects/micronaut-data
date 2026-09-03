@@ -21,12 +21,12 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 
 /**
- * Compile-time-discovered method annotated with {@code @ChangeListener}.
+ * Executable {@code @ChangeListener} method collected for notification registration.
  *
  * <p>This value preserves the executable method and the bean definition that owns it until the
- * datasource-specific notification provider is resolved at application startup. The entity
- * argument is resolved once from {@code ChangeEvent<E>}; providers translate this generic value
- * to their own listener definition.</p>
+ * datasource-specific notification provider is resolved after application startup. The entity
+ * argument is resolved once from {@code ChangeEvent<E>}; providers translate this generic
+ * description into their own listener definition.</p>
  *
  * @param beanDefinition The bean definition that owns the listener method.
  * @param method The executable listener method.

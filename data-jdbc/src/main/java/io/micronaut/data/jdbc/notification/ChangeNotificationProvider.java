@@ -25,8 +25,9 @@ import java.util.List;
  * Database-specific implementation of JDBC change notifications.
  *
  * <p>Providers are singleton beans selected by {@link ChangeNotificationProviderResolver} from a
- * live datasource connection. A provider translates generic {@link ChangeListenerMethod listener
- * methods} into database-specific registrations and owns their lifecycle.</p>
+ * live datasource connection during application startup. A provider translates generic
+ * {@link ChangeListenerMethod listener methods} into database-specific registrations and manages
+ * their lifecycle.</p>
  */
 @Internal
 public interface ChangeNotificationProvider {

@@ -21,7 +21,7 @@ import io.micronaut.inject.ExecutableMethod;
 import java.util.Properties;
 
 /**
- * Immutable Oracle-specific runtime definition for one {@code @ChangeListener} method.
+ * Oracle-specific runtime definition for one {@code @ChangeListener} method.
  *
  * <p>The definition combines the method to invoke, the Oracle registration query and properties,
  * and the ROWID reload query used to obtain the changed entity before dispatch.</p>

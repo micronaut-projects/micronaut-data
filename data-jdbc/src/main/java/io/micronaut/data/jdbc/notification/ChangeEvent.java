@@ -20,9 +20,9 @@ import java.util.Optional;
 /**
  * A database change notification for a persistent entity type.
  *
- * <p>Entity state is optional. When present, it is the state reloaded while processing the
- * notification and is not guaranteed to be a historical snapshot from the exact change instant.
- * For example, a deleted row cannot be reloaded.</p>
+ * <p>Entity state is optional. When available, it is reloaded while the notification is processed,
+ * rather than being a historical snapshot from the instant of the database change. For example,
+ * a deleted row cannot be reloaded.</p>
  *
  * @param <E> The persistent entity type.
  * @since 5.2.0
@@ -30,11 +30,15 @@ import java.util.Optional;
 public interface ChangeEvent<E> {
 
     /**
+     * Returns the operation reported by the notification provider.
+     *
      * @return The reported change operation.
      */
     ChangeOperation operation();
 
     /**
+     * Returns the entity state reloaded for this event, when it is available.
+     *
      * @return The reloaded entity, or empty when no entity state is available.
      */
     Optional<E> entity();

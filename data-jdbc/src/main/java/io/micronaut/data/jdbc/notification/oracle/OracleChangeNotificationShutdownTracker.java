@@ -22,7 +22,7 @@ import java.util.concurrent.CompletionStage;
 /**
  * Coordinates Oracle notification dispatch tasks during graceful shutdown.
  *
- * <p>Once shutdown begins, no new task may start. The completion stage completes after every
+ * <p>Once shutdown begins, no new task is accepted. The completion stage completes after every
  * task accepted before shutdown has finished, allowing the provider to report and await its
  * remaining work.</p>
  */

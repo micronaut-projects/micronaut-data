@@ -27,9 +27,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * Materializes provider-deferred entity state immediately before invoking a change listener.
  *
- * <p>The interceptor runs inside Micronaut's retry phase. Consequently, a loader failure reaches
- * the retry interceptor without invoking the listener, while a successfully materialized event is
- * reused if the listener itself subsequently fails and is retried.</p>
+ * <p>The interceptor is ordered immediately inside Micronaut's retry advice. Consequently, a
+ * loader failure reaches the retry interceptor without invoking the listener, while a successfully
+ * materialized event is reused if the listener itself subsequently fails and is retried.</p>
  */
 @Internal
 @Singleton

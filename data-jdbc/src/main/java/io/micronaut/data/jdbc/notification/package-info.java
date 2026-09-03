@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * JDBC database change notification APIs and infrastructure.
+ * JDBC database change-notification APIs and internal runtime infrastructure.
  */
 @NullMarked
 package io.micronaut.data.jdbc.notification;

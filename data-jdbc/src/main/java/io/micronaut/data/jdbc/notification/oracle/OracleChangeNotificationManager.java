@@ -45,10 +45,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>It registers definitions after application startup, keeps the live registrations available
  * for cleanup, and coordinates their dispatch tasks with graceful shutdown. The manager starts at
  * most once. Registration startup is atomic: if one definition fails, registrations completed
- * during that start attempt are unregistered before the original failure is propagated. Stopping
- * first rejects new tasks,
- * unregisters every live Oracle registration once, then completes after any already-submitted
- * dispatch task finishes.</p>
+ * during that start attempt are unregistered before the failure is propagated. Stopping first
+ * rejects new tasks, unregisters every live Oracle registration once, then completes after any
+ * already-submitted dispatch task finishes.</p>
  */
 final class OracleChangeNotificationManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationManager.class);

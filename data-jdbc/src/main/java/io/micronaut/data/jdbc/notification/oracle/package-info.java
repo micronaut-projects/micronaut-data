@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Oracle Continuous Query Notification support.
+ * Oracle Continuous Query Notification provider implementation and infrastructure.
  */
 @NullMarked
 package io.micronaut.data.jdbc.notification.oracle;

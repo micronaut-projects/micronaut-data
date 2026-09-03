@@ -34,7 +34,7 @@ import java.util.List;
  * Reloads a changed entity by its Oracle {@code ROWID}.
  *
  * <p>Oracle notifications identify changed rows by ROWID rather than supplying entity state. The
- * loader creates one immutable SQL query template containing the entity metadata and query
+ * loader caches one immutable stored-query template containing the entity metadata and ROWID
  * binding descriptor. Each reload creates a short-lived prepared query that supplies only the
  * notification-specific ROWID, allowing the template to be safely shared by concurrent dispatch
  * tasks.</p>

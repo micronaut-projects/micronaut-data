@@ -29,11 +29,11 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Converts a discovered listener method into a validated Oracle notification definition.
+ * Creates an Oracle notification definition from a discovered listener method.
  *
  * <p>The generic processor has already selected the datasource and resolved the persistent entity
  * argument. This factory consumes the compile-time generated Oracle ROWID query and applies the
- * Oracle registration configuration.</p>
+ * Oracle registration configuration as a runtime defensive check.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;

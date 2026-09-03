@@ -22,7 +22,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Default immutable change event used by database notification providers.
+ * Default immutable change event used by database notification providers when entity state is
+ * already available, or is intentionally unavailable.
  *
  * @param <E> The persistent entity type.
  */
@@ -32,6 +33,13 @@ public final class DefaultChangeEvent<E> implements ChangeEvent<E> {
     private final @Nullable E entity;
     private final @Nullable ChangeEventMetadata metadata;
 
+    /**
+     * Creates a change event.
+     *
+     * @param operation The operation reported by the notification provider.
+     * @param entity The reloaded entity, or {@code null} when no entity state is available.
+     * @param metadata Provider-specific event metadata, or {@code null} when none is available.
+     */
     public DefaultChangeEvent(ChangeOperation operation,
                               @Nullable E entity,
                               @Nullable ChangeEventMetadata metadata) {
