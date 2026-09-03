@@ -151,7 +151,6 @@ abstract class AbstractUpsertSpec extends Specification {
         LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).get().created
         UUID requestId = autoPopulatedUpsertRepository.findById(1L).get().requestId
         AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified")
-        replacement.tenantId = "another-tenant"
         dateTimeProvider.setValue(OffsetDateTime.of(2026, 1, 2, 12, 0, 0, 0, ZoneOffset.UTC))
 
         when:
@@ -164,9 +163,27 @@ abstract class AbstractUpsertSpec extends Specification {
         replacement.created != created
         replacement.created != found.created
         found.updated != null
-        found.tenantId == "another-tenant"
+        found.tenantId == "upsert-tenant"
         found.requestId != null
         found.requestId != requestId
+    }
+
+    void "upsert updates tenant ID when supplied"() {
+        given:
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
+        AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified")
+        replacement.tenantId = "another-tenant"
+
+        when:
+        autoPopulatedUpsertRepository.upsert(replacement)
+
+        then:
+        autoPopulatedUpsertRepository.findById(1L).empty
+        AutoPopulatedUpsertEntity moved = autoPopulatedUpsertRepository
+            .findByIdAndTenantId(1L, "another-tenant")
+            .get()
+        moved.tenantId == "another-tenant"
+        moved.name == "modified"
     }
 
     void "#methodName inserts and updates product review by assigned ID"() {

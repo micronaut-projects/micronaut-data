@@ -15,14 +15,19 @@
  */
 package io.micronaut.data.tck.repositories.upsert;
 
+import io.micronaut.data.annotation.WithoutTenantId;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AutoPopulatedUpsertRepository extends CrudRepository<AutoPopulatedUpsertEntity, Long> {
 
     AutoPopulatedUpsertEntity upsert(AutoPopulatedUpsertEntity entity);
 
     List<AutoPopulatedUpsertEntity> upsertAll(Iterable<AutoPopulatedUpsertEntity> entities);
+
+    @WithoutTenantId
+    Optional<AutoPopulatedUpsertEntity> findByIdAndTenantId(Long id, String tenantId);
 }
