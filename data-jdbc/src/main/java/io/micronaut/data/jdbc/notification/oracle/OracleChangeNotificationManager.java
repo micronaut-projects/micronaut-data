@@ -27,10 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -45,9 +43,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * instances rather than representing a single Oracle registration.</p>
  *
  * <p>It registers definitions after application startup, keeps the live registrations available
- * for cleanup, and coordinates their dispatch tasks with graceful shutdown. Registration startup
- * is atomic: if one definition fails, registrations completed during that start attempt are
- * unregistered before the original failure is propagated. Stopping first rejects new tasks,
+ * for cleanup, and coordinates their dispatch tasks with graceful shutdown. The manager starts at
+ * most once. Registration startup is atomic: if one definition fails, registrations completed
+ * during that start attempt are unregistered before the original failure is propagated. Stopping
+ * first rejects new tasks,
  * unregisters every live Oracle registration once, then completes after any already-submitted
  * dispatch task finishes.</p>
  */
@@ -61,6 +60,7 @@ final class OracleChangeNotificationManager {
     private final List<OracleChangeListenerDefinition> definitions = new CopyOnWriteArrayList<>();
     private final List<DatabaseChangeRegistration> registrations = new CopyOnWriteArrayList<>();
     private final OracleChangeNotificationShutdownTracker shutdownTracker = new OracleChangeNotificationShutdownTracker();
+    private final AtomicBoolean started = new AtomicBoolean();
     private final AtomicBoolean registrationsClosed = new AtomicBoolean();
 
     OracleChangeNotificationManager(String dataSourceName,
@@ -78,21 +78,20 @@ final class OracleChangeNotificationManager {
     }
 
     void start() {
-        if (shutdownTracker.isShutdownStarted()) {
+        if (shutdownTracker.isShutdownStarted() || !started.compareAndSet(false, true)) {
             return;
         }
-        List<DatabaseChangeRegistration> startedRegistrations = new ArrayList<>(definitions.size());
         try {
             for (OracleChangeListenerDefinition definition : definitions) {
                 try {
-                    startedRegistrations.add(register(definition));
+                    register(definition);
                 } catch (RuntimeException e) {
                     throw new DataAccessException("Unable to register Oracle query notification for datasource ["
                         + dataSourceName + "] and listener method [" + definition.method().getDescription(true) + "]", e);
                 }
             }
         } catch (RuntimeException | Error registrationFailure) {
-            rollback(startedRegistrations, registrationFailure);
+            rollback(registrationFailure);
             throw registrationFailure;
         }
     }
@@ -110,28 +109,27 @@ final class OracleChangeNotificationManager {
     private DatabaseChangeRegistration register(OracleChangeListenerDefinition definition) {
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
-            Properties properties = new Properties();
-            properties.putAll(definition.registrationProperties());
-            DatabaseChangeRegistration newRegistration = oracleConnection.registerDatabaseChangeNotification(properties);
+            DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(
+                definition.registrationProperties());
             try {
-                newRegistration.addListener(new OracleChangeNotificationDispatcher(
-                    definition, newRegistration, beanContext, blockingExecutor,
+                registration.addListener(new OracleChangeNotificationDispatcher(
+                    definition, registration, beanContext, blockingExecutor,
                     shutdownTracker, registrations::remove
                 ));
-                registrations.add(newRegistration);
+                registrations.add(registration);
                 try (Statement statement = connection.createStatement()) {
-                    statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(newRegistration);
+                    statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
                         // Executing the statement associates its query and tables with the registration.
                         LOG.trace("Associated Oracle change notification registration [{}] with query",
-                            newRegistration.getRegId());
+                            registration.getRegId());
                     }
                 }
-                return newRegistration;
+                return registration;
             } catch (SQLException | RuntimeException e) {
-                registrations.remove(newRegistration);
+                registrations.remove(registration);
                 try {
-                    oracleConnection.unregisterDatabaseChangeNotification(newRegistration);
+                    oracleConnection.unregisterDatabaseChangeNotification(registration);
                 } catch (SQLException | RuntimeException cleanupException) {
                     e.addSuppressed(cleanupException);
                 }
@@ -140,9 +138,10 @@ final class OracleChangeNotificationManager {
         });
     }
 
-    private void rollback(List<DatabaseChangeRegistration> startedRegistrations, Throwable registrationFailure) {
-        for (int i = startedRegistrations.size() - 1; i >= 0; i--) {
-            DatabaseChangeRegistration registration = startedRegistrations.get(i);
+    private void rollback(Throwable registrationFailure) {
+        DatabaseChangeRegistration[] registrationsToRollback = registrations.toArray(DatabaseChangeRegistration[]::new);
+        for (int i = registrationsToRollback.length - 1; i >= 0; i--) {
+            DatabaseChangeRegistration registration = registrationsToRollback[i];
             try {
                 unregister(registration);
                 registrations.remove(registration);

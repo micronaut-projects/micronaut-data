@@ -33,18 +33,23 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Discovers {@link ChangeListener} methods for one datasource and delegates them to the matching
- * database notification provider.
+ * Discovers {@link ChangeListener} methods and delegates their registration to a database
+ * notification provider.
  *
- * <p>A processor is created for every {@link DataSource}. During executable-method processing it
- * collects only methods selecting its datasource. Provider resolution is deliberately deferred to
- * {@link StartupEvent}: schema generation has completed by then, and only one datasource
- * connection is required to select a provider and register all collected methods.</p>
+ * <p>{@link EachBean} creates a separate processor for every {@link DataSource}. During
+ * executable-method processing, a processor collects only listeners that select its datasource
+ * through {@link ChangeListener#dataSource()}. A listener without an explicit selection belongs
+ * to the {@code default} datasource. Listener discovery and registration are therefore isolated
+ * per datasource.</p>
+ *
+ * <p>Registration is deferred to {@link StartupEvent}, after schema generation. The processor
+ * then uses operations and a connection from its datasource to select a notification provider and
+ * register the listener methods it collected.</p>
  */
 @Context
 @EachBean(DataSource.class)
 @Requires(beans = ChangeNotificationProvider.class)
-final class ChangeNotificationMethodProcessor implements ExecutableMethodProcessor<ChangeListener>,
+final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<ChangeListener>,
     ApplicationEventListener<StartupEvent> {
 
     private final String dataSourceName;
@@ -52,9 +57,9 @@ final class ChangeNotificationMethodProcessor implements ExecutableMethodProcess
     private final ChangeNotificationProviderResolver providerResolver;
     private final List<ChangeListenerMethod> listenerMethods = new CopyOnWriteArrayList<>();
 
-    ChangeNotificationMethodProcessor(@Parameter String dataSourceName,
-                                      JdbcRepositoryOperations operations,
-                                      ChangeNotificationProviderResolver providerResolver) {
+    ChangeListenerMethodProcessor(@Parameter String dataSourceName,
+                                  JdbcRepositoryOperations operations,
+                                  ChangeNotificationProviderResolver providerResolver) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;
         this.providerResolver = providerResolver;

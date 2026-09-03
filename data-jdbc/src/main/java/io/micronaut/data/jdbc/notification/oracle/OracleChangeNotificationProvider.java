@@ -74,18 +74,10 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
                          List<ChangeListenerMethod> listenerMethods) {
         OracleChangeNotificationManager manager = managers.computeIfAbsent(
             dataSourceName,
-            ignored -> new OracleChangeNotificationManager(
-                dataSourceName,
-                operations,
-                beanContext,
-                blockingExecutor
-            )
+            ignored -> new OracleChangeNotificationManager(dataSourceName, operations, beanContext, blockingExecutor)
         );
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
-        listenerMethods.forEach(listenerMethod -> {
-            OracleChangeListenerDefinition definition = definitionFactory.create(listenerMethod);
-            manager.addDefinition(definition);
-        });
+        listenerMethods.forEach(listenerMethod -> manager.addDefinition(definitionFactory.create(listenerMethod)));
         manager.start();
     }
 
