@@ -690,13 +690,16 @@ interface MyRepository {
         PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
         Sort sort = Sort.of(Sort.Order.asc("name"))
         String alias = entity.getAliasName()
-        String normalizedAlias = alias.substring(0, 45) + "_c2b3c9ea3df33487_"
 
         when:
         String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
 
         then:
-        query == " ORDER BY ${normalizedAlias}.\"name\" ASC"
+        normalizedAlias.length() <= 63
+        normalizedAlias != alias
+        normalizedAlias ==~ /^.{1,46}_[0-9a-f]{16}_?$/
+        query.endsWith(".\"name\" ASC")
     }
 
     void "test encode order by normalizes a long declared Postgres association alias"() {

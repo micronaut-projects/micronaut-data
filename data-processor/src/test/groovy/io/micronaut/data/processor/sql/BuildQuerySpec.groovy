@@ -104,6 +104,64 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
     }
 
+    void "test POSTGRES long explicit join alias is normalized"() {
+        given:
+        String explicitAlias = "this_is_an_intentionally_very_long_explicit_join_alias_for_postgres_"
+        def repository = buildRepository('test.LongJoinAliasRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@Join(value = "author", alias = "${explicitAlias}")
+interface LongJoinAliasRepository extends GenericRepository<LongJoinAliasBook, Long> {
+    List<LongJoinAliasBook> findAll();
+}
+
+@MappedEntity
+class LongJoinAliasBook {
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private LongJoinAliasAuthor author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public LongJoinAliasAuthor getAuthor() { return author; }
+    public void setAuthor(LongJoinAliasAuthor author) { this.author = author; }
+}
+
+@MappedEntity
+class LongJoinAliasAuthor {
+    @Id
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+""")
+
+        when:
+        String query = getQuery(repository.getRequiredMethod("findAll"))
+        def joinAliasMatcher = query =~ /JOIN [^ ]+ ([A-Za-z0-9_]+) ON/
+        String normalizedJoinAlias = joinAliasMatcher.find() ? joinAliasMatcher.group(1) : ""
+
+        then:
+        normalizedJoinAlias.length() <= 63
+        normalizedJoinAlias != explicitAlias
+        query.contains(" ${normalizedJoinAlias} ON")
+    }
+
     void "test POSTGRES custom query"() {
         given:
             def repository = buildRepository('test.MyInterface2', """

@@ -416,7 +416,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias
      */
     protected String getAliasName(JoinPath joinPath, @Nullable String tableAlias) {
-        return joinPath.getAlias().orElseGet(() -> {
+        return joinPath.getAlias().map(this::normalizeAlias).orElseGet(() -> {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
 
             // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
@@ -2003,7 +2003,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         private String getAliasName(JoinPath joinPath) {
             if (joinPath.getAlias().isPresent()) {
-                return joinPath.getAlias().get();
+                return AbstractSqlLikeQueryBuilder.this.normalizeAlias(joinPath.getAlias().get());
             }
             PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
             String tableAlias = owner.equals(entity) ? rootAlias : null;
