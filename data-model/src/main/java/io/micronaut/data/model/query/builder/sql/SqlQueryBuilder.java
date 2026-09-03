@@ -123,7 +123,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
-    private static final int MAX_POSTGRES_IDENTIFIER_LENGTH = 63;
+    // PostgreSQL's NAMEDATALEN limit is measured in bytes (typically UTF-8), not Java characters.
+    private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
     // FNV-1a 64-bit offset basis and prime; the hash keeps truncated aliases distinct.
     private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
     private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
@@ -262,7 +263,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String normalizeAlias(String alias) {
-        if (dialect != Dialect.POSTGRES || alias.length() <= MAX_POSTGRES_IDENTIFIER_LENGTH) {
+        if (dialect != Dialect.POSTGRES || utf8Length(alias) <= MAX_POSTGRES_IDENTIFIER_BYTES) {
             return alias;
         }
         String hash = Long.toUnsignedString(hashAlias(alias), 16);
@@ -271,9 +272,47 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         boolean trailingUnderscore = alias.endsWith("_");
         int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
-        String prefix = alias.substring(0, MAX_POSTGRES_IDENTIFIER_LENGTH - reserved);
+        String prefix = truncateToUtf8Bytes(alias, MAX_POSTGRES_IDENTIFIER_BYTES - reserved);
         String normalized = prefix + "_" + hash;
         return trailingUnderscore ? normalized + "_" : normalized;
+    }
+
+    private static int utf8Length(String value) {
+        int length = 0;
+        for (int i = 0; i < value.length();) {
+            int codePoint = value.codePointAt(i);
+            length += utf8CodePointLength(codePoint);
+            i += Character.charCount(codePoint);
+        }
+        return length;
+    }
+
+    private static String truncateToUtf8Bytes(String value, int maxBytes) {
+        int length = 0;
+        int end = 0;
+        while (end < value.length()) {
+            int codePoint = value.codePointAt(end);
+            int codePointLength = utf8CodePointLength(codePoint);
+            if (length + codePointLength > maxBytes) {
+                break;
+            }
+            length += codePointLength;
+            end += Character.charCount(codePoint);
+        }
+        return value.substring(0, end);
+    }
+
+    private static int utf8CodePointLength(int codePoint) {
+        if (codePoint <= 0x7F) {
+            return 1;
+        }
+        if (codePoint <= 0x7FF) {
+            return 2;
+        }
+        if (codePoint <= 0xFFFF) {
+            return 3;
+        }
+        return 4;
     }
 
     private static long hashAlias(String value) {

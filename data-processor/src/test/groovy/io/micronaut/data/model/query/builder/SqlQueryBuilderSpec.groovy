@@ -702,6 +702,24 @@ interface MyRepository {
         query.endsWith(".\"name\" ASC")
     }
 
+    void "test encode order by normalizes a multibyte Postgres entity alias by bytes"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongMultibytePostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        alias.length() <= 63
+        alias.getBytes("UTF-8").length > 63
+        normalizedAlias.getBytes("UTF-8").length <= 63
+        normalizedAlias != alias
+        query.endsWith(".\"name\" ASC")
+    }
+
     void "test encode order by normalizes a long declared Postgres association alias"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(LongDeclaredAssociationAliasEntity)
@@ -1324,6 +1342,14 @@ interface MyRepository {
 
 @MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
 class LongPostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")
+class LongMultibytePostgresAliasEntity {
     @Id
     Long id
 
