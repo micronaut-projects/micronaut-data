@@ -2940,6 +2940,107 @@ interface TestRepository extends GenericRepository<Book, Long> {
         getParameterTableAliases(method) == [null, "book_book_", "book_"]
     }
 
+    void "test pageable inverse one-to-one joins are not treated as row multiplying"() {
+        given:
+        def repository = buildRepository('test.InverseOwnerRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface InverseOwnerRepository extends GenericRepository<InverseOwner, Long> {
+    @Join(value = "profile", type = Join.Type.LEFT_FETCH)
+    Page<InverseOwner> findAll(Pageable pageable);
+
+    Page<InverseOwner> findByTagsNameOrderByProfileNameAndName(String name, Pageable pageable);
+}
+
+@MappedEntity("inverse_owner")
+class InverseOwner {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, mappedBy = "owner")
+    private InverseProfile profile;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "owner")
+    private List<InverseTag> tags;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseProfile getProfile() { return profile; }
+    public void setProfile(InverseProfile profile) { this.profile = profile; }
+    public List<InverseTag> getTags() { return tags; }
+    public void setTags(List<InverseTag> tags) { this.tags = tags; }
+}
+
+@MappedEntity("inverse_profile")
+class InverseProfile {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(Relation.Kind.ONE_TO_ONE)
+    private InverseOwner owner;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseOwner getOwner() { return owner; }
+    public void setOwner(InverseOwner owner) { this.owner = owner; }
+}
+
+@MappedEntity("inverse_tag")
+class InverseTag {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private InverseOwner owner;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseOwner getOwner() { return owner; }
+    public void setOwner(InverseOwner owner) { this.owner = owner; }
+}
+
+""")
+        def findAll = repository.getRequiredMethod("findAll", Pageable)
+        def findByTagsName = repository.getRequiredMethod("findByTagsNameOrderByProfileNameAndName", String, Pageable)
+        def simpleQuery = getQuery(findAll)
+        def query = getQuery(findByTagsName)
+
+        expect:
+        !simpleQuery.contains(' IN (SELECT ')
+        getParameterRoles(findAll) == ["pageable"]
+        query.count('`inverse_profile`') == 2
+        query.contains('INNER JOIN `inverse_profile` inverse_owner_inverse_owner_profile_')
+        getParameterRoles(findByTagsName) == [null, "pageableRequired", "sort"]
+    }
+
     void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
         given:
         def repository = buildRepository('test.CarRepository', """

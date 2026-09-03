@@ -25,8 +25,10 @@ import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -243,7 +245,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     private void applyPaginationJoins(PersistentEntityFrom<?, ?> analyzedFrom,
                                       PersistentEntityFrom<?, ?> paginationFrom) {
         for (var analyzedJoin : analyzedFrom.getPersistentJoins()) {
-            if (analyzedJoin.getAssociation().isForeignKey()) {
+            if (isRowMultiplyingJoin(analyzedJoin.getAssociation())) {
                 continue;
             }
             String associationName = analyzedJoin.getAssociation().getName();
@@ -268,11 +270,16 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     private boolean requiresPaginationSubquery(PersistentEntityFrom<?, ?> from) {
         for (var join : from.getPersistentJoins()) {
-            if (join.getAssociation().isForeignKey() || requiresPaginationSubquery(join)) {
+            if (isRowMultiplyingJoin(join.getAssociation()) || requiresPaginationSubquery(join)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean isRowMultiplyingJoin(Association association) {
+        Relation.Kind kind = association.getKind();
+        return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY;
     }
 
     /**
