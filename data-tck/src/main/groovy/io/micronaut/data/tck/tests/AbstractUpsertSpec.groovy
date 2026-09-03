@@ -164,7 +164,7 @@ abstract class AbstractUpsertSpec extends Specification {
         replacement.created != created
         replacement.created != found.created
         found.updated != null
-        found.tenantId == "upsert-tenant"
+        found.tenantId == "another-tenant"
         found.requestId != null
         found.requestId != requestId
     }

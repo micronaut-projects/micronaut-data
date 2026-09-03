@@ -33,6 +33,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Documented
 @Experimental
-@AutoPopulated(updatable = false)
+@AutoPopulated
 public @interface TenantId {
 }
