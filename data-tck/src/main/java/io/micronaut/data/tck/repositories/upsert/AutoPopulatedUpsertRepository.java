@@ -30,4 +30,7 @@ public interface AutoPopulatedUpsertRepository extends CrudRepository<AutoPopula
 
     @WithoutTenantId
     Optional<AutoPopulatedUpsertEntity> findByIdAndTenantId(Long id, String tenantId);
+
+    @WithoutTenantId
+    long deleteByTenantId(String tenantId);
 }

@@ -61,6 +61,7 @@ abstract class AbstractUpsertSpec extends Specification {
     void cleanup() {
         context.getBean(MockedDateTimeProvider).setValue(null)
         autoPopulatedUpsertRepository.deleteAll()
+        autoPopulatedUpsertRepository.deleteByTenantId("another-tenant")
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
@@ -127,7 +128,7 @@ abstract class AbstractUpsertSpec extends Specification {
         updatedProfile.displayName == "updated"
     }
 
-    void "upsertAll populates auto-populated timestamps on insert"() {
+    void "upsertAll prepares auto-populated timestamps and invokes update lifecycle"() {
         given:
         AutoPopulatedUpsertEntity first = new AutoPopulatedUpsertEntity(1L, "first")
         AutoPopulatedUpsertEntity second = new AutoPopulatedUpsertEntity(2L, "second")
@@ -143,7 +144,7 @@ abstract class AbstractUpsertSpec extends Specification {
         }
     }
 
-    void "upsert preserves date created on update"() {
+    void "upsert preserves persisted date created on update"() {
         given:
         MockedDateTimeProvider dateTimeProvider = context.getBean(MockedDateTimeProvider)
         dateTimeProvider.setValue(OffsetDateTime.of(2026, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC))

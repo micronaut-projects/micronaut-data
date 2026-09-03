@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.jdbc.sqlite;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity;
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile;
+import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid;
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview;
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -26,11 +28,15 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
+@Property(name = "test.sqlite.upsert.tenant.enabled", value = "true")
 @SQLiteDBProperties(packages = "io.micronaut.data.jdbc.sqlite,io.micronaut.data.tck.jdbc.entities.upsert")
 class SQLiteUpsertTest {
 
@@ -41,6 +47,9 @@ class SQLiteUpsertTest {
     SQLiteCustomerProfileRepository customerProfileRepository;
 
     @Inject
+    SQLiteCustomerProfileUuidRepository customerProfileUuidRepository;
+
+    @Inject
     SQLiteWarehouseInventoryRepository warehouseInventoryRepository;
 
     @Inject
@@ -49,27 +58,41 @@ class SQLiteUpsertTest {
     @AfterEach
     void cleanup() {
         autoPopulatedUpsertRepository.deleteAll();
+        autoPopulatedUpsertRepository.deleteByTenantId("another-tenant");
         warehouseInventoryRepository.deleteAll();
         customerProfileRepository.deleteAll();
+        customerProfileUuidRepository.deleteAll();
         productReviewRepository.deleteAll();
     }
 
     @Test
-    void upsertPopulatesAutoPopulatedTimestampsOnInsert() {
+    void upsertPreparesAutoPopulatedPropertiesCascadesUpdatesAndInvokesUpdateLifecycle() {
+        ProductReview review = productReviewRepository.save(new ProductReview(100L, "initial title", "initial content"));
+        review.setTitle("updated title");
+        review.setContent("updated content");
         AutoPopulatedUpsertEntity entity = new AutoPopulatedUpsertEntity(1L, "initial");
+        entity.setReview(review);
 
         autoPopulatedUpsertRepository.upsert(entity);
+        AutoPopulatedUpsertEntity persisted = autoPopulatedUpsertRepository.findById(1L).orElseThrow();
+        ProductReview cascadedReview = productReviewRepository.findById(100L).orElseThrow();
 
         assertNotNull(entity.getCreated());
         assertNotNull(entity.getUpdated());
+        assertEquals("upsert-tenant", entity.getTenantId());
+        assertNotNull(entity.getRequestId());
         assertEquals(0, entity.getPrePersistCalls());
         assertEquals(1, entity.getPreUpdateCalls());
         assertEquals(0, entity.getPostPersistCalls());
         assertEquals(1, entity.getPostUpdateCalls());
+        assertEquals(100L, persisted.getReview().getId());
+        assertEquals("upsert-tenant", persisted.getTenantId());
+        assertEquals(entity.getRequestId(), persisted.getRequestId());
+        assertProductReview(new ProductReview(100L, "updated title", "updated content"), cascadedReview);
     }
 
     @Test
-    void upsertAllPopulatesAutoPopulatedTimestampsOnInsert() {
+    void upsertAllPreparesAutoPopulatedTimestampsAndInvokesUpdateLifecycle() {
         AutoPopulatedUpsertEntity first = new AutoPopulatedUpsertEntity(1L, "first");
         AutoPopulatedUpsertEntity second = new AutoPopulatedUpsertEntity(2L, "second");
 
@@ -78,17 +101,24 @@ class SQLiteUpsertTest {
         for (AutoPopulatedUpsertEntity entity : List.of(first, second)) {
             assertNotNull(entity.getCreated());
             assertNotNull(entity.getUpdated());
+            assertEquals("upsert-tenant", entity.getTenantId());
+            assertNotNull(entity.getRequestId());
             assertEquals(0, entity.getPrePersistCalls());
             assertEquals(1, entity.getPreUpdateCalls());
             assertEquals(0, entity.getPostPersistCalls());
             assertEquals(1, entity.getPostUpdateCalls());
         }
+        for (AutoPopulatedUpsertEntity persisted : autoPopulatedUpsertRepository.findAll()) {
+            assertEquals("upsert-tenant", persisted.getTenantId());
+            assertNotNull(persisted.getRequestId());
+        }
     }
 
     @Test
-    void upsertPreservesDateCreatedOnUpdate() {
+    void upsertPreservesPersistedDateCreatedOnUpdate() {
         autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"));
         LocalDateTime created = autoPopulatedUpsertRepository.findById(1L).orElseThrow().getCreated();
+        UUID requestId = autoPopulatedUpsertRepository.findById(1L).orElseThrow().getRequestId();
         AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified");
 
         autoPopulatedUpsertRepository.upsert(replacement);
@@ -97,6 +127,39 @@ class SQLiteUpsertTest {
         assertNotNull(created);
         assertEquals(created, found.getCreated());
         assertNotNull(found.getUpdated());
+        assertEquals("upsert-tenant", found.getTenantId());
+        assertNotNull(found.getRequestId());
+        assertNotEquals(requestId, found.getRequestId());
+    }
+
+    @Test
+    void upsertUpdatesTenantIdWhenSupplied() {
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"));
+        AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified");
+        replacement.setTenantId("another-tenant");
+
+        autoPopulatedUpsertRepository.upsert(replacement);
+
+        assertTrue(autoPopulatedUpsertRepository.findById(1L).isEmpty());
+        AutoPopulatedUpsertEntity moved = autoPopulatedUpsertRepository
+            .findByIdAndTenantId(1L, "another-tenant")
+            .orElseThrow();
+        assertEquals("another-tenant", moved.getTenantId());
+        assertEquals("modified", moved.getName());
+    }
+
+    @Test
+    void numericUpsertReturnReportsAffectedRowCount() {
+        CustomerProfile profile = new CustomerProfile("count@example.com", "initial");
+
+        assertEquals(1, customerProfileRepository.upsertCount(profile));
+        assertEquals(1, customerProfileRepository.count());
+
+        profile.setDisplayName("updated");
+
+        assertEquals(1, customerProfileRepository.upsertCount(profile));
+        assertEquals(1, customerProfileRepository.count());
+        assertEquals("updated", customerProfileRepository.findByEmail("count@example.com").orElseThrow().getDisplayName());
     }
 
     @Test
@@ -143,6 +206,30 @@ class SQLiteUpsertTest {
     }
 
     @Test
+    void annotationBasedPutMethodsInsertAndUpdateProductReviews() {
+        ProductReview review = new ProductReview(1L, "initial", "content");
+
+        assertProductReview(review, productReviewRepository.put(review));
+        review.setTitle("updated");
+        assertProductReview(review, productReviewRepository.put(review));
+
+        ProductReview first = new ProductReview(2L, "first", "content");
+        ProductReview second = new ProductReview(3L, "second", "content");
+        List<ProductReview> inserted = productReviewRepository.putAll(List.of(first, second));
+
+        assertEquals(2, inserted.size());
+        assertProductReview(first, inserted.get(0));
+        assertProductReview(second, inserted.get(1));
+
+        first.setTitle("first updated");
+        second.setTitle("second updated");
+        List<ProductReview> updated = productReviewRepository.putAll(List.of(first, second));
+
+        assertProductReview(first, updated.get(0));
+        assertProductReview(second, updated.get(1));
+    }
+
+    @Test
     void upsertByEmailConflictInsertsAndUpdatesCustomerProfile() {
         CustomerProfile profile = new CustomerProfile("test@example.com", "test");
 
@@ -178,13 +265,114 @@ class SQLiteUpsertTest {
 
         profile1.setDisplayName("test 1 modified");
         profile2.setDisplayName("test 2 modified");
-        List<CustomerProfile> updated = customerProfileRepository.upsertAll(List.of(profile1, profile2));
+        CustomerProfile profile3 = new CustomerProfile("test3@example.com", "test 3");
+        CustomerProfile profile4 = new CustomerProfile("test4@example.com", "test 4");
+        List<CustomerProfile> updated = customerProfileRepository.upsertAll(List.of(profile1, profile2, profile3, profile4));
 
-        assertEquals(2, updated.size());
+        assertEquals(4, updated.size());
         assertCustomerProfileContent(profile1, updated.get(0));
         assertCustomerProfileContent(profile2, updated.get(1));
+        assertNotNull(updated.get(2).getId());
+        assertNotNull(updated.get(3).getId());
         assertCustomerProfileContent(profile1, customerProfileRepository.findByEmail(profile1.getEmail()).orElseThrow());
         assertCustomerProfileContent(profile2, customerProfileRepository.findByEmail(profile2.getEmail()).orElseThrow());
+        assertCustomerProfileContent(profile3, customerProfileRepository.findByEmail(profile3.getEmail()).orElseThrow());
+        assertCustomerProfileContent(profile4, customerProfileRepository.findByEmail(profile4.getEmail()).orElseThrow());
+    }
+
+    @Test
+    void upsertMethodsWithVoidReactiveAndFutureReturnTypesPersistCustomerProfiles() throws Exception {
+        CustomerProfile noResult = new CustomerProfile("no-result@example.com", "initial");
+        customerProfileRepository.upsertNoResult(noResult);
+        noResult.setDisplayName("updated");
+        customerProfileRepository.upsertNoResult(noResult);
+
+        CustomerProfile mono = customerProfileRepository
+            .upsertMono(new CustomerProfile("mono@example.com", "initial"))
+            .block();
+        CustomerProfile future = customerProfileRepository
+            .upsertFuture(new CustomerProfile("future@example.com", "initial"))
+            .get();
+        customerProfileRepository
+            .upsertMonoNoResult(new CustomerProfile("mono-no-result@example.com", "initial"))
+            .block();
+        customerProfileRepository
+            .upsertFutureNoResult(new CustomerProfile("future-no-result@example.com", "initial"))
+            .get();
+
+        List<CustomerProfile> flux = customerProfileRepository
+            .upsertAllFlux(List.of(
+                new CustomerProfile("flux-1@example.com", "first"),
+                new CustomerProfile("flux-2@example.com", "second")
+            ))
+            .collectList()
+            .block();
+        List<CustomerProfile> futureBatch = customerProfileRepository
+            .upsertAllFuture(List.of(
+                new CustomerProfile("future-1@example.com", "first"),
+                new CustomerProfile("future-2@example.com", "second")
+            ))
+            .get();
+        customerProfileRepository.upsertAllNoResult(List.of(
+            new CustomerProfile("no-result-1@example.com", "first"),
+            new CustomerProfile("no-result-2@example.com", "second")
+        ));
+        customerProfileRepository.upsertAllFluxNoResult(List.of(
+            new CustomerProfile("flux-no-result-1@example.com", "first"),
+            new CustomerProfile("flux-no-result-2@example.com", "second")
+        )).blockLast();
+        customerProfileRepository.upsertAllFutureNoResult(List.of(
+            new CustomerProfile("future-no-result-1@example.com", "first"),
+            new CustomerProfile("future-no-result-2@example.com", "second")
+        )).get();
+
+        assertNotNull(mono);
+        assertNotNull(mono.getId());
+        assertNotNull(future);
+        assertNotNull(future.getId());
+        assertEquals(2, flux.size());
+        assertEquals(2, futureBatch.size());
+        assertEquals(15, customerProfileRepository.count());
+        assertEquals("updated", customerProfileRepository.findByEmail("no-result@example.com").orElseThrow().getDisplayName());
+    }
+
+    @Test
+    void upsertWithUuidIdentityPersistsSingleAndBatchProfiles() {
+        CustomerProfileUuid profile = new CustomerProfileUuid("uuid@example.com", "initial");
+        customerProfileUuidRepository.upsert(profile);
+        CustomerProfileUuid inserted = customerProfileUuidRepository.findByEmail(profile.getEmail()).orElseThrow();
+
+        assertNotNull(inserted.getId());
+        assertCustomerProfileUuidContent(profile, inserted);
+
+        CustomerProfileUuid replacement = new CustomerProfileUuid("uuid@example.com", "updated");
+        customerProfileUuidRepository.upsert(replacement);
+        CustomerProfileUuid updated = customerProfileUuidRepository.findByEmail(profile.getEmail()).orElseThrow();
+
+        assertEquals(inserted.getId(), updated.getId());
+        assertCustomerProfileUuidContent(replacement, updated);
+
+        CustomerProfileUuid first = new CustomerProfileUuid("uuid-1@example.com", "first");
+        CustomerProfileUuid second = new CustomerProfileUuid("uuid-2@example.com", "second");
+        customerProfileUuidRepository.upsertAll(List.of(first, second));
+
+        CustomerProfileUuid firstInserted = customerProfileUuidRepository.findByEmail(first.getEmail()).orElseThrow();
+        CustomerProfileUuid secondInserted = customerProfileUuidRepository.findByEmail(second.getEmail()).orElseThrow();
+        assertNotNull(firstInserted.getId());
+        assertNotNull(secondInserted.getId());
+
+        CustomerProfileUuid firstReplacement = new CustomerProfileUuid(first.getEmail(), "first updated");
+        CustomerProfileUuid secondReplacement = new CustomerProfileUuid(second.getEmail(), "second updated");
+        CustomerProfileUuid third = new CustomerProfileUuid("uuid-3@example.com", "third");
+        CustomerProfileUuid fourth = new CustomerProfileUuid("uuid-4@example.com", "fourth");
+        customerProfileUuidRepository.upsertAll(List.of(firstReplacement, secondReplacement, third, fourth));
+
+        assertCustomerProfileUuidContent(firstReplacement, customerProfileUuidRepository.findByEmail(first.getEmail()).orElseThrow());
+        assertCustomerProfileUuidContent(secondReplacement, customerProfileUuidRepository.findByEmail(second.getEmail()).orElseThrow());
+        assertEquals(firstInserted.getId(), customerProfileUuidRepository.findByEmail(first.getEmail()).orElseThrow().getId());
+        assertEquals(secondInserted.getId(), customerProfileUuidRepository.findByEmail(second.getEmail()).orElseThrow().getId());
+        assertNotNull(customerProfileUuidRepository.findByEmail(third.getEmail()).orElseThrow().getId());
+        assertNotNull(customerProfileUuidRepository.findByEmail(fourth.getEmail()).orElseThrow().getId());
     }
 
     @Test
@@ -244,6 +432,11 @@ class SQLiteUpsertTest {
     }
 
     private static void assertCustomerProfileContent(CustomerProfile expected, CustomerProfile actual) {
+        assertEquals(expected.getEmail(), actual.getEmail());
+        assertEquals(expected.getDisplayName(), actual.getDisplayName());
+    }
+
+    private static void assertCustomerProfileUuidContent(CustomerProfileUuid expected, CustomerProfileUuid actual) {
         assertEquals(expected.getEmail(), actual.getEmail());
         assertEquals(expected.getDisplayName(), actual.getDisplayName());
     }

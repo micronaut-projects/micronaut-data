@@ -15,15 +15,19 @@
  */
 package io.micronaut.data.jdbc.sqlite;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid;
-import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.runtime.multitenancy.TenantResolver;
+import jakarta.inject.Singleton;
 
-import java.util.Optional;
+/**
+ * Tenant resolver used only by {@link SQLiteUpsertTest}.
+ */
+@Singleton
+@Requires(property = "test.sqlite.upsert.tenant.enabled")
+final class SQLiteUpsertTenantResolver implements TenantResolver {
 
-@JdbcRepository(dialect = Dialect.SQLITE)
-public interface SQLiteCustomerProfileUuidRepository extends CustomerProfileUuidRepository {
-
-    Optional<CustomerProfileUuid> findByEmail(String email);
+    @Override
+    public String resolveTenantIdentifier() {
+        return "upsert-tenant";
+    }
 }
