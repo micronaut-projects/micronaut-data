@@ -15,7 +15,10 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -39,6 +42,7 @@ import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
@@ -211,6 +215,9 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
 
                 SourcePersistentEntityCriteriaQuery<?> criteriaQueryInternal = (SourcePersistentEntityCriteriaQuery) criteriaQuery;
 
+                applyProjections(matchContext, criteriaQueryInternal);
+                applyFirst(matchContext, criteriaQueryInternal);
+
                 MethodResult result = analyzeMethodResult(
                     matchContext,
                     criteriaQueryInternal.getQueryResultTypeName(),
@@ -269,6 +276,59 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                     .queryResult(queryResult);
             }
         };
+    }
+
+    /**
+     * Applies the projections declared by {@link Projection} (mapped from Jakarta Data {@code @Select})
+     * to a JDQL query that doesn't already select something explicitly.
+     *
+     * @param matchContext The match context
+     * @param criteriaQuery The criteria query
+     */
+    private static void applyProjections(MethodMatchContext matchContext,
+                                         SourcePersistentEntityCriteriaQuery<?> criteriaQuery) {
+        if (criteriaQuery.getSelection() != null) {
+            return;
+        }
+        List<String> projections = matchContext.getMethodElement().getAnnotationValuesByType(Projection.class)
+            .stream()
+            .flatMap(av -> av.stringValue().stream())
+            .filter(value -> !value.isBlank())
+            .toList();
+        if (projections.isEmpty()) {
+            return;
+        }
+        Root<?> root = criteriaQuery.getRoots().iterator().next();
+        List<Selection<?>> selections = projections.stream()
+            .<Selection<?>>map(projection -> {
+                // A projection may name a path into an embedded or associated entity
+                Path<?> path = root;
+                for (String segment : StringUtils.splitOmitEmptyStrings(projection, '.')) {
+                    path = path.get(segment);
+                }
+                return (Selection<?>) path;
+            })
+            .toList();
+        if (selections.size() == 1) {
+            criteriaQuery.select((Selection) selections.getFirst());
+        } else {
+            criteriaQuery.multiselect(selections);
+        }
+    }
+
+    /**
+     * Applies the limit declared by {@link First} (mapped from Jakarta Data {@code @First}) to a JDQL query.
+     * JDQL itself has no limit clause, so the annotation is the only static source of one.
+     *
+     * @param matchContext The match context
+     * @param criteriaQuery The criteria query
+     */
+    private static void applyFirst(MethodMatchContext matchContext,
+                                   SourcePersistentEntityCriteriaQuery<?> criteriaQuery) {
+        AnnotationValue<First> firstAnnotation = matchContext.getMethodElement().getAnnotation(First.class);
+        if (firstAnnotation != null) {
+            criteriaQuery.limit(firstAnnotation.intValue().orElse(1));
+        }
     }
 
     @Override

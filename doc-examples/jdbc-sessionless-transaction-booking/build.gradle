@@ -1,0 +1,37 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+    implementation projects.micronautDataJdbc
+    implementation mnValidation.micronaut.validation
+    implementation mnSerde.micronaut.serde.jackson
+
+    testImplementation mn.micronaut.http.client
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.ojdbc11
+    runtimeOnly mnLogging.logback.classic
+
+    testResourcesService mnSerde.micronaut.serde.jackson
+}
