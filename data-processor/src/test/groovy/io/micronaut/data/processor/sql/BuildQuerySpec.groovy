@@ -2930,6 +2930,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         def method = repository.getRequiredMethod("findByStudentsNameOrderByAuthorNameAndTitle", String, Pageable)
         def query = getQuery(method)
         def countQuery = getCountQuery(method)
+        def pageableRequiredIndex = getParameterRoles(method).findIndexOf { it == "pageableRequired" }
 
         expect:
         query.contains('INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id`')
@@ -2938,6 +2939,8 @@ interface TestRepository extends GenericRepository<Book, Long> {
         countQuery.contains('book_students_.`name` = ?')
         getParameterRoles(method) == [null, "pageableRequired", "sort"]
         getParameterTableAliases(method) == [null, "book_book_", "book_"]
+        // The pageable-required binding renders the sort inside the pagination subquery.
+        getParameterTableAliases(method)[pageableRequiredIndex] == "book_book_"
     }
 
     void "test pageable inverse one-to-one joins are not treated as row multiplying"() {

@@ -1858,9 +1858,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             this.baseQueryDefinition = query;
             this.entity = query.persistentEntity();
             this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
-            this.rootAlias = useAlias || tableAliasPrefix != null
-                ? normalizeAlias((tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder.this.getAliasName(entity))
-                : null;
+            if (useAlias || tableAliasPrefix != null) {
+                String aliasPrefix = tableAliasPrefix == null ? "" : tableAliasPrefix;
+                this.rootAlias = normalizeAlias(aliasPrefix + AbstractSqlLikeQueryBuilder.this.getAliasName(entity));
+            } else {
+                this.rootAlias = null;
+            }
         }
 
         public QueryState(BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
@@ -1999,31 +2002,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private String getAliasName(JoinPath joinPath) {
-            return joinPath.getAlias().orElseGet(() -> {
-                String joinPathAlias = getPathOnlyAliasName(joinPath);
-
-                // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
-                if (joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
-                    return joinPathAlias;
-                }
-
-                PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-                String ownerAlias;
-                if (owner.equals(entity)) {
-                    if (rootAlias == null) {
-                        ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
-                    } else {
-                        ownerAlias = rootAlias;
-                    }
-                } else {
-                    ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
-                }
-                if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
-                    return normalizeAlias(ownerAlias + joinPathAlias.substring(1));
-                } else {
-                    return normalizeAlias(ownerAlias + joinPathAlias);
-                }
-            });
+            if (joinPath.getAlias().isPresent()) {
+                return joinPath.getAlias().get();
+            }
+            PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
+            String tableAlias = owner.equals(entity) ? rootAlias : null;
+            return AbstractSqlLikeQueryBuilder.this.getAliasName(joinPath, tableAlias);
         }
 
         /**

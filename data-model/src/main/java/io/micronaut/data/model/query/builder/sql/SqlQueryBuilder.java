@@ -124,9 +124,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     private static final int MAX_POSTGRES_IDENTIFIER_LENGTH = 63;
-    // FNV-1a 64-bit parameters used to distinguish aliases sharing a truncated prefix.
+    // FNV-1a 64-bit offset basis and prime; the hash keeps truncated aliases distinct.
     private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
     private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
+    private static final int ALIAS_HASH_LENGTH = 16;
 
     private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
 
@@ -264,7 +265,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (dialect != Dialect.POSTGRES || alias.length() <= MAX_POSTGRES_IDENTIFIER_LENGTH) {
             return alias;
         }
-        String hash = String.format(Locale.ROOT, "%016x", hashAlias(alias));
+        String hash = Long.toUnsignedString(hashAlias(alias), 16);
+        if (hash.length() < ALIAS_HASH_LENGTH) {
+            hash = "0".repeat(ALIAS_HASH_LENGTH - hash.length()) + hash;
+        }
         boolean trailingUnderscore = alias.endsWith("_");
         int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
         String prefix = alias.substring(0, MAX_POSTGRES_IDENTIFIER_LENGTH - reserved);
