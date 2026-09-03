@@ -876,6 +876,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         queryString.append(SPACE).append("SET").append(SPACE);
 
         PersistentEntity entity = queryState.getEntity();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
         boolean jsonEntity = isJsonEntity(annotationMetadata, queryState.getEntity());
         if (jsonEntity && propertiesToUpdate.size() == 1) {
             checkDialectSupportsJsonEntity(entity);
@@ -955,7 +957,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
         }
         List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
-            .filter(e -> e.getValue() instanceof ReservationDelta || !generatedEntityUpdate || hasNonReservableUpdateProperty(e.getKey()))
+            .filter(e -> e.getValue() instanceof ReservationDelta || !generatedEntityUpdate
+                || hasNonGeneratedOrSharedIdentityUpdateProperty(e.getKey(), namingStrategy, identityColumns))
             .toList();
         if (update.isEmpty() && updateProperties.stream()
             .anyMatch(e -> hasReservableUpdateProperty(e.getKey()))) {
@@ -964,7 +967,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         boolean[] needsTrimming = {false};
-        if (!computePropertyPaths() || jsonEntity) {
+        List<SharedIdentityUpdateBinding> sharedIdentityUpdateBindings = new ArrayList<>(1);
+        boolean computesPropertyPaths = computePropertyPaths();
+        if (!computesPropertyPaths || jsonEntity) {
             String jsonViewColumnName = getJsonEntityColumn(annotationMetadata);
             if (jsonViewColumnName != null) {
                 queryString.append(queryState.getRootAlias()).append(DOT).append(jsonViewColumnName).append("= json_transform(").append(jsonViewColumnName);
@@ -1001,12 +1006,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 queryString.append(CLOSE_BRACKET);
             }
         } else {
-            NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+                        String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                        // Shared primary-key one-to-one mappings can traverse the relation id path here
+                        // (for example metadata.id.containerId), but those columns belong to the owner
+                        // identity and must remain driven by the WHERE predicate instead of being written
+                        // through the relation path in SET. Check this before the generated-property filter:
+                        // an associated generated id still supplies the shared owner identity value.
+                        if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, unescapedColumnName)) {
+                            sharedIdentityUpdateBindings.add(new SharedIdentityUpdateBinding(unescapedColumnName,
+                                bindingParameter,
+                                propertyPath.getTableAlias()));
+                            return;
+                        }
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
                         if (generated || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                             return;
@@ -1015,7 +1031,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = getMappedName(namingStrategy, associations, property);
+                        String columnName = unescapedColumnName;
                         if (queryState.escape) {
                             columnName = quote(columnName);
                         }
@@ -1045,9 +1061,59 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+        if (computesPropertyPaths && !jsonEntity && !needsTrimming[0] && generatedEntityUpdate
+            && !sharedIdentityUpdateBindings.isEmpty()
+            && appendIdentityUpdateFallback(queryState, namingStrategy, sharedIdentityUpdateBindings)) {
+            needsTrimming[0] = true;
+        }
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
         }
+    }
+
+    /**
+     * Appends the same identity assignment used for generated updates of entities that have no mutable properties.
+     *
+     * <p>A shared-identity relation can make the criteria update appear non-empty before its relation columns are
+     * skipped. Reusing each skipped column's entity binding for the corresponding owner identity keeps the generated
+     * update syntactically valid, including for composite identities.</p>
+     */
+    private boolean appendIdentityUpdateFallback(QueryState queryState,
+                                                 NamingStrategy namingStrategy,
+                                                 List<SharedIdentityUpdateBinding> updateBindings) {
+        Map<String, SharedIdentityUpdateBinding> updateBindingsByColumn = new LinkedHashMap<>();
+        for (SharedIdentityUpdateBinding updateBinding : updateBindings) {
+            updateBindingsByColumn.putIfAbsent(updateBinding.columnName(), updateBinding);
+        }
+        boolean[] assignmentAppended = {false};
+        for (PersistentProperty identity : queryState.getEntity().getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                SharedIdentityUpdateBinding updateBinding = updateBindingsByColumn.get(unescapedColumnName);
+                if (updateBinding == null) {
+                    return;
+                }
+                StringBuilder queryString = queryState.getQuery();
+                String tableAlias = updateBinding.tableAlias();
+                if (tableAlias != null) {
+                    queryString.append(tableAlias).append(DOT);
+                }
+                String columnName = unescapedColumnName;
+                if (queryState.escape) {
+                    columnName = quote(columnName);
+                }
+                queryString.append(columnName).append('=');
+                BindingParameter bindingParameter = updateBinding.bindingParameter();
+                appendUpdateSetParameter(queryString, tableAlias, property, () -> {
+                    PersistentPropertyPath identityPath = PersistentPropertyPath.of(associations, property);
+                    queryState.pushParameter(bindingParameter,
+                        newBindingContext(identityPath));
+                });
+                queryString.append(COMMA);
+                assignmentAppended[0] = true;
+            });
+        }
+        return assignmentAppended[0];
     }
 
     private static Object unwrapUpdateValue(Object value) {
@@ -1058,9 +1124,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return value instanceof ReservationDelta;
     }
 
-    private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath) {
+    private boolean hasNonGeneratedOrSharedIdentityUpdateProperty(QueryPropertyPath propertyPath,
+                                                                  NamingStrategy namingStrategy,
+                                                                  Set<String> identityColumns) {
         boolean[] found = {false};
         PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            String columnName = getMappedName(namingStrategy, associations, property);
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, columnName)) {
+                // Keep a shared-identity relation in generated updates so the identity fallback can emit a valid SET clause.
+                found[0] = true;
+                return;
+            }
             if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
                 && !property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                 found[0] = true;
@@ -3678,6 +3752,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return queryState.findProperty(propertyPath);
         }
 
+    }
+
+    private record SharedIdentityUpdateBinding(String columnName,
+                                               BindingParameter bindingParameter,
+                                               @Nullable String tableAlias) {
     }
 
     /**

@@ -51,6 +51,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
@@ -82,12 +83,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -1300,61 +1304,99 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         } else {
 
             NamingStrategy namingStrategy = getNamingStrategy(entity);
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
             List<String> values = new ArrayList<>();
+            Map<String, String[]> columnPaths = new LinkedHashMap<>();
+            Map<String, PersistentPropertyPath> identityPathsByColumn = new LinkedHashMap<>();
+
+            for (PersistentProperty identity : entity.getIdentityProperties()) {
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    PersistentPropertyPath identityPath = PersistentPropertyPath.of(associations, property);
+                    PersistentPropertyPath existingPath = identityPathsByColumn.putIfAbsent(columnName, identityPath);
+                    if (existingPath != null && !existingPath.equals(identityPath)) {
+                        failOnConflictingInsertColumn(entity, columnName,
+                            SqlQueryBuilderUtils.asPath(existingPath.getAssociations(), existingPath.getProperty()),
+                            SqlQueryBuilderUtils.asPath(associations, property));
+                    }
+                });
+            }
+
+            BiConsumer<List<Association>, PersistentProperty> addIdentityColumn = (associations, property) -> {
+                String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                String[] path = SqlQueryBuilderUtils.asPath(associations, property);
+                String @Nullable [] existingPath = columnPaths.putIfAbsent(unescapedColumnName, path);
+                if (existingPath != null) {
+                    if (Arrays.equals(existingPath, path)) {
+                        return;
+                    }
+                    failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
+                }
+                String columnName = escape ? quote(unescapedColumnName) : unescapedColumnName;
+                boolean isSequence = false;
+                if (SqlQueryBuilderUtils.isNotForeign(associations)) {
+                    unescapedColumns.add(unescapedColumnName);
+                    resultColumns.add(columnName);
+                    resultColumnTypes.add(property.getDataType());
+
+                    Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
+                    if (generated.isPresent()) {
+                        GeneratedValue.Type idGeneratorType = generated
+                            .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
+                            .orElseGet(() -> selectAutoStrategy(property));
+                        if (idGeneratorType == SEQUENCE) {
+                            isSequence = true;
+                        } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
+                            return;
+                        }
+                    }
+                }
+
+                if (isSequence) {
+                    values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                } else {
+                    int bindingIndex = parameterBindings.size() + 1;
+                    values.add(getWriteExpression(bindingIndex, property));
+                    parameterBindings.add(createInsertParameterBinding(String.valueOf(bindingIndex), property, path));
+                }
+                columns.add(columnName);
+            };
 
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
-                    boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
-                    if (generated) {
-                        String columnName = getMappedName(namingStrategy, associations, property);
-                        unescapedColumns.add(columnName);
-                        if (escape) {
-                            columnName = quote(columnName);
+                    String unescapedColumnName = getMappedName(namingStrategy, associations, property);
+                    if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, unescapedColumnName)) {
+                        PersistentPropertyPath identityPath = identityPathsByColumn.get(unescapedColumnName);
+                        if (identityPath == null) {
+                            throw new MappingException("Shared identity insert mapping for column [" + unescapedColumnName + "] on entity ["
+                                + entity.getName() + "] did not resolve to a root identity property");
                         }
+                        addIdentityColumn.accept(identityPath.getAssociations(), identityPath.getProperty());
+                        return;
+                    }
+                    String columnName = unescapedColumnName;
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+                    if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                        unescapedColumns.add(unescapedColumnName);
                         resultColumns.add(columnName);
                         resultColumnTypes.add(property.getDataType());
                         return;
                     }
 
-                    addWriteExpression(values, property);
-
-                    String key = String.valueOf(values.size());
-                    String[] path = asStringPath(associations, property);
-                    parameterBindings.add(new QueryParameterBinding() {
-                        @Override
-                        public String getName() {
-                            return key;
-                        }
-
-                        @Override
-                        public String getKey() {
-                            return key;
-                        }
-
-                        @Override
-                        public DataType getDataType() {
-                            return property.getDataType();
-                        }
-
-                        @Override
-                        public JsonDataType getJsonDataType() {
-                            return property.getJsonDataType();
-                        }
-
-                        @Override
-                        public String[] getPropertyPath() {
-                            return path;
-                        }
-                    });
-
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    unescapedColumns.add(columnName);
-                    if (escape) {
-                        columnName = quote(columnName);
+                    String[] path = SqlQueryBuilderUtils.asPath(associations, property);
+                    String @Nullable [] existingPath = columnPaths.putIfAbsent(unescapedColumnName, path);
+                    if (existingPath != null) {
+                        failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
                     }
+                    int bindingIndex = parameterBindings.size() + 1;
+                    values.add(getWriteExpression(bindingIndex, property));
+                    parameterBindings.add(createInsertParameterBinding(String.valueOf(bindingIndex), property, path));
+                    unescapedColumns.add(unescapedColumnName);
                     columns.add(columnName);
                     resultColumns.add(columnName);
                     resultColumnTypes.add(property.getDataType());
@@ -1363,34 +1405,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (entity.hasVersion()) {
                 PersistentProperty version = entity.getVersion();
                 if (!version.isGenerated()) {
-                    addWriteExpression(values, version);
-
-                    String key = String.valueOf(values.size());
-                    parameterBindings.add(new QueryParameterBinding() {
-
-                        @Override
-                        public String getName() {
-                            return key;
-                        }
-
-                        @Override
-                        public String getKey() {
-                            return key;
-                        }
-
-                        @Override
-                        public DataType getDataType() {
-                            return version.getDataType();
-                        }
-
-                        @Override
-                        public String[] getPropertyPath() {
-                            return new String[]{version.getName()};
-                        }
-                    });
-
-                    String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
-                    unescapedColumns.add(columnName);
+                    String unescapedColumnName = getMappedName(namingStrategy, Collections.emptyList(), version);
+                    String[] path = new String[]{version.getName()};
+                    String @Nullable [] existingPath = columnPaths.putIfAbsent(unescapedColumnName, path);
+                    if (existingPath != null) {
+                        failOnConflictingInsertColumn(entity, unescapedColumnName, existingPath, path);
+                    }
+                    int bindingIndex = parameterBindings.size() + 1;
+                    values.add(getWriteExpression(bindingIndex, version));
+                    parameterBindings.add(createInsertParameterBinding(String.valueOf(bindingIndex), version, path));
+                    unescapedColumns.add(unescapedColumnName);
+                    String columnName = unescapedColumnName;
                     if (escape) {
                         columnName = quote(columnName);
                     }
@@ -1401,74 +1426,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
 
             for (PersistentProperty identity : entity.getIdentityProperties()) {
-                // Property skipped
-                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                    String unescapedColumnName = getMappedName(namingStrategy, associations, property);
-                    String columnName = unescapedColumnName;
-                    if (escape) {
-                        columnName = quote(columnName);
-                    }
-
-                    boolean isSequence = false;
-                    if (SqlQueryBuilderUtils.isNotForeign(associations)) {
-
-                        unescapedColumns.add(unescapedColumnName);
-                        resultColumns.add(columnName);
-                        resultColumnTypes.add(property.getDataType());
-
-                        Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
-                        if (generated.isPresent()) {
-                            GeneratedValue.Type idGeneratorType = generated
-                                .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
-                                .orElseGet(() -> selectAutoStrategy(property));
-                            if (idGeneratorType == SEQUENCE) {
-                                isSequence = true;
-                            } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
-                                // Property skipped
-                                return;
-                            }
-                        }
-                    }
-
-                    if (isSequence) {
-                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
-                    } else {
-                        addWriteExpression(values, property);
-
-                        String key = String.valueOf(values.size());
-                        String[] path = asStringPath(associations, property);
-                        parameterBindings.add(new QueryParameterBinding() {
-
-                            @Override
-                            public String getName() {
-                                return key;
-                            }
-
-                            @Override
-                            public String getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return property.getDataType();
-                            }
-
-                            @Override
-                            public JsonDataType getJsonDataType() {
-                                return property.getJsonDataType();
-                            }
-
-                            @Override
-                            public String[] getPropertyPath() {
-                                return path;
-                            }
-                        });
-
-                    }
-
-                    columns.add(columnName);
-                });
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, addIdentityColumn);
             }
 
             if (columns.isEmpty()) {
@@ -1529,16 +1487,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Collections.emptyMap());
     }
 
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
+    private void failOnConflictingInsertColumn(PersistentEntity entity, String columnName, String[] existingPath, String[] path) {
+        throw new MappingException("Conflicting insert mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
+            + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
     }
 
     private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
@@ -1589,33 +1540,63 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private boolean addWriteExpression(List<String> values, PersistentProperty property) {
+    private QueryParameterBinding createInsertParameterBinding(String key, PersistentProperty property, String[] path) {
+        return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return key;
+            }
+
+            @Override
+            public String getKey() {
+                return key;
+            }
+
+            @Override
+            public DataType getDataType() {
+                return property.getDataType();
+            }
+
+            @Override
+            public JsonDataType getJsonDataType() {
+                return property.getJsonDataType();
+            }
+
+            @Override
+            public String[] getPropertyPath() {
+                return path;
+            }
+        };
+    }
+
+    private String getWriteExpression(int parameterIndex, PersistentProperty property) {
         DataType dt = property.getDataType();
         String transformer = getDataTransformerWriteValue(null, property).orElse(null);
         if (transformer != null) {
-            return values.add(transformer);
+            StringBuilder transformed = new StringBuilder();
+            appendTransformed(transformed, transformer,
+                () -> transformed.append(formatParameter(parameterIndex).name()));
+            return transformed.toString();
         }
-        String param = formatParameter(values.size() + 1).name();
+        String param = formatParameter(parameterIndex).name();
         if (dt == DataType.JSON) {
-            switch (dialect) {
-                case POSTGRES -> values.add("to_json(" + param + "::json)");
-                case H2 -> values.add(param + " FORMAT JSON");
-                case MYSQL -> values.add("CONVERT(" + param + " USING UTF8MB4)");
-                default -> values.add(param);
-            }
-            return true;
+            return switch (dialect) {
+                case POSTGRES -> "to_json(" + param + "::json)";
+                case H2 -> param + " FORMAT JSON";
+                case MYSQL -> "CONVERT(" + param + " USING UTF8MB4)";
+                default -> param;
+            };
         }
         if (isJsonOrWktGeometry(property)) {
-            switch (dialect) {
-                case ORACLE -> values.add(getOracleGeometryExpression(param, property));
-                case MYSQL -> values.add(getMysqlGeometryExpression(param, property));
-                case SQL_SERVER -> values.add(getSqlServerGeometryExpression(param, property));
-                case POSTGRES, H2 -> values.add(getPostgresGeometryExpression(param, property));
-                default -> values.add(param);
-            }
-            return true;
+            return switch (dialect) {
+                case ORACLE -> getOracleGeometryExpression(param, property);
+                case MYSQL -> getMysqlGeometryExpression(param, property);
+                case SQL_SERVER -> getSqlServerGeometryExpression(param, property);
+                case POSTGRES, H2 -> getPostgresGeometryExpression(param, property);
+                default -> param;
+            };
         }
-        return values.add(param);
+        return param;
     }
 
     @Override
@@ -2368,9 +2349,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
                 query.append(COMMA);
 
-                boolean includeIdentity = association.isForeignKey();
-                // in the case of a foreign key association the ID is not in the table,
-                // so we need to retrieve it
+                boolean includeIdentity = association.isForeignKey()
+                    || (associatedEntity.hasIdentity()
+                    && associatedEntity.getIdentity() instanceof Embedded
+                    && association.getAnnotationMetadata().hasAnnotation(JoinColumns.class));
+                // In the case of a foreign key association the ID is not in the owner table,
+                // so we need to retrieve it. Embedded IDs also need the joined aliases so
+                // constructor/record materialization can resolve the fetched association ID.
                 PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
 
                     String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);

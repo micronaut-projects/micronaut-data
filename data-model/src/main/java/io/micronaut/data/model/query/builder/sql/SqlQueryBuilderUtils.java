@@ -34,15 +34,18 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -122,6 +125,117 @@ final class SqlQueryBuilderUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Detects the narrow case where a relation deliberately reuses an entity identity column.
+     *
+     * <p>The duplicate insert/DDL column checks use this to distinguish a valid shared primary-key/foreign-key
+     * one-to-one mapping from an accidental duplicate column mapping. Plain embedded paths are intentionally
+     * rejected because they do not have join metadata proving that the duplicate column is a shared identity column.</p>
+     *
+     * @param associations The property path associations that lead to {@code property}
+     * @param property The associated identity property
+     * @param columnName The owner-side column name being written or generated
+     * @return {@code true} if an explicit owning relation join column maps {@code columnName} to {@code property};
+     *         an omitted referenced column name uses the associated identity property
+     */
+    static boolean isExplicitSharedIdentityJoinColumn(List<Association> associations,
+                                                      PersistentProperty property,
+                                                      String columnName) {
+        Association foreignAssociation = findForeignAssociation(associations);
+        if (foreignAssociation == null || foreignAssociation.isForeignKey()) {
+            return false;
+        }
+        AnnotationValue<JoinColumns> joinColumns = foreignAssociation.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        return joinColumns != null && hasMatchingJoinColumn(joinColumns, foreignAssociation, property, columnName);
+    }
+
+    private static @Nullable Association findForeignAssociation(List<Association> associations) {
+        for (Association association : associations) {
+            if (association.getKind() != Relation.Kind.EMBEDDED) {
+                return association;
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasMatchingJoinColumn(AnnotationValue<JoinColumns> joinColumns,
+                                                 Association foreignAssociation,
+                                                 PersistentProperty property,
+                                                 String columnName) {
+        for (AnnotationValue<?> joinColumn : joinColumns.getAnnotations(AnnotationMetadata.VALUE_MEMBER)) {
+            if (isMatchingJoinColumn(joinColumn, foreignAssociation, property, columnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isMatchingJoinColumn(AnnotationValue<?> joinColumn,
+                                                Association foreignAssociation,
+                                                PersistentProperty property,
+                                                String columnName) {
+        String name = normalizeJoinColumnValue(joinColumn.stringValue("name").orElse(null));
+        if (!columnName.equals(name)) {
+            return false;
+        }
+        String referencedColumnName = normalizeJoinColumnValue(joinColumn.stringValue("referencedColumnName").orElse(null));
+        return property.getPersistedName().equals(referencedColumnName)
+            || (referencedColumnName == null
+            && PersistentEntityUtils.isImplicitIdentityProperty(foreignAssociation.getAssociatedEntity(), property, name));
+    }
+
+    private static @Nullable String normalizeJoinColumnValue(@Nullable String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    /**
+     * Detects the shared-identity update/DDL/insert case where an explicit join column also maps to
+     * one of the root entity identity columns.
+     *
+     * @param identityColumns The physical columns belonging to the root entity identity
+     * @param associations The property path associations that lead to {@code property}
+     * @param property The associated identity property
+     * @param columnName The owner-side physical column name
+     * @return {@code true} if the relation path maps to a root identity column
+     */
+    static boolean isSharedIdentityColumn(Set<String> identityColumns,
+                                          List<Association> associations,
+                                          PersistentProperty property,
+                                          String columnName) {
+        return isExplicitSharedIdentityJoinColumn(associations, property, columnName)
+            && identityColumns.contains(columnName);
+    }
+
+    /**
+     * Resolves the physical columns belonging to the root entity identity.
+     *
+     * <p>This resolves embedded identities to their concrete columns so callers can distinguish true shared
+     * identity columns from regular foreign-key columns that also reference an associated identity property.</p>
+     */
+    static Set<String> getIdentityColumns(PersistentEntity entity, NamingStrategy namingStrategy) {
+        Set<String> identityColumns = new HashSet<>();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity,
+                (associations, property) -> identityColumns.add(namingStrategy.mappedName(associations, property)));
+        }
+        return identityColumns;
+    }
+
+    /**
+     * Converts an association/property traversal to the dot-path used by query parameter bindings and conflict checks.
+     */
+    static String[] asPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
+        }
+        List<String> path = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            path.add(association.getName());
+        }
+        path.add(property.getName());
+        return path.toArray(new String[0]);
     }
 
     /**
