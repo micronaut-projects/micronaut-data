@@ -18,6 +18,7 @@ A numeric return value represents the affected-row count reported by the databas
 Convention-based upsert methods must be named exactly `upsert` or `upsertAll`.
 Derived names such as `upsertByEmail` are not supported because upsert matching is controlled by the entity identity or `conflictsOn`, not by a method-name predicate.
 Use ann:data.annotation.Upsert[] for custom method names.
+Until https://github.com/micronaut-projects/micronaut-data/issues/4016[annotation precedence is resolved], a custom upsert method name must not start with another recognized operation prefix, such as `find`, `update`, `delete`, `count`, or `exists`.
 
 The default conflict target is the entity identity.
 The following JDBC example uses the caller-provided flight number as the identity:
