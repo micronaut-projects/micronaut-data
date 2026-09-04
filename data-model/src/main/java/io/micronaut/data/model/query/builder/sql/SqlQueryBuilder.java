@@ -263,44 +263,47 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     protected String normalizeAlias(String alias) {
-        if (dialect != Dialect.POSTGRES || utf8Length(alias) <= MAX_POSTGRES_IDENTIFIER_BYTES) {
+        if (dialect != Dialect.POSTGRES) {
             return alias;
         }
-        String hash = Long.toUnsignedString(hashAlias(alias), 16);
-        if (hash.length() < ALIAS_HASH_LENGTH) {
-            hash = "0".repeat(ALIAS_HASH_LENGTH - hash.length()) + hash;
-        }
         boolean trailingUnderscore = alias.endsWith("_");
-        int reserved = hash.length() + 1 + (trailingUnderscore ? 1 : 0);
-        String prefix = truncateToUtf8Bytes(alias, MAX_POSTGRES_IDENTIFIER_BYTES - reserved);
-        String normalized = prefix + "_" + hash;
-        return trailingUnderscore ? normalized + "_" : normalized;
-    }
-
-    private static int utf8Length(String value) {
-        int length = 0;
+        // Reserve bytes for the separator, fixed-width hash, and preserved trailing underscore.
+        int maxPrefixBytes = MAX_POSTGRES_IDENTIFIER_BYTES - ALIAS_HASH_LENGTH - 1
+            - (trailingUnderscore ? 1 : 0);
+        int totalBytes = 0;
+        int prefixBytes = 0;
+        int prefixEnd = 0;
+        boolean prefixComplete = false;
+        long hash = ALIAS_HASH_OFFSET_BASIS;
         int i = 0;
-        while (i < value.length()) {
-            int codePoint = value.codePointAt(i);
-            length += utf8CodePointLength(codePoint);
+        while (i < alias.length()) {
+            int codePoint = alias.codePointAt(i);
+            int codePointLength = utf8CodePointLength(codePoint);
+            totalBytes += codePointLength;
+            if (!prefixComplete) {
+                if (prefixBytes + codePointLength <= maxPrefixBytes) {
+                    prefixBytes += codePointLength;
+                    prefixEnd = i + Character.charCount(codePoint);
+                } else {
+                    prefixComplete = true;
+                }
+            }
+            // Hash Unicode code points so surrogate pairs are treated as one character.
+            hash ^= codePoint;
+            hash *= ALIAS_HASH_PRIME;
             i += Character.charCount(codePoint);
         }
-        return length;
-    }
-
-    private static String truncateToUtf8Bytes(String value, int maxBytes) {
-        int length = 0;
-        int end = 0;
-        while (end < value.length()) {
-            int codePoint = value.codePointAt(end);
-            int codePointLength = utf8CodePointLength(codePoint);
-            if (length + codePointLength > maxBytes) {
-                break;
-            }
-            length += codePointLength;
-            end += Character.charCount(codePoint);
+        if (totalBytes <= MAX_POSTGRES_IDENTIFIER_BYTES) {
+            return alias;
         }
-        return value.substring(0, end);
+
+        String hashString = Long.toUnsignedString(hash, 16);
+        if (hashString.length() < ALIAS_HASH_LENGTH) {
+            hashString = "0".repeat(ALIAS_HASH_LENGTH - hashString.length()) + hashString;
+        }
+        String prefix = alias.substring(0, prefixEnd);
+        String normalized = prefix + "_" + hashString;
+        return trailingUnderscore ? normalized + "_" : normalized;
     }
 
     private static int utf8CodePointLength(int codePoint) {
@@ -314,17 +317,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return 3;
         }
         return 4;
-    }
-
-    private static long hashAlias(String value) {
-        long hash = ALIAS_HASH_OFFSET_BASIS;
-        for (int i = 0; i < value.length();) {
-            int codePoint = value.codePointAt(i);
-            hash ^= codePoint;
-            hash *= ALIAS_HASH_PRIME;
-            i += Character.charCount(codePoint);
-        }
-        return hash;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {

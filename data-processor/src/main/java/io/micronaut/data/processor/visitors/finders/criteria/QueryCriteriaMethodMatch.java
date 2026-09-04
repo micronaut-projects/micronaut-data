@@ -349,22 +349,37 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
             String associationName = analyzedJoin.getAssociation().getName();
             String alias = analyzedJoin.getAlias();
-            Join.Type joinType = analyzedJoin.getAssociationJoinType();
+            Join.Type joinType = toPaginationJoinType(analyzedJoin.getAssociationJoinType());
             PersistentEntityFrom<?, ?> paginationJoin;
             if (alias == null) {
                 paginationJoin = paginationFrom.join(
                     associationName,
-                    joinType == null ? Join.Type.DEFAULT : joinType
+                    joinType
                 );
             } else {
                 paginationJoin = paginationFrom.join(
                     associationName,
-                    joinType == null ? Join.Type.DEFAULT : joinType,
+                    joinType,
                     alias
                 );
             }
             applyPaginationJoins(analyzedJoin, paginationJoin);
         }
+    }
+
+    private Join.Type toPaginationJoinType(Join.@Nullable Type joinType) {
+        // The pagination subquery selects only root IDs, so fetch semantics are unnecessary there.
+        if (joinType == null) {
+            return Join.Type.DEFAULT;
+        }
+        return switch (joinType) {
+            case LEFT_FETCH -> Join.Type.LEFT;
+            case RIGHT_FETCH -> Join.Type.RIGHT;
+            case INNER_FETCH -> Join.Type.INNER;
+            case FETCH -> Join.Type.DEFAULT;
+            case OUTER_FETCH -> Join.Type.OUTER;
+            default -> joinType;
+        };
     }
 
     private boolean requiresPaginationSubquery(PersistentEntityFrom<?, ?> from) {
