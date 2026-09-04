@@ -171,10 +171,14 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (unmappedArguments.isEmpty()) {
             return;
         }
+        // getPersistentPropertyNames() and getPropertyByName() are backed by the same map, which also holds the
+        // identity, the composite identity components and the version, so both checks above and here see the very
+        // same definition of "persistent property"
         List<String> readOnlyProperties = new ArrayList<>();
-        for (SourcePersistentProperty property : allPersistentProperties(entity)) {
-            if (property.getPropertyElement().isReadOnly()) {
-                readOnlyProperties.add(property.getName());
+        for (String propertyName : entity.getPersistentPropertyNames()) {
+            SourcePersistentProperty property = entity.getPropertyByName(propertyName);
+            if (property != null && property.getPropertyElement().isReadOnly()) {
+                readOnlyProperties.add(propertyName);
             }
         }
         boolean hasDefaultConstructor = element.getDefaultConstructor().isPresent();
@@ -199,19 +203,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     private static boolean isJsonCreator(MethodElement element) {
         return element.hasAnnotation(JSON_CREATOR_ANNOTATION) || element.hasAnnotation(JACKSON3_JSON_CREATOR_ANNOTATION);
-    }
-
-    private static List<SourcePersistentProperty> allPersistentProperties(SourcePersistentEntity entity) {
-        List<SourcePersistentProperty> properties = new ArrayList<>(entity.getPersistentProperties());
-        if (entity.hasCompositeIdentity()) {
-            properties.addAll(Arrays.asList(entity.getCompositeIdentity()));
-        } else if (entity.hasIdentity()) {
-            properties.add(entity.getIdentity());
-        }
-        if (entity.hasVersion()) {
-            properties.add(entity.getVersion());
-        }
-        return properties;
     }
 
     private static String describeCreator(ClassElement element, MethodElement creator) {

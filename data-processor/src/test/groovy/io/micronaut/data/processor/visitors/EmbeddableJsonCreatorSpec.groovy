@@ -62,9 +62,10 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         entity.constructorArguments*.name == expected
 
         where:
-        title                              | className          | source                 | expected
-        'mappable @JsonCreator'            | 'test.PojoCountry' | CLASS_MAPPABLE_CREATOR | ['countryCode', 'regionCode']
-        'no jackson, several constructors' | 'test.Thing'       | SEVERAL_CONSTRUCTORS   | ['name']
+        title                              | className              | source                 | expected
+        'mappable @JsonCreator'            | 'test.PojoCountry'     | CLASS_MAPPABLE_CREATOR | ['countryCode', 'regionCode']
+        'no jackson, several constructors' | 'test.Thing'           | SEVERAL_CONSTRUCTORS   | ['name']
+        'arguments are the id and version' | 'test.VersionedThing'  | ID_AND_VERSION_CREATOR | ['id', 'version', 'name']
     }
 
     @Unroll
@@ -85,6 +86,7 @@ class EmbeddableJsonCreatorSpec extends AbstractTypeElementSpec {
         'class with final fields and two constructors' | 'test.PojoCountry' | CLASS_FINAL_FIELDS        | 'PojoCountry(String value)'    | 'there is no accessible no-argument constructor'
         'mutable class without no-arg constructor'   | 'test.Country'     | CLASS_SETTERS_WITHOUT_NOARG | 'Country.fromJson(String value)' | 'there is no accessible no-argument constructor'
         'default constructor but read-only property' | 'test.Country'     | CLASS_NOARG_READ_ONLY       | 'Country(String value)'        | 'the properties [regionCode] cannot be set after construction'
+        'default constructor but read-only id'       | 'test.ReadOnlyIdEntity' | ENTITY_READ_ONLY_ID    | 'ReadOnlyIdEntity(String value)' | 'the properties [id] cannot be set after construction'
     }
 
     // Issue #3752, first variant
@@ -330,6 +332,82 @@ public class PojoCountry {
 
     public String getRegionCode() {
         return regionCode;
+    }
+}
+'''
+
+    // The identity and the version are persistent properties too, so a creator built from them is mappable
+    private static final String ID_AND_VERSION_CREATOR = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Version;
+
+@MappedEntity
+public class VersionedThing {
+    @Id
+    private final Long id;
+    @Version
+    private final Long version;
+    private final String name;
+
+    @JsonCreator
+    public VersionedThing(Long id, Long version, String name) {
+        this.id = id;
+        this.version = version;
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+'''
+
+    // The read-only scan has to see the identity as well, not just the plain properties
+    private static final String ENTITY_READ_ONLY_ID = '''
+package test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity
+public class ReadOnlyIdEntity {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+
+    public ReadOnlyIdEntity() {
+    }
+
+    @JsonCreator
+    public ReadOnlyIdEntity(String value) {
+        this.name = value;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
 '''
