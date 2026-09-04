@@ -79,6 +79,11 @@ public @interface DataMethod {
     String META_MEMBER_RESULT_DATA_TYPE = "resultDataType";
 
     /**
+     * The member that indicates whether an upsert should read a generated identity value.
+     */
+    String META_MEMBER_READ_GENERATED_ID = "readGeneratedId";
+
+    /**
      * The member name that holds the root entity type.
      */
     String META_MEMBER_ROOT_ENTITY = "rootEntity";
@@ -214,6 +219,11 @@ public @interface DataMethod {
     DataType resultDataType() default DataType.OBJECT;
 
     /**
+     * @return Whether an upsert should read a generated identity value.
+     */
+    boolean readGeneratedId() default false;
+
+    /**
      * The parameter binding defines which method arguments bind to which
      * query parameters. The {@link Property#name()} is used to define the query parameter name and the
      * {@link Property#value()} is used to define method argument name to bind.
@@ -323,5 +333,11 @@ public @interface DataMethod {
          * An insert returning operation.
          */
         INSERT_RETURNING,
+        /**
+         * An upsert operation.
+         *
+         * @since 5.2.0
+         */
+        UPSERT,
     }
 }

@@ -28,6 +28,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.event.UpsertEntityEventListener;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -116,7 +117,22 @@ abstract class BaseOperations<T, Exc extends Exception> {
      * Update one operation.
      */
     public void update() {
+        update(false);
+    }
+
+    /**
+     * Execute one native upsert using update lifecycle callbacks and cascades. Framework-managed values
+     * required by the insert branch are prepared before the update lifecycle runs.
+     */
+    public void upsert() {
+        update(true);
+    }
+
+    private void update(boolean upsert) {
         collectAutoPopulatedPreviousValues();
+        if (upsert) {
+            prepareUpsert();
+        }
         boolean vetoed = triggerPreUpdate();
         if (vetoed) {
             return;
@@ -134,7 +150,17 @@ abstract class BaseOperations<T, Exc extends Exception> {
         } catch (OptimisticLockException ex) {
             throw ex;
         } catch (Exception e) {
-            failed(e, "UPDATE");
+            failed(e, upsert ? "UPSERT" : "UPDATE");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void prepareUpsert() {
+        if (entityEventListener instanceof UpsertEntityEventListener<?> upsertEntityEventListener) {
+            triggerPre(context -> {
+                ((UpsertEntityEventListener<Object>) upsertEntityEventListener).prepareUpsert(context);
+                return true;
+            });
         }
     }
 

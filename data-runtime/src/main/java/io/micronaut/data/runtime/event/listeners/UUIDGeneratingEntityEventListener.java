@@ -16,11 +16,13 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import org.jspecify.annotations.NonNull;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.event.UpsertEntityEventListener;
 
 import jakarta.inject.Singleton;
 
@@ -37,7 +39,7 @@ import java.util.function.Predicate;
  * @since 2.3.0
  */
 @Singleton
-public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener {
+public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener implements UpsertEntityEventListener<Object> {
 
     private static final Predicate<RuntimePersistentProperty<Object>> UUID_PREDICATE = p -> p.getType() == UUID.class;
 
@@ -55,46 +57,54 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
+        populateUuids(context, false);
+        return true;
+    }
+
+    @Override
+    public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+        populateUuids(context, true);
+    }
+
+    private void populateUuids(EntityEventContext<Object> context, boolean preserveExistingValues) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
         final Object entity = context.getEntity();
         AutoPopulateUtil.applyTopLevel(context, persistentProperties, property ->
-            shouldSkipPopulation(property, entity) ? null : UUID.randomUUID()
+            shouldSkipPopulation(property, entity, preserveExistingValues) ? null : UUID.randomUUID()
         );
 
         // 2) Embedded properties (recursive via util)
-        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
-            if (embeddedPersistentProperty.getType() != UUID.class) {
-                return current;
-            }
-            if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
-                return current;
-            }
-            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-            if (!prop.hasSetterOrConstructorArgument()) {
-                return current;
-            }
-            boolean skipIfPresent = embeddedPersistentProperty.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
-            if (skipIfPresent) {
-                Object existing = prop.get(current);
-                if (existing != null) {
-                    return current; // skip
-                }
-            }
-            UUID value = UUID.randomUUID();
-            if (prop.isReadOnly()) {
-                return prop.withValue(current, value);
-            } else {
-                prop.set(current, value);
-                return current;
-            }
-        });
-
-        return true;
+        AutoPopulateUtil.applyEmbedded(context, (property, current) -> populateEmbeddedUuid(property, current, preserveExistingValues));
     }
 
-    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity) {
-        return property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)
-            && property.getProperty().get(entity) != null;
+    private Object populateEmbeddedUuid(RuntimePersistentProperty<Object> property, Object current, boolean preserveExistingValues) {
+        if (property.getType() != UUID.class) {
+            return current;
+        }
+        if (!property.isAutoPopulated() && !property.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
+            return current;
+        }
+        BeanProperty<Object, Object> beanProperty = property.getProperty();
+        if (!beanProperty.hasSetterOrConstructorArgument()) {
+            return current;
+        }
+        if ((preserveExistingValues || skipIfPresent(property.getAnnotationMetadata())) && beanProperty.get(current) != null) {
+            return current;
+        }
+        UUID value = UUID.randomUUID();
+        if (beanProperty.isReadOnly()) {
+            return beanProperty.withValue(current, value);
+        }
+        beanProperty.set(current, value);
+        return current;
+    }
+
+    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity, boolean preserveExistingValues) {
+        return (preserveExistingValues || skipIfPresent(property.getAnnotationMetadata())) && property.getProperty().get(entity) != null;
+    }
+
+    private static boolean skipIfPresent(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
     }
 }
