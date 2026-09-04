@@ -171,6 +171,17 @@ Because the selected database branch is not known before execution, the supplied
 When an upsert matches an existing row, a non-updatable auto-populated property on the supplied or returned entity can therefore differ from the value retained in the database.
 Reload the entity when the persisted value of such a property is required.
 
+=== Discriminator Multitenancy
+
+For an entity with ann:data.annotation.TenantId[], upsert preparation supplies the current tenant identifier only when the entity does not already have a tenant value.
+The tenant identifier is not automatically included in the native upsert match condition.
+That condition uses the entity identity or the properties declared with ann:data.annotation.Upsert[]'s `conflictsOn` member.
+
+Consequently, an upsert that supplies a different tenant identifier can match an existing row and update that row's tenant value.
+This is consistent with entity update operations, which also do not add a tenant predicate automatically.
+
+To use the tenant identifier as part of conflict resolution, include it in the entity identity or in `conflictsOn` together with a database constraint that enforces the same uniqueness rule.
+
 === Optimistic Locking
 
 Optimistic locking is not supported by the native upsert implementation.
