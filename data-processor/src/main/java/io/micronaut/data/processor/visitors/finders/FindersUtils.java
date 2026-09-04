@@ -635,6 +635,10 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
             );
+        } else if (returnType.isArray()) {
+            return typeAndInterceptorEntry(returnType.fromArray(),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
+            );
          } else if (isContainer(returnType, Optional.class)) {
             return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor")

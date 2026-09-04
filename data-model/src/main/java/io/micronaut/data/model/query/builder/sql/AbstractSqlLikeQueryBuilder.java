@@ -31,6 +31,7 @@ import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Reservable;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
@@ -84,6 +85,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -868,7 +870,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return null;
     }
 
-    private void buildUpdateStatement(AnnotationMetadata annotationMetadata, QueryState queryState, Map<String, Object> propertiesToUpdate) {
+    private void buildUpdateStatement(AnnotationMetadata annotationMetadata, QueryState queryState,
+                                      Map<String, Object> propertiesToUpdate, boolean generatedEntityUpdate) {
         StringBuilder queryString = queryState.getQuery();
         queryString.append(SPACE).append("SET").append(SPACE);
 
@@ -915,7 +918,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         // keys need to be sorted before query is built
-        List<Map.Entry<QueryPropertyPath, Object>> update = propertiesToUpdate.entrySet().stream()
+        List<Map.Entry<QueryPropertyPath, Object>> updateProperties = propertiesToUpdate.entrySet().stream()
             .map(e -> {
                 QueryPropertyPath propertyPath = queryState.findProperty(e.getKey());
                 if (propertyPath.getProperty() instanceof Association association && association.isForeignKey()) {
@@ -939,6 +942,26 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return !generated;
             })
             .collect(Collectors.toList());
+        boolean hasReservableUpdateProperty = updateProperties.stream()
+            .anyMatch(e -> hasReservableUpdateProperty(e.getKey()));
+        if (hasReservableUpdateProperty && getDialect() != Dialect.ORACLE) {
+            throw new IllegalArgumentException("Cannot generate update statement for @Reservable properties with dialect ["
+                + getDialect() + "]. @Reservable properties require the Oracle dialect.");
+        }
+        boolean hasDirectReservableAssignment = !generatedEntityUpdate && updateProperties.stream()
+            .anyMatch(e -> !isPermittedReservableAssignment(e.getValue()) && hasReservableUpdateProperty(e.getKey()));
+        if (hasDirectReservableAssignment) {
+            throw new IllegalArgumentException("Cannot generate update statement with direct assignments to @Reservable properties. "
+                + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
+        }
+        List<Map.Entry<QueryPropertyPath, Object>> update = updateProperties.stream()
+            .filter(e -> e.getValue() instanceof ReservationDelta || !generatedEntityUpdate || hasNonReservableUpdateProperty(e.getKey()))
+            .toList();
+        if (update.isEmpty() && updateProperties.stream()
+            .anyMatch(e -> hasReservableUpdateProperty(e.getKey()))) {
+            throw new IllegalArgumentException("Cannot generate update statement because all update properties are reservable. "
+                + "Use derived reserveIncrement.../reserveDecrement... methods for reservable columns, or an explicit @Query delta update when needed.");
+        }
 
         boolean[] needsTrimming = {false};
         if (!computePropertyPaths() || jsonEntity) {
@@ -958,7 +981,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     queryString.append(propertyPath.getPath()).append('=');
                 }
-                Object value = entry.getValue();
+                Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
                         queryState.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
@@ -981,10 +1004,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
-                if (entry.getValue() instanceof BindingParameter bindingParameter) {
+                Object value = unwrapUpdateValue(entry.getValue());
+                if (value instanceof BindingParameter bindingParameter) {
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
-                        if (generated) {
+                        if (generated || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                             return;
                         }
                         String tableAlias = propertyPath.getTableAlias();
@@ -1010,7 +1034,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         queryString.append(tableAlias).append(DOT);
                     }
                     queryString.append(propertyPath.getColumnName()).append('=');
-                    Object value = entry.getValue();
                     if (value instanceof IExpression<?> expression) {
                         new ExpressionAppender(queryState, annotationMetadata)
                             .appendExpression(expression, new DefaultPersistentPropertyPath<>(propertyPath.propertyPath));
@@ -1025,6 +1048,36 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
         }
+    }
+
+    private static Object unwrapUpdateValue(Object value) {
+        return value instanceof ReservationDelta reservationDelta ? reservationDelta.expression() : value;
+    }
+
+    private static boolean isPermittedReservableAssignment(Object value) {
+        return value instanceof ReservationDelta;
+    }
+
+    private boolean hasNonReservableUpdateProperty(QueryPropertyPath propertyPath) {
+        boolean[] found = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                && !property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
+    }
+
+    private boolean hasReservableUpdateProperty(QueryPropertyPath propertyPath) {
+        boolean[] found = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+            if (!SqlQueryBuilderUtils.isGeneratedProperty(property, associations)
+                && property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
     }
 
     /**
@@ -1104,7 +1157,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (tableAlias != null) {
             queryString.append(SPACE).append(tableAlias);
         }
-        buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate);
+        // Only repository-generated entity assignments may omit @Reservable properties.
+        // Explicit Criteria API updates must be validated as direct assignments.
+        boolean generatedEntityUpdate = definition instanceof GeneratedEntityUpdateQueryDefinition generated
+            && generated.isGeneratedEntityUpdate();
+        buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate, generatedEntityUpdate);
         buildWhereClause(annotationMetadata, definition.predicate(), queryState);
 
         Selection<?> returningSelection = definition.returningSelection();
@@ -1211,20 +1268,48 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Sort.Order order = i.next();
             String property = order.getProperty();
             boolean ignoreCase = order.isIgnoreCase();
+            String propertyRef = buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias);
+            Sort.Order.NullOrdering nullOrdering = order.getNullOrdering();
+            boolean emulateNullOrdering = nullOrdering != Sort.Order.NullOrdering.NONE && !supportsNullOrdering();
+            if (emulateNullOrdering) {
+                // Sorting the null rank first puts the nulls where the caller asked for them. Whether the
+                // value is null does not depend on its case, so the rank tests the property as it is
+                int nullRank = nullOrdering == Sort.Order.NullOrdering.FIRST ? 0 : 1;
+                buff.append("CASE WHEN ").append(propertyRef).append(" IS NULL THEN ").append(nullRank)
+                    .append(" ELSE ").append(1 - nullRank).append(" END,");
+            }
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias));
+            buff.append(propertyRef);
             if (ignoreCase) {
                 buff.append(")");
             }
             buff.append(SPACE).append(order.getDirection());
+            if (!emulateNullOrdering) {
+                switch (nullOrdering) {
+                    case FIRST -> buff.append(" NULLS FIRST");
+                    case LAST -> buff.append(" NULLS LAST");
+                    default -> { /* let the database decide */ }
+                }
+            }
             if (i.hasNext()) {
                 buff.append(",");
             }
         }
 
         return buff.toString();
+    }
+
+    /**
+     * Whether the dialect understands the standard {@code NULLS FIRST} and {@code NULLS LAST} suffixes on an
+     * {@code ORDER BY} item. Dialects that do not get an equivalent {@code CASE} expression sorted on first.
+     *
+     * @return Whether the suffixes are supported
+     * @since 5.2
+     */
+    protected boolean supportsNullOrdering() {
+        return true;
     }
 
     /**
@@ -3494,10 +3579,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
-            Optional<String> optDefinition = annotationMetadata.stringValue(MappedProperty.class, "definition");
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             function = function + column;
-            if (optDefinition.isPresent() && optDefinition.get().toLowerCase().contains("geography")) {
+            if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
                 // convert value from geography to geometry since ST_AsText and ST_AsGeoJSON requires geometry
                 function = function + "::geometry";
             }

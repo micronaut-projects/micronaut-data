@@ -72,6 +72,11 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
     }
 
     @Override
+    public void markGeneratedEntityUpdate() {
+        super.markGeneratedEntityUpdate();
+    }
+
+    @Override
     protected void setValue(String attributeName, @Nullable Object value) {
         if (value instanceof SourceParameterExpressionImpl sourceParameterExpression) {
             sourceParameterExpression.setUpdate(true);

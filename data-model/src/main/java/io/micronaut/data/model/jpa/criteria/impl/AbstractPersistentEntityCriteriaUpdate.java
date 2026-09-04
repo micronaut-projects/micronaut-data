@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
@@ -66,6 +67,9 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     protected Map<String, Object> updateValues = new LinkedHashMap<>();
     @Nullable
     protected Selection<?> returning;
+    // Repository entity updates need separate SQL handling for @Reservable assignments.
+    // Explicit Criteria API updates leave this false and are validated as direct updates.
+    private boolean generatedEntityUpdate;
 
     @Override
     public PersistentEntity getPersistentEntity() {
@@ -77,7 +81,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         Objects.requireNonNull(entityRoot);
         return queryBuilder.buildUpdate(annotationMetadata,
-            new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues));
+            new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues, generatedEntityUpdate));
     }
 
     @Override
@@ -187,6 +191,16 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         return updateValues;
     }
 
+    /**
+     * Mark this internal criteria representation as generated from a repository entity update
+     * such as {@code update(entity)} or the update branch of {@code save(entity)}.
+     *
+     * <p>This is not a marker for arbitrary Criteria API updates.</p>
+     */
+    public void markGeneratedEntityUpdate() {
+        generatedEntityUpdate = true;
+    }
+
     @Override
     public Set<ParameterExpression<?>> getParameters() {
         return CriteriaUtils.extractPredicateParameters(predicate);
@@ -210,9 +224,10 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         return this;
     }
 
-    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.UpdateQueryDefinition {
+    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements GeneratedEntityUpdateQueryDefinition {
 
         private final Map<String, Object> propertiesToUpdate;
+        private final boolean generatedEntityUpdate;
         @Nullable
         private final Selection<?> returningSelection;
 
@@ -221,15 +236,22 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
                                          Predicate predicate,
                                          @Nullable
                                          Selection<?> returningSelection,
-                                         Map<String, Object> propertiesToUpdate) {
+                                         Map<String, Object> propertiesToUpdate,
+                                         boolean generatedEntityUpdate) {
             super(persistentEntity, predicate, Map.of());
             this.propertiesToUpdate = propertiesToUpdate;
+            this.generatedEntityUpdate = generatedEntityUpdate;
             this.returningSelection = returningSelection;
         }
 
         @Override
         public Map<String, Object> propertiesToUpdate() {
             return propertiesToUpdate;
+        }
+
+        @Override
+        public boolean isGeneratedEntityUpdate() {
+            return generatedEntityUpdate;
         }
 
         @Override

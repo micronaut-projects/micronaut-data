@@ -22,7 +22,8 @@ class OracleXEMultitenancySpec extends AbstractJdbcMultitenancySpec implements C
         return [
                 'db-type'        : 'oracle',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'ORACLE'
+                'dialect'        : 'ORACLE',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

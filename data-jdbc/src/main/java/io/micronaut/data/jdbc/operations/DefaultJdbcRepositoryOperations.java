@@ -36,9 +36,12 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.DataIntegrityViolationException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
+import io.micronaut.data.jdbc.exceptions.JdbcExceptionUtils;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
@@ -1163,6 +1166,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (dataAccessException != null) {
             return dataAccessException;
         }
+        if (JdbcExceptionUtils.isUniqueConstraintViolation(sqlException)) {
+            return new EntityExistsException("Entity already exists: " + sqlException.getMessage(), sqlException);
+        }
+        if (JdbcExceptionUtils.isIntegrityConstraintViolation(sqlException)) {
+            return new DataIntegrityViolationException("Data integrity violation: " + sqlException.getMessage(), sqlException);
+        }
         return fallbackMapper.apply(sqlException);
     }
 
@@ -1432,12 +1441,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     checkOptimisticLocking(1, rowsUpdated);
                 }
             } catch (SQLException e) {
-                DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
-                if (dataAccessException != null) {
-                    throw dataAccessException;
-                }
-                throw e;
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException("Error executing SQL: " + sqlException.getMessage(), sqlException));
             }
+        }
+
+        @Override
+        protected void failed(Exception e, String operation) throws DataAccessException {
+            if (e instanceof DataAccessException dataAccessException) {
+                throw dataAccessException;
+            }
+            super.failed(e, operation);
         }
 
         private void executeReturning() {

@@ -26,6 +26,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jd.SpecificationConstraint;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -62,36 +63,25 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
 
     @Override
     public void register(MutableConversionService conversionService) {
-        conversionService.addConverter(Restriction.class, PredicateSpecification.class, new JakartaDataRestrictionsConverter(dateTimeProvider));
+        JakartaDataRestrictionsConverter restrictionsConverter = new JakartaDataRestrictionsConverter(dateTimeProvider);
+        conversionService.addConverter(Restriction.class, PredicateSpecification.class, restrictionsConverter);
         conversionService.addConverter(SpecificationConstraint.class, PredicateSpecification.class, new JakartaDataConstraintConverter(dateTimeProvider, runtimeEntityRegistry));
         conversionService.addConverter(Limit.class, io.micronaut.data.model.Limit.class,
             limit -> io.micronaut.data.model.Limit.of(limit.maxResults(), (int) limit.startAt() - 1));
         conversionService.addConverter(Order.class, Sort.class, order -> Sort.of(
-            ((Order<?>) order).sorts().stream().map(sort -> new Sort.Order(
-                sort.property(),
-                sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                sort.ignoreCase())
-            ).toList()
+            ((Order<?>) order).sorts().stream().map(sort -> toOrder(sort, restrictionsConverter)).toList()
         ));
-        conversionService.addConverter(jakarta.data.Sort.class, Sort.class, sort -> Sort.of(
-                new Sort.Order(
-                    sort.property(),
-                    sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                    sort.ignoreCase())
-            )
+        conversionService.addConverter(jakarta.data.Sort.class, Sort.class,
+            sort -> Sort.of(toOrder(sort, restrictionsConverter))
         );
-        conversionService.addConverter(jakarta.data.Sort[].class, Sort.class, sort -> Sort.of(
-                Arrays.stream(sort).map(s -> new Sort.Order(
-                    s.property(),
-                    s.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
-                    s.ignoreCase())
-                ).toList()
+        conversionService.addConverter(jakarta.data.Sort[].class, Sort.class, sorts -> Sort.of(
+                Arrays.stream(sorts).map(sort -> toOrder(sort, restrictionsConverter)).toList()
             )
         );
         conversionService.addConverter(jakarta.data.page.PageRequest.class, Pageable.class, pageRequest -> {
             if (pageRequest.mode() == PageRequest.Mode.CURSOR_NEXT || pageRequest.mode() == PageRequest.Mode.CURSOR_PREVIOUS) {
                 return CursoredPageable.from(
-                    (int) (pageRequest.page() - 1),
+                    (int) (pageRequest.pageNumber() - 1),
                     pageRequest.cursor().map(cursor -> Pageable.Cursor.of((List<Object>) cursor.elements())).orElse(null),
                     pageRequest.mode() == PageRequest.Mode.CURSOR_NEXT ? Pageable.Mode.CURSOR_NEXT : Pageable.Mode.CURSOR_PREVIOUS,
                     pageRequest.size(),
@@ -99,7 +89,7 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
                     pageRequest.requestTotal()
                 );
             } else {
-                Pageable pageable = Pageable.from((int) (pageRequest.page() - 1), pageRequest.size());
+                Pageable pageable = Pageable.from((int) (pageRequest.pageNumber() - 1), pageRequest.size());
                 if (pageRequest.requestTotal()) {
                     pageable = pageable.withTotal();
                 } else {
@@ -160,4 +150,25 @@ final class JakartaDataConverters implements TypeConverterRegistrar {
         return PageRequest.ofPage(pageable.getNumber() + 1, pageable.getSize() == -1 ? Integer.MAX_VALUE : pageable.getSize(), pageable.requestTotal());
     }
 
+    private static Sort.Order toOrder(jakarta.data.Sort<?> sort, JakartaDataRestrictionsConverter restrictionsConverter) {
+        Sort.Order.Direction direction = sort.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC;
+        Sort.Order.NullOrdering nullOrdering = switch (sort.nullOrdering()) {
+            case FIRST -> Sort.Order.NullOrdering.FIRST;
+            case LAST -> Sort.Order.NullOrdering.LAST;
+            case UNSPECIFIED -> Sort.Order.NullOrdering.NONE;
+        };
+        jakarta.data.expression.Expression<?, ?> expression = sort.expression();
+        String property = sort.property();
+        if (property == null) {
+            // Sorting by an expression rather than by an attribute name
+            return new ExpressionOrder(
+                String.valueOf(expression),
+                direction,
+                sort.ignoreCase(),
+                nullOrdering,
+                (root, criteriaBuilder) -> restrictionsConverter.toCriteriaExpression(root, criteriaBuilder, expression)
+            );
+        }
+        return new Sort.Order(property, direction, sort.ignoreCase(), nullOrdering);
+    }
 }

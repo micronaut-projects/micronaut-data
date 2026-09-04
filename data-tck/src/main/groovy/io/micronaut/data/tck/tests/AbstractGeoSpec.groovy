@@ -61,7 +61,7 @@ abstract class AbstractGeoSpec extends Specification {
         getDeliveryDriverWktRepository()?.deleteAll()
     }
 
-    void "test creating, reading and updating when json conversion used on embedded geometry type"() {
+    void "test creates, reads, and updates embedded geometry with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -104,7 +104,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test creating, reading and updating when json conversion used on geometry type"() {
+    void "test creates, reads, and updates geometry with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -161,7 +161,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test delete when json conversion used on geometry type"() {
+    void "test updates geometry to null with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
         assumeTrue(supportsDeletingGeometryTypes())
 
@@ -216,7 +216,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test crud when wkt conversion used on geometry type"() {
+    void "test creates, reads, updates, and clears geometry with WKT conversion"() {
         given:
         GeometryEntityWkt entity = new GeometryEntityWkt()
         entity.setPoint(createPoint(1))
@@ -290,7 +290,7 @@ abstract class AbstractGeoSpec extends Specification {
         }
     }
 
-    void "test findByLocationGeoWithin when json conversion is used"() {
+    void "test findByLocationGeoWithin with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -321,7 +321,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoIntersects when json conversion used"() {
+    void "test findByLocationGeoIntersects with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -347,7 +347,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoWithin when wkt conversion used"() {
+    void "test findByLocationGeoWithin with WKT conversion"() {
         given:
         HotelWkt inside1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelWkt inside2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
@@ -376,7 +376,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationGeoIntersects when wkt conversion used"() {
+    void "test findByLocationGeoIntersects with WKT conversion"() {
         given:
         HotelWkt onRoute1 = new HotelWkt("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelWkt onRoute2 = new HotelWkt("Sunset Resort", new Point(12.0, 12.0))
@@ -400,7 +400,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationNear on geometry database type when projected crs is used and json conversion applied"() {
+    void "test findByLocationNear with projected CRS and JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -423,7 +423,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationNear on geometry database type when projected crs is used and wkt conversion applied"() {
+    void "test findByLocationNear with projected CRS and WKT conversion"() {
         given:
         HotelWkt nearby1 = new HotelWkt("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelWkt nearby2 = new HotelWkt("Sunset Resort", new Point(12.0, 10.0))
@@ -444,8 +444,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Sunset Resort")
     }
 
-    void "test findByLocationNear on geometry database type when geographic crs is used and json conversion applied"() {
-        assumeTrue(supportsGeometryTypeWithGeographicCrs())
+    void "test findByLocationNear with geographic CRS and JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
@@ -471,9 +470,7 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Closest Driver")
     }
 
-    void "test findByLocationNear on geometry database type when geographic crs is used and wkt conversion applied"() {
-        assumeTrue(supportsGeometryTypeWithGeographicCrs())
-
+    void "test findByLocationNear with geographic CRS and WKT conversion"() {
         given:
         DeliveryDriverWkt nearby = new DeliveryDriverWkt("Nearby Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
         DeliveryDriverWkt closest = new DeliveryDriverWkt("Closest Driver", DeliveryDriverWkt.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
@@ -502,10 +499,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     protected boolean supportsDeletingGeometryTypes() {
-        return true
-    }
-
-    protected boolean supportsGeometryTypeWithGeographicCrs() {
         return true
     }
 

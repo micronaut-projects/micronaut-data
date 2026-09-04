@@ -6,9 +6,9 @@ By default, Micronaut Data keeps the legacy Oracle mapping so applications targe
 * Boolean literals and predicates are generated using numeric values such as `1` and `0`.
 * JDBC binding uses the legacy Oracle boolean type mapping.
 
-To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the annotation processor option `micronaut.data.sql.dialect-options.oracle.version=23.1`.
-The same value can also be provided as a JVM system property, for example `-Dmicronaut.data.sql.dialect-options.oracle.version=23.1`.
-If both are present, the annotation processor option takes precedence.
+To generate Oracle 23.1-compatible SQL for Oracle repositories, keep using api:data.model.query.builder.sql.Dialect#ORACLE[] and set the build-time dialect target `micronaut.data.sql.dialect-options.oracle.version=23.1`.
+The target is consumed by the annotation processor from its processor-context options. Build integrations that can populate those options directly may provide this key there. For standard `javac`-based Maven and Gradle builds, make the value available as a JVM system property to the compiler process, as shown below. The examples use compiler forking to scope the property to compilation, but forking is not required when the property is already present in the compiler JVM.
+If both processor-context configuration and the JVM system property are available, processor-context configuration takes precedence.
 
 The configured dialect `version` is a SQL generation target.
 It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
@@ -18,19 +18,25 @@ Micronaut Data compares semantic version values, so a later configured version s
 
 For Gradle Java projects:
 
+The dialect-scoped key is read from the processor context, but raw `javac -A` options require dot-separated identifiers and therefore reject this key because it contains hyphens. Use the JVM-property fallback for a standard Gradle compiler invocation. This example uses a per-task JVM argument, which requires a forked compiler; alternatively, the property can be supplied to the Gradle daemon JVM.
+
 [source,groovy]
 ----
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add("-Amicronaut.data.sql.dialect-options.oracle.version=23.1")
+    options.fork = true
+    options.forkOptions.jvmArgs.add("-Dmicronaut.data.sql.dialect-options.oracle.version=23.1")
 }
 ----
 
 For Maven projects:
 
+This example uses Maven's `-J` prefix to forward the `-D` property to the compiler JVM, so `<fork>true</fork>` is required for this form. A system property supplied to the Maven/compiler process does not inherently require forking.
+
 [source,xml]
 ----
+<fork>true</fork>
 <compilerArgs>
-    <arg>-Amicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
+    <arg>-J-Dmicronaut.data.sql.dialect-options.oracle.version=23.1</arg>
 </compilerArgs>
 ----
 
@@ -88,7 +94,7 @@ r2dbc:
         version: 23.1
 ----
 
-IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the annotation processor option or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
+IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the build-time dialect target or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
 Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
 

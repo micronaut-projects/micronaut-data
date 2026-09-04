@@ -1,0 +1,6 @@
+Micronaut Data provides Oracle-specific transaction options through ann:transaction.annotation.OracleTransactional[].
+The annotation is a transactional stereotype that can be used instead of ann:transaction.annotation.Transactional[] when an
+Oracle transaction feature should be applied.
+
+Oracle transaction priority is available for Oracle JDBC and R2DBC transactions.
+Oracle sessionless transactions are available for Oracle JDBC transactions.

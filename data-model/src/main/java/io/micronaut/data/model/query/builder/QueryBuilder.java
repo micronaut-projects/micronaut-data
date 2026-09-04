@@ -129,7 +129,15 @@ public interface QueryBuilder {
                 PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
                 String name = propertyPath.getPathAsString();
                 if (o instanceof DefaultOrder<?> order) {
-                    return new Sort.Order(name, order.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC, order.isIgnoreCase());
+                    return new Sort.Order(
+                        name,
+                        order.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC,
+                        order.isIgnoreCase(),
+                        switch (order.getNullPrecedence()) {
+                            case FIRST -> Sort.Order.NullOrdering.FIRST;
+                            case LAST -> Sort.Order.NullOrdering.LAST;
+                            case NONE -> Sort.Order.NullOrdering.NONE;
+                        });
                 }
                 if (o.isAscending()) {
                     return Sort.Order.asc(name);

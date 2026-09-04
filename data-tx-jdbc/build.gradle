@@ -12,6 +12,7 @@ dependencies {
     implementation mn.micronaut.inject
     implementation mn.micronaut.aop
 
+    compileOnly mn.micronaut.http
     compileOnly mnSql.micronaut.jdbc
     compileOnly mnSql.ojdbc11
 
@@ -20,6 +21,7 @@ dependencies {
 
     testImplementation projects.micronautDataProcessor
     testImplementation mn.micronaut.inject.java.test
+    testImplementation mn.micronaut.http
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnSql.ojdbc11

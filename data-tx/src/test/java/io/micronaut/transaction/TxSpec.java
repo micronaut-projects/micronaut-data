@@ -16,6 +16,9 @@
 package io.micronaut.transaction;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -238,6 +241,34 @@ public class TxSpec {
             Assertions.assertEquals(List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "COMMIT TX CONNECTION_1", "CLOSE CONNECTION_1"), opLogger.getLogs());
             Assertions.assertEquals(List.of("Doing job: job1 in transaction: CONNECTION_1", "Doing job: job2 in transaction: CONNECTION_1"), results);
         }
+    }
+
+    @Test
+    public void testReactiveTxRejectsOracleSessionlessPropagation() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
+
+            assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.SUSPEND);
+            assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
+        }
+    }
+
+    private static void assertUnsupportedReactiveOracleSessionlessMode(ReactiveTxManager txManager,
+                                                                       OracleTransactional.Sessionless mode) {
+        TransactionSuspensionNotSupportedException exception = Assertions.assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.withTransactionMono(oracleSessionlessDefinition(mode), status -> Mono.just("ignored"))
+        );
+        Assertions.assertEquals(
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
+        );
+    }
+
+    private static TransactionDefinition oracleSessionlessDefinition(OracleTransactional.Sessionless mode) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, mode);
+        return definition;
     }
 
     // end::test[]

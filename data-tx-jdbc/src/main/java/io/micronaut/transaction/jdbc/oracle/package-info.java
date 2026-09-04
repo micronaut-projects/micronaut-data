@@ -1,0 +1,34 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Oracle-specific JDBC transaction support.
+ *
+ * <p>Includes sessionless transaction integration for Oracle JDBC connections. Transaction identifiers
+ * are held in Micronaut's {@link io.micronaut.core.propagation.PropagatedContext}, installed automatically
+ * for HTTP requests when HTTP propagation is enabled, or programmatically through
+ * {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations}. The external
+ * string representation is handled by {@link io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec},
+ * which applications may replace to add signing, encryption, or another transport encoding.</p>
+ */
+@Configuration
+@Requires(classes = OracleConnection.class)
+@NullMarked
+package io.micronaut.transaction.jdbc.oracle;
+
+import io.micronaut.context.annotation.Configuration;
+import io.micronaut.context.annotation.Requires;
+import oracle.jdbc.OracleConnection;
+import org.jspecify.annotations.NullMarked;

@@ -1,0 +1,18 @@
+For Oracle JDBC and R2DBC transactions, Micronaut Data supports Oracle transaction priority with ann:transaction.annotation.OracleTransactional[].
+Set the `priority` attribute to request the desired Oracle transaction priority:
+
+[source,java]
+----
+import io.micronaut.transaction.annotation.OracleTransactional;
+
+@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+void updateInventory() {
+    // ...
+}
+----
+
+When the transaction uses an Oracle connection, Micronaut Data sets the session `txn_priority` for the duration of the transaction and resets it afterwards.
+Non-Oracle databases ignore this property.
+
+NOTE: Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
+Older Oracle versions that reject `txn_priority` continue without applying priority.

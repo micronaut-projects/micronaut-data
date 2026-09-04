@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Experimental;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 
@@ -64,6 +65,20 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @return ascending ordering corresponding to the expression
      */
     Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
+
+    /**
+     * Create an ordering with an explicit null precedence.
+     *
+     * @param x              expression used to define the ordering
+     * @param ascending      If ascending should be use
+     * @param ignoreCase     If ignore case should be used
+     * @param nullPrecedence Where to place null values relative to non-null values
+     * @return ordering corresponding to the expression
+     * @since 5.2
+     */
+    default Order sort(Expression<?> x, boolean ascending, boolean ignoreCase, Nulls nullPrecedence) {
+        return sort(x, ascending, ignoreCase);
+    }
 
     /**
      * OR restriction predicate.
