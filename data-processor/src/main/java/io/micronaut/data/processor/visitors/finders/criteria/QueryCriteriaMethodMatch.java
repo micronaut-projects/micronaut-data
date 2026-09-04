@@ -138,7 +138,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         if (!hasPotentialPredicate(matchContext)) {
-            // Tenant restrictions do not introduce joins, so apply them only to the final query.
+            // When join analysis did not already apply predicates, add tenant restrictions here on
+            // the final query. Tenant restrictions themselves do not introduce additional joins.
             PersistentEntityRoot<Object> root = (PersistentEntityRoot<Object>) criteriaQuery.getRoots().iterator().next();
             applyPredicate(matchContext, cb, root, criteriaQuery);
         }
@@ -253,7 +254,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
         PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
         applyJoinSpecs(root, joinSpecs);
-        // Apply predicates during analysis only when they can introduce implicit joins.
+        // Apply predicates during analysis when they can introduce implicit joins. Tenant
+        // restrictions are applied when the final or filtered pagination query is built.
         if (hasPotentialPredicate(matchContext)) {
             applyPredicate(matchContext, cb, root, query);
         }

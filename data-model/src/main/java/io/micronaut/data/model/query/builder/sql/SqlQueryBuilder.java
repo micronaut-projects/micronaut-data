@@ -125,7 +125,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     // PostgreSQL's NAMEDATALEN limit is measured in bytes (typically UTF-8), not Java characters.
     private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
-    // FNV-1a 64-bit offset basis and prime; the hash keeps truncated aliases distinct.
+    // FNV-1a 64-bit constants; hashing code points keeps surrogate pairs intact.
     private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
     private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
     private static final int ALIAS_HASH_LENGTH = 16;
@@ -279,9 +279,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static int utf8Length(String value) {
         int length = 0;
-        for (int i = 0; i < value.length(); i = value.offsetByCodePoints(i, 1)) {
+        int i = 0;
+        while (i < value.length()) {
             int codePoint = value.codePointAt(i);
             length += utf8CodePointLength(codePoint);
+            i += Character.charCount(codePoint);
         }
         return length;
     }
@@ -316,9 +318,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static long hashAlias(String value) {
         long hash = ALIAS_HASH_OFFSET_BASIS;
-        for (int i = 0; i < value.length(); i++) {
-            hash ^= value.charAt(i);
+        for (int i = 0; i < value.length();) {
+            int codePoint = value.codePointAt(i);
+            hash ^= codePoint;
             hash *= ALIAS_HASH_PRIME;
+            i += Character.charCount(codePoint);
         }
         return hash;
     }

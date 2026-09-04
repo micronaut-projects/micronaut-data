@@ -153,15 +153,14 @@ class LongJoinAliasAuthor {
 
         when:
         String query = getQuery(repository.getRequiredMethod("findAll"))
-        def joinAliasMatcher = query =~ /JOIN [^ ]+ ([A-Za-z0-9_]+) ON/
+        def joinAliasMatcher = query =~ /(?i)\bJOIN\s+\S+\s+([`"]?)([A-Za-z0-9_]+)\1\s+ON\b/
 
         then:
         joinAliasMatcher.find()
-        String normalizedJoinAlias = joinAliasMatcher.group(1)
+        String normalizedJoinAlias = joinAliasMatcher.group(2)
         normalizedJoinAlias.length() <= 63
         normalizedJoinAlias != explicitAlias
         normalizedJoinAlias.startsWith(explicitAlias.substring(0, 20))
-        query.contains(" ${normalizedJoinAlias} ON")
     }
 
     void "test POSTGRES custom query"() {
