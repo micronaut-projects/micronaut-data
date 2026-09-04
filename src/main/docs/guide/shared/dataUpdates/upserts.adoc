@@ -82,7 +82,7 @@ Micronaut Data generates dialect-specific SQL for upsert operations.
 
 |`Dialect.SQLITE`
 |`INSERT INTO <table> (...) VALUES (...) ON CONFLICT (...) DO UPDATE SET ...`
-|The `ON CONFLICT` columns are the identity columns or the configured conflict properties. If there are no mutable columns to update, Micronaut Data generates `DO NOTHING`.
+|The `ON CONFLICT` columns are the identity columns or the configured conflict properties. If there are no mutable columns to update, Micronaut Data generates `DO NOTHING`. SQLite upsert is available through JDBC only.
 
 |`Dialect.SQL_SERVER`
 |`MERGE INTO <table> WITH (HOLDLOCK) AS target USING (VALUES (...)) AS source (...) ON ...`
@@ -138,7 +138,6 @@ The driver still decides whether that batch is sent in one network exchange or a
 
 When an upsert has a database-generated identity, a generic batch result does not identify which item in a mixed insert/update batch produced each generated value.
 JDBC and R2DBC therefore execute one statement per entity when returning generated identities, preserving the association between each returned identity and the entity that produced it.
-SQLite upsert is supported only by JDBC.
 
 Oracle JDBC also requires per-entity execution because Oracle DML returning cannot be combined with JDBC batch updates.
 
@@ -158,6 +157,9 @@ Micronaut Data therefore defines upsert lifecycle behavior using the update life
 Before the update lifecycle runs, Micronaut Data prepares framework-managed values needed by the insert branch.
 This populates ann:data.annotation.DateCreated[] and other insert-required properties marked with `@AutoPopulated(updatable = false)`.
 The normal update preparation then populates values such as ann:data.annotation.DateUpdated[].
+Upsert preparation preserves a non-null `@AutoPopulated UUID` on the supplied entity.
+When that UUID is null, Micronaut Data generates a value for the possible insert branch; an updatable UUID is also included in matched update assignments.
+Declare the property with `@AutoPopulated(updatable = false)` when the UUID must remain unchanged after insertion, including when callers use fresh entities with null UUID values.
 
 The resulting lifecycle contract is:
 
