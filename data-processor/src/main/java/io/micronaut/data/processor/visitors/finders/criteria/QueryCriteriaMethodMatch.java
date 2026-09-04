@@ -254,8 +254,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
         PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
         applyJoinSpecs(root, joinSpecs);
-        // Apply predicates during analysis when they can introduce implicit joins. Tenant
-        // restrictions are applied when the final or filtered pagination query is built.
+        // Apply predicates during analysis when they can introduce implicit joins. Because
+        // applyPredicate(...) is also responsible for tenant restrictions, those restrictions
+        // may be applied at this stage as well, not only when the final or filtered pagination
+        // query is built.
         if (hasPotentialPredicate(matchContext)) {
             applyPredicate(matchContext, cb, root, query);
         }

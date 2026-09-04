@@ -394,8 +394,29 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias name
      */
     protected String getAliasName(PersistentEntity entity) {
-        return normalizeAlias(entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
-            .orElseGet(() -> getTableName(entity) + "_"));
+        return normalizeAliasWithPrefix(getRawAliasName(entity), null);
+    }
+
+    /**
+     * Normalize an alias after composing it with an optional prefix.
+     *
+     * @param alias       The raw alias
+     * @param aliasPrefix The optional alias prefix
+     * @return The normalized alias
+     */
+    private String normalizeAliasWithPrefix(String alias, @Nullable String aliasPrefix) {
+        return normalizeAlias(aliasPrefix == null ? alias : aliasPrefix + alias);
+    }
+
+    /**
+     * Get the unnormalized alias name for the given entity.
+     *
+     * @param entity The entity
+     * @return The raw alias name
+     */
+    protected String getRawAliasName(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
+            .orElseGet(() -> getTableName(entity) + "_");
     }
 
     /**
@@ -427,7 +448,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String ownerAlias;
             if (tableAlias == null) {
                 PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-                ownerAlias = getAliasName(owner);
+                ownerAlias = getRawAliasName(owner);
             } else {
                 ownerAlias = tableAlias;
             }
@@ -1841,6 +1862,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final QueryBuilder queryBuilder;
         @Nullable
         private final String rootAlias;
+        @Nullable
+        private final String rootAliasSource;
         private final Map<String, JoinPath> appliedJoinPaths = new LinkedHashMap<>();
         private final boolean allowJoins;
         private final BaseQueryDefinition baseQueryDefinition;
@@ -1860,8 +1883,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
             if (useAlias || tableAliasPrefix != null) {
                 String aliasPrefix = tableAliasPrefix == null ? "" : tableAliasPrefix;
-                this.rootAlias = normalizeAlias(aliasPrefix + AbstractSqlLikeQueryBuilder.this.getAliasName(entity));
+                String rawAlias = AbstractSqlLikeQueryBuilder.this.getRawAliasName(entity);
+                this.rootAliasSource = aliasPrefix + rawAlias;
+                this.rootAlias = AbstractSqlLikeQueryBuilder.this.normalizeAliasWithPrefix(rawAlias, tableAliasPrefix);
             } else {
+                this.rootAliasSource = null;
                 this.rootAlias = null;
             }
         }
@@ -2006,7 +2032,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return AbstractSqlLikeQueryBuilder.this.normalizeAlias(joinPath.getAlias().get());
             }
             PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-            String tableAlias = owner.equals(entity) ? rootAlias : null;
+            String tableAlias = owner.equals(entity) ? rootAliasSource : null;
             return AbstractSqlLikeQueryBuilder.this.getAliasName(joinPath, tableAlias);
         }
 

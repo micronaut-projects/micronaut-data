@@ -300,6 +300,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String hashString = Long.toUnsignedString(hash, 16);
         if (hashString.length() < ALIAS_HASH_LENGTH) {
             hashString = "0".repeat(ALIAS_HASH_LENGTH - hashString.length()) + hashString;
+        } else if (hashString.length() > ALIAS_HASH_LENGTH) {
+            hashString = hashString.substring(hashString.length() - ALIAS_HASH_LENGTH);
         }
         String prefix = alias.substring(0, prefixEnd);
         String normalized = prefix + "_" + hashString;
@@ -1628,8 +1630,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
-    protected String getAliasName(PersistentEntity entity) {
-        return normalizeAlias(entity.getAliasName());
+    protected String getRawAliasName(PersistentEntity entity) {
+        return entity.getAliasName();
     }
 
     @Override
