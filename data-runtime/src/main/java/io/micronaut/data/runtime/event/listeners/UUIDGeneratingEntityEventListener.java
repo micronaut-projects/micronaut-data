@@ -75,33 +75,29 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
         );
 
         // 2) Embedded properties (recursive via util)
-        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
-            if (embeddedPersistentProperty.getType() != UUID.class) {
-                return current;
-            }
-            if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
-                return current;
-            }
-            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-            if (!prop.hasSetterOrConstructorArgument()) {
-                return current;
-            }
-            boolean skipIfPresent = preserveExistingValues || skipIfPresent(embeddedPersistentProperty.getAnnotationMetadata());
-            if (skipIfPresent) {
-                Object existing = prop.get(current);
-                if (existing != null) {
-                    return current; // skip
-                }
-            }
-            UUID value = UUID.randomUUID();
-            if (prop.isReadOnly()) {
-                return prop.withValue(current, value);
-            } else {
-                prop.set(current, value);
-                return current;
-            }
-        });
+        AutoPopulateUtil.applyEmbedded(context, (property, current) -> populateEmbeddedUuid(property, current, preserveExistingValues));
+    }
 
+    private Object populateEmbeddedUuid(RuntimePersistentProperty<Object> property, Object current, boolean preserveExistingValues) {
+        if (property.getType() != UUID.class) {
+            return current;
+        }
+        if (!property.isAutoPopulated() && !property.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
+            return current;
+        }
+        BeanProperty<Object, Object> beanProperty = property.getProperty();
+        if (!beanProperty.hasSetterOrConstructorArgument()) {
+            return current;
+        }
+        if ((preserveExistingValues || skipIfPresent(property.getAnnotationMetadata())) && beanProperty.get(current) != null) {
+            return current;
+        }
+        UUID value = UUID.randomUUID();
+        if (beanProperty.isReadOnly()) {
+            return beanProperty.withValue(current, value);
+        }
+        beanProperty.set(current, value);
+        return current;
     }
 
     private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity, boolean preserveExistingValues) {
