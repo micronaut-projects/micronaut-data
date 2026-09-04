@@ -25,11 +25,15 @@ import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
@@ -115,42 +119,86 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                                                 List<AnnotationValue<Join>> joinSpecs) {
         Element paginationParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);
         boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
-        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
-        PersistentEntityCriteriaQuery<Object> criteriaQuery;
-        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, joinSpecs)) {
-            int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
-            criteriaQuery = createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, pageableParameterIndex);
-        } else {
-            criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
-            if (isPageable) {
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
-            } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
-                Element sortParameter = matchContext.findParameterInRole(TypeRole.SORT);
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(sortParameter), TypeRole.SORT);
-            } else if (matchContext.hasParameterInRole(TypeRole.LIMIT)) {
-                Element limitParameter = matchContext.findParameterInRole(TypeRole.LIMIT);
-                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
-            }
+        // Only pageable queries can need a pagination subquery. Pure to-one joins can use the
+        // regular query, while row-multiplying joins and criteria paths require join analysis.
+        boolean shouldAnalyzeJoins = isPageable && needsJoinAnalysis(matchContext, joinSpecs);
+        if (!shouldAnalyzeJoins) {
+            PersistentEntityCriteriaQuery<Object> criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
+            applyParameterRole(criteriaQuery, matchContext, paginationParameter, isPageable);
+            return criteriaQuery;
         }
+
+        // Predicates, projections, and ordering can introduce joins in addition to explicit @Join specifications.
+        // The analyzed query is reused as the final query when no pagination subquery is required.
+        PersistentEntityCriteriaQuery<Object> criteriaQuery = createQueryWithJoinAnalysis(matchContext, cb, joinSpecs);
+        if (isPageableWithJoins(matchContext, criteriaQuery)) {
+            int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
+            PersistentEntityRoot<?> analyzedRoot = (PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next();
+            return createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedRoot, pageableParameterIndex);
+        }
+
+        if (!hasPotentialPredicate(matchContext)) {
+            // When join analysis did not already apply predicates, add tenant restrictions here on
+            // the final query. Tenant restrictions themselves do not introduce additional joins.
+            PersistentEntityRoot<Object> root = (PersistentEntityRoot<Object>) criteriaQuery.getRoots().iterator().next();
+            applyPredicate(matchContext, cb, root, criteriaQuery);
+        }
+        applyDistinct(criteriaQuery);
+        applyForUpdate(criteriaQuery);
+        applyLimit(criteriaQuery, matchContext.getMethodElement());
+        applyParameterRole(criteriaQuery, matchContext, paginationParameter, isPageable);
         return criteriaQuery;
     }
 
-    private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity, MethodMatchContext matchContext, List<AnnotationValue<Join>> joinSpecs) {
-        return !joinSpecs.isEmpty()
-            && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
-            // MySQL doesn't support subquery with limits
-            && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
-            && !persistentEntity.hasCompositeIdentity()
-            && !(persistentEntity.getIdentity() instanceof Embedded);
+    private boolean needsJoinAnalysis(MethodMatchContext matchContext,
+                                      List<AnnotationValue<Join>> joinSpecs) {
+        return hasPotentialCriteria(matchContext)
+            || hasRowMultiplyingJoinSpecs(matchContext.getRootEntity(), joinSpecs);
+    }
+
+    private boolean hasPotentialPredicate(MethodMatchContext matchContext) {
+        return findMatchPart(matches, QueryMatchId.PREDICATE).isPresent()
+            || !matchContext.getParametersNotInRole().isEmpty();
+    }
+
+    /**
+     * Checks explicit join metadata before creating a pagination subquery. This avoids join
+     * analysis for pageable queries containing only to-one joins.
+     */
+    private boolean hasRowMultiplyingJoinSpecs(SourcePersistentEntity persistentEntity,
+                                               List<AnnotationValue<Join>> joinSpecs) {
+        for (AnnotationValue<Join> joinSpec : joinSpecs) {
+            String path = joinSpec.stringValue().orElse(null);
+            if (path != null) {
+                // Invalid paths are left for applyJoinSpecs to report while building the regular query.
+                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+                if (propertyPath != null
+                    && ((propertyPath.getProperty() instanceof Association association
+                    && isRowMultiplyingJoin(association))
+                    || propertyPath.getAssociations().stream().anyMatch(this::isRowMultiplyingJoin))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasPotentialCriteria(MethodMatchContext matchContext) {
+        if (findMatchPart(matches, QueryMatchId.PREDICATE).isPresent()
+            || !matchContext.getParametersNotInRole().isEmpty()
+            || findMatchPart(matches, QueryMatchId.PROJECTION).isPresent()
+            || !matchContext.getMethodElement().getAnnotationValuesByType(Projection.class).isEmpty()
+            || findMatchPart(matches, QueryMatchId.ORDER).isPresent()) {
+            return true;
+        }
+        return !matchContext.getMethodElement()
+            .getAnnotationValuesByStereotype(OrderBy.class.getName())
+            .isEmpty();
     }
 
     private PersistentEntityCriteriaQuery<Object> createDefaultQuery(MethodMatchContext matchContext,
-                                                                     PersistentEntityCriteriaBuilder cb,
-                                                                     List<AnnotationValue<Join>> joinSpecs) {
-
+                                                                       PersistentEntityCriteriaBuilder cb,
+                                                                       List<AnnotationValue<Join>> joinSpecs) {
         PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
         PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
         applyJoinSpecs(root, joinSpecs);
@@ -162,6 +210,64 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyOrderByAnnotation(cb, root, query, matchContext.getMethodElement());
         applyForUpdate(query);
         applyLimit(query, matchContext.getMethodElement());
+        return query;
+    }
+
+    private void applyParameterRole(PersistentEntityCriteriaQuery<Object> criteriaQuery,
+                                    MethodMatchContext matchContext,
+                                    @Nullable Element paginationParameter,
+                                    boolean isPageable) {
+        if (isPageable) {
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
+        } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
+            Element sortParameter = matchContext.findParameterInRole(TypeRole.SORT);
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(sortParameter), TypeRole.SORT);
+        } else if (matchContext.hasParameterInRole(TypeRole.LIMIT)) {
+            Element limitParameter = matchContext.findParameterInRole(TypeRole.LIMIT);
+            AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+            abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
+        }
+    }
+
+    private boolean isPageableWithJoins(MethodMatchContext matchContext,
+                                        PersistentEntityCriteriaQuery<Object> criteriaQuery) {
+        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
+        return requiresPaginationSubquery((PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next())
+            && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
+            // MySQL doesn't support subquery with limits
+            && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
+            && !persistentEntity.hasCompositeIdentity()
+            && !(persistentEntity.getIdentity() instanceof Embedded);
+    }
+
+    /**
+     * Creates a query that materializes joins introduced by the method criteria. The query is used
+     * to inspect the resulting join tree before deciding whether pagination needs a subquery, and
+     * is reused as the final query when no subquery is needed.
+     */
+    private PersistentEntityCriteriaQuery<Object> createQueryWithJoinAnalysis(MethodMatchContext matchContext,
+                                                                               PersistentEntityCriteriaBuilder cb,
+                                                                               List<AnnotationValue<Join>> joinSpecs) {
+
+        PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
+        PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
+        applyJoinSpecs(root, joinSpecs);
+        // Apply predicates during analysis when they can introduce implicit joins. Because
+        // applyPredicate(...) is also responsible for tenant restrictions, those restrictions
+        // may be applied at this stage as well, not only when the final or filtered pagination
+        // query is built.
+        if (hasPotentialPredicate(matchContext)) {
+            applyPredicate(matchContext, cb, root, query);
+        }
+        if (hasPotentialCriteria(matchContext)) {
+            // Avoid resolving projection and order paths for join-only methods.
+            applyProjection(matchContext, cb, root, query);
+            applyVectorScoreOrderIfNeeded(matchContext, cb, root, query);
+            applyOrder(cb, root, query);
+            applyOrderByAnnotation(cb, root, query, matchContext.getMethodElement());
+        }
 
         return query;
     }
@@ -172,11 +278,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
      * @param matchContext The match context
      * @param cb           The criteria builder
      * @param joinSpecs    The joinSpecs
+     * @param analyzedRoot The root containing every join introduced by the join analysis query
+     * @param pageableParameterIndex The pageable parameter index
      * @return A new query
      */
     private PersistentEntityCriteriaQuery<Object> createQueryWithJoinsAndPagination(MethodMatchContext matchContext,
                                                                                     PersistentEntityCriteriaBuilder cb,
                                                                                     List<AnnotationValue<Join>> joinSpecs,
+                                                                                    PersistentEntityRoot<?> analyzedRoot,
                                                                                     int pageableParameterIndex) {
         // SQL tabular results with JOINs cannot be property limited by LIMIT and OFFSET
         // Create a query that can be paginated with JOINs using a subquery
@@ -221,6 +330,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         applyDistinct(mainQuery);
 
+        // Copy non-row-multiplying joins into the pagination subquery so pageable sort paths
+        // resolve against aliases in that scope. Row-multiplying joins remain on the filtered query.
+        applyPaginationJoins(analyzedRoot, paginationRoot);
         applyJoinSpecs(filteredRoot, joinSpecs);
         applyJoinSpecs(mainRoot, joinSpecs);
 
@@ -229,6 +341,61 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         mainEntityQuery.getParametersInRole().put(pageableParameterIndex, TypeRole.SORT);
 
         return mainQuery;
+    }
+
+    private void applyPaginationJoins(PersistentEntityFrom<?, ?> analyzedFrom,
+                                      PersistentEntityFrom<?, ?> paginationFrom) {
+        for (var analyzedJoin : analyzedFrom.getPersistentJoins()) {
+            if (isRowMultiplyingJoin(analyzedJoin.getAssociation())) {
+                continue;
+            }
+            String associationName = analyzedJoin.getAssociation().getName();
+            String alias = analyzedJoin.getAlias();
+            Join.Type joinType = toPaginationJoinType(analyzedJoin.getAssociationJoinType());
+            PersistentEntityFrom<?, ?> paginationJoin;
+            if (alias == null) {
+                paginationJoin = paginationFrom.join(
+                    associationName,
+                    joinType
+                );
+            } else {
+                paginationJoin = paginationFrom.join(
+                    associationName,
+                    joinType,
+                    alias
+                );
+            }
+            applyPaginationJoins(analyzedJoin, paginationJoin);
+        }
+    }
+
+    private Join.Type toPaginationJoinType(Join.@Nullable Type joinType) {
+        // The pagination subquery selects only root IDs, so fetch semantics are unnecessary there.
+        if (joinType == null) {
+            return Join.Type.DEFAULT;
+        }
+        return switch (joinType) {
+            case LEFT_FETCH -> Join.Type.LEFT;
+            case RIGHT_FETCH -> Join.Type.RIGHT;
+            case INNER_FETCH -> Join.Type.INNER;
+            case FETCH -> Join.Type.DEFAULT;
+            case OUTER_FETCH -> Join.Type.OUTER;
+            default -> joinType;
+        };
+    }
+
+    private boolean requiresPaginationSubquery(PersistentEntityFrom<?, ?> from) {
+        for (var join : from.getPersistentJoins()) {
+            if (isRowMultiplyingJoin(join.getAssociation()) || requiresPaginationSubquery(join)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isRowMultiplyingJoin(Association association) {
+        Relation.Kind kind = association.getKind();
+        return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY;
     }
 
     /**
@@ -245,23 +412,20 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
         PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
-        query.select(cb.count(root));
-
         applyPredicate(matchContext, cb, root, query);
 
-        boolean distinct = !joinSpecs.isEmpty() || findMatchPart(matches, QueryMatchId.DISTINCT).isPresent();
         String projectionPart = findMatchPart(matches, QueryMatchId.PROJECTION).orElse(null);
-
+        Expression<?> countExpression = root;
         if (StringUtils.isNotEmpty(projectionPart)) {
-            Expression<?> propertyPath = getProperty(root, Objects.requireNonNull(projectionPart));
-            Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
-            query.select(count);
-        } else {
-            Expression<Long> count = distinct ? cb.countDistinct(root) : cb.count(root);
-            query.select(count);
+            countExpression = getProperty(root, Objects.requireNonNull(projectionPart));
         }
 
         applyJoinSpecs(root, joinSpecs);
+
+        boolean distinct = !joinSpecs.isEmpty()
+            || requiresPaginationSubquery(root)
+            || findMatchPart(matches, QueryMatchId.DISTINCT).isPresent();
+        query.select(distinct ? cb.countDistinct(countExpression) : cb.count(countExpression));
 
         return query;
     }

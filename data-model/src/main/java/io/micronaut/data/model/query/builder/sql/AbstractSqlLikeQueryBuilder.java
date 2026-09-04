@@ -394,6 +394,27 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias name
      */
     protected String getAliasName(PersistentEntity entity) {
+        return normalizeAliasWithPrefix(getRawAliasName(entity), null);
+    }
+
+    /**
+     * Normalize an alias after composing it with an optional prefix.
+     *
+     * @param alias       The raw alias
+     * @param aliasPrefix The optional alias prefix
+     * @return The normalized alias
+     */
+    private String normalizeAliasWithPrefix(String alias, @Nullable String aliasPrefix) {
+        return normalizeAlias(aliasPrefix == null ? alias : aliasPrefix + alias);
+    }
+
+    /**
+     * Get the unnormalized alias name for the given entity.
+     *
+     * @param entity The entity
+     * @return The raw alias name
+     */
+    protected String getRawAliasName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
             .orElseGet(() -> getTableName(entity) + "_");
     }
@@ -405,22 +426,48 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias
      */
     public String getAliasName(JoinPath joinPath) {
-        return joinPath.getAlias().orElseGet(() -> {
+        return getAliasName(joinPath, null);
+    }
+
+    /**
+     * Get the alias name.
+     *
+     * @param joinPath   The join path
+     * @param tableAlias The root table alias to prefix nested joins with
+     * @return The alias
+     */
+    protected String getAliasName(JoinPath joinPath, @Nullable String tableAlias) {
+        return joinPath.getAlias().map(this::normalizeAlias).orElseGet(() -> {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
 
             // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
             if (joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
-                return joinPathAlias;
+                return normalizeAlias(joinPathAlias);
             }
 
-            PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-            String ownerAlias = getAliasName(owner);
-            if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
-                return ownerAlias + joinPathAlias.substring(1);
+            String ownerAlias;
+            if (tableAlias == null) {
+                PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
+                ownerAlias = getRawAliasName(owner);
             } else {
-                return ownerAlias + joinPathAlias;
+                ownerAlias = tableAlias;
+            }
+            if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
+                return normalizeAlias(ownerAlias + joinPathAlias.substring(1));
+            } else {
+                return normalizeAlias(ownerAlias + joinPathAlias);
             }
         });
+    }
+
+    /**
+     * Normalize a generated alias for dialect-specific identifier requirements.
+     *
+     * @param alias The generated alias
+     * @return The normalized alias
+     */
+    protected String normalizeAlias(String alias) {
+        return alias;
     }
 
     /**
@@ -1362,7 +1409,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             for (Association association : associations) {
                 joiner.add(association.getName());
             }
-            String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
+            String joinAlias = getAliasName(
+                new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null),
+                tableAlias
+            );
             if (!computePropertyPaths()) {
                 if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
                     // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
@@ -1812,6 +1862,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final QueryBuilder queryBuilder;
         @Nullable
         private final String rootAlias;
+        @Nullable
+        private final String rootAliasSource;
         private final Map<String, JoinPath> appliedJoinPaths = new LinkedHashMap<>();
         private final boolean allowJoins;
         private final BaseQueryDefinition baseQueryDefinition;
@@ -1829,7 +1881,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             this.baseQueryDefinition = query;
             this.entity = query.persistentEntity();
             this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
-            this.rootAlias = useAlias || tableAliasPrefix != null ? (tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder.this.getAliasName(entity) : null;
+            if (useAlias || tableAliasPrefix != null) {
+                String aliasPrefix = tableAliasPrefix == null ? "" : tableAliasPrefix;
+                String rawAlias = AbstractSqlLikeQueryBuilder.this.getRawAliasName(entity);
+                this.rootAliasSource = aliasPrefix + rawAlias;
+                this.rootAlias = AbstractSqlLikeQueryBuilder.this.normalizeAliasWithPrefix(rawAlias, tableAliasPrefix);
+            } else {
+                this.rootAliasSource = null;
+                this.rootAlias = null;
+            }
         }
 
         public QueryState(BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
@@ -1968,31 +2028,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         private String getAliasName(JoinPath joinPath) {
-            return joinPath.getAlias().orElseGet(() -> {
-                String joinPathAlias = getPathOnlyAliasName(joinPath);
-
-                // if "root association" has a declared alias, don't add entity alias as a prefix to match behavior of @Join(alias= "...")
-                if (joinPath.getAssociationPath()[0].hasDeclaredAliasName()) {
-                    return joinPathAlias;
-                }
-
-                PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-                String ownerAlias;
-                if (owner.equals(entity)) {
-                    if (rootAlias == null) {
-                        ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
-                    } else {
-                        ownerAlias = rootAlias;
-                    }
-                } else {
-                    ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
-                }
-                if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
-                    return ownerAlias + joinPathAlias.substring(1);
-                } else {
-                    return ownerAlias + joinPathAlias;
-                }
-            });
+            if (joinPath.getAlias().isPresent()) {
+                return AbstractSqlLikeQueryBuilder.this.normalizeAlias(joinPath.getAlias().get());
+            }
+            PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
+            String tableAlias = owner.equals(entity) ? rootAliasSource : null;
+            return AbstractSqlLikeQueryBuilder.this.getAliasName(joinPath, tableAlias);
         }
 
         /**

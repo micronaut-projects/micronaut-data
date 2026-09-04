@@ -123,6 +123,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
+    // PostgreSQL's NAMEDATALEN limit is measured in bytes (typically UTF-8), not Java characters.
+    private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
+    // FNV-1a 64-bit constants; hashing code points keeps surrogate pairs intact.
+    private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
+    private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
+    private static final int ALIAS_HASH_LENGTH = 16;
 
     private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
 
@@ -253,6 +259,66 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     protected boolean shouldEscape(PersistentEntity entity) {
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
         return Objects.requireNonNullElseGet(shouldEscapeDialect, () -> super.shouldEscape(entity));
+    }
+
+    @Override
+    protected String normalizeAlias(String alias) {
+        if (dialect != Dialect.POSTGRES) {
+            return alias;
+        }
+        boolean trailingUnderscore = alias.endsWith("_");
+        // Reserve bytes for the separator, fixed-width hash, and preserved trailing underscore.
+        int maxPrefixBytes = MAX_POSTGRES_IDENTIFIER_BYTES - ALIAS_HASH_LENGTH - 1
+            - (trailingUnderscore ? 1 : 0);
+        int totalBytes = 0;
+        int prefixBytes = 0;
+        int prefixEnd = 0;
+        boolean prefixComplete = false;
+        long hash = ALIAS_HASH_OFFSET_BASIS;
+        int i = 0;
+        while (i < alias.length()) {
+            int codePoint = alias.codePointAt(i);
+            int codePointLength = utf8CodePointLength(codePoint);
+            totalBytes += codePointLength;
+            if (!prefixComplete) {
+                if (prefixBytes + codePointLength <= maxPrefixBytes) {
+                    prefixBytes += codePointLength;
+                    prefixEnd = i + Character.charCount(codePoint);
+                } else {
+                    prefixComplete = true;
+                }
+            }
+            // Hash Unicode code points so surrogate pairs are treated as one character.
+            hash ^= codePoint;
+            hash *= ALIAS_HASH_PRIME;
+            i += Character.charCount(codePoint);
+        }
+        if (totalBytes <= MAX_POSTGRES_IDENTIFIER_BYTES) {
+            return alias;
+        }
+
+        String hashString = Long.toUnsignedString(hash, 16);
+        if (hashString.length() < ALIAS_HASH_LENGTH) {
+            hashString = "0".repeat(ALIAS_HASH_LENGTH - hashString.length()) + hashString;
+        } else if (hashString.length() > ALIAS_HASH_LENGTH) {
+            hashString = hashString.substring(hashString.length() - ALIAS_HASH_LENGTH);
+        }
+        String prefix = alias.substring(0, prefixEnd);
+        String normalized = prefix + "_" + hashString;
+        return trailingUnderscore ? normalized + "_" : normalized;
+    }
+
+    private static int utf8CodePointLength(int codePoint) {
+        if (codePoint <= 0x7F) {
+            return 1;
+        }
+        if (codePoint <= 0x7FF) {
+            return 2;
+        }
+        if (codePoint <= 0xFFFF) {
+            return 3;
+        }
+        return 4;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {
@@ -1564,7 +1630,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
-    protected String getAliasName(PersistentEntity entity) {
+    protected String getRawAliasName(PersistentEntity entity) {
         return entity.getAliasName();
     }
 

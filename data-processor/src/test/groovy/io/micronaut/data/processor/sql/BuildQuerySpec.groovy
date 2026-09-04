@@ -57,7 +57,9 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterExpressions
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterRoles
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterTableAliases
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
@@ -100,6 +102,65 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
         then:
             query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
+    }
+
+    void "test POSTGRES long explicit join alias is normalized"() {
+        given:
+        String explicitAlias = "this_is_an_intentionally_very_long_explicit_join_alias_for_postgres_"
+        def repository = buildRepository('test.LongJoinAliasRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@Join(value = "author", alias = "${explicitAlias}")
+interface LongJoinAliasRepository extends GenericRepository<LongJoinAliasBook, Long> {
+    List<LongJoinAliasBook> findAll();
+}
+
+@MappedEntity
+class LongJoinAliasBook {
+    @Id
+    private Long id;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private LongJoinAliasAuthor author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public LongJoinAliasAuthor getAuthor() { return author; }
+    public void setAuthor(LongJoinAliasAuthor author) { this.author = author; }
+}
+
+@MappedEntity
+class LongJoinAliasAuthor {
+    @Id
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+""")
+
+        when:
+        String query = getQuery(repository.getRequiredMethod("findAll"))
+        def joinAliasMatcher = query =~ /(?i)\bJOIN\s+\S+\s+([`"]?)([A-Za-z0-9_]+)\1\s+ON\b/
+
+        then:
+        joinAliasMatcher.find()
+        String normalizedJoinAlias = joinAliasMatcher.group(2)
+        normalizedJoinAlias.length() <= 63
+        normalizedJoinAlias != explicitAlias
+        normalizedJoinAlias.startsWith(explicitAlias.substring(0, 20))
     }
 
     void "test POSTGRES custom query"() {
@@ -2242,7 +2303,7 @@ interface EntityWithIdClassRepository extends GenericRepository<Book, Long> {
 """)
             def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_ WHERE (book_.id IN (SELECT book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_ WHERE (book_book_.id IN (SELECT book_book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_book_ JOIN book_book_book_.author book_book_book_author_))))'
+            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_'
             getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(book_)) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
     }
 
@@ -2867,9 +2928,373 @@ interface TestRepository extends GenericRepository<Book, Long> {
 
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
+        def expectedQuery = """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id`"""
         expect:
-            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
-            getParameterRoles(findAll) == ["pageableRequired", "sort"]
+            getQuery(findAll) == expectedQuery
+            getQueryParts(findAll) == [
+                expectedQuery,
+                ""
+            ] as String[]
+            getParameterRoles(findAll) == ["pageable"]
+            getParameterTableAliases(findAll) == ["book_"]
+    }
+
+    void "test pageable to-one fetch join with to-many predicate uses pagination subquery"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    @Join(value = "author", type = Join.Type.LEFT_FETCH)
+    Page<Book> findByStudentsName(String name, Pageable pageable);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByStudentsName", String, Pageable)
+        def query = getQuery(method)
+
+        expect:
+        query.contains('WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_')
+        query.contains('WHERE (book_book_.`id` IN (SELECT book_book_book_.`id`')
+        query.contains('book_book_book_students_.`name` = ?')
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "book_book_", "book_"]
+    }
+
+    void "test pageable to-many predicate copies implicit to-one order join and uses distinct count"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    Page<Book> findByStudentsNameOrderByAuthorNameAndTitle(String name, Pageable pageable);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByStudentsNameOrderByAuthorNameAndTitle", String, Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+        def pageableRequiredIndex = getParameterRoles(method).findIndexOf { it == "pageableRequired" }
+
+        expect:
+        query.contains('INNER JOIN `author` book_book_author_ ON book_book_.`author_id`=book_book_author_.`id`')
+        query.contains('book_book_book_students_.`name` = ?')
+        countQuery.startsWith('SELECT COUNT(DISTINCT(book_.`id`))')
+        countQuery.contains('book_students_.`name` = ?')
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "book_book_", "book_"]
+        // The pageable-required binding renders the sort inside the pagination subquery.
+        getParameterTableAliases(method)[pageableRequiredIndex] == "book_book_"
+    }
+
+    void "test pageable inverse one-to-one joins are not treated as row multiplying"() {
+        given:
+        def repository = buildRepository('test.InverseOwnerRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface InverseOwnerRepository extends GenericRepository<InverseOwner, Long> {
+    @Join(value = "profile", type = Join.Type.LEFT_FETCH)
+    Page<InverseOwner> findAll(Pageable pageable);
+
+    Page<InverseOwner> findByTagsNameOrderByProfileNameAndName(String name, Pageable pageable);
+}
+
+@MappedEntity("inverse_owner")
+class InverseOwner {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, mappedBy = "owner")
+    private InverseProfile profile;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "owner")
+    private List<InverseTag> tags;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseProfile getProfile() { return profile; }
+    public void setProfile(InverseProfile profile) { this.profile = profile; }
+    public List<InverseTag> getTags() { return tags; }
+    public void setTags(List<InverseTag> tags) { this.tags = tags; }
+}
+
+@MappedEntity("inverse_profile")
+class InverseProfile {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(Relation.Kind.ONE_TO_ONE)
+    private InverseOwner owner;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseOwner getOwner() { return owner; }
+    public void setOwner(InverseOwner owner) { this.owner = owner; }
+}
+
+@MappedEntity("inverse_tag")
+class InverseTag {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private InverseOwner owner;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public InverseOwner getOwner() { return owner; }
+    public void setOwner(InverseOwner owner) { this.owner = owner; }
+}
+
+""")
+        def findAll = repository.getRequiredMethod("findAll", Pageable)
+        def findByTagsName = repository.getRequiredMethod("findByTagsNameOrderByProfileNameAndName", String, Pageable)
+        def simpleQuery = getQuery(findAll)
+        def query = getQuery(findByTagsName)
+
+        expect:
+        !simpleQuery.contains(' IN (SELECT ')
+        getParameterRoles(findAll) == ["pageable"]
+        query.count('`inverse_profile`') == 2
+        query.contains('INNER JOIN `inverse_profile` inverse_owner_inverse_owner_profile_')
+        getParameterRoles(findByTagsName) == [null, "pageableRequired", "sort"]
+    }
+
+    void "test issue 3851 many-to-one join with pageable sorting and pagination"() {
+        given:
+        def repository = buildRepository('test.CarRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface CarRepository extends CrudRepository<Car, Long> {
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<Car> findAll(Pageable pageable);
+
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Slice<Car> getAll(Pageable pageable);
+}
+
+@MappedEntity("the_car")
+class Car {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String licensePlate;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private CarManufacturer manufacturer;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getLicensePlate() { return licensePlate; }
+    public void setLicensePlate(String licensePlate) { this.licensePlate = licensePlate; }
+    public CarManufacturer getManufacturer() { return manufacturer; }
+    public void setManufacturer(CarManufacturer manufacturer) { this.manufacturer = manufacturer; }
+}
+
+@MappedEntity("the_car_manufacturer")
+class CarManufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+        """)
+        def findAll = repository.getRequiredMethod("findAll", Pageable)
+        def getAll = repository.getRequiredMethod("getAll", Pageable)
+        def expectedQuery = """SELECT car_.`id`,car_.`license_plate`,car_.`manufacturer_id`,car_manufacturer_.`name` AS manufacturer_name FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id`"""
+        def expectedQueryParts = [
+            expectedQuery,
+            ""
+        ] as String[]
+
+        expect:
+        getQuery(findAll) == expectedQuery
+        getQueryParts(findAll) == expectedQueryParts
+        getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(car_.`id`)) FROM `the_car` car_ LEFT JOIN `the_car_manufacturer` car_manufacturer_ ON car_.`manufacturer_id`=car_manufacturer_.`id`'
+        getParameterRoles(findAll) == ["pageable"]
+        getParameterTableAliases(findAll) == ["car_"]
+
+        getQuery(getAll) == expectedQuery
+        getQueryParts(getAll) == expectedQueryParts
+        getParameterRoles(getAll) == ["pageable"]
+        getParameterTableAliases(getAll) == ["car_"]
+    }
+
+    void "test issue 3851 pageable join criteria rejects non association join path"() {
+        when:
+        buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Join("title")
+    Page<Book> findByTitle(String title, Pageable pageable);
+}
+
+        """)
+
+        then:
+        Throwable ex = thrown()
+        ex.message.contains('Invalid join spec [title]. Property is not an association!')
+    }
+
+    void "test issue 3851 pageable join criteria supports nested to-one join path through foreign key association"() {
+        given:
+        def repository = buildRepository('test.FleetRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface FleetRepository extends GenericRepository<Fleet, Long> {
+    @Join(value = "vehicles.manufacturer", type = Join.Type.FETCH)
+    Page<Fleet> findByVehiclesManufacturerName(String name, Pageable pageable);
+}
+
+@MappedEntity("fleet")
+class Fleet {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "fleet")
+    private List<Vehicle> vehicles = List.of();
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public List<Vehicle> getVehicles() { return vehicles; }
+    public void setVehicles(List<Vehicle> vehicles) { this.vehicles = vehicles; }
+}
+
+@MappedEntity("vehicle")
+class Vehicle {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String registrationCode;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Fleet fleet;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Manufacturer manufacturer;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getRegistrationCode() { return registrationCode; }
+    public void setRegistrationCode(String registrationCode) { this.registrationCode = registrationCode; }
+    public Fleet getFleet() { return fleet; }
+    public void setFleet(Fleet fleet) { this.fleet = fleet; }
+    public Manufacturer getManufacturer() { return manufacturer; }
+    public void setManufacturer(Manufacturer manufacturer) { this.manufacturer = manufacturer; }
+}
+
+@MappedEntity("manufacturer")
+class Manufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+        """)
+
+        def method = repository.getRequiredMethod("findByVehiclesManufacturerName", String, Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+
+        expect:
+        query.contains('INNER JOIN `vehicle` fleet_vehicles_ ON fleet_.`id`=fleet_vehicles_.`fleet_id`')
+        query.contains('INNER JOIN `manufacturer` fleet_vehicles_manufacturer_ ON fleet_vehicles_.`manufacturer_id`=fleet_vehicles_manufacturer_.`id`')
+        query.contains('fleet_vehicles_manufacturer_.`name` = ?')
+        countQuery == 'SELECT COUNT(DISTINCT(fleet_.`id`)) FROM `fleet` fleet_ INNER JOIN `vehicle` fleet_vehicles_ ON fleet_.`id`=fleet_vehicles_.`fleet_id` INNER JOIN `manufacturer` fleet_vehicles_manufacturer_ ON fleet_vehicles_.`manufacturer_id`=fleet_vehicles_manufacturer_.`id` WHERE (fleet_vehicles_manufacturer_.`name` = ?)'
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "fleet_fleet_", "fleet_"]
     }
 
     void "test repository with reused embedded entity"() {
