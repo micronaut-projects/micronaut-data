@@ -158,50 +158,55 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
         // 1) Top-level properties
-        AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
-            final AnnotationMetadata am = prop.getAnnotationMetadata();
-            if (!appliesTo(event, am)) {
-                return null;
-            }
-            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
-            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-            Object current = prop.getProperty().get(context.getEntity());
-            boolean isUpdate = event == TimestampEvent.UPDATE;
-            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, current)) {
-                return null;
-            }
-            Object propertyNow = computePropertyNow(am, isUpdate, now);
-            return convertIfNeeded(propertyNow, prop.getType());
-        });
+        AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> populateTopLevelTimestamp(context, prop, event, now));
         // 2) Embedded properties (recursive via util)
-        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
-            final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
-            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
-            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-            if (!hasDateCreated && !hasDateUpdated) {
-                return current;
-            }
-            if (!appliesTo(event, am)) {
-                return current;
-            }
-            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-            if (!prop.hasSetterOrConstructorArgument()) {
-                return current;
-            }
-            boolean isUpdate = event == TimestampEvent.UPDATE;
-            if (shouldSkipTimestamp(am, hasDateCreated, hasDateUpdated, isUpdate, prop.get(current))) {
-                return current;
-            }
-            Object propertyNow = computePropertyNow(am, isUpdate, now);
-            Class<?> propertyType = embeddedPersistentProperty.getType();
-            Object newValue = convertIfNeeded(propertyNow, propertyType);
-            if (prop.isReadOnly()) {
-                return prop.withValue(current, newValue);
-            } else {
-                prop.set(current, newValue);
-                return current;
-            }
-        });
+        AutoPopulateUtil.applyEmbedded(context, (property, current) -> populateEmbeddedTimestamp(property, current, event, now));
+    }
+
+    private @Nullable Object populateTopLevelTimestamp(@NonNull EntityEventContext<Object> context,
+                                                        @NonNull RuntimePersistentProperty<Object> property,
+                                                        TimestampEvent event,
+                                                        @Nullable Object now) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        if (!appliesTo(event, annotationMetadata)) {
+            return null;
+        }
+        boolean hasDateCreated = annotationMetadata.hasAnnotation(DateCreated.class);
+        boolean hasDateUpdated = annotationMetadata.hasAnnotation(DateUpdated.class);
+        boolean isUpdate = event == TimestampEvent.UPDATE;
+        Object current = property.getProperty().get(context.getEntity());
+        if (shouldSkipTimestamp(annotationMetadata, hasDateCreated, hasDateUpdated, isUpdate, current)) {
+            return null;
+        }
+        Object propertyNow = computePropertyNow(annotationMetadata, isUpdate, now);
+        return convertIfNeeded(propertyNow, property.getType());
+    }
+
+    private Object populateEmbeddedTimestamp(@NonNull RuntimePersistentProperty<Object> property,
+                                             @NonNull Object current,
+                                             TimestampEvent event,
+                                             @Nullable Object now) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        boolean hasDateCreated = annotationMetadata.hasAnnotation(DateCreated.class);
+        boolean hasDateUpdated = annotationMetadata.hasAnnotation(DateUpdated.class);
+        if ((!hasDateCreated && !hasDateUpdated) || !appliesTo(event, annotationMetadata)) {
+            return current;
+        }
+        BeanProperty<Object, Object> beanProperty = property.getProperty();
+        if (!beanProperty.hasSetterOrConstructorArgument()) {
+            return current;
+        }
+        boolean isUpdate = event == TimestampEvent.UPDATE;
+        if (shouldSkipTimestamp(annotationMetadata, hasDateCreated, hasDateUpdated, isUpdate, beanProperty.get(current))) {
+            return current;
+        }
+        Object propertyNow = computePropertyNow(annotationMetadata, isUpdate, now);
+        Object newValue = convertIfNeeded(propertyNow, property.getType());
+        if (beanProperty.isReadOnly()) {
+            return beanProperty.withValue(current, newValue);
+        }
+        beanProperty.set(current, newValue);
+        return current;
     }
 
     private boolean appliesTo(TimestampEvent event, AnnotationMetadata annotationMetadata) {
