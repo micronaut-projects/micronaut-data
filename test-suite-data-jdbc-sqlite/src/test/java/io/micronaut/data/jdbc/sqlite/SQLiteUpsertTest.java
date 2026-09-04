@@ -133,6 +133,22 @@ class SQLiteUpsertTest {
     }
 
     @Test
+    void upsertPreservesExistingAutoPopulatedUuidOnUpdate() {
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"));
+        AutoPopulatedUpsertEntity loaded = autoPopulatedUpsertRepository.findById(1L).orElseThrow();
+        UUID requestId = loaded.getRequestId();
+        loaded.setName("modified");
+
+        autoPopulatedUpsertRepository.upsert(loaded);
+        AutoPopulatedUpsertEntity found = autoPopulatedUpsertRepository.findById(1L).orElseThrow();
+
+        assertNotNull(requestId);
+        assertEquals(requestId, loaded.getRequestId());
+        assertEquals(requestId, found.getRequestId());
+        assertEquals("modified", found.getName());
+    }
+
+    @Test
     void upsertUpdatesTenantIdWhenSupplied() {
         autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"));
         AutoPopulatedUpsertEntity replacement = new AutoPopulatedUpsertEntity(1L, "modified");

@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import org.jspecify.annotations.NonNull;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.event.PrePersist;
@@ -56,21 +57,21 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        populateUuids(context);
+        populateUuids(context, false);
         return true;
     }
 
     @Override
     public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
-        populateUuids(context);
+        populateUuids(context, true);
     }
 
-    private void populateUuids(EntityEventContext<Object> context) {
+    private void populateUuids(EntityEventContext<Object> context, boolean preserveExistingValues) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties.
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
         final Object entity = context.getEntity();
         AutoPopulateUtil.applyTopLevel(context, persistentProperties, property ->
-            shouldSkipPopulation(property, entity) ? null : UUID.randomUUID()
+            shouldSkipPopulation(property, entity, preserveExistingValues) ? null : UUID.randomUUID()
         );
 
         // 2) Embedded properties (recursive via util)
@@ -85,7 +86,7 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             if (!prop.hasSetterOrConstructorArgument()) {
                 return current;
             }
-            boolean skipIfPresent = embeddedPersistentProperty.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
+            boolean skipIfPresent = preserveExistingValues || skipIfPresent(embeddedPersistentProperty.getAnnotationMetadata());
             if (skipIfPresent) {
                 Object existing = prop.get(current);
                 if (existing != null) {
@@ -103,8 +104,11 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     }
 
-    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity) {
-        return property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false)
-            && property.getProperty().get(entity) != null;
+    private static boolean shouldSkipPopulation(RuntimePersistentProperty<Object> property, Object entity, boolean preserveExistingValues) {
+        return (preserveExistingValues || skipIfPresent(property.getAnnotationMetadata())) && property.getProperty().get(entity) != null;
+    }
+
+    private static boolean skipIfPresent(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.booleanValue(AutoPopulated.class, AutoPopulated.SKIP_IF_PRESENT).orElse(false);
     }
 }

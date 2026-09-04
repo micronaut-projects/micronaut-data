@@ -169,6 +169,24 @@ abstract class AbstractUpsertSpec extends Specification {
         found.requestId != requestId
     }
 
+    void "upsert preserves an existing auto-populated UUID on update"() {
+        given:
+        autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
+        AutoPopulatedUpsertEntity loaded = autoPopulatedUpsertRepository.findById(1L).get()
+        UUID requestId = loaded.requestId
+        loaded.name = "modified"
+
+        when:
+        autoPopulatedUpsertRepository.upsert(loaded)
+        AutoPopulatedUpsertEntity found = autoPopulatedUpsertRepository.findById(1L).get()
+
+        then:
+        requestId != null
+        loaded.requestId == requestId
+        found.requestId == requestId
+        found.name == "modified"
+    }
+
     void "upsert updates tenant ID when supplied"() {
         given:
         autoPopulatedUpsertRepository.save(new AutoPopulatedUpsertEntity(1L, "initial"))
