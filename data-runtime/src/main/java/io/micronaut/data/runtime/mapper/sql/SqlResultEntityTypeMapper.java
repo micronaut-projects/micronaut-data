@@ -513,8 +513,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
 
             K entity;
+            // An optional embedded instantiated with its default constructor is null when none of its columns has a value
+            boolean nullIfNoValue = false;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
+                nullIfNoValue = nullableEmbedded;
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
@@ -604,6 +607,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     entity = convertAndSetWithValue(entity, version, version.getProperty(), v);
                 }
             }
+            boolean hasValue = id != null;
             for (RuntimePersistentProperty<K> rpp : persistentEntity.getPersistentProperties()) {
                 if (rpp.isReadOnly()) {
                     continue;
@@ -621,11 +625,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
                     if (rpp instanceof Embedded embedded) {
                         Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
+                        if (value != null) {
+                            hasValue = true;
+                        }
                         entity = setProperty(property, entity, value);
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && ctx.association != null && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
                         // Before setting property value, check if mappedBy is not different from the property name
                         if (isInverse && mappedByMatchesOrEmpty(Objects.requireNonNull(ctx.association), property)) {
+                            hasValue = true;
                             entity = setProperty(property, entity, parent);
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
@@ -639,6 +647,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             if (joinCtx.jp != null) {
                                 if (entityAssociation.getKind().isSingleEnded()) {
                                     Object associatedEntity = readEntity(rs, joinCtx, entity, associatedId);
+                                    if (associatedEntity != null) {
+                                        hasValue = true;
+                                    }
                                     entity = setProperty(property, entity, associatedEntity);
                                 } else {
                                     MappingContext<K> associatedCtx = joinCtx.copy();
@@ -647,6 +658,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                     Object associatedEntity = readEntity(rs, associatedCtx, entity, associatedId);
                                     if (associatedEntity != null) {
+                                        hasValue = true;
                                         Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
                                     } else if (joinCtx.manyAssociations == null) {
@@ -655,6 +667,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 }
                             } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
                                 Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId);
+                                if (value != null) {
+                                    hasValue = true;
+                                }
                                 entity = setProperty(property, entity, value);
                             }
                         }
@@ -662,9 +677,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 } else {
                     Object v = readProperty(rs, ctx, rpp);
                     if (v != null) {
+                        hasValue = true;
                         entity = convertAndSetWithValue(entity, rpp, property, v);
                     }
                 }
+            }
+            if (nullIfNoValue && !hasValue) {
+                return null;
             }
             return entity;
         } catch (InstantiationException e) {
