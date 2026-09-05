@@ -1,0 +1,27 @@
+[[nitriteCompositeId]]
+== Composite Primary Keys
+
+Composite primary keys can be defined using ann:data.annotation.EmbeddedId[].
+
+A composite ID requires an additional class to represent the key. The class should define fields that correspond to the attributes making up the key.
+
+snippet::example.ProjectId[project-base="doc-examples/nitrite-example", source="main", tags="projectId"]
+
+The entity then references the composite key using ann:data.annotation.EmbeddedId[]:
+
+snippet::example.Project[project-base="doc-examples/nitrite-example", source="main", tags="project"]
+
+The repository uses the composite ID type as its ID parameter:
+
+snippet::example.ProjectRepository[project-base="doc-examples/nitrite-example", source="main", tags="projectRepository"]
+
+Usage example:
+
+snippet::example.ProjectRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="useEmbeddedId"]
+
+TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+TIP: When using Java, define getters for the fields making up your composite key.
+
+=== Multiple @Id Properties
+
+An identity can also be composed by annotating more than one property with ann:data.annotation.Id[], without a separate key class. Each identity property is stored as a document field of its own, so it round-trips with the entity and can be filtered and sorted on like any other property. The identity properties are also appended to the sort of a paged query, giving a page boundary a tie-breaker when the requested sort is on a non-unique field.

@@ -1,0 +1,28 @@
+[[nitriteTransactions]]
+== Transactions
+
+Nitrite integrates with Micronaut's `@Transactional` infrastructure through `io.micronaut.data.nitrite.transaction.NitriteTransactionOperations` and the `NitriteTransactionHolder`. When a transaction is active, repository calls use the bound `org.dizitart.no2.transaction.Transaction`, so all reads/writes participate in the same Nitrite transaction and are committed or rolled back together, whichever storage engine backs the datasource. Keep units of work short to avoid blocking other threads that need to mutate the store.
+
+Both beans exist once per configured datasource. A transaction therefore covers exactly the datasource it was opened against; see <<nitriteConfiguration, Multiple Datasources>>.
+
+NOTE: Because these beans are per datasource rather than singletons, injecting `NitriteTransactionOperations`, `NitriteConnectionOperations` or `NitriteTransactionHolder` directly requires a `@Named` qualifier naming the datasource once more than one datasource is configured. The implicit `default` datasource remains the primary one and resolves without a qualifier.
+
+=== Examples
+
+Transactional method using `@Transactional` annotation:
+
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-managed", indent="0"]
+
+Manual rollback using `TransactionOperations`:
+
+snippet::example.TransactionService[project-base="doc-examples/nitrite-example", source="main", tags="transaction-manual-rollback", indent="0"]
+
+=== Rollback control
+
+If you need to mark the current transaction rollback-only after some condition, use the `TransactionOperations` helper (`executeWrite`/`executeRead`) to set the status without throwing an exception.
+
+=== Entity Events
+
+Nitrite supports entity lifecycle events (see <<entityEvents, Entity Events>>). Event callbacks such as `@PrePersist`, `@PostPersist`, `@PreUpdate`, `@PostUpdate`, `@PreRemove`, and `@PostRemove` are triggered during transactional operations.
+
+NOTE: When cascade operations are used, child entity events are triggered before parent entity events (children before parent for cascade operations).

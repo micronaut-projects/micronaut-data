@@ -1,0 +1,84 @@
+[[nitriteNaming]]
+== Naming Strategies
+
+The default naming strategy when converting camel case class and property names to collection and attribute names is to use underscore separated lower case (snake_case). In other words `FooBar` becomes `foo_bar`.
+
+This naming strategy applies to:
+
+- Entity class names (converted to collection names)
+- Entity property names (converted to document field names)
+- Aggregation query field references
+
+== Date/Time Serialization
+
+Date and time types are normalized before being stored in Nitrite documents so filtering, sorting, and aggregation use stable representations. For example:
+
+- `LocalDate` is stored as an epoch-day number.
+- `Instant` and `LocalDateTime` are stored as epoch-nanosecond numbers.
+- `OffsetDateTime` and `ZonedDateTime` are stored as ISO-8601 offset strings.
+
+The runtime applies the same normalization to query parameters, so repository methods can continue to use Java time types directly.
+
+== Type Mapping
+
+Nitrite supports common Java value types including enums, Java time values, `BigDecimal`, byte arrays, lists, maps, `Optional` values, and embedded objects.
+
+snippet::example.ExampleEvent[project-base="doc-examples/nitrite-example", source="main", tags="event-type-mapping"]
+
+<1> Enum values persist as their name string
+<2> Java time values (`LocalDate`, `LocalDateTime`, `Instant`) are normalized for stable storage and querying
+<3> `BigDecimal` preserves precision
+<4> Byte arrays store binary data directly
+<5> Lists persist as JSON arrays
+<6> Maps support both simple values and nested embeddable/introspected values
+<7> `Optional`-wrapped values unwrap transparently
+<8> Embedded objects are inlined in the owning document
+
+The following executable example saves and reloads an entity using those types:
+
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="type-mapping-usage"]
+
+<1> Enum round-trips by name
+<2> Date/time values round-trip through their normalized storage representation
+<3> `BigDecimal` precision is preserved
+<4> Byte arrays round-trip exactly
+<5> Maps of simple and nested introspected values round-trip
+<6> `Optional`-wrapped values round-trip and unwrap transparently
+<7> Embedded objects round-trip inline
+
+== Example Entity
+
+snippet::example.PersonWithDateOfBirth[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirth"]
+
+In this example:
+
+- The entity class `PersonWithDateOfBirth` maps to the collection `person_with_date_of_birth`
+- The property `dateOfBirth` maps to the document field `date_of_birth`
+- The `LocalDate` value is normalized for storage and converted back to `LocalDate` when the entity is read.
+
+== Repository Example
+
+snippet::example.PersonWithDateOfBirthRepository[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirthRepository"]
+
+== Aggregation Queries
+
+When using aggregation queries (such as `countBy*`, `findBy*`, etc.), the field names in the generated JSON queries use snake_case format:
+
+snippet::example.PersonWithDateOfBirthRepository[project-base="doc-examples/nitrite-example", source="main", tags="personWithDateOfBirthRepository-countByName"]
+
+The above method generates a query that references the `name` field (not `Name` or `name` in camel case).
+
+TIP: The snake_case naming strategy is applied automatically. If you need different naming behavior, you can use the `@MappedEntity` annotation's `namingStrategy` attribute (though this is rarely needed for Nitrite).
+
+== @Query JSON Filters
+
+When using the `@Query` annotation with explicit JSON filter documents, field names use snake_case format to match the stored document structure. For example, a property `firstName` is stored as `first_name` in the document.
+
+The framework automatically converts camelCase property names to their snake_case persisted names when processing `@Query` JSON filters:
+
+[source,json]
+----
+{"firstName": "John"}  // Converted to {"first_name": "John"} internally
+----
+
+This means developers can use either camelCase or snake_case in `@Query` JSON filters - both will work correctly.

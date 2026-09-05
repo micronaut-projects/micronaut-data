@@ -1,0 +1,108 @@
+[[nitriteRepositories]]
+As seen in the <<nitriteQuickStart, Quick Start>> repositories are defined using the ann:data.nitrite.annotation.NitriteRepository[] stereotype annotation.
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="repository"]
+
+Micronaut Data generates an implementation at compile time and executes queries via the Nitrite runtime implementation.
+
+A repository that names no datasource uses the primary one. To bind a repository to a particular datasource, pass its name to the annotation, for example `@NitriteRepository("audit")`. See <<nitriteConfiguration, Configuration>> for configuring more than one datasource.
+
+You can use standard repository method patterns:
+
+- CRUD methods from `CrudRepository`
+- Derived finders (for example `findByTitle`, `findByAgeGreaterThan`, `existsBySku`)
+- Paging and sorting via `Pageable` and `Sort`
+- Case-insensitive queries (for example `findByTitleIgnoreCase`)
+- IN queries with collections and arrays (for example `findByTitleIn`)
+
+== Save Method Upsert Semantics
+
+The `save()` and `saveAll()` methods from `CrudRepository` use **upsert semantics**:
+
+- If the entity's ID is `null`, a new document is inserted and the ID is generated
+- If the entity has an existing ID, the document is updated (replaced) if found, or inserted if not found
+
+This allows `save()` to be used for both creating new entities and updating existing ones. For explicit update operations, use the `update()` method or derived update methods (see <<nitriteQuickStart>>).
+
+== Case-Insensitive Queries
+
+Nitrite supports case-insensitive queries using the `IgnoreCase` suffix in method names:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="case-insensitive"]
+
+== IN Queries
+
+Nitrite supports IN queries with both collections and arrays:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="in-queries"]
+
+== Field Projections
+
+Nitrite supports single-field projections and aggregate functions, including property-scoped distinct counts:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="projections"]
+
+For example, methods such as `findDistinctTitle()`, `countByAuthorId(...)`, and `countByTitle(...)` are resolved by the Nitrite runtime without requiring a native Nitrite aggregation pipeline. Native single-field projections, including `@Query` methods that use `"$project"`, return scalar result lists such as `List<String>`.
+
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="json-project"]
+
+Usage example:
+
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="json-project-usage"]
+
+== DTO Projections
+
+Micronaut Data Nitrite supports reflection-free https://micronaut-projects.github.io/micronaut-data/latest/guide/#dto[DTO projections] (see <<dto, shared DTO Projections guide>>) for repository methods that return a type other than the root entity. The DTO must be a concrete class (or record/data class) annotated with `@Introspected`, with a constructor or getter/setter pair for every projected property. Unlike JDBC/JPA, only concrete DTO types work: an `@Introspected` interface compiles but fails at runtime, because the Nitrite mapper instantiates the DTO via its `BeanIntrospection` constructor, and interfaces have none.
+
+snippet::example.EventSummary[project-base="doc-examples/nitrite-example", source="main", tags="dto-projection"]
+
+The repository method's return type declares the DTO projection:
+
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="dto-projection-repository"]
+
+Usage example:
+
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="dto-projection-usage"]
+
+== Aggregation Queries
+
+Nitrite supports derived aggregate queries for numeric fields and min/max queries for temporal fields:
+
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="aggregations"]
+
+Usage example:
+
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="aggregation-usage"]
+
+NOTE: `sum` and `avg` are intended for numeric fields. For temporal fields, use `min` and `max`.
+
+== Explicit JSON Queries
+
+Nitrite does not support SQL-style `@Query` strings. User-authored `@Query` methods must use JSON filter documents with named placeholders.
+
+Supported JSON filter operators include `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`, `$null`, `$notNull`, `$between`, `$regex`, `$like`, `$not`, `$exists`, `$empty`, `$all`, and spatial operators (`$near`, `$within`, `$intersects`) when the spatial module is present. Full-text search uses Nitrite's `$text` filter on fields indexed with `@FullTextIndex`.
+
+snippet::example.ExampleEventRepository[project-base="doc-examples/nitrite-example", source="main", tags="json-query-operators"]
+
+Usage example:
+
+snippet::example.ExampleEventRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="json-query-operators-usage"]
+
+If a query needs to update fields, keep the filter document and update document separate and use named parameters. The runtime handles the Mongo-style `$set` wrapper used by some generated and JSON update queries before applying the Nitrite update.
+
+For complex query logic, Micronaut Data provides:
+
+- Criteria API repositories (see <<nitriteCriteriaSpecifications>>)
+- `@Query` for explicit JSON filter queries
+
+NOTE: Nitrite's runtime query execution supports the query strings encoded by Micronaut Data's document processor and the Nitrite query builder. If you use `@Query` with JSON, use named placeholders like `:name` and keep update documents separate from filter documents.
+
+== Entity Lifecycle Events
+
+Micronaut Data Nitrite supports the same entity lifecycle listener mechanism described in <<entityEvents>>. A Micronaut bean implementing api:data.event.EntityEventListener[] (or one of its functional sub-interfaces) can veto a persist operation by returning `false` from `prePersist`:
+
+snippet::example.VetoTimestampedRecordListener[project-base="doc-examples/nitrite-example", source="main", tags="pre-persist-listener"]
+
+Entities that fail the veto are silently skipped by `saveAll`, so only the remaining entities are inserted:
+
+snippet::example.TimestampedRecordRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="pre-persist-listener-usage"]

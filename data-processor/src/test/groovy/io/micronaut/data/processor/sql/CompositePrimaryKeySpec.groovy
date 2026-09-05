@@ -259,4 +259,117 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         then:
         sql2.startsWith('SELECT project_."department_id",project_."project_id"')
     }
+
+    void "test nested embedded id property of an association resolves to the owning table"() {
+        given:"an association whose target has an embedded id containing a further embedded"
+        def repository = buildRepository('test.ParcelRepository', """
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+
+@Entity
+class Shipment {
+    @EmbeddedId
+    private ShipmentId shipmentId;
+    private String name;
+
+    public ShipmentId getShipmentId() {
+        return shipmentId;
+    }
+
+    public void setShipmentId(ShipmentId shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Embeddable
+class ShipmentId {
+    @Embedded
+    private ShipmentRegion region;
+    private int number;
+
+    public ShipmentRegion getRegion() {
+        return region;
+    }
+
+    public void setRegion(ShipmentRegion region) {
+        this.region = region;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+}
+
+@Embeddable
+class ShipmentRegion {
+    private String country;
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+}
+
+@Entity
+class Parcel {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @ManyToOne
+    private Shipment shipment;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Shipment getShipment() {
+        return shipment;
+    }
+
+    public void setShipment(Shipment shipment) {
+        this.shipment = shipment;
+    }
+}
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
+interface ParcelRepository extends GenericRepository<Parcel, Long> {
+
+    List<Parcel> findByShipmentShipmentIdRegionCountry(String country);
+}
+""")
+
+        when:"the query filters on the nested leaf of that embedded id"
+        def method = repository.findPossibleMethods("findByShipmentShipmentIdRegionCountry").findFirst().get()
+        def query = getQuery(method)
+
+        then:"the leaf resolves to the foreign key column on the owning table, not to the join alias"
+        // Accessibility has to agree with traversal, which descends the whole embedded chain.
+        // Matching only the identity's top level made the predicate read parcel_shipment_."country".
+        query == 'SELECT parcel_."id",parcel_."shipment_country",parcel_."shipment_number" FROM "parcel" parcel_ INNER JOIN "shipment" parcel_shipment_ ON parcel_."shipment_country"=parcel_shipment_."country" AND parcel_."shipment_number"=parcel_shipment_."number" WHERE (parcel_."shipment_country" = ?)'
+    }
 }

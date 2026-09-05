@@ -1,0 +1,27 @@
+plugins {
+    id "java"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor projects.micronautDataNitrite
+
+    implementation projects.micronautDataNitrite
+    implementation(libs.nitrite.spatial) {
+        exclude group: "tools.jackson.core", module: "jackson-databind"
+    }
+    implementation mnSql.jakarta.persistence.api
+
+    runtimeOnly mnLogging.logback.classic
+}

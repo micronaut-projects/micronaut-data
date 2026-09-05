@@ -30,4 +30,5 @@ dependencies {
 
     compileOnly projects.micronautDataJdbc
     compileOnly projects.micronautDataMongodb
+    compileOnly projects.micronautDataNitrite
 }

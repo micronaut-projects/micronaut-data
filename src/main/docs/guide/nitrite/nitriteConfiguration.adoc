@@ -1,0 +1,120 @@
+[[nitriteConfiguration]]
+== Configuration
+
+Nitrite datasources are bound from `micronaut.nitrite.*` properties. Each datasource has a name, which forms part of the property path: settings for a datasource named `default` are bound from `micronaut.nitrite.default.*`.
+
+The following settings are supported for each datasource:
+
+- `db-path`: Path to the database file. If not provided, an in-memory database is created.
+- `storage-mode`: The storage engine to use. Supported values are:
+    * `MVSTORE`: (Default) MVStore-backed persistent database.
+    * `IN_MEMORY`: Pure in-memory database (equivalent to leaving `db-path` empty).
+    * `ROCKSDB`: RocksDB-backed persistent database.
+- `field-separator`: The character used to separate nested fields in query strings (default: `.`).
+- `create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
+- `username`: Optional username (for authenticated databases).
+- `password`: Optional password.
+
+Example (Persistent):
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      create-indexes: true
+----
+
+If no `micronaut.nitrite` configuration is present at all, an in-memory datasource named `default` is created implicitly, so a repository works without any configuration. If a datasource is configured but supplies no `db-path`, an in-memory database is used for it.
+
+== Multiple Datasources
+
+More than one datasource can be configured by giving each one its own name under `micronaut.nitrite`. Each datasource is opened independently, with its own storage mode and its own documents:
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+    audit:
+      storage-mode: IN_MEMORY
+----
+
+A repository selects its datasource by passing the name to ann:data.nitrite.annotation.NitriteRepository[]:
+
+[source,java]
+----
+@NitriteRepository("audit")
+public interface AuditRepository extends CrudRepository<AuditRecord, String> {
+}
+----
+
+A repository that names no datasource uses the primary one, which is the datasource named `default`.
+
+Datasources are isolated from each other: an entity written through a repository bound to one datasource is not visible through a repository bound to another, even when both repositories map the same entity type.
+
+The isolation extends to transactions. Each datasource gets its own connection operations, transaction operations and transaction context holder, so a transaction opened against one datasource neither covers nor is visible to repositories bound to another. To drive a transaction of a named datasource programmatically, resolve its `NitriteTransactionOperations` bean by that name:
+
+[source,java]
+----
+NitriteTransactionOperations auditTransactions =
+    beanContext.getBean(NitriteTransactionOperations.class, Qualifiers.byName("audit"));
+----
+
+== Optional Modules
+
+Micronaut Data Nitrite supports optional Nitrite modules that provide additional functionality:
+
+=== ROCKSDB Storage Engine
+
+To use the `ROCKSDB` storage mode, add the Nitrite ROCKSDB adapter dependency:
+
+dependency:org.dizitart:nitrite-rocksdb-adapter[scope="runtime"]
+
+Then configure the storage mode:
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      storage-mode: ROCKSDB
+----
+
+`ROCKSDB` requires a `db-path`; unlike `MVSTORE` it cannot fall back to in-memory storage, so a missing path fails at startup. Configuring `ROCKSDB` without the adapter on the classpath also fails at startup, naming the missing adapter class.
+
+See the https://nitrite.dizitart.com/java-sdk/modules/store-modules/rocksdb/index.html[Nitrite ROCKSDB Adapter documentation] for more details.
+
+=== Spatial Module
+
+To use spatial queries with Geometry types (points, polygons, etc.), add the Nitrite spatial module:
+
+dependency:org.dizitart:nitrite-spatial[scope="runtime"]
+
+Micronaut Data Nitrite serializes JTS Geometry values through its built-in Micronaut Serde codec; no Jackson JTS module is required.
+
+The spatial module enables:
+
+- <<nitriteSpatial, Spatial indexes>> on Geometry fields
+- <<nitriteSpatial, Spatial filters>> (`$near`, `$within`, `$intersects`)
+
+The module is loaded automatically when it is on the classpath and is simply absent when it is not. A module that is present but cannot be initialized fails at startup rather than being skipped, so spatial indexes and filters are never silently unavailable.
+
+See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module documentation] and https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Spatial Filters documentation] for more details.
+
+=== Object Mapping
+
+Micronaut Data Nitrite uses its own Micronaut Data mapping layer with Nitrite collections. It does not require Nitrite's Jackson mapper module, and a Micronaut Serde `ObjectMapper` bean is optional. If Micronaut Serde is present, the mapper can use it for non-simple nested values; otherwise it relies on Micronaut introspection and the built-in conversion service.
+
+== Batch Operations
+
+For bulk operations, use the `saveAll`, `updateAll`, and `deleteAll` repository methods to batch operations efficiently:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="batch-operations"]
+
+Batch operations are more efficient than individual operations when working with multiple entities, as they reduce the number of database round-trips and take advantage of Nitrite's internal batching mechanisms.
+
+NOTE: For large batch operations, consider breaking them into smaller chunks to avoid memory pressure and improve transaction management.

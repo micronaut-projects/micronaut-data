@@ -1,0 +1,124 @@
+[[nitriteAssociationFetching]]
+Micronaut Data Nitrite supports fetching of associations using the `@Join` annotation. This allows you to eagerly load related entities when querying.
+
+== Supported Association Types
+
+Nitrite supports the following association types with `@Join`:
+
+* `Kind.ONE_TO_ONE` - Single-valued association
+* `Kind.MANY_TO_ONE` - Single-valued association
+* `Kind.ONE_TO_MANY` - Collection-valued association
+* `Kind.MANY_TO_MANY` - Collection-valued association
+
+== Using @Join
+
+To fetch associations eagerly, use the `@Join` annotation on repository methods:
+
+snippet::example.AuthorRepository[project-base="doc-examples/nitrite-example", source="main", tags="join-example"]
+
+== Lazy by Default
+
+`ONE_TO_MANY` and `MANY_TO_MANY` associations are **lazy-loaded by default** in Nitrite. This means:
+
+* Without `@Join`: the collection is not loaded (empty)
+* With `@Join`: the collection is fetched in the same query operation, using a single batch query rather than one query per entity
+
+`MANY_TO_ONE` and `ONE_TO_ONE` associations, by contrast, are always eagerly resolved — the owning entity stores the foreign key directly, so Nitrite fetches the associated entity whether or not `@Join` is used. Adding `@Join` to these still helps: it replaces the per-entity lookup with a single `$lookup`-based query, and is required to filter or project through the association with the Criteria API.
+
+IMPORTANT: Without `@Join`, each to-one association is resolved with a separate lookup per root document, and the associated entity's own to-one associations are resolved in turn. Loading N entities therefore costs N additional lookups per to-one association, and can walk further into the graph from there. Each root document has its own hydration cache, so the same associated document is fetched again for every root that references it, and cycles are handled without infinite recursion. Declare `@Join` on the association when loading more than a handful of entities, and model deep to-one chains deliberately.
+
+snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-usage"]
+
+== Fetching ONE_TO_MANY Associations
+
+For `ONE_TO_MANY` associations, use `@Join` with the property name of the collection:
+
+snippet::example.AuthorRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="join-fetch"]
+
+The `@Join` annotation triggers a batch fetch that:
+
+1. Queries all `Author` entities
+2. Collects all author IDs
+3. Queries all `Book` entities where `author_id` IN (author IDs)
+4. Groups books by author ID
+5. Populates each author's `books` collection
+
+== Fetching MANY_TO_MANY Associations
+
+For `MANY_TO_MANY` associations, `@Join` works the same way as `ONE_TO_MANY`. The owning side stores the relationship, and Nitrite can resolve the association when fetching from either side.
+
+In the Student/Book example, `Book` is the owning side (it has `@Relation(value = Relation.Kind.MANY_TO_MANY)` without `mappedBy`), while `Student` is the inverse side (it has `mappedBy = "students"`).
+
+To eagerly fetch students when querying books, add `@Join("students")` to a `findAll` method on `BookRepository`:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="join-students"]
+
+The `@Join` annotation triggers a batch fetch that:
+
+. Queries all `Book` entities
+. For each book, reads the stored student ID references from the owning side's field
+. Queries all `Student` entities whose IDs are in the collected set
+. Groups students by book ID
+. Populates each book's `students` collection
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="many-to-many-fetch"]
+
+<1> `@Join("students")` on `findAll()` triggers batch fetching
+<2> Students collection is already populated, no additional queries
+
+NOTE: For bidirectional `MANY_TO_MANY` associations, persist relationship changes through the owning side. Fetching can still be declared on repository methods for either side when the association metadata identifies the owning side.
+
+See the <<nitriteAssociationMapping, Association Mapping>> section for a complete Student/Book MANY_TO_MANY example.
+
+== Batch Fetching
+
+When multiple entities are loaded with `@Join`, Nitrite uses batch fetching to efficiently load associations:
+
+1. Load all parent entities
+2. Collect parent IDs
+3. Query associated entities with `IN` clause
+4. Group results by parent ID
+5. Populate associations on parent entities
+
+This approach minimizes database queries and is efficient for loading collections.
+
+== Limitations
+
+Current boundaries of `@Join` support in Nitrite:
+
+* Use explicit `@Join` annotations for each association path that should be fetched.
+* Nested association paths are supported by declaring each path explicitly, for example `@Join("books")` and `@Join("books.pages")`.
+* Deep nested graphs should be modeled deliberately; avoid relying on broad implicit graph loading.
+* Only the default join behavior is supported; custom join types such as `LEFT_FETCH` and `INNER_FETCH` are not currently distinguished.
+
+== Association Name Matching
+
+Nitrite uses the associated entity's class name for matching association paths in queries. This handles both regular and irregular plural forms correctly:
+
+* Regular plurals: `books` → `book` (e.g., `findByBooksTitle`)
+* Irregular plurals: `cities` → `city` (e.g., `findByCitiesName`)
+
+This ensures that queries on `ONE_TO_MANY` associations work correctly regardless of the naming convention used.
+
+== UUID-Keyed Association Lookup
+
+When a `MANY_TO_ONE` association's target entity has a `UUID` id, a `@Query` filter on the association property accepts either the associated entity's `UUID` (as a string) or a string value of one of the associated entity's own properties:
+
+.Widget entity with a UUID id
+snippet::example.Widget[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget"]
+
+`WidgetOrder` references `Widget` via a `MANY_TO_ONE` association:
+
+.WidgetOrder entity referencing Widget
+snippet::example.WidgetOrder[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget-order"]
+
+The repository defines a `@Query` filter on the association property:
+
+.Repository filtering on the association value
+snippet::example.WidgetOrderRepository[project-base="doc-examples/nitrite-example", source="main", tags="uuid-widget-order-repository"]
+
+If the supplied `:value` parses as a `UUID`, the filter matches the stored foreign key directly. Otherwise, it falls back to a sub-query that matches against the associated `Widget`'s own string properties (for example, `name`):
+
+snippet::example.WidgetOrderRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="uuid-association-usage"]
+
+For more complex association fetching patterns, consider using the Criteria API (see <<nitriteCriteriaSpecifications>>).

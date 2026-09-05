@@ -1,0 +1,98 @@
+[[nitriteSpatial]]
+== Spatial Queries
+
+Micronaut Data Nitrite supports spatial queries through the optional https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial] module. This enables storage and querying of geometric data types such as points, lines, and polygons.
+
+=== Setup
+
+Add the following dependencies to your project:
+
+dependency:org.dizitart:nitrite-spatial[scope="runtime"]
+
+The `nitrite-spatial` module provides spatial indexing and filtering capabilities. Micronaut Data Nitrite serializes JTS Geometry objects with its built-in Micronaut Serde codec, so no Jackson JTS module is required.
+
+=== Spatial Indexes
+
+To create a spatial index on a field, use the `@SpatialIndex` annotation:
+
+snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="spatial-index", indent="0"]
+
+=== Geometry Types
+
+Micronaut Data Nitrite uses the https://locationtech.github.io/jts/[JTS (Java Topology Suite)] library for geometry types. Common geometry types include:
+
+- `Point`: A single coordinate (x, y)
+- `LineString`: A sequence of connected line segments
+- `Polygon`: A closed shape defined by a ring of coordinates
+- `MultiPoint`, `MultiLineString`, `MultiPolygon`: Collections of geometry types
+
+IMPORTANT: JTS Coordinate order is **(longitude, latitude)** or **(x, y)**, NOT (latitude, longitude). This is a common source of errors. For example, to create a point for New York City (40.7128° N, 74.0060° W), use:
+
+snippet::example.GeometryTypesExample[project-base="doc-examples/nitrite-example", source="main", tags="geometry-types"]
+
+=== Spatial Filters
+
+Micronaut Data Nitrite supports spatial filters through explicit JSON `@Query` methods and derived spatial query predicates.
+
+==== $near - Find Objects Near a Location
+
+The `$near` filter finds objects within a specified distance from a reference point.
+
+snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="near-query", indent="0"]
+
+Usage example:
+
+snippet::example.SpatialExample[project-base="doc-examples/nitrite-example", source="main", tags="near-usage", indent="0"]
+
+==== $within - Find Objects Within a Geometry
+
+The `$within` filter finds objects whose location is completely within a specified geometry (polygon or circle).
+
+snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="within-query", indent="0"]
+
+Usage example:
+
+snippet::example.SpatialExample[project-base="doc-examples/nitrite-example", source="main", tags="within-usage", indent="0"]
+
+==== $intersects - Find Objects Intersecting a Geometry
+
+The `$intersects` filter finds objects whose location intersects with a specified geometry.
+
+snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="intersects-query", indent="0"]
+
+Usage example:
+
+snippet::example.SpatialExample[project-base="doc-examples/nitrite-example", source="main", tags="intersects-usage", indent="0"]
+
+Derived spatial repository methods are translated to the same Nitrite spatial filter operations. If the `nitrite-spatial` module is missing at runtime, spatial filter creation fails with a data access error instead of silently returning all documents.
+
+==== Derived Spatial Methods
+
+Instead of writing an explicit `@Query`, spatial filters can also be expressed as derived query methods using the `Near`, `GeoWithin`, and `GeoIntersects` predicates:
+
+snippet::example.IndexedBookRepository[project-base="doc-examples/nitrite-example", source="main", tags="derived-spatial", indent="0"]
+
+Usage example:
+
+snippet::example.IndexedBookRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="derived-spatial-usage", indent="0"]
+
+=== Complete Examples
+
+The following are complete examples showing all three spatial filter types:
+
+snippet::example.SpatialExample[project-base="doc-examples/nitrite-example", source="main", indent="0"]
+
+=== Limitations
+
+- Spatial queries require the `nitrite-spatial` module at runtime
+- Geometry fields must use JTS types from `org.locationtech.jts.geom`
+- Spatial indexes are automatically created for fields annotated with `@SpatialIndex`
+- The `$near` filter uses planar distance calculations (not geodesic/spherical)
+- For geographic applications, consider the coordinate system and distance units carefully
+
+=== See Also
+
+- https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module]
+- https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Nitrite Spatial Filters]
+- https://github.com/graphhopper/jackson-datatype-jts[Jackson Datatype JTS]
+- https://locationtech.github.io/jts/[JTS Topology Suite]

@@ -1,0 +1,11 @@
+[[nitriteCriteriaSpecifications]]
+Micronaut Data Nitrite supports repositories that use the Jakarta Persistence Criteria API (see <<criteriaSpecifications, Shared Criteria API documentation>>).
+
+Nitrite executes Criteria queries by encoding the criteria model into a JSON filter document that is evaluated by the Nitrite runtime.
+
+See:
+
+- <<nitriteCriteriaExecuteQuery, Querying>>
+- <<nitriteCriteriaExecuteUpdate, Updating>>
+- <<nitriteCriteriaExecuteDelete, Deleting>>
+
