@@ -90,6 +90,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#persist()" tabindex="0">persist()</a></li>
 <li><a href="#delete()" tabindex="0">delete()</a></li>
 <li><a href="#update()" tabindex="0">update()</a></li>
+<li><a href="#upsert()" tabindex="0">upsert()</a></li>
 <li><a href="#failed(java.lang.Exception,java.lang.String)" tabindex="0">failed(Exception, String)</a></li>
 <li><a href="#collectAutoPopulatedPreviousValues()" tabindex="0">collectAutoPopulatedPreviousValues()</a></li>
 <li><a href="#execute()" tabindex="0">execute()</a></li>
@@ -331,8 +332,13 @@ loadScripts(document, 'script');</script>
 <div class="block">Update entity id.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#veto(java.util.function.Predicate)" class="member-name-link">veto</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="#type-param-T" title="type parameter in AbstractReactiveEntitiesOperations">T</a>&gt;&nbsp;predicate)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upsert()" class="member-name-link">upsert</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Execute one native upsert using update lifecycle callbacks and cascades.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#veto(java.util.function.Predicate)" class="member-name-link">veto</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="#type-param-T" title="type parameter in AbstractReactiveEntitiesOperations">T</a>&gt;&nbsp;predicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Veto an entity.</div>
 </div>
 </div>
@@ -612,6 +618,16 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">update</span>()</div>
 <div class="block">Update one operation.</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="upsert()">
+<h3>upsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">upsert</span>()</div>
+<div class="block">Execute one native upsert using update lifecycle callbacks and cascades. Framework-managed values
+required by the insert branch are prepared before the update lifecycle runs.</div>
 </div>
 </section>
 </li>

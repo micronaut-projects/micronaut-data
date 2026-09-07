@@ -76,6 +76,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#preRemove(io.micronaut.data.event.EntityEventContext)" tabindex="0">preRemove(EntityEventContext)</a></li>
 <li><a href="#postRemove(io.micronaut.data.event.EntityEventContext)" tabindex="0">postRemove(EntityEventContext)</a></li>
 <li><a href="#preUpdate(io.micronaut.data.event.EntityEventContext)" tabindex="0">preUpdate(EntityEventContext)</a></li>
+<li><a href="#prepareUpsert(io.micronaut.data.event.EntityEventContext)" tabindex="0">prepareUpsert(EntityEventContext)</a></li>
 <li><a href="#postUpdate(io.micronaut.data.event.EntityEventContext)" tabindex="0">postUpdate(EntityEventContext)</a></li>
 <li><a href="#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" tabindex="0">process(BeanDefinition, ExecutableMethod)</a></li>
 </ol>
@@ -93,7 +94,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;, io.micronaut.core.order.Ordered, <a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EventListener.html" title="class or interface in java.util" class="external-link">EventListener</a></code></dd>
+<dd><code>io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;, io.micronaut.core.order.Ordered, <a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="UpsertEntityEventListener.html" title="interface in io.micronaut.data.runtime.event">UpsertEntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EventListener.html" title="class or interface in java.util" class="external-link">EventListener</a></code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
@@ -101,7 +102,7 @@ loadScripts(document, 'script');</script>
 @Primary
 </span><span class="modifiers">public class </span><span class="element-name type-name-label">EntityEventRegistry</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements <a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;</span></div>
+implements <a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, <a href="UpsertEntityEventListener.html" title="interface in io.micronaut.data.runtime.event">UpsertEntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;, io.micronaut.context.processor.ExecutableMethodProcessor&lt;<a href="../../annotation/event/EntityEventMapping.html" title="annotation interface in io.micronaut.data.annotation.event">EntityEventMapping</a>&gt;</span></div>
 <div class="block">Primary implementation of the <a href="../../event/EntityEventListener.html" title="interface in io.micronaut.data.event"><code>EntityEventListener</code></a> interface that aggregates all other listeners.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -180,29 +181,34 @@ implements <a href="../../event/EntityEventListener.html" title="interface in io
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A post-update hook.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prePersist(io.micronaut.data.event.EntityEventContext)" class="member-name-link">prePersist</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareUpsert(io.micronaut.data.event.EntityEventContext)" class="member-name-link">prepareUpsert</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">A pre-persist hook.</div>
+<div class="block">Prepares framework-managed values needed by the insert branch of an upsert.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preRemove(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preRemove</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prePersist(io.micronaut.data.event.EntityEventContext)" class="member-name-link">prePersist</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">A pre-persist hook.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preRemove(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preRemove</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A pre-remove hook.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preUpdate(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preUpdate</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preUpdate(io.micronaut.data.event.EntityEventContext)" class="member-name-link">preUpdate</a><wbr>(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">A pre-update hook.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;B&gt;&nbsp;void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process</a><wbr>(io.micronaut.inject.BeanDefinition&lt;B&gt;&nbsp;beanDefinition,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;B&gt;&nbsp;void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process</a><wbr>(io.micronaut.inject.BeanDefinition&lt;B&gt;&nbsp;beanDefinition,
  io.micronaut.inject.ExecutableMethod&lt;B,<wbr>?&gt;&nbsp;method)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;entity,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports</a><wbr>(<a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;entity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Annotation.html" title="class or interface in java.lang.annotation" class="external-link">Annotation</a>&gt;&nbsp;eventType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Allows including or excluding a listener for a specific entity.</div>
 </div>
 </div>
@@ -383,6 +389,22 @@ implements <a href="../../event/EntityEventListener.html" title="interface in io
 <dd><code>context</code> - The context object</dd>
 <dt>Returns:</dt>
 <dd>A boolean value indicating whether to proceed with the operation.</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="prepareUpsert(io.micronaut.data.event.EntityEventContext)">
+<h3>prepareUpsert</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">prepareUpsert</span><wbr><span class="parameters">(@NonNull <a href="../../event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;context)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="UpsertEntityEventListener.html#prepareUpsert(io.micronaut.data.event.EntityEventContext)">UpsertEntityEventListener</a></code></span></div>
+<div class="block">Prepares framework-managed values needed by the insert branch of an upsert.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="UpsertEntityEventListener.html#prepareUpsert(io.micronaut.data.event.EntityEventContext)">prepareUpsert</a></code>&nbsp;in interface&nbsp;<code><a href="UpsertEntityEventListener.html" title="interface in io.micronaut.data.runtime.event">UpsertEntityEventListener</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>context</code> - The entity event context</dd>
 </dl>
 </div>
 </section>
