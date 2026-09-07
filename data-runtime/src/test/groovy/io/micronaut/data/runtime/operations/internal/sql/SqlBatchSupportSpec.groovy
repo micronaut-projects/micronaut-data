@@ -21,9 +21,11 @@ import io.micronaut.data.model.runtime.InsertBatchOperation
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.model.runtime.StoredQuery
+import org.reactivestreams.Publisher
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.Optional
 import java.util.concurrent.CompletionStage
 
 class SqlBatchSupportSpec extends Specification {
@@ -192,6 +194,19 @@ class SqlBatchSupportSpec extends Specification {
         "MySQL metadata"   | "MySQL"            | "MySQL Connector/J"
     }
 
+    void "jdbc non-mysql dialect keeps batching for identity-less inserts"() {
+        expect:
+        SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithoutIdentity(),
+            Dialect.POSTGRES,
+            "PostgreSQL",
+            "PostgreSQL JDBC Driver",
+            true,
+            false,
+            false
+        )
+    }
+
     void "jdbc mysql family requires explicit batch update support"() {
         expect:
         !SqlBatchSupport.isSupportsJdbcBatchInsert(
@@ -247,6 +262,8 @@ class SqlBatchSupportSpec extends Specification {
         scenario                         | cascadesPersist | postPersist | resultArgument                                            || required
         "entity lists"                   | false           | false       | Argument.listOf(TestEntity)                               || true
         "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(TestEntity)) || true
+        "optional numeric returns"        | false           | false       | Argument.of(Optional, Argument.of(Long))                 || false
+        "publisher numeric returns"       | false           | false       | Argument.of(Publisher, Argument.of(Long))                || false
         "void returns"                   | false           | false       | Argument.of(Void)                                          || false
         "boxed boolean returns"          | false           | false       | Argument.of(Boolean)                                       || false
         "primitive count arrays"         | false           | false       | Argument.of(long[].class)                                  || false

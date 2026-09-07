@@ -104,10 +104,10 @@ public final class SqlBatchSupport {
         if (!dialect.allowBatch()) {
             return false;
         }
-        if (!persistentEntity.hasIdentity()) {
-            return false;
-        }
         if (dialect == Dialect.MYSQL) {
+            if (!persistentEntity.hasIdentity()) {
+                return false;
+            }
             if (isMariaDb(databaseProductName, driverName)) {
                 // MariaDB reports generated-key support generally, but complete generated keys for
                 // batched multi-value inserts depend on driver options. Only batch when the caller
