@@ -182,7 +182,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final JdbcSchemaHandler schemaHandler;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
-    private final AtomicReference<JdbcBatchCapabilities> jdbcBatchCapabilities = new AtomicReference<>();
+    private final AtomicReference<JdbcBatchCapabilities> cachedJdbcBatchCapabilities = new AtomicReference<>();
     private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
     // This @EachBean(DataSource.class) instance caches the successfully resolved version per datasource.
     private final SynchronizedLazyValue<DatabaseVersion> databaseVersion = new SynchronizedLazyValue<>();
@@ -1273,7 +1273,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (ctx.dialect != Dialect.MYSQL) {
             return isSupportsBatchInsert(persistentEntity, ctx.dialect);
         }
-        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities(ctx);
+        JdbcBatchCapabilities capabilities = getJdbcBatchCapabilities(ctx);
         return SqlBatchSupport.isSupportsJdbcBatchInsert(
             persistentEntity,
             ctx.dialect,
@@ -1285,15 +1285,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         );
     }
 
-    private JdbcBatchCapabilities jdbcBatchCapabilities(JdbcOperationContext ctx) {
-        JdbcBatchCapabilities capabilities = jdbcBatchCapabilities.get();
+    private JdbcBatchCapabilities getJdbcBatchCapabilities(JdbcOperationContext ctx) {
+        JdbcBatchCapabilities capabilities = cachedJdbcBatchCapabilities.get();
         if (capabilities == null) {
             capabilities = resolveJdbcBatchCapabilities(ctx);
             if (capabilities == null) {
                 return JdbcBatchCapabilities.UNKNOWN;
             }
-            if (!jdbcBatchCapabilities.compareAndSet(null, capabilities)) {
-                capabilities = Objects.requireNonNull(jdbcBatchCapabilities.get());
+            if (!cachedJdbcBatchCapabilities.compareAndSet(null, capabilities)) {
+                capabilities = Objects.requireNonNull(cachedJdbcBatchCapabilities.get());
             }
         }
         return capabilities;
