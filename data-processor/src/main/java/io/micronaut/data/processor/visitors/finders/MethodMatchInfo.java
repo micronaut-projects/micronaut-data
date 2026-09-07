@@ -45,6 +45,7 @@ public final class MethodMatchInfo {
     private final Map<ParameterElement, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
     private boolean optimisticLock;
+    private boolean readGeneratedId;
 
     @Nullable
     private QueryResult queryResult;
@@ -177,6 +178,24 @@ public final class MethodMatchInfo {
 
     public MethodMatchInfo optimisticLock(boolean optimisticLock) {
         this.optimisticLock = optimisticLock;
+        return this;
+    }
+
+    /**
+     * @return Whether this method should read a generated identity value.
+     */
+    public boolean shouldReadGeneratedId() {
+        return readGeneratedId;
+    }
+
+    /**
+     * Sets whether this method should read a generated identity value.
+     *
+     * @param readGeneratedId Whether to read the generated identity value
+     * @return This method match information
+     */
+    public MethodMatchInfo readGeneratedId(boolean readGeneratedId) {
+        this.readGeneratedId = readGeneratedId;
         return this;
     }
 

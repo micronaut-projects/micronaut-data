@@ -39,6 +39,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -181,6 +182,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final DataR2dbcConfiguration configuration;
     private final Map<Dialect, VectorBindSupport> vectorBindSupportByDialect = new EnumMap<>(Dialect.class);
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
+    private final Map<Dialect, R2dbcUpsertReturningExecutor> upsertReturningExecutors = new EnumMap<>(Dialect.class);
     private final Integer defaultFetchSize;
 
     /**
@@ -200,6 +202,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
      * @param r2dbcExceptionMapperList    The R2dbc exception mapper list
+     * @param upsertReturningExecutorList The dialect-specific upsert returning executors
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
      * @param conversionContextFactory    The conversion context factory
@@ -222,6 +225,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         List<VectorBindSupport> vectorBindSupports,
+        List<R2dbcUpsertReturningExecutor> upsertReturningExecutorList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations,
         @Parameter DatabaseConversionContextFactory conversionContextFactory) {
@@ -247,6 +251,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
+        for (R2dbcUpsertReturningExecutor executor : upsertReturningExecutorList) {
+            upsertReturningExecutors.put(executor.getDialect(), executor);
+        }
         if (CollectionUtils.isNotEmpty(vectorBindSupports)) {
             for (VectorBindSupport vectorBindSupport : vectorBindSupports) {
                 vectorBindSupportByDialect.put(vectorBindSupport.getDialect(), vectorBindSupport);
@@ -575,7 +582,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <R> Flux<R> executeOracleReturningPreparedQuery(Statement statement, SqlPreparedQuery<?, R> preparedQuery, int startIndex) {
-        Statement oracleStatement = bindOracleReturningOutParameters(statement, preparedQuery, startIndex);
+        Statement oracleStatement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, preparedQuery, startIndex);
         SqlTypeMapper<Readable, R> mapper = createOracleReturningMapper(preparedQuery);
         return executeAndMapOracleReturningSingleNullable(oracleStatement, preparedQuery.getDialect(), readable -> mapper.map(readable, preparedQuery.getResultType()))
             .flux()
@@ -588,6 +595,43 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             && (operationType == OperationType.INSERT_RETURNING
             || operationType == OperationType.UPDATE_RETURNING
             || operationType == OperationType.DELETE_RETURNING);
+    }
+
+    private boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
+        return storedQuery.getOperationType() == OperationType.UPSERT;
+    }
+
+    private boolean isUpsertReturningOperation(SqlStoredQuery<?, ?> storedQuery) {
+        return isUpsertOperation(storedQuery)
+            && CollectionUtils.isNotEmpty(storedQuery.getOutParameterBindings());
+    }
+
+    private boolean shouldReadGeneratedId(SqlStoredQuery<?, ?> storedQuery, boolean hasGeneratedId) {
+        return hasGeneratedId
+            && (!isUpsertOperation(storedQuery)
+            || storedQuery.getAnnotationMetadata().isTrue(DataMethod.NAME, DataMethod.META_MEMBER_READ_GENERATED_ID));
+    }
+
+    private <T> int bindUpsertParameters(R2dbcOperationContext ctx,
+                                         Statement statement,
+                                         SqlStoredQuery<T, ?> storedQuery,
+                                         T entity,
+                                         @Nullable Map<QueryParameterBinding, Object> previousValues) {
+        R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
+        storedQuery.bindParameters(binder, ctx.invocationContext, entity, previousValues);
+        return binder.currentIndex();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> SqlStoredQuery<T, ?> prepareStoredQuery(SqlStoredQuery<T, ?> storedQuery, T entity) {
+        if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+            SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
+            SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
+            DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
+            entityPreparedQuery.prepare(entity);
+            return entityPreparedQuery;
+        }
+        return storedQuery;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -683,18 +727,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return (SqlResultEntityTypeMapper<Readable, T>) createOracleReturningMapper(storedQuery);
     }
 
-    private Statement bindOracleReturningOutParameters(Statement statement, SqlStoredQuery<?, ?> storedQuery, int startIndex) {
-        List<QueryOutParameterBinding> outParameterBindings = storedQuery.getOutParameterBindings();
-        if (CollectionUtils.isEmpty(outParameterBindings)) {
-            throw new DataAccessException("Missing OUT parameter metadata for Oracle RETURNING. SqlQueryBuilder must attach QueryOutParameterBinding list.");
-        }
-        int index = startIndex;
-        for (QueryOutParameterBinding outParameterBinding : outParameterBindings) {
-            statement.bind(index++, Parameters.out(findR2dbcType(outParameterBinding.dataType())));
-        }
-        return statement;
-    }
-
     private int getJsonGeneratedIdOutParameterIndex(SqlStoredQuery<?, ?> storedQuery) {
         return countQueryPlaceholders(storedQuery.getQuery()) - 1;
     }
@@ -707,26 +739,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         return placeholders;
-    }
-
-    private R2dbcType findR2dbcType(DataType dataType) {
-        return switch (dataType) {
-            case BOOLEAN -> R2dbcType.BOOLEAN;
-            case BYTE, SHORT, INTEGER -> R2dbcType.INTEGER;
-            case LONG -> R2dbcType.BIGINT;
-            case FLOAT -> R2dbcType.REAL;
-            case DOUBLE -> R2dbcType.DOUBLE;
-            case BIGDECIMAL -> R2dbcType.NUMERIC;
-            case BYTE_ARRAY -> R2dbcType.VARBINARY;
-            case DATE -> R2dbcType.DATE;
-            case TIME -> R2dbcType.TIME;
-            case TIMESTAMP -> R2dbcType.TIMESTAMP;
-            case CHARACTER -> R2dbcType.CHAR;
-            case BOOLEAN_ARRAY, CHARACTER_ARRAY, DOUBLE_ARRAY,
-                 FLOAT_ARRAY, INTEGER_ARRAY, LONG_ARRAY, SHORT_ARRAY,
-                 STRING_ARRAY -> R2dbcType.COLLECTION;
-            default -> R2dbcType.VARCHAR;
-        };
     }
 
     private <R> Mono<R> executeAndMapOracleReturningSingle(Statement statement, Dialect dialect, Function<Readable, R> mapper) {
@@ -938,7 +950,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
                 storedQuery.bindParameters(binder, ctx.invocationContext, operation.getEntity(), null);
                 if (isOracleReturningQuery(storedQuery)) {
-                    statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                    statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
                     SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
                     return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                 }
@@ -967,7 +979,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, storedQuery);
                             storedQuery.bindParameters(binder, ctx.invocationContext, deleteOp.getEntity(), null);
                             if (isOracleReturningQuery(storedQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
+                                statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, storedQuery, binder.currentIndex());
                                 SqlTypeMapper<Readable, R> oracleMapper = createOracleReturningMapper(storedQuery);
                                 return executeAndMapOracleReturningSingleNullable(statement, ctx.dialect, readable -> oracleMapper.map(readable, storedQuery.getResultType()));
                             }
@@ -1028,8 +1040,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
-                op.update();
+                boolean upsert = isUpsertOperation(storedQuery);
+                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(),
+                    operation.getEntity(), upsert);
+                if (upsert) {
+                    op.upsert();
+                } else {
+                    op.update();
+                }
                 return op.getEntity();
             });
         }
@@ -1134,18 +1152,27 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
+                boolean upsert = isUpsertOperation(storedQuery);
                 if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(updateOp -> {
-                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), storedQuery);
-                                op.update();
+                                R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, persistentEntity, updateOp.getEntity(), upsert);
+                                if (upsert) {
+                                    op.upsert();
+                                } else {
+                                    op.update();
+                                }
                                 return op.getEntity();
                             })
                     );
                 }
-                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
-                op.update();
+                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, storedQuery, persistentEntity, operation, upsert);
+                if (upsert) {
+                    op.upsert();
+                } else {
+                    op.update();
+                }
                 return op.getEntities();
             });
         }
@@ -1336,7 +1363,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             LOG.debug(storedQuery.getQuery());
             Statement statement = connection.createStatement(storedQuery.getQuery());
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     return statement;
                 } else if (storedQuery.getOperationType() != OperationType.INSERT_RETURNING) {
@@ -1356,8 +1383,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, stmt, storedQuery);
                         storedQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                         if (isOracleReturningQuery(storedQuery)) {
-                            bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
-                        } else if (hasGeneratedId && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
+                            OracleR2dbcReturningSupport.bindOracleReturningOutParameters(stmt, storedQuery, binder.currentIndex());
+                        } else if (shouldReadGeneratedId(storedQuery, hasGeneratedId)
+                            && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                             stmt.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
                         }
                         return Mono.just(d);
@@ -1374,6 +1402,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         protected void execute() throws RuntimeException {
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            }
+            if (isUpsertReturningOperation(storedQuery)) {
+                executeUpsertReturning();
+                return;
             }
             Statement statement = prepare(ctx.connection);
             setParameters(statement, storedQuery);
@@ -1400,7 +1432,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         return d;
                     });
                 });
-            } else if (hasGeneratedId) {
+            } else if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 data = data.flatMap(d -> {
                     if (d.vetoed) {
                         return Mono.just(d);
@@ -1416,7 +1448,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             .onErrorResume(errorHandler(ctx.dialect)).map(idMapper).last();
                     } else {
                         return executeAndMapEachRowSingle(statement, ctx.dialect, row -> columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))
-                            .map(idMapper);
+                            .map(idMapper)
+                            .switchIfEmpty(isUpsertOperation(storedQuery) ? Mono.just(d) : Mono.empty());
                     }
                 });
             } else {
@@ -1436,6 +1469,32 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return d;
                 });
             }
+        }
+
+        private void executeUpsertReturning() {
+            R2dbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+            if (executor == null) {
+                throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+            }
+            BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
+            data = data.flatMap(d -> {
+                if (d.vetoed) {
+                    return Mono.just(d);
+                }
+                SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
+                Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
+                int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
+                return executor.execute(statement, entityStoredQuery, d.entity, inputParameterCount)
+                    .onErrorResume(throwable -> Mono.from(
+                        DefaultR2dbcRepositoryOperations.this.<Object>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                    ))
+                    .map(generatedId -> {
+                        d.entity = updateEntityId(identityProperty, d.entity, generatedId);
+                        // The executor emits only after it has read exactly one generated identity.
+                        d.rowsUpdated = 1;
+                        return d;
+                    });
+            });
         }
     }
 
@@ -1493,6 +1552,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
+            if (isUpsertReturningOperation(storedQuery)) {
+                executeUpsertReturning();
+                return;
+            }
             if (storedQuery.getOperationType() == OperationType.INSERT_RETURNING) {
                 entities = entities.flatMap(list -> {
                     SqlTypeMapper<Row, ?> mapper = createMapper(storedQuery, Row.class);
@@ -1504,21 +1567,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             if (d.vetoed) {
                                 return Mono.just(d);
                             }
-                            SqlStoredQuery<T, ?> entityStoredQuery = storedQuery;
-                            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
-                                @SuppressWarnings("unchecked")
-                                SqlStoredQuery<T, Object> typedStoredQuery = (SqlStoredQuery<T, Object>) storedQuery;
-                                @SuppressWarnings("unchecked")
-                                SqlPreparedQuery<T, Object> typedPreparedQuery = (SqlPreparedQuery<T, Object>) sqlPreparedQuery;
-                                DefaultSqlPreparedQuery<T, Object> entityPreparedQuery = new DefaultSqlPreparedQuery<>(typedPreparedQuery, typedStoredQuery);
-                                entityPreparedQuery.prepare(d.entity);
-                                entityStoredQuery = entityPreparedQuery;
-                            }
+                            SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
                             Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
                             R2dbcParameterBinder binder = new R2dbcParameterBinder(ctx, statement, entityStoredQuery);
                             entityStoredQuery.bindParameters(binder, ctx.invocationContext, d.entity, d.previousValues);
                             if (isOracleReturningQuery(entityStoredQuery)) {
-                                statement = bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
+                                statement = OracleR2dbcReturningSupport.bindOracleReturningOutParameters(statement, entityStoredQuery, binder.currentIndex());
                             }
                             @SuppressWarnings("unchecked")
                             SqlResultEntityTypeMapper<Readable, T> entityTypeMapper = isOracleReturningQuery(entityStoredQuery)
@@ -1539,7 +1593,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 return;
             }
             Statement statement;
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
                 if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                     statement.bind(getJsonGeneratedIdOutParameterIndex(storedQuery), Parameters.out(R2dbcType.NUMERIC));
@@ -1550,7 +1604,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 statement = ctx.connection.createStatement(storedQuery.getQuery());
             }
             setParameters(statement, storedQuery);
-            if (hasGeneratedId) {
+            if (shouldReadGeneratedId(storedQuery, hasGeneratedId)) {
                 entities = entities
                     .flatMap(list -> {
                         List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
@@ -1602,6 +1656,40 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
+        }
+
+        private void executeUpsertReturning() {
+            R2dbcUpsertReturningExecutor executor = upsertReturningExecutors.get(storedQuery.getDialect());
+            if (executor == null) {
+                throw new DataAccessException("No upsert returning executor is available for dialect: " + storedQuery.getDialect());
+            }
+            BeanProperty<T, Object> identityProperty = persistentEntity.getIdentity().getProperty();
+            Mono<Tuple2<List<Data>, Long>> upsertedEntities = entities.flatMap(list -> Flux.fromIterable(list)
+                .concatMap(d -> {
+                    if (d.vetoed) {
+                        return Mono.just(Tuples.of(d, 0L));
+                    }
+                    SqlStoredQuery<T, ?> entityStoredQuery = prepareStoredQuery(storedQuery, d.entity);
+                    Statement statement = ctx.connection.createStatement(entityStoredQuery.getQuery());
+                    int inputParameterCount = bindUpsertParameters(ctx, statement, entityStoredQuery, d.entity, d.previousValues);
+                    return executor.execute(statement, entityStoredQuery, d.entity, inputParameterCount)
+                        .onErrorResume(throwable -> Mono.from(
+                            DefaultR2dbcRepositoryOperations.this.<Object>errorHandler(entityStoredQuery.getDialect()).apply(throwable)
+                        ))
+                        .map(generatedId -> {
+                            d.entity = updateEntityId(identityProperty, d.entity, generatedId);
+                            // The executor emits only after it has read exactly one generated identity.
+                            return Tuples.of(d, 1L);
+                        });
+                })
+                .collectList()
+                .map(results -> Tuples.of(
+                    results.stream().map(Tuple2::getT1).toList(),
+                    results.stream().mapToLong(Tuple2::getT2).sum()
+                )))
+                .cache();
+            entities = upsertedEntities.map(Tuple2::getT1);
+            rowsUpdated = upsertedEntities.map(Tuple2::getT2);
         }
     }
 

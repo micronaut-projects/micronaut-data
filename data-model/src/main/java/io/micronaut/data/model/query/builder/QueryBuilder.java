@@ -58,6 +58,18 @@ public interface QueryBuilder {
     QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition);
 
     /**
+     * Builds an upsert statement for the given entity.
+     *
+     * @param repositoryMetadata The repository annotation metadata
+     * @param definition         The definition
+     * @return The upsert statement
+     * @since 5.2.0
+     */
+    default QueryResult buildUpsert(AnnotationMetadata repositoryMetadata, UpsertQueryDefinition definition) {
+        throw new UnsupportedOperationException("Upsert is not supported by " + getClass().getName());
+    }
+
+    /**
      * Encode the given query for the passed annotation metadata and query.
      *
      * @param annotationMetadata The annotation metadata
@@ -91,7 +103,6 @@ public interface QueryBuilder {
      * @param offset The offset (0 if not set)
      * @return The encoded query
      */
-
     String buildLimitAndOffset(long limit, long offset);
 
     /**
@@ -102,19 +113,16 @@ public interface QueryBuilder {
         /**
          * @return The root
          */
-
         Root<?> root();
 
         /**
          * @return The selection
          */
-
         Selection<?> selection();
 
         /**
          * @return The order
          */
-
         List<Order> order();
 
         /**
@@ -191,13 +199,40 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-
         PersistentEntity persistentEntity();
 
         /**
          * @return Is returning selection
          */
         boolean returning();
+
+    }
+
+    /**
+     * The upsert query definition.
+     *
+     * @since 5.2.0
+     */
+    interface UpsertQueryDefinition {
+
+        /**
+         * @return The persistent entity
+         */
+        PersistentEntity persistentEntity();
+
+        /**
+         * @return The persistent entity properties to use as the conflict target
+         */
+        default List<String> conflictProperties() {
+            return List.of();
+        }
+
+        /**
+         * @return Should upsert return generated id
+         */
+        default boolean returnGeneratedId() {
+            return false;
+        }
 
     }
 
@@ -209,7 +244,6 @@ public interface QueryBuilder {
         /**
          * @return The properties to update
          */
-
         Map<String, Object> propertiesToUpdate();
 
         /**
@@ -228,7 +262,6 @@ public interface QueryBuilder {
         /**
          * @return The persistent entity
          */
-
         PersistentEntity persistentEntity();
 
         /**

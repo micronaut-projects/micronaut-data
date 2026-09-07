@@ -43,6 +43,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Update;
+import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQuery;
@@ -697,6 +698,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (methodInfo.isOptimisticLock()) {
                 annotationBuilder.member(DataMethod.META_MEMBER_OPTIMISTIC_LOCK, true);
             }
+            if (methodInfo.shouldReadGeneratedId()) {
+                annotationBuilder.member(DataMethod.META_MEMBER_READ_GENERATED_ID, true);
+            }
 
             if (!methodInfo.getParameterRoles().isEmpty()) {
                 // include the roles
@@ -1101,7 +1105,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private SourcePersistentEntity resolvePersistentEntityFromLifecycleMethods(MethodElement element,
                                                                                List<ParameterElement> parametersNotInRole,
                                                                                Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        if (element.hasStereotype(Insert.class) || element.hasStereotype(Update.class) || element.hasStereotype(Delete.class)) {
+        if (element.hasStereotype(Insert.class)
+            || element.hasStereotype(Update.class)
+            || element.hasStereotype(Upsert.class)
+            || element.hasStereotype(Delete.class)) {
             if (!parametersNotInRole.isEmpty()) {
                 ClassElement type = parametersNotInRole.iterator().next().getGenericType();
                 if (type.isArray()) {

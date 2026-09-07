@@ -22,6 +22,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
@@ -101,7 +102,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
-        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        // The introspection creator can be reserved for another purpose (a Jackson @JsonCreator building the type
+        // from a single JSON value); the annotation processor then marks the type to be instantiated with its
+        // default constructor and populated through setters instead.
+        Argument<?>[] constructorArguments = introspection.hasAnnotation(InstantiateWithDefaultConstructor.class)
+            ? Argument.ZERO_ARGUMENTS
+            : introspection.getConstructorArguments();
         Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
         RuntimePersistentProperty<T> version = null;
         List<RuntimePersistentProperty<T>> ids = new ArrayList<>(5);
