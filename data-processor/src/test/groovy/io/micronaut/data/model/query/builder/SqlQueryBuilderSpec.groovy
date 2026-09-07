@@ -64,6 +64,7 @@ import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
+import java.nio.charset.StandardCharsets
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -714,8 +715,8 @@ interface MyRepository {
 
         then:
         alias.length() <= 63
-        alias.getBytes("UTF-8").length > 63
-        normalizedAlias.getBytes("UTF-8").length <= 63
+        alias.getBytes(StandardCharsets.UTF_8).length > 63
+        normalizedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
         normalizedAlias != alias
         query.endsWith(".\"name\" ASC")
     }
@@ -750,8 +751,8 @@ interface MyRepository {
         String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
 
         then:
-        prefixedAlias.getBytes("UTF-8").length > 63
-        usedAlias.getBytes("UTF-8").length <= 63
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
         usedAlias != prefixedAlias
         usedAlias ==~ /^[A-Za-z0-9_]{1,46}_[0-9a-f]{16}_?$/
     }
@@ -772,8 +773,8 @@ interface MyRepository {
         String aliasFromNormalizedRoot = queryFromNormalizedRoot.substring(" ORDER BY ".length(), queryFromNormalizedRoot.indexOf(".\"name\""))
 
         then:
-        prefixedAlias.getBytes("UTF-8").length > 63
-        usedAlias.getBytes("UTF-8").length <= 63
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
         // The join alias has to be derived from the raw alias, because that is what the query
         // builder itself used when it emitted the JOIN
         usedAlias.startsWith(prefixedAlias.substring(0, 45))

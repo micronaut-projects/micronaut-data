@@ -124,7 +124,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     // PostgreSQL's NAMEDATALEN limit is measured in server-encoding bytes, not Java characters.
-    // UTF-8 is assumed here for deterministic alias normalization, although it is not guaranteed.
+    // The server encoding is not available to the builder, so non-ASCII code points use the
+    // conservative four-byte UTF-8 maximum when sizing aliases.
     private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
     // FNV-1a 64-bit constants; hashing code points keeps surrogate pairs intact.
     private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
@@ -279,7 +280,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         int i = 0;
         while (i < alias.length()) {
             int codePoint = alias.codePointAt(i);
-            int codePointLength = utf8CodePointLength(codePoint);
+            // Be conservative when the PostgreSQL server encoding is unknown: ASCII is one byte,
+            // while every non-ASCII code point is counted as the four-byte UTF-8 maximum.
+            int codePointLength = codePoint <= 0x7F ? 1 : 4;
             totalBytes += codePointLength;
             if (!prefixComplete) {
                 if (prefixBytes + codePointLength <= maxPrefixBytes) {
@@ -307,19 +310,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String prefix = alias.substring(0, prefixEnd);
         String normalized = prefix + "_" + hashString;
         return trailingUnderscore ? normalized + "_" : normalized;
-    }
-
-    private static int utf8CodePointLength(int codePoint) {
-        if (codePoint <= 0x7F) {
-            return 1;
-        }
-        if (codePoint <= 0x7FF) {
-            return 2;
-        }
-        if (codePoint <= 0xFFFF) {
-            return 3;
-        }
-        return 4;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {

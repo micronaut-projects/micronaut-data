@@ -45,6 +45,7 @@ import spock.lang.ResourceLock
 import spock.lang.Unroll
 import spock.util.environment.RestoreSystemProperties
 import org.spockframework.runtime.model.parallel.Resources
+import java.nio.charset.StandardCharsets
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getCountQuery
@@ -3090,18 +3091,18 @@ class LongAliasVehicle {
         expect:
         // The bound alias must be the un-normalized one: the runtime re-derives join aliases from
         // it, and the query builder derived the ones in the query from the very same value
-        boundAlias.getBytes("UTF-8").length > 63
+        boundAlias.getBytes(StandardCharsets.UTF_8).length > 63
         !query.contains(boundAlias)
         rootAliasMatcher.find()
         String normalizedRootAlias = rootAliasMatcher.group(1)
-        normalizedRootAlias.getBytes("UTF-8").length <= 63
+        normalizedRootAlias.getBytes(StandardCharsets.UTF_8).length <= 63
         normalizedRootAlias != boundAlias
         normalizedRootAlias.startsWith(boundAlias.substring(0, 20))
         // The to-one join copied into the pagination subquery has to be addressable by the alias
         // the runtime computes when sorting on `manufacturer.name`
         manufacturerAliasMatcher.find()
         String normalizedManufacturerAlias = manufacturerAliasMatcher.group(1)
-        normalizedManufacturerAlias.getBytes("UTF-8").length <= 63
+        normalizedManufacturerAlias.getBytes(StandardCharsets.UTF_8).length <= 63
         normalizedManufacturerAlias != boundAlias
         normalizedManufacturerAlias.startsWith(boundAlias.substring(0, 20))
     }

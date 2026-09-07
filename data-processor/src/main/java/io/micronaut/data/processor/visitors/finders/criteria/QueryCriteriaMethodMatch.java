@@ -159,7 +159,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     private boolean needsJoinAnalysis(MethodMatchContext matchContext,
                                       List<AnnotationValue<Join>> joinSpecs) {
-        return hasPotentialCriteria(matchContext)
+        return hasPotentialPredicate(matchContext)
+            || hasPotentialProjectionOrOrder(matchContext)
             || hasRowMultiplyingJoinSpecs(matchContext.getRootEntity(), joinSpecs);
     }
 
@@ -190,10 +191,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return false;
     }
 
-    private boolean hasPotentialCriteria(MethodMatchContext matchContext) {
-        if (findMatchPart(matches, QueryMatchId.PREDICATE).isPresent()
-            || !matchContext.getParametersNotInRole().isEmpty()
-            || findMatchPart(matches, QueryMatchId.PROJECTION).isPresent()
+    private boolean hasPotentialProjectionOrOrder(MethodMatchContext matchContext) {
+        if (findMatchPart(matches, QueryMatchId.PROJECTION).isPresent()
             || !matchContext.getMethodElement().getAnnotationValuesByType(Projection.class).isEmpty()
             || findMatchPart(matches, QueryMatchId.ORDER).isPresent()) {
             return true;
@@ -268,8 +267,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (hasPotentialPredicate(matchContext)) {
             applyPredicate(matchContext, cb, root, query);
         }
-        if (hasPotentialCriteria(matchContext)) {
-            // Avoid resolving projection and order paths for join-only methods.
+        if (hasPotentialProjectionOrOrder(matchContext)) {
+            // Avoid resolving projection and order paths for predicate-only methods.
             applyProjection(matchContext, cb, root, query);
             applyVectorScoreOrderIfNeeded(matchContext, cb, root, query);
             applyOrder(cb, root, query);
