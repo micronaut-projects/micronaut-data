@@ -98,27 +98,27 @@ class MariaBatchInsertSpec extends Specification implements MariaTestPropertyPro
 
     void "saveAll generated-key record inserts populate ids through fallback path"() {
         given:
-        def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
+        def records = (0..<100).collect { new MariaBatchRecord(null, "name-$it") }
 
         when:
-        List<MariaBatchRecord> saved = recordRepository.saveAll(records)
+        List<MariaBatchRecord> saved = recordRepository.saveAll(records).toList()
 
         then:
         saved.size() == 100
         saved.collect { it.id() }.every { it != null && it != 0L }
-        records.collect { it.id() }.every { it == 0L }
+        records.collect { it.id() }.every { it == null }
     }
 
     void "custom void insertAll stores generated-id record inserts without mutating input ids"() {
         given:
-        def records = (0..<100).collect { new MariaBatchRecord(0L, "name-$it") }
+        def records = (0..<100).collect { new MariaBatchRecord(null, "name-$it") }
 
         when:
         recordRepository.insertAll(records)
         def savedRecords = recordRepository.findAll()
 
         then:
-        records.collect { it.id() }.every { it == 0L }
+        records.collect { it.id() }.every { it == null }
         savedRecords.size() == 100
         savedRecords.every { it.id() != null && it.id() != 0L }
     }

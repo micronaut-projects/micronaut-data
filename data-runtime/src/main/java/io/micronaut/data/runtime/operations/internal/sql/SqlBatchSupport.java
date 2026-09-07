@@ -160,7 +160,7 @@ public final class SqlBatchSupport {
     private static boolean returnsEntities(Argument<?> resultArgument) {
         Argument<?> unwrapped = unwrapResultArgument(resultArgument);
         Class<?> type = unwrapped.getType();
-        if (unwrapped.isVoid() || type == Void.class || type == void.class) {
+        if (unwrapped.isVoid() || type == Void.class || type == void.class || type == Boolean.class) {
             return false;
         }
         if (type.isPrimitive()) {

@@ -229,6 +229,7 @@ class SqlBatchSupportSpec extends Specification {
         "entity lists"                   | false           | false       | Argument.listOf(TestEntity)                               || true
         "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(TestEntity)) || true
         "void returns"                   | false           | false       | Argument.of(Void)                                          || false
+        "boxed boolean returns"          | false           | false       | Argument.of(Boolean)                                       || false
         "numeric returns"                | false           | false       | Argument.of(Long)                                         || false
         "primitive numeric returns"      | false           | false       | Argument.of(Long.TYPE)                                    || false
         "post persist listeners"         | false           | true        | Argument.of(Long)                                         || true
