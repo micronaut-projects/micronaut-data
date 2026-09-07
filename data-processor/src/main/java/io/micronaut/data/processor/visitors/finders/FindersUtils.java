@@ -176,7 +176,7 @@ public interface FindersUtils {
                     yield updateEntry;
                 }
             }
-            case UPDATE -> {
+            case UPDATE, UPSERT -> {
                 InterceptorMatch updateEntry;
                 if (hasMultipleEntityParameter) {
                     updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
