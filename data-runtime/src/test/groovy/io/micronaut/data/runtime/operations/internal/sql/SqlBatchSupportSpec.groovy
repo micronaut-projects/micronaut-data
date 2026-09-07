@@ -173,6 +173,25 @@ class SqlBatchSupportSpec extends Specification {
         )
     }
 
+    @Unroll
+    void "jdbc mysql family stays conservative for identity-less inserts for #scenario"() {
+        expect:
+        !SqlBatchSupport.isSupportsJdbcBatchInsert(
+            entityWithoutIdentity(),
+            Dialect.MYSQL,
+            databaseProductName,
+            driverName,
+            true,
+            true,
+            false
+        )
+
+        where:
+        scenario           | databaseProductName | driverName
+        "MariaDB metadata" | "MariaDB"          | "MariaDB Connector/J"
+        "MySQL metadata"   | "MySQL"            | "MySQL Connector/J"
+    }
+
     void "jdbc mysql family requires explicit batch update support"() {
         expect:
         !SqlBatchSupport.isSupportsJdbcBatchInsert(
@@ -248,6 +267,12 @@ class SqlBatchSupportSpec extends Specification {
 
     private RuntimePersistentEntity<?> entityWithGeneratedId() {
         entity(false, false)
+    }
+
+    private RuntimePersistentEntity<?> entityWithoutIdentity() {
+        Stub(RuntimePersistentEntity) {
+            hasIdentity() >> false
+        }
     }
 
     private RuntimePersistentEntity<?> entity(boolean cascadesPersistAssociations, boolean postPersist) {
