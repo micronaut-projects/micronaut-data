@@ -139,6 +139,12 @@ interface MyRepository {
 
         then:
         insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+
+        when:
+        def transformedInsertResult = builder.createCriteriaInsert(Project).build(sqlQueryBuilder)
+
+        then:
+        transformedInsertResult.query == 'INSERT INTO project (name,db_name,org,department_id,project_id) VALUES (UPPER($1),$2,$3,$4,$5)'
     }
 
     void 'test where annotation replacement'() {
