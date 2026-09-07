@@ -3002,6 +3002,133 @@ interface TestRepository extends GenericRepository<Book, Long> {
         getParameterTableAliases(method)[pageableRequiredIndex] == "book_book_"
     }
 
+    void "test POSTGRES pagination subquery binds the un-normalized table alias"() {
+        given:
+        String longAlias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_"
+        def repository = buildRepository('test.LongAliasFleetRepository', """
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface LongAliasFleetRepository extends GenericRepository<LongAliasFleet, Long> {
+    @Join(value = "manufacturer", type = Join.Type.LEFT_FETCH)
+    Page<LongAliasFleet> findByVehiclesRegistrationCode(String registrationCode, Pageable pageable);
+}
+
+@MappedEntity(value = "long_alias_fleet", alias = "${longAlias}")
+class LongAliasFleet {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private LongAliasManufacturer manufacturer;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "fleet")
+    private List<LongAliasVehicle> vehicles = List.of();
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public LongAliasManufacturer getManufacturer() { return manufacturer; }
+    public void setManufacturer(LongAliasManufacturer manufacturer) { this.manufacturer = manufacturer; }
+    public List<LongAliasVehicle> getVehicles() { return vehicles; }
+    public void setVehicles(List<LongAliasVehicle> vehicles) { this.vehicles = vehicles; }
+}
+
+@MappedEntity("long_alias_manufacturer")
+class LongAliasManufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity("long_alias_vehicle")
+class LongAliasVehicle {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String registrationCode;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private LongAliasFleet fleet;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getRegistrationCode() { return registrationCode; }
+    public void setRegistrationCode(String registrationCode) { this.registrationCode = registrationCode; }
+    public LongAliasFleet getFleet() { return fleet; }
+    public void setFleet(LongAliasFleet fleet) { this.fleet = fleet; }
+}
+
+        """)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def method = repository.getRequiredMethod("findByVehiclesRegistrationCode", String, Pageable)
+        def query = getQuery(method)
+        def pageableRequiredIndex = getParameterRoles(method).findIndexOf { it == "pageableRequired" }
+        // The alias bound for the runtime sort of the pagination subquery
+        String boundAlias = getParameterTableAliases(method)[pageableRequiredIndex]
+
+        expect:
+        // The bound alias must be the un-normalized one: the runtime re-derives join aliases from
+        // it, and the query builder derived the ones in the query from the very same value
+        boundAlias.getBytes("UTF-8").length > 63
+        !query.contains(boundAlias)
+        query.contains(builder.normalizeAlias(boundAlias))
+        // The to-one join copied into the pagination subquery has to be addressable by the alias
+        // the runtime computes when sorting on `manufacturer.name`
+        query.contains(builder.normalizeAlias(boundAlias + "manufacturer_"))
+    }
+
+    void "test pageable to-many query does not join a to-one path that is only navigated"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    Page<Book> findByStudentsNameOrderByAuthorId(String name, Pageable pageable);
+}
+
+""")
+        def method = repository.getRequiredMethod("findByStudentsNameOrderByAuthorId", String, Pageable)
+        def query = getQuery(method)
+        def countQuery = getCountQuery(method)
+
+        expect:
+        // `author.id` is the foreign key of `book`, so ordering by it needs no join at all. The
+        // pagination subquery must not introduce one either, otherwise books without an author
+        // would be dropped from the page while still being counted.
+        !query.contains('`author`')
+        !countQuery.contains('`author`')
+        query.contains('SELECT book_book_.`id` FROM `book` book_book_ WHERE')
+        getParameterRoles(method) == [null, "pageableRequired", "sort"]
+        getParameterTableAliases(method) == [null, "book_book_", "book_"]
+    }
+
     void "test pageable inverse one-to-one joins are not treated as row multiplying"() {
         given:
         def repository = buildRepository('test.InverseOwnerRepository', """

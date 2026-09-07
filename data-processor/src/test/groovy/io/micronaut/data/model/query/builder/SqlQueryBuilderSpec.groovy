@@ -736,6 +736,46 @@ interface MyRepository {
         query.endsWith(".\"name\" ASC")
     }
 
+    void "test encode order by normalizes an un-normalized provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        // A pagination subquery prefixes the root alias with the outer one, which can push a legal
+        // alias over the Postgres limit
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes("UTF-8").length > 63
+        usedAlias.getBytes("UTF-8").length <= 63
+        usedAlias == builder.normalizeAlias(prefixedAlias)
+    }
+
+    void "test encode order by derives the joined alias from the un-normalized table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasBook)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes("UTF-8").length > 63
+        usedAlias.getBytes("UTF-8").length <= 63
+        // The join alias has to be derived from the raw alias, because that is what the query
+        // builder itself used when it emitted the JOIN
+        usedAlias == builder.normalizeAlias(prefixedAlias + "author_")
+        // Deriving it from the already normalized alias would reference a non existing alias
+        usedAlias != builder.normalizeAlias(builder.normalizeAlias(prefixedAlias) + "author_")
+    }
+
     void "test encode order by differentiates colliding Java aliases"() {
         given:
         PersistentEntity firstEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionOne)
@@ -1346,6 +1386,15 @@ class LongPostgresAliasEntity {
     Long id
 
     String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasBook {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
 }
 
 @MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")

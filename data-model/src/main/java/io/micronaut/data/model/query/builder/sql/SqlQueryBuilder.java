@@ -2308,7 +2308,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 @Override
                 @Nullable
                 public String getTableAlias() {
-                    String rootAlias = queryState.getRootAlias();
+                    // The un-normalized alias is stored so that the runtime can re-derive the very
+                    // same join aliases that were generated into the query. buildPropertyByName
+                    // normalizes it again before using it on its own.
+                    String rootAlias = queryState.getRootAliasSource();
                     return StringUtils.isNotEmpty(rootAlias) ? rootAlias : null;
                 }
             });

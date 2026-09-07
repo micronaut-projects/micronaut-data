@@ -1401,7 +1401,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         StringBuilder buff = new StringBuilder();
-        String aliasName = tableAlias == null ? getAliasName(entity) : tableAlias;
+        // The alias is normalized here and not by the caller because join aliases have to be derived
+        // from the un-normalized alias to match the ones generated into the query. normalizeAlias is
+        // idempotent, so an already normalized alias is returned unchanged.
+        String aliasName = normalizeAlias(tableAlias == null ? getAliasName(entity) : tableAlias);
         if (associations.isEmpty()) {
             buff.append(aliasName);
         } else {
@@ -1902,6 +1905,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Nullable
         public String getRootAlias() {
             return rootAlias;
+        }
+
+        /**
+         * The un-normalized root alias. Join aliases are derived from this value, so anything that
+         * needs to re-derive a join alias later (for example the runtime sorting) must start from it
+         * and not from {@link #getRootAlias()}, which may already have been shortened.
+         *
+         * @return The root alias source
+         */
+        @Nullable
+        public String getRootAliasSource() {
+            return rootAliasSource;
         }
 
         /**

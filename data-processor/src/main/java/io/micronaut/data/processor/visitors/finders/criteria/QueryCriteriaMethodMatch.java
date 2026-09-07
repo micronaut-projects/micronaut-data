@@ -39,6 +39,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -78,6 +79,8 @@ import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -131,10 +134,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         // Predicates, projections, and ordering can introduce joins in addition to explicit @Join specifications.
         // The analyzed query is reused as the final query when no pagination subquery is required.
         PersistentEntityCriteriaQuery<Object> criteriaQuery = createQueryWithJoinAnalysis(matchContext, cb, joinSpecs);
-        if (isPageableWithJoins(matchContext, criteriaQuery)) {
+        // Resolve the joins the analyzed query actually produces. The join tree of the root also
+        // contains association paths that were only navigated (accessing the foreign key does not
+        // require a join), and those must not be turned into real joins.
+        Collection<JoinPath> analyzedJoinPaths = ((AbstractPersistentEntityQuery<?, ?>) criteriaQuery)
+            .toSelectQueryDefinition().getJoinPaths();
+        if (isPageableWithJoins(matchContext, analyzedJoinPaths)) {
             int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
-            PersistentEntityRoot<?> analyzedRoot = (PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next();
-            return createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedRoot, pageableParameterIndex);
+            return createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, analyzedJoinPaths, pageableParameterIndex);
         }
 
         if (!hasPotentialPredicate(matchContext)) {
@@ -232,9 +239,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private boolean isPageableWithJoins(MethodMatchContext matchContext,
-                                        PersistentEntityCriteriaQuery<Object> criteriaQuery) {
+                                        Collection<JoinPath> analyzedJoinPaths) {
         SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
-        return requiresPaginationSubquery((PersistentEntityRoot<?>) criteriaQuery.getRoots().iterator().next())
+        return requiresPaginationSubquery(analyzedJoinPaths)
             && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
             // MySQL doesn't support subquery with limits
             && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
@@ -278,14 +285,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
      * @param matchContext The match context
      * @param cb           The criteria builder
      * @param joinSpecs    The joinSpecs
-     * @param analyzedRoot The root containing every join introduced by the join analysis query
+     * @param analyzedJoinPaths The joins produced by the join analysis query
      * @param pageableParameterIndex The pageable parameter index
      * @return A new query
      */
     private PersistentEntityCriteriaQuery<Object> createQueryWithJoinsAndPagination(MethodMatchContext matchContext,
                                                                                     PersistentEntityCriteriaBuilder cb,
                                                                                     List<AnnotationValue<Join>> joinSpecs,
-                                                                                    PersistentEntityRoot<?> analyzedRoot,
+                                                                                    Collection<JoinPath> analyzedJoinPaths,
                                                                                     int pageableParameterIndex) {
         // SQL tabular results with JOINs cannot be property limited by LIMIT and OFFSET
         // Create a query that can be paginated with JOINs using a subquery
@@ -332,7 +339,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Copy non-row-multiplying joins into the pagination subquery so pageable sort paths
         // resolve against aliases in that scope. Row-multiplying joins remain on the filtered query.
-        applyPaginationJoins(analyzedRoot, paginationRoot);
+        applyPaginationJoins(analyzedJoinPaths, paginationRoot);
         applyJoinSpecs(filteredRoot, joinSpecs);
         applyJoinSpecs(mainRoot, joinSpecs);
 
@@ -343,29 +350,24 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return mainQuery;
     }
 
-    private void applyPaginationJoins(PersistentEntityFrom<?, ?> analyzedFrom,
+    private void applyPaginationJoins(Collection<JoinPath> analyzedJoinPaths,
                                       PersistentEntityFrom<?, ?> paginationFrom) {
-        for (var analyzedJoin : analyzedFrom.getPersistentJoins()) {
-            if (isRowMultiplyingJoin(analyzedJoin.getAssociation())) {
+        // Shortest paths first so that an intermediate join is created with its own type and not
+        // with the type of a nested join that happens to be visited before it.
+        List<JoinPath> orderedJoinPaths = analyzedJoinPaths.stream()
+            .sorted(Comparator.comparingInt(joinPath -> joinPath.getAssociationPath().length))
+            .toList();
+        for (JoinPath analyzedJoinPath : orderedJoinPaths) {
+            if (isRowMultiplyingJoin(analyzedJoinPath)) {
                 continue;
             }
-            String associationName = analyzedJoin.getAssociation().getName();
-            String alias = analyzedJoin.getAlias();
-            Join.Type joinType = toPaginationJoinType(analyzedJoin.getAssociationJoinType());
-            PersistentEntityFrom<?, ?> paginationJoin;
+            Join.Type joinType = toPaginationJoinType(analyzedJoinPath.getJoinType());
+            String alias = analyzedJoinPath.getAlias().orElse(null);
             if (alias == null) {
-                paginationJoin = paginationFrom.join(
-                    associationName,
-                    joinType
-                );
+                paginationFrom.join(analyzedJoinPath.getPath(), joinType);
             } else {
-                paginationJoin = paginationFrom.join(
-                    associationName,
-                    joinType,
-                    alias
-                );
+                paginationFrom.join(analyzedJoinPath.getPath(), joinType, alias);
             }
-            applyPaginationJoins(analyzedJoin, paginationJoin);
         }
     }
 
@@ -382,6 +384,19 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             case OUTER_FETCH -> Join.Type.OUTER;
             default -> joinType;
         };
+    }
+
+    private boolean requiresPaginationSubquery(Collection<JoinPath> joinPaths) {
+        return joinPaths.stream().anyMatch(this::isRowMultiplyingJoin);
+    }
+
+    private boolean isRowMultiplyingJoin(JoinPath joinPath) {
+        for (Association association : joinPath.getAssociationPath()) {
+            if (isRowMultiplyingJoin(association)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean requiresPaginationSubquery(PersistentEntityFrom<?, ?> from) {
