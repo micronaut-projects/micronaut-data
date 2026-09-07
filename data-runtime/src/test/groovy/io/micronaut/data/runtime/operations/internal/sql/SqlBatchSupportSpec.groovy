@@ -35,7 +35,7 @@ class SqlBatchSupportSpec extends Specification {
 
     void "stored query preserves sqlite batch opt-out"() {
         given:
-        SqlStoredQuery<?, ?> storedQuery = Stub {
+        SqlStoredQuery<?, ?> storedQuery = Stub(SqlStoredQuery) {
             getDialect() >> Dialect.SQLITE
             getOperationType() >> StoredQuery.OperationType.INSERT
         }

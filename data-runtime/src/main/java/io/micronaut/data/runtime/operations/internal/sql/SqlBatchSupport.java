@@ -101,6 +101,9 @@ public final class SqlBatchSupport {
                                                     @Nullable Boolean supportsBatchUpdates,
                                                     @Nullable Boolean supportsGetGeneratedKeys,
                                                     boolean requiresGeneratedKeys) {
+        if (!dialect.allowBatch()) {
+            return false;
+        }
         if (dialect == Dialect.MYSQL) {
             if (isMariaDb(databaseProductName, driverName)) {
                 // MariaDB reports generated-key support generally, but complete generated keys for
