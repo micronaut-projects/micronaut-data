@@ -43,9 +43,9 @@ import kotlin.coroutines.CoroutineContext
 @EachBean(ReactorReactiveTransactionOperations::class)
 @Singleton
 @Internal
-class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
+class DefaultCoroutineTransactionOperations<C : Any>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
 
-    override suspend fun <R> execute(definition: TransactionDefinition,
+    override suspend fun <R : Any> execute(definition: TransactionDefinition,
                                      handler: suspend (CoroutineTransactionStatus<C>) -> R): R {
         return reactiveTransactionOperations.withTransaction(definition) {
             mono<R> {
