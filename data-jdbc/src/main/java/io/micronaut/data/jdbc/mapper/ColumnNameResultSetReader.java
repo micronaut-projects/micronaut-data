@@ -56,6 +56,8 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     public ColumnNameResultSetReader(@Nullable DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+        // The index reader resolves a null conversion service the same way, so both read a column with the same
+        // conversions. ColumnNameResultSetReaderSpec holds them to that.
         this.columnIndexReader = new ColumnIndexResultSetReader(conversionService);
     }
 

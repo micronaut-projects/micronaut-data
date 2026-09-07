@@ -102,7 +102,9 @@ public class ResultSetMapping {
             System.getProperty(USER_PROPERTY, "sa"),
             System.getProperty(PASSWORD_PROPERTY, ""));
         // Quote every identifier so the result set labels match the names the mapper asks for exactly
-        quote = connection.getMetaData().getIdentifierQuoteString();
+        // A single space means the database does not support quoted identifiers, so nothing is quoted
+        String identifierQuote = connection.getMetaData().getIdentifierQuoteString();
+        quote = identifierQuote == null ? "" : identifierQuote.trim();
         oracle = connection.getMetaData().getDatabaseProductName().toLowerCase().contains("oracle");
         createTable();
         insertRows();

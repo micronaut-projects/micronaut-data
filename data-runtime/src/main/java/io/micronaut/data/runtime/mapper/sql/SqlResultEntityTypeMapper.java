@@ -992,12 +992,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
          * @return The resolved column
          */
         private ColumnRef columnRef(RuntimePersistentProperty<?> property) {
-            ColumnRef columnRef = shape.columns.get(property);
-            if (columnRef == null) {
-                columnRef = new ColumnRef(columnName(property));
-                shape.columns.put(property, columnRef);
-            }
-            return columnRef;
+            return shape.columns.computeIfAbsent(property, p -> new ColumnRef(columnName(p)));
         }
 
         private String columnName(RuntimePersistentProperty<?> property) {

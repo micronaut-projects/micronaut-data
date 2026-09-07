@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.jdbc.mapper
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.DataType
+import io.micronaut.data.runtime.convert.DataConversionService
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -26,6 +28,10 @@ import java.sql.ResultSet
 import java.sql.Statement
 
 class ColumnNameResultSetReaderSpec extends Specification {
+
+    @Shared
+    @AutoCleanup
+    ApplicationContext context = ApplicationContext.run()
 
     @Shared
     @AutoCleanup
@@ -83,5 +89,15 @@ class ColumnNameResultSetReaderSpec extends Specification {
         cleanup:
         resultSet.close()
         statement.close()
+    }
+
+    void "the index reader converts values with the same conversion service as the name reader"() {
+        given: "a reader built with an explicit conversion service, and one left to the default"
+        def configured = new ColumnNameResultSetReader(context.getBean(DataConversionService))
+        def defaulted = new ColumnNameResultSetReader(null)
+
+        expect: "both address a column with the same conversions, so a value reads the same either way"
+        configured.getColumnIndexReader().getConversionService().is(configured.getConversionService())
+        defaulted.getColumnIndexReader().getConversionService().is(defaulted.getConversionService())
     }
 }
