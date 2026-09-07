@@ -123,7 +123,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
-    // PostgreSQL's NAMEDATALEN limit is measured in bytes (typically UTF-8), not Java characters.
+    // PostgreSQL's NAMEDATALEN limit is measured in server-encoding bytes, not Java characters.
+    // UTF-8 is assumed here for deterministic alias normalization, although it is not guaranteed.
     private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
     // FNV-1a 64-bit constants; hashing code points keeps surrogate pairs intact.
     private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
