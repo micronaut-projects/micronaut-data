@@ -118,10 +118,10 @@ class SqlBatchSupportSpec extends Specification {
         ) == supported
 
         where:
-        scenario                                      | resultArgument          || supported
-        "falls back for entity-returning saveAll"      | Argument.listOf(String) || false
-        "can batch for void insertAll"                 | Argument.of(Void)       || true
-        "can batch for count-returning insertAll"      | Argument.of(Long)       || true
+        scenario                                      | resultArgument                     || supported
+        "falls back for entity-returning saveAll"      | Argument.listOf(TestEntity)         || false
+        "can batch for void insertAll"                 | Argument.of(Void)                  || true
+        "can batch for count-returning insertAll"      | Argument.of(Long)                  || true
     }
 
     @Unroll
@@ -141,10 +141,10 @@ class SqlBatchSupportSpec extends Specification {
         ) == supported
 
         where:
-        scenario                                      | resultArgument          || supported
-        "can batch for entity-returning saveAll"       | Argument.listOf(String) || true
-        "can batch for void insertAll"                 | Argument.of(Void)       || true
-        "can batch for count-returning insertAll"      | Argument.of(Long)       || true
+        scenario                                      | resultArgument                     || supported
+        "can batch for entity-returning saveAll"       | Argument.listOf(TestEntity)         || true
+        "can batch for void insertAll"                 | Argument.of(Void)                  || true
+        "can batch for count-returning insertAll"      | Argument.of(Long)                  || true
     }
 
     void "jdbc mysql family does not batch generated-id inserts when generated keys are unsupported"() {
@@ -226,8 +226,8 @@ class SqlBatchSupportSpec extends Specification {
 
         where:
         scenario                         | cascadesPersist | postPersist | resultArgument                                            || required
-        "entity lists"                   | false           | false       | Argument.listOf(String)                                   || true
-        "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(String))     || true
+        "entity lists"                   | false           | false       | Argument.listOf(TestEntity)                               || true
+        "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(TestEntity)) || true
         "void returns"                   | false           | false       | Argument.of(Void)                                          || false
         "numeric returns"                | false           | false       | Argument.of(Long)                                         || false
         "primitive numeric returns"      | false           | false       | Argument.of(Long.TYPE)                                    || false
@@ -254,5 +254,8 @@ class SqlBatchSupportSpec extends Specification {
             cascadesPersist() >> cascadesPersistAssociations
             hasPostPersistEventListeners() >> postPersist
         }
+    }
+
+    private static final class TestEntity {
     }
 }

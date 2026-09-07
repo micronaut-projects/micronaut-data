@@ -610,9 +610,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
-        if (!dialect.allowBatch()) {
-            return false;
-        }
         return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, dialect);
     }
 

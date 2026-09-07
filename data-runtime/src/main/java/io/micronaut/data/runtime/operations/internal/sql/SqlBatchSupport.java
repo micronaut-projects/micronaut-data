@@ -75,7 +75,6 @@ public final class SqlBatchSupport {
             return false;
         }
         return switch (dialect) {
-            case SQL_SERVER -> false;
             // Preserve the generic SQL/R2DBC rule for dialects where generated IDs cannot be
             // assumed to come back reliably from a batch insert.
             case MYSQL, ORACLE -> hasNonGeneratedIdentity(persistentEntity);

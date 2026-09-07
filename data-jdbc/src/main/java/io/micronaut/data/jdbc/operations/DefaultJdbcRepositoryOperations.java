@@ -1309,7 +1309,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 metaData.supportsBatchUpdates(),
                 metaData.supportsGetGeneratedKeys()
             );
-        } catch (SQLException ignored) {
+        } catch (SQLException e) {
+            LOG.debug("Unable to read JDBC batch metadata; using unknown batch capabilities", e);
             return null;
         }
     }

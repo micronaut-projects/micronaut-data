@@ -41,7 +41,7 @@ class MySqlBatchInsertSpec extends Specification implements MySQLTestPropertyPro
         def records = (0..<100).collect { new MySqlBatchRecord(0L, "name-$it") }
 
         when:
-        List<MySqlBatchRecord> saved = repository.saveAll(records)
+        List<MySqlBatchRecord> saved = repository.saveAll(records).toList()
 
         then:
         saved.size() == 100
