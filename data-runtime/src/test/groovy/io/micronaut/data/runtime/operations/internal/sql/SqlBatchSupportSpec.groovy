@@ -230,6 +230,10 @@ class SqlBatchSupportSpec extends Specification {
         "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(TestEntity)) || true
         "void returns"                   | false           | false       | Argument.of(Void)                                          || false
         "boxed boolean returns"          | false           | false       | Argument.of(Boolean)                                       || false
+        "primitive count arrays"         | false           | false       | Argument.of(long[].class)                                  || false
+        "boxed count arrays"             | false           | false       | Argument.of(Long[].class)                                  || false
+        "boxed boolean arrays"           | false           | false       | Argument.of(Boolean[].class)                               || false
+        "entity arrays"                  | false           | false       | Argument.of(TestEntity[].class)                            || true
         "numeric returns"                | false           | false       | Argument.of(Long)                                         || false
         "primitive numeric returns"      | false           | false       | Argument.of(Long.TYPE)                                    || false
         "post persist listeners"         | false           | true        | Argument.of(Long)                                         || true

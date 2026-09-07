@@ -75,8 +75,8 @@ public final class SqlBatchSupport {
             return false;
         }
         return switch (dialect) {
-            // Preserve the generic SQL/R2DBC rule for dialects where generated IDs cannot be
-            // assumed to come back reliably from a batch insert.
+            // Preserve the generic SQL/R2DBC rule: MySQL and Oracle only batch entities with a
+            // non-generated identity, keeping generated and identity-less entities conservative.
             case MYSQL, ORACLE -> hasNonGeneratedIdentity(persistentEntity);
             default -> true;
         };
@@ -162,6 +162,14 @@ public final class SqlBatchSupport {
         Class<?> type = unwrapped.getType();
         if (unwrapped.isVoid() || type == Void.class || type == void.class || type == Boolean.class) {
             return false;
+        }
+        if (type.isArray()) {
+            Class<?> componentType = type.getComponentType();
+            if (componentType.isPrimitive()
+                || Number.class.isAssignableFrom(componentType)
+                || componentType == Boolean.class) {
+                return false;
+            }
         }
         if (type.isPrimitive()) {
             return false;
