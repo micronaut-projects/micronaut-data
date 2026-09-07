@@ -182,9 +182,28 @@ class PageSpec extends Specification {
         def json = serdeMapper.writeValueAsString(sort)
 
         then:
-        json == '{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
+        json == '{"orderBy":[{"nullOrdering":"NONE","ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
         def deserializedSort = serdeMapper.readValue(json, Sort)
         deserializedSort == sort
+
+        and: "sort payloads written before nullOrdering existed still deserialize"
+        serdeMapper.readValue('{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property"}]}', Sort) == sort
+    }
+
+    void "test order null ordering survives a reverse and shows in the description"() {
+        given:
+        def order = new Sort.Order("name", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.LAST)
+
+        when:
+        def reversed = order.reverse()
+
+        then: "reversing the direction keeps where nulls belong"
+        reversed.direction == Sort.Order.Direction.DESC
+        reversed.nullOrdering == Sort.Order.NullOrdering.LAST
+
+        and: "an explicit null ordering is described, an unspecified one is not"
+        order.toString().contains("NULLS LAST")
+        !Sort.Order.asc("name").toString().contains("NULLS")
     }
 
     void "test empty page map"() {

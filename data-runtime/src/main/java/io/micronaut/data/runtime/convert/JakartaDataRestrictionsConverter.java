@@ -197,6 +197,21 @@ final class JakartaDataRestrictionsConverter<T> implements TypeConverter<Restric
         return result;
     }
 
+    /**
+     * Converts a Jakarta Data expression into the equivalent criteria expression.
+     *
+     * @param root            The criteria root
+     * @param criteriaBuilder The criteria builder
+     * @param expression      The Jakarta Data expression
+     * @param <V>             The expression value type
+     * @return The criteria expression
+     */
+    <V> jakarta.persistence.criteria.Expression<V> toCriteriaExpression(Root<?> root,
+                                                                       CriteriaBuilder criteriaBuilder,
+                                                                       Expression<?, V> expression) {
+        return asExpression(root, criteriaBuilder, expression);
+    }
+
     private <V> jakarta.persistence.criteria.Expression<V> asExpression(Root<?> root,
                                                                         CriteriaBuilder criteriaBuilder,
                                                                         Expression<?, V> expression) {

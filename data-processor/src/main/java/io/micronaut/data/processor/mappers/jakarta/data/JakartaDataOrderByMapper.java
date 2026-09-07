@@ -16,8 +16,10 @@
 package io.micronaut.data.processor.mappers.jakarta.data;
 
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.model.Sort;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -40,8 +42,14 @@ public final class JakartaDataOrderByMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        return List.of(
-            AnnotationValue.builder(OrderBy.class).members(annotation.getValues()).build()
-        );
+        AnnotationValueBuilder<OrderBy> builder = AnnotationValue.builder(OrderBy.class).members(annotation.getValues());
+        // Jakarta Data names the "let the database decide" constant UNSPECIFIED, Micronaut Data names it NONE
+        annotation.stringValue("nullOrdering")
+            .ifPresent(nullOrdering -> builder.member("nullOrdering", switch (nullOrdering) {
+                case "FIRST" -> Sort.Order.NullOrdering.FIRST;
+                case "LAST" -> Sort.Order.NullOrdering.LAST;
+                default -> Sort.Order.NullOrdering.NONE;
+            }));
+        return List.of(builder.build());
     }
 }

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.model.Sort;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
@@ -89,6 +91,17 @@ public @interface OrderBy {
      * @return whether or not to request case insensitive sorting for the property.
      */
     boolean ignoreCase() default false;
+
+    /**
+     * <p>Indicates where null values are placed relative to non-null values
+     * when sorting by this attribute.</p>
+     *
+     * <p>The default value of {@link Sort.Order.NullOrdering#NONE} lets the database decide.</p>
+     *
+     * @return where to place null values relative to non-null values.
+     * @since 5.2
+     */
+    Sort.Order.NullOrdering nullOrdering() default Sort.Order.NullOrdering.NONE;
 
     /**
      * <p>Entity attribute name to sort by.</p>

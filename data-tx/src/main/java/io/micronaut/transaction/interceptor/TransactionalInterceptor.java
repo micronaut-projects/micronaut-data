@@ -29,6 +29,7 @@ import io.micronaut.transaction.TransactionOperationsRegistry;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.async.AsyncTransactionOperations;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.support.TransactionUtil;
@@ -95,6 +96,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             @Nullable String dataSource = resolveDataSourceName(tenantDataSourceName, executableMethod);
             TransactionInvocation<?> transactionInvocation = resolveTransactionInvocation(tenantDataSourceName, executableMethod, interceptedMethod, dataSource);
+            validateOracleTransactionModes(context, transactionInvocation.definition);
             return switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> interceptPublisher(context, interceptedMethod, transactionInvocation);
                 case COMPLETION_STAGE -> interceptCompletionStage(interceptedMethod, transactionInvocation);
@@ -103,6 +105,17 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
             };
         } catch (Exception e) {
             return interceptedMethod.handleException(e);
+        }
+    }
+
+    private static void validateOracleTransactionModes(MethodInvocationContext<Object, Object> context,
+                                                       TransactionDefinition definition) {
+        OracleTransactional.Sessionless sessionlessMode = TransactionUtil.getOracleSessionlessMode(definition);
+        if (sessionlessMode != null && context.getAnnotationMetadata().hasAnnotation(OracleTransactional.Recoverable.class)) {
+            throw new TransactionUsageException(
+                "Oracle sessionless transaction mode '" + sessionlessMode
+                    + "' cannot be combined with @OracleTransactional.Recoverable"
+            );
         }
     }
 

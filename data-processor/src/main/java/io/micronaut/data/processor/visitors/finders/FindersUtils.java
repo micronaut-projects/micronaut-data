@@ -176,7 +176,7 @@ public interface FindersUtils {
                     yield updateEntry;
                 }
             }
-            case UPDATE -> {
+            case UPDATE, UPSERT -> {
                 InterceptorMatch updateEntry;
                 if (hasMultipleEntityParameter) {
                     updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
@@ -633,6 +633,10 @@ public interface FindersUtils {
             );
         } else if (isContainer(returnType, Iterable.class) || isContainer(returnType, Stream.class)) {
             return typeAndInterceptorEntry(getFirstTypeArgumentOrFail(matchContext, returnType),
+                getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
+            );
+        } else if (returnType.isArray()) {
+            return typeAndInterceptorEntry(returnType.fromArray(),
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
             );
          } else if (isContainer(returnType, Optional.class)) {
