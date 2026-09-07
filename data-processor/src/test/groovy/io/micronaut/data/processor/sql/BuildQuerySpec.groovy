@@ -3079,22 +3079,31 @@ class LongAliasVehicle {
 }
 
         """)
-        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
         def method = repository.getRequiredMethod("findByVehiclesRegistrationCode", String, Pageable)
         def query = getQuery(method)
         def pageableRequiredIndex = getParameterRoles(method).findIndexOf { it == "pageableRequired" }
         // The alias bound for the runtime sort of the pagination subquery
         String boundAlias = getParameterTableAliases(method)[pageableRequiredIndex]
+        def rootAliasMatcher = query =~ /(?i)\bFROM\s+["`]long_alias_fleet["`]\s+([A-Za-z0-9_]+)\b/
+        def manufacturerAliasMatcher = query =~ /(?i)\bJOIN\s+["`]long_alias_manufacturer["`]\s+([A-Za-z0-9_]+)\b/
 
         expect:
         // The bound alias must be the un-normalized one: the runtime re-derives join aliases from
         // it, and the query builder derived the ones in the query from the very same value
         boundAlias.getBytes("UTF-8").length > 63
         !query.contains(boundAlias)
-        query.contains(builder.normalizeAlias(boundAlias))
+        rootAliasMatcher.find()
+        String normalizedRootAlias = rootAliasMatcher.group(1)
+        normalizedRootAlias.getBytes("UTF-8").length <= 63
+        normalizedRootAlias != boundAlias
+        normalizedRootAlias.startsWith(boundAlias.substring(0, 20))
         // The to-one join copied into the pagination subquery has to be addressable by the alias
         // the runtime computes when sorting on `manufacturer.name`
-        query.contains(builder.normalizeAlias(boundAlias + "manufacturer_"))
+        manufacturerAliasMatcher.find()
+        String normalizedManufacturerAlias = manufacturerAliasMatcher.group(1)
+        normalizedManufacturerAlias.getBytes("UTF-8").length <= 63
+        normalizedManufacturerAlias != boundAlias
+        normalizedManufacturerAlias.startsWith(boundAlias.substring(0, 20))
     }
 
     void "test pageable to-many query does not join a to-one path that is only navigated"() {

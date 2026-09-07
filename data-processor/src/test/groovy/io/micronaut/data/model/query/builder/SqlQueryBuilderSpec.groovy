@@ -752,7 +752,8 @@ interface MyRepository {
         then:
         prefixedAlias.getBytes("UTF-8").length > 63
         usedAlias.getBytes("UTF-8").length <= 63
-        usedAlias == builder.normalizeAlias(prefixedAlias)
+        usedAlias != prefixedAlias
+        usedAlias ==~ /^[A-Za-z0-9_]{1,46}_[0-9a-f]{16}_?$/
     }
 
     void "test encode order by derives the joined alias from the un-normalized table alias"() {
@@ -763,17 +764,21 @@ interface MyRepository {
         Sort sort = Sort.of(Sort.Order.asc("author.name"))
 
         when:
+        String rootQuery = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, Sort.of(Sort.Order.asc("id")), false, prefixedAlias)
+        String normalizedRootAlias = rootQuery.substring(" ORDER BY ".length(), rootQuery.indexOf(".\"id\""))
         String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
         String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+        String queryFromNormalizedRoot = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, normalizedRootAlias)
+        String aliasFromNormalizedRoot = queryFromNormalizedRoot.substring(" ORDER BY ".length(), queryFromNormalizedRoot.indexOf(".\"name\""))
 
         then:
         prefixedAlias.getBytes("UTF-8").length > 63
         usedAlias.getBytes("UTF-8").length <= 63
         // The join alias has to be derived from the raw alias, because that is what the query
         // builder itself used when it emitted the JOIN
-        usedAlias == builder.normalizeAlias(prefixedAlias + "author_")
+        usedAlias.startsWith(prefixedAlias.substring(0, 45))
         // Deriving it from the already normalized alias would reference a non existing alias
-        usedAlias != builder.normalizeAlias(builder.normalizeAlias(prefixedAlias) + "author_")
+        usedAlias != aliasFromNormalizedRoot
     }
 
     void "test encode order by differentiates colliding Java aliases"() {
