@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
@@ -34,6 +35,8 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.model.query.builder.compile.CompileExpressionHandler;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
@@ -101,7 +104,6 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
         Map<String, Object> projectionObj = new LinkedHashMap<>();
-        Map<String, Object> sortObj = new LinkedHashMap<>();
 
         Predicate predicate = query.predicate();
         if (predicate != null) {
@@ -110,20 +112,13 @@ public final class NitriteQueryBuilder implements QueryBuilder {
 
         NitriteQueryBuilderHelper.buildProjection(query.selection(), group, projectionObj, countObj);
 
-        List<Order> orders = query.order();
-        if (!orders.isEmpty()) {
-            orders.forEach(
-                order -> {
-                    PersistentPropertyPath<?> propertyPath =
-                        CriteriaUtils.requireProperty(order.getExpression());
-                    String fieldName = NitriteFieldNameResolver.getFieldName(propertyPath.getPropertyPath());
-                    sortObj.put(fieldName, order.isAscending() ? 1 : -1);
-                });
-        }
+        List<NitriteSortKey> sortKeys = buildSortKeys(query.order(), queryState);
+        Object sortObj = NitriteSortKeys.toJson(sortKeys);
+        boolean hasSort = !sortKeys.isEmpty();
 
         boolean hasLookups = !lookupPipeline.isEmpty();
         boolean hasAggregation = !group.isEmpty() || !countObj.isEmpty();
-        boolean needsPipeline = hasLookups || hasAggregation || (!sortObj.isEmpty() && !predicateObj.isEmpty());
+        boolean needsPipeline = hasLookups || hasAggregation || (hasSort && !predicateObj.isEmpty());
         if (needsPipeline) {
             List<Map<String, Object>> pipeline = new ArrayList<>(lookupPipeline);
             if (!predicateObj.isEmpty()) {
@@ -136,7 +131,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
             if (!countObj.isEmpty()) {
                 pipeline.add(countObj);
             }
-            if (!sortObj.isEmpty()) {
+            if (hasSort) {
                 pipeline.add(Map.of(NitriteQueryOperators.SORT, sortObj));
             }
             if (!projectionObj.isEmpty()) {
@@ -163,7 +158,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         if (!predicateObj.isEmpty()) {
             topLevel.putAll(predicateObj);
         }
-        if (!sortObj.isEmpty()) {
+        if (hasSort) {
             topLevel.put(NitriteQueryOperators.SORT, sortObj);
         }
         if (!projectionObj.isEmpty()) {
@@ -208,7 +203,6 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
         Map<String, Object> projectionObj = new LinkedHashMap<>();
-        Map<String, Object> sortObj = new LinkedHashMap<>();
 
         Predicate predicate = query.predicate();
         if (predicate != null) {
@@ -217,23 +211,14 @@ public final class NitriteQueryBuilder implements QueryBuilder {
 
         NitriteQueryBuilderHelper.buildProjection(query.selection(), group, projectionObj, countObj);
 
-        List<Order> orders = query.order();
-        if (!orders.isEmpty()) {
-            orders.forEach(
-                order -> {
-                    PersistentPropertyPath<?> propertyPath =
-                        CriteriaUtils.requireProperty(order.getExpression());
-                    String fieldName = NitriteFieldNameResolver.getFieldName(propertyPath.getPropertyPath());
-                    sortObj.put(fieldName, order.isAscending() ? 1 : -1);
-                });
-        }
+        List<NitriteSortKey> sortKeys = buildSortKeys(query.order(), queryState);
 
         boolean hasLookups = !lookupPipeline.isEmpty();
         boolean hasAggregation = !group.isEmpty() || !countObj.isEmpty();
         if (hasLookups || hasAggregation) {
             return null;
         }
-        return new NitriteRuntimeFilter(predicateObj, sortObj, projectionObj, query.offset(), query.limit(), queryState.getParameterBindings());
+        return new NitriteRuntimeFilter(predicateObj, sortKeys, projectionObj, query.offset(), query.limit(), queryState.getParameterBindings());
     }
 
     @Override
@@ -381,6 +366,54 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         return obj.isEmpty() ? "{}" : NitriteQuerySerializer.toJsonString(obj);
     }
 
+    /**
+     * Translates the {@code ORDER BY} of a query into sort keys. A key over a plain property stays
+     * a stored field name; anything computed is encoded as the same {@code $expr} operand tree a
+     * predicate over that expression would produce, and is evaluated per document at read time.
+     */
+    private List<NitriteSortKey> buildSortKeys(final List<Order> orders, final NitriteQueryState queryState) {
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+        List<NitriteSortKey> keys = new ArrayList<>(orders.size());
+        NitritePredicateVisitor expressionVisitor = null;
+        for (Order order : orders) {
+            Sort.Order.NullOrdering nullOrdering = nullOrdering(order);
+            Expression<?> expression = order.getExpression();
+            if (expression instanceof PersistentPropertyPath<?> propertyPath) {
+                keys.add(NitriteSortKey.ofField(
+                    NitriteFieldNameResolver.getFieldName(propertyPath.getPropertyPath()),
+                    order.isAscending(),
+                    nullOrdering));
+            } else {
+                if (expressionVisitor == null) {
+                    expressionVisitor = new NitritePredicateVisitor(queryState, new LinkedHashMap<>(), expressionHandler());
+                }
+                keys.add(NitriteSortKey.ofExpression(
+                    expressionVisitor.encodeExpression(expression), order.isAscending(), nullOrdering));
+            }
+        }
+        return keys;
+    }
+
+    private static Sort.Order.NullOrdering nullOrdering(final Order order) {
+        Nulls nullPrecedence = order.getNullPrecedence();
+        if (nullPrecedence == null) {
+            return Sort.Order.NullOrdering.NONE;
+        }
+        return switch (nullPrecedence) {
+            case FIRST -> Sort.Order.NullOrdering.FIRST;
+            case LAST -> Sort.Order.NullOrdering.LAST;
+            case NONE -> Sort.Order.NullOrdering.NONE;
+        };
+    }
+
+    private NitriteExpressionHandler expressionHandler() {
+        return !queryBuilderMetadata.equals(AnnotationMetadata.EMPTY_METADATA)
+            ? new CompileExpressionHandler()
+            : new RuntimeExpressionHandler();
+    }
+
     private Map<String, Object> buildWhereClauseFromCriteria(
         final Predicate predicate, final NitriteQueryState queryState) {
         if (predicate == null) {
@@ -388,10 +421,7 @@ public final class NitriteQueryBuilder implements QueryBuilder {
         }
         Map<String, Object> queryMap = new LinkedHashMap<>();
         if (predicate instanceof IPredicate predicateVisitable) {
-            NitriteExpressionHandler handler = !queryBuilderMetadata.equals(AnnotationMetadata.EMPTY_METADATA)
-                ? new CompileExpressionHandler()
-                : new RuntimeExpressionHandler();
-            predicateVisitable.visitPredicate(new NitritePredicateVisitor(queryState, queryMap, handler));
+            predicateVisitable.visitPredicate(new NitritePredicateVisitor(queryState, queryMap, expressionHandler()));
         } else {
             throw new IllegalStateException(
                 "Unsupported predicate type: " + predicate.getClass().getName());

@@ -665,6 +665,19 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
         };
     }
 
+    /**
+     * Encodes an expression as an {@code $expr} operand tree, for a caller that needs the tree on
+     * its own rather than as one side of a comparison - an {@code ORDER BY} key computed per
+     * document, for instance. The binding context is taken from the first property path the
+     * expression names, the same one a comparison on that expression would bind against.
+     *
+     * @param expression the expression to encode
+     * @return the operand tree
+     */
+    public Object encodeExpression(final Expression<?> expression) {
+        return requireExprOperand(expression, requirePropertyOperand(expression));
+    }
+
     private Object requireExprOperand(final Expression<?> expr, final PersistentPropertyPath bindingContextPath) {
         return Objects.requireNonNull(
             exprOperand(expr, bindingContextPath),

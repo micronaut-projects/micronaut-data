@@ -2,6 +2,7 @@ package io.micronaut.data.nitrite.runtime
 
 import io.micronaut.core.beans.BeanProperty
 import io.micronaut.data.model.Sort
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKey
 import org.dizitart.no2.collection.Document
 import org.dizitart.no2.collection.NitriteCollection
 import org.dizitart.no2.filters.Filter
@@ -53,6 +54,16 @@ class CountingOperationsHelper implements NitriteOperationsHelper {
     @Override
     Sort parseSortFromQuery(String query) {
         return null
+    }
+
+    @Override
+    List<NitriteSortKey> parseSortKeysFromHints(Map<String, Object> hints) {
+        return []
+    }
+
+    @Override
+    List<NitriteSortKey> parseSortKeysFromQuery(String query) {
+        return []
     }
 
     @Override

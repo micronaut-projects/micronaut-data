@@ -154,7 +154,6 @@ public final class NitriteOperationsFactory {
     }
   }
 
-
   /**
    * Builds the MVStore module for a datasource, applying only the settings the configuration
    * actually carries. Every MVStore setting is nullable: an unset one leaves the adapter's own

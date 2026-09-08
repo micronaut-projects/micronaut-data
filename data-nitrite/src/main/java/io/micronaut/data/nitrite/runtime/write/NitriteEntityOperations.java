@@ -381,8 +381,6 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         }
     }
 
-
-
     /**
      * A write that resolved to an existing document must affect exactly that document. An insert
      * is exempt: it is counted by the collection insert itself.

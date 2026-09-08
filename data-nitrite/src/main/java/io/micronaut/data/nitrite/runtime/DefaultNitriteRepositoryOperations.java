@@ -46,6 +46,8 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKey;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKeys;
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations;
 import io.micronaut.data.nitrite.runtime.criteria.NitriteCriteriaExecutor;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -61,7 +63,9 @@ import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
 import io.micronaut.data.nitrite.runtime.read.CursorWindow;
+import io.micronaut.data.nitrite.runtime.read.NitriteFind;
 import io.micronaut.data.nitrite.runtime.read.NitriteQueryExecutor;
+import io.micronaut.data.nitrite.runtime.read.NitriteSortPlan;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntitiesOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntityOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteOperationContext;
@@ -86,7 +90,6 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.NitriteId;
-import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +157,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         LoggerFactory.getLogger(DefaultNitriteRepositoryOperations.class);
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     private static final AtomicLong ID_GENERATOR = new AtomicLong(System.currentTimeMillis());
+    private static final Object[] EMPTY_PARAMS = new Object[0];
 
     private final Nitrite database;
     private final NitriteEntityMapper entityMapper;
@@ -220,7 +224,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             conversionService,
             collectionRegistry::getCollection,
             this::getEntity,
-            this::buildFindOptions,
+            this::buildFind,
             this,
             runtimeEntityRegistry.getEntityEventListener(),
             useCursorLimitForSortedReads);
@@ -560,44 +564,55 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     }
 
     /**
-     * Build FindOptions with pagination and sorting, merging additional sort from QueryModel.
+     * Build a find with pagination and sorting, merging additional sort keys from the query.
      */
-    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable RuntimePersistentEntity<?> entity) {
-        return buildFindOptions(pageable, additionalSort, null, entity);
+    private NitriteFind buildFind(final Pageable pageable, final List<NitriteSortKey> additionalSortKeys, @Nullable RuntimePersistentEntity<?> entity) {
+        return buildFind(pageable, additionalSortKeys, null, entity);
     }
 
     /**
-     * Build FindOptions with pagination, limit, and sorting.
+     * Build a find with pagination, limit, and sorting.
+     *
+     * <p>A key the find cannot order by - one computed per document, or one asking for nulls where
+     * Nitrite does not place them - leaves the ordering and the row window to the returned
+     * {@link NitriteSortPlan} instead, which orders the documents the find returns.
      */
-    private FindOptions buildFindOptions(final Pageable pageable, @Nullable final Sort additionalSort, @Nullable final Limit limit, @Nullable RuntimePersistentEntity<?> entity) {
+    private NitriteFind buildFind(final Pageable pageable, final List<NitriteSortKey> additionalSortKeys, @Nullable final Limit limit, @Nullable RuntimePersistentEntity<?> entity) {
         FindOptions options = new FindOptions();
         boolean cursored = pageable.getMode() == Pageable.Mode.CURSOR_NEXT || pageable.getMode() == Pageable.Mode.CURSOR_PREVIOUS;
         if (!cursored && pageable.getOffset() > 0) {
             options.skip(pageable.getOffset());
         }
-        Map<String, Sort.Order> mergedOrders = new LinkedHashMap<>();
-        if (additionalSort != null && additionalSort.isSorted()) {
-            for (var order : additionalSort.getOrderBy()) {
-                mergedOrders.put(order.getProperty(), order);
-            }
+        // A key is merged under the field it orders by, so a runtime sort replaces the query's own
+        // key for that field rather than ordering by it twice. A computed key orders by no field
+        // and so is merged under itself, which nothing else can replace.
+        Map<Object, NitriteSortKey> mergedKeys = new LinkedHashMap<>();
+        for (NitriteSortKey key : additionalSortKeys) {
+            mergedKeys.put(key.isExpression() ? key : key.field(), key);
         }
-        if (pageable.getSort().isSorted()) {
-            for (var order : pageable.getSort().getOrderBy()) {
-                mergedOrders.put(order.getProperty(), order);
-            }
+        for (NitriteSortKey key : NitriteSortKeys.fromSort(pageable.getSort())) {
+            mergedKeys.put(key.field(), key);
         }
         if (cursored && entity != null) {
             // Cursor ordering appends the entity identity so that records sharing a primary sort
             // value cannot be skipped between pages.
-            appendIdentitySort(mergedOrders, entity);
-        }
-        if (!mergedOrders.isEmpty()) {
-            for (var order : mergedOrders.values()) {
-                SortOrder sortOrder = order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.Ascending : SortOrder.Descending;
-                String property = normalizeSortProperty(order.getProperty(), entity);
-                options.thenOrderBy(entityMapper.normalizeFieldName(property, entity), sortOrder);
+            Map<String, Sort.Order> identityOrders = new LinkedHashMap<>();
+            for (Sort.Order order : NitriteSortKeys.toOrders(List.copyOf(mergedKeys.values()))) {
+                identityOrders.put(order.getProperty(), order);
+            }
+            appendIdentitySort(identityOrders, entity);
+            mergedKeys.clear();
+            for (NitriteSortKey key : NitriteSortKeys.fromSort(Sort.of(new ArrayList<>(identityOrders.values())))) {
+                mergedKeys.put(key.field(), key);
             }
         }
+        List<NitriteSortKey> sortKeys = mergedKeys.values().stream()
+            .map(key -> key.isExpression()
+                ? key
+                : NitriteSortKey.ofField(normalizeSortProperty(
+                    Objects.requireNonNull(key.field(), "A stored sort key must have a field"), entity),
+                    key.ascending(), key.nullOrdering()))
+            .toList();
         // Apply limit from pageable first, then from explicit Limit (for methods like listTop10).
         // For MVSTORE and in-memory, a sorted read has this bound taken off again by
         // CursorWindow.withholdSortedLimit and applied to its cursor instead, so that the find
@@ -612,7 +627,14 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (effectiveLimit > 0) {
             options.limit(effectiveLimit);
         }
-        return options;
+        NitriteSortPlan sortPlan = NitriteSortPlan.build(
+            sortKeys, entity, entityMapper, filterBuilder, EMPTY_PARAMS, Map.of());
+        if (sortPlan.isNativelySortable()) {
+            sortPlan.applyNativeOrder(options);
+            return new NitriteFind(options, null);
+        }
+        sortPlan.withholdWindow(options);
+        return new NitriteFind(options, sortPlan);
     }
 
     private void appendIdentitySort(Map<String, Sort.Order> orders, RuntimePersistentEntity<?> entity) {
@@ -669,39 +691,45 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
      */
     @Override
     public @Nullable Sort parseSortFromQuery(@Nullable final String queryString) {
+        if (queryString != null && !queryString.contains(NitriteQueryOperators.SORT)) {
+            return GeneratedQueryParser.parseOrderBy(queryString);
+        }
+        List<Sort.Order> orders = NitriteSortKeys.toOrders(parseSortKeysFromQuery(queryString));
+        return orders.isEmpty() ? null : Sort.of(orders);
+    }
+
+    @Override
+    public List<NitriteSortKey> parseSortKeysFromQuery(@Nullable final String queryString) {
         if (queryString == null) {
-            return null;
+            return List.of();
         }
         if (!queryString.contains(NitriteQueryOperators.SORT)) {
-            return GeneratedQueryParser.parseOrderBy(queryString);
+            Sort parsed = GeneratedQueryParser.parseOrderBy(queryString);
+            return NitriteSortKeys.fromSort(parsed);
         }
         try {
             Object parsed = queryParser.parseJson(queryString);
-            Map<?, ?> sortObj = null;
+            Object sortValue = null;
             if (parsed instanceof Map<?, ?> m) {
-                sortObj = m.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> s ? s : null;
+                sortValue = m.get(NitriteQueryOperators.SORT);
             } else if (parsed instanceof List<?> pipeline) {
-                sortObj = pipeline.stream()
+                sortValue = pipeline.stream()
                     .filter(Map.class::isInstance)
                     .map(stage -> ((Map<?, ?>) stage).get(NitriteQueryOperators.SORT))
-                    .filter(Map.class::isInstance)
-                    .map(Map.class::cast)
+                    .filter(Objects::nonNull)
                     .findFirst()
                     .orElse(null);
             }
-            if (sortObj != null) {
-                List<Sort.Order> orders = sortObj.entrySet().stream()
-                    .map(e -> {
-                        int dir = e.getValue() instanceof Number n ? n.intValue() : 1;
-                        return dir >= 1 ? Sort.Order.asc(e.getKey().toString()) : Sort.Order.desc(e.getKey().toString());
-                    })
-                    .toList();
-                return orders.isEmpty() ? null : Sort.of(orders);
-            }
+            return NitriteSortKeys.fromJson(sortValue);
         } catch (Exception ignored) {
             // Best-effort JSON sort parsing; if it fails, assume no sort
+            return List.of();
         }
-        return null;
+    }
+
+    @Override
+    public List<NitriteSortKey> parseSortKeysFromHints(@Nullable final Map<String, Object> hints) {
+        return NitriteSortKeys.fromSort(parseSortFromHints(hints));
     }
 
     /**
@@ -730,14 +758,17 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
         Class<T> type = query.getRootEntity();
         Filter filter = Filter.ALL;
-        Sort sort = query.getPageable().getSort();
         Limit limit = query.getPageable().getMode() == Pageable.Mode.OFFSET ? query.getQueryLimit() : Limit.UNLIMITED;
 
-        FindOptions findOptions = buildFindOptions(query.getPageable(), sort, limit, getEntity(type));
+        NitriteFind find = buildFind(query.getPageable(), List.of(), limit, getEntity(type));
+        FindOptions findOptions = find.options();
         long cursorLimit = CursorWindow.withholdSortedLimit(findOptions, useCursorLimitForSortedReads);
-        var cursor = CursorWindow.limit(getCollection(type).find(filter, findOptions), cursorLimit);
+        List<Document> documents = CursorWindow.limit(getCollection(type).find(filter, findOptions), cursorLimit).toList();
+        if (find.sortPlan() != null) {
+            documents = find.sortPlan().apply(documents, findOptions.collator());
+        }
         List<T> results = new ArrayList<>();
-        for (Document doc : cursor) {
+        for (Document doc : documents) {
             results.add(entityMapper.fromDocument(doc, type));
         }
         return results;

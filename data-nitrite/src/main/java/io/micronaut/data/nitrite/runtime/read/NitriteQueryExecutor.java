@@ -30,7 +30,6 @@ import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -38,6 +37,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.nitrite.model.query.NitriteInternalKeys;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKey;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKeys;
 import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper;
 import io.micronaut.data.nitrite.runtime.NumericUpdateOperations;
@@ -249,32 +250,16 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        Sort sort = nq.getSort();
-        Sort parsedSort = null;
-        String queryString = nq.getQuery();
-        if (queryString != null) {
-            parsedSort = helper.parseSortFromQuery(queryString);
-        }
-        if ((parsedSort == null || !parsedSort.isSorted()) && nq.getQueryHints() != null) {
-            parsedSort = helper.parseSortFromHints(nq.getQueryHints());
-        }
-        if (parsedSort != null && parsedSort.isSorted()) {
-            if (sort == null || !sort.isSorted()) {
-                sort = parsedSort;
-            } else {
-                List<Sort.Order> merged = new ArrayList<>(parsedSort.getOrderBy());
-                merged.addAll(sort.getOrderBy());
-                sort = Sort.of(merged);
-            }
-        }
+        List<NitriteSortKey> sortKeys = querySortKeys(nq);
         Limit limit = resolveTopFirstLimit(q.getName(), nq.getQueryLimit());
-        FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), sort, entityFactory.apply(q.getRootEntity()));
+        NitriteFind find = findOptionsFactory.build(nq.getPageable(), sortKeys, entityFactory.apply(q.getRootEntity()));
+        FindOptions findOptions = find.options();
         boolean bounded = limit.maxResults() > 0;
         if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && bounded) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
         }
-        boolean hasFindOptions = (sort != null && sort.isSorted()) || bounded;
+        boolean hasFindOptions = !sortKeys.isEmpty() || nq.getPageable().getSort().isSorted() || bounded;
         long cursorLimit = CursorWindow.withholdSortedLimit(findOptions, useCursorLimitForSortedReads);
         // A query that is nothing but an identity equality is answered by the document key when
         // the identity is stored as one, which is a key seek rather than the collection scan the
@@ -282,7 +267,7 @@ public final class NitriteQueryExecutor {
         // one. This provider always writes such an identity to the key, so a miss is a miss.
         Filter documentKeyFilter = entityMapper.documentKeyFilterFor(entityFactory.apply(q.getRootEntity()), filter);
         Document doc = readOne(coll, documentKeyFilter != null ? documentKeyFilter : filter,
-            findOptions, hasFindOptions, cursorLimit, bounded);
+            findOptions, hasFindOptions, cursorLimit, bounded, find.sortPlan());
         if (doc == null) {
             return null;
         }
@@ -343,11 +328,47 @@ public final class NitriteQueryExecutor {
                                        FindOptions findOptions,
                                        boolean hasFindOptions,
                                        long cursorLimit,
-                                       boolean bounded) {
+                                       boolean bounded,
+                                       @Nullable NitriteSortPlan sortPlan) {
         RecordStream<Document> cursor = hasFindOptions
-            ? CursorWindow.limit(coll.find(filter, findOptions), cursorLimit)
+            ? read(coll, filter, findOptions, cursorLimit, sortPlan)
             : coll.find(filter);
         return bounded ? firstResult(cursor) : singleResult(cursor);
+    }
+
+    /**
+     * Issues a find, bounds its cursor, and orders the result when the sort was withheld from the
+     * find because Nitrite could not carry it.
+     */
+    private RecordStream<Document> read(NitriteCollection coll,
+                                        Filter filter,
+                                        FindOptions findOptions,
+                                        long cursorLimit,
+                                        @Nullable NitriteSortPlan sortPlan) {
+        RecordStream<Document> stream = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+        if (sortPlan == null) {
+            return stream;
+        }
+        return RecordStream.fromIterable(sortPlan.apply(stream.toList(), findOptions.collator()));
+    }
+
+    /**
+     * The sort keys a prepared query carries: those of its query string or, failing that, its
+     * hints, followed by the sort its method declared. A key of the declared sort replaces the
+     * query's own key for the same field when {@code FindOptionsBuilder} merges them.
+     */
+    private List<NitriteSortKey> querySortKeys(NitritePreparedQuery<?, ?> nq) {
+        List<NitriteSortKey> parsed = helper.parseSortKeysFromQuery(nq.getQuery());
+        if (parsed.isEmpty()) {
+            parsed = helper.parseSortKeysFromHints(nq.getQueryHints());
+        }
+        List<NitriteSortKey> declared = NitriteSortKeys.fromSort(nq.getSort());
+        if (declared.isEmpty()) {
+            return parsed;
+        }
+        List<NitriteSortKey> sortKeys = new ArrayList<>(parsed);
+        sortKeys.addAll(declared);
+        return sortKeys;
     }
 
     /**
@@ -424,24 +445,7 @@ public final class NitriteQueryExecutor {
         }
 
         // Setup sort and limit
-        Sort s = nq.getSort();
-        Sort parsedS = null;
-        String queryString = nq.getQuery();
-        if (queryString != null) {
-            parsedS = helper.parseSortFromQuery(queryString);
-        }
-        if ((parsedS == null || !parsedS.isSorted()) && nq.getQueryHints() != null) {
-            parsedS = helper.parseSortFromHints(nq.getQueryHints());
-        }
-        if (parsedS != null && parsedS.isSorted()) {
-            if (s == null || !s.isSorted()) {
-                s = parsedS;
-            } else {
-                List<Sort.Order> merged = new ArrayList<>(parsedS.getOrderBy());
-                merged.addAll(s.getOrderBy());
-                s = Sort.of(merged);
-            }
-        }
+        List<NitriteSortKey> sortKeys = querySortKeys(nq);
         Limit limit = nq.getQueryLimit();
         if (limit.maxResults() <= 0) {
             String methodName = q.getName();
@@ -452,7 +456,8 @@ public final class NitriteQueryExecutor {
             }
         }
 
-        FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), s, entityFactory.apply(q.getRootEntity()));
+        NitriteFind find = findOptionsFactory.build(nq.getPageable(), sortKeys, entityFactory.apply(q.getRootEntity()));
+        FindOptions findOptions = find.options();
         if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && limit.maxResults() > 0) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
@@ -466,7 +471,7 @@ public final class NitriteQueryExecutor {
         // Handle aggregation methods - not typically used with findAll, but handle for completeness
         if (aggregationHandler.isAggregationMethod(methodName)) {
             // Aggregation with findAll returns single aggregated value
-            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+            var cursor = read(coll, filter, findOptions, cursorLimit, find.sortPlan());
             List<Document> docs = cursor.toList();
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
@@ -478,14 +483,14 @@ public final class NitriteQueryExecutor {
 
         List<String> projectedFields = getProjectedFields(nq);
         if (Object[].class.equals(nq.getResultType()) && !projectedFields.isEmpty()) {
-            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+            var cursor = read(coll, filter, findOptions, cursorLimit, find.sortPlan());
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
             return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
         }
 
         // Handle DTO projection
         if (nq.isDtoProjection()) {
-            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+            var cursor = read(coll, filter, findOptions, cursorLimit, find.sortPlan());
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
             List<R> results = new ArrayList<>();
             for (Document doc : cursor) {
@@ -512,14 +517,14 @@ public final class NitriteQueryExecutor {
             }
 
             if (projectedFields != null) {
-                var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+                var cursor = read(coll, filter, findOptions, cursorLimit, find.sortPlan());
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
                 return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
             }
         }
 
         // Handle full entity load
-        var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
+        var cursor = read(coll, filter, findOptions, cursorLimit, find.sortPlan());
         List<R> results = new ArrayList<>();
         for (Document doc : cursor) {
             results.add((R) entityMapperHandler.loadEntity(doc, nq.getRootEntity()));
@@ -909,18 +914,18 @@ public final class NitriteQueryExecutor {
     }
 
     /**
-     * Interface to build FindOptions from pageable, sort, and entity context.
+     * Interface to build a find from pageable, sort keys, and entity context.
      */
     @FunctionalInterface
     public interface FindOptionsBuilder {
         /**
-         * Build the find options.
+         * Build the find.
          *
          * @param pageable the pageable
-         * @param sort the sort
+         * @param sortKeys the sort keys the query itself carries
          * @param entity the entity
-         * @return the options
+         * @return the find
          */
-        FindOptions build(Pageable pageable, Sort sort, RuntimePersistentEntity<?> entity);
+        NitriteFind build(Pageable pageable, List<NitriteSortKey> sortKeys, RuntimePersistentEntity<?> entity);
     }
 }

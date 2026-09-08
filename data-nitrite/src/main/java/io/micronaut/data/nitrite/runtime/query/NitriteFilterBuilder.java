@@ -191,6 +191,19 @@ public final class NitriteFilterBuilder {
     }
 
     /**
+     * Compiles a computed {@code ORDER BY} key into the same value tree a {@code $expr} predicate
+     * compiles to, so a sort over an expression is evaluated by the one evaluator rather than a
+     * second one written for ordering.
+     *
+     * @param entity the root entity
+     * @param node the {@code $expr} operand tree
+     * @return the compiled value tree
+     */
+    public NitriteFilterAST.ExprValueNode compileSortExpression(RuntimePersistentEntity<?> entity, Object node) {
+        return compileExprValue(entity, node);
+    }
+
+    /**
      * Compile a {@code $expr} value tree node: a field reference ({@code "$fieldName"}),
      * a computed operator, or a literal/bound-parameter value.
      */

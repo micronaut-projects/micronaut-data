@@ -29,7 +29,7 @@ import java.util.Map;
  * had to survive a text round trip.
  *
  * @param filter the filter map, keyed by field name (or the empty map for "match all")
- * @param sort the sort map, keyed by field name to 1 (ascending) or -1 (descending)
+ * @param sort the sort keys, in order of precedence
  * @param projection the projection map, keyed by field name to 1/true when included
  * @param offset the offset, or 0 if unset
  * @param limit the limit, or -1 if unset
@@ -39,7 +39,7 @@ import java.util.Map;
 @Internal
 public record NitriteRuntimeFilter(
     Map<String, Object> filter,
-    Map<String, Object> sort,
+    List<NitriteSortKey> sort,
     Map<String, Object> projection,
     int offset,
     int limit,

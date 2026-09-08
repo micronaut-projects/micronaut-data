@@ -27,6 +27,8 @@ snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-exam
 
 Method-name `OrderBy` clauses, dynamic `Sort`, `Pageable` sorting, `Limit`, and offset pagination are supported for repository and criteria queries. When both a static method sort and a dynamic sort are present, Micronaut Data's standard ordering precedence is preserved.
 
+Null ordering (`NULLS FIRST` / `NULLS LAST`) and ordering by a computed expression are supported as well. Nitrite itself orders by a stored field only, and places nulls first on an ascending key and last on a descending one; a sort that stays within that is carried out by the find, where an index can serve it. Any other sort is carried out in memory over the documents the find returns, which reads the whole matching set before applying the offset and limit.
+
 == Predicate and Expression Support
 
 Nitrite supports the common Micronaut Data and Jakarta Data predicate set for document repositories, including:

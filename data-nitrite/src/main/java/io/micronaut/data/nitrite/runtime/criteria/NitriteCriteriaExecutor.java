@@ -43,6 +43,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.model.query.NitriteQueryOperators;
 import io.micronaut.data.nitrite.model.query.builder.NitriteQueryBuilder;
 import io.micronaut.data.nitrite.model.query.builder.NitriteRuntimeFilter;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKey;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKeys;
 import io.micronaut.data.nitrite.runtime.CollectionUpdateLock;
 import io.micronaut.data.nitrite.runtime.ValueConverter;
 import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
@@ -53,6 +55,7 @@ import io.micronaut.data.nitrite.runtime.read.CollectionAggregator;
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper;
 import io.micronaut.data.nitrite.runtime.read.CursorWindow;
 import io.micronaut.data.nitrite.runtime.read.JoinFetcher;
+import io.micronaut.data.nitrite.runtime.read.NitriteSortPlan;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
@@ -64,7 +67,6 @@ import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.common.Lookup;
 import org.dizitart.no2.common.RecordStream;
-import org.dizitart.no2.common.SortOrder;
 import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
@@ -240,6 +242,7 @@ public final class NitriteCriteriaExecutor {
         FindOptions options;
         Window window;
         List<String> projectedFields;
+        NitriteSortPlan sortPlan;
         Object parsedQuery = null;
         String queryString = null;
 
@@ -247,8 +250,9 @@ public final class NitriteCriteriaExecutor {
             joinPaths = resolveJoinPaths(query, definition.getJoinPaths(), persistentEntity);
             boolean innerJoin = hasInnerJoin(joinPaths);
             filter = buildFilterFromRuntimeFilter(runtimeFilter, entityType);
-            options = buildFindOptionsFromRuntimeFilter(
-                runtimeFilter, persistentEntity, offset, limit, !innerJoin);
+            options = buildFindOptionsFromRuntimeFilter(runtimeFilter, offset, limit, !innerJoin);
+            sortPlan = applySort(options, runtimeFilter.sort(), persistentEntity,
+                paramsOf(runtimeFilter.parameterBindings()));
             window = runtimeFilterWindow(runtimeFilter, offset, limit);
             projectedFields = queryParser.extractProjectionFields(runtimeFilter.projection());
         } else {
@@ -260,7 +264,9 @@ public final class NitriteCriteriaExecutor {
             boolean innerJoin = hasInnerJoin(joinPaths);
             parsedQuery = parseQueryForFilter(queryString);
             filter = buildFilterFromQueryResult(queryResult, entityType, parsedQuery);
-            options = buildFindOptions(persistentEntity, offset, limit, parsedQuery, !innerJoin);
+            options = buildFindOptions(offset, limit, parsedQuery, !innerJoin);
+            sortPlan = applySort(options, sortKeysOf(parsedQuery), persistentEntity,
+                paramsOf(queryResult.getParameterBindings()));
             window = pipelineWindow(parsedQuery, offset, limit);
             projectedFields = queryParser.extractProjectionFields(parsedQuery);
         }
@@ -278,6 +284,7 @@ public final class NitriteCriteriaExecutor {
             resultType,
             filter,
             options,
+            sortPlan,
             cursorLimit,
             joinPaths,
             hasInnerJoin(joinPaths),
@@ -287,6 +294,48 @@ public final class NitriteCriteriaExecutor {
             selectionJavaTypes(query),
             parsedQuery,
             queryString);
+    }
+
+    /**
+     * Decides how a sort is carried out: put on the find when Nitrite can order it, withheld and
+     * carried out over the returned documents when it cannot.
+     *
+     * @return the plan to order with after the read, or {@code null} when the find orders it
+     */
+    private @Nullable NitriteSortPlan applySort(FindOptions options,
+                                                List<NitriteSortKey> sortKeys,
+                                                RuntimePersistentEntity<?> persistentEntity,
+                                                Object[] params) {
+        NitriteSortPlan sortPlan = NitriteSortPlan.build(
+            sortKeys, persistentEntity, entityMapper, filterBuilder, params, Map.of());
+        if (sortPlan.isNativelySortable()) {
+            sortPlan.applyNativeOrder(options);
+            return null;
+        }
+        sortPlan.withholdWindow(options);
+        return sortPlan;
+    }
+
+    private static List<NitriteSortKey> sortKeysOf(@Nullable Object parsedQuery) {
+        if (parsedQuery instanceof Map<?, ?> single) {
+            return NitriteSortKeys.fromJson(single.get(NitriteQueryOperators.SORT));
+        }
+        if (parsedQuery instanceof List<?> pipeline) {
+            for (Object stage : pipeline) {
+                if (stage instanceof Map<?, ?> stageMap && stageMap.get(NitriteQueryOperators.SORT) != null) {
+                    return NitriteSortKeys.fromJson(stageMap.get(NitriteQueryOperators.SORT));
+                }
+            }
+        }
+        return List.of();
+    }
+
+    private static Object[] paramsOf(List<QueryParameterBinding> bindings) {
+        Object[] params = new Object[bindings.size()];
+        for (int i = 0; i < bindings.size(); i++) {
+            params[i] = bindings.get(i).getValue();
+        }
+        return params;
     }
 
     private DocumentRead readDocuments(CriteriaReadPlan plan, boolean fetchAssociations) {
@@ -303,6 +352,9 @@ public final class NitriteCriteriaExecutor {
         }
 
         List<Document> documents = CursorWindow.limit(stream, plan.cursorLimit()).toList();
+        if (plan.sortPlan() != null) {
+            documents = plan.sortPlan().apply(documents, plan.options().collator());
+        }
         if (plan.innerJoin()) {
             documents = nativeJoin == null
                 ? restrictToInnerJoins(documents, plan.joinPaths(), plan.entityType())
@@ -707,7 +759,7 @@ public final class NitriteCriteriaExecutor {
      * @param applyWindow false to leave skip/limit off the options, so the caller can page the
      *                    result itself after an INNER join has restricted it
      */
-    private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, RuntimePersistentEntity<?> persistentEntity, int offset, int limit, boolean applyWindow) {
+    private FindOptions buildFindOptionsFromRuntimeFilter(NitriteRuntimeFilter runtimeFilter, int offset, int limit, boolean applyWindow) {
         FindOptions options = new FindOptions();
         if (!applyWindow) {
             offset = -1;
@@ -722,10 +774,6 @@ public final class NitriteCriteriaExecutor {
             options.limit((long) limit);
         } else if (applyWindow && runtimeFilter.limit() != -1) {
             options.limit((long) runtimeFilter.limit());
-        }
-        for (Map.Entry<String, Object> entry : runtimeFilter.sort().entrySet()) {
-            SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
-            options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey(), persistentEntity), order);
         }
         return options;
     }
@@ -818,7 +866,7 @@ public final class NitriteCriteriaExecutor {
      * @param applyWindow false to leave skip/limit off the options, so the caller can page the
      *                    result itself after an INNER join has restricted it
      */
-    private FindOptions buildFindOptions(RuntimePersistentEntity<?> persistentEntity, int offset, int limit, @Nullable Object parsedQuery, boolean applyWindow) {
+    private FindOptions buildFindOptions(int offset, int limit, @Nullable Object parsedQuery, boolean applyWindow) {
         FindOptions options = new FindOptions();
         if (!applyWindow) {
             offset = -1;
@@ -848,12 +896,6 @@ public final class NitriteCriteriaExecutor {
                 }
 
                 for (Map<?, ?> stage : stages) {
-                    if (stage.get(NitriteQueryOperators.SORT) instanceof Map<?, ?> sortMap) {
-                        for (Map.Entry<?, ?> entry : sortMap.entrySet()) {
-                            SortOrder order = ((Number) entry.getValue()).intValue() == 1 ? SortOrder.Ascending : SortOrder.Descending;
-                            options.thenOrderBy(entityMapper.normalizeFieldName(entry.getKey().toString(), persistentEntity), order);
-                        }
-                    }
                     if (applyWindow && offset <= 0 && stage.get(NitriteQueryOperators.SKIP) instanceof Number skip) {
                         options.skip(skip.longValue());
                     }
@@ -875,6 +917,7 @@ public final class NitriteCriteriaExecutor {
         Class<?> resultType,
         Filter filter,
         FindOptions options,
+        @Nullable NitriteSortPlan sortPlan,
         long cursorLimit,
         Set<JoinPath> joinPaths,
         boolean innerJoin,

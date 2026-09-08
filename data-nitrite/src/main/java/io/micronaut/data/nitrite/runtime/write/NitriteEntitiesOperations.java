@@ -385,8 +385,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
     }
 
-
-
     @SuppressWarnings("unchecked")
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {

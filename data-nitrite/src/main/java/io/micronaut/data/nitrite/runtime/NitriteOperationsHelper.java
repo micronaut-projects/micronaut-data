@@ -19,10 +19,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.nitrite.model.query.builder.NitriteSortKey;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.filters.Filter;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -119,4 +121,21 @@ public interface NitriteOperationsHelper {
      * @return the parsed sort
      */
     @Nullable Sort parseSortFromHints(@Nullable Map<String, Object> hints);
+
+    /**
+     * Parses the sort a query carries as sort keys, which unlike a {@link Sort} can also carry a
+     * key computed per document and a null placement Nitrite does not order by on its own.
+     *
+     * @param queryString the query string
+     * @return the sort keys, empty when the query carries no sort
+     */
+    List<NitriteSortKey> parseSortKeysFromQuery(@Nullable String queryString);
+
+    /**
+     * Parses the sort of query hints as sort keys.
+     *
+     * @param hints the query hints
+     * @return the sort keys, empty when the hints carry no sort
+     */
+    List<NitriteSortKey> parseSortKeysFromHints(@Nullable Map<String, Object> hints);
 }

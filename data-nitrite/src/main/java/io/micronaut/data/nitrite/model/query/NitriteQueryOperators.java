@@ -111,6 +111,12 @@ public final class NitriteQueryOperators {
     public static final String GROUP = "$group";
     /** Sort pipeline stage. */
     public static final String SORT = "$sort";
+    /** Stored field a sort key orders by, in the list form of {@link #SORT}. */
+    public static final String SORT_KEY = "$key";
+    /** Direction of a sort key, in the list form of {@link #SORT}: 1 ascending, -1 descending. */
+    public static final String SORT_DIR = "$dir";
+    /** Null placement of a sort key, in the list form of {@link #SORT}: FIRST or LAST. */
+    public static final String SORT_NULLS = "$nulls";
     /** Projection pipeline stage. */
     public static final String PROJECT = "$project";
     /** Limit pipeline stage. */
