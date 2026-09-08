@@ -33,6 +33,7 @@ dependencies {
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnReactor.micronaut.reactor
     testImplementation mnTest.micronaut.test.junit5
+    testImplementation(mn.kotlinx.coroutines.reactor)
     testImplementation "javax.transaction:javax.transaction-api:1.3"
 
     testRuntimeOnly mnSql.h2
