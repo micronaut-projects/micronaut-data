@@ -305,9 +305,10 @@ public final class NitriteFilterBuilder {
             }
             return new NitriteFilterAST.SimpleEqualityNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, eqValue);
         }
-        List<NitriteFilterAST.OperatorBinding> bindings = operatorValues.entrySet().stream()
-            .map(entry -> new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()))
-            .toList();
+        List<NitriteFilterAST.OperatorBinding> bindings = new ArrayList<>(operatorValues.size());
+        for (Map.Entry<String, CompiledValue> entry : operatorValues.entrySet()) {
+            bindings.add(new NitriteFilterAST.OperatorBinding(entry.getKey(), entry.getValue()));
+        }
         return new NitriteFilterAST.SimpleOperatorNode(this::prepareFilterValue, this::buildOperatorFilter, entity, persistedName, rawField, bindings);
     }
 
@@ -569,12 +570,10 @@ public final class NitriteFilterBuilder {
         if (entity == null) {
             return null;
         }
-        RuntimePersistentProperty<?> property = entity.getPersistentProperties().stream()
-            .filter(candidate -> candidate.getName().equals(field) || candidate.getPersistedName().equals(field))
-            .findFirst()
-            .orElse(null);
-        if (property != null) {
-            return property;
+        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+            if (property.getName().equals(field) || property.getPersistedName().equals(field)) {
+                return property;
+            }
         }
         try {
             RuntimePersistentProperty<?> identity = entity.getIdentity();
@@ -648,16 +647,17 @@ public final class NitriteFilterBuilder {
             final Object[] params,
             final Map<String, Object> namedParameters) {
 
-        List<Filter> fieldFilters = operators.entrySet().stream()
-            .map(opEntry -> {
-                String op = opEntry.getKey();
-                Object value = valueResolver.resolveValue(opEntry.getValue(), params, namedParameters);
-                Object finalValue = entityMapper.toNitriteFilterValue(
-                    valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
-                return buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
-            })
-            .filter(f -> f != null && !Filter.ALL.equals(f))
-            .toList();
+        List<Filter> fieldFilters = new ArrayList<>(operators.size());
+        for (Map.Entry<String, Object> opEntry : operators.entrySet()) {
+            String op = opEntry.getKey();
+            Object value = valueResolver.resolveValue(opEntry.getValue(), params, namedParameters);
+            Object finalValue = entityMapper.toNitriteFilterValue(
+                valueResolver.preConvertForFilter(valueResolver.maybeCoerceUuid(fullPath, value)));
+            Filter f = buildOperatorFilter(entity, fullPath, op, finalValue, params, namedParameters);
+            if (f != null && !Filter.ALL.equals(f)) {
+                fieldFilters.add(f);
+            }
+        }
         return fieldFilters.size() == 1 ? fieldFilters.getFirst() : Filter.and(fieldFilters.toArray(new Filter[0]));
     }
 

@@ -58,6 +58,7 @@ import org.dizitart.no2.filters.Filter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +88,6 @@ public final class NitriteQueryExecutor {
     private static final Pattern GENERATED_EQUALITY_PATTERN = Pattern.compile(
         "(?:[A-Za-z0-9_]+\\.)?([A-Za-z0-9_]+)\\s*=\\s*:p\\d+");
     private static final Object[] EMPTY_PARAMS = new Object[0];
-    /**
-     * The number of documents {@link #singleResult} consumes: one to return, and a second to detect
-     * that the result was not unique.
-     */
-    private static final long SINGLE_RESULT_LIMIT = 2L;
 
     private final NitriteEntityMapper entityMapper;
     private final NitriteQueryParser queryParser;
@@ -107,6 +103,7 @@ public final class NitriteQueryExecutor {
     private final CollectionFieldMapper nativeProjectionHandler;
     private final CollectionAggregator aggregationHandler;
     private final JoinFetcher joinFetcher;
+    private final boolean useCursorLimitForSortedReads;
     /**
      * Parses SQL-shaped queries. Every leaf predicate is routed back through {@link #filterBuilder}
      * so a generated query and its JSON equivalent resolve fields and coerce values identically.
@@ -125,6 +122,7 @@ public final class NitriteQueryExecutor {
      * @param findOptionsFactory the find options factory function
      * @param helper the operations helper
      * @param entityEventListener the entity event listener
+     * @param useCursorLimitForSortedReads whether sorted bounds should be moved to the cursor
      */
     public NitriteQueryExecutor(NitriteEntityMapper entityMapper,
                                 NitriteQueryParser queryParser,
@@ -134,7 +132,8 @@ public final class NitriteQueryExecutor {
                                 Function<Class<?>, RuntimePersistentEntity<?>> entityFactory,
                                 FindOptionsBuilder findOptionsFactory,
                                 NitriteOperationsHelper helper,
-                                EntityEventListener<Object> entityEventListener) {
+                                EntityEventListener<Object> entityEventListener,
+                                boolean useCursorLimitForSortedReads) {
         this.entityMapper = entityMapper;
         this.queryParser = queryParser;
         this.filterBuilder = filterBuilder;
@@ -145,6 +144,7 @@ public final class NitriteQueryExecutor {
         this.entityFactory = entityFactory;
         this.findOptionsFactory = findOptionsFactory;
         this.helper = helper;
+        this.useCursorLimitForSortedReads = useCursorLimitForSortedReads;
 
         // Initialize centralized strategy classes
         this.valueConverter = new ValueConverter(conversionService);
@@ -269,16 +269,24 @@ public final class NitriteQueryExecutor {
         }
         Limit limit = resolveTopFirstLimit(q.getName(), nq.getQueryLimit());
         FindOptions findOptions = findOptionsFactory.build(nq.getPageable(), sort, entityFactory.apply(q.getRootEntity()));
-        if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && limit.maxResults() > 0) {
+        boolean bounded = limit.maxResults() > 0;
+        if (nq.getPageable().getMode() == Pageable.Mode.OFFSET && bounded) {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
-        } else if (sort != null && sort.isSorted()) {
-            boundSingleResultSort(findOptions);
         }
-        boolean hasFindOptions = (sort != null && sort.isSorted()) || limit.maxResults() > 0;
-        Document doc = singleResult(hasFindOptions
-            ? coll.find(filter, findOptions)
-            : coll.find(filter));
+        boolean hasFindOptions = (sort != null && sort.isSorted()) || bounded;
+        long cursorLimit = CursorWindow.withholdSortedLimit(findOptions, useCursorLimitForSortedReads);
+        // A query that is nothing but an identity equality is answered by the document key when
+        // the identity is stored as one, which is a key seek rather than the collection scan the
+        // identity field would take - it carries no index precisely because the key already is
+        // one. A document stored under a foreign key is not matched by it, so a miss reruns the
+        // identity-field filter, which is the fallback the write paths make on the same case.
+        Filter documentKeyFilter = entityMapper.documentKeyFilterFor(entityFactory.apply(q.getRootEntity()), filter);
+        Document doc = readOne(coll, documentKeyFilter != null ? documentKeyFilter : filter,
+            findOptions, hasFindOptions, cursorLimit, bounded);
+        if (doc == null && documentKeyFilter != null) {
+            doc = readOne(coll, filter, findOptions, hasFindOptions, cursorLimit, bounded);
+        }
         if (doc == null) {
             return null;
         }
@@ -323,20 +331,46 @@ public final class NitriteQueryExecutor {
     }
 
     /**
-     * Bounds a sorted cursor that {@link #singleResult} will read, leaving one that already carries
-     * a limit untouched.
+     * Reads the single document a filter selects, through the same cursor window every other read
+     * of this query would use.
      *
-     * <p>Nitrite orders a find from an index on the sort field only when the query asks for a
-     * bounded number of rows; without a limit it falls back to a blocking sort, which deserializes
-     * every stored document to read the one field it orders by. An unbounded sorted read for a
-     * single result therefore costs what draining the whole collection costs, however few documents
-     * are consumed. Two rows is the smallest bound that keeps the read's meaning: the first is the
-     * result, and the second is what makes a non-unique result detectable.
+     * @param coll the collection to read
+     * @param filter the filter to apply
+     * @param findOptions the find options of this query
+     * @param hasFindOptions whether those options are to be given to the find
+     * @param cursorLimit the bound withheld from the find, or {@code -1}
+     * @param bounded whether the query bounds itself to one row
+     * @return the document, or {@code null}
      */
-    private static void boundSingleResultSort(FindOptions findOptions) {
-        if (findOptions.limit() == null) {
-            findOptions.limit(SINGLE_RESULT_LIMIT);
+    private @Nullable Document readOne(NitriteCollection coll,
+                                       Filter filter,
+                                       FindOptions findOptions,
+                                       boolean hasFindOptions,
+                                       long cursorLimit,
+                                       boolean bounded) {
+        RecordStream<Document> cursor = hasFindOptions
+            ? CursorWindow.limit(coll.find(filter, findOptions), cursorLimit)
+            : coll.find(filter);
+        return bounded ? firstResult(cursor) : singleResult(cursor);
+    }
+
+    /**
+     * Reads the first document of a cursor a {@code Top}/{@code First} query bounded, without
+     * asking whether a further document exists.
+     *
+     * <p>Such a query is bounded by its own definition rather than by the caller expecting one
+     * record, so a second match is the normal case and not a
+     * {@link NonUniqueResultException}. The bound is applied here rather than pushed into the find
+     * whenever the read is sorted: a bound is what makes Nitrite order from an index on the sort
+     * field instead of blocking-sorting the collection, and that path measured about 3.4 times
+     * slower on every collection size and bound tried, at a cost that grows with the collection
+     * rather than with the bound.
+     */
+    private @Nullable Document firstResult(RecordStream<Document> cursor) {
+        for (Document doc : cursor) {
+            return doc;
         }
+        return null;
     }
 
     private @Nullable Document singleResult(RecordStream<Document> cursor) {
@@ -387,7 +421,7 @@ public final class NitriteQueryExecutor {
                 (queryStr != null && queryStr.contains(NitriteQueryOperators.COUNT));
             if (isCountQuery) {
                 if (queryStr != null && queryStr.contains(NitriteQueryOperators.GROUP)) {
-                    return List.of((R) handleDistinctCount(coll, filter, queryStr));
+                    return Collections.singletonList((R) handleDistinctCount(coll, filter, queryStr));
                 }
                 return List.of((R) Long.valueOf(coll.find(filter).size()));
             }
@@ -427,6 +461,8 @@ public final class NitriteQueryExecutor {
             findOptions.limit((long) limit.maxResults());
             findOptions.skip(limit.offset());
         }
+        // A sorted find is issued unbounded and bounded while its cursor is read: see CursorWindow.
+        final long cursorLimit = CursorWindow.withholdSortedLimit(findOptions, useCursorLimitForSortedReads);
 
         String methodName = q.getName();
         String query = nq.getQuery();
@@ -434,26 +470,26 @@ public final class NitriteQueryExecutor {
         // Handle aggregation methods - not typically used with findAll, but handle for completeness
         if (aggregationHandler.isAggregationMethod(methodName)) {
             // Aggregation with findAll returns single aggregated value
-            var cursor = coll.find(filter, findOptions);
+            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
             List<Document> docs = cursor.toList();
             String aggFunc = aggregationHandler.extractAggFunc(methodName);
             String fieldName = aggregationHandler.extractFieldName(methodName);
             if (aggFunc != null && fieldName != null) {
                 Object result = aggregationHandler.aggregate(docs, persistedField(fieldName, nq), aggFunc);
-                return List.of(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
+                return Collections.singletonList(valueConverter.convertWithTemporalHandling(result, nq.getResultType()));
             }
         }
 
         List<String> projectedFields = getProjectedFields(nq);
         if (Object[].class.equals(nq.getResultType()) && !projectedFields.isEmpty()) {
-            var cursor = coll.find(filter, findOptions);
+            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
             return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
         }
 
         // Handle DTO projection
         if (nq.isDtoProjection()) {
-            var cursor = coll.find(filter, findOptions);
+            var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
             RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
             List<R> results = new ArrayList<>();
             for (Document doc : cursor) {
@@ -480,14 +516,14 @@ public final class NitriteQueryExecutor {
             }
 
             if (projectedFields != null) {
-                var cursor = coll.find(filter, findOptions);
+                var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
                 RuntimePersistentEntity<?> entity = entityFactory.apply(nq.getRootEntity());
                 return projectionMapper.mapResults(cursor, projectedFields, entity, nq.getResultType(), false);
             }
         }
 
         // Handle full entity load
-        var cursor = coll.find(filter, findOptions);
+        var cursor = CursorWindow.limit(coll.find(filter, findOptions), cursorLimit);
         List<R> results = new ArrayList<>();
         for (Document doc : cursor) {
             results.add((R) entityMapperHandler.loadEntity(doc, nq.getRootEntity()));

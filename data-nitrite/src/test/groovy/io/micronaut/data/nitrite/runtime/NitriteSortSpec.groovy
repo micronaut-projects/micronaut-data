@@ -39,7 +39,7 @@ class NitriteSortSpec extends Specification implements NitriteTestPropertyProvid
     void 'a sorted single-result query returns the matching record'() {
         when: 'a single-result finder carries an OrderBy but no limit of its own'
             def person = personRepository.findByNameOrderByAge("Alice")
-        then: 'the cursor is bounded so Nitrite can order from an index, and the record still comes back'
+        then: 'the record comes back'
             person.present
             person.get().name == "Alice"
             person.get().age == 25
@@ -50,7 +50,7 @@ class NitriteSortSpec extends Specification implements NitriteTestPropertyProvid
             personRepository.save(new NitriteMpPerson(name: "Alice", age: 41))
         when:
             personRepository.findByNameOrderByAge("Alice")
-        then: 'the bound is two rows, not one, so the second match is still seen and reported'
+        then: 'the read is unbounded, so the second match is still seen and reported'
             thrown(NonUniqueResultException)
     }
 

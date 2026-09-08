@@ -19,11 +19,14 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.nitrite.annotation.FullTextIndex;
 import io.micronaut.data.nitrite.annotation.SpatialIndex;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.runtime.mapping.NitriteEntityMapper;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionContext;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
 import org.dizitart.no2.Nitrite;
@@ -149,14 +152,49 @@ final class NitriteCollectionRegistry {
                 }
             }
         }
-        // The identity field carries no index. Entity identity is stored in a plain "id" document
-        // field, so an index on it would let FindOptimizer plan eq("id", ..) as an index scan
-        // rather than a collection scan - but it is maintained on every insert, update and delete,
-        // and the index lookup itself builds a LinkedHashSet of ids before reading a document.
-        // Measured over the benchmark suite (3 forks, 5 iterations), creating it cost 29.8% of
-        // transactional write throughput on MVSTORE, 19.5% in memory, and 26.0% of association
-        // reads, while the collections a lookup planned this way saves a scan over are small
-        // enough that the scan was already cheaper. Document uniqueness is Nitrite's own _id's
-        // responsibility either way.
+        ensureIdentityIndex(entity, collection);
+    }
+
+    /**
+     * Creates the unique index that stands in for Nitrite's document key on an identity that key
+     * cannot hold.
+     *
+     * <p>A Long identity is written into "_id" as well as "id", so its lookups are already a key
+     * seek and its uniqueness is already the key's. A secondary index on it is pure cost: measured
+     * over the benchmark suite (3 forks, 5 iterations), one took 29.8% of transactional write
+     * throughput on MVSTORE, 19.5% in memory and 26.0% of association reads. Every other scalar
+     * identity keeps its value in "id" alone, where only this index makes an identity filter
+     * seekable and a duplicate identity a write failure rather than a second document. That write
+     * failure is what Jakarta Data requires of {@code @Insert}, which must raise
+     * {@code EntityExistsException} when an insert would violate a uniqueness constraint, so
+     * turning index creation off for a datasource also gives up that rejection.
+     *
+     * @param entity the entity whose identity is indexed
+     * @param collection the collection holding that entity
+     */
+    private void ensureIdentityIndex(RuntimePersistentEntity<?> entity, NitriteCollection collection) {
+        if (!entity.hasIdentity() || entity.hasCompositeIdentity()) {
+            return;
+        }
+        RuntimePersistentProperty<?> identity = entity.getIdentity();
+        if (identity instanceof Embedded || identity instanceof RuntimeAssociation<?>) {
+            return;
+        }
+        Class<?> idType = identity.getType();
+        if (idType == Long.class || idType == long.class) {
+            return;
+        }
+        // The entity mapper stores the identity under the canonical field name (ID_FIELD = "id"),
+        // regardless of the Java property name or @MappedProperty persisted name.
+        String fieldName = NitriteEntityMapper.ID_FIELD;
+        if (collection.hasIndex(fieldName)) {
+            return;
+        }
+        try {
+            collection.createIndex(indexOptions(IndexType.UNIQUE), fieldName);
+        } catch (Exception e) {
+            LOG.warn("Could not create identity index for field {} in collection {}: {}",
+                identity.getName(), collection.getName(), e.getMessage());
+        }
     }
 }

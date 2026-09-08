@@ -43,6 +43,7 @@ import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.serde.ObjectMapper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteId;
+import org.dizitart.no2.filters.EqualsFilter;
 import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -241,9 +242,10 @@ public final class NitriteEntityMapper {
    */
   public <T> @Nullable Object getEntityIdValue(final NitriteEntityMeta<T> meta, final T entity) {
     if (meta.persistentEntity().hasCompositeIdentity()) {
-      if (meta.persistentEntity().getRuntimeIdentityProperties().stream()
-          .anyMatch(identityProperty -> identityProperty.getProperty().get(entity) == null)) {
-        return null;
+      for (RuntimePersistentProperty<T> identityProperty : meta.persistentEntity().getRuntimeIdentityProperties()) {
+        if (identityProperty.getProperty().get(entity) == null) {
+          return null;
+        }
       }
       return entity;
     }
@@ -392,9 +394,50 @@ public final class NitriteEntityMapper {
   }
 
   /**
+   * The identity-field equality {@link #idEqualsFilter(NitriteEntityMeta, Object)} would have
+   * returned had it not taken the document-key shortcut, or {@code null} when it did not take it
+   * and there is therefore nothing to fall back to.
+   *
+   * <p>The shortcut holds only for a document this version wrote, because it is what puts the
+   * identity in {@code _id} to begin with. A document stored with any other key - written before
+   * the shortcut existed, or inserted through Nitrite directly - carries its identity in the
+   * {@code id} field alone, and the shortcut passes straight over it. A read that misses returns
+   * nothing and is merely wrong; a write that misses concludes the entity is absent, and inserts a
+   * second document carrying the same identity, so the write paths try this filter first.
+   *
+   * @param meta the pre-computed entity metadata
+   * @param id the ID value
+   * @return the identity-field filter, or {@code null} when the primary filter already is one
+   * @param <T> the entity type
+   */
+  public <T> @Nullable Filter identityFieldEqualsFilter(final NitriteEntityMeta<T> meta, final @Nullable Object id) {
+    RuntimePersistentProperty<T> idProperty = meta.idProp();
+    if (meta.persistentEntity().hasCompositeIdentity() || idProperty == null || id == null) {
+      return null;
+    }
+    if (normalizeIdentityValue(idProperty, id) instanceof Document) {
+      return null;
+    }
+    if (documentKeyOf(idProperty, toFilterValue(id)) == null) {
+      return null;
+    }
+    return eqWithNumericCoercion(meta.persistentEntity(), ID_FIELD, toFilterValue(id), ID_FIELD);
+  }
+
+  /**
    * The Nitrite document key for an identity value, or {@code null} when the identity is not stored
    * as the document key. Only a {@code Long} identity is: NitriteId is backed by a long, and a
    * narrower or wider identity would either collide with generated keys or not round-trip.
+   *
+   * <p>{@link Long#MIN_VALUE} is excluded because
+   * {@link io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils#matchNone()} spends it as the
+   * id that cannot exist, which is how a sub-query selecting no rows is expressed without reading
+   * the collection. A generated NitriteId is always positive, so that held for free until an
+   * assigned identity could reach {@code _id} as well; writing this one there would make a filter
+   * that must match nothing match that document instead. Withholding it costs the entity its
+   * direct-key lookup, which falls back to an equality on the identity field, and keeps the
+   * sentinel impossible by construction. Both the read and write sides call through here, so they
+   * withhold it together or not at all.
    *
    * @param idProperty the identity property
    * @param normalizedId the identity value, already normalized for storage
@@ -405,7 +448,10 @@ public final class NitriteEntityMapper {
     if (idType != Long.class && idType != long.class) {
       return null;
     }
-    return normalizedId instanceof Long value ? value : null;
+    if (!(normalizedId instanceof Long value) || value == Long.MIN_VALUE) {
+      return null;
+    }
+    return value;
   }
 
   /**
@@ -440,6 +486,73 @@ public final class NitriteEntityMapper {
   }
 
   /**
+   * The document-key equality that answers a whole query filter, or {@code null} when that filter
+   * is not a bare identity equality.
+   *
+   * <p>Applied to the complete filter rather than to each predicate as it is built, because the
+   * rewrite is only safe where a fallback is: a document stored under a key that is not its
+   * identity is matched by the identity field and not by the key, so the caller reruns the
+   * original filter when the rewritten one finds nothing. That retry is only well defined when
+   * the identity equality is the entire query. A predicate buried in a conjunction keeps the
+   * identity field, and with it the behaviour it had.
+   *
+   * @param entity the entity being queried
+   * @param filter the complete filter built for the query
+   * @return the document-key filter, or {@code null} when the query is not a bare identity equality
+   * @param <E> the entity type
+   */
+  public <E> @Nullable Filter documentKeyFilterFor(final RuntimePersistentEntity<E> entity, final Filter filter) {
+    if (!(filter instanceof EqualsFilter equalsFilter)) {
+      return null;
+    }
+    return documentKeyEqualsFilter(entity, equalsFilter.getField(), equalsFilter.getValue());
+  }
+
+  /**
+   * The document-key equality for a query predicate that compares an entity's identity field, or
+   * {@code null} when the predicate is not one, or when that identity is not the document key.
+   *
+   * <p>A query reaches its predicates through the field name rather than through
+   * {@link #idEqualsFilter(NitriteEntityMeta, Object)}, so without this a derived {@code findById},
+   * a {@code @Query} on the identity and a criteria equality on it would all filter on the "id"
+   * field. That field carries no index for a {@code Long} identity - the document key already
+   * being one - so the predicate would be answered by a collection scan while the same lookup
+   * issued through the entity operations is a single key seek.
+   *
+   * <p>Like the filter the entity operations build, this matches only a document whose key is its
+   * identity. A document stored under any other key is not found by it. The write paths carry a
+   * fallback for that case; a read does not, and did not before this rewrite either, since
+   * {@code findById} has always filtered on the document key.
+   *
+   * @param entity the entity being queried
+   * @param field the persisted field name the predicate compares
+   * @param value the value the predicate compares it against
+   * @return the document-key filter, or {@code null} when the predicate is not rewritable
+   * @param <E> the entity type
+   */
+  public <E> @Nullable Filter documentKeyEqualsFilter(final RuntimePersistentEntity<E> entity,
+                                                      final String field,
+                                                      final @Nullable Object value) {
+    if (value == null || entity.hasCompositeIdentity()) {
+      return null;
+    }
+    RuntimePersistentProperty<E> idProperty = entity.getIdentity();
+    if (idProperty == null || (!ID_FIELD.equals(field) && !field.equals(idProperty.getPersistedName()))) {
+      return null;
+    }
+    Object filterValue = toFilterValue(value);
+    Class<?> idType = idProperty.getType();
+    if ((idType == Long.class || idType == long.class)
+        && (filterValue instanceof Integer || filterValue instanceof Short || filterValue instanceof Byte)) {
+      // A derived query binds a literal identity as the narrowest type that holds it, so an
+      // Integer here is the same key a Long identity was written under.
+      filterValue = ((Number) filterValue).longValue();
+    }
+    Long documentKey = documentKeyOf(idProperty, filterValue);
+    return documentKey == null ? null : NitriteFilterUtils.eq(DOC_ID_FIELD, documentKey);
+  }
+
+  /**
    * Create an equality filter with numeric type tolerance.
    *
    * @param entity the entity metadata
@@ -465,10 +578,12 @@ public final class NitriteEntityMapper {
     if (entity != null) {
       RuntimePersistentProperty<E> property = entity.getPropertyByName(field);
       if (property == null) {
-        property = entity.getPersistentProperties().stream()
-            .filter(p -> p.getPersistedName().equals(field))
-            .findFirst()
-            .orElse(null);
+        for (RuntimePersistentProperty<E> p : entity.getPersistentProperties()) {
+          if (p.getPersistedName().equals(field)) {
+            property = p;
+            break;
+          }
+        }
       }
 
       if (property != null) {
@@ -755,11 +870,12 @@ public final class NitriteEntityMapper {
    */
   public List<CompositeJoinColumn> getCompositeJoinColumns(final Class<?> type, final String propertyName) {
     NitriteEntityMeta<?> meta = getOrBuildMeta(type);
-    return meta.writableProps().stream()
-        .filter(property -> property.prop().getName().equals(propertyName))
-        .map(WritablePropertyMeta::compositeJoinColumns)
-        .findFirst()
-        .orElseGet(List::of);
+    for (WritablePropertyMeta<?> property : meta.writableProps()) {
+      if (property.prop().getName().equals(propertyName)) {
+        return property.compositeJoinColumns();
+      }
+    }
+    return List.of();
   }
 
   /**
@@ -1546,19 +1662,15 @@ public final class NitriteEntityMapper {
         if (property != null) {
             return property;
         }
-        RuntimePersistentProperty<?> candidate = entity.getRuntimeIdentityProperties().stream()
-            .filter(candidateProperty -> candidateProperty.getPersistedName().equals(name))
-            .findFirst()
-            .orElse(null);
-        if (candidate != null) {
-            return candidate;
+        for (RuntimePersistentProperty<?> candidate : entity.getRuntimeIdentityProperties()) {
+            if (candidate.getPersistedName().equals(name)) {
+                return candidate;
+            }
         }
-        candidate = entity.getPersistentProperties().stream()
-            .filter(candidateProperty -> candidateProperty.getPersistedName().equals(name))
-            .findFirst()
-            .orElse(null);
-        if (candidate != null) {
-            return candidate;
+        for (RuntimePersistentProperty<?> candidate : entity.getPersistentProperties()) {
+            if (candidate.getPersistedName().equals(name)) {
+                return candidate;
+            }
         }
         return null;
     }

@@ -3,7 +3,6 @@ package io.micronaut.data.nitrite.runtime
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.data.nitrite.transaction.NitriteConnectionOperations
-import io.micronaut.data.nitrite.transaction.NitriteTransactionContext
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder
 import io.micronaut.data.nitrite.transaction.DefaultNitriteTransactionOperations
 import io.micronaut.data.nitrite.transaction.NitriteTransactionOperations

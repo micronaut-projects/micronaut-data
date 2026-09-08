@@ -21,6 +21,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.Filter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,10 +66,13 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     record AndNode(List<NitriteFilterAST> children) implements NitriteFilterAST {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
-            List<Filter> results = children.stream()
-                .map(child -> child.toFilter(params, namedParameters))
-                .filter(f -> f != null && !f.equals(Filter.ALL))
-                .toList();
+            List<Filter> results = new ArrayList<>(children.size());
+            for (NitriteFilterAST child : children) {
+                Filter f = child.toFilter(params, namedParameters);
+                if (f != null && !f.equals(Filter.ALL)) {
+                    results.add(f);
+                }
+            }
             return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.and(results.toArray(new Filter[0]));
         }
     }
@@ -81,10 +85,13 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
     record OrNode(List<NitriteFilterAST> children) implements NitriteFilterAST {
         @Override
         public Filter toFilter(Object[] params, Map<String, Object> namedParameters) {
-            List<Filter> results = children.stream()
-                .map(child -> child.toFilter(params, namedParameters))
-                .filter(f -> f != null && !f.equals(Filter.ALL))
-                .toList();
+            List<Filter> results = new ArrayList<>(children.size());
+            for (NitriteFilterAST child : children) {
+                Filter f = child.toFilter(params, namedParameters);
+                if (f != null && !f.equals(Filter.ALL)) {
+                    results.add(f);
+                }
+            }
             return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.or(results.toArray(new Filter[0]));
         }
     }
@@ -152,10 +159,13 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
             if (operators.size() == 1) {
                 return operators.getFirst().toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters);
             }
-            List<Filter> results = operators.stream()
-                .map(op -> op.toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters))
-                .filter(f -> f != null && !f.equals(Filter.ALL))
-                .toList();
+            List<Filter> results = new ArrayList<>(operators.size());
+            for (OperatorBinding op : operators) {
+                Filter f = op.toFilter(preparer, evaluator, entity, persistedName, rawField, params, namedParameters);
+                if (f != null && !f.equals(Filter.ALL)) {
+                    results.add(f);
+                }
+            }
             return results.isEmpty() ? Filter.ALL : results.size() == 1 ? results.getFirst() : Filter.and(results.toArray(new Filter[0]));
         }
     }
@@ -402,9 +412,11 @@ public sealed interface NitriteFilterAST extends CompiledNitriteFilter {
         record ListValue(List<ExprValueNode> values) implements ExprValueNode {
             @Override
             public @Nullable Object evaluate(Document doc, Object[] params, Map<String, Object> namedParameters) {
-                return values.stream()
-                    .map(value -> value.evaluate(doc, params, namedParameters))
-                    .toList();
+                List<Object> resolved = new ArrayList<>(values.size());
+                for (ExprValueNode value : values) {
+                    resolved.add(value.evaluate(doc, params, namedParameters));
+                }
+                return resolved;
             }
         }
 

@@ -3,8 +3,6 @@ package io.micronaut.data.nitrite
 import io.micronaut.data.nitrite.model.Event
 import io.micronaut.data.nitrite.repository.EventJdqlRepository
 import io.micronaut.data.nitrite.repository.EventRepository
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
-import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification

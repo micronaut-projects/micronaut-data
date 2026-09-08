@@ -1,9 +1,7 @@
 package io.micronaut.data.nitrite
 
 import io.micronaut.data.document.tck.entities.Author
-import io.micronaut.data.document.tck.entities.AuthorBooksDto
 import io.micronaut.data.document.tck.entities.Book
-import io.micronaut.data.document.tck.entities.BookDto
 import io.micronaut.data.nitrite.tck.NitriteAuthorRepository
 import io.micronaut.data.nitrite.tck.NitriteBookRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest

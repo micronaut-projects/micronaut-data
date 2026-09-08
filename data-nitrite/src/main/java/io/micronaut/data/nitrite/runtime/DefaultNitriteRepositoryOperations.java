@@ -60,6 +60,7 @@ import io.micronaut.data.nitrite.runtime.query.NitriteQueryBinder;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.query.NitriteStoredQuery;
 import io.micronaut.data.nitrite.runtime.query.ast.CompiledNitriteFilter;
+import io.micronaut.data.nitrite.runtime.read.CursorWindow;
 import io.micronaut.data.nitrite.runtime.read.NitriteQueryExecutor;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntitiesOperations;
 import io.micronaut.data.nitrite.runtime.write.NitriteEntityOperations;
@@ -165,6 +166,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
     private final ValueConverter valueConverter;
     private final NitriteCollectionRegistry collectionRegistry;
     private final NitriteQueryBinder queryBinder;
+    private final boolean useCursorLimitForSortedReads;
 
     /**
      * Create Nitrite repository operations.
@@ -188,6 +190,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         final NitriteTransactionHolder transactionHolder,
         final @Nullable ObjectMapper serdeObjectMapper) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        this.useCursorLimitForSortedReads = configuration.getSortedReadStrategy()
+            .usesCursorLimit(configuration.getStorageMode());
         this.database = database;
         this.collectionRegistry = new NitriteCollectionRegistry(database, transactionHolder, configuration, this::getEntity);
         this.entityMapper =
@@ -207,7 +211,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             filterBuilder,
             conversionService,
             collectionRegistry::getCollection,
-            this::getEntity);
+            this::getEntity,
+            useCursorLimitForSortedReads);
         this.queryExecutor = new NitriteQueryExecutor(
             entityMapper,
             queryParser,
@@ -217,7 +222,8 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
             this::getEntity,
             this::buildFindOptions,
             this,
-            runtimeEntityRegistry.getEntityEventListener());
+            runtimeEntityRegistry.getEntityEventListener(),
+            useCursorLimitForSortedReads);
         this.queryBinder = new NitriteQueryBinder(entityMapper);
     }
 
@@ -491,13 +497,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public <T> T persist(@NonNull final InsertOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         return persistOne(ctx, operation.getEntity(), getEntity(operation.getRootEntity()));
     }
 
     @Override
     public <T> Iterable<T> persistAll(@NonNull final InsertBatchOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
             ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
             getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
@@ -508,13 +514,13 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public <T> T update(@NonNull final UpdateOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         return updateOne(ctx, operation.getEntity(), getEntity(operation.getRootEntity()));
     }
 
     @Override
     public <T> Iterable<T> updateAll(@NonNull final UpdateBatchOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         NitriteEntitiesOperations<T> op = new NitriteEntitiesOperations<>(
             ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
             getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
@@ -525,7 +531,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public <T> int delete(@NonNull final DeleteOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         NitriteEntityOperations<T> op = new NitriteEntityOperations<>(
             ctx, cascadeOperations, runtimeEntityRegistry.getEntityEventListener(),
             getEntity(operation.getRootEntity()), conversionService, entityMapper, this,
@@ -536,7 +542,7 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull final DeleteBatchOperation<T> operation) {
-        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType());
+        NitriteOperationContext ctx = new NitriteOperationContext(operation.getAnnotationMetadata(), operation.getRepositoryType(), operation.getName());
         if (operation.all()) {
             NitriteCollection collection = getCollection(operation.getRootEntity());
             logDelete(collection.getName(), Filter.ALL);
@@ -569,16 +575,6 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         if (!cursored && pageable.getOffset() > 0) {
             options.skip(pageable.getOffset());
         }
-        // Apply limit from pageable first, then from explicit Limit (for methods like listTop10)
-        int effectiveLimit = -1;
-        if (!cursored && pageable.getSize() > 0) {
-            effectiveLimit = pageable.getSize();
-        } else if (!cursored && limit != null && limit.maxResults() > 0) {
-            effectiveLimit = limit.maxResults();
-        }
-        if (effectiveLimit > 0) {
-            options.limit(effectiveLimit);
-        }
         Map<String, Sort.Order> mergedOrders = new LinkedHashMap<>();
         if (additionalSort != null && additionalSort.isSorted()) {
             for (var order : additionalSort.getOrderBy()) {
@@ -601,6 +597,20 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
                 String property = normalizeSortProperty(order.getProperty(), entity);
                 options.thenOrderBy(entityMapper.normalizeFieldName(property, entity), sortOrder);
             }
+        }
+        // Apply limit from pageable first, then from explicit Limit (for methods like listTop10).
+        // For MVSTORE and in-memory, a sorted read has this bound taken off again by
+        // CursorWindow.withholdSortedLimit and applied to its cursor instead, so that the find
+        // does not take Nitrite's index-ordered path. RocksDB retains the bound because its
+        // bounded indexed path is faster than the unbounded alternative.
+        int effectiveLimit = -1;
+        if (!cursored && pageable.getSize() > 0) {
+            effectiveLimit = pageable.getSize();
+        } else if (!cursored && limit != null && limit.maxResults() > 0) {
+            effectiveLimit = limit.maxResults();
+        }
+        if (effectiveLimit > 0) {
+            options.limit(effectiveLimit);
         }
         return options;
     }
@@ -723,7 +733,9 @@ public final class DefaultNitriteRepositoryOperations extends AbstractRepository
         Sort sort = query.getPageable().getSort();
         Limit limit = query.getPageable().getMode() == Pageable.Mode.OFFSET ? query.getQueryLimit() : Limit.UNLIMITED;
 
-        var cursor = getCollection(type).find(filter, buildFindOptions(query.getPageable(), sort, limit, getEntity(type)));
+        FindOptions findOptions = buildFindOptions(query.getPageable(), sort, limit, getEntity(type));
+        long cursorLimit = CursorWindow.withholdSortedLimit(findOptions, useCursorLimitForSortedReads);
+        var cursor = CursorWindow.limit(getCollection(type).find(filter, findOptions), cursorLimit);
         List<T> results = new ArrayList<>();
         for (Document doc : cursor) {
             results.add(entityMapper.fromDocument(doc, type));

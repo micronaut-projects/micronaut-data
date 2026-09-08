@@ -49,6 +49,7 @@ import jakarta.persistence.criteria.Expression;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -357,7 +358,7 @@ public final class NitritePredicateVisitor implements AdvancedPredicateVisitor<P
                 int index = queryState.pushParameter(bp, newBindingContext(propertyPath, propertyPath));
                 resolvedValues = List.of(NitriteInternalKeys.QUERY_PARAMETER_PREFIX + index);
             } else {
-                resolvedValues = List.of(valueRepresentation(queryState, propertyPath, singleValue));
+                resolvedValues = Collections.singletonList(valueRepresentation(queryState, propertyPath, singleValue));
             }
         } else {
             resolvedValues = values.stream()

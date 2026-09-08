@@ -39,12 +39,13 @@ To save an instance use the `save` method of the `CrudRepository` interface:
 
 snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="save", indent="0"]
 
-The `save` method uses **upsert semantics**:
+The `save` method inserts or updates according to what the collection holds:
 
 - If the entity's ID is `null`, a new document is inserted and the ID is generated
-- If the entity has an existing ID, the document is updated (replaced) if found, or inserted if not found
+- If the entity's ID is present in the collection, that document is replaced
+- If the entity's ID is not present in the collection, a new document is inserted under it
 
-This means `save()` can be used for both creating new entities and updating existing ones when you know the entity's ID.
+This means `save()` can be used for both creating new entities and updating existing ones, including entities whose ID the application assigns itself.
 
 == Retrieving an Instance (Read)
 

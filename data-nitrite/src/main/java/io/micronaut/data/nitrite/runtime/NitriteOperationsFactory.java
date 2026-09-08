@@ -29,6 +29,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.nitrite.conf.NitriteConfiguration;
+import io.micronaut.data.nitrite.operations.NitriteIndexManagement;
 import io.micronaut.data.nitrite.transaction.DefaultNitriteTransactionOperations;
 import io.micronaut.data.nitrite.transaction.NitriteConnectionOperations;
 import io.micronaut.data.nitrite.transaction.NitriteTransactionHolder;
@@ -222,6 +223,20 @@ public final class NitriteOperationsFactory {
       BeanLocator beanLocator,
       @Parameter NitriteConfiguration configuration) {
     return new NitriteConnectionOperations(forDatasource(beanLocator, Nitrite.class, configuration));
+  }
+
+  /**
+   * Creates index management bound to one Nitrite datasource.
+   *
+   * @param beanLocator the bean locator used to resolve the matching database
+   * @param configuration the matching datasource configuration
+   * @return index management for that datasource
+   */
+  @EachBean(NitriteConfiguration.class)
+  public NitriteIndexManagement nitriteIndexManagement(
+      BeanLocator beanLocator,
+      @Parameter NitriteConfiguration configuration) {
+    return new NitriteIndexManagement(forDatasource(beanLocator, Nitrite.class, configuration));
   }
 
   /**

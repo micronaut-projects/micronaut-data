@@ -19,6 +19,11 @@ import io.micronaut.data.annotation.Relation
 import io.micronaut.core.annotation.Creator
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.nitrite.model.LongIdEntity
+import io.micronaut.data.nitrite.model.MappedIdParent
+import io.micronaut.data.nitrite.model.NumericWidthsEntity
+import io.micronaut.data.nitrite.model.PrimitiveLongIdEntity
+import io.micronaut.data.nitrite.model.StringIdEntity
 import io.micronaut.data.nitrite.model.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.serde.ObjectMapper
@@ -26,6 +31,7 @@ import io.micronaut.serde.annotation.Serdeable
 import jakarta.inject.Inject
 import org.dizitart.no2.Nitrite
 import org.dizitart.no2.collection.Document
+import org.dizitart.no2.filters.EqualsFilter
 import org.dizitart.no2.collection.NitriteId
 import org.dizitart.no2.common.tuples.Pair
 import spock.lang.Specification
@@ -37,9 +43,104 @@ class NitriteEntityMapperSpec extends Specification {
     @Inject Nitrite nitrite
     @Inject RuntimeEntityRegistry runtimeEntityRegistry
 
+    def "an identity equality is rewritten onto the document key only when the key is the identity"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+        def longEntity = runtimeEntityRegistry.getEntity(LongIdEntity)
+        def stringEntity = runtimeEntityRegistry.getEntity(StringIdEntity)
+        def compositeEntity = runtimeEntityRegistry.getEntity(CompositeIdEntity)
+        def primitiveLongEntity = runtimeEntityRegistry.getEntity(PrimitiveLongIdEntity)
+        def mappedNameEntity = runtimeEntityRegistry.getEntity(MappedIdParent)
+
+        expect: "a Long identity is answered by the document key, which is what it is written under"
+        mapper.documentKeyEqualsFilter(longEntity, "id", 42L).toString() == '(_id == 42)'
+
+        and: "a literal bound as a narrower integral type is the same key"
+        mapper.documentKeyEqualsFilter(longEntity, "id", 42 as Integer).toString() == '(_id == 42)'
+
+        and: "an identity the document key cannot hold keeps the identity field, where its index is"
+        mapper.documentKeyEqualsFilter(stringEntity, "id", "a-string") == null
+
+        and: "and so does the one value withheld from the key, and a composite identity"
+        mapper.documentKeyEqualsFilter(longEntity, "id", Long.MIN_VALUE) == null
+        mapper.documentKeyEqualsFilter(compositeEntity, "id", 42L) == null
+
+        and: "a literal bound as Short or Byte is the same key"
+        mapper.documentKeyEqualsFilter(longEntity, "id", 42 as Short).toString() == '(_id == 42)'
+        mapper.documentKeyEqualsFilter(longEntity, "id", 42 as Byte).toString() == '(_id == 42)'
+
+        and: "a primitive long identity is the document key too"
+        mapper.documentKeyEqualsFilter(primitiveLongEntity, "id", 42L).toString() == '(_id == 42)'
+
+        and: "an identity carrying a mapped name is recognised under that name"
+        mapper.documentKeyEqualsFilter(mappedNameEntity, "parent_id", "a-string") == null
+
+        and: "a predicate on any other field is left alone"
+        mapper.documentKeyEqualsFilter(longEntity, "name", 42L) == null
+        mapper.documentKeyEqualsFilter(longEntity, "id", null) == null
+    }
+
     def "a numeric equality narrows to the property's declared type when the conversion service declines"() {
         given: "a conversion service that converts nothing, so the explicit narrowing switch is used"
-        def decliningConversionService = new ConversionService() {
+        def mapper = new NitriteEntityMapper(decliningConversionService(), objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(Person)
+        def expected = mapper.eqWithNumericCoercion(entity, "age", 10 as Integer, "age").toString()
+
+        expect: "every incoming numeric width collapses onto the Integer-typed filter"
+        mapper.eqWithNumericCoercion(entity, "age", value, "age").toString() == expected
+
+        where:
+        value << [10L, (short) 10, (byte) 10, 10.0f, 10.0d, 10 as Integer]
+    }
+
+    def "the narrowing switch reaches every declared numeric width when the conversion service declines"() {
+        given: "a conversion service that converts nothing, so the explicit narrowing switch is used"
+        def mapper = new NitriteEntityMapper(decliningConversionService(), objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(NumericWidthsEntity)
+
+        expect: "the bound literal is narrowed onto the type the property declares"
+        def filter = mapper.eqWithNumericCoercion(entity, field, 10L, field)
+        ((EqualsFilter) filter).value.class == narrowedTo
+
+        where:
+        field              || narrowedTo
+        "boxedInt"         || Integer
+        "primitiveInt"     || Integer
+        "boxedLong"        || Long
+        "primitiveLong"    || Long
+        "boxedDouble"      || Double
+        "primitiveDouble"  || Double
+        "boxedFloat"       || Float
+        "primitiveFloat"   || Float
+        "boxedShort"       || Short
+        "primitiveShort"   || Short
+        "boxedByte"        || Byte
+        "primitiveByte"    || Byte
+    }
+
+    def "a numeric width the switch does not name, and a non-numeric property, keep the bound value"() {
+        given:
+        def mapper = new NitriteEntityMapper(decliningConversionService(), objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(NumericWidthsEntity)
+
+        expect: "a Number the switch does not name is left as bound"
+        ((EqualsFilter) mapper.eqWithNumericCoercion(entity, "amount", 10L, "amount")).value == 10L
+
+        and: "so is a numeric literal compared against a property that is not numeric at all"
+        ((EqualsFilter) mapper.eqWithNumericCoercion(entity, "label", 10L, "label")).value == 10L
+    }
+
+    def "a property is found by its persisted name when the field is not its property name"() {
+        given:
+        def mapper = new NitriteEntityMapper(decliningConversionService(), objectMapper, runtimeEntityRegistry)
+        def entity = runtimeEntityRegistry.getEntity(NumericWidthsEntity)
+
+        expect: "the mapped name narrows onto the same Integer the property name does"
+        ((EqualsFilter) mapper.eqWithNumericCoercion(entity, "mapped_count", 10L, "mapped_count")).value.class == Integer
+    }
+
+    private static ConversionService decliningConversionService() {
+        new ConversionService() {
             @Override
             def <T> Optional<T> convert(Object object, Class<T> targetType, ConversionContext context) {
                 Optional.empty()
@@ -50,15 +151,6 @@ class NitriteEntityMapperSpec extends Specification {
                 false
             }
         }
-        def mapper = new NitriteEntityMapper(decliningConversionService, objectMapper, runtimeEntityRegistry)
-        def entity = runtimeEntityRegistry.getEntity(Person)
-        def expected = mapper.eqWithNumericCoercion(entity, "age", 10 as Integer, "age").toString()
-
-        expect: "every incoming numeric width collapses onto the Integer-typed filter"
-        mapper.eqWithNumericCoercion(entity, "age", value, "age").toString() == expected
-
-        where:
-        value << [10L, (short) 10, (byte) 10, 10.0f, 10.0d, 10 as Integer]
     }
 
     def "an eq filter on a widened numeric property is a single indexable equality, not an or-fan-out"() {
@@ -436,6 +528,27 @@ class NitriteEntityMapperSpec extends Specification {
         def e = thrown(IllegalArgumentException)
         e.message.contains(CompositeIdEntity.name)
     }
+    def "an assigned Long identity is the document key, except the one matchNone() spends"() {
+        given:
+        def mapper = new NitriteEntityMapper(conversionService, objectMapper, runtimeEntityRegistry)
+
+        when: "an ordinary assigned identity"
+        def ordinary = mapper.toDocument(new LongIdEntity(42L, "ordinary"))
+
+        then: "it is stored as the document key, so a lookup by it plans as a single map get"
+        ordinary.get("_id") == 42L
+        ordinary.get("id") == 42L
+
+        when: "the identity NitriteFilterUtils.matchNone() relies on being impossible"
+        def sentinel = mapper.toDocument(new LongIdEntity(Long.MIN_VALUE, "sentinel"))
+
+        then: "it is withheld from the document key, so a filter that must match nothing still does"
+        sentinel.get("_id") == null
+
+        and: "the identity itself still round-trips, on the equality fallback rather than the key"
+        sentinel.get("id") == Long.MIN_VALUE
+    }
+
 }
 
 @MappedEntity

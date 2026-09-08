@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -127,11 +126,13 @@ public final class JoinFetcher {
         }
 
         RuntimePersistentProperty<?> idProp = persistentEntity.getIdentity();
-        List<Object> parentIds = entities.stream()
-            .map(entity -> ((BeanProperty<Object, Object>) idProp.getProperty()).get(entity))
-            .filter(Objects::nonNull)
-            .map(entityMapper::toFilterValue)
-            .toList();
+        List<Object> parentIds = new ArrayList<>(entities.size());
+        for (Object entity : entities) {
+            Object idValue = ((BeanProperty<Object, Object>) idProp.getProperty()).get(entity);
+            if (idValue != null) {
+                parentIds.add(entityMapper.toFilterValue(idValue));
+            }
+        }
         if (parentIds.isEmpty()) {
             return List.of();
         }

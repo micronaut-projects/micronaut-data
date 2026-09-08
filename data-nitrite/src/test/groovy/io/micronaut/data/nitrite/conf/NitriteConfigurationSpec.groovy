@@ -3,12 +3,14 @@ package io.micronaut.data.nitrite.conf
 import io.micronaut.context.ApplicationContext
 import spock.lang.AutoCleanup
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Tests for NitriteConfiguration binding and setter methods.
  *
  * This spec covers:
- * - All setter methods (setDbPath, setUsername, setPassword, setStorageMode, setFieldSeparator, setCreateIndexes)
+ * - All setter methods (setDbPath, setUsername, setPassword, setStorageMode, setSortedReadStrategy,
+ *   setFieldSeparator, setCreateIndexes)
  * - All StorageMode enum values (MVSTORE, IN_MEMORY, ROCKSDB)
  * - Configuration binding from properties
  */
@@ -45,6 +47,30 @@ class NitriteConfigurationSpec extends Specification {
         expect:
         config.getStorageMode() == NitriteConfiguration.StorageMode.IN_MEMORY
         config.getDbPath() == null
+    }
+
+    void "test configuration binding for sorted-read strategy"() {
+        given:
+        ctx = ApplicationContext.run([
+                "micronaut.nitrite.default.sorted-read-strategy": "DATABASE"
+        ])
+
+        expect:
+        ctx.getBean(NitriteConfiguration).getSortedReadStrategy() == NitriteConfiguration.SortedReadStrategy.DATABASE
+    }
+
+    @Unroll
+    void "sorted-read strategy #strategy for #storageMode uses cursor limit: #usesCursorLimit"() {
+        expect:
+        strategy.usesCursorLimit(storageMode) == usesCursorLimit
+
+        where:
+        strategy                                       | storageMode                                  | usesCursorLimit
+        NitriteConfiguration.SortedReadStrategy.AUTO   | NitriteConfiguration.StorageMode.MVSTORE   | true
+        NitriteConfiguration.SortedReadStrategy.AUTO   | NitriteConfiguration.StorageMode.IN_MEMORY | true
+        NitriteConfiguration.SortedReadStrategy.AUTO   | NitriteConfiguration.StorageMode.ROCKSDB   | false
+        NitriteConfiguration.SortedReadStrategy.CURSOR | NitriteConfiguration.StorageMode.ROCKSDB   | true
+        NitriteConfiguration.SortedReadStrategy.DATABASE | NitriteConfiguration.StorageMode.MVSTORE | false
     }
 
     void "test configuration binding from properties - custom field separator"() {

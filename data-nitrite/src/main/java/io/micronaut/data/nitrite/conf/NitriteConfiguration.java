@@ -30,6 +30,7 @@ import io.micronaut.core.naming.Named;
  *       db-path: /data/myapp.db
  *       storage-mode: MVSTORE
  *       create-indexes: true
+ *       sorted-read-strategy: AUTO
  *       username: admin
  *       password: secret
  * </pre>
@@ -59,12 +60,19 @@ public class NitriteConfiguration implements Named {
   private StorageMode storageMode = StorageMode.MVSTORE;
 
   /**
+   * Strategy for applying limits to sorted reads. Defaults to {@code AUTO}, which selects the
+   * strategy measured to be best for the configured storage mode.
+   */
+  private SortedReadStrategy sortedReadStrategy = SortedReadStrategy.AUTO;
+
+  /**
    * The field separator character used for nested properties. Defaults to {@code "."}.
    */
   private String fieldSeparator = ".";
 
   /**
-   * Whether to automatically create indexes based on {@code @Index} annotations.
+   * Whether to automatically create indexes based on {@code @Index} annotations and scalar
+   * identity properties.
    * Defaults to {@code true}.
    */
   private boolean createIndexes = true;
@@ -157,6 +165,22 @@ public class NitriteConfiguration implements Named {
   }
 
   /**
+   * Returns the sorted-read limit strategy.
+   * @return the sorted-read limit strategy
+   */
+  public SortedReadStrategy getSortedReadStrategy() {
+    return sortedReadStrategy;
+  }
+
+  /**
+   * Sets the sorted-read limit strategy.
+   * @param sortedReadStrategy the sorted-read limit strategy
+   */
+  public void setSortedReadStrategy(SortedReadStrategy sortedReadStrategy) {
+    this.sortedReadStrategy = sortedReadStrategy;
+  }
+
+  /**
    * Returns the field separator.
    * @return the field separator
    */
@@ -204,5 +228,31 @@ public class NitriteConfiguration implements Named {
      * RocksDB-backed persistent database.
      */
     ROCKSDB
+  }
+
+  /**
+   * Controls whether sorted row limits are applied by Nitrite or by the returned cursor.
+   */
+  public enum SortedReadStrategy {
+    /** Select the measured strategy for the configured storage mode. */
+    AUTO,
+    /** Remove the limit from the Nitrite find and apply it while reading the cursor. */
+    CURSOR,
+    /** Keep the limit on the Nitrite find. */
+    DATABASE;
+
+    /**
+     * Determines whether the sorted limit should be moved to the cursor.
+     *
+     * @param storageMode the configured storage mode
+     * @return true when the cursor should apply the limit
+     */
+    public boolean usesCursorLimit(StorageMode storageMode) {
+      return switch (this) {
+        case AUTO -> storageMode != StorageMode.ROCKSDB;
+        case CURSOR -> true;
+        case DATABASE -> false;
+      };
+    }
   }
 }

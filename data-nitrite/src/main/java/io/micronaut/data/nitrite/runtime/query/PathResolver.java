@@ -71,15 +71,12 @@ final class PathResolver {
         // Step 2: direct FK match — MANY_TO_ONE whose persistedName == rawField (non-dotted).
         // Matches FK fields stored in the document (e.g. "author" in a Book document).
         if (!rawField.contains(".")) {
-            RuntimeAssociation<?> association = entity.getPersistentProperties().stream()
-                .filter(RuntimeAssociation.class::isInstance)
-                .map(p -> (RuntimeAssociation<?>) p)
-                .filter(assoc -> assoc.getKind() == Relation.Kind.MANY_TO_ONE
-                    && assoc.getPersistedName().equals(rawField))
-                .findFirst()
-                .orElse(null);
-            if (association != null) {
-                return reference(List.of(association), null, rawField);
+            for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+                if (p instanceof RuntimeAssociation<?> assoc
+                        && assoc.getKind() == Relation.Kind.MANY_TO_ONE
+                        && assoc.getPersistedName().equals(rawField)) {
+                    return reference(List.of(assoc), null, rawField);
+                }
             }
         }
 
@@ -131,12 +128,10 @@ final class PathResolver {
      */
     private static @Nullable RuntimePersistentProperty<?> findPropertyByName(RuntimePersistentEntity<?> entity, String name) {
         // Primary: match on property name
-        RuntimePersistentProperty<?> property = entity.getPersistentProperties().stream()
-            .filter(p -> p.getName().equals(name))
-            .findFirst()
-            .orElse(null);
-        if (property != null) {
-            return property;
+        for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+            if (p.getName().equals(name)) {
+                return p;
+            }
         }
         // Fallback 1: identity aliases ("_id", id.getName(), id.getPersistedName())
         try {
@@ -150,29 +145,25 @@ final class PathResolver {
             // Identity might not exist on embedded or non-entity types
         }
         // Fallback 2: persisted-name match for plain (non-association) properties
-        property = entity.getPersistentProperties().stream()
-            .filter(p -> !(p instanceof RuntimeAssociation<?>) && p.getPersistedName().equals(name))
-            .findFirst()
-            .orElse(null);
-        if (property != null) {
-            return property;
+        for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+            if (!(p instanceof RuntimeAssociation<?>) && p.getPersistedName().equals(name)) {
+                return p;
+            }
         }
         // Fallback 3: ONE_TO_MANY/MANY_TO_MANY — match by join-segment {child_collection}_{owner_collection}
         // or by the association's own persisted name (used by MANY_TO_MANY stored as an array field).
         // The {child}_{owner} naming convention mirrors NitriteQueryBuilder.addLookups / NitriteFieldNameResolver;
         // if that convention changes, update both sides in lockstep.
-        return entity.getPersistentProperties().stream()
-            .filter(RuntimeAssociation.class::isInstance)
-            .map(p -> (RuntimeAssociation<?>) p)
-            .filter(assoc -> assoc.getKind() == Relation.Kind.ONE_TO_MANY
-                || assoc.getKind() == Relation.Kind.MANY_TO_MANY)
-            .filter(assoc -> {
+        for (RuntimePersistentProperty<?> p : entity.getPersistentProperties()) {
+            if (p instanceof RuntimeAssociation<?> assoc
+                    && (assoc.getKind() == Relation.Kind.ONE_TO_MANY || assoc.getKind() == Relation.Kind.MANY_TO_MANY)) {
                 String joinSegment = assoc.getAssociatedEntity().getPersistedName() + "_" + entity.getPersistedName();
-                return joinSegment.equals(name) || assoc.getPersistedName().equals(name);
-            })
-            .map(assoc -> (RuntimePersistentProperty<?>) assoc)
-            .findFirst()
-            .orElse(null);
+                if (joinSegment.equals(name) || assoc.getPersistedName().equals(name)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
     private static PathResolution plain(String persistedField) {

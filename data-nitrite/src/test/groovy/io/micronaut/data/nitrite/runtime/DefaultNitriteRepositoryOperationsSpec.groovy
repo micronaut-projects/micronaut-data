@@ -32,9 +32,6 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
     @Inject
     RuntimeEntityRegistry runtimeEntityRegistry
 
-
-
-
     void "test malformed operators"() {
         given:
         def mapper = new NitriteEntityMapper(null, null, runtimeEntityRegistry)
@@ -167,7 +164,5 @@ class DefaultNitriteRepositoryOperationsSpec extends Specification {
         and: "null document yields null"
         mapper.mapDocument(null, ["name"], persistentEntity, String, false) == null
     }
-
-
 
 }

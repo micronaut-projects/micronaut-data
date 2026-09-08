@@ -51,6 +51,7 @@ import io.micronaut.data.nitrite.runtime.query.NitriteFilterUtils;
 import io.micronaut.data.nitrite.runtime.query.NitriteQueryParser;
 import io.micronaut.data.nitrite.runtime.read.CollectionAggregator;
 import io.micronaut.data.nitrite.runtime.read.CollectionProjectionMapper;
+import io.micronaut.data.nitrite.runtime.read.CursorWindow;
 import io.micronaut.data.nitrite.runtime.read.JoinFetcher;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -96,6 +97,7 @@ public final class NitriteCriteriaExecutor {
     private final CollectionProjectionMapper projectionMapper;
     private final ConversionService conversionService;
     private final JoinFetcher joinFetcher;
+    private final boolean useCursorLimitForSortedReads;
 
     /**
      * Creates a new NitriteCriteriaExecutor.
@@ -107,6 +109,7 @@ public final class NitriteCriteriaExecutor {
      * @param conversionService the conversion service
      * @param collectionFactory the collection factory function
      * @param entityFactory the entity factory function
+     * @param useCursorLimitForSortedReads whether sorted bounds should be moved to the cursor
      */
     public NitriteCriteriaExecutor(QueryBuilder queryBuilder,
                                    NitriteEntityMapper entityMapper,
@@ -114,7 +117,8 @@ public final class NitriteCriteriaExecutor {
                                    NitriteFilterBuilder filterBuilder,
                                    ConversionService conversionService,
                                    Function<Class<?>, NitriteCollection> collectionFactory,
-                                   Function<Class<?>, RuntimePersistentEntity<?>> entityFactory) {
+                                   Function<Class<?>, RuntimePersistentEntity<?>> entityFactory,
+                                   boolean useCursorLimitForSortedReads) {
         this.queryBuilder = queryBuilder;
         this.entityMapper = entityMapper;
         this.queryParser = queryParser;
@@ -122,6 +126,7 @@ public final class NitriteCriteriaExecutor {
         this.collectionFactory = collectionFactory;
         this.entityFactory = entityFactory;
         this.conversionService = conversionService;
+        this.useCursorLimitForSortedReads = useCursorLimitForSortedReads;
         this.projectionMapper = new CollectionProjectionMapper(new ValueConverter(conversionService), entityMapper);
         this.joinFetcher = new JoinFetcher(entityMapper, collectionFactory, entityFactory, conversionService);
     }
@@ -260,12 +265,20 @@ public final class NitriteCriteriaExecutor {
             projectedFields = queryParser.extractProjectionFields(parsedQuery);
         }
 
+        // A sorted find is issued unbounded and bounded while its cursor is read: see CursorWindow.
+        // Taking the bound off here rather than in readDocuments keeps that a property of the plan,
+        // decided once when the options are built, instead of an edit readDocuments makes to a
+        // record every other reader treats as immutable - which would leave a second read of the
+        // same plan unbounded.
+        long cursorLimit = CursorWindow.withholdSortedLimit(options, useCursorLimitForSortedReads);
+
         return new CriteriaReadPlan(
             entityType,
             persistentEntity,
             resultType,
             filter,
             options,
+            cursorLimit,
             joinPaths,
             hasInnerJoin(joinPaths),
             window,
@@ -289,7 +302,7 @@ public final class NitriteCriteriaExecutor {
             stream = cursor.project(nativeProjection(plan));
         }
 
-        List<Document> documents = stream.toList();
+        List<Document> documents = CursorWindow.limit(stream, plan.cursorLimit()).toList();
         if (plan.innerJoin()) {
             documents = nativeJoin == null
                 ? restrictToInnerJoins(documents, plan.joinPaths(), plan.entityType())
@@ -369,10 +382,14 @@ public final class NitriteCriteriaExecutor {
     }
 
     private <T> List<T> mapDocuments(List<Document> documents, CriteriaReadPlan plan, Class<T> type) {
-        return documents.stream()
-            .map(document -> mapDocument(document, plan, type))
-            .filter(Objects::nonNull)
-            .toList();
+        List<T> results = new ArrayList<>(documents.size());
+        for (Document document : documents) {
+            T result = mapDocument(document, plan, type);
+            if (result != null) {
+                results.add(result);
+            }
+        }
+        return results;
     }
 
     private <T> void fetchRemainingJoins(
@@ -858,6 +875,7 @@ public final class NitriteCriteriaExecutor {
         Class<?> resultType,
         Filter filter,
         FindOptions options,
+        long cursorLimit,
         Set<JoinPath> joinPaths,
         boolean innerJoin,
         Window window,

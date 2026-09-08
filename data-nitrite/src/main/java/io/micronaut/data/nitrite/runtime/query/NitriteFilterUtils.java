@@ -50,8 +50,10 @@ public final class NitriteFilterUtils {
      * a plain lambda is not a {@code NitriteFilter} and would instead be evaluated against every
      * document in the collection.
      *
-     * <p>{@link Long#MIN_VALUE} is the impossible id: {@code NitriteId} values come from a snowflake
-     * generator and are always positive.
+     * <p>{@link Long#MIN_VALUE} is the impossible id. A generated {@code NitriteId} comes from a
+     * snowflake generator and is always positive, and an assigned identity, which the mapper also
+     * stores as the document key, is withheld at this one value for exactly this reason - see
+     * {@code NitriteEntityMapper.documentKeyOf}. Change the sentinel only in both places at once.
      *
      * <p>A new instance is returned per call because Nitrite mutates a filter while planning it,
      * setting the config and collection name on it; a shared constant would be written to

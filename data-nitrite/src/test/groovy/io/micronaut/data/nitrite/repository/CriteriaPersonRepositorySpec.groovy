@@ -4,6 +4,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.nitrite.model.CriteriaPerson
 import io.micronaut.data.nitrite.model.CriteriaBook
 import io.micronaut.data.nitrite.operations.NitriteRepositoryOperations
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
+import io.micronaut.data.operations.CriteriaRepositoryOperations
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -32,12 +34,6 @@ class CriteriaPersonRepositorySpec extends Specification {
         ])
     }
 
-    // ========== Section 3: Null Check Predicates ==========
-
-    // ========== Section 4: BETWEEN Predicate ==========
-
-    // ========== Section 5: IN / NOT IN Predicates ==========
-
     void "test criteria NOT IN"() {
         given:
         repository.save(new CriteriaPerson("Alice", 25))
@@ -53,11 +49,30 @@ class CriteriaPersonRepositorySpec extends Specification {
         results*.name.containsAll(["Denis", "Josh", "Alice", "Charlie"])
     }
 
-    // ========== Section 6: Logical Operators (AND, OR, NOT) ==========
+    void "test criteria limit of zero returns nothing whether or not the query is sorted"() {
+        given:
+        def ops = (CriteriaRepositoryOperations) operations
+        def cb = ops.criteriaBuilder
 
-    // ========== Section 7: LIKE Predicate ==========
+        when: "a bound of zero rows is asked for without a sort"
+        def unsorted = (PersistentEntityCriteriaQuery) cb.createQuery(CriteriaPerson)
+        def unsortedRoot = unsorted.from(CriteriaPerson)
+        unsorted.select(unsortedRoot)
+        unsorted.limit(0)
 
-    // ========== Section 8: exists / paginated findAll ==========
+        then:
+        ops.findAll(unsorted).isEmpty()
+
+        when: "the same bound is asked for alongside an order by"
+        def sorted = (PersistentEntityCriteriaQuery) cb.createQuery(CriteriaPerson)
+        def sortedRoot = sorted.from(CriteriaPerson)
+        sorted.select(sortedRoot)
+        sorted.orderBy(cb.asc(sortedRoot.get("name")))
+        sorted.limit(0)
+
+        then: "the sort does not turn the bound into no bound at all"
+        ops.findAll(sorted).isEmpty()
+    }
 
     void "test criteria exists"() {
         when:
@@ -187,12 +202,6 @@ class CriteriaPersonRepositorySpec extends Specification {
         results.size() == 2
         results*.name.containsAll(["Denis", "Josh"])
     }
-
-    // ========== Section 11: Criteria fallbacks — the string-query path ==========
-    //
-    // NitriteCriteriaExecutor first tries to build a runtime filter directly. A query carrying an
-    // aggregation or a join declines that fast path and falls back to the compiled string query,
-    // so each of these covers a distinct fallback entry point.
 
     void "a non-aggregate selection typed as a count still reports the collection size"() {
         given:

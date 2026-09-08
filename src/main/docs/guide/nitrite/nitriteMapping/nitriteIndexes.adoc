@@ -5,9 +5,13 @@ Micronaut Data Nitrite automatically creates indexes based on standard Micronaut
 
 You can define indexes at the class level or property level using ann:data.annotation.Index[] or ann:data.annotation.Indexes[].
 
-=== Primary Key Uniqueness
+=== Identity Indexing and Uniqueness
 
-No secondary index is created on the identity property. Nitrite enforces document uniqueness internally through its own `_id` field, and Micronaut Data Nitrite deliberately avoids adding a unique index on `id`: doing so would cause spurious constraint violations for identifiers generated in rapid succession (for example, timestamp-based `Long`/`Integer` ids, see <<nitriteIdGenerator>>).
+A `Long` identity is written into Nitrite's own `_id` document key as well as into the `id` field, so its lookups are already a single key seek and its uniqueness is already enforced by that key. No secondary index is created for it: measured over the benchmark suite, one cost 29.8% of transactional write throughput on MVStore, 19.5% in memory, and 26.0% of association reads.
+
+Every other scalar identity - `String`, `UUID`, `Integer` and the rest - cannot be held in `_id`, so Micronaut Data Nitrite creates a unique index on the `id` field instead. That index is what makes an identity lookup seekable and what raises api:data.exceptions.EntityExistsException[] when `insert` is given an identity that already exists.
+
+Composite, embedded and association identities are given no identity index.
 
 === Property-level Index
 
@@ -41,37 +45,31 @@ Spatial indexes are covered in <<nitriteSpatial>>.
 
 === Indexes and Sorting
 
-An index on a sort field does more than speed up filtering. When a query has no filter, orders by
-exactly one field, and asks for a bounded number of records, Nitrite takes the ordering from a
-simple index on that field — which already holds the value for every document — and fetches only
-the records actually returned. Without such an index the sort has to deserialize every stored
-document to read the one field it orders by, so the query costs what reading the whole collection
-costs however few records are returned.
+When a query has no filter, orders by exactly one field, and asks for a bounded number of records,
+Nitrite takes the ordering from a simple index on that field rather than blocking-sorting the
+collection. That path is slower than the sort it replaces: measured against Nitrite 5.3.0 it cost
+about 3.4 times a blocking sort at every collection size and every bound tried, and its cost grows
+with the size of the collection rather than with the number of records asked for.
 
-The conditions are narrow, and all of them have to hold:
+A sorted read is therefore issued unbounded and bounded while its cursor is read, whether the bound
+comes from a `Pageable` page size, from a `Limit`, or from returning a single result. A skip does
+not select the index path and is left with the find, so only a suffix of the cursor is ever
+dropped. Ordering, null placement and tie-breaking are unaffected.
 
-* the query has no `WHERE` clause of its own;
-* it orders by a single property — a second sort key disqualifies it, including the identity
-  properties appended to a <<nitriteCompositeId, cursored>> page;
-* it is bounded, by `Pageable` size, by `Limit`, or by returning a single result — an unpaged
-  sorted `findAll` is not. Note the method-name form: an unfiltered ordered finder is
-  `findFirstOrderByCreatedAtDesc()`, without a `By` — `findFirstBy...` expects a property to
-  filter on and does not compile;
-* a property-level `@Index` (unique or non-unique) exists on exactly that property. A compound
-  index does not qualify, and neither does a full-text or spatial index.
+The default `AUTO` strategy uses this cursor-side behavior for MVSTORE and in-memory storage. It
+keeps the bound on the Nitrite find for ROCKSDB, whose bounded indexed path is faster in the
+benchmark. Set `sorted-read-strategy` to `CURSOR` or `DATABASE` to force one strategy for all
+storage modes; see <<nitriteConfiguration>>.
 
-The results are identical either way — the same comparator runs over keys read from the index
-instead of from the documents, so ordering, null placement and tie-breaking do not change. A
-collection-valued property is indexed once per element rather than once per document, and is
-detected and excluded, falling back to the ordinary sort.
+For a single-result read this changes nothing a caller can observe: a `Top`/`First` query returns
+the first record, and any other single-result query still reads a second record to detect a
+non-unique result and raises api:data.exceptions.NonUniqueResultException[] rather than silently
+returning the first.
 
-Bounding a single-result read does not weaken it: a query that matches more than one record still
-raises api:data.exceptions.NonUniqueResultException[] rather than silently returning the first.
+=== Managing Indexes Directly
 
-The gain grows with document size and collection size, and is largest where a small page is taken
-from a large collection of large documents. Where documents are small the index read replaces a
-document read that was already cheap, so such a query can be marginally slower.
+A `NitriteIndexManagement` bean is created for each datasource. It drops and rebuilds a unique index on a named collection field, and `dropUniqueIndex` returns a closeable scope that rebuilds the index when the scope closes, so a bulk load can run unindexed without leaving the collection unindexed if it fails. Index DDL is not part of a Nitrite transaction, so this is the only way to undo a drop.
 
 === Configuration
 
-Automatic index creation can be disabled by setting `create-indexes` to `false` for the datasource, for example `micronaut.nitrite.default.create-indexes`.
+Automatic index creation, including the identity index, can be disabled by setting `create-indexes` to `false` for the datasource, for example `micronaut.nitrite.default.create-indexes`. Without the identity index a duplicate non-`Long` identity is no longer rejected by the database, so `insert` of an entity whose identity already exists writes a second document rather than raising api:data.exceptions.EntityExistsException[].

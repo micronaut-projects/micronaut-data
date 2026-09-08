@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,10 +158,12 @@ final class AssociationFilterResolver {
 
         RuntimePersistentProperty<?> targetProperty = associatedEntity.getPropertyByName(targetPropertyName);
         if (targetProperty == null) {
-            targetProperty = associatedEntity.getPersistentProperties().stream()
-                .filter(p -> p.getPersistedName().equals(targetPropertyName))
-                .findFirst()
-                .orElse(null);
+            for (RuntimePersistentProperty<?> p : associatedEntity.getPersistentProperties()) {
+                if (p.getPersistedName().equals(targetPropertyName)) {
+                    targetProperty = p;
+                    break;
+                }
+            }
         }
         if (targetProperty == null) {
             return null;
@@ -172,7 +175,8 @@ final class AssociationFilterResolver {
         }
         String backRefPersistedName = backRefProp.getPersistedName();
 
-        Map<String, Object> subFilterMap = Map.of(targetProperty.getPersistedName(), Map.of(EQ, value));
+        Map<String, Object> subFilterMap = Collections.singletonMap(
+            targetProperty.getPersistedName(), Collections.singletonMap(EQ, value));
 
         List<CompositeJoinColumn> joinColumns = entityMapper.getCompositeJoinColumns(
             associatedEntity.getIntrospection().getBeanType(), mappedBy);

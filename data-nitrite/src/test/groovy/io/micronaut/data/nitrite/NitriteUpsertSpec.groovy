@@ -4,11 +4,11 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.nitrite.model.DuplicateTestEntity
 import io.micronaut.data.nitrite.model.LongIdEntity
 import io.micronaut.data.nitrite.model.StringIdEntity
-import io.micronaut.data.nitrite.model.VersionedRecord
 import io.micronaut.data.nitrite.repository.DuplicateTestRepository
 import io.micronaut.data.nitrite.repository.LongIdRepository
 import io.micronaut.data.nitrite.repository.StringIdRepository
-import io.micronaut.data.nitrite.repository.VersionedRecordRepository
+import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper
+import org.dizitart.no2.collection.Document
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -16,11 +16,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Consolidated regression tests for Nitrite save() upsert behavior.
+ * Consolidated regression tests for Nitrite Jakarta Data save behavior.
  *
  * Verifies that save() correctly handles:
  * - New entities (no ID) → INSERT with generated ID
- * - Existing entities (has ID) → UPSERT (update or insert if absent)
+ * - Existing entities (has ID) → UPDATE
+ * - Assigned IDs that are not present → INSERT
  * - Different ID types: UUID, String, Long
  * - Both IN_MEMORY and MVSTORE storage modes
  */
@@ -83,7 +84,45 @@ class NitriteUpsertSpec extends Specification {
         mode << ["IN_MEMORY", "MVSTORE"]
     }
 
-    // ========== Helper Methods ==========
+    def "an entity stored without the identity as its document key is still found by id"() {
+        given: "a document written the way a store predating the document-key optimisation holds it"
+        def ctx = createContext("IN_MEMORY", "foreign-document-key")
+        def repo = ctx.getBean(LongIdRepository)
+        def helper = ctx.getBean(NitriteOperationsHelper)
+        repo.deleteAll()
+
+        def stored = Document.createDocument("id", 7L).put("name", "written-elsewhere")
+        helper.getCollection(LongIdEntity).insert(stored)
+
+        expect: "its key is Nitrite's own, unrelated to the identity"
+        stored.getId().getIdValue() != 7L
+
+        when: "it is looked up by that identity"
+        def found = repo.findById(7L)
+
+        then: "the lookup does not depend on the identity having been used as the key"
+        found.present
+        found.get().name == "written-elsewhere"
+
+        when: "the same document is updated through its identity"
+        def toUpdate = found.get()
+        toUpdate.name = "updated"
+        repo.update(toUpdate)
+
+        then: "the update lands on it rather than inserting a second document"
+        repo.count() == 1
+        repo.findById(7L).get().name == "updated"
+
+        when: "and deleted through its identity"
+        repo.deleteById(7L)
+
+        then:
+        repo.findById(7L).isEmpty()
+        repo.count() == 0
+
+        cleanup:
+        ctx.close()
+    }
 
     private ApplicationContext createContext(String mode, String testName) {
         Files.createDirectories(Path.of("build/test-db"))
@@ -111,15 +150,6 @@ class NitriteUpsertSpec extends Specification {
             case "UUID": return new DuplicateTestEntity((UUID) id, name)
             case "String": return new StringIdEntity((String) id, name)
             case "Long": return new LongIdEntity((Long) id, name)
-            default: throw new IllegalArgumentException("Unknown ID type: $idType")
-        }
-    }
-
-    private def getId(def entity, String idType) {
-        switch (idType) {
-            case "UUID": return ((DuplicateTestEntity) entity).id
-            case "String": return ((StringIdEntity) entity).id
-            case "Long": return ((LongIdEntity) entity).id
             default: throw new IllegalArgumentException("Unknown ID type: $idType")
         }
     }

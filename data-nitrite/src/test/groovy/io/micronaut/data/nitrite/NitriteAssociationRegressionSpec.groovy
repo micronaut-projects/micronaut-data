@@ -8,7 +8,6 @@ import io.micronaut.data.nitrite.repository.ClubRepository
 import io.micronaut.data.nitrite.repository.CriteriaAuthorRepository
 import io.micronaut.data.nitrite.repository.CriteriaBookRepository
 import io.micronaut.data.nitrite.repository.MemberRepository
-import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification

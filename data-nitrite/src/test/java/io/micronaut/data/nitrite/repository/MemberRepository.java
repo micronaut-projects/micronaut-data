@@ -14,4 +14,7 @@ public interface MemberRepository extends CrudRepository<Member, String> {
 
     @Join("clubs")
     Optional<Member> findByName(String name);
+
+    @Join("clubs")
+    List<Member> findAllOrderByName();
 }

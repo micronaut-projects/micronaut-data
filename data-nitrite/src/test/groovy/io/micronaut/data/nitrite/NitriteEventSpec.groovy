@@ -7,19 +7,13 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-
 /**
- * Tests for Event repository operations including predicates, temporal types, and transactions.
+ * Tests for Event repository predicate support.
  *
  * This spec covers:
  * - IS TRUE / IS FALSE predicates (via processed field)
  * - IS EMPTY / IS NOT EMPTY predicates (via payload field)
- * - IS NULL / IS NOT NULL predicates
- * - Temporal type handling (Instant, LocalDate, LocalDateTime)
- * - Transaction commit and rollback behavior
+ * - NOT IN predicates
  */
 @MicronautTest(transactional = false)
 class NitriteEventSpec extends Specification {
@@ -66,16 +60,6 @@ class NitriteEventSpec extends Specification {
         then:
         results*.type == ["type2"]
     }
-
-    // ========== Section 3: Null Check Predicates ==========
-
-    // ========== Section 4: Temporal Type Tests ==========
-
-    // ========== Section 5: Comparison Operators ==========
-
-    // ========== Section 6: Pattern Matching ==========
-
-    // ========== Section 7: Logical Operators (AND/OR/NOT) ==========
 
     // ========== Section 8: IN/NOT IN Predicates ==========
 

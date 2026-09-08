@@ -12,6 +12,10 @@ The following settings are supported for each datasource:
     * `ROCKSDB`: RocksDB-backed persistent database.
 - `field-separator`: The character used to separate nested fields in query strings (default: `.`).
 - `create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
+- `sorted-read-strategy`: How limits are applied to sorted reads (default: `AUTO`):
+    * `AUTO`: Uses cursor-side limits for MVSTORE and in-memory storage, and database-side limits for ROCKSDB.
+    * `CURSOR`: Always removes the limit from the Nitrite find and applies it while reading the cursor.
+    * `DATABASE`: Always keeps the limit on the Nitrite find.
 - `username`: Optional username (for authenticated databases).
 - `password`: Optional password.
 

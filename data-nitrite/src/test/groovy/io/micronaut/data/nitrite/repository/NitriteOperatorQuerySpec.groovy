@@ -15,13 +15,6 @@ class NitriteOperatorQuerySpec extends Specification {
         eventRepository.deleteAll()
     }
 
-
-
-
-
-
-
-
     void "test findByPayloadEmptyWithQuery uses \$empty operator"() {
         given:
         eventRepository.save(new Event("A", ""))

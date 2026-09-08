@@ -27,8 +27,6 @@ import jakarta.persistence.criteria.Root
 import jakarta.persistence.criteria.Selection
 import spock.lang.Specification
 
-import java.time.Instant
-
 /**
  * Regression-focused tests for Nitrite query builder/runtime edge cases.
  *
@@ -330,13 +328,6 @@ class NitriteQueryBuilderSpec extends Specification {
         results*.payload == ["middle"]
     }
 
-
-
-
-
-
-
-
     void "test regex via criteria returns matching events"() {
         given:
         eventRepository.save(new Event("ORDER_CREATED", "p1"))
@@ -353,9 +344,6 @@ class NitriteQueryBuilderSpec extends Specification {
         results.size() == 2
         results*.type.every { it.startsWith("ORDER") }
     }
-
-
-
 
     void "test count distinct via criteria query builder"() {
         given:
@@ -501,9 +489,6 @@ class NitriteQueryBuilderSpec extends Specification {
         results.size() == 1
         results[0].type == "order-created"
     }
-
-
-
 
     void "test buildInsert and buildLimitAndOffset"() {
         given:

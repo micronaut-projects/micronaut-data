@@ -2,7 +2,6 @@ package io.micronaut.data.nitrite
 
 import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.nitrite.model.ManualIdVersionedPerson
-import io.micronaut.data.nitrite.model.ProjectId
 import io.micronaut.data.nitrite.model.VersionedProject
 import io.micronaut.data.nitrite.repository.ManualIdVersionedPersonRepository
 import io.micronaut.data.nitrite.repository.VersionedProjectRepository
@@ -35,7 +34,7 @@ class NitriteManualIdVersionBugSpec extends Specification {
         projectRepository.deleteAll()
     }
 
-    void "saveAll with manually assigned ids upserts each entity by id"() {
+    void "saveAll with manually assigned ids inserts each new entity"() {
         given: "brand new entities that already carry a manually assigned (non-null) id"
             def batch = [
                 new ManualIdVersionedPerson("Amy", 20),
@@ -45,12 +44,9 @@ class NitriteManualIdVersionBugSpec extends Specification {
         when:
             def saved = repository.saveAll(batch).toList()
 
-        then: "each is upserted by its pre-set id, not treated as a duplicate insert"
+        then: "each is inserted by its pre-set id, not treated as an existing entity"
             saved.size() == 2
-            // Unlike single save() (see above), saveAll()'s upsert path does not special-case
-            // a fresh entity with a pre-set id: it always goes through the update-with-upsert
-            // branch, which increments the version like any other update.
-            saved*.version == [1L, 1L]
+            saved*.version == [0L, 0L]
             repository.findFirstByNameOrderByAgeAsc("Amy").isPresent()
             repository.findFirstByNameOrderByAgeAsc("Ben").isPresent()
     }
@@ -65,6 +61,19 @@ class NitriteManualIdVersionBugSpec extends Specification {
             repository.insertBatch([duplicate])
 
         then:
+            thrown(EntityExistsException)
+    }
+
+    void "inherited insertAll rejects an id that already exists"() {
+        given: "an entity whose identity is already present"
+            def existing = repository.save(new ManualIdVersionedPerson("Existing", 30))
+            def duplicate = new ManualIdVersionedPerson("Duplicate", 31)
+            duplicate.id = existing.id
+
+        when: "the inherited CrudRepository insertAll operation is used"
+            repository.insertAll([duplicate])
+
+        then: "insertAll remains strict instead of being treated as saveAll"
             thrown(EntityExistsException)
     }
 

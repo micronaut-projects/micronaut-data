@@ -35,7 +35,7 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncEntitiesOperations;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.exceptions.UniqueConstraintException;
 import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +52,15 @@ import java.util.stream.IntStream;
 /**
  * Internal entities operations for Nitrite with automatic event firing and version handling.
  * <p>
- * <b>Save All (INSERT) Operation:</b> Uses upsert semantics for each entity:
- * <ul>
- *   <li>If an entity has no ID: generates an ID and inserts as a new document</li>
- *   <li>If an entity has an existing ID: updates (replaces) the document if found, or inserts if not found</li>
- * </ul>
- * This allows {@code saveAll()} to work for mixed batches of new and existing entities.
+ * <b>Save All (INSERT) Operation:</b> follows Jakarta Data {@code BasicRepository.save} semantics
+ * for each entity: an identity found in the store is updated, and an identity not found in the
+ * store is inserted.
+ * This allows {@code saveAll()} to work for mixed batches of new and existing entities without
+ * using Nitrite's insert-if-absent update option.
  * <p>
- * <b>Update All (UPDATE) Operation:</b> Replaces existing documents by ID.
- * Requires all entities to have IDs; throws {@link OptimisticLockException} if version mismatch occurs.
+ * <b>Update All (UPDATE) Operation:</b> Replaces existing documents by ID, and never inserts.
+ * An entity whose document is absent, or whose version does not match, affects no rows and raises
+ * {@link OptimisticLockException}, versioned or not. An entity with no ID is skipped.
  *
  * @param <T> The entity type
  * @since 5.2.0
@@ -74,11 +74,13 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     private final NitriteCollection collection;
     private List<T> entities;
     private final boolean insert;
+    /** Whether the current execute call is writing the insert half of a mixed save batch. */
+    private boolean executingInsert;
     private final NitriteEntityMapper entityMapper;
     private final ObjectRepositoryWriter<T> repositoryWriter;
     private final SyncCascadeOperations<NitriteOperationContext> cascadeOperations;
     private final NitriteOperationsHelper helper;
-    /** Prior version per entity, keyed by identity. Populated by triggerPre for !insert paths. */
+    /** Prior version per entity, keyed by identity. Populated before every lifecycle phase. */
     private @Nullable IdentityHashMap<T, Object> priorVersions;
     /** Documents actually removed, which can be fewer than the entities passed in. */
     private long affectedCount;
@@ -122,6 +124,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
             }
         }
         this.insert = insert;
+        this.executingInsert = insert;
     }
 
     @Override
@@ -152,15 +155,28 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
             NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType());
 
-            // Partition once: new entities have no ID, existing entities have one.
+            // Jakarta Data save determines insert/update from whether the identity exists in the
+            // store. A non-null assigned identity is not enough to select update. Explicit insert
+            // is strict and therefore bypasses the existence check entirely.
             List<T> newEntities = new ArrayList<>();
             List<T> existingEntities = new ArrayList<>();
-            for (T entity : entities) {
-                if (!ctx.isStrictInsert() && entityMapper.getEntityIdValue(meta, entity) != null) {
-                    existingEntities.add(entity);
-                } else {
-                    newEntities.add(entity);
+            if (insert || ctx.isSave()) {
+                for (T entity : entities) {
+                    Object id = entityMapper.getEntityIdValue(meta, entity);
+                    boolean existing = false;
+                    if (!ctx.isStrictInsert() && id != null) {
+                        Filter identityFilter = entityMapper.idEqualsFilter(meta, id);
+                        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
+                        existing = NitriteCrudOperations.exists(collection, identityFilter, legacyIdentityFilter);
+                    }
+                    if (existing) {
+                        existingEntities.add(entity);
+                    } else {
+                        newEntities.add(entity);
+                    }
                 }
+            } else {
+                existingEntities.addAll(entities);
             }
 
             // Pre-phase: new entities (persist lifecycle).
@@ -179,30 +195,39 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 }
             }
 
-            // Execute over the combined list. newEntities first so execute()'s index loop
-            // stays stable; subList views below reflect any entity replacements made by execute().
-            List<T> combined = new ArrayList<>(newEntities.size() + existingEntities.size());
-            combined.addAll(newEntities);
-            combined.addAll(existingEntities);
-            this.entities = combined;
-            execute();
+            // Execute each lifecycle half using its matching write operation. The collection
+            // insert must not be attempted for entities that were classified as existing.
+            if (!newEntities.isEmpty()) {
+                this.entities = newEntities;
+                executingInsert = true;
+                execute();
+            }
+            if (!existingEntities.isEmpty()) {
+                this.entities = existingEntities;
+                executingInsert = false;
+                execute();
+            }
 
-            // Post-phase using subList views — mutations from execute() are visible here.
-            int newCount = newEntities.size();
-            if (newCount > 0) {
-                this.entities = combined.subList(0, newCount);
+            // Post-phase over the halves themselves. An immutable entity given a generated id or
+            // an initial version is replaced by a new instance in the list execute() was handed,
+            // so the combined view has to be built from the halves after execute() has run.
+            if (!newEntities.isEmpty()) {
+                this.entities = newEntities;
                 triggerPostPersist();
                 if (persistentEntity.cascadesPersist()) {
                     cascadePost(Relation.Cascade.PERSIST);
                 }
             }
-            if (newCount < combined.size()) {
-                this.entities = combined.subList(newCount, combined.size());
+            if (!existingEntities.isEmpty()) {
+                this.entities = existingEntities;
                 triggerPostUpdate();
                 if (persistentEntity.cascadesUpdate()) {
                     cascadePost(Relation.Cascade.UPDATE);
                 }
             }
+            List<T> combined = new ArrayList<>(newEntities.size() + existingEntities.size());
+            combined.addAll(newEntities);
+            combined.addAll(existingEntities);
             this.entities = combined;
 
         } catch (EntityExistsException | OptimisticLockException e) {
@@ -226,6 +251,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         List<Filter> filters = new ArrayList<>();
+        List<Filter> legacyFilters = new ArrayList<>();
         List<T> entitiesToDelete = new ArrayList<>();
 
         for (T entity : entities) {
@@ -241,11 +267,14 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 Object versionValue = versionProperty.get(entity);
                 filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
+            Filter legacyFilter = legacyIdentityFilter(meta, idValue,
+                meta.versionProp() == null ? null : meta.versionProp().getProperty().get(entity));
 
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             if (entityEventListener.preRemove((EntityEventContext<Object>) event)) {
                 entitiesToDelete.add(event.getEntity());
                 filters.add(filter);
+                legacyFilters.add(legacyFilter);
             }
         }
 
@@ -255,14 +284,14 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
 
         int count = 0;
-        for (Filter filter : filters) {
-            if (collection.remove(filter, false).getAffectedCount() > 0) {
+        for (int i = 0; i < filters.size(); i++) {
+            if (NitriteCrudOperations.remove(collection, filters.get(i), legacyFilters.get(i)) > 0) {
                 count++;
             }
         }
         affectedCount = count;
 
-        if (meta.versionProp() != null && count != entitiesToDelete.size()) {
+        if (count != entitiesToDelete.size()) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + entitiesToDelete.size() + " got: " + count);
         }
 
@@ -276,16 +305,15 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
     @Override
     protected void execute() throws RuntimeException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("execute: insert={}, entities count={}", insert, entities.size());
+            LOG.debug("execute: insert={}, entities count={}", executingInsert, entities.size());
         }
 
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
-        if (insert) {
-            // saveAll() operation uses upsert semantics for each entity:
-            // - If entity has no ID: generate ID and insert as new document
-            // - If entity has ID: update (replace) existing document, or insert if not found
+        if (executingInsert) {
+            // Standard save/insert operations use a strict batch insert. Existing save entities
+            // were partitioned into the update lifecycle above; no insert-if-absent update is used.
             List<Document> docsToInsert = new ArrayList<>();
 
             for (int i = 0; i < entities.size(); i++) {
@@ -295,52 +323,17 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     continue;
                 }
 
-                Object id = entityMapper.getEntityIdValue(meta, entity);
-                if (id != null) {
-                    if (ctx.isStrictInsert()) {
-                        Filter filter = entityMapper.idEqualsFilter(meta, id);
-                        if (!collection.find(filter).isEmpty()) {
-                            throw new EntityExistsException("Entity already exists with id: " + id);
-                        }
-                        if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
-                            BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
-                            entity = helper.updateEntityId(versionProperty, entity, 0L);
-                            entities.set(i, entity);
-                        }
-                        Document doc = repositoryWriter.toDocument(entity);
-                        if (doc != null) {
-                            docsToInsert.add(doc);
-                        }
-                        continue;
-                    }
-                    if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
-                        entity = helper.updateEntityId(versionProperty, entity, 0L);
-                        entities.set(i, entity);
-                    }
-                    Document doc = repositoryWriter.toDocument(entity);
-                    if (doc != null) {
-                        Filter filter = entityMapper.idEqualsFilter(meta, id);
-                        helper.logUpdate(collection.getName(), filter, doc);
-                        long rows = collection.update(filter, doc, UpdateOptions.updateOptions(true)).getAffectedCount();
-                        if (meta.versionProp() != null) {
-                            if (rows != 1) {
-                                throw new OptimisticLockException("Upsert expected 1 row but got " + rows);
-                            }
-                        }
-                        ctx.persisted.add(entity);
-                    }
-                } else {
+                if (entityMapper.getEntityIdValue(meta, entity) == null) {
                     helper.generateIdIfNecessary(entity, type);
-                    if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
-                        entity = helper.updateEntityId(versionProperty, entity, 0L);
-                        entities.set(i, entity);
-                    }
-                    Document doc = repositoryWriter.toDocument(entity);
-                    if (doc != null) {
-                        docsToInsert.add(doc);
-                    }
+                }
+                if (meta.versionProp() != null && repositoryWriter.needsVersionInit(entity)) {
+                    BeanProperty<T, Object> versionProperty = meta.versionProp().getProperty();
+                    entity = helper.updateEntityId(versionProperty, entity, 0L);
+                    entities.set(i, entity);
+                }
+                Document doc = repositoryWriter.toDocument(entity);
+                if (doc != null) {
+                    docsToInsert.add(doc);
                 }
             }
 
@@ -348,20 +341,33 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                     helper.logInsert(collection.getName(), "batch of " + docsToInsert.size());
                 }
-                collection.insert(docsToInsert.toArray(new Document[0]));
+                try {
+                    collection.insert(docsToInsert.toArray(new Document[0]));
+                } catch (UniqueConstraintException e) {
+                    // Nitrite reports the collision without naming the document, and the batch is
+                    // written as one call, so the identity cannot be narrowed down here.
+                    throw new EntityExistsException(
+                        "One or more entities already exist in collection: " + collection.getName(), e);
+                }
+                affectedCount = docsToInsert.size();
                 ctx.persisted.addAll(entities);
             }
         } else {
             // updateAll() operation: replace existing documents by ID.
-            int expectedCount = entities.size();
-            long affectedCount = 0;
+            int expectedCount = 0;
+            long updatedCount = 0;
 
             for (int i = 0; i < entities.size(); i++) {
                 T entity = entities.get(i);
                 Object id = entityMapper.getEntityIdValue(meta, entity);
+                if (id == null) {
+                    continue;
+                }
+                expectedCount++;
                 Filter filter = entityMapper.idEqualsFilter(meta, id);
+                Object versionValue = null;
                 if (meta.versionProp() != null) {
-                    Object versionValue = priorVersions != null ? priorVersions.get(entity) : null;
+                    versionValue = priorVersions != null ? priorVersions.get(entity) : null;
                     if (versionValue == null) {
                         versionValue = meta.versionProp().getProperty().get(entity);
                     }
@@ -373,16 +379,37 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 Document update = repositoryWriter.toDocument(entity);
                 if (update != null) {
                     helper.logUpdate(collection.getName(), filter, update);
-                    boolean upsert = meta.versionProp() == null && id != null;
-                    long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
-                    affectedCount += rows;
+                    long rows = NitriteCrudOperations.update(
+                        collection, filter, legacyIdentityFilter(meta, id, versionValue), update);
+                    updatedCount += rows;
                 }
             }
 
-            if (meta.versionProp() != null && affectedCount != expectedCount) {
-                throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expectedCount + " got: " + affectedCount);
+            affectedCount = updatedCount;
+            if (updatedCount != expectedCount) {
+                throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + expectedCount + " got: " + updatedCount);
             }
         }
+    }
+
+    /**
+     * The filter over the identity field for a document whose Nitrite key is not its identity.
+     * A versioned filter is an AND over the identity, so the fallback has to carry the version
+     * clause too or it would write over a stale document.
+     *
+     * @param meta the entity metadata
+     * @param id the identity value
+     * @param versionValue the version the document is expected to hold, or {@code null} when the
+     *        entity is unversioned
+     * @return the fallback filter, or {@code null} when the identity is always the document key
+     */
+    private @Nullable Filter legacyIdentityFilter(NitriteEntityMeta<T> meta, Object id, @Nullable Object versionValue) {
+        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
+        if (legacyIdentityFilter == null || meta.versionProp() == null) {
+            return legacyIdentityFilter;
+        }
+        return Filter.and(legacyIdentityFilter,
+            NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
     }
 
     @SuppressWarnings("unchecked")
@@ -394,7 +421,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         for (int i = 0; i < entities.size(); i++) {
             T entity = entities.get(i);
             // Capture pre-version before the event listener can modify the field.
-            if (!insert && meta.versionProp() != null) {
+            if (meta.versionProp() != null) {
                 priorVersions.put(entity, meta.versionProp().getProperty().get(entity));
             }
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);

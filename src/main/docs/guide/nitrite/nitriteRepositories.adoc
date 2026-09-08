@@ -15,14 +15,23 @@ You can use standard repository method patterns:
 - Case-insensitive queries (for example `findByTitleIgnoreCase`)
 - IN queries with collections and arrays (for example `findByTitleIn`)
 
-== Save Method Upsert Semantics
+== CRUD Semantics
 
-The `save()` and `saveAll()` methods from `CrudRepository` use **upsert semantics**:
+The write methods follow the Jakarta Data lifecycle contract.
+
+`save()` and `saveAll()` are conditional. They decide between an insert and an update from what the collection holds, not from whether the entity carries an identity:
 
 - If the entity's ID is `null`, a new document is inserted and the ID is generated
-- If the entity has an existing ID, the document is updated (replaced) if found, or inserted if not found
+- If the entity's ID is present in the collection, that document is replaced
+- If the entity's ID is not present in the collection, a new document is inserted under it
 
-This allows `save()` to be used for both creating new entities and updating existing ones. For explicit update operations, use the `update()` method or derived update methods (see <<nitriteQuickStart>>).
+An assigned identity - `UUID`, `String`, an application-set `Long` - is therefore inserted on its first save and updated on every later one, and `saveAll()` may insert some of its batch and update the rest.
+
+`insert()`, `update()` and their batch forms are unconditional, for every entity, versioned or not:
+
+- `insert()` and `insertAll()` reject an identity the collection already holds with api:data.exceptions.EntityExistsException[]
+- `update()`, `updateAll()`, `delete()` and `deleteAll()` require the document to exist: an entity whose ID matches nothing raises api:data.exceptions.OptimisticLockException[] rather than being inserted or silently affecting nothing
+- An entity with no ID at all is never inserted by `update()`; it reports zero affected rows
 
 == Case-Insensitive Queries
 

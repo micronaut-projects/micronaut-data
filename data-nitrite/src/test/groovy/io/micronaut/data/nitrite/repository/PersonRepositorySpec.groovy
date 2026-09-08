@@ -8,11 +8,10 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 /**
- * Comprehensive test suite for Micronaut Data NitriteDB implementation.
- * Based on patterns from data-document-tck AbstractDocumentRepositorySpec.
+ * Tests for Micronaut Data Nitrite repository query paths: derived queries, criteria predicates,
+ * JSON projections and update-by-query regressions.
  *
- * <p>In addition to derived queries, this spec contains a small set of regression tests for
- * "update by query" behavior. Those tests are important because update queries use criteria
+ * <p>The update-by-query tests are important because update queries use criteria
  * bindings, and Nitrite must encode update parameters as bindable placeholders (not as
  * {@code ParameterExpressionImpl{...}} strings).
  */

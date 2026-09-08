@@ -37,7 +37,7 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations.SyncCascadeOperationsHelper;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
-import org.dizitart.no2.collection.UpdateOptions;
+import org.dizitart.no2.exceptions.UniqueConstraintException;
 import org.dizitart.no2.filters.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,15 +50,26 @@ import java.util.function.Function;
  * Internal entity operations for Nitrite with automatic event firing and version handling.
  * Uses ObjectRepositoryWriter for entity-to-Document conversion.
  * <p>
- * <b>Save (INSERT) Operation:</b> Uses upsert semantics:
+ * <b>Save (INSERT) Operation:</b> follows Jakarta Data {@code @Save}, which defines the operation
+ * by what the store holds rather than by the state of the identity field: an identity the store
+ * already holds behaves as {@code @Update}, and one it does not behaves as {@code @Insert}. So:
  * <ul>
- *   <li>If the entity has no ID: generates an ID and inserts as a new document</li>
- *   <li>If the entity has an existing ID: updates (replaces) the document if found, or inserts if not found</li>
+ *   <li>If the entity has no ID, it is inserted as a new document</li>
+ *   <li>If the entity has an ID that exists, the existing document is updated</li>
+ *   <li>If the entity has an ID that does not exist, it is inserted as a new document</li>
  * </ul>
- * This allows {@code save()} to work for both creating new entities and updating existing ones.
+ * A non-null identity is therefore never on its own taken as proof of a stored document. It never
+ * uses Nitrite's insert-if-absent update option.
  * <p>
- * <b>Update (UPDATE) Operation:</b> Replaces an existing document by ID.
- * Requires the entity to have an ID; throws {@link OptimisticLockException} if version mismatch occurs.
+ * Jakarta Data also requires the instance an insert or update returns to carry every value written
+ * to the database, including generated identities and incremented versions. An immutable entity
+ * cannot be given those in place, so what is returned is the replacement instance built here, not
+ * the argument.
+ * <p>
+ * <b>Update (UPDATE) Operation:</b> Replaces an existing document by ID, and never inserts.
+ * Requires the entity to have an ID. A document that is absent, or whose version does not match,
+ * affects no rows and raises {@link OptimisticLockException}. Jakarta Data {@code @Update} states
+ * both cases as one, and conditions neither on the entity carrying a version, so neither does this.
  *
  * @param <T> The entity type
  * @since 5.2.0
@@ -72,7 +83,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     private final ObjectRepositoryWriter<T> repositoryWriter;
     private final NitriteEntityMapper entityMapper;
     private final NitriteOperationsHelper helper;
-    private final OperationType operationType;
+    private OperationType operationType;
     private @Nullable Object preVersionValue;
     private long affectedCount;
 
@@ -141,6 +152,21 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     }
 
     /**
+     * Micronaut's common save interceptor selects the update operation for a non-null generated
+     * identity. Jakarta Data save is conditional, though: the entity is inserted when that
+     * identity is not present in the store. Re-enter the save resolver here so the provider can
+     * distinguish that case from an explicit {@code update} operation.
+     */
+    @Override
+    public void update() {
+        if (ctx.isSave()) {
+            persist();
+        } else {
+            super.update();
+        }
+    }
+
+    /**
      * The number of documents the executed operation actually affected. A vetoed operation, or an
      * update or delete of an entity without an identity, affects nothing.
      *
@@ -151,9 +177,9 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
     }
 
     /**
-     * Override persist to handle upsert semantics correctly.
-     * If the entity has an existing ID, trigger update lifecycle events (preUpdate/postUpdate)
-     * to ensure version increments and @DateUpdated fields are handled correctly.
+     * Resolve Jakarta Data save semantics before firing lifecycle events. A non-null identity is
+     * not by itself proof that a row exists: both assigned identities and generated identities can
+     * be supplied for a new entity.
      */
     @Override
     public void persist() {
@@ -164,23 +190,20 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Class<T> type = persistentEntity.getIntrospection().getBeanType();
             NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
-            // A non-null id alone isn't proof the row already exists: entities with a
-            // manually-assigned id (no @GeneratedValue - UUID, String, Long, ...) always
-            // carry a non-null id, even on their very first save. Only treat the id as
-            // evidence of an existing row when it's framework-generated (null pre-insert),
-            // or otherwise confirm by checking the collection.
             Object idValue = entityMapper.getEntityIdValue(meta, entity);
-            boolean isUpdate;
-            if (ctx.isStrictInsert() || idValue == null) {
-                isUpdate = false;
-            } else if (meta.idProp() != null && meta.idProp().isGenerated()) {
-                isUpdate = true;
-            } else {
-                Filter existsFilter = entityMapper.idEqualsFilter(meta, idValue);
-                isUpdate = !collection.find(existsFilter).isEmpty();
+            boolean isUpdate = false;
+            if (!ctx.isStrictInsert() && idValue != null) {
+                Filter identityFilter = entityMapper.idEqualsFilter(meta, idValue);
+                Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, idValue);
+                isUpdate = NitriteCrudOperations.exists(collection, identityFilter, legacyIdentityFilter);
             }
 
             if (isUpdate) {
+                // The common Micronaut save interceptor represents a save of an entity with a
+                // generated identity as an UPDATE operation. For assigned identities, however,
+                // it represents save as INSERT and the provider resolves existence here. Keep
+                // the lifecycle decision and the write decision aligned before executing.
+                operationType = OperationType.UPDATE;
                 // Entity has ID - use update lifecycle for proper version/@DateUpdated handling
                 boolean vetoed = triggerPreUpdate();
                 if (vetoed) {
@@ -196,6 +219,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                     cascadePost(Relation.Cascade.UPDATE);
                 }
             } else {
+                operationType = OperationType.INSERT;
                 // No ID - use standard persist lifecycle
                 boolean vetoed = triggerPrePersist();
                 if (vetoed) {
@@ -240,65 +264,31 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
 
         Class<T> type = persistentEntity.getIntrospection().getBeanType();
         if (operationType == OperationType.INSERT) {
-            // Save operation uses upsert semantics:
-            // - If entity has no ID: generate ID and insert as new document
-            // - If entity has ID: update (replace) existing document, or insert if not found
-            // This allows save() to work for both create and update scenarios
-            Object entityId = entityMapper.getEntityIdValue(meta, entity);
-
-            if (entityId != null) {
-                if (ctx.isStrictInsert()) {
-                    Filter filter = entityMapper.idEqualsFilter(meta, entityId);
-                    if (!collection.find(filter).isEmpty()) {
-                        throw new EntityExistsException("Entity already exists with id: " + entityId);
-                    }
-                    RuntimePersistentProperty<T> versionProp = meta.versionProp();
-                    if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
-                        BeanProperty<T, Object> versionProperty = versionProp.getProperty();
-                        entity = helper.updateEntityId(versionProperty, entity, 0L);
-                    }
-                    Document doc = repositoryWriter.toDocument(entity);
-                    if (doc != null) {
-                        helper.logInsert(collection.getName(), doc);
-                        collection.insert(doc);
-                    }
-                    ctx.persisted.add(entity);
-                    return;
-                }
-                // Entity has ID - use upsert (update with insert-if-absent)
-                // Initialize version to 0 if not set (for optimistic locking)
-                RuntimePersistentProperty<T> versionProp = meta.versionProp();
-                if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = versionProp.getProperty();
-                    entity = helper.updateEntityId(versionProperty, entity, 0L);
-                }
-                Document doc = repositoryWriter.toDocument(entity);
-                if (doc != null) {
-                    Filter filter = entityMapper.idEqualsFilter(meta, entityId);
-                    helper.logUpdate(collection.getName(), filter, doc);
-                    long rows = collection.update(filter, doc, UpdateOptions.updateOptions(true)).getAffectedCount();
-                    if (meta.versionProp() != null) {
-                        checkOptimisticLocking(rows);
-                    }
-                }
-            } else {
-                // No ID - generate and insert as new
+            // Both Jakarta Data save of a new entity and explicit insert use a strict collection
+            // insert. Save(existing) is routed through OperationType.UPDATE by persist() above.
+            if (entityMapper.getEntityIdValue(meta, entity) == null) {
                 helper.generateIdIfNecessary(entity, type);
-                // Initialize version to 0 if not set (for optimistic locking)
-                RuntimePersistentProperty<T> versionProp = meta.versionProp();
-                if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
-                    BeanProperty<T, Object> versionProperty = versionProp.getProperty();
-                    entity = helper.updateEntityId(versionProperty, entity, 0L);
-                }
-                Document doc = repositoryWriter.toDocument(entity);
-                if (doc != null) {
-                    helper.logInsert(collection.getName(), doc);
+            }
+            RuntimePersistentProperty<T> versionProp = meta.versionProp();
+            if (versionProp != null && repositoryWriter.needsVersionInit(entity)) {
+                BeanProperty<T, Object> versionProperty = versionProp.getProperty();
+                entity = helper.updateEntityId(versionProperty, entity, 0L);
+            }
+            Document doc = repositoryWriter.toDocument(entity);
+            if (doc != null) {
+                helper.logInsert(collection.getName(), doc);
+                try {
                     collection.insert(doc);
-                    affectedCount = 1;
-                    Object generatedId = doc.get("_id");
-                    if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
-                        entity = helper.updateEntityId(meta.idAccessor(), entity, generatedId);
-                    }
+                } catch (UniqueConstraintException e) {
+                    // Raised by Nitrite's own document key for a Long identity, and by the unique
+                    // index NitriteCollectionRegistry puts on "id" for every other scalar identity.
+                    throw new EntityExistsException(
+                        "Entity already exists with id: " + entityMapper.getEntityIdValue(meta, entity), e);
+                }
+                affectedCount = 1;
+                Object generatedId = doc.get("_id");
+                if (generatedId != null && meta.idAccessor() != null && meta.idAccessor().get(entity) == null) {
+                    entity = helper.updateEntityId(meta.idAccessor(), entity, generatedId);
                 }
             }
             ctx.persisted.add(entity);
@@ -307,8 +297,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             // Requires entity to have an ID; throws OptimisticLockException if version mismatch
             // Note: VersionGeneratingEntityEventListener.preUpdate() already incremented the version
             Object id = entityMapper.getEntityIdValue(meta, entity);
-            // A transient entity has nothing to update: an "id == null" filter combined with upsert
-            // would insert it instead. Report zero affected rows rather than silently inserting.
+            // A transient entity has nothing to update: an "id == null" filter would match every
+            // identity-less document in the collection. Report zero affected rows instead.
             if (id == null) {
                 affectedCount = 0;
                 return;
@@ -325,21 +315,10 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Document update = repositoryWriter.toDocument(entity);
             if (update != null) {
                 helper.logUpdate(collection.getName(), filter, update);
-                // An unversioned update runs with Nitrite's upsert option, so update() and
-                // updateAll() of an entity whose id matches no document still write that document.
-                // This is deliberate: Nitrite has no notion of a detached entity, so an id assigned
-                // by the application is the only evidence of what the caller intends to store, and
-                // re-attaching such an entity through update() must not lose it. It differs from
-                // save() only in that save() also assigns a generated id and runs the insert
-                // cascade for new children.
-                // A versioned entity keeps strict semantics: the version is part of the filter, so a
-                // row that is absent (or stale) affects nothing and raises an optimistic-lock
-                // failure instead of being inserted. An entity with no id at all is rejected above,
-                // before this point, rather than inserted.
-                // Documented in src/main/docs/guide/nitrite/nitriteLimitations.adoc; covered by
-                // NitriteUpdateUpsertSemanticsSpec.
-                boolean upsert = meta.versionProp() == null;
-                long rows = collection.update(filter, update, UpdateOptions.updateOptions(upsert)).getAffectedCount();
+                // Explicit update is strict for every entity, including unversioned entities. A
+                // legacy document-key fallback is still allowed, but it carries the version
+                // predicate when optimistic locking is enabled.
+                long rows = NitriteCrudOperations.update(collection, filter, legacyIdentityFilter(meta, id), update);
                 affectedCount = rows;
                 checkOptimisticLocking(rows);
             }
@@ -361,7 +340,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
             helper.logFind(collection.getName(), filter);
-            long rows = collection.remove(filter, false).getAffectedCount();
+            long rows = NitriteCrudOperations.remove(collection, filter, legacyIdentityFilter(meta, id));
             affectedCount = rows;
             checkOptimisticLocking(rows);
         }
@@ -405,8 +384,36 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         }
     }
 
+    /**
+     * The filter over the identity field for a document whose Nitrite key is not its identity.
+     * A versioned filter is an AND over the identity, so the fallback has to carry the version
+     * clause too or it would write over a stale document.
+     *
+     * @param meta the entity metadata
+     * @param id the identity value
+     * @return the fallback filter, or {@code null} when the identity is always the document key
+     */
+    private @Nullable Filter legacyIdentityFilter(NitriteEntityMeta<T> meta, Object id) {
+        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
+        if (legacyIdentityFilter == null || meta.versionProp() == null) {
+            return legacyIdentityFilter;
+        }
+        Object versionValue = preVersionValue;
+        if (versionValue == null) {
+            versionValue = meta.versionProp().getProperty().get(entity);
+        }
+        return Filter.and(legacyIdentityFilter,
+            NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
+    }
+
+    /**
+     * A write that resolved to an existing document must affect exactly that document. An insert
+     * is exempt: it is counted by the collection insert itself.
+     *
+     * @param received the number of documents the write affected
+     */
     private void checkOptimisticLocking(long received) {
-        if (entityMapper.getOrBuildMeta(persistentEntity.getIntrospection().getBeanType()).versionProp() != null && received != 1) {
+        if (operationType != OperationType.INSERT && received != 1) {
             throw new OptimisticLockException("Execute update returned unexpected row count. Expected: " + 1 + " got: " + received);
         }
     }
