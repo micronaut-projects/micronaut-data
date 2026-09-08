@@ -22,6 +22,9 @@ import org.jspecify.annotations.NonNull
 import io.micronaut.core.convert.DefaultMutableConversionService
 import io.micronaut.core.convert.MutableConversionService
 import io.micronaut.inject.BeanDefinitionReference
+import org.spockframework.runtime.model.parallel.Resources
+import spock.lang.ResourceLock
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -29,10 +32,28 @@ import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.*
 
+@ResourceLock(Resources.SYSTEM_PROPERTIES)
 class DataConversionServiceSpec extends Specification {
 
-    static def DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
+    private static final ZoneId TEST_ZONE = ZoneOffset.UTC
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
+    static {
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone(TEST_ZONE))
+    }
+
+    @Shared
+    private TimeZone defaultTimeZone
+
     static Date now = new Date()
+
+    def setupSpec() {
+        defaultTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone(TEST_ZONE))
+    }
+
+    def cleanupSpec() {
+        TimeZone.setDefault(defaultTimeZone)
+    }
 
     @Unroll
     def "test date conversion #obj to #targetType"() {
@@ -48,18 +69,18 @@ class DataConversionServiceSpec extends Specification {
             obj                                          || targetType     || result
             DATE_FORMAT.parse("1970-01-02")              || LocalDate      || LocalDate.parse("1970-01-02")
             DATE_FORMAT.parse("1970-01-02")              || LocalDateTime  || LocalDate.parse("1970-01-02").atStartOfDay()
-            DATE_FORMAT.parse("1970-01-02")              || OffsetDateTime || LocalDate.parse("1970-01-02").atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime()
-            LocalDate.parse("1970-01-02")                || Date           || DATE_FORMAT.parse("1970-01-02")
-            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || DATE_FORMAT.parse("1970-01-02")
+            DATE_FORMAT.parse("1970-01-02")              || OffsetDateTime || LocalDate.parse("1970-01-02").atStartOfDay().atZone(TEST_ZONE).toOffsetDateTime()
+            LocalDate.parse("1970-01-02")                || Date           || Date.from(LocalDate.parse("1970-01-02").atStartOfDay(TEST_ZONE).toInstant())
+            LocalDate.parse("1970-01-02").atStartOfDay() || Date           || Date.from(LocalDate.parse("1970-01-02").atStartOfDay().atZone(TEST_ZONE).toInstant())
             new Date(now.getTime())                      || Instant        || Instant.ofEpochMilli(now.getTime())
             Instant.ofEpochMilli(now.getTime())          || Date           || new Date(now.getTime())
 
             new java.sql.Date(now.getTime())             || Instant        || Instant.ofEpochMilli(now.getTime())
             Instant.ofEpochMilli(now.getTime())          || java.sql.Date  || new Date(now.getTime())
 
-            new java.sql.Date(now.getTime())             || LocalDate      || Instant.ofEpochMilli(now.getTime()).atZone(ZoneId.systemDefault()).toLocalDate()
-            new java.sql.Date(now.getTime())             || LocalDateTime  || Instant.ofEpochMilli(now.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()
-            new java.sql.Date(now.getTime())             || OffsetDateTime || Instant.ofEpochMilli(now.getTime()).atZone(ZoneId.systemDefault()).toOffsetDateTime()
+            new java.sql.Date(now.getTime())             || LocalDate      || Instant.ofEpochMilli(now.getTime()).atZone(TEST_ZONE).toLocalDate()
+            new java.sql.Date(now.getTime())             || LocalDateTime  || Instant.ofEpochMilli(now.getTime()).atZone(TEST_ZONE).toLocalDateTime()
+            new java.sql.Date(now.getTime())             || OffsetDateTime || Instant.ofEpochMilli(now.getTime()).atZone(TEST_ZONE).toOffsetDateTime()
 
             LocalDate.parse("1970-01-02")
                     .atTime( LocalTime.of(2,0))
