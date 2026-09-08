@@ -77,6 +77,21 @@ public class NitriteConfiguration implements Named {
    */
   private boolean createIndexes = true;
 
+  /**
+   * The MVStore page split size in bytes, or {@code null} to leave the adapter's own default in
+   * place. Only read when the storage mode is {@code MVSTORE}.
+   *
+   * <p>Nitrite 5.3.0 defaults this to {@code 16} <em>bytes</em> where its javadoc promises 16 KB,
+   * so a leaf page splits as soon as it holds more than one entry. The resulting tree is deep and
+   * page-heavy - upstream measured 93,781 pages at depth 13 for 46,926 entries, against 36,096 at
+   * depth 12 with MVStore's own 16 KB default - which makes the cost of a write climb with the
+   * size of the collection. Setting this to {@code 16384} restores the documented default; H2
+   * clamps it to {@code (cacheSize / cacheConcurrency) >> 4}, so 64 KB is the practical ceiling.
+   *
+   * <p>An existing file keeps the page shape it was written with until those pages are rewritten.
+   */
+  @Nullable private Integer mvstorePageSplitSize;
+
   /** Optional username for authenticated databases. */
   @Nullable private String username;
 
@@ -210,6 +225,23 @@ public class NitriteConfiguration implements Named {
    */
   public void setCreateIndexes(boolean createIndexes) {
     this.createIndexes = createIndexes;
+  }
+
+  /**
+   * Returns the MVStore page split size in bytes.
+   * @return the page split size, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Integer getMvstorePageSplitSize() {
+    return mvstorePageSplitSize;
+  }
+
+  /**
+   * Sets the MVStore page split size in bytes.
+   * @param mvstorePageSplitSize the page split size, or {@code null} to use the adapter default
+   */
+  public void setMvstorePageSplitSize(@Nullable final Integer mvstorePageSplitSize) {
+    this.mvstorePageSplitSize = mvstorePageSplitSize;
   }
 
   /**

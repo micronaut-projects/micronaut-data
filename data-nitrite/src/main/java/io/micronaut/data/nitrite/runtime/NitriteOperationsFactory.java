@@ -40,6 +40,7 @@ import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteBuilder;
 import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.mvstore.MVStoreModule;
+import org.dizitart.no2.mvstore.MVStoreModuleBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +99,12 @@ public final class NitriteOperationsFactory {
       if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
         storeModule = loadRocksDbModule(file);
       } else {
-        storeModule = MVStoreModule.withConfig().filePath(file).build();
+        MVStoreModuleBuilder mvStore = MVStoreModule.withConfig().filePath(file);
+        Integer pageSplitSize = config.getMvstorePageSplitSize();
+        if (pageSplitSize != null) {
+          mvStore.pageSplitSize(pageSplitSize);
+        }
+        storeModule = mvStore.build();
       }
       builder.loadModule(storeModule);
     }

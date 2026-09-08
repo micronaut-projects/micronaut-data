@@ -1,9 +1,15 @@
 package io.micronaut.data.nitrite.conf
 
 import io.micronaut.context.ApplicationContext
+import org.dizitart.no2.Nitrite
+import org.dizitart.no2.collection.Document
 import spock.lang.AutoCleanup
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.nio.file.Files
+
+import static org.dizitart.no2.filters.FluentFilter.where
 
 /**
  * Tests for NitriteConfiguration binding and setter methods.
@@ -34,6 +40,49 @@ class NitriteConfigurationSpec extends Specification {
         config.getDbPath() == "/data/myapp.db"
         config.getUsername() == "admin"
         config.getPassword() == "secret"
+    }
+
+    void "the MVStore page split size binds and defaults to the adapter's own value"() {
+        given:
+        ctx = ApplicationContext.run([
+            "micronaut.nitrite.default.storage-mode": "MVSTORE",
+            "micronaut.nitrite.default.db-path": "/data/myapp.db",
+            "micronaut.nitrite.default.mvstore-page-split-size": 16384
+        ])
+
+        expect:
+        ctx.getBean(NitriteConfiguration).getMvstorePageSplitSize() == 16384
+
+        when: "the property is absent"
+        ctx.close()
+        ctx = ApplicationContext.run([
+            "micronaut.nitrite.default.storage-mode": "MVSTORE",
+            "micronaut.nitrite.default.db-path": "/data/myapp.db"
+        ])
+
+        then: "nothing is passed to the module builder"
+        ctx.getBean(NitriteConfiguration).getMvstorePageSplitSize() == null
+    }
+
+    void "a datasource configured with a page split size opens and round-trips a document"() {
+        given:
+        def dbPath = Files.createTempDirectory("nitrite-page-split").resolve("bodies.db")
+        ctx = ApplicationContext.run([
+            "micronaut.nitrite.default.storage-mode": "MVSTORE",
+            "micronaut.nitrite.default.db-path": dbPath.toString(),
+            "micronaut.nitrite.default.mvstore-page-split-size": 16384
+        ])
+
+        when:
+        def collection = ctx.getBean(Nitrite).getCollection("bodies")
+        collection.insert(Document.createDocument("id", "one").put("body", "hello"))
+
+        then:
+        collection.find(where("id").eq("one")).firstOrNull().get("body") == "hello"
+
+        cleanup:
+        ctx.close()
+        Files.deleteIfExists(dbPath)
     }
 
     void "test configuration binding from properties - IN_MEMORY"() {

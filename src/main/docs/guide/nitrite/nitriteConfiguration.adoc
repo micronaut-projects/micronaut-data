@@ -16,6 +16,14 @@ The following settings are supported for each datasource:
     * `AUTO`: Uses cursor-side limits for MVSTORE and in-memory storage, and database-side limits for ROCKSDB.
     * `CURSOR`: Always removes the limit from the Nitrite find and applies it while reading the cursor.
     * `DATABASE`: Always keeps the limit on the Nitrite find.
+- `mvstore-page-split-size`: The MVStore page split size in bytes. Unset by default, which leaves the
+Nitrite adapter's own value in place. Only read when `storage-mode` is `MVSTORE`.
++
+Nitrite 5.3.0 sets this to `16` bytes where its own javadoc documents 16 KB, so a leaf page splits as
+soon as it holds more than one entry and the cost of a write climbs with the size of the collection.
+Set it to `16384` to get the documented default. H2 clamps the value to
+`(cacheSize / cacheConcurrency) >> 4`, which makes 64 KB the practical ceiling, and an existing file
+keeps the page shape it was written with until those pages are rewritten.
 - `username`: Optional username (for authenticated databases).
 - `password`: Optional password.
 
