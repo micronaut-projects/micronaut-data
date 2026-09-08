@@ -17,7 +17,11 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -60,6 +64,7 @@ import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
+import java.nio.charset.StandardCharsets
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -669,6 +674,129 @@ interface MyRepository {
         query == ' ORDER BY owner_."OWNER_NAME" ASC'
     }
 
+    void "test encode order by with joined property uses provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Book)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, "book_book_")
+
+        then:
+        query == ' ORDER BY book_book_author_.`name` ASC'
+    }
+
+    void "test encode order by normalizes a long Postgres entity alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        normalizedAlias.length() <= 63
+        normalizedAlias != alias
+        normalizedAlias ==~ /^.{1,46}_[0-9a-f]{16}_?$/
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes a multibyte Postgres entity alias by bytes"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongMultibytePostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        alias.length() <= 63
+        alias.getBytes(StandardCharsets.UTF_8).length > 63
+        normalizedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        normalizedAlias != alias
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes a long declared Postgres association alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongDeclaredAssociationAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+        String declaredAlias = entity.getPropertyByName("author").getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        normalizedAlias.length() <= 63
+        normalizedAlias != declaredAlias
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes an un-normalized provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        // A pagination subquery prefixes the root alias with the outer one, which can push a legal
+        // alias over the Postgres limit
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        usedAlias != prefixedAlias
+        usedAlias ==~ /^[A-Za-z0-9_]{1,46}_[0-9a-f]{16}_?$/
+    }
+
+    void "test encode order by derives the joined alias from the un-normalized table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasBook)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String rootQuery = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, Sort.of(Sort.Order.asc("id")), false, prefixedAlias)
+        String normalizedRootAlias = rootQuery.substring(" ORDER BY ".length(), rootQuery.indexOf(".\"id\""))
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+        String queryFromNormalizedRoot = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, normalizedRootAlias)
+        String aliasFromNormalizedRoot = queryFromNormalizedRoot.substring(" ORDER BY ".length(), queryFromNormalizedRoot.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        // The join alias has to be derived from the raw alias, because that is what the query
+        // builder itself used when it emitted the JOIN
+        usedAlias.startsWith(prefixedAlias.substring(0, 45))
+        // Deriving it from the already normalized alias would reference a non existing alias
+        usedAlias != aliasFromNormalizedRoot
+    }
+
+    void "test encode order by differentiates colliding Java aliases"() {
+        given:
+        PersistentEntity firstEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionOne)
+        PersistentEntity secondEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionTwo)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        String firstQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", firstEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String secondQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", secondEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        firstEntity.getAliasName().hashCode() == secondEntity.getAliasName().hashCode()
+        firstQuery != secondQuery
+    }
+
     void "test encode insert statement"() {
         given:
         def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder())
@@ -1256,4 +1384,63 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasBook {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
+}
+
+@MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")
+class LongMultibytePostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_Aa_")
+class LongPostgresAliasCollisionOne {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_BB_")
+class LongPostgresAliasCollisionTwo {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasEntity {
+    @Id
+    Long id
+
+    @MappedProperty(alias = "this_is_an_intentionally_very_long_declared_association_alias_for_sorting_")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasAuthor {
+    @Id
+    Long id
+
+    String name
 }
