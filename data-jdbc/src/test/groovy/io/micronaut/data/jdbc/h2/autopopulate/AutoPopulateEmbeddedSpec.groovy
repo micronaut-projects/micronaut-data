@@ -53,10 +53,32 @@ class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyPr
         loaded.nestedOnlyAuditFields.innerFields
         loaded.nestedOnlyAuditFields.innerFields.nestedCreatedAt
         loaded.nestedOnlyAuditFields.innerFields.nestedGuid
+        !saved.nestedOnlyAuditFields.nonAutoPopulatedFields
+        !saved.nestedOnlyAuditFields.noDefaultAuditFields
         !saved.nonAutoPopulatedFields
         // Currently embedded entity without default constructor cannot be created
         // in order to populate fields in timestamp and uuid entity event listeners
         !loaded.otherAuditFields
+    }
+
+    def "test existing embeddable fields auto populated"() {
+        given:
+        def auditFields = new AuditFields(innerFields: new InnerFields())
+
+        when:
+        def saved = myAuditableEntityRepository.insert(new MyAuditableEntity(
+            id: "id2",
+            firstName: "Peter",
+            auditFields: auditFields
+        ))
+
+        then:
+        saved.auditFields.is(auditFields)
+        saved.auditFields.innerCreatedAt
+        saved.auditFields.innerUpdatedAt
+        saved.auditFields.innerGuid
+        saved.auditFields.innerFields.subInnerCreatedAt
+        saved.auditFields.innerFields.subInnerGuid
     }
 
 }
@@ -100,6 +122,12 @@ class OtherAuditFields {
 class NestedOnlyAuditFields {
     @Relation(value = Relation.Kind.EMBEDDED)
     NestedOnlyInnerFields innerFields
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    NestedNonAutoPopulatedFields nonAutoPopulatedFields
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    NestedNoDefaultAuditFields noDefaultAuditFields
 }
 
 @Embeddable
@@ -145,6 +173,26 @@ class MyAuditableEntity {
 class NonAutoPopulatedFields {
     @Nullable
     String value
+}
+
+@Embeddable
+class NestedNonAutoPopulatedFields {
+    @Nullable
+    String nestedValue
+}
+
+@Embeddable
+class NestedNoDefaultAuditFields {
+    @DateCreated
+    LocalDateTime nestedOtherCreatedAt
+
+    @AutoPopulated
+    UUID nestedOtherGuid
+
+    NestedNoDefaultAuditFields(LocalDateTime nestedOtherCreatedAt, UUID nestedOtherGuid) {
+        this.nestedOtherCreatedAt = nestedOtherCreatedAt
+        this.nestedOtherGuid = nestedOtherGuid
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
