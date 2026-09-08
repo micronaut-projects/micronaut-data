@@ -12221,9 +12221,11 @@ as a RxJava Single or a Reactor Mono.</div>
 <dd>
 <div class="block">Get an alias name for the given entity.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getAliasName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getAliasName(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getAliasName(io.micronaut.data.model.query.JoinPath)" class="member-name-link">getAliasName(JoinPath)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Get the alias name.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getAliasName(io.micronaut.data.model.query.JoinPath,java.lang.String)" class="member-name-link">getAliasName(JoinPath, String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Get the alias name.</div>
 </dd>
@@ -15611,6 +15613,14 @@ i.e.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#getRating()" class="member-name-link">getRating()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#getRawAliasName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getRawAliasName(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getRawAliasName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getRawAliasName(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Get the unnormalized alias name for the given entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getRawAliasName(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getRawAliasName(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/coherence/data/util/EventRecorder.html#getRecordedEvents()" class="member-name-link">getRecordedEvents()</a> - Method in class io.micronaut.coherence.data.util.<a href="io/micronaut/coherence/data/util/EventRecorder.html" title="class in io.micronaut.coherence.data.util">EventRecorder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Payment.html#getReference()" class="member-name-link">getReference()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Payment.html" title="class in io.micronaut.data.tck.entities">Payment</a></dt>
@@ -15925,6 +15935,10 @@ i.e.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html#getRootAlias()" class="member-name-link">getRootAlias()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html#getRootAliasSource()" class="member-name-link">getRootAliasSource()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
+<dd>
+<div class="block">The un-normalized root alias.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#getRootEntity()" class="member-name-link">getRootEntity()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
 <div class="block">Obtains the root entity of an inheritance hierarchy.</div>
@@ -23781,6 +23795,12 @@ exists.</div>
 <dd>
 <div class="block">A no-op event listener that does nothing.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#normalizeAlias(java.lang.String)" class="member-name-link">normalizeAlias(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Normalize a generated alias for dialect-specific identifier requirements.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#normalizeAlias(java.lang.String)" class="member-name-link">normalizeAlias(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#noRollbackFor()" class="member-name-link">noRollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
 <dd>
 <div class="block">Defines the exceptions that will not result in a rollback.</div>
