@@ -106,7 +106,12 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;RS,<wbr>R&gt;</span></div>
 <div class="block">A <a href="../TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that can take a <a href="../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentEntity</code></a> and a <a href="../ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a>
-and materialize an instance using column naming conventions mapped by the entity.</div>
+and materialize an instance using column naming conventions mapped by the entity.
+
+<p>Instances are stateful and are not thread safe: an instance caches the column name of every property it has
+read and the ordinals those columns have in the result set being mapped, and <a href="#hasNext(RS)"><code>hasNext(RS)</code></a> keeps track of the
+cursor. Create one mapper per query execution, the way the repository operations do, and do not share an instance
+between threads or retain it after the result set has been consumed.</p></div>
 </div>
 </section>
 <section class="summary">

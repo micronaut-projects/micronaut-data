@@ -10906,6 +10906,20 @@ WHERE :nullableValue IS NULL AND nullable_value IS NULL
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/BookRepository.html#findByTotalPagesGreaterThan(int,io.micronaut.data.model.Pageable)" class="member-name-link">findByTotalPagesGreaterThan(int, Pageable)</a> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#findColumnIndex(java.sql.ResultSet,java.lang.String)" class="member-name-link">findColumnIndex(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>
+<div class="block">Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+and read the values of subsequent rows by index using <a href="io/micronaut/data/runtime/mapper/ResultReader.html#getColumnIndexReader()"><code>ResultReader.getColumnIndexReader()</code></a> instead of resolving
+the column name for every row.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#findColumnIndex(RS,java.lang.String)" class="member-name-link">findColumnIndex(RS, String)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#findColumnIndex(RS,java.lang.String)" class="member-name-link">findColumnIndex(RS, String)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
+<dd>
+<div class="block">Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+and read the values of subsequent rows by index using <a href="io/micronaut/data/runtime/mapper/ResultReader.html#getColumnIndexReader()"><code>ResultReader.getColumnIndexReader()</code></a> instead of resolving
+the column name for every row.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/async/AsyncConnectionOperations.html#findConnectionStatus()" class="member-name-link">findConnectionStatus()</a> - Method in interface io.micronaut.data.connection.async.<a href="io/micronaut/data/connection/async/AsyncConnectionOperations.html" title="interface in io.micronaut.data.connection.async">AsyncConnectionOperations</a></dt>
 <dd>
 <div class="block">Obtains the current connection.</div>
@@ -12555,6 +12569,14 @@ if any.</div>
 <dt><a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html#getColumnDefinition(io.micronaut.core.type.Argument,io.micronaut.data.model.runtime.convert.DatabaseType)" class="member-name-link">getColumnDefinition(Argument, DatabaseType)</a> - Method in interface io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/SqlColumnDefinitionProvider.html" title="interface in io.micronaut.data.model.runtime.convert">SqlColumnDefinitionProvider</a></dt>
 <dd>
 <div class="block">Return a vendor-specific SQL column definition for this attribute, or <code>null</code> to delegate to default mapping.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#getColumnIndexReader()" class="member-name-link">getColumnIndexReader()</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#getColumnIndexReader()" class="member-name-link">getColumnIndexReader()</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#getColumnIndexReader()" class="member-name-link">getColumnIndexReader()</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
+<dd>
+<div class="block">The reader capable of reading values by the ordinals resolved by <a href="io/micronaut/data/runtime/mapper/ResultReader.html#findColumnIndex(RS,java.lang.String)"><code>ResultReader.findColumnIndex(Object, String)</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getColumnName()" class="member-name-link">getColumnName()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
 <dd>&nbsp;</dd>
