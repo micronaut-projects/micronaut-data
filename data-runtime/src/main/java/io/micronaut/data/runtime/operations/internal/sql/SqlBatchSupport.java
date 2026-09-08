@@ -36,7 +36,7 @@ import java.util.concurrent.CompletionStage;
  * driver behavior can still diverge, so runtime capability checks stay internal and separate from
  * the public dialect enum.</p>
  *
- * @since 5.1.0
+ * @since 5.2.0
  */
 @Internal
 public final class SqlBatchSupport {
