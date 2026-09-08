@@ -147,6 +147,29 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         0 * connection._
     }
 
+    void "mysql identity-less batch insert does not inspect metadata"() {
+        given:
+        DefaultJdbcRepositoryOperations operations = newOperations(null)
+        RuntimePersistentEntity<?> persistentEntity = Mock {
+            hasIdentity() >> false
+        }
+        Connection connection = Mock()
+        def operationContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                AnnotationMetadata.EMPTY_METADATA,
+                null,
+                Object,
+                Dialect.MYSQL,
+                connection
+        )
+
+        when:
+        boolean supported = operations.isSupportsBatchInsert(operationContext, persistentEntity)
+
+        then:
+        !supported
+        0 * connection._
+    }
+
     void "binds datasource dialect options"() {
         given:
             context = ApplicationContext.run([

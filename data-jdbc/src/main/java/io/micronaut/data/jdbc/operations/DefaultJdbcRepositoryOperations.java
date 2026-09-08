@@ -1270,7 +1270,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                           boolean requiresGeneratedKeys) {
         // JDBC metadata is only needed for MySQL, where Micronaut Data distinguishes MySQL from MariaDB
         // and accounts for generated-key batch behavior; public capability queries conservatively assume keys.
-        if (ctx.dialect != Dialect.MYSQL) {
+        if (ctx.dialect != Dialect.MYSQL || !persistentEntity.hasIdentity()) {
             return isSupportsBatchInsert(persistentEntity, ctx.dialect);
         }
         JdbcBatchCapabilities capabilities = getJdbcBatchCapabilities(ctx);
