@@ -92,6 +92,68 @@ public class NitriteConfiguration implements Named {
    */
   @Nullable private Integer mvstorePageSplitSize;
 
+  /**
+   * The MVStore read cache size in MB, or {@code null} to leave the adapter's default (16).
+   */
+  @Nullable private Integer mvstoreCacheSize;
+
+  /**
+   * The number of segments in the MVStore read cache, or {@code null} to leave the adapter's
+   * default (16). H2 clamps the page split size to {@code (cacheSize / cacheConcurrency) >> 4},
+   * so this bounds {@link #getMvstorePageSplitSize()} as well.
+   */
+  @Nullable private Integer mvstoreCacheConcurrency;
+
+  /**
+   * Whether MVStore commits every change as it is made, or {@code null} to leave the adapter's
+   * default ({@code true}). With this off, changes are buffered until {@code Nitrite.commit()}.
+   */
+  @Nullable private Boolean mvstoreAutoCommit;
+
+  /**
+   * The number of unsaved changes MVStore buffers before committing automatically, or
+   * {@code null} to leave the adapter's default (1024). Only meaningful while auto-commit is on.
+   */
+  @Nullable private Integer mvstoreAutoCommitBufferSize;
+
+  /**
+   * Whether MVStore reclaims fragmented chunks and chunks below the 90% target fill rate, which
+   * shrinks the file. {@code null} leaves the adapter's default ({@code true}).
+   */
+  @Nullable private Boolean mvstoreAutoCompact;
+
+  /**
+   * Whether MVStore compresses stored data, or {@code null} to leave the adapter's default
+   * ({@code false}).
+   */
+  @Nullable private Boolean mvstoreCompress;
+
+  /**
+   * Whether MVStore uses its higher compression level - smaller file, slower reads and writes.
+   * {@code null} leaves the adapter's default ({@code false}).
+   */
+  @Nullable private Boolean mvstoreCompressHigh;
+
+  /**
+   * Whether to open the store in MVStore's recovery mode, which tolerates a file H2 would
+   * otherwise refuse. {@code null} leaves the adapter's default ({@code false}).
+   */
+  @Nullable private Boolean mvstoreRecoveryMode;
+
+  /**
+   * Whether to open the store read-only, or {@code null} to leave the adapter's default
+   * ({@code false}).
+   */
+  @Nullable private Boolean mvstoreReadOnly;
+
+  /**
+   * The key MVStore encrypts the file with, or {@code null} for an unencrypted store. Encryption
+   * is an MVStore feature; the RocksDB adapter has no equivalent, so this is ignored for any other
+   * storage mode. The key is read as configured, so keep it out of checked-in configuration and
+   * supply it from the environment.
+   */
+  @Nullable private String mvstoreEncryptionKey;
+
   /** Optional username for authenticated databases. */
   @Nullable private String username;
 
@@ -242,6 +304,176 @@ public class NitriteConfiguration implements Named {
    */
   public void setMvstorePageSplitSize(@Nullable final Integer mvstorePageSplitSize) {
     this.mvstorePageSplitSize = mvstorePageSplitSize;
+  }
+
+  /**
+   * Returns the MVStore read cache size in MB.
+   * @return the cache size, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Integer getMvstoreCacheSize() {
+    return mvstoreCacheSize;
+  }
+
+  /**
+   * Sets the MVStore read cache size in MB.
+   * @param mvstoreCacheSize the cache size, or {@code null} to use the adapter default
+   */
+  public void setMvstoreCacheSize(@Nullable final Integer mvstoreCacheSize) {
+    this.mvstoreCacheSize = mvstoreCacheSize;
+  }
+
+  /**
+   * Returns the MVStore read cache concurrency.
+   * @return the number of cache segments, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Integer getMvstoreCacheConcurrency() {
+    return mvstoreCacheConcurrency;
+  }
+
+  /**
+   * Sets the MVStore read cache concurrency.
+   * @param mvstoreCacheConcurrency the number of cache segments, or {@code null} to use the adapter default
+   */
+  public void setMvstoreCacheConcurrency(@Nullable final Integer mvstoreCacheConcurrency) {
+    this.mvstoreCacheConcurrency = mvstoreCacheConcurrency;
+  }
+
+  /**
+   * Returns whether MVStore auto-commits.
+   * @return whether auto-commit is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreAutoCommit() {
+    return mvstoreAutoCommit;
+  }
+
+  /**
+   * Sets whether MVStore auto-commits.
+   * @param mvstoreAutoCommit whether auto-commit is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreAutoCommit(@Nullable final Boolean mvstoreAutoCommit) {
+    this.mvstoreAutoCommit = mvstoreAutoCommit;
+  }
+
+  /**
+   * Returns the MVStore auto-commit buffer size.
+   * @return the buffer size, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Integer getMvstoreAutoCommitBufferSize() {
+    return mvstoreAutoCommitBufferSize;
+  }
+
+  /**
+   * Sets the MVStore auto-commit buffer size.
+   * @param mvstoreAutoCommitBufferSize the buffer size, or {@code null} to use the adapter default
+   */
+  public void setMvstoreAutoCommitBufferSize(@Nullable final Integer mvstoreAutoCommitBufferSize) {
+    this.mvstoreAutoCommitBufferSize = mvstoreAutoCommitBufferSize;
+  }
+
+  /**
+   * Returns whether MVStore auto-compacts.
+   * @return whether auto-compact is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreAutoCompact() {
+    return mvstoreAutoCompact;
+  }
+
+  /**
+   * Sets whether MVStore auto-compacts.
+   * @param mvstoreAutoCompact whether auto-compact is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreAutoCompact(@Nullable final Boolean mvstoreAutoCompact) {
+    this.mvstoreAutoCompact = mvstoreAutoCompact;
+  }
+
+  /**
+   * Returns whether MVStore compresses stored data.
+   * @return whether compression is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreCompress() {
+    return mvstoreCompress;
+  }
+
+  /**
+   * Sets whether MVStore compresses stored data.
+   * @param mvstoreCompress whether compression is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreCompress(@Nullable final Boolean mvstoreCompress) {
+    this.mvstoreCompress = mvstoreCompress;
+  }
+
+  /**
+   * Returns whether MVStore uses high compression.
+   * @return whether high compression is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreCompressHigh() {
+    return mvstoreCompressHigh;
+  }
+
+  /**
+   * Sets whether MVStore uses high compression.
+   * @param mvstoreCompressHigh whether high compression is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreCompressHigh(@Nullable final Boolean mvstoreCompressHigh) {
+    this.mvstoreCompressHigh = mvstoreCompressHigh;
+  }
+
+  /**
+   * Returns whether the store opens in MVStore's recovery mode.
+   * @return whether recovery mode is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreRecoveryMode() {
+    return mvstoreRecoveryMode;
+  }
+
+  /**
+   * Sets whether the store opens in MVStore's recovery mode.
+   * @param mvstoreRecoveryMode whether recovery mode is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreRecoveryMode(@Nullable final Boolean mvstoreRecoveryMode) {
+    this.mvstoreRecoveryMode = mvstoreRecoveryMode;
+  }
+
+  /**
+   * Returns whether the store opens read-only.
+   * @return whether read-only is enabled, or {@code null} to use the adapter default
+   */
+  @Nullable
+  public Boolean getMvstoreReadOnly() {
+    return mvstoreReadOnly;
+  }
+
+  /**
+   * Sets whether the store opens read-only.
+   * @param mvstoreReadOnly whether read-only is enabled, or {@code null} to use the adapter default
+   */
+  public void setMvstoreReadOnly(@Nullable final Boolean mvstoreReadOnly) {
+    this.mvstoreReadOnly = mvstoreReadOnly;
+  }
+
+  /**
+   * Returns the MVStore encryption key.
+   * @return the encryption key, or {@code null} for an unencrypted store
+   */
+  @Nullable
+  public String getMvstoreEncryptionKey() {
+    return mvstoreEncryptionKey;
+  }
+
+  /**
+   * Sets the MVStore encryption key.
+   * @param mvstoreEncryptionKey the encryption key, or {@code null} for an unencrypted store
+   */
+  public void setMvstoreEncryptionKey(@Nullable final String mvstoreEncryptionKey) {
+    this.mvstoreEncryptionKey = mvstoreEncryptionKey;
   }
 
   /**

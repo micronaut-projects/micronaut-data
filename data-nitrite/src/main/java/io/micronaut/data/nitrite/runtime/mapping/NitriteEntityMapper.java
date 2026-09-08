@@ -394,37 +394,6 @@ public final class NitriteEntityMapper {
   }
 
   /**
-   * The identity-field equality {@link #idEqualsFilter(NitriteEntityMeta, Object)} would have
-   * returned had it not taken the document-key shortcut, or {@code null} when it did not take it
-   * and there is therefore nothing to fall back to.
-   *
-   * <p>The shortcut holds only for a document this version wrote, because it is what puts the
-   * identity in {@code _id} to begin with. A document stored with any other key - written before
-   * the shortcut existed, or inserted through Nitrite directly - carries its identity in the
-   * {@code id} field alone, and the shortcut passes straight over it. A read that misses returns
-   * nothing and is merely wrong; a write that misses concludes the entity is absent, and inserts a
-   * second document carrying the same identity, so the write paths try this filter first.
-   *
-   * @param meta the pre-computed entity metadata
-   * @param id the ID value
-   * @return the identity-field filter, or {@code null} when the primary filter already is one
-   * @param <T> the entity type
-   */
-  public <T> @Nullable Filter identityFieldEqualsFilter(final NitriteEntityMeta<T> meta, final @Nullable Object id) {
-    RuntimePersistentProperty<T> idProperty = meta.idProp();
-    if (meta.persistentEntity().hasCompositeIdentity() || idProperty == null || id == null) {
-      return null;
-    }
-    if (normalizeIdentityValue(idProperty, id) instanceof Document) {
-      return null;
-    }
-    if (documentKeyOf(idProperty, toFilterValue(id)) == null) {
-      return null;
-    }
-    return eqWithNumericCoercion(meta.persistentEntity(), ID_FIELD, toFilterValue(id), ID_FIELD);
-  }
-
-  /**
    * The Nitrite document key for an identity value, or {@code null} when the identity is not stored
    * as the document key. Only a {@code Long} identity is: NitriteId is backed by a long, and a
    * narrower or wider identity would either collide with generated keys or not round-trip.

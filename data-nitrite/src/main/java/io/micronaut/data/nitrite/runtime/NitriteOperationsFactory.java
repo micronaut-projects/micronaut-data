@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Factory for Nitrite repository operations.
@@ -99,12 +100,7 @@ public final class NitriteOperationsFactory {
       if (mode == NitriteConfiguration.StorageMode.ROCKSDB) {
         storeModule = loadRocksDbModule(file);
       } else {
-        MVStoreModuleBuilder mvStore = MVStoreModule.withConfig().filePath(file);
-        Integer pageSplitSize = config.getMvstorePageSplitSize();
-        if (pageSplitSize != null) {
-          mvStore.pageSplitSize(pageSplitSize);
-        }
-        storeModule = mvStore.build();
+        storeModule = buildMvStoreModule(config, file);
       }
       builder.loadModule(storeModule);
     }
@@ -155,6 +151,42 @@ public final class NitriteOperationsFactory {
     } catch (Exception e) {
       throw new IllegalStateException(
           "Failed to initialize the Nitrite spatial module even though it is on the classpath", e);
+    }
+  }
+
+
+  /**
+   * Builds the MVStore module for a datasource, applying only the settings the configuration
+   * actually carries. Every MVStore setting is nullable: an unset one leaves the adapter's own
+   * default in place rather than restating it here, so the provider does not pin a value the
+   * adapter may change.
+   *
+   * @param config the datasource configuration
+   * @param file the database file
+   * @return the configured MVStore module
+   */
+  private static NitriteModule buildMvStoreModule(final NitriteConfiguration config, final File file) {
+    MVStoreModuleBuilder mvStore = MVStoreModule.withConfig().filePath(file);
+    applyIfSet(config.getMvstorePageSplitSize(), mvStore::pageSplitSize);
+    applyIfSet(config.getMvstoreCacheSize(), mvStore::cacheSize);
+    applyIfSet(config.getMvstoreCacheConcurrency(), mvStore::cacheConcurrency);
+    applyIfSet(config.getMvstoreAutoCommitBufferSize(), mvStore::autoCommitBufferSize);
+    applyIfSet(config.getMvstoreAutoCommit(), mvStore::autoCommit);
+    applyIfSet(config.getMvstoreAutoCompact(), mvStore::autoCompact);
+    applyIfSet(config.getMvstoreCompress(), mvStore::compress);
+    applyIfSet(config.getMvstoreCompressHigh(), mvStore::compressHigh);
+    applyIfSet(config.getMvstoreRecoveryMode(), mvStore::recoveryMode);
+    applyIfSet(config.getMvstoreReadOnly(), mvStore::readOnly);
+    String encryptionKey = config.getMvstoreEncryptionKey();
+    if (encryptionKey != null) {
+      mvStore.encryptionKey(encryptionKey.toCharArray());
+    }
+    return mvStore.build();
+  }
+
+  private static <V> void applyIfSet(@Nullable final V value, final Consumer<V> setter) {
+    if (value != null) {
+      setter.accept(value);
     }
   }
 

@@ -7,8 +7,6 @@ import io.micronaut.data.nitrite.model.StringIdEntity
 import io.micronaut.data.nitrite.repository.DuplicateTestRepository
 import io.micronaut.data.nitrite.repository.LongIdRepository
 import io.micronaut.data.nitrite.repository.StringIdRepository
-import io.micronaut.data.nitrite.runtime.NitriteOperationsHelper
-import org.dizitart.no2.collection.Document
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -82,46 +80,6 @@ class NitriteUpsertSpec extends Specification {
 
         where:
         mode << ["IN_MEMORY", "MVSTORE"]
-    }
-
-    def "an entity stored without the identity as its document key is still found by id"() {
-        given: "a document written the way a store predating the document-key optimisation holds it"
-        def ctx = createContext("IN_MEMORY", "foreign-document-key")
-        def repo = ctx.getBean(LongIdRepository)
-        def helper = ctx.getBean(NitriteOperationsHelper)
-        repo.deleteAll()
-
-        def stored = Document.createDocument("id", 7L).put("name", "written-elsewhere")
-        helper.getCollection(LongIdEntity).insert(stored)
-
-        expect: "its key is Nitrite's own, unrelated to the identity"
-        stored.getId().getIdValue() != 7L
-
-        when: "it is looked up by that identity"
-        def found = repo.findById(7L)
-
-        then: "the lookup does not depend on the identity having been used as the key"
-        found.present
-        found.get().name == "written-elsewhere"
-
-        when: "the same document is updated through its identity"
-        def toUpdate = found.get()
-        toUpdate.name = "updated"
-        repo.update(toUpdate)
-
-        then: "the update lands on it rather than inserting a second document"
-        repo.count() == 1
-        repo.findById(7L).get().name == "updated"
-
-        when: "and deleted through its identity"
-        repo.deleteById(7L)
-
-        then:
-        repo.findById(7L).isEmpty()
-        repo.count() == 0
-
-        cleanup:
-        ctx.close()
     }
 
     private ApplicationContext createContext(String mode, String testName) {

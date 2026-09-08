@@ -41,6 +41,7 @@ public interface NitriteOperationsHelper {
      */
     NitriteCollection getCollection(Class<?> type);
 
+
     /**
      * Generates an ID for the entity if necessary.
      *

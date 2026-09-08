@@ -166,8 +166,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                     boolean existing = false;
                     if (!ctx.isStrictInsert() && id != null) {
                         Filter identityFilter = entityMapper.idEqualsFilter(meta, id);
-                        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
-                        existing = NitriteCrudOperations.exists(collection, identityFilter, legacyIdentityFilter);
+                        existing = NitriteCrudOperations.exists(collection, identityFilter);
                     }
                     if (existing) {
                         existingEntities.add(entity);
@@ -251,7 +250,6 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         NitriteEntityMeta<T> meta = entityMapper.getOrBuildMeta(type);
 
         List<Filter> filters = new ArrayList<>();
-        List<Filter> legacyFilters = new ArrayList<>();
         List<T> entitiesToDelete = new ArrayList<>();
 
         for (T entity : entities) {
@@ -267,14 +265,10 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 Object versionValue = versionProperty.get(entity);
                 filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
-            Filter legacyFilter = legacyIdentityFilter(meta, idValue,
-                meta.versionProp() == null ? null : meta.versionProp().getProperty().get(entity));
-
             DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
             if (entityEventListener.preRemove((EntityEventContext<Object>) event)) {
                 entitiesToDelete.add(event.getEntity());
                 filters.add(filter);
-                legacyFilters.add(legacyFilter);
             }
         }
 
@@ -285,7 +279,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
 
         int count = 0;
         for (int i = 0; i < filters.size(); i++) {
-            if (NitriteCrudOperations.remove(collection, filters.get(i), legacyFilters.get(i)) > 0) {
+            if (NitriteCrudOperations.remove(collection, filters.get(i)) > 0) {
                 count++;
             }
         }
@@ -379,8 +373,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
                 Document update = repositoryWriter.toDocument(entity);
                 if (update != null) {
                     helper.logUpdate(collection.getName(), filter, update);
-                    long rows = NitriteCrudOperations.update(
-                        collection, filter, legacyIdentityFilter(meta, id, versionValue), update);
+                    long rows = NitriteCrudOperations.update(collection, filter, update);
                     updatedCount += rows;
                 }
             }
@@ -392,25 +385,7 @@ public final class NitriteEntitiesOperations<T> extends SyncEntitiesOperations<T
         }
     }
 
-    /**
-     * The filter over the identity field for a document whose Nitrite key is not its identity.
-     * A versioned filter is an AND over the identity, so the fallback has to carry the version
-     * clause too or it would write over a stale document.
-     *
-     * @param meta the entity metadata
-     * @param id the identity value
-     * @param versionValue the version the document is expected to hold, or {@code null} when the
-     *        entity is unversioned
-     * @return the fallback filter, or {@code null} when the identity is always the document key
-     */
-    private @Nullable Filter legacyIdentityFilter(NitriteEntityMeta<T> meta, Object id, @Nullable Object versionValue) {
-        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
-        if (legacyIdentityFilter == null || meta.versionProp() == null) {
-            return legacyIdentityFilter;
-        }
-        return Filter.and(legacyIdentityFilter,
-            NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
-    }
+
 
     @SuppressWarnings("unchecked")
     @Override

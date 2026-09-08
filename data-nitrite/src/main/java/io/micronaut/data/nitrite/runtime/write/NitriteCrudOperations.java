@@ -16,7 +16,6 @@
 package io.micronaut.data.nitrite.runtime.write;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.collection.UpdateOptions;
@@ -25,11 +24,11 @@ import org.dizitart.no2.filters.Filter;
 /**
  * Collection-level primitives used by the Jakarta Data CRUD implementation.
  *
- * <p>The primary identity filter is tried first. The secondary filter is only for documents
- * written by an older version of the provider whose identity was not also the Nitrite document
- * key. No operation here enables Nitrite's {@code insertIfAbsent} option: Jakarta Data
- * {@code save} resolves an insert from an update by looking the identity up first, and
- * {@code update} never inserts.</p>
+ * <p>An identity is resolved by one filter, because this provider stores an identity the Nitrite
+ * document key can hold as that key and every other identity in the indexed identity field. No
+ * operation here enables Nitrite's {@code insertIfAbsent} option: Jakarta Data {@code save}
+ * resolves an insert from an update by looking the identity up first, and {@code update} never
+ * inserts.</p>
  *
  * @since 5.2.0
  */
@@ -39,18 +38,12 @@ final class NitriteCrudOperations {
     private NitriteCrudOperations() {
     }
 
-    static boolean exists(NitriteCollection collection,
-                          Filter identityFilter,
-                          @Nullable Filter legacyIdentityFilter) {
-        if (collection.find(identityFilter).firstOrNull() != null) {
-            return true;
-        }
-        return legacyIdentityFilter != null && collection.find(legacyIdentityFilter).firstOrNull() != null;
+    static boolean exists(NitriteCollection collection, Filter identityFilter) {
+        return collection.find(identityFilter).firstOrNull() != null;
     }
 
     static long update(NitriteCollection collection,
                        Filter identityFilter,
-                       @Nullable Filter legacyIdentityFilter,
                        Document document) {
         // Nitrite's WriteResult deliberately reports zero when the update document contains no
         // mutable fields (for example, an identity-only update), although the filter did match a
@@ -59,20 +52,10 @@ final class NitriteCrudOperations {
             collection.update(identityFilter, document, UpdateOptions.updateOptions(false));
             return 1;
         }
-        if (legacyIdentityFilter != null && collection.find(legacyIdentityFilter).firstOrNull() != null) {
-            collection.update(legacyIdentityFilter, document, UpdateOptions.updateOptions(false));
-            return 1;
-        }
         return 0;
     }
 
-    static long remove(NitriteCollection collection,
-                       Filter identityFilter,
-                       @Nullable Filter legacyIdentityFilter) {
-        long rows = collection.remove(identityFilter, false).getAffectedCount();
-        if (rows == 0 && legacyIdentityFilter != null) {
-            rows = collection.remove(legacyIdentityFilter, false).getAffectedCount();
-        }
-        return rows;
+    static long remove(NitriteCollection collection, Filter identityFilter) {
+        return collection.remove(identityFilter, false).getAffectedCount();
     }
 }

@@ -194,8 +194,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             boolean isUpdate = false;
             if (!ctx.isStrictInsert() && idValue != null) {
                 Filter identityFilter = entityMapper.idEqualsFilter(meta, idValue);
-                Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, idValue);
-                isUpdate = NitriteCrudOperations.exists(collection, identityFilter, legacyIdentityFilter);
+                isUpdate = NitriteCrudOperations.exists(collection, identityFilter);
             }
 
             if (isUpdate) {
@@ -315,10 +314,8 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
             Document update = repositoryWriter.toDocument(entity);
             if (update != null) {
                 helper.logUpdate(collection.getName(), filter, update);
-                // Explicit update is strict for every entity, including unversioned entities. A
-                // legacy document-key fallback is still allowed, but it carries the version
-                // predicate when optimistic locking is enabled.
-                long rows = NitriteCrudOperations.update(collection, filter, legacyIdentityFilter(meta, id), update);
+                // Explicit update is strict for every entity, including unversioned entities.
+                long rows = NitriteCrudOperations.update(collection, filter, update);
                 affectedCount = rows;
                 checkOptimisticLocking(rows);
             }
@@ -340,7 +337,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
                 filter = Filter.and(filter, NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
             }
             helper.logFind(collection.getName(), filter);
-            long rows = NitriteCrudOperations.remove(collection, filter, legacyIdentityFilter(meta, id));
+            long rows = NitriteCrudOperations.remove(collection, filter);
             affectedCount = rows;
             checkOptimisticLocking(rows);
         }
@@ -384,27 +381,7 @@ public final class NitriteEntityOperations<T> extends AbstractSyncEntityOperatio
         }
     }
 
-    /**
-     * The filter over the identity field for a document whose Nitrite key is not its identity.
-     * A versioned filter is an AND over the identity, so the fallback has to carry the version
-     * clause too or it would write over a stale document.
-     *
-     * @param meta the entity metadata
-     * @param id the identity value
-     * @return the fallback filter, or {@code null} when the identity is always the document key
-     */
-    private @Nullable Filter legacyIdentityFilter(NitriteEntityMeta<T> meta, Object id) {
-        Filter legacyIdentityFilter = entityMapper.identityFieldEqualsFilter(meta, id);
-        if (legacyIdentityFilter == null || meta.versionProp() == null) {
-            return legacyIdentityFilter;
-        }
-        Object versionValue = preVersionValue;
-        if (versionValue == null) {
-            versionValue = meta.versionProp().getProperty().get(entity);
-        }
-        return Filter.and(legacyIdentityFilter,
-            NitriteFilterUtils.eq(meta.versionProp().getPersistedName(), helper.toFilterValue(versionValue)));
-    }
+
 
     /**
      * A write that resolved to an existing document must affect exactly that document. An insert

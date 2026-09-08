@@ -29,6 +29,7 @@ class NitriteIdentityIndexSpec extends Specification {
         def collection = [
                 getName    : { -> "City" },
                 hasIndex   : { String... fields -> false },
+                size       : { -> 0L },
                 createIndex: { IndexOptions options, String... fields ->
                     throw new IllegalStateException("index rejected")
                 }

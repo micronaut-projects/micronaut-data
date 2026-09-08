@@ -279,14 +279,10 @@ public final class NitriteQueryExecutor {
         // A query that is nothing but an identity equality is answered by the document key when
         // the identity is stored as one, which is a key seek rather than the collection scan the
         // identity field would take - it carries no index precisely because the key already is
-        // one. A document stored under a foreign key is not matched by it, so a miss reruns the
-        // identity-field filter, which is the fallback the write paths make on the same case.
+        // one. This provider always writes such an identity to the key, so a miss is a miss.
         Filter documentKeyFilter = entityMapper.documentKeyFilterFor(entityFactory.apply(q.getRootEntity()), filter);
         Document doc = readOne(coll, documentKeyFilter != null ? documentKeyFilter : filter,
             findOptions, hasFindOptions, cursorLimit, bounded);
-        if (doc == null && documentKeyFilter != null) {
-            doc = readOne(coll, filter, findOptions, hasFindOptions, cursorLimit, bounded);
-        }
         if (doc == null) {
             return null;
         }

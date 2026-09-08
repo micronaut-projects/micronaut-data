@@ -24,6 +24,29 @@ soon as it holds more than one entry and the cost of a write climbs with the siz
 Set it to `16384` to get the documented default. H2 clamps the value to
 `(cacheSize / cacheConcurrency) >> 4`, which makes 64 KB the practical ceiling, and an existing file
 keeps the page shape it was written with until those pages are rewritten.
+
+The remaining MVStore settings are unset by default and, like the one above, are read only for
+`MVSTORE`. An unset value leaves the adapter's own default in place:
+
+- `mvstore-cache-size`: Read cache size in MB (adapter default: 16).
+- `mvstore-cache-concurrency`: Number of read cache segments (adapter default: 16). H2 clamps the
+page split size to `(cacheSize / cacheConcurrency) >> 4`, so this bounds `mvstore-page-split-size`.
+- `mvstore-auto-commit`: Whether every change is committed as it is made (adapter default: `true`).
+With this off, changes are buffered until `Nitrite.commit()`.
+- `mvstore-auto-commit-buffer-size`: Unsaved changes buffered before an automatic commit (adapter
+default: 1024). Only meaningful while auto-commit is on.
+- `mvstore-auto-compact`: Whether fragmented chunks and chunks below the 90% target fill rate are
+reclaimed, which shrinks the file (adapter default: `true`).
+- `mvstore-compress`: Whether stored data is compressed (adapter default: `false`).
+- `mvstore-compress-high`: Whether the higher compression level is used - smaller file, slower reads
+and writes (adapter default: `false`).
+- `mvstore-recovery-mode`: Whether the store opens in MVStore's recovery mode, which tolerates a file
+H2 would otherwise refuse (adapter default: `false`).
+- `mvstore-read-only`: Whether the store opens read-only (adapter default: `false`).
+- `mvstore-encryption-key`: The key MVStore encrypts the file with. Unset means an unencrypted
+store. Supply it from the environment rather than checked-in configuration. Encryption is an
+MVStore feature; the RocksDB adapter has no equivalent.
+
 - `username`: Optional username (for authenticated databases).
 - `password`: Optional password.
 
