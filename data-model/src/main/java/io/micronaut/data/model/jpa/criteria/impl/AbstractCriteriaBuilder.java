@@ -221,6 +221,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public Order sort(Expression<?> x, boolean ascending, boolean ignoreCase, Nulls nullPrecedence) {
+        return new DefaultOrder<>(x, ascending, ignoreCase, nullPrecedence);
+    }
+
+    @Override
     public <N extends Number> Expression<Double> avg(Expression<N> x) {
         return new UnaryExpression<>(x, UnaryExpressionType.AVG);
     }

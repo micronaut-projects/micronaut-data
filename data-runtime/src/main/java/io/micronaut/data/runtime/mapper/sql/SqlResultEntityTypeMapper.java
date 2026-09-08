@@ -55,6 +55,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -67,6 +68,11 @@ import java.util.function.BiFunction;
 /**
  * A {@link io.micronaut.data.runtime.mapper.TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader}
  * and materialize an instance using column naming conventions mapped by the entity.
+ *
+ * <p>Instances are stateful and are not thread safe: an instance caches the column name of every property it has
+ * read and the ordinals those columns have in the result set being mapped, and {@link #hasNext} keeps track of the
+ * cursor. Create one mapper per query execution, the way the repository operations do, and do not share an instance
+ * between threads or retain it after the result set has been consumed.</p>
  *
  * @param <RS> The result set type
  * @param <R>  The result type
@@ -87,6 +93,30 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final DatabaseConversionContextFactory conversionContextFactory;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
+    @Nullable
+    private final ResultReader<RS, Integer> columnIndexReader;
+    /**
+     * The resolved column of every property, shared by the mapping contexts of the same shape. The mapping
+     * contexts are rebuilt for every row when JOINs are used, so the resolved columns are held here to compute
+     * each column name once instead of once per row.
+     */
+    private final ShapeCache rootShape = new ShapeCache();
+    /**
+     * The resolved columns of the {@link #read} methods, which address a column by name rather than by property.
+     */
+    private final Map<String, ColumnRef> columnRefsByName = new HashMap<>();
+    /**
+     * The result set the currently resolved column ordinals were resolved from, compared by identity so that a
+     * mapper handed a different result set resolves the ordinals again. The reference is held for as long as the
+     * mapper lives, which is one query execution; an identity hash code is deliberately not used instead, because
+     * two result sets sharing a hash code would silently read the columns of one with the ordinals of the other.
+     */
+    @Nullable
+    private RS resolvedResultSet;
+    /**
+     * Incremented whenever a different result set is mapped, which invalidates every resolved ordinal.
+     */
+    private int resolvedGeneration = 1;
     private boolean callNext = true;
 
     /**
@@ -186,6 +216,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         this.startingPrefix = startingPrefix;
         this.conversionContextFactory = conversionContextFactory;
+        this.columnIndexReader = resultReader.getColumnIndexReader();
     }
 
     @Override
@@ -219,7 +250,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @since 4.2.0
      */
     public R readEntity(RS rs) throws DataAccessException {
-        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix), null, null);
+        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix, rootShape), null, null);
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + entity.getIntrospection().getBeanType() + "]. Missing result data.");
         }
@@ -235,7 +266,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = property.getDataType();
         String columnName = property.getPersistedName();
-        return resultReader.readDynamic(resultSet, columnName, dataType);
+        return readDynamic(resultSet, columnRefByName(columnName), dataType);
     }
 
     @Nullable
@@ -254,7 +285,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             dataType = property.getDataType();
             columnName = property.getPersistedName();
         }
-        return resultReader.readDynamic(resultSet, columnName, dataType);
+        return readDynamic(resultSet, columnRefByName(columnName), dataType);
     }
 
     @Override
@@ -276,7 +307,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (hasJoins) {
             return new PushingMapper<>() {
 
-                final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix, rootShape);
                 @Nullable
                 Object entityId;
                 @Nullable
@@ -312,7 +343,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         return new PushingMapper<>() {
 
-            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix, rootShape);
             @Nullable
             R entityInstance;
 
@@ -350,7 +381,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
                 @Override
                 public void processRow(RS row) {
-                    MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                    MappingContext<R> ctx = MappingContext.of(entity, startingPrefix, rootShape);
                     Object id = readEntityId(row, ctx);
                     if (id == null) {
                         throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
@@ -388,7 +419,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return new PushingMapper<>() {
 
             final List<R> allProcessed = new ArrayList<>(20);
-            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix, rootShape);
 
             @Override
             public void processRow(RS row) {
@@ -513,8 +544,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
 
             K entity;
+            // An optional embedded instantiated with its default constructor is null when none of its columns has a value
+            boolean nullIfNoValue = false;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
+                nullIfNoValue = nullableEmbedded;
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
@@ -604,6 +638,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     entity = convertAndSetWithValue(entity, version, version.getProperty(), v);
                 }
             }
+            boolean hasValue = id != null;
             for (RuntimePersistentProperty<K> rpp : persistentEntity.getPersistentProperties()) {
                 if (rpp.isReadOnly()) {
                     continue;
@@ -621,11 +656,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
                     if (rpp instanceof Embedded embedded) {
                         Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
+                        if (value != null) {
+                            hasValue = true;
+                        }
                         entity = setProperty(property, entity, value);
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && ctx.association != null && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
                         // Before setting property value, check if mappedBy is not different from the property name
                         if (isInverse && mappedByMatchesOrEmpty(Objects.requireNonNull(ctx.association), property)) {
+                            hasValue = true;
                             entity = setProperty(property, entity, parent);
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
@@ -639,6 +678,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             if (joinCtx.jp != null) {
                                 if (entityAssociation.getKind().isSingleEnded()) {
                                     Object associatedEntity = readEntity(rs, joinCtx, entity, associatedId);
+                                    if (associatedEntity != null) {
+                                        hasValue = true;
+                                    }
                                     entity = setProperty(property, entity, associatedEntity);
                                 } else {
                                     MappingContext<K> associatedCtx = joinCtx.copy();
@@ -647,6 +689,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                     Object associatedEntity = readEntity(rs, associatedCtx, entity, associatedId);
                                     if (associatedEntity != null) {
+                                        hasValue = true;
                                         Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
                                     } else if (joinCtx.manyAssociations == null) {
@@ -655,6 +698,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 }
                             } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
                                 Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId);
+                                if (value != null) {
+                                    hasValue = true;
+                                }
                                 entity = setProperty(property, entity, value);
                             }
                         }
@@ -662,9 +708,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 } else {
                     Object v = readProperty(rs, ctx, rpp);
                     if (v != null) {
+                        hasValue = true;
                         entity = convertAndSetWithValue(entity, rpp, property, v);
                     }
                 }
+            }
+            if (nullIfNoValue && !hasValue) {
+                return null;
             }
             return entity;
         } catch (InstantiationException e) {
@@ -722,13 +772,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     @Nullable
     private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
-        String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
-        String columnAlias = prop.getAlias();
-        if (StringUtils.isNotEmpty(columnAlias)) {
-            columnName = columnAlias;
-        } else if (ctx.prefix != null && !ctx.prefix.isEmpty()) {
-            columnName = ctx.prefix + columnName;
-        }
+        ColumnRef column = ctx.columnRef(prop);
+        String columnName = column.name;
         DataType dataType = prop.getDataType();
         Object result;
         AttributeConverter<Object, Object> converter = prop.getConverter();
@@ -739,13 +784,52 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             JsonDataType jsonDataType = prop.getJsonDataType();
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
         } else {
-            result = resultReader.readDynamic(rs, columnName, dataType);
+            result = readDynamic(rs, column, dataType);
         }
 
         if (converter != null && conversionContextFactory != null) {
             return converter.convertToEntityValue(result, conversionContextFactory.forArgument(prop.getArgument()));
         }
         return result;
+    }
+
+    private ColumnRef columnRefByName(String columnName) {
+        return columnRefsByName.computeIfAbsent(columnName, ColumnRef::new);
+    }
+
+    /**
+     * Reads the column value by its ordinal when the result reader can resolve one, otherwise by the column name.
+     * The ordinal is resolved once per result set and column, so the driver doesn't have to resolve the column
+     * name for every row.
+     */
+    @Nullable
+    private Object readDynamic(RS rs, ColumnRef column, DataType dataType) {
+        if (columnIndexReader != null) {
+            Integer columnIndex = resolveColumnIndex(rs, column);
+            if (columnIndex != null) {
+                return columnIndexReader.readDynamic(rs, columnIndex, dataType);
+            }
+        }
+        return resultReader.readDynamic(rs, column.name, dataType);
+    }
+
+    /**
+     * @return The ordinal of the column in the given result set, or {@code null} when it cannot be resolved and
+     * the column has to be read by name
+     */
+    @Nullable
+    private Integer resolveColumnIndex(RS rs, ColumnRef column) {
+        if (rs != resolvedResultSet) {
+            // The ordinals are only valid for the result set they were resolved from
+            resolvedResultSet = rs;
+            resolvedGeneration++;
+        }
+        if (column.generation != resolvedGeneration) {
+            int index = resultReader.findColumnIndex(rs, column.name);
+            column.index = index < 0 ? null : index;
+            column.generation = resolvedGeneration;
+        }
+        return column.index;
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
@@ -850,6 +934,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         private final List<Association> embeddedPath;
         @Nullable
         private final Association association;
+        /**
+         * The resolved columns shared by every mapping context of this shape.
+         */
+        private final ShapeCache shape;
 
         @Nullable
         private Map<Object, MappingContext> manyAssociations;
@@ -869,7 +957,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                List<Association> joinPath,
                                List<Association> embeddedPath,
                                @Nullable
-                               Association association) {
+                               Association association,
+                               ShapeCache shape) {
             this.rootPersistentEntity = rootPersistentEntity;
             this.persistentEntity = persistentEntity;
             this.namingStrategy = namingStrategy;
@@ -878,9 +967,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             this.joinPath = joinPath;
             this.embeddedPath = embeddedPath;
             this.association = association;
+            this.shape = shape;
         }
 
-        private static <K> MappingContext<K> of(RuntimePersistentEntity<K> persistentEntity, @Nullable String prefix) {
+        private static <K> MappingContext<K> of(RuntimePersistentEntity<K> persistentEntity,
+                                                @Nullable String prefix,
+                                                ShapeCache shape) {
             return new MappingContext<>(
                     persistentEntity,
                     persistentEntity,
@@ -889,7 +981,30 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     null,
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    null);
+                    null,
+                    shape);
+        }
+
+        /**
+         * The column of the given property, computed once per shape and reused by every row.
+         *
+         * @param property The property
+         * @return The resolved column
+         */
+        private ColumnRef columnRef(RuntimePersistentProperty<?> property) {
+            return shape.columns.computeIfAbsent(property, p -> new ColumnRef(columnName(p)));
+        }
+
+        private String columnName(RuntimePersistentProperty<?> property) {
+            String columnAlias = property.getAlias();
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                return columnAlias;
+            }
+            String columnName = namingStrategy.mappedName(embeddedPath, property);
+            if (prefix != null && !prefix.isEmpty()) {
+                return prefix + columnName;
+            }
+            return columnName;
         }
 
         private <K> MappingContext<K> embedded(Embedded embedded) {
@@ -909,7 +1024,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     jp,
                     joinPath,
                     associated(embeddedPath, association),
-                    association
+                    association,
+                    shape.child(association)
             );
         }
 
@@ -938,7 +1054,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     jp,
                     joinPath,
                     embeddedPath,
-                    association
+                    association,
+                    shape
             );
         }
 
@@ -953,7 +1070,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     jp,
                     associated(this.joinPath, association),
                     Collections.emptyList(), // Reset path,
-                    association
+                    association,
+                    shape.child(association)
             );
         }
 
@@ -967,7 +1085,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     jp,
                     joinPath,
                     associated(embeddedPath, embedded),
-                    embedded
+                    embedded,
+                    shape.child(embedded)
             );
         }
 
@@ -1046,6 +1165,40 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return newAssociations;
         }
 
+    }
+
+    /**
+     * The resolved columns of every mapping context sharing the same shape, that is the same entity reached over
+     * the same association path. The mapping contexts themselves are rebuilt for every row when JOINs are used,
+     * so this tree lives on the mapper and is navigated when a context is created rather than when a value is read.
+     */
+    private static final class ShapeCache {
+
+        private final IdentityHashMap<Association, ShapeCache> children = new IdentityHashMap<>(4);
+        private final IdentityHashMap<RuntimePersistentProperty<?>, ColumnRef> columns = new IdentityHashMap<>(8);
+
+        private ShapeCache child(Association association) {
+            return children.computeIfAbsent(association, a -> new ShapeCache());
+        }
+    }
+
+    /**
+     * A column of the result set, holding the column name computed from the entity and, once resolved, the ordinal
+     * of that column in the result set being mapped.
+     */
+    private static final class ColumnRef {
+
+        private final String name;
+        /**
+         * The ordinal in the result set of {@link #generation}, {@code null} when the column has to be read by name.
+         */
+        @Nullable
+        private Integer index;
+        private int generation;
+
+        private ColumnRef(String name) {
+            this.name = name;
+        }
     }
 
     /**

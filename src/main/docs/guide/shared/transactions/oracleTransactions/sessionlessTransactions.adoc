@@ -1,0 +1,117 @@
+Oracle sessionless transactions allow a JDBC transaction to be suspended and later resumed, potentially from a different
+request. Micronaut Data supports this for Oracle JDBC with the ann:transaction.annotation.OracleTransactional[] `sessionless`
+attribute:
+
+* api:transaction.annotation.OracleTransactional.Sessionless#SUSPEND[]
+* api:transaction.annotation.OracleTransactional.Sessionless#REQUIRES_SUSPENDED[]
+
+The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another
+active transaction. If a parent transaction is already active, Micronaut rejects the sessionless transaction definition
+instead of allowing it to participate in the existing transaction.
+The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
+They also cannot be combined with `@OracleTransactional.Recoverable`. `SUSPEND` detaches the transaction instead of
+committing it, so there is no ambiguous commit outcome to resolve. Replaying `REQUIRES_SUSPENDED` could attempt to resume
+a transaction whose completion state is already uncertain. Micronaut rejects either combination before transactional work begins.
+
+Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
+For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
+
+The following service starts a sessionless transaction, suspends it, and later resumes it:
+
+snippet::example.BookingService[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+
+For a method annotated with `@OracleTransactional(sessionless = SUSPEND)`, the standard JDBC transaction manager and
+Oracle sessionless transaction handler:
+
+* requires an active Oracle sessionless propagation state
+* begins the JDBC transaction normally
+* starts an Oracle sessionless transaction with `OracleConnection.startTransaction(...)`
+* stores the returned Oracle global transaction identifier, or GTRID, in the propagation state
+* registers work at the resource commit boundary
+* runs all transaction synchronization callbacks before suspending the Oracle transaction and skipping the JDBC commit
+
+If the method declares `@OracleTransactional(timeout = ...)`, that timeout is passed to Oracle when the sessionless transaction is started.
+If no timeout is declared, the Oracle driver and database defaults apply.
+
+For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPENDED)`, the Oracle sessionless transaction handler:
+
+* reads the GTRID from the active propagation state
+* begins the JDBC transaction normally
+* resumes the Oracle sessionless transaction with `OracleConnection.resumeTransaction(...)`
+* commits or rolls back the JDBC transaction normally
+* clears the GTRID from the propagation state after completion
+
+Because `SUSPEND` leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction
+until a later `REQUIRES_SUSPENDED` transaction completes it.
+
+== HTTP Propagation
+
+HTTP propagation is provided by an HTTP server filter and is opt-in:
+
+[configuration]
+----
+micronaut:
+  data:
+    oracle:
+      sessionless:
+        http:
+          propagation-enabled: true
+----
+
+By default, the filter uses the `Oracle-Sessionless-Transaction-Id` header.
+You can change the header name:
+
+[configuration]
+----
+micronaut:
+  data:
+    oracle:
+      sessionless:
+        http:
+          propagation-enabled: true
+          header-name: X-Oracle-Sessionless-Transaction-Id
+----
+
+On each HTTP request, the filter creates the request-scoped Oracle sessionless propagation state. If the configured header
+is present, the filter decodes the header and stores the GTRID in that state so a `REQUIRES_SUSPENDED` method can resume it.
+If the request contains a malformed transaction id, the filter fails the request with a bad request response. If another
+component has already created Oracle sessionless transaction state before the filter runs, the filter fails fast because
+the HTTP filter owns the request-level state.
+
+On the response, if the request still has a suspended transaction id, the filter writes it to the configured header.
+After a resumed transaction commits or rolls back, the sessionless transaction handler clears the id, so the response does not contain the header.
+
+The following controller does not need to handle the header directly:
+
+snippet::example.BookingController[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+
+The HTTP client sends one request that starts and suspends the transaction:
+
+snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-suspend", indent="0"]
+
+Then sends the returned header back on a later request that resumes and completes it:
+
+snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-resume", indent="0"]
+
+The header value is encoded through api:transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec[]. The default codec
+uses URL-safe Base64 without padding. Applications can provide their own `OracleSessionlessTransactionIdCodec` bean to sign,
+encrypt, or otherwise protect the value before it is exposed outside the process.
+
+IMPORTANT: The encoded transaction id is a capability to resume the suspended Oracle transaction.
+Only enable HTTP propagation for trusted workflows, protect the request with normal authentication and transport security,
+and use short transaction timeouts.
+
+== Programmatic Propagation
+
+For non-HTTP workflows, inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] and create
+an explicit propagation scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export
+and import the encoded transaction id itself.
+
+snippet::example.BookingServiceTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
+
+The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
+`currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`
+call creates a state that already contains the id, so the `REQUIRES_SUSPENDED` method can resume and complete the transaction.
+
+The programmatic propagation scope is lexical. Code invoked in the same scope sees the same transaction id.
+A nested `withPropagation(...)` call creates a scoped override and restores the previous state after the supplier returns.

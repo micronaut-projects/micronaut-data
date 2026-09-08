@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 @Primary
-public class EntityEventRegistry implements EntityEventListener<Object>, ExecutableMethodProcessor<EntityEventMapping> {
+public class EntityEventRegistry implements EntityEventListener<Object>, UpsertEntityEventListener<Object>, ExecutableMethodProcessor<EntityEventMapping> {
     public static final List<Class<? extends Annotation>> EVENT_TYPES = Arrays.asList(
             PostLoad.class,
             PostPersist.class,
@@ -171,6 +171,19 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
             return true;
         } catch (Exception e) {
             throw new PersistenceEventException("An error occurred invoking pre-update event listeners: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+        try {
+            EntityEventListener<Object> target = getListeners(context.getPersistentEntity()).get(PrePersist.class);
+            if (target instanceof UpsertEntityEventListener<?> upsertEntityEventListener) {
+                ((UpsertEntityEventListener<Object>) upsertEntityEventListener).prepareUpsert(context);
+            }
+        } catch (Exception e) {
+            throw new PersistenceEventException("An error occurred preparing an entity for upsert: " + e.getMessage(), e);
         }
     }
 
@@ -318,7 +331,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
         }
     }
 
-    private static final class CompositeEventListener implements EntityEventListener<Object> {
+    private static final class CompositeEventListener implements EntityEventListener<Object>, UpsertEntityEventListener<Object> {
         private final EntityEventListener<Object>[] listenerArray;
 
         public CompositeEventListener(Collection<EntityEventListener<Object>> listeners) {
@@ -385,6 +398,16 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
                 }
             }
             return true;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void prepareUpsert(@NonNull EntityEventContext<Object> context) {
+            for (EntityEventListener<Object> listener : listenerArray) {
+                if (listener instanceof UpsertEntityEventListener<?> upsertEntityEventListener) {
+                    ((UpsertEntityEventListener<Object>) upsertEntityEventListener).prepareUpsert(context);
+                }
+            }
         }
 
         @Override

@@ -16,10 +16,11 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
-import org.jspecify.annotations.NonNull;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
+import io.micronaut.transaction.support.TransactionResourceCommit;
 import io.micronaut.transaction.support.TransactionSynchronization;
+import org.jspecify.annotations.NonNull;
 
 /**
  * The internal transaction representation.
@@ -71,6 +72,20 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
     void triggerAfterCommit();
 
     void triggerBeforeCompletion();
+
+    /**
+     * Registers vendor-specific work for the resource commit boundary.
+     *
+     * @param resourceCommit The resource commit callback
+     */
+    void registerResourceCommit(TransactionResourceCommit resourceCommit);
+
+    /**
+     * Runs a registered resource commit action.
+     *
+     * @return {@code true} when a resource commit action was registered and executed
+     */
+    boolean triggerResourceCommit();
 
     void triggerAfterCompletion(TransactionSynchronization.Status status);
 

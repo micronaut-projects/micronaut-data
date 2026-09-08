@@ -45,6 +45,23 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
      */
     protected abstract <R extends @Nullable Object> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
 
+    /**
+     * @param definition The transaction definition
+     * @return Whether this transaction manager supports the requested sessionless transaction mode.
+     */
+    protected boolean supportsSessionlessTransactions(TransactionDefinition definition) {
+        return false;
+    }
+
+    /**
+     * Validate a transaction definition before transactional work begins.
+     *
+     * @param definition The transaction definition
+     */
+    protected void validateTransactionDefinition(TransactionDefinition definition) {
+        TransactionUtil.validateOracleSessionlessMode(definition, supportsSessionlessTransactions(definition));
+    }
+
     @Override
     public final Optional<TransactionStatus<C>> findTransactionStatus() {
         return findTransactionStatusInternal().map(status -> status);
@@ -61,6 +78,7 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
     @Override
     public final <R extends @Nullable Object> R execute(@NonNull TransactionDefinition definition,
                                                         @NonNull TransactionCallback<C, R> callback) {
+        validateTransactionDefinition(definition);
         return doExecute(definition, status -> status.propagate(() -> {
             try {
                 return callback.call(status);

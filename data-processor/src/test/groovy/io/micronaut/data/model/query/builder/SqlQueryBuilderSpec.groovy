@@ -17,7 +17,11 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -60,6 +64,7 @@ import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import jakarta.persistence.criteria.JoinType
+import java.nio.charset.StandardCharsets
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -549,6 +554,114 @@ interface MyRepository {
         Person | 'desc'    | ["name", "someId"] | 'person_.`name` DESC,person_.`some_id` DESC'
     }
 
+    @Unroll
+    void "test encode order by with null ordering #nullOrdering"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", direction, false, nullOrdering))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == " ORDER BY ${statement}"
+
+        where:
+        direction                     | nullOrdering                        | statement
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.FIRST       | 'person_.`name` ASC NULLS FIRST'
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.LAST        | 'person_.`name` ASC NULLS LAST'
+        Sort.Order.Direction.DESC     | Sort.Order.NullOrdering.FIRST       | 'person_.`name` DESC NULLS FIRST'
+        Sort.Order.Direction.DESC     | Sort.Order.NullOrdering.LAST        | 'person_.`name` DESC NULLS LAST'
+        Sort.Order.Direction.ASC      | Sort.Order.NullOrdering.NONE        | 'person_.`name` ASC'
+    }
+
+    @Unroll
+    void "test encode order by null ordering on #dialect which has no NULLS syntax"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", direction, false, nullOrdering))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then: "the null ordering becomes a leading CASE, since NULLS FIRST/LAST would not parse"
+        query == " ORDER BY ${statement}"
+
+        where:
+        dialect            | direction                 | nullOrdering                  | statement
+        Dialect.MYSQL      | Sort.Order.Direction.ASC  | Sort.Order.NullOrdering.LAST  | 'CASE WHEN person_.`name` IS NULL THEN 1 ELSE 0 END,person_.`name` ASC'
+        Dialect.MYSQL      | Sort.Order.Direction.DESC | Sort.Order.NullOrdering.FIRST | 'CASE WHEN person_.`name` IS NULL THEN 0 ELSE 1 END,person_.`name` DESC'
+        Dialect.SQL_SERVER | Sort.Order.Direction.ASC  | Sort.Order.NullOrdering.LAST  | 'CASE WHEN person_.[name] IS NULL THEN 1 ELSE 0 END,person_.[name] ASC'
+        Dialect.SQL_SERVER | Sort.Order.Direction.DESC | Sort.Order.NullOrdering.FIRST | 'CASE WHEN person_.[name] IS NULL THEN 0 ELSE 1 END,person_.[name] DESC'
+    }
+
+    @Unroll
+    void "test encode order by ignoring case together with a null ordering on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true, Sort.Order.NullOrdering.LAST))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then: "LOWER wraps only the sorted value, and its parentheses balance"
+        query == " ORDER BY ${statement}"
+        query.count("(") == query.count(")")
+
+        where:
+        dialect            | statement
+        Dialect.MYSQL      | 'CASE WHEN person_.`name` IS NULL THEN 1 ELSE 0 END,LOWER(person_.`name`) ASC'
+        Dialect.SQL_SERVER | 'CASE WHEN person_.[name] IS NULL THEN 1 ELSE 0 END,LOWER(person_.[name]) ASC'
+        Dialect.POSTGRES   | 'LOWER(person_."name") ASC NULLS LAST'
+        Dialect.H2         | 'LOWER(person_.`name`) ASC NULLS LAST'
+    }
+
+    @Unroll
+    void "test encode order by without a null ordering is untouched on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        expect: "no null ordering means no CASE and no NULLS suffix"
+        !new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null).contains("CASE")
+        !new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null).contains("NULLS")
+
+        where:
+        dialect << [Dialect.MYSQL, Dialect.SQL_SERVER, Dialect.POSTGRES, Dialect.ORACLE, Dialect.H2, Dialect.ANSI]
+    }
+
+    @Unroll
+    void "test encode order by null ordering uses the NULLS syntax on #dialect"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.LAST))
+
+        when:
+        String query = new SqlQueryBuilder(dialect).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query.endsWith(" ASC NULLS LAST")
+        !query.contains("CASE")
+
+        where:
+        dialect << [Dialect.POSTGRES, Dialect.ORACLE, Dialect.H2, Dialect.ANSI]
+    }
+
+    void "test encode order by with null ordering only on the orders that ask for it"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(
+                new Sort.Order("name", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.LAST),
+                Sort.Order.desc("someId")
+        )
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        query == ' ORDER BY person_.`name` ASC NULLS LAST,person_.`some_id` DESC'
+    }
+
     void 'test encode order by uppercase mapped column'() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Owner)
@@ -559,6 +672,129 @@ interface MyRepository {
 
         then:
         query == ' ORDER BY owner_."OWNER_NAME" ASC'
+    }
+
+    void "test encode order by with joined property uses provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Book)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, "book_book_")
+
+        then:
+        query == ' ORDER BY book_book_author_.`name` ASC'
+    }
+
+    void "test encode order by normalizes a long Postgres entity alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        normalizedAlias.length() <= 63
+        normalizedAlias != alias
+        normalizedAlias ==~ /^.{1,46}_[0-9a-f]{16}_?$/
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes a multibyte Postgres entity alias by bytes"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongMultibytePostgresAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+        String alias = entity.getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        alias.length() <= 63
+        alias.getBytes(StandardCharsets.UTF_8).length > 63
+        normalizedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        normalizedAlias != alias
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes a long declared Postgres association alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongDeclaredAssociationAliasEntity)
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+        String declaredAlias = entity.getPropertyByName("author").getAliasName()
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String normalizedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        normalizedAlias.length() <= 63
+        normalizedAlias != declaredAlias
+        query.endsWith(".\"name\" ASC")
+    }
+
+    void "test encode order by normalizes an un-normalized provided table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasEntity)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        // A pagination subquery prefixes the root alias with the outer one, which can push a legal
+        // alias over the Postgres limit
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        usedAlias != prefixedAlias
+        usedAlias ==~ /^[A-Za-z0-9_]{1,46}_[0-9a-f]{16}_?$/
+    }
+
+    void "test encode order by derives the joined alias from the un-normalized table alias"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(LongPostgresAliasBook)
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        String prefixedAlias = entity.getAliasName() + entity.getAliasName()
+        Sort sort = Sort.of(Sort.Order.asc("author.name"))
+
+        when:
+        String rootQuery = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, Sort.of(Sort.Order.asc("id")), false, prefixedAlias)
+        String normalizedRootAlias = rootQuery.substring(" ORDER BY ".length(), rootQuery.indexOf(".\"id\""))
+        String query = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, prefixedAlias)
+        String usedAlias = query.substring(" ORDER BY ".length(), query.indexOf(".\"name\""))
+        String queryFromNormalizedRoot = builder.buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, normalizedRootAlias)
+        String aliasFromNormalizedRoot = queryFromNormalizedRoot.substring(" ORDER BY ".length(), queryFromNormalizedRoot.indexOf(".\"name\""))
+
+        then:
+        prefixedAlias.getBytes(StandardCharsets.UTF_8).length > 63
+        usedAlias.getBytes(StandardCharsets.UTF_8).length <= 63
+        // The join alias has to be derived from the raw alias, because that is what the query
+        // builder itself used when it emitted the JOIN
+        usedAlias.startsWith(prefixedAlias.substring(0, 45))
+        // Deriving it from the already normalized alias would reference a non existing alias
+        usedAlias != aliasFromNormalizedRoot
+    }
+
+    void "test encode order by differentiates colliding Java aliases"() {
+        given:
+        PersistentEntity firstEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionOne)
+        PersistentEntity secondEntity = new RuntimePersistentEntity(LongPostgresAliasCollisionTwo)
+        Sort sort = Sort.of(Sort.Order.asc("name"))
+
+        when:
+        String firstQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", firstEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+        String secondQuery = new SqlQueryBuilder(Dialect.POSTGRES).buildOrderBy("", secondEntity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        firstEntity.getAliasName().hashCode() == secondEntity.getAliasName().hashCode()
+        firstQuery != secondQuery
     }
 
     void "test encode insert statement"() {
@@ -1148,4 +1384,63 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
+class LongPostgresAliasBook {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
+}
+
+@MappedEntity(alias = "žžžžžžžžžžžžžžžžžžžžžžžžžžžžžžžž_")
+class LongMultibytePostgresAliasEntity {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_Aa_")
+class LongPostgresAliasCollisionOne {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_BB_")
+class LongPostgresAliasCollisionTwo {
+    @Id
+    Long id
+
+    String name
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasEntity {
+    @Id
+    Long id
+
+    @MappedProperty(alias = "this_is_an_intentionally_very_long_declared_association_alias_for_sorting_")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    LongDeclaredAssociationAliasAuthor author
+}
+
+@MappedEntity
+class LongDeclaredAssociationAliasAuthor {
+    @Id
+    Long id
+
+    String name
 }
