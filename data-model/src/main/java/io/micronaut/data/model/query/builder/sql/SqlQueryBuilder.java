@@ -123,6 +123,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
+    // PostgreSQL's NAMEDATALEN limit is measured in server-encoding bytes, not Java characters.
+    // The server encoding is not available to the builder, so non-ASCII code points use the
+    // conservative four-byte UTF-8 maximum when sizing aliases.
+    private static final int MAX_POSTGRES_IDENTIFIER_BYTES = 63;
+    // FNV-1a 64-bit constants; hashing code points keeps surrogate pairs intact.
+    private static final long ALIAS_HASH_OFFSET_BASIS = 0xcbf29ce484222325L;
+    private static final long ALIAS_HASH_PRIME = 0x100000001b3L;
+    private static final int ALIAS_HASH_LENGTH = 16;
 
     private static final String CONSTRAINT_CHECK_TEMPLATE = " CONSTRAINT %s CHECK (%s %s %s)";
 
@@ -253,6 +261,55 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     protected boolean shouldEscape(PersistentEntity entity) {
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
         return Objects.requireNonNullElseGet(shouldEscapeDialect, () -> super.shouldEscape(entity));
+    }
+
+    @Override
+    protected String normalizeAlias(String alias) {
+        if (dialect != Dialect.POSTGRES) {
+            return alias;
+        }
+        boolean trailingUnderscore = alias.endsWith("_");
+        // Reserve bytes for the separator, fixed-width hash, and preserved trailing underscore.
+        int maxPrefixBytes = MAX_POSTGRES_IDENTIFIER_BYTES - ALIAS_HASH_LENGTH - 1
+            - (trailingUnderscore ? 1 : 0);
+        int totalBytes = 0;
+        int prefixBytes = 0;
+        int prefixEnd = 0;
+        boolean prefixComplete = false;
+        long hash = ALIAS_HASH_OFFSET_BASIS;
+        int i = 0;
+        while (i < alias.length()) {
+            int codePoint = alias.codePointAt(i);
+            // Be conservative when the PostgreSQL server encoding is unknown: ASCII is one byte,
+            // while every non-ASCII code point is counted as the four-byte UTF-8 maximum.
+            int codePointLength = codePoint <= 0x7F ? 1 : 4;
+            totalBytes += codePointLength;
+            if (!prefixComplete) {
+                if (prefixBytes + codePointLength <= maxPrefixBytes) {
+                    prefixBytes += codePointLength;
+                    prefixEnd = i + Character.charCount(codePoint);
+                } else {
+                    prefixComplete = true;
+                }
+            }
+            // Hash Unicode code points so surrogate pairs are treated as one character.
+            hash ^= codePoint;
+            hash *= ALIAS_HASH_PRIME;
+            i += Character.charCount(codePoint);
+        }
+        if (totalBytes <= MAX_POSTGRES_IDENTIFIER_BYTES) {
+            return alias;
+        }
+
+        String hashString = Long.toUnsignedString(hash, 16);
+        if (hashString.length() < ALIAS_HASH_LENGTH) {
+            hashString = "0".repeat(ALIAS_HASH_LENGTH - hashString.length()) + hashString;
+        } else if (hashString.length() > ALIAS_HASH_LENGTH) {
+            hashString = hashString.substring(hashString.length() - ALIAS_HASH_LENGTH);
+        }
+        String prefix = alias.substring(0, prefixEnd);
+        String normalized = prefix + "_" + hashString;
+        return trailingUnderscore ? normalized + "_" : normalized;
     }
 
     private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {
@@ -1575,7 +1632,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
-    protected String getAliasName(PersistentEntity entity) {
+    protected String getRawAliasName(PersistentEntity entity) {
         return entity.getAliasName();
     }
 
@@ -2253,7 +2310,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 @Override
                 @Nullable
                 public String getTableAlias() {
-                    String rootAlias = queryState.getRootAlias();
+                    // The un-normalized alias is stored so that the runtime can re-derive the very
+                    // same join aliases that were generated into the query. buildPropertyByName
+                    // normalizes it again before using it on its own.
+                    String rootAlias = queryState.getRootAliasSource();
                     return StringUtils.isNotEmpty(rootAlias) ? rootAlias : null;
                 }
             });
