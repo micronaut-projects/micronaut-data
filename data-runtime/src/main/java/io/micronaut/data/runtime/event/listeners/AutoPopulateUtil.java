@@ -66,12 +66,13 @@ final class AutoPopulateUtil {
     }
 
     /**
-     * Traverse all embedded associations at the root level of the given context, instantiate missing
-     * embedded instances if necessary, delegate recursive population to {@link #populateEmbedded(RuntimePersistentEntity, Object, BiFunction)},
-     * and reattach the resulting instance via {@link EntityEventContext#setProperty(BeanProperty, Object)}.
+     * Traverse embedded associations at the root level of the given context that contain auto-populated
+     * properties, instantiate missing embedded instances if necessary, and delegate recursive population
+     * to {@link #populateEmbedded(RuntimePersistentEntity, Object, BiFunction)}, then reattach the resulting
+     * instance via {@link EntityEventContext#setProperty(BeanProperty, Object)}.
      *
      * This method centralizes the boilerplate to:
-     * - find embedded associations of the root entity
+     * - find embedded associations of the root entity with auto-populated properties
      * - lazily instantiate null embedded instances
      * - apply the provided propertySetter within the embedded graph (recursively)
      * - support immutable entities by reattaching the updated instance through the context
@@ -87,21 +88,22 @@ final class AutoPopulateUtil {
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
         for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
-            if (association.isEmbedded()) {
-                @SuppressWarnings("unchecked")
-                BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
-                Object embedded = embeddedProperty.get(rootEntity);
-                if (embedded == null) {
-                    try {
-                        embedded = association.getAssociatedEntity().getIntrospection().instantiate();
-                    } catch (Exception e) {
-                        LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
-                        continue;
-                    }
-                }
-                Object updated = populateEmbedded(association.getAssociatedEntity(), embedded, propertySetter);
-                context.setProperty(embeddedProperty, updated);
+            if (!association.isEmbedded() || !association.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                continue;
             }
+            @SuppressWarnings("unchecked")
+            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
+            Object embedded = embeddedProperty.get(rootEntity);
+            if (embedded == null) {
+                try {
+                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                } catch (Exception e) {
+                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
+                    continue;
+                }
+            }
+            Object updated = populateEmbedded(association.getAssociatedEntity(), embedded, propertySetter);
+            context.setProperty(embeddedProperty, updated);
         }
     }
 
@@ -125,23 +127,24 @@ final class AutoPopulateUtil {
 
         // Recurse into nested embedded associations
         for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
-            if (nested.isEmbedded()) {
-                BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
-                Object child = ep.get(current);
-                if (child == null) {
-                    try {
-                        child = nested.getAssociatedEntity().getIntrospection().instantiate();
-                    } catch (Exception e) {
-                        LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
-                        continue;
-                    }
+            if (!nested.isEmbedded() || !nested.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                continue;
+            }
+            BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
+            Object child = ep.get(current);
+            if (child == null) {
+                try {
+                    child = nested.getAssociatedEntity().getIntrospection().instantiate();
+                } catch (Exception e) {
+                    LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
+                    continue;
                 }
-                Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
-                if (ep.isReadOnly()) {
-                    current = ep.withValue(current, updatedChild);
-                } else {
-                    ep.set(current, updatedChild);
-                }
+            }
+            Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
+            if (ep.isReadOnly()) {
+                current = ep.withValue(current, updatedChild);
+            } else {
+                ep.set(current, updatedChild);
             }
         }
 

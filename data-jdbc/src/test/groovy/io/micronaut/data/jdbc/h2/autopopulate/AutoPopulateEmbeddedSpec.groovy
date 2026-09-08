@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2.autopopulate
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.AutoPopulated
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
@@ -48,6 +49,11 @@ class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyPr
         loaded.auditFields.innerFields
         loaded.auditFields.innerFields.subInnerCreatedAt
         loaded.auditFields.innerFields.subInnerGuid
+        loaded.nestedOnlyAuditFields
+        loaded.nestedOnlyAuditFields.innerFields
+        loaded.nestedOnlyAuditFields.innerFields.nestedCreatedAt
+        loaded.nestedOnlyAuditFields.innerFields.nestedGuid
+        !saved.nonAutoPopulatedFields
         // Currently embedded entity without default constructor cannot be created
         // in order to populate fields in timestamp and uuid entity event listeners
         !loaded.otherAuditFields
@@ -90,6 +96,21 @@ class OtherAuditFields {
     }
 }
 
+@Embeddable
+class NestedOnlyAuditFields {
+    @Relation(value = Relation.Kind.EMBEDDED)
+    NestedOnlyInnerFields innerFields
+}
+
+@Embeddable
+class NestedOnlyInnerFields {
+    @DateCreated
+    LocalDateTime nestedCreatedAt
+
+    @AutoPopulated
+    UUID nestedGuid
+}
+
 @Serdeable
 @MappedEntity(value = "my_auditable_entity")
 class MyAuditableEntity {
@@ -112,6 +133,18 @@ class MyAuditableEntity {
 
     @Relation(value = Relation.Kind.EMBEDDED)
     OtherAuditFields otherAuditFields
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    NestedOnlyAuditFields nestedOnlyAuditFields
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    NonAutoPopulatedFields nonAutoPopulatedFields
+}
+
+@Embeddable
+class NonAutoPopulatedFields {
+    @Nullable
+    String value
 }
 
 @JdbcRepository(dialect = Dialect.H2)
