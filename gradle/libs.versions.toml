@@ -55,6 +55,8 @@ groovy_yaml = "5.0.7"
 
 antlr = "4.13.2"
 
+jackson-override = "2.18.10"
+
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
@@ -101,6 +103,8 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 # AZURE COSMOS
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+jackson-core-override = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-override" }
+jackson-databind-override = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-override" }
 
 # Antlr
 
