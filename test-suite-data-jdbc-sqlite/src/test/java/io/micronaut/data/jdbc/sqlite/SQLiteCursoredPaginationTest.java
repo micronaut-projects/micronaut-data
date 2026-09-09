@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.sqlite;
 
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
@@ -54,6 +56,37 @@ class SQLiteCursoredPaginationTest {
         bookRepository.deleteAll();
         personRepository.deleteAll();
         personRepository.saveAll(createPeople());
+    }
+
+    @Test
+    void testNativeQueryRejectsUnsafeCursoredSortProperty() {
+        CursoredPageable pageable = Pageable.afterCursor(
+            Pageable.Cursor.of("AAAAA00", 1L),
+            1,
+            10,
+            Sort.of(Sort.Order.asc("(SELECT password FROM users)"))
+        );
+
+        DataAccessException exception = assertThrows(DataAccessException.class,
+            () -> personRepository.findPeopleNative("A%", pageable));
+
+        assertEquals("Invalid native query sort property: (SELECT password FROM users)", exception.getCause().getMessage());
+    }
+
+    @Test
+    void testNativeQueryCursoredPagination() {
+        Sort sort = Sort.of(Sort.Order.asc("name"));
+        CursoredPage<Person> firstPage = assertCursored(
+            personRepository.findPeopleNative("A%", CursoredPageable.from(10, sort))
+        );
+
+        CursoredPage<Person> secondPage = assertCursored(
+            personRepository.findPeopleNative("A%", firstPage.nextPageable())
+        );
+
+        assertEquals(10, firstPage.getContent().size());
+        assertEquals(10, secondPage.getContent().size());
+        assertNotEquals(ids(firstPage.getContent()), ids(secondPage.getContent()));
     }
 
     @AfterEach
