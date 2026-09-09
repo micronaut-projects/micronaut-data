@@ -88,22 +88,21 @@ final class AutoPopulateUtil {
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
         for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
-            if (!association.isEmbedded() || !association.getAssociatedEntity().hasAutoPopulatedProperties()) {
-                continue;
-            }
-            @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
-            Object embedded = embeddedProperty.get(rootEntity);
-            if (embedded == null) {
-                try {
-                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
-                } catch (Exception e) {
-                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
-                    continue;
+            if (association.isEmbedded() && association.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                @SuppressWarnings("unchecked")
+                BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
+                Object embedded = embeddedProperty.get(rootEntity);
+                if (embedded == null) {
+                    try {
+                        embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                    } catch (Exception e) {
+                        LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
+                        continue;
+                    }
                 }
+                Object updated = populateEmbedded(association.getAssociatedEntity(), embedded, propertySetter);
+                context.setProperty(embeddedProperty, updated);
             }
-            Object updated = populateEmbedded(association.getAssociatedEntity(), embedded, propertySetter);
-            context.setProperty(embeddedProperty, updated);
         }
     }
 
@@ -127,24 +126,23 @@ final class AutoPopulateUtil {
 
         // Recurse into nested embedded associations
         for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
-            if (!nested.isEmbedded() || !nested.getAssociatedEntity().hasAutoPopulatedProperties()) {
-                continue;
-            }
-            BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
-            Object child = ep.get(current);
-            if (child == null) {
-                try {
-                    child = nested.getAssociatedEntity().getIntrospection().instantiate();
-                } catch (Exception e) {
-                    LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
-                    continue;
+            if (nested.isEmbedded() && nested.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
+                Object child = ep.get(current);
+                if (child == null) {
+                    try {
+                        child = nested.getAssociatedEntity().getIntrospection().instantiate();
+                    } catch (Exception e) {
+                        LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
+                        continue;
+                    }
                 }
-            }
-            Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
-            if (ep.isReadOnly()) {
-                current = ep.withValue(current, updatedChild);
-            } else {
-                ep.set(current, updatedChild);
+                Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
+                if (ep.isReadOnly()) {
+                    current = ep.withValue(current, updatedChild);
+                } else {
+                    ep.set(current, updatedChild);
+                }
             }
         }
 
