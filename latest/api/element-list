@@ -141,6 +141,7 @@ io.micronaut.data.runtime.mapper
 io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.multitenancy
 io.micronaut.data.runtime.multitenancy.conf
+io.micronaut.data.runtime.multitenancy.internal
 io.micronaut.data.runtime.operations
 io.micronaut.data.runtime.operations.internal
 io.micronaut.data.runtime.operations.internal.query
