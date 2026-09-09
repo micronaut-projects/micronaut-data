@@ -1,24 +1,24 @@
 [versions]
-micronaut = "5.1.10"
-micronaut-platform = "5.0.4"
+micronaut = "5.1.14"
+micronaut-platform = "5.1.3"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.2"
-micronaut-testresources = "4.0.0"
+micronaut-testresources = "4.1.0"
 
 micronaut-azure = "6.0.0"
-micronaut-reactor = "4.1.0"
+micronaut-reactor = "4.2.0"
 micronaut-rxjava3 = "4.1.0"
 micronaut-r2dbc = "7.1.0"
-micronaut-sql = "7.1.0"
-micronaut-serde = "3.1.0"
+micronaut-sql = "7.1.2"
+micronaut-serde = "3.1.1"
 micronaut-spring = "6.1.0"
-micronaut-test = "5.0.0"
+micronaut-test = "5.1.1"
 micronaut-mongo = "6.1.0"
-micronaut-kotlin = "5.0.0"
+micronaut-kotlin = "5.1.0"
 micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.1.0"
 micronaut-logging = "2.1.0"
-micronaut-flyway = "8.0.0"
+micronaut-flyway = "8.1.1"
 micronaut-coherence = "7.0.1"
 micronaut-sourcegen = "2.1.0"
 
@@ -54,6 +54,9 @@ error_prone_core = "2.50.0"
 groovy_yaml = "5.0.7"
 
 antlr = "4.13.2"
+
+jackson-override = "2.18.10"
+micrometer-override = "1.15.12"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -101,6 +104,9 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 # AZURE COSMOS
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+jackson-core-override = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-override" }
+jackson-databind-override = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-override" }
+micrometer-core-override = { module = "io.micrometer:micrometer-core", version.ref = "micrometer-override" }
 
 # Antlr
 
