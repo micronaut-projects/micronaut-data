@@ -163,7 +163,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     default <R> Page<R> findPage(PagedQuery<R> query) {
         return reactive().findPage(query)
             .contextWrite(getContextView())
-            .block();
+            .blockOptional()
+            .orElseThrow();
     }
 
     @Override
