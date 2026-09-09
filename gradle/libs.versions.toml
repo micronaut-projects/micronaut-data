@@ -18,7 +18,7 @@ micronaut-kotlin = "5.1.0"
 micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.1.0"
 micronaut-logging = "2.1.0"
-micronaut-flyway = "8.0.0"
+micronaut-flyway = "8.1.1"
 micronaut-coherence = "7.0.1"
 micronaut-sourcegen = "2.1.0"
 
