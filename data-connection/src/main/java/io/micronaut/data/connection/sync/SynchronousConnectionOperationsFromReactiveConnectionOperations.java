@@ -22,6 +22,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import org.jspecify.annotations.NullUnmarked;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -56,7 +57,7 @@ public final class SynchronousConnectionOperationsFromReactiveConnectionOperatio
     }
 
     @Override
-    public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<T>, R> callback) {
+    public @NullUnmarked <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<T>, R> callback) {
         Mono<R> result = reactorConnectionOperations.withConnectionMono(definition, status -> Mono.deferContextual(contextView -> {
             PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
             return status.propagate(propagatedContext, () -> Mono.justOrEmpty(callback.apply(status)));
