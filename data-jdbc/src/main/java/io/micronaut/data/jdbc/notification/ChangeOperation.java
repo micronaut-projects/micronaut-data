@@ -26,5 +26,11 @@ public enum ChangeOperation {
     /** A row was updated. */
     UPDATE,
     /** A row was deleted. */
-    DELETE
+    DELETE,
+    /**
+     * The provider reports that the registered data may have changed but cannot identify the
+     * affected rows. No entity state or row-specific metadata is available. Applications
+     * determine how to respond to this event.
+     */
+    INVALIDATE
 }

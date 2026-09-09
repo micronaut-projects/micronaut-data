@@ -22,7 +22,7 @@ import java.util.Optional;
  *
  * <p>Entity state is optional. When available, it is reloaded while the notification is processed,
  * rather than being a historical snapshot from the instant of the database change. For example,
- * a deleted row cannot be reloaded.</p>
+ * a deleted row cannot be reloaded, and an invalidation event has no row-level entity state.</p>
  *
  * @param <E> The persistent entity type.
  * @since 5.2.0

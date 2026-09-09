@@ -38,6 +38,22 @@ class ChangeListenerVisitorSpec extends AbstractTypeElementSpec {
         method.classValue(OracleChangeListenerQuery, 'entity').orElseThrow().name == 'test.Book'
     }
 
+    void "test valid Oracle query notification accepts mapped column select"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(
+        select = "id, book_title",
+        properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
+    )
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+    }
+
     @Unroll
     void "test invalid listener signature fails compilation: #description"() {
         when:
@@ -98,6 +114,12 @@ class BookListener<T> {
         'blank select'       | '@OracleChangeNotification(select = " ")'                                                                                 | 'must have a non-blank select value'
         'select without QCN' | '@OracleChangeNotification(select = "id")'                                                                                | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'nonzero change lag' | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "DCN_NOTIFY_CHANGELAG", value = "1"))' | 'requires DCN_NOTIFY_CHANGELAG to be 0'
+        'aggregate select'   | '@OracleChangeNotification(select = "COUNT(*)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [COUNT(*)]'
+        'expression select'  | '@OracleChangeNotification(select = "UPPER(title)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [UPPER(title)]'
+        'aliased select'     | '@OracleChangeNotification(select = "title AS name", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [title AS name]'
+        'property name'      | '@OracleChangeNotification(select = "title", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [title]'
+        'unmapped select'    | '@OracleChangeNotification(select = "isbn", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [isbn]'
+        'empty selection'    | '@OracleChangeNotification(select = "id, , title", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection []'
     }
 
     void "test Oracle configuration requires a change listener"() {
@@ -119,6 +141,7 @@ package test;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
@@ -127,8 +150,9 @@ import jakarta.inject.Singleton;
 @MappedEntity
 class Book {
     @Id
-    Long id;
-    String title;
+    public Long id;
+    @MappedProperty("book_title")
+    public String title;
 }
 
 @Singleton

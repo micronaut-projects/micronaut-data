@@ -19,7 +19,11 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -27,6 +31,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -69,22 +74,26 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         if (entityType == null || !entityType.hasStereotype(MappedEntity.class)) {
             return;
         }
-        if (!validateRegistration(element.getAnnotationMetadata(), context, element)) {
+        ClassElement resolvedEntityType = context.getClassElement(entityType.getName()).orElse(entityType);
+        Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
+        SourcePersistentEntity persistentEntity = entityResolver.apply(resolvedEntityType);
+        if (!validateRegistration(element.getAnnotationMetadata(), context, element, persistentEntity, resolvedEntityType)) {
             return;
         }
 
-        Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
         SourcePersistentEntityCriteriaQuery<Object> query = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver).createQuery();
-        query.select(query.from(entityResolver.apply(entityType)));
+        query.select(query.from(persistentEntity));
         QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE)));
         element.annotate(OracleChangeListenerQuery.class, builder -> builder
             .value(queryResult.getQuery() + " WHERE ROWID = ?")
-            .member("entity", new AnnotationClassValue<>(entityType.getName())));
+            .member("entity", new AnnotationClassValue<>(resolvedEntityType.getName())));
     }
 
     private static boolean validateRegistration(AnnotationMetadata annotationMetadata,
                                                 VisitorContext context,
-                                                MethodElement element) {
+                                                MethodElement element,
+                                                SourcePersistentEntity persistentEntity,
+                                                ClassElement entityType) {
         String select = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "select").orElse("*").trim();
         if (select.isEmpty()) {
             context.fail("@OracleChangeNotification must have a non-blank select value", element);
@@ -115,7 +124,63 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                 + QUERY_CHANGE_NOTIFICATION + " is true", element);
             return false;
         }
+        if (queryChangeNotification && !validateSelect(select, persistentEntity, entityType, context, element)) {
+            return false;
+        }
         return true;
+    }
+
+    private static boolean validateSelect(String select,
+                                          SourcePersistentEntity persistentEntity,
+                                          ClassElement entityType,
+                                          VisitorContext context,
+                                          MethodElement element) {
+        if (select.equals("*")) {
+            return true;
+        }
+        for (String selection : select.split(",", -1)) {
+            String column = selection.trim();
+            if (column.isEmpty() || !isMappedColumn(persistentEntity, entityType, unquote(column))) {
+                context.fail("@OracleChangeNotification select must be '*' or a comma-separated list of mapped columns; "
+                    + "unsupported selection [" + column + "]", element);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isMappedColumn(PersistentEntity persistentEntity, ClassElement entityType, String column) {
+        if (persistentEntity.getIdentityProperties().stream().anyMatch(property -> matchesColumn(property, column))
+            || (persistentEntity.hasVersion() && matchesColumn(persistentEntity.getVersion(), column))
+            || persistentEntity.getPersistentProperties().stream().anyMatch(property -> matchesColumn(property, column))) {
+            return true;
+        }
+        for (FieldElement field : entityType.getFields()) {
+            if (field.isStatic() || field.hasStereotype(Transient.class)) {
+                continue;
+            }
+            String mappedName = field.stringValue(MappedProperty.class)
+                .filter(value -> !value.isBlank())
+                .orElseGet(() -> persistentEntity.getNamingStrategy().mappedName(field.getName()));
+            if (unquote(mappedName).equalsIgnoreCase(column)) {
+                return true;
+            }
+        }
+        PersistentEntity parentEntity = persistentEntity.getParentEntity();
+        return parentEntity != null && entityType.getSuperType()
+            .map(parentType -> isMappedColumn(parentEntity, parentType, column))
+            .orElse(false);
+    }
+
+    private static boolean matchesColumn(PersistentProperty property, String column) {
+        return unquote(property.getPersistedName()).equalsIgnoreCase(column);
+    }
+
+    private static String unquote(String identifier) {
+        if (identifier.length() >= 2 && identifier.charAt(0) == '"' && identifier.charAt(identifier.length() - 1) == '"') {
+            return identifier.substring(1, identifier.length() - 1);
+        }
+        return identifier;
     }
 
     private static boolean invalidChangeLag(AnnotationValue<?> property,

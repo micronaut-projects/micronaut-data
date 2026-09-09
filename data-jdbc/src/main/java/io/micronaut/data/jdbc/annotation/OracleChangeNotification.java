@@ -28,7 +28,9 @@ import java.lang.annotation.Target;
  * <p>This annotation is required for Oracle change listeners, even when all members use their
  * defaults. It enables compile-time generation of the Oracle {@code ROWID} reload query. Row IDs
  * are always requested because they identify the affected row and allow inserts and updates to be
- * reloaded.</p>
+ * reloaded. Oracle may instead report a full-table invalidation when row-level details are not
+ * available; this is delivered with
+ * {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
  * @since 5.2.0
  */
@@ -38,11 +40,13 @@ import java.lang.annotation.Target;
 public @interface OracleChangeNotification {
 
     /**
-     * The select list to register for Oracle Query Result Change Notification. It is valid only
-     * when {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is enabled in
-     * {@link #properties()}.
+     * The select list to register for Oracle Query Result Change Notification. The value must be
+     * {@code *} or a comma-separated list of mapped column names. It controls the result registered
+     * with Oracle and is not used as a projection for the entity supplied to the listener. It is
+     * valid only when {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is enabled
+     * in {@link #properties()}.
      *
-     * @return The select list, or {@code *} to select all columns.
+     * @return The mapped column list, or {@code *} to select all columns.
      */
     String select() default "*";
 

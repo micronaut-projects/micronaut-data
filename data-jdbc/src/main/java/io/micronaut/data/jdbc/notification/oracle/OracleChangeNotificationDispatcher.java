@@ -41,8 +41,11 @@ import java.util.function.Consumer;
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor. It
  * tracks accepted tasks so graceful shutdown can reject new work and wait for work already
  * submitted. Inserts and updates reload current entity state by ROWID; deletes are dispatched
- * without entity state because the deleted row can no longer be reloaded. Failures while handling
- * an individual row are logged and do not prevent later rows from being dispatched.</p>
+ * without entity state because the deleted row can no longer be reloaded. When Oracle reports that
+ * all rows were invalidated without row-level details, the dispatcher invokes the listener once
+ * with {@link ChangeOperation#INVALIDATE}, no entity state, and no Oracle ROWID metadata. Failures
+ * while handling an individual change are logged and do not prevent later changes from being
+ * dispatched.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -119,6 +122,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (!matchesTable(listenerDefinition.tableName(), table.getTableName())) {
                 continue;
             }
+            if (table.getTableOperations().contains(TableChangeDescription.TableOperation.ALL_ROWS)) {
+                dispatchInvalidation();
+                continue;
+            }
             RowChangeDescription[] rows = table.getRowChangeDescription();
             if (rows == null) {
                 continue;
@@ -138,6 +145,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     }
                 }
             }
+        }
+    }
+
+    private void dispatchInvalidation() {
+        try {
+            invokeListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
+        } catch (Exception e) {
+            LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID unavailable",
+                listenerDefinition.method().getDescription(true), ChangeOperation.INVALIDATE, listenerDefinition.tableName(), e);
         }
     }
 
