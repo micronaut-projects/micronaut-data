@@ -129,28 +129,40 @@ final class AutoPopulateUtil {
             current = propertySetter.apply(p, current);
         }
 
-        // Recurse into nested embedded associations
+        return populateNestedEmbedded(embeddedEntity, current, propertySetter);
+    }
+
+    private static Object populateNestedEmbedded(@NonNull RuntimePersistentEntity<?> embeddedEntity,
+                                                 @NonNull Object instance,
+                                                 BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+        Object current = instance;
         for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
             if (nested.isEmbedded() && nested.getAssociatedEntity().hasAutoPopulatedProperties()) {
-                BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
-                Object child = ep.get(current);
-                if (child == null) {
-                    try {
-                        child = nested.getAssociatedEntity().getIntrospection().instantiate();
-                    } catch (Exception e) {
-                        LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
-                        continue;
-                    }
-                }
-                Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
-                if (ep.isReadOnly()) {
-                    current = ep.withValue(current, updatedChild);
-                } else {
-                    ep.set(current, updatedChild);
-                }
+                current = populateNestedEmbedded(current, nested, propertySetter);
             }
         }
+        return current;
+    }
 
+    @SuppressWarnings("unchecked")
+    private static Object populateNestedEmbedded(@NonNull Object current,
+                                                 RuntimeAssociation<?> nested,
+                                                 BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+        BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
+        Object child = ep.get(current);
+        if (child == null) {
+            try {
+                child = nested.getAssociatedEntity().getIntrospection().instantiate();
+            } catch (Exception e) {
+                LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
+                return current;
+            }
+        }
+        Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
+        if (ep.isReadOnly()) {
+            return ep.withValue(current, updatedChild);
+        }
+        ep.set(current, updatedChild);
         return current;
     }
 }
