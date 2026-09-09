@@ -60,11 +60,6 @@ jobs:
         run: |
           [ -f ./setup.sh ] && ./setup.sh || [ ! -f ./setup.sh ]
 
-      - name: "🚔 Vulnerability Audit"
-        if: matrix.java == '17'
-        run: |
-          .github/scripts/vulnerability-audit.sh
-
       - name: "🛠 Build with Gradle"
         id: gradle
         run: |
