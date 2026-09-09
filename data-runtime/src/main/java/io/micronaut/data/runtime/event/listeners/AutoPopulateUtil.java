@@ -37,6 +37,11 @@ import org.slf4j.LoggerFactory;
  * Centralizes the traversal of embedded associations and applies a provided
  * property population strategy. It returns the possibly new instance of the processed object,
  * which allows callers to reattach immutable objects at the root.
+ *
+ * Embedded population is best effort. Existing immutable embedded instances can be updated using
+ * {@link BeanProperty#withValue(Object, Object)}, but a null embedded association can only be
+ * populated when its introspection supports no-argument instantiation. Constructor-only immutable
+ * embedded types are therefore left unchanged when no instance is available.
  */
 @Internal
 final class AutoPopulateUtil {
