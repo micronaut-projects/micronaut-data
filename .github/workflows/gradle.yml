@@ -76,9 +76,9 @@ jobs:
           check_retries: 'true'
       - name: "📜 Upload binary compatibility check results"
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: binary-compatibility-reports
+          name: binary-compatibility-reports-${{ matrix.java }}
           path: "**/build/reports/binary-compatibility-*.html"
       - name: Publish to Sonatype Snapshots
         if: success() && github.event_name == 'push' && matrix.java == '11'
