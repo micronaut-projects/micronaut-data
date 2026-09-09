@@ -68,7 +68,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().findAll(preparedQuery)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override
@@ -133,7 +134,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().execute(preparedQuery)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override
