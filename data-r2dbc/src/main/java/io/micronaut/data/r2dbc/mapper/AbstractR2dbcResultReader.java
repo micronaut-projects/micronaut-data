@@ -43,11 +43,11 @@ import java.util.Date;
  * <p>Every value is read through {@link #getValue(Row, Object)} and {@link #getValue(Row, Object, Class)}, so both
  * readers interpret a column the same way and only differ in how they address it.</p>
  *
- * @param <ID> The column identifier type, a name or an ordinal
+ * @param <I> The column identifier type, a name or an ordinal
  * @since 5.2.0
  */
 @Internal
-abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
+abstract class AbstractR2dbcResultReader<I> implements ResultReader<Row, I> {
 
     protected final ConversionService conversionService;
 
@@ -64,7 +64,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
      * @return The value, can be null
      */
     @Nullable
-    protected abstract Object getValue(Row row, ID id);
+    protected abstract Object getValue(Row row, I id);
 
     /**
      * Reads the value of the column as the given type.
@@ -76,7 +76,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
      * @return The value, can be null
      */
     @Nullable
-    protected abstract <T> T getValue(Row row, ID id, Class<T> type);
+    protected abstract <T> T getValue(Row row, I id, Class<T> type);
 
     /**
      * Reads the raw value of the column for {@link #getRequiredValue}, which the reader addressing a column by name
@@ -87,7 +87,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
      * @return The value, can be null
      */
     @Nullable
-    protected abstract Object getRequiredRawValue(Row row, ID id);
+    protected abstract Object getRequiredRawValue(Row row, I id);
 
     /**
      * Reads the value of the column as the given type for {@link #getRequiredValue}, which the reader addressing a
@@ -100,14 +100,14 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
      * @return The value, can be null
      */
     @Nullable
-    protected abstract <T> T getRequiredTypedValue(Row row, ID id, Class<T> type);
+    protected abstract <T> T getRequiredTypedValue(Row row, I id, Class<T> type);
 
     /**
      * @param id The column identifier
      * @param e  The cause
      * @return The exception describing a column that cannot be read
      */
-    protected abstract DataAccessException exceptionForColumn(ID id, Exception e);
+    protected abstract DataAccessException exceptionForColumn(I id, Exception e);
 
     @Override
     public ConversionService getConversionService() {
@@ -116,57 +116,44 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Nullable
     @Override
-    public Object readDynamic(@NonNull Row resultSet, @NonNull ID index, @NonNull DataType dataType) {
-        switch (dataType) {
-            case UUID:
-                return readUUID(resultSet, index);
-            case STRING:
-            case JSON:
-                return readString(resultSet, index);
-            case LONG:
-                return getValue(resultSet, index, Long.class);
-            case INTEGER:
-                Object o = getValue(resultSet, index);
-                if (o == null) {
-                    return null;
-                }
-                if (o instanceof Integer) {
-                    return o;
-                }
-                if (o instanceof Number number) {
-                    return number.intValue();
-                }
-                return convertRequired(o, Integer.class);
-            case BOOLEAN:
-                return getValue(resultSet, index, Boolean.class);
-            case BYTE:
-                return getValue(resultSet, index, Byte.class);
-            case TIMESTAMP:
-                return readAs(resultSet, index, Instant.class);
-            case DATE:
-                return readAs(resultSet, index, LocalDate.class);
-            case TIME:
-                return readAs(resultSet, index, Time.class);
-            case CHARACTER:
-                return readAs(resultSet, index, Character.class);
-            case FLOAT:
-                return readAs(resultSet, index, Float.class);
-            case SHORT:
-                return readAs(resultSet, index, Short.class);
-            case DOUBLE:
-                return getValue(resultSet, index, Double.class);
-            case BYTE_ARRAY:
-                return readBytes(resultSet, index);
-            case BIGDECIMAL:
-                return getValue(resultSet, index, BigDecimal.class);
-            case OBJECT:
-            default:
-                return getRequiredValue(resultSet, index, Object.class);
-        }
+    public Object readDynamic(@NonNull Row resultSet, @NonNull I index, @NonNull DataType dataType) {
+        return switch (dataType) {
+            case UUID -> readUUID(resultSet, index);
+            case STRING, JSON -> readString(resultSet, index);
+            case LONG -> getValue(resultSet, index, Long.class);
+            case INTEGER -> readInteger(resultSet, index);
+            case BOOLEAN -> getValue(resultSet, index, Boolean.class);
+            case BYTE -> getValue(resultSet, index, Byte.class);
+            case TIMESTAMP -> readAs(resultSet, index, Instant.class);
+            case DATE -> readAs(resultSet, index, LocalDate.class);
+            case TIME -> readAs(resultSet, index, Time.class);
+            case CHARACTER -> readAs(resultSet, index, Character.class);
+            case FLOAT -> readAs(resultSet, index, Float.class);
+            case SHORT -> readAs(resultSet, index, Short.class);
+            case DOUBLE -> getValue(resultSet, index, Double.class);
+            case BYTE_ARRAY -> readBytes(resultSet, index);
+            case BIGDECIMAL -> getValue(resultSet, index, BigDecimal.class);
+            default -> getRequiredValue(resultSet, index, Object.class);
+        };
     }
 
     @Nullable
-    private <T> T readAs(@NonNull Row resultSet, @NonNull ID index, Class<T> type) {
+    private Object readInteger(Row resultSet, I index) {
+        Object o = getValue(resultSet, index);
+        if (o == null) {
+            return null;
+        }
+        if (o instanceof Integer) {
+            return o;
+        }
+        if (o instanceof Number number) {
+            return number.intValue();
+        }
+        return convertRequired(o, Integer.class);
+    }
+
+    @Nullable
+    private <T> T readAs(@NonNull Row resultSet, @NonNull I index, Class<T> type) {
         Object o = getValue(resultSet, index);
         if (o == null) {
             return null;
@@ -178,7 +165,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public long readLong(Row resultSet, ID name) {
+    public long readLong(Row resultSet, I name) {
         Long l = getValue(resultSet, name, Long.class);
         if (l != null) {
             return l;
@@ -188,7 +175,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public char readChar(Row resultSet, ID name) {
+    public char readChar(Row resultSet, I name) {
         Character character = getValue(resultSet, name, Character.class);
         if (character != null) {
             return character;
@@ -198,7 +185,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Override
     @Nullable
-    public Date readDate(Row resultSet, ID name) {
+    public Date readDate(Row resultSet, I name) {
         final LocalDate localDate = getValue(resultSet, name, LocalDate.class);
         if (localDate != null) {
             return java.sql.Date.valueOf(localDate);
@@ -208,7 +195,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Override
     @Nullable
-    public Date readTimestamp(Row resultSet, ID index) {
+    public Date readTimestamp(Row resultSet, I index) {
         final LocalDateTime localDateTime = getValue(resultSet, index, LocalDateTime.class);
         if (localDateTime != null) {
             return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
@@ -218,7 +205,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Nullable
     @Override
-    public String readString(Row resultSet, ID name) {
+    public String readString(Row resultSet, I name) {
         Object o = getValue(resultSet, name);
         if (o == null) {
             return null;
@@ -233,14 +220,14 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
         // Try to get it as a string otherwise Postgres can return an internal class
         try {
             return getValue(resultSet, name, String.class);
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Ignore
         }
         return convertRequired(o, String.class);
     }
 
     @Override
-    public int readInt(Row resultSet, ID name) {
+    public int readInt(Row resultSet, I name) {
         Integer l = getValue(resultSet, name, Integer.class);
         if (l != null) {
             return l;
@@ -250,7 +237,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public boolean readBoolean(Row resultSet, ID name) {
+    public boolean readBoolean(Row resultSet, I name) {
         Boolean l = getValue(resultSet, name, Boolean.class);
         if (l != null) {
             return l;
@@ -260,7 +247,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public float readFloat(Row resultSet, ID name) {
+    public float readFloat(Row resultSet, I name) {
         Float l = getValue(resultSet, name, Float.class);
         if (l != null) {
             return l;
@@ -270,7 +257,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public byte readByte(Row resultSet, ID name) {
+    public byte readByte(Row resultSet, I name) {
         Byte l = getValue(resultSet, name, Byte.class);
         if (l != null) {
             return l;
@@ -280,7 +267,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public short readShort(Row resultSet, ID name) {
+    public short readShort(Row resultSet, I name) {
         Short l = getValue(resultSet, name, Short.class);
         if (l != null) {
             return l;
@@ -290,7 +277,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
     }
 
     @Override
-    public double readDouble(Row resultSet, ID name) {
+    public double readDouble(Row resultSet, I name) {
         Double l = getValue(resultSet, name, Double.class);
         if (l != null) {
             return l;
@@ -301,15 +288,15 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Override
     @Nullable
-    public BigDecimal readBigDecimal(Row resultSet, ID name) {
+    public BigDecimal readBigDecimal(Row resultSet, I name) {
         return getValue(resultSet, name, BigDecimal.class);
     }
 
     @Override
-    public byte @Nullable [] readBytes(Row resultSet, ID name) {
+    public byte @Nullable [] readBytes(Row resultSet, I name) {
         try {
             return getValue(resultSet, name, byte[].class);
-        } catch (Exception e) {
+        } catch (Exception _) {
             // Ignore and fallback to generic handling (Oracle, H2, etc.)
         }
         return R2dbcBytesReader.toBytes(getValue(resultSet, name), this);
@@ -317,7 +304,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
 
     @Nullable
     @Override
-    public <T> T getRequiredValue(Row resultSet, ID name, Class<T> type) throws DataAccessException {
+    public <T> T getRequiredValue(Row resultSet, I name, Class<T> type) throws DataAccessException {
         try {
             T value = getRequiredTypedValue(resultSet, name, type);
             if (value != null) {
@@ -335,7 +322,7 @@ abstract class AbstractR2dbcResultReader<ID> implements ResultReader<Row, ID> {
                  R2dbcTransientResourceException e) {
             try {
                 return conversionService.convert(getValue(resultSet, name), type).orElse(null);
-            } catch (Exception exception) {
+            } catch (Exception _) {
                 throw exceptionForColumn(name, e);
             }
         }

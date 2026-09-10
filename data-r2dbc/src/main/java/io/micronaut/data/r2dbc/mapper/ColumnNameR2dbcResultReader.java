@@ -120,7 +120,7 @@ public class ColumnNameR2dbcResultReader extends AbstractR2dbcResultReader<Strin
                     return i;
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception _) {
             // The metadata is unavailable, the caller keeps reading by name
         }
         return -1;
@@ -142,7 +142,7 @@ public class ColumnNameR2dbcResultReader extends AbstractR2dbcResultReader<Strin
     public Object columnResolutionKey(Row resultSet) {
         try {
             return resultSet.getMetadata();
-        } catch (Exception e) {
+        } catch (Exception _) {
             return resultSet;
         }
     }

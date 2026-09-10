@@ -40,13 +40,13 @@ final class ColumnOrdinalR2dbcResultReader extends AbstractR2dbcResultReader<Int
     @Override
     @Nullable
     protected Object getValue(Row row, Integer index) {
-        return row.get((int) index);
+        return row.get(index);
     }
 
     @Override
     @Nullable
     protected <T> T getValue(Row row, Integer index, Class<T> type) {
-        return row.get((int) index, type);
+        return row.get(index, type);
     }
 
     @Override
