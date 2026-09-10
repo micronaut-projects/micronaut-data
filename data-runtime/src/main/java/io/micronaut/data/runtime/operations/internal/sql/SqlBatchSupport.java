@@ -110,33 +110,54 @@ public final class SqlBatchSupport {
             return JdbcBatchInsertMode.FALLBACK;
         }
         if (dialect == Dialect.MYSQL && persistentEntity.hasIdentity()) {
-            boolean supportsBatchUpdates = Boolean.TRUE.equals(metadata.supportsBatchUpdates());
-            if (metadata.isMariaDb()) {
-                // MariaDB reports generated-key support generally, but complete generated keys for
-                // batched multi-value inserts depend on driver options. Only batch when the caller
-                // does not need generated keys back.
-                if (requiresGeneratedKeys) {
-                    return JdbcBatchInsertMode.FALLBACK;
-                }
-                if (supportsBatchUpdates) {
-                    return JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS;
-                }
-            } else if (metadata.isMySql() && supportsBatchUpdates) {
-                // MySQL Connector/J can return generated keys for JDBC batches, so generated-key
-                // batches can be enabled there.
-                if (requiresGeneratedKeys) {
-                    if (Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())) {
-                        return JdbcBatchInsertMode.BATCH;
-                    }
-                    return JdbcBatchInsertMode.FALLBACK;
-                }
-                if (Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())) {
-                    return JdbcBatchInsertMode.BATCH;
-                }
-                return JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS;
+            JdbcBatchInsertMode mode = resolveMySqlBatchInsertMode(metadata, requiresGeneratedKeys);
+            if (mode != null) {
+                return mode;
             }
         }
         return isSupportsBatchInsert(persistentEntity, dialect) ? JdbcBatchInsertMode.BATCH : JdbcBatchInsertMode.FALLBACK;
+    }
+
+    @Nullable
+    private static JdbcBatchInsertMode resolveMySqlBatchInsertMode(JdbcBatchMetadata metadata,
+                                                                   boolean requiresGeneratedKeys) {
+        boolean supportsBatchUpdates = Boolean.TRUE.equals(metadata.supportsBatchUpdates());
+        if (metadata.isMariaDb()) {
+            return resolveMariaDbBatchInsertMode(supportsBatchUpdates, requiresGeneratedKeys);
+        }
+        if (metadata.isMySql() && supportsBatchUpdates) {
+            return resolveMySqlConnectorBatchInsertMode(metadata, requiresGeneratedKeys);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static JdbcBatchInsertMode resolveMariaDbBatchInsertMode(boolean supportsBatchUpdates,
+                                                                     boolean requiresGeneratedKeys) {
+        // MariaDB reports generated-key support generally, but complete generated keys for batched
+        // multi-value inserts depend on driver options. Only batch when the caller does not need
+        // generated keys back.
+        if (requiresGeneratedKeys) {
+            return JdbcBatchInsertMode.FALLBACK;
+        }
+        if (supportsBatchUpdates) {
+            return JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS;
+        }
+        return null;
+    }
+
+    private static JdbcBatchInsertMode resolveMySqlConnectorBatchInsertMode(JdbcBatchMetadata metadata,
+                                                                            boolean requiresGeneratedKeys) {
+        // MySQL Connector/J can return generated keys for JDBC batches, so generated-key batches
+        // can be enabled there.
+        if (requiresGeneratedKeys) {
+            return Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())
+                ? JdbcBatchInsertMode.BATCH
+                : JdbcBatchInsertMode.FALLBACK;
+        }
+        return Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())
+            ? JdbcBatchInsertMode.BATCH
+            : JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS;
     }
 
     /**
@@ -159,13 +180,6 @@ public final class SqlBatchSupport {
 
     private static boolean hasNonGeneratedIdentity(PersistentEntity persistentEntity) {
         return persistentEntity.hasIdentity() && !persistentEntity.getIdentity().isGenerated();
-    }
-
-    private static boolean containsIgnoreCase(@Nullable String value, String expected) {
-        if (value == null) {
-            return false;
-        }
-        return value.toUpperCase(Locale.ENGLISH).contains(expected);
     }
 
     private static boolean returnsEntities(Argument<?> resultArgument) {
@@ -284,6 +298,13 @@ public final class SqlBatchSupport {
         public boolean isMySql() {
             return containsIgnoreCase(databaseProductName, MYSQL_PRODUCT_NAME)
                 || containsIgnoreCase(driverName, MYSQL_PRODUCT_NAME);
+        }
+
+        private static boolean containsIgnoreCase(@Nullable String value, String expected) {
+            if (value == null) {
+                return false;
+            }
+            return value.toUpperCase(Locale.ENGLISH).contains(expected);
         }
     }
 }
