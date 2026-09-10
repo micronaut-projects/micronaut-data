@@ -17,11 +17,17 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntityUtils;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
+import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,11 +42,13 @@ final class SourcePersistentPropertyPathImpl<T> extends DefaultPersistentPropert
 
     private final Path<?> parentPath;
     private final SourcePersistentProperty sourcePersistentProperty;
+    private final CriteriaBuilder criteriaBuilder;
 
     public SourcePersistentPropertyPathImpl(Path<?> parentPath, List<Association> path, SourcePersistentProperty persistentProperty, CriteriaBuilder criteriaBuilder) {
         super(persistentProperty, path, criteriaBuilder);
         this.parentPath = parentPath;
         this.sourcePersistentProperty = persistentProperty;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
@@ -51,6 +59,22 @@ final class SourcePersistentPropertyPathImpl<T> extends DefaultPersistentPropert
     @Override
     public SourcePersistentProperty getProperty() {
         return sourcePersistentProperty;
+    }
+
+    @Override
+    public <Y> PersistentPropertyPath<Y> get(String attributeName) {
+        if (sourcePersistentProperty instanceof SourceAssociation association
+            && parentPath instanceof AbstractPersistentEntityFrom<?, ?> from) {
+            SourcePersistentProperty target = association.getAssociatedEntity().getPropertyByNameIgnoreCase(attributeName);
+            if (target != null && PersistentEntityUtils.isAccessibleWithoutJoin(association, target)) {
+                List<Association> associations = new ArrayList<>(getAssociations());
+                associations.add(association);
+                return new SourcePersistentPropertyPathImpl<>(parentPath, associations, target, criteriaBuilder);
+            }
+            PersistentAssociationPath<?, ?> join = from.join(association.getName());
+            return join.get(attributeName);
+        }
+        return super.get(attributeName);
     }
 
     @Override

@@ -43,7 +43,17 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
             @Override
              <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new)
+                RuntimeEntityRegistry entityRegistry = this
+                // Properties are compared by identity, so every lookup for a type has to return
+                // the same entity instance, including entities reached through an association.
+                return map.computeIfAbsent(type, { Class entityType ->
+                    new RuntimePersistentEntity<Object>(entityType) {
+                        @Override
+                        protected RuntimePersistentEntity<Object> getEntity(Class<Object> nestedType) {
+                            return entityRegistry.getEntity(nestedType)
+                        }
+                    }
+                })
             }
 
             @Override
@@ -96,7 +106,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ INNER JOIN "author" book_book_author_ ON book_book_."author_id"=book_book_author_."id" WHERE (book_book_author_."id" = book_book_author_."id"))) ORDER BY book_."title" ASC'''
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."author_id" = book_book_."author_id"))) ORDER BY book_."title" ASC'''
     }
 
     void "test subquery IN with JOIN"() {
@@ -395,6 +405,44 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             "amount"  | BigDecimal.valueOf(100) | "ge"                   | '(NOT(test_."amount" >= ?))'
             "amount"  | BigDecimal.valueOf(100) | "lt"                   | '(NOT(test_."amount" < ?))'
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
+    }
+
+    void "test criteria navigation across MANY_TO_ONE association creates an implicit join for a non-FK leaf"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "navigating to a property that lives on the associated table using chained get()"
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then:
+            query.contains('INNER JOIN "test"')
+            query.contains('test_."name"')
+
+        when: "navigating using the static metamodel"
+            criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            otherEntityRoot = criteriaQuery.from(OtherEntity)
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get(OtherEntity_.test).get(Test_.name), "testValue"))
+            String query2 = getSqlQuery(criteriaQuery)
+
+        then:
+            query2.contains('INNER JOIN "test"')
+            query2.contains('test_."name"')
+    }
+
+    void "test criteria navigation to the association's own identity does not require a join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "navigating to the association's id, which the owning table already stores as a FK column"
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("id"), 1L))
+            String query = getSqlQuery(criteriaQuery)
+
+        then: "the FK column is used directly instead of joining to the associated table"
+            !query.contains('JOIN')
+            query.contains('"test_id"')
     }
 
 }
