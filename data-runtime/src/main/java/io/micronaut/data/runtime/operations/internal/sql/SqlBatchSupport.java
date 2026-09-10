@@ -37,10 +37,11 @@ import java.util.concurrent.CompletionStage;
  * the public dialect enum.</p>
  *
  * <p>MySQL and MariaDB are told apart by the product and driver names reported by JDBC metadata.
- * The {@code supportsBatchUpdates}/{@code supportsGetGeneratedKeys} metadata flags are only used to
- * keep drivers that do not advertise batch support on the conservative path; both MySQL
- * Connector/J and the MariaDB driver report them unconditionally, so they cannot be relied on to
- * describe batched generated-key behavior.</p>
+ * The {@code supportsBatchUpdates} flag keeps drivers that do not advertise batch support on the
+ * conservative path. The {@code supportsGetGeneratedKeys} flag determines whether a MySQL batch
+ * may read generated keys; it does not guarantee that a driver returns one key per inserted row.
+ * Both MySQL Connector/J and the MariaDB driver report these flags generally, so they cannot by
+ * themselves describe all batched generated-key behavior.</p>
  *
  * @since 5.2.0
  */
@@ -123,10 +124,16 @@ public final class SqlBatchSupport {
             } else if (metadata.isMySql() && supportsBatchUpdates) {
                 // MySQL Connector/J can return generated keys for JDBC batches, so generated-key
                 // batches can be enabled there.
-                if (!requiresGeneratedKeys || Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())) {
+                if (requiresGeneratedKeys) {
+                    if (Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())) {
+                        return JdbcBatchInsertMode.BATCH;
+                    }
+                    return JdbcBatchInsertMode.FALLBACK;
+                }
+                if (Boolean.TRUE.equals(metadata.supportsGetGeneratedKeys())) {
                     return JdbcBatchInsertMode.BATCH;
                 }
-                return JdbcBatchInsertMode.FALLBACK;
+                return JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS;
             }
         }
         return isSupportsBatchInsert(persistentEntity, dialect) ? JdbcBatchInsertMode.BATCH : JdbcBatchInsertMode.FALLBACK;

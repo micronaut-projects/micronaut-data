@@ -124,6 +124,14 @@ class SqlBatchSupportSpec extends Specification {
         resolve(entityWithGeneratedId(), Dialect.MYSQL, metadata, true) == JdbcBatchInsertMode.FALLBACK
     }
 
+    void "jdbc mysql batches without generated keys when they are unsupported and not required"() {
+        given:
+        def metadata = new JdbcBatchMetadata("MySQL", "8.4.0", "MySQL Connector/J", true, false)
+
+        expect:
+        resolve(entityWithGeneratedId(), Dialect.MYSQL, metadata, false) == JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+    }
+
     @Unroll
     void "jdbc mysql family does not batch generated-id inserts when batch updates are unsupported for #scenario"() {
         given:
