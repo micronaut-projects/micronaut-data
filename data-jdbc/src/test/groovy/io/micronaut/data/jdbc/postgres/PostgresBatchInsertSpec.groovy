@@ -40,7 +40,7 @@ class PostgresBatchInsertSpec extends Specification implements PostgresTestPrope
         repository.deleteAll()
     }
 
-    void "custom void insertAll stores generated-id inserts without mutating input ids"() {
+    void "custom void insertAll batches generated-id inserts and populates ids"() {
         given:
         def books = [
             new PostgresBatchInsertBook(title: "Solaris"),
@@ -52,13 +52,13 @@ class PostgresBatchInsertSpec extends Specification implements PostgresTestPrope
         def savedBooks = repository.findAll()
 
         then:
-        books*.id == [null, null]
+        books*.id.every { it != null }
         savedBooks.size() == 2
         savedBooks*.id.every { it != null }
         savedBooks*.title as Set == ["Solaris", "Eden"] as Set
     }
 
-    void "custom count insertAll stores generated-id inserts without mutating input ids"() {
+    void "custom count insertAll batches generated-id inserts and populates ids"() {
         given:
         def books = [
             new PostgresBatchInsertBook(title: "Fiasco"),
@@ -71,7 +71,7 @@ class PostgresBatchInsertSpec extends Specification implements PostgresTestPrope
 
         then:
         inserted == 2
-        books*.id == [null, null]
+        books*.id.every { it != null }
         savedBooks.size() == 2
         savedBooks*.id.every { it != null }
         savedBooks*.title as Set == ["Fiasco", "The Invincible"] as Set
