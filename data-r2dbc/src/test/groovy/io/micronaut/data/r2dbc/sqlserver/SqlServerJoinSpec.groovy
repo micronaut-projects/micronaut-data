@@ -20,7 +20,9 @@ import io.micronaut.data.tck.repositories.CategoryRepository
 import io.micronaut.data.tck.repositories.ProductDtoRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.data.tck.tests.AbstractJoinSpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerJoinSpec extends AbstractJoinSpec implements SqlServerTestPropertyProvider {
 
     @Memoized

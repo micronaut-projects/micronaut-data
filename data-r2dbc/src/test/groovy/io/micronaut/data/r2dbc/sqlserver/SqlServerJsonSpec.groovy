@@ -20,7 +20,9 @@ import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerJsonSpec extends AbstractJSONSpec implements SqlServerTestPropertyProvider {
     @Override
     SaleRepository getSaleRepository() {

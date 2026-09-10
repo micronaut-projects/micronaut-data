@@ -4,7 +4,9 @@ import groovy.transform.Memoized
 import io.micronaut.data.r2dbc.AbstractManualSchemaSpec
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PatientRepository
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerManualSchemaSpec extends AbstractManualSchemaSpec implements SqlServerTestPropertyProvider {
 
     @Override

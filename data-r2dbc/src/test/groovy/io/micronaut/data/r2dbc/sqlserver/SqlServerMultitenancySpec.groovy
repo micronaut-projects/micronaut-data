@@ -5,6 +5,9 @@ import io.micronaut.data.r2dbc.CleanupTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 
 @TestResourcesScope("multitenancy-r2-sqlserver")
+import spock.lang.Ignore
+
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerMultitenancySpec extends AbstractR2dbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override

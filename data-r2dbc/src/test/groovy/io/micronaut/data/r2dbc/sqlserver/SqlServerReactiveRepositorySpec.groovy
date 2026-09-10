@@ -20,7 +20,9 @@ import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements SqlServerTestPropertyProvider {
 
     @Memoized

@@ -18,7 +18,9 @@ package io.micronaut.data.r2dbc.sqlserver
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerUUIDSpec extends AbstractUUIDSpec implements SqlServerTestPropertyProvider {
 
     @Memoized

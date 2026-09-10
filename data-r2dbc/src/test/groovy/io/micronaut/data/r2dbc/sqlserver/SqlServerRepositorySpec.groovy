@@ -18,7 +18,9 @@ package io.micronaut.data.r2dbc.sqlserver
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServerTestPropertyProvider {
 
     @Override

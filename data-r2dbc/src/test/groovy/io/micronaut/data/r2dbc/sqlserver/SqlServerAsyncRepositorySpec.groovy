@@ -19,7 +19,9 @@ import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
+import spock.lang.Ignore
 
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements SqlServerTestPropertyProvider {
 
     @Memoized

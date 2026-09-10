@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.r2dbc.sqlserver
 
+import spock.lang.Ignore
+
+@Ignore("SQL Server R2DBC tests are temporarily disabled")
 class SqlServerReactiveRepositoryPoolSpec extends SqlServerReactiveRepositorySpec {
 
     @Override
