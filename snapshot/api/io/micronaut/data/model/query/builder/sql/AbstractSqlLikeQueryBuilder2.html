@@ -1550,7 +1550,7 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <dd><code>entity</code> - The root entity</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>sort</code> - The sort</dd>
-<dd><code>nativeQuery</code> - Whether the query is native query, in which case sort field names will be supplied by the user and not verified</dd>
+<dd><code>nativeQuery</code> - Whether the query is native query, in which case sort field names must be dot-separated, unquoted ASCII SQL identifiers</dd>
 <dd><code>tableAlias</code> - The table alias</dd>
 <dt>Returns:</dt>
 <dd>The encoded query</dd>
@@ -1580,7 +1580,7 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <dd><code>query</code> - The query</dd>
 <dd><code>entity</code> - The root entity</dd>
 <dd><code>annotationMetadata</code> - The annotation metadata</dd>
-<dd><code>nativeQuery</code> - Whether the query is native query, in which case the property name will be supplied by the user and not verified</dd>
+<dd><code>nativeQuery</code> - Whether the query is native query, in which case the property name must be a dot-separated, unquoted ASCII SQL identifier</dd>
 <dd><code>tableAlias</code> - The table alias</dd>
 <dt>Returns:</dt>
 <dd>The encoded query</dd>
