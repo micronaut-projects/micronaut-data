@@ -26,8 +26,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -46,7 +48,11 @@ public final class PersistentEntityUtils {
     }
 
     /**
-     * Check if the property is an association ID that can be accessed without join. In a case it's not an ID stored outside the associated table.
+     * Check if the property is stored on the owning side, and so can be accessed without a join.
+     * This does not mirror {@link #traversePersistentProperties(List, PersistentProperty, boolean, BiConsumer)},
+     * which also descends through non-foreign-key associations: a leaf several associations deep has to be
+     * checked one association at a time.
+     *
      * @param association The association
      * @param persistentProperty The association's property
      * @return true if can be accessed
@@ -56,21 +62,40 @@ public final class PersistentEntityUtils {
         if (association instanceof Embedded) {
             return true;
         }
-        PersistentEntity associatedEntity = association.getAssociatedEntity();
-        if (!associatedEntity.hasIdentity()) {
-            // Some strange case of document DB
+        if (association.isForeignKey()) {
             return false;
         }
-        PersistentProperty identity = associatedEntity.getIdentity();
-        if (identity instanceof Embedded embedded) {
-            for (PersistentProperty property : embedded.getAssociatedEntity().getPersistentProperties()) {
-                if (property == persistentProperty) {
-                    return !association.isForeignKey();
+        PersistentEntity associatedEntity = association.getAssociatedEntity();
+        List<PersistentProperty> identityProperties = associatedEntity.getIdentityProperties();
+        if (identityProperties.isEmpty()) {
+            // An identity-less association is stored embedded in the owning document
+            return contains(associatedEntity.getPersistentProperties(), persistentProperty, new HashSet<>());
+        }
+        for (PersistentProperty identity : identityProperties) {
+            if (identity == persistentProperty) {
+                return true;
+            }
+            if (identity instanceof Embedded embedded && contains(embedded.getAssociatedEntity().getPersistentProperties(), persistentProperty, new HashSet<>())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean contains(Collection<? extends PersistentProperty> properties, PersistentProperty persistentProperty, Set<PersistentEntity> visited) {
+        for (PersistentProperty property : properties) {
+            if (property == persistentProperty) {
+                return true;
+            }
+            // The leaf can be nested several embeddeds deep
+            if (property instanceof Embedded embedded) {
+                PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
+                if (visited.add(embeddedEntity) && contains(embeddedEntity.getPersistentProperties(), persistentProperty, visited)) {
+                    return true;
                 }
             }
-
         }
-        return identity == persistentProperty && !association.isForeignKey();
+        return false;
     }
 
     /**
@@ -170,6 +195,16 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded, consumerProperty);
     }
 
+    /**
+     * Traverses the properties that should be persisted for the given property. An association contributes
+     * the columns the owning side stores for it: its identity properties, or, when the target has no
+     * identity, its own properties, as a document store stores such a target inline.
+     *
+     * @param associations      The associations traversed so far, prefixed to every emitted leaf
+     * @param property          The property to traverse
+     * @param traverseEmbedded  Whether to descend into an embedded property or emit it whole
+     * @param consumerProperty  The function to invoke on every leaf property
+     */
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     boolean traverseEmbedded,
@@ -191,22 +226,33 @@ public final class PersistentEntityUtils {
                 return;
             }
             List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
+            newAssociations.add(association);
             PersistentEntity associatedEntity = association.getAssociatedEntity();
-            if (!associatedEntity.hasIdentity()) {
-                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
+            Collection<? extends PersistentProperty> identityProperties = associatedEntity.getIdentityProperties();
+            if (identityProperties.isEmpty()) {
+                // Identity-less associations behave like embedded value objects.
+                for (Association traversedAssociation : associations) {
+                    if (traversedAssociation.getAssociatedEntity() == associatedEntity) {
+                        // The value object refers back to itself, traversing it would never terminate
+                        return;
+                    }
+                }
+                for (PersistentProperty associatedProperty : associatedEntity.getPersistentProperties()) {
+                    traversePersistentProperties(newAssociations, associatedProperty, traverseEmbedded, consumerProperty);
+                }
+                return;
             }
-            PersistentProperty assocIdentity = associatedEntity.getIdentity();
-            if (assocIdentity instanceof Association) {
-                traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
-            } else {
-                // In case there is JoinColumn defined on property, we might use specified column
-                // instead of association id
-                PersistentProperty joinColumnAssocIdentity = getJoinColumnAssocIdentity(property, associatedEntity);
-                if (joinColumnAssocIdentity != null) {
-                    consumerProperty.accept(newAssociations, joinColumnAssocIdentity);
+            // A single JoinColumn can name the column to use instead of the association id, but it
+            // cannot stand in for a composite identity, which maps a column each.
+            PersistentProperty joinColumnIdentity = identityProperties.size() == 1
+                ? getJoinColumnAssocIdentity(property, associatedEntity)
+                : null;
+            for (PersistentProperty identityProperty : identityProperties) {
+                if (identityProperty instanceof Association) {
+                    traversePersistentProperties(newAssociations, identityProperty, traverseEmbedded, consumerProperty);
                 } else {
-                    consumerProperty.accept(newAssociations, assocIdentity);
+                    consumerProperty.accept(newAssociations,
+                        joinColumnIdentity != null ? joinColumnIdentity : identityProperty);
                 }
             }
         } else {
