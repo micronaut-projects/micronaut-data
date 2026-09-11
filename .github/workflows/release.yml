@@ -45,15 +45,21 @@ jobs:
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
         run: |
           echo $GPG_FILE | base64 -d > secring.gpg
-          # Publish both locally and to Sonatype.
-          # The artifacts stored locally will be used to generate the SLSA provenance.
-          ./gradlew publishAllPublicationsToBuildRepository publishToSonatype closeAndReleaseSonatypeStagingRepository
           # Read the current version from gradle.properties.
           VERSION=$(./gradlew properties | grep 'version:' | awk '{print $2}')
           # Read the project group from gradle.properties.
           GROUP_PATH=$(./gradlew properties| grep "projectGroup" | awk '{print $2}' | sed 's/\./\//g')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "group=$GROUP_PATH" >> "$GITHUB_OUTPUT"
+          # Publish locally
+          ./gradlew publishAllPublicationsToBuildRepository
+          cd build/repo
+          zip -r ../../artifacts.zip io
+          cd ../..
+          export SONATYPE_BEARER=$(printf "%s:%s" "$SONATYPE_USERNAME" "$SONATYPE_PASSWORD" | base64 | tr -d '\n')
+          echo "Publishing via the Portal API"
+          # https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
+          curl -X POST https://central.sonatype.com/api/v1/publisher/upload -H "Authorization: Bearer $SONATYPE_BEARER" -F name="$GROUP_PATH $VERSION" -F publishingType="AUTOMATIC" -F bundle=@artifacts.zip
       - name: Generate subject
         id: hash
         run: |
