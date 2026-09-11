@@ -12,6 +12,7 @@ repositories {
 // be registered for every project as well.
 allprojects {
     repositories {
+        mavenCentral()
         maven {
             name = 'mavenSnapshots'
             url = uri('https://central.sonatype.com/repository/maven-snapshots/')
