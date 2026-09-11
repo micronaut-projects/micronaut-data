@@ -70,6 +70,9 @@ tasks.withType(JavaCompile).configureEach {
         option("NullAway:AnnotatedPackages", "io.micronaut.data")
         disable("MissingSummary")
         disable("ClassInitializationDeadlock")
+        // Annotation processor output is not ours to fix
+        disableWarningsInGeneratedCode = true
+        excludedPaths = ".*/build/generated/.*"
     }
     // Disable Error Prone (including NullAway) on test code and TCK
     if (name.toLowerCase().contains("test") || project.name.contains("tck")) {
