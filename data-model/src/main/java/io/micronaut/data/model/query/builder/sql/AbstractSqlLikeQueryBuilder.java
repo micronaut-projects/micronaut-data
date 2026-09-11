@@ -2884,7 +2884,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (values.isEmpty()) {
                 return;
             }
-            PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
             appendExpression(expression);
             query.append(negated ? " NOT IN (" : " IN (");
             boolean hasOneParameter = values.stream().filter(v -> v instanceof ParameterExpression).count() == 1;
@@ -2892,6 +2891,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             while (iterator.hasNext()) {
                 Object value = iterator.next();
                 if (value instanceof ParameterExpression) {
+                    PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                     BindingParameter.BindingContext bindingContext = newBindingContext(propertyPath);
                     if (hasOneParameter) {
                         bindingContext = bindingContext.expandable();
