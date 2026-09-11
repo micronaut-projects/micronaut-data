@@ -175,15 +175,20 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
             ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
             if (connectionStatus == null) {
-                ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(txConnectionDefinition(definition));
-                T transactionStatus = createAndBeginTransaction(definition, newConnectionStatus);
-                transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCompletion(Status status) {
-                        synchronousConnectionManager.complete(newConnectionStatus);
-                    }
-                });
-                return transactionStatus;
+                final ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(txConnectionDefinition(definition));
+                try {
+                    T transactionStatus = createAndBeginTransaction(definition, newConnectionStatus);
+                    transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
+                        @Override
+                        public void afterCompletion(Status status) {
+                            synchronousConnectionManager.complete(newConnectionStatus);
+                        }
+                    });
+                    return transactionStatus;
+                } catch (RuntimeException e) {
+                    synchronousConnectionManager.complete(newConnectionStatus);
+                    throw e;
+                }
             }
             return createAndBeginTransaction(definition, connectionStatus);
         }
@@ -193,16 +198,29 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
-            ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
-            T newTransaction = createAndBeginTransaction(definition, newConnection);
-            newTransaction.registerInvocationSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCompletion(Status status) {
+            ConnectionStatus<C> newConnection = null;
+            try {
+                newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
+                final ConnectionStatus<C> finalConnection = newConnection;
+                T newTransaction = createAndBeginTransaction(definition, finalConnection);
+                newTransaction.registerInvocationSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(Status status) {
+                        doResume(existingTransaction);
+                        synchronousConnectionManager.complete(finalConnection);
+                    }
+                });
+                return newTransaction;
+            } catch (RuntimeException e) {
+                try {
+                    if (newConnection != null) {
+                        synchronousConnectionManager.complete(newConnection);
+                    }
+                } finally {
                     doResume(existingTransaction);
-                    synchronousConnectionManager.complete(newConnection);
                 }
-            });
-            return newTransaction;
+                throw e;
+            }
         }
         T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
         begin(existingTransactionStatus);
