@@ -7,6 +7,21 @@ repositories {
     mavenCentral()
 }
 
+// Project repositories are added by the shared build plugins, which take
+// precedence over the settings repositories, so the snapshot repository has to
+// be registered for every project as well.
+allprojects {
+    repositories {
+        maven {
+            name = 'mavenSnapshots'
+            url = uri('https://central.sonatype.com/repository/maven-snapshots/')
+            mavenContent {
+                snapshotsOnly()
+            }
+        }
+    }
+}
+
 if (System.getenv("SONAR_TOKEN") != null) {
     sonarqube {
         properties {
