@@ -1,0 +1,30 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "io.micronaut.build.internal.data-kotlin-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    kapt projects.micronautDataDocumentProcessor
+    kapt projects.micronautDataNitrite
+
+    implementation projects.micronautDataNitrite
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation(libs.nitrite.spatial) {
+        exclude group: "tools.jackson.core", module: "jackson-databind"
+    }
+    implementation mnSql.jakarta.persistence.api
+
+    runtimeOnly mnLogging.logback.classic
+}

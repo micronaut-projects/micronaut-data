@@ -1,0 +1,155 @@
+[[nitriteConfiguration]]
+== Configuration
+
+Nitrite datasources are bound from `micronaut.nitrite.*` properties. Each datasource has a name, which forms part of the property path: settings for a datasource named `default` are bound from `micronaut.nitrite.default.*`.
+
+The following settings are supported for each datasource:
+
+- `db-path`: Path to the database file. If not provided, an in-memory database is created.
+- `storage-mode`: The storage engine to use. Supported values are:
+    * `MVSTORE`: (Default) MVStore-backed persistent database.
+    * `IN_MEMORY`: Pure in-memory database (equivalent to leaving `db-path` empty).
+    * `ROCKSDB`: RocksDB-backed persistent database.
+- `field-separator`: The character used to separate nested fields in query strings (default: `.`).
+- `create-indexes`: Whether to automatically create indexes from Micronaut Data `@Index`, `@Indexes`, `@FullTextIndex`, and `@SpatialIndex` annotations (default: `true`).
+- `sorted-read-strategy`: How limits are applied to sorted reads (default: `AUTO`):
+    * `AUTO`: Uses cursor-side limits for MVSTORE and in-memory storage, and database-side limits for ROCKSDB.
+    * `CURSOR`: Always removes the limit from the Nitrite find and applies it while reading the cursor.
+    * `DATABASE`: Always keeps the limit on the Nitrite find.
+- `mvstore-page-split-size`: The MVStore page split size in bytes. Unset by default, which leaves the
+Nitrite adapter's own value in place. Only read when `storage-mode` is `MVSTORE`.
++
+Nitrite 5.3.0 sets this to `16` bytes where its own javadoc documents 16 KB, so a leaf page splits as
+soon as it holds more than one entry and the cost of a write climbs with the size of the collection.
+Set it to `16384` to get the documented default. H2 clamps the value to
+`(cacheSize / cacheConcurrency) >> 4`, which makes 64 KB the practical ceiling, and an existing file
+keeps the page shape it was written with until those pages are rewritten.
+
+The remaining MVStore settings are unset by default and, like the one above, are read only for
+`MVSTORE`. An unset value leaves the adapter's own default in place:
+
+- `mvstore-cache-size`: Read cache size in MB (adapter default: 16).
+- `mvstore-cache-concurrency`: Number of read cache segments (adapter default: 16). H2 clamps the
+page split size to `(cacheSize / cacheConcurrency) >> 4`, so this bounds `mvstore-page-split-size`.
+- `mvstore-auto-commit`: Whether every change is committed as it is made (adapter default: `true`).
+With this off, changes are buffered until `Nitrite.commit()`.
+- `mvstore-auto-commit-buffer-size`: Unsaved changes buffered before an automatic commit (adapter
+default: 1024). Only meaningful while auto-commit is on.
+- `mvstore-auto-compact`: Whether fragmented chunks and chunks below the 90% target fill rate are
+reclaimed, which shrinks the file (adapter default: `true`).
+- `mvstore-compress`: Whether stored data is compressed (adapter default: `false`).
+- `mvstore-compress-high`: Whether the higher compression level is used - smaller file, slower reads
+and writes (adapter default: `false`).
+- `mvstore-recovery-mode`: Whether the store opens in MVStore's recovery mode, which tolerates a file
+H2 would otherwise refuse (adapter default: `false`).
+- `mvstore-read-only`: Whether the store opens read-only (adapter default: `false`).
+- `mvstore-encryption-key`: The key MVStore encrypts the file with. Unset means an unencrypted
+store. Supply it from the environment rather than checked-in configuration. Encryption is an
+MVStore feature; the RocksDB adapter has no equivalent.
+
+- `username`: Optional username (for authenticated databases).
+- `password`: Optional password.
+
+Example (Persistent):
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      create-indexes: true
+----
+
+If no `micronaut.nitrite` configuration is present at all, an in-memory datasource named `default` is created implicitly, so a repository works without any configuration. If a datasource is configured but supplies no `db-path`, an in-memory database is used for it.
+
+== Multiple Datasources
+
+More than one datasource can be configured by giving each one its own name under `micronaut.nitrite`. Each datasource is opened independently, with its own storage mode and its own documents:
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+    audit:
+      storage-mode: IN_MEMORY
+----
+
+A repository selects its datasource by passing the name to ann:data.nitrite.annotation.NitriteRepository[]:
+
+[source,java]
+----
+@NitriteRepository("audit")
+public interface AuditRepository extends CrudRepository<AuditRecord, String> {
+}
+----
+
+A repository that names no datasource uses the primary one, which is the datasource named `default`.
+
+Datasources are isolated from each other: an entity written through a repository bound to one datasource is not visible through a repository bound to another, even when both repositories map the same entity type.
+
+The isolation extends to transactions. Each datasource gets its own connection operations, transaction operations and transaction context holder, so a transaction opened against one datasource neither covers nor is visible to repositories bound to another. To drive a transaction of a named datasource programmatically, resolve its `NitriteTransactionOperations` bean by that name:
+
+[source,java]
+----
+NitriteTransactionOperations auditTransactions =
+    beanContext.getBean(NitriteTransactionOperations.class, Qualifiers.byName("audit"));
+----
+
+== Optional Modules
+
+Micronaut Data Nitrite supports optional Nitrite modules that provide additional functionality:
+
+=== ROCKSDB Storage Engine
+
+To use the `ROCKSDB` storage mode, add the Nitrite ROCKSDB adapter dependency:
+
+dependency:org.dizitart:nitrite-rocksdb-adapter[scope="runtime"]
+
+Then configure the storage mode:
+
+[source,yaml]
+----
+micronaut:
+  nitrite:
+    default:
+      db-path: /data/myapp.db
+      storage-mode: ROCKSDB
+----
+
+`ROCKSDB` requires a `db-path`; unlike `MVSTORE` it cannot fall back to in-memory storage, so a missing path fails at startup. Configuring `ROCKSDB` without the adapter on the classpath also fails at startup, naming the missing adapter class.
+
+See the https://nitrite.dizitart.com/java-sdk/modules/store-modules/rocksdb/index.html[Nitrite ROCKSDB Adapter documentation] for more details.
+
+=== Spatial Module
+
+To use spatial queries with Geometry types (points, polygons, etc.), add the Nitrite spatial module:
+
+dependency:org.dizitart:nitrite-spatial[scope="runtime"]
+
+Micronaut Data Nitrite serializes JTS Geometry values through its built-in Micronaut Serde codec; no Jackson JTS module is required.
+
+The spatial module enables:
+
+- <<nitriteSpatial, Spatial indexes>> on Geometry fields
+- <<nitriteSpatial, Spatial filters>> (`$near`, `$within`, `$intersects`)
+
+The module is loaded automatically when it is on the classpath and is simply absent when it is not. A module that is present but cannot be initialized fails at startup rather than being skipped, so spatial indexes and filters are never silently unavailable.
+
+See <<nitriteSpatial>> for detailed usage. See the https://nitrite.dizitart.com/java-sdk/modules/spatial/index.html[Nitrite Spatial Module documentation] and https://nitrite.dizitart.com/java-sdk/filter/index.html#spatial-filters[Spatial Filters documentation] for more details.
+
+=== Object Mapping
+
+Micronaut Data Nitrite uses its own Micronaut Data mapping layer with Nitrite collections. It does not require Nitrite's Jackson mapper module, and a Micronaut Serde `ObjectMapper` bean is optional. If Micronaut Serde is present, the mapper can use it for non-simple nested values; otherwise it relies on Micronaut introspection and the built-in conversion service.
+
+== Batch Operations
+
+For bulk operations, use the `saveAll`, `updateAll`, and `deleteAll` repository methods to batch operations efficiently:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="batch-operations"]
+
+Batch operations are more efficient than individual operations when working with multiple entities, as they reduce the number of database round-trips and take advantage of Nitrite's internal batching mechanisms.
+
+NOTE: For large batch operations, consider breaking them into smaller chunks to avoid memory pressure and improve transaction management.

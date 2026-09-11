@@ -1,0 +1,40 @@
+[[nitriteLimitations]]
+== Scope and Current Boundaries
+
+Nitrite is intended as an embedded datastore for Micronaut Data repository applications. It now supports more than basic CRUD, including criteria queries, association mapping and fetching, optimistic locking, transactions, lifecycle events, and optional spatial queries.
+
+It is still a Nitrite-backed embedded store, not a MongoDB compatibility layer. In particular:
+
+- Nitrite is not a BSON/driver-native query-document store like MongoDB.
+- MongoDB-specific features such as aggregation pipelines, BSON filters, and Mongo-only annotations are out of scope for this module.
+- Persistent storage engines other than the default MVStore (for example, RocksDB) require additional Nitrite adapter dependencies in your build configuration.
+- If you need full MongoDB feature parity, use Micronaut Data MongoDB instead (see <<mongo>>).
+
+== Feature Overview
+
+Micronaut Data Nitrite supports the following features for embedded document storage:
+
+* <<nitriteRepositories, Repository patterns>> with derived query methods
+* <<nitriteCriteriaSpecifications, Criteria API>> with sorting, pagination, projection, logical predicates, LIKE/regex matching, and common computed expressions
+* <<nitriteAssociationMapping, Association mapping>> with cascade operations
+* <<nitriteAssociationFetching, Association fetching>> with `@Join` annotation
+* <<nitriteOptimisticLocking, Optimistic locking>> with `@Version` annotation
+* <<nitriteTransactions, Transaction management>> with programmatic transactions
+* <<nitriteConfiguration, Multiple datasources>>, each with its own storage mode
+* <<nitriteSpatial, Spatial queries>> with Geometry types (requires spatial module)
+* Entity lifecycle events (see <<entityEvents, Shared Entity Events>>)
+
+For details and examples, see the respective sections above.
+
+== Remaining Limitations
+
+The following boundaries remain:
+
+* `@Join` uses Nitrite's default fetch behavior; custom join types such as `LEFT_FETCH` and `INNER_FETCH` are not currently distinguished.
+* Criteria subqueries (`cb.exists(subquery)`) are not supported by Nitrite.
+* Criteria `sum`, `diff`, and unsupported string transforms such as `trim` are rejected in query expressions. Supported computed expressions such as `length`, `lower`, `upper`, `concat`, `right`, and `prod` are evaluated in application code against candidate documents rather than pushed down to Nitrite indexes, so use them with care on large collections. This applies only to computed expressions: a plain comparison on a field, including `>`, `>=`, `<`, `<=` and `between`, is expressed as a native Nitrite filter and can be served by an index on that field.
+* A criteria update assigns values only. `CriteriaUpdate.set` accepts a value or a parameter, not a computed expression such as `cb.sum(path, 1)`, `cb.quot(path, 2)` or `cb.concat(path, suffix)`, which Micronaut Data rejects for every implementation. To apply a computed update, read the entity, change it and save it, or use a `@Query` update with `$inc`, `$mul` or `$concat`.
+* Nitrite has no derived update operators of its own, so `$inc`, `$mul` and `$concat` are applied by reading each matching document, computing the new value and writing it back. The sequence is serialized per collection so that concurrent updates are not lost, which means arithmetic updates on the same collection do not proceed in parallel. A result that does not fit the stored field's type — an overflowing increment on an `Integer` field, for example — fails with an api:data.exceptions.DataAccessException[] rather than wrapping silently.
+* Advanced Mongo-style aggregation pipelines are out of scope. Use repository aggregate methods, including property-scoped distinct counts, and Criteria API support where applicable.
+* Embedded/nested POJO values are persisted and round-trip correctly, but derived nested-property queries against arbitrary embedded object fields depend on annotation processor support.
+* Immutable entities are not supported. An entity is populated through its setters on both the write and the read side, so a Java record, or any entity whose identity is read-only, fails with `Cannot write a read-only property`. A generated identity is assigned in place before the insert, and a document is mapped back into a new instance the same way. An immutable entity whose identity is assigned by the application can be written, and the instance returned by `save` does carry its initial version, but it cannot be read back.

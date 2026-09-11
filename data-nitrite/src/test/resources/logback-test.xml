@@ -1,0 +1,25 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- Include source line numbers to make diagnosing AP/runtime interactions easier. -->
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Keep the default test output readable; enable DEBUG only for Nitrite implementation logs. -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <logger name="io.micronaut.data.nitrite" level="DEBUG" />
+
+    <logger name="io.micronaut.context" level="WARN" />
+    <logger name="io.micronaut.context.lifecycle" level="WARN" />
+    <logger name="io.micronaut.context.DefaultBeanContext" level="WARN" />
+
+    <!-- Suppress noisy environment / classpath discovery logs during tests. -->
+    <logger name="io.micronaut.json.convert.env" level="WARN" />
+    <logger name="io.micronaut.core.reflect.ClassUtils" level="WARN" />
+    <logger name="io.micronaut.core.beans.DefaultBeanIntrospector" level="WARN" />
+</configuration>

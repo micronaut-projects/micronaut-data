@@ -46,7 +46,22 @@ public final class PersistentEntityUtils {
     }
 
     /**
-     * Check if the property is an association ID that can be accessed without join. In a case it's not an ID stored outside the associated table.
+     * Check if the association's property is stored on the owning side, and so can be read without joining
+     * to the associated table.
+     *
+     * <p>The answer has to agree with what {@link #traversePersistentProperties(List, PersistentProperty, boolean, BiConsumer)}
+     * emits for the same association, because a caller that resolves a property path uses this method to decide
+     * whether the leaf that traversal produced belongs to the owning table or to the join alias. The three
+     * association target shapes are therefore mirrored here:</p>
+     * <ul>
+     *     <li>a single identity - only that identity is on the owning side;</li>
+     *     <li>a composite identity - every identity property maps a column on the owning side;</li>
+     *     <li>no identity - the target is stored inline, so all of its properties are on the owning side.</li>
+     * </ul>
+     *
+     * <p>Traversal descends through embedded properties, so the leaf it produces can be nested several
+     * embeddeds deep; matching is recursive to reach it.</p>
+     *
      * @param association The association
      * @param persistentProperty The association's property
      * @return true if can be accessed
@@ -56,21 +71,39 @@ public final class PersistentEntityUtils {
         if (association instanceof Embedded) {
             return true;
         }
-        PersistentEntity associatedEntity = association.getAssociatedEntity();
-        if (!associatedEntity.hasIdentity()) {
-            // Some strange case of document DB
+        if (association.isForeignKey()) {
             return false;
         }
-        PersistentProperty identity = associatedEntity.getIdentity();
-        if (identity instanceof Embedded embedded) {
-            for (PersistentProperty property : embedded.getAssociatedEntity().getPersistentProperties()) {
-                if (property == persistentProperty) {
-                    return !association.isForeignKey();
-                }
-            }
-
+        PersistentEntity associatedEntity = association.getAssociatedEntity();
+        List<PersistentProperty> identityProperties = associatedEntity.getIdentityProperties();
+        if (identityProperties.isEmpty()) {
+            // An identity-less association is stored embedded in the owning document
+            return contains(associatedEntity.getPersistentProperties(), persistentProperty);
         }
-        return identity == persistentProperty && !association.isForeignKey();
+        for (PersistentProperty identity : identityProperties) {
+            if (identity == persistentProperty) {
+                return true;
+            }
+            if (identity instanceof Embedded embedded && contains(embedded.getAssociatedEntity().getPersistentProperties(), persistentProperty)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean contains(Collection<? extends PersistentProperty> properties, PersistentProperty persistentProperty) {
+        for (PersistentProperty property : properties) {
+            if (property == persistentProperty) {
+                return true;
+            }
+            // Traversal descends through embedded properties, so the leaf it reaches can be nested
+            // several embeddeds deep; matching only the top level would report a needless join
+            if (property instanceof Embedded embedded
+                && contains(embedded.getAssociatedEntity().getPersistentProperties(), persistentProperty)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -170,6 +203,30 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded, consumerProperty);
     }
 
+    /**
+     * Traverses the properties that should be persisted for the given property, descending through embedded
+     * properties and through the owning side of non-foreign-key associations until a leaf is reached.
+     *
+     * <p>An association contributes the columns that the owning side stores for it, which depends on the
+     * shape of the association's target:</p>
+     * <ul>
+     *     <li><b>single identity</b> - that identity, or the column named by a single {@code @JoinColumn}
+     *     when one is declared on the property;</li>
+     *     <li><b>composite identity</b> - one leaf per identity property. A single referenced column cannot
+     *     stand in for several, so {@code @JoinColumn} substitution does not apply;</li>
+     *     <li><b>no identity</b> - the target is a value object stored inline in the owning record, so its
+     *     properties are traversed as if it were embedded. Traversal stops if the value object refers back
+     *     to an entity already on the path, which would otherwise never terminate.</li>
+     * </ul>
+     *
+     * <p>The latter two shapes only arise in document stores; a relational mapping declares an identity on
+     * every association target.</p>
+     *
+     * @param associations      The associations traversed so far, prefixed to every emitted leaf
+     * @param property          The property to traverse
+     * @param traverseEmbedded  Whether to descend into an embedded property or emit it whole
+     * @param consumerProperty  The function to invoke on every leaf property
+     */
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     boolean traverseEmbedded,
@@ -191,22 +248,34 @@ public final class PersistentEntityUtils {
                 return;
             }
             List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
+            newAssociations.add(association);
             PersistentEntity associatedEntity = association.getAssociatedEntity();
-            if (!associatedEntity.hasIdentity()) {
-                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
+            Collection<? extends PersistentProperty> identityProperties = associatedEntity.getIdentityProperties();
+            if (identityProperties.isEmpty()) {
+                // Identity-less associations behave like embedded value objects.
+                for (Association traversedAssociation : associations) {
+                    if (traversedAssociation.getAssociatedEntity() == associatedEntity) {
+                        // The value object refers back to itself, traversing it would never terminate
+                        return;
+                    }
+                }
+                for (PersistentProperty associatedProperty : associatedEntity.getPersistentProperties()) {
+                    traversePersistentProperties(newAssociations, associatedProperty, consumerProperty);
+                }
+                return;
             }
-            PersistentProperty assocIdentity = associatedEntity.getIdentity();
-            if (assocIdentity instanceof Association) {
-                traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
-            } else {
-                // In case there is JoinColumn defined on property, we might use specified column
-                // instead of association id
-                PersistentProperty joinColumnAssocIdentity = getJoinColumnAssocIdentity(property, associatedEntity);
-                if (joinColumnAssocIdentity != null) {
-                    consumerProperty.accept(newAssociations, joinColumnAssocIdentity);
+            // In case there is a single JoinColumn defined on the property, we might use the specified
+            // column instead of the association id. A composite identity maps a column each, so the
+            // single referenced column cannot stand in for all of them.
+            PersistentProperty joinColumnIdentity = identityProperties.size() == 1
+                ? getJoinColumnAssocIdentity(property, associatedEntity)
+                : null;
+            for (PersistentProperty identityProperty : identityProperties) {
+                if (identityProperty instanceof Association) {
+                    traversePersistentProperties(newAssociations, identityProperty, consumerProperty);
                 } else {
-                    consumerProperty.accept(newAssociations, assocIdentity);
+                    consumerProperty.accept(newAssociations,
+                        joinColumnIdentity != null ? joinColumnIdentity : identityProperty);
                 }
             }
         } else {

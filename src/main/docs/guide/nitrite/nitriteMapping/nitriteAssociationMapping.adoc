@@ -1,0 +1,147 @@
+[[nitriteAssociationMapping]]
+To specify a relation between two entities, use the ann:data.annotation.Relation[] annotation. The relation kind is specified using the enum ann:data.annotation.Relation.Kind[] `value` attribute, which is similar to JPA relationship annotations (`@OneToMany`, `@OneToOne`, etc.).
+
+== Supported Relation Types
+
+.Micronaut Data Nitrite supported relations:
+[cols=2*]
+|===
+|*Kind*
+|*Description*
+
+|`Kind.ONE_TO_MANY`
+|One-To-Many association. The associated entities are stored in a separate collection with a foreign key reference back to the owning entity.
+
+|`Kind.ONE_TO_ONE`
+|One-To-One association. The associated entity is referenced by ID in the owning document.
+
+|`Kind.MANY_TO_MANY`
+|Many-To-Many association. Both entities maintain collections of the other, stored with foreign key references.
+
+|`Kind.MANY_TO_ONE`
+|Many-To-One association. The owning entity stores the ID of the associated entity as a foreign key.
+
+|`Kind.EMBEDDED`
+|Embedded association. The associated entity's fields are stored inline within the owning document.
+|===
+
+Use the `mappedBy` attribute to specify the inverse property that this relation is mapped by. This is required for bidirectional associations.
+
+== Cascade Operations
+
+Micronaut Data Nitrite supports cascading operations on associations. The cascade type is specified using the `cascade` attribute of the `@Relation` annotation.
+
+.Micronaut Data Nitrite supported cascade types:
+[cols=2*]
+|===
+|*Type*
+|*Description*
+
+|`Cascade.PERSIST`
+|Associated entity or entities are automatically persisted when the owning entity is saved.
+
+|`Cascade.UPDATE`
+|Associated entity or entities are automatically updated when the owning entity is updated.
+
+|`Cascade.ALL`
+|All operations (`Cascade.PERSIST` and `Cascade.UPDATE`) are cascaded to associated entities.
+
+|`Cascade.NONE`
+|(Default) No operations are cascaded. Associated entities must be managed explicitly.
+|===
+
+== Example: One-To-Many with Cascade Persist
+
+The following example shows a bidirectional `ONE_TO_MANY` relationship between `Author` and `Book` with cascade persist:
+
+.Author entity with ONE_TO_MANY association
+snippet::example.Author[project-base="doc-examples/nitrite-example", source="main", tags="author"]
+
+<1> `cascade = Cascade.PERSIST` means saving an Author also saves associated Books
+
+.Book entity with MANY_TO_ONE association
+snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book-many-to-one"]
+
+<1> The `MANY_TO_ONE` association stores the author's ID as a foreign key
+
+When you save an `Author` with associated `Book` entities, the books are automatically persisted:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="cascade-persist"]
+
+== Example: Many-To-One
+
+A `MANY_TO_ONE` association stores the foreign key reference to the associated entity (see the `Book` entity above).
+
+When querying, you can use the Criteria API or method names to filter by association properties:
+
+snippet::example.BookRepository[project-base="doc-examples/nitrite-example", source="main", tags="findByAuthorName"]
+
+== Example: Many-To-Many
+
+A `MANY_TO_MANY` association allows multiple entities on both sides of the relationship. One side uses `mappedBy` to indicate it is the inverse side:
+
+.Student entity with MANY_TO_MANY (inverse side)
+snippet::example.Student[project-base="doc-examples/nitrite-example", source="main", tags="student"]
+
+<1> `mappedBy = "students"` indicates this is the inverse side of the relationship
+
+.Book entity with MANY_TO_MANY (owning side)
+snippet::example.Book[project-base="doc-examples/nitrite-example", source="main", tags="book-many-to-many"]
+
+<1> The owning side stores the relationship
+
+When saving, add entities to the owning side's collection:
+
+snippet::example.BookRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="manyToMany"]
+
+NOTE: For bidirectional `MANY_TO_MANY` associations, only the owning side (without `mappedBy`) persists the relationship. The inverse side's collection is populated when explicitly loaded.
+
+== Example: Embedded Association
+
+Embedded associations store the associated entity's fields inline within the owning document. Annotate the value type with ann:data.annotation.Embeddable[] instead of `@MappedEntity` — it has no `@Id` of its own, since it isn't persisted as a separate document:
+
+snippet::example.Address[project-base="doc-examples/nitrite-example", source="main", tags="address"]
+
+Reference it as a plain field on the owning entity:
+
+snippet::example.Customer[project-base="doc-examples/nitrite-example", source="main", tags="customer"]
+
+The `Address` fields are stored directly in the `Customer` document rather than as a reference:
+
+snippet::example.AssociationMappingSpec[project-base="doc-examples/nitrite-example", source="test", tags="embedded-address-usage"]
+
+== Example: Composite Foreign Key with @JoinColumns
+
+A `MANY_TO_ONE` association can be keyed on more than one property of the associated entity using the ann:data.annotation.sql.JoinColumns[] annotation with multiple ann:data.annotation.sql.JoinColumn[] entries. Each `@JoinColumn` maps one local foreign-key field to one `referencedColumnName` on the associated entity, together forming a composite key — useful for natural keys such as a tenant ID plus a per-tenant reference number, without introducing a synthetic single-column ID.
+
+.Parent entity with a two-property natural key
+snippet::example.CompositeFkParent[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-parent"]
+
+`CompositeFkChild` joins back to its parent using both properties together:
+
+.Child entity referencing the parent by composite key
+snippet::example.CompositeFkChild[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-child"]
+
+<1> ann:core.annotation.Creator[] marks the constructor Micronaut Data uses to hydrate the entity on read. It is **required** here: because the parent association is a constructor argument, the resolved `CompositeFkParent` is passed in at construction time rather than through a setter.
+
+The `@JoinColumns` annotation pairs each local `@JoinColumn` with the `referencedColumnName` on `CompositeFkParent` it corresponds to, so the join is resolved on both `tenantId` and `refId` together.
+
+[IMPORTANT]
+====
+When an entity declares more than one constructor — for example a no-argument constructor alongside an all-arguments one — annotate the intended constructor with ann:core.annotation.Creator[]. Without it, which constructor bean introspection selects is unspecified, and an entity whose association is a constructor argument may fail to hydrate (an `InstantiationException` at read time). `@Creator` makes the choice explicit and independent of constructor declaration order. Both `CompositeFkParent` and `CompositeFkChild` above annotate their all-arguments constructor for this reason.
+====
+
+.Repository joining the composite foreign key
+snippet::example.CompositeFkChildRepository[project-base="doc-examples/nitrite-example", source="main", tags="composite-fk-repository"]
+
+Usage example:
+
+snippet::example.CompositeFkAssociationSpec[project-base="doc-examples/nitrite-example", source="test", tags="composite-fk-usage"]
+
+== Notes
+
+- `ONE_TO_MANY` and `MANY_TO_MANY` associations are **lazy-loaded by default**; use `@Join` to fetch them eagerly in a single batch query. `MANY_TO_ONE` and `ONE_TO_ONE` associations are always eagerly resolved regardless of `@Join` — see <<nitriteAssociationFetching>>.
+- For `ONE_TO_MANY` and `MANY_TO_MANY` associations, the associated entities are stored in separate collections with foreign key references.
+- Cascade operations trigger entity lifecycle events for child entities (children before parent for cascade operations).
+- The `mappedBy` attribute is required for bidirectional associations to specify the inverse side.
+- `MANY_TO_ONE` associations can use `@JoinColumns` with multiple `@JoinColumn` entries to join on a composite key instead of a single ID.

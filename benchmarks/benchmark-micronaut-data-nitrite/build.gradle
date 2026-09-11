@@ -1,0 +1,15 @@
+plugins {
+    id "io.micronaut.build.internal.data-micronaut-benchmark"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    // Required on the processor path: without it the query builder falls back to JPQL.
+    annotationProcessor projects.micronautDataNitrite
+    implementation projects.micronautDataNitrite
+    implementation libs.nitrite.rocksdb.adapter
+    implementation(libs.nitrite.spatial) {
+        exclude group: "tools.jackson.core", module: "jackson-databind"
+    }
+    runtimeOnly mn.snakeyaml
+}

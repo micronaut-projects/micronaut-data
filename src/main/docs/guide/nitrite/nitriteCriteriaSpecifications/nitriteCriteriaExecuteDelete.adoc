@@ -1,0 +1,12 @@
+[[nitriteCriteriaExecuteDelete]]
+This section complements the shared Criteria API guide (see <<criteriaExecuteDelete, Deleting>>).
+
+With Nitrite, criteria deletes are encoded as JSON filters and executed as remove operations against Nitrite collections.
+
+To implement a delete, use the `deleteAll` method from api:data.repository.JpaSpecificationExecutor[]:
+
+snippet::example.PersonRepository[project-base="doc-examples/nitrite-example", source="main", tags="delete", indent="0"]
+
+Then execute the delete specification:
+
+snippet::example.PersonRepositoryExample[project-base="doc-examples/nitrite-example", source="main", tags="delete", indent="0"]

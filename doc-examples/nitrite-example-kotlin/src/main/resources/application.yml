@@ -1,0 +1,5 @@
+micronaut:
+  nitrite:
+    default:
+      storage-mode: IN_MEMORY
+      create-indexes: true

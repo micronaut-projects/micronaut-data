@@ -1,0 +1,75 @@
+[[nitriteIndexes]]
+== Automated Index Creation
+
+Micronaut Data Nitrite automatically creates indexes based on standard Micronaut Data annotations.
+
+You can define indexes at the class level or property level using ann:data.annotation.Index[] or ann:data.annotation.Indexes[].
+
+=== Identity Indexing and Uniqueness
+
+A `Long` identity is written into Nitrite's own `_id` document key as well as into the `id` field, so its lookups are already a single key seek and its uniqueness is already enforced by that key. No secondary index is created for it: measured over the benchmark suite, one cost 29.8% of transactional write throughput on MVStore, 19.5% in memory, and 26.0% of association reads.
+
+Every other scalar identity - `String`, `UUID`, `Integer` and the rest - cannot be held in `_id`, so Micronaut Data Nitrite creates a unique index on the `id` field instead. That index is what makes an identity lookup seekable and what raises api:data.exceptions.EntityExistsException[] when `insert` is given an identity that already exists.
+
+Composite, embedded and association identities are given no identity index.
+
+=== Property-level Index
+
+Applying `@Index` to a property creates a non-unique index on that field:
+
+snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="property-index"]
+
+=== Compound Index
+
+You can define multi-column indexes at the class level:
+
+snippet::example.IndexedBook[project-base="doc-examples/nitrite-example", source="main", tags="compound-index"]
+
+=== Unique Index
+
+Set `unique = true` on `@Index` to enforce a uniqueness constraint on a property:
+
+snippet::example.CatalogItem[project-base="doc-examples/nitrite-example", source="main", tags="unique-index"]
+
+Attempting to save an entity whose indexed value already exists raises an api:data.exceptions.DataAccessException[] wrapping Nitrite's own `org.dizitart.no2.exceptions.UniqueConstraintException`:
+
+snippet::example.CatalogItemRepositorySpec[project-base="doc-examples/nitrite-example", source="test", tags="unique-index-usage"]
+
+=== Full-text and Spatial Indexes
+
+Nitrite-specific indexes can be declared with ann:data.nitrite.annotation.FullTextIndex[] and ann:data.nitrite.annotation.SpatialIndex[].
+
+Use `@FullTextIndex` on string fields that should be queried with Nitrite's `$text` filter in JSON `@Query` methods.
+
+Spatial indexes are covered in <<nitriteSpatial>>.
+
+=== Indexes and Sorting
+
+When a query has no filter, orders by exactly one field, and asks for a bounded number of records,
+Nitrite takes the ordering from a simple index on that field rather than blocking-sorting the
+collection. That path is slower than the sort it replaces: measured against Nitrite 5.3.0 it cost
+about 3.4 times a blocking sort at every collection size and every bound tried, and its cost grows
+with the size of the collection rather than with the number of records asked for.
+
+A sorted read is therefore issued unbounded and bounded while its cursor is read, whether the bound
+comes from a `Pageable` page size, from a `Limit`, or from returning a single result. A skip does
+not select the index path and is left with the find, so only a suffix of the cursor is ever
+dropped. Ordering, null placement and tie-breaking are unaffected.
+
+The default `AUTO` strategy uses this cursor-side behavior for MVSTORE and in-memory storage. It
+keeps the bound on the Nitrite find for ROCKSDB, whose bounded indexed path is faster in the
+benchmark. Set `sorted-read-strategy` to `CURSOR` or `DATABASE` to force one strategy for all
+storage modes; see <<nitriteConfiguration>>.
+
+For a single-result read this changes nothing a caller can observe: a `Top`/`First` query returns
+the first record, and any other single-result query still reads a second record to detect a
+non-unique result and raises api:data.exceptions.NonUniqueResultException[] rather than silently
+returning the first.
+
+=== Managing Indexes Directly
+
+A `NitriteIndexManagement` bean is created for each datasource. It drops and rebuilds a unique index on a named collection field, and `dropUniqueIndex` returns a closeable scope that rebuilds the index when the scope closes, so a bulk load can run unindexed without leaving the collection unindexed if it fails. Index DDL is not part of a Nitrite transaction, so this is the only way to undo a drop.
+
+=== Configuration
+
+Automatic index creation, including the identity index, can be disabled by setting `create-indexes` to `false` for the datasource, for example `micronaut.nitrite.default.create-indexes`. Without the identity index a duplicate non-`Long` identity is no longer rejected by the database, so `insert` of an entity whose identity already exists writes a second document rather than raising api:data.exceptions.EntityExistsException[].

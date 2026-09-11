@@ -1,0 +1,25 @@
+plugins {
+    id "java-library"
+    id "io.micronaut.build.internal.data-base"
+    id "io.micronaut.build.internal.data-dependencies"
+}
+
+dependencies {
+
+    testImplementation projects.micronautJakartaDataTck.micronautSupport
+    testImplementation projects.micronautDataNitrite
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mnValidation.micronaut.validation
+
+    testRuntimeOnly mnTest.junit.jupiter.engine
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mn.snakeyaml
+}
+
+test {
+    scanForTestClasses true
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    useJUnitPlatform()
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}

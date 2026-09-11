@@ -1,0 +1,182 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id "groovy"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+
+// Source sets for testing with optional dependencies present
+sourceSets {
+    // Compiled without micronaut-data-nitrite on the annotation processor path, so queries are
+    // SQL-shaped rather than Nitrite JSON. Adding it back makes this a duplicate of `test`.
+    generatedQueryTest {
+        java.srcDir file('src/generatedQueryTest/java')
+        groovy.srcDir file('src/generatedQueryTest/groovy')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    rocksDbPresentTest {
+        groovy.srcDir file('src/rocksDbPresentTest/groovy')
+        resources.srcDir file('src/rocksDbPresentTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    spatialPresentTest {
+        groovy.srcDir file('src/spatialPresentTest/groovy')
+        resources.srcDir file('src/spatialPresentTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + sourceSets.test.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    // Inherits the test compile/runtime dependencies but not testAnnotationProcessor.
+    generatedQueryTestImplementation {
+        extendsFrom configurations.testImplementation
+    }
+    generatedQueryTestCompileOnly {
+        extendsFrom configurations.testCompileOnly
+    }
+    generatedQueryTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
+    rocksDbPresentTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
+    spatialPresentTestRuntimeOnly {
+        extendsFrom configurations.testRuntimeOnly
+    }
+    spatialPresentTestCompileOnly {
+        extendsFrom configurations.testCompileOnly
+    }
+    spatialPresentTestAnnotationProcessor {
+        extendsFrom configurations.testAnnotationProcessor
+    }
+    spatialPresentTestImplementation {
+        extendsFrom configurations.testImplementation
+    }
+}
+
+dependencies {
+    components {
+        withModule("org.dizitart:nitrite-spatial") {
+            allVariants {
+                withDependencies {
+                    removeAll { it.group == "tools.jackson.core" && it.name == "jackson-databind" }
+                }
+            }
+        }
+    }
+
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor libs.micronaut.docs
+
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
+    api projects.micronautDataConnection
+
+    // The Nitrite BOM manages the version of every org.dizitart artifact. Configurations that do
+    // not extend `api` need it imported explicitly, otherwise the versionless dependencies below
+    // cannot be resolved.
+    api platform(libs.nitrite.bom)
+    compileOnly platform(libs.nitrite.bom)
+
+    api libs.nitrite
+    api libs.nitrite.mvstore.adapter
+    compileOnly libs.nitrite.rocksdb.adapter
+    compileOnly libs.nitrite.spatial
+    api libs.managed.javax.persistence.api
+    compileOnly mnSql.jakarta.persistence.api
+
+    compileOnly mn.micronaut.inject.groovy
+
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataNitrite
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor mnTest.micronaut.test.spock
+
+    testImplementation project(':micronaut-data-document-tck')
+    testImplementation mnSql.jakarta.persistence.api
+    testImplementation libs.managed.jakarta.data.api
+    testImplementation project(':micronaut-data-tck')
+    testImplementation project(':micronaut-data-runtime')
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation mnTest.micronaut.test.spock
+
+    // Optional dependency tests - ROCKSDB adapter (only for rocksDbPresentTest source set)
+    rocksDbPresentTestRuntimeOnly platform(libs.nitrite.bom)
+    rocksDbPresentTestRuntimeOnly libs.nitrite.rocksdb.adapter
+    // Optional dependency tests - Spatial module (only for spatialPresentTest source set)
+    spatialPresentTestCompileOnly platform(libs.nitrite.bom)
+    spatialPresentTestRuntimeOnly platform(libs.nitrite.bom)
+    spatialPresentTestCompileOnly libs.nitrite.spatial
+    spatialPresentTestRuntimeOnly libs.nitrite.spatial
+    spatialPresentTestAnnotationProcessor projects.micronautDataNitrite
+
+    // No micronautDataNitrite here by design - see the generatedQueryTest source set.
+    generatedQueryTestAnnotationProcessor projects.micronautDataDocumentProcessor
+    generatedQueryTestAnnotationProcessor mn.micronaut.inject.java
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Nitrite is embedded, so no suite here resolves anything through test resources. The plugin is
+// still applied for the shared build conventions, and its client throws an NPE out of
+// DefaultTestResourcesClient.getRequiredPropertyEntries while loading property sources, which
+// fails context startup for every spec. Disabling the client is what keeps the suites runnable.
+tasks.withType(Test).configureEach {
+    systemProperty "micronaut.test.resources.enabled", "false"
+}
+
+tasks.register('generatedQueryTest', Test) {
+    group = "verification"
+    description = "Run the generated (SQL-shaped) query fallback suite"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.generatedQueryTest.output.classesDirs
+    classpath = sourceSets.generatedQueryTest.runtimeClasspath
+    mustRunAfter test
+    onlyIf { tasks.named('test').get().state.failure == null }
+}
+
+tasks.register('rocksDbPresentTest', Test) {
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.rocksDbPresentTest.output.classesDirs
+    classpath = sourceSets.rocksDbPresentTest.runtimeClasspath
+    mustRunAfter test
+    onlyIf { tasks.named('test').get().state.failure == null }
+}
+
+tasks.register('spatialPresentTest', Test) {
+    group = "verification"
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.spatialPresentTest.output.classesDirs
+    classpath = sourceSets.spatialPresentTest.runtimeClasspath
+    mustRunAfter test
+    onlyIf { tasks.named('test').get().state.failure == null }
+}
+
+test.finalizedBy generatedQueryTest, rocksDbPresentTest, spatialPresentTest
+
+tasks.named('check') {
+    dependsOn tasks.named('generatedQueryTest')
+    dependsOn tasks.named('rocksDbPresentTest')
+    dependsOn tasks.named('spatialPresentTest')
+}
+
+micronautBuild {
+    binaryCompatibility.enabledAfter("5.2.0")
+}

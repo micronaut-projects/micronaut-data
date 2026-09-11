@@ -397,4 +397,56 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
     }
 
+    void "test criteria navigation across MANY_TO_ONE association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "Navigate across MANY_TO_ONE association using get()"
+            def testAssociationPath = otherEntityRoot.get("test")
+            def testNamePath = testAssociationPath.get("name")
+            criteriaQuery.where(criteriaBuilder.equal(testNamePath, "testValue"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then:
+            query.contains('INNER JOIN "test"')
+            query.contains('test_."name"')
+
+        when: "Navigate using string property paths"
+            criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            otherEntityRoot = criteriaQuery.from(OtherEntity)
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
+            String query2 = getSqlQuery(criteriaQuery)
+
+        then:
+            query2.contains('INNER JOIN "test"')
+            query2.contains('test_."name"')
+    }
+
+    void "RuntimePersistentPropertyPathImpl.get auto-creates implicit join for RuntimeAssociation"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def root = criteriaQuery.from(OtherEntity)
+
+        when: "accessing a property through a MANY_TO_ONE association path"
+            def path = root.get("test").get("name")
+            criteriaQuery.where(criteriaBuilder.equal(path, "value"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then:
+            query.contains('INNER JOIN "test"')
+            query.contains('test_."name"')
+
+        when: "nested association path via static metamodel"
+            criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            root = criteriaQuery.from(OtherEntity)
+            def nestedPath = root.get(OtherEntity_.test).get(Test_.name)
+            criteriaQuery.where(criteriaBuilder.equal(nestedPath, "value"))
+            String query2 = getSqlQuery(criteriaQuery)
+
+        then:
+            query2.contains('INNER JOIN "test"')
+            query2.contains('test_."name"')
+    }
+
 }
