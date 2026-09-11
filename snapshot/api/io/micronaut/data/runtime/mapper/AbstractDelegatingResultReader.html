@@ -76,6 +76,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#next(RS)" tabindex="0">next(RS)</a></li>
 <li><a href="#findColumnIndex(RS,java.lang.String)" tabindex="0">findColumnIndex(RS, String)</a></li>
 <li><a href="#getColumnIndexReader()" tabindex="0">getColumnIndexReader()</a></li>
+<li><a href="#columnResolutionKey(RS)" tabindex="0">columnResolutionKey(RS)</a></li>
 <li><a href="#readDynamic(RS,ID,io.micronaut.data.model.DataType)" tabindex="0">readDynamic(RS, ID, DataType)</a></li>
 <li><a href="#readLong(RS,ID)" tabindex="0">readLong(RS, ID)</a></li>
 <li><a href="#readChar(RS,ID)" tabindex="0">readChar(RS, ID)</a></li>
@@ -177,150 +178,155 @@ implements <a href="ResultReader.html" title="interface in io.micronaut.data.run
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
- io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columnResolutionKey(RS)" class="member-name-link">columnResolutionKey</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Convert the value to the given type.</div>
+<div class="block">The object the resolved column ordinals belong to, compared by identity by callers that cache them.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Convert the value to the given type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findColumnIndex(RS,java.lang.String)" class="member-name-link">findColumnIndex</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Convert the value to the given type.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findColumnIndex(RS,java.lang.String)" class="member-name-link">findColumnIndex</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
 and read the values of subsequent rows by index using <a href="ResultReader.html#getColumnIndexReader()"><code>ResultReader.getColumnIndexReader()</code></a> instead of resolving
 the column name for every row.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a><wbr>&lt;<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumnIndexReader()" class="member-name-link">getColumnIndexReader</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a><wbr>&lt;<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumnIndexReader()" class="member-name-link">getColumnIndexReader</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The reader capable of reading values by the ordinals resolved by <a href="ResultReader.html#findColumnIndex(RS,java.lang.String)"><code>ResultReader.findColumnIndex(Object, String)</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.ConversionService</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConversionService()" class="member-name-link">getConversionService</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConversionService()" class="member-name-link">getConversionService</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get conversion service.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(RS,ID,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
- <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get a value from the given result set for the given name and type.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValueNonNull(RS,ID,java.lang.Class)" class="member-name-link">getRequiredValueNonNull</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(RS,ID,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#next(RS)" class="member-name-link">next</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;T</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValueNonNull(RS,ID,java.lang.Class)" class="member-name-link">getRequiredValueNonNull</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Get a value from the given result set for the given name and type.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#next(RS)" class="member-name-link">next</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Move the index to the next result if possible.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBigDecimal(RS,ID)" class="member-name-link">readBigDecimal</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBigDecimal(RS,ID)" class="member-name-link">readBigDecimal</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a BigDecimal value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBoolean(RS,ID)" class="member-name-link">readBoolean</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBoolean(RS,ID)" class="member-name-link">readBoolean</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a boolean value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readByte(RS,ID)" class="member-name-link">readByte</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readByte(RS,ID)" class="member-name-link">readByte</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a byte value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte @Nullable []</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBytes(RS,ID)" class="member-name-link">readBytes</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte @Nullable []</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBytes(RS,ID)" class="member-name-link">readBytes</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a byte[] value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>char</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readChar(RS,ID)" class="member-name-link">readChar</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>char</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readChar(RS,ID)" class="member-name-link">readChar</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a char value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDate(RS,ID)" class="member-name-link">readDate</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDate(RS,ID)" class="member-name-link">readDate</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a date value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>double</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDouble(RS,ID)" class="member-name-link">readDouble</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>double</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDouble(RS,ID)" class="member-name-link">readDouble</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a double value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDynamic(RS,ID,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDynamic(RS,ID,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;index,
  <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>float</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readFloat(RS,ID)" class="member-name-link">readFloat</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>float</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readFloat(RS,ID)" class="member-name-link">readFloat</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a float value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readInt(RS,ID)" class="member-name-link">readInt</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readInt(RS,ID)" class="member-name-link">readInt</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read an int value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readLong(RS,ID)" class="member-name-link">readLong</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readLong(RS,ID)" class="member-name-link">readLong</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a long value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>short</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readShort(RS,ID)" class="member-name-link">readShort</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>short</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readShort(RS,ID)" class="member-name-link">readShort</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a short value for the given name.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readString(RS,ID)" class="member-name-link">readString</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readString(RS,ID)" class="member-name-link">readString</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a string value for the given name.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTime(RS,ID)" class="member-name-link">readTime</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
- <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;index)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Read a time value for the given index.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTimestamp(RS,ID)" class="member-name-link">readTimestamp</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Time.html" title="class or interface in java.sql" class="external-link">Time</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTime(RS,ID)" class="member-name-link">readTime</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;index)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Read a time value for the given index.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTimestamp(RS,ID)" class="member-name-link">readTimestamp</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+ <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;index)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a timestamp value for the given index.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readUUID(RS,ID)" class="member-name-link">readUUID</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readUUID(RS,ID)" class="member-name-link">readUUID</a><wbr>(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet,
  <a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&nbsp;name)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a UUID value for the given name.</div>
 </div>
 </div>
@@ -529,6 +535,29 @@ case callers must keep reading by name.</div>
 <dd><code><a href="ResultReader.html#getColumnIndexReader()">getColumnIndexReader</a></code>&nbsp;in interface&nbsp;<code><a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>,<wbr><a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>The column index reader or <code>null</code> if reading by column index is not supported</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="columnResolutionKey(RS)">
+<h3 id="columnResolutionKey(java.lang.Object)">columnResolutionKey</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">columnResolutionKey</span><wbr><span class="parameters">(<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>&nbsp;resultSet)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="ResultReader.html#columnResolutionKey(RS)">ResultReader</a></code></span></div>
+<div class="block">The object the resolved column ordinals belong to, compared by identity by callers that cache them. It is the
+result set itself when the result set spans every row, which is the case for JDBC. Readers whose result set
+object is a single row, which is the case for R2DBC, return something shared by the rows of one result, such
+as the row metadata, so that the ordinals survive from one row to the next.
+<p>
+Returning a different object per row is safe: the ordinals are then resolved again for each row.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ResultReader.html#columnResolutionKey(RS)">columnResolutionKey</a></code>&nbsp;in interface&nbsp;<code><a href="ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="#type-param-RS" title="type parameter in AbstractDelegatingResultReader">RS</a>,<wbr><a href="#type-param-ID" title="type parameter in AbstractDelegatingResultReader">ID</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dt>Returns:</dt>
+<dd>The object the resolved ordinals belong to</dd>
 </dl>
 </div>
 </section>

@@ -54,8 +54,14 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#conversionService" tabindex="0">conversionService</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E()" tabindex="0">ColumnNameR2dbcResultReader()</a></li>
@@ -64,22 +70,30 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#getValue(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">getValue(Row, String)</a></li>
+<li><a href="#getValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" tabindex="0">getValue(Row, String, Class)</a></li>
+<li><a href="#getRequiredTypedValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" tabindex="0">getRequiredTypedValue(Row, String, Class)</a></li>
+<li><a href="#getRequiredRawValue(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">getRequiredRawValue(Row, String)</a></li>
+<li><a href="#findColumnIndex(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">findColumnIndex(Row, String)</a></li>
+<li><a href="#getColumnIndexReader()" tabindex="0">getColumnIndexReader()</a></li>
+<li><a href="#columnResolutionKey(io.r2dbc.spi.Row)" tabindex="0">columnResolutionKey(Row)</a></li>
+<li><a href="#exceptionForColumn(java.lang.String,java.lang.Exception)" tabindex="0">exceptionForColumn(String, Exception)</a></li>
 <li><a href="#getConversionService()" tabindex="0">getConversionService()</a></li>
-<li><a href="#readDynamic(io.r2dbc.spi.Row,java.lang.String,io.micronaut.data.model.DataType)" tabindex="0">readDynamic(Row, String, DataType)</a></li>
-<li><a href="#readLong(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readLong(Row, String)</a></li>
-<li><a href="#readChar(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readChar(Row, String)</a></li>
-<li><a href="#readDate(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readDate(Row, String)</a></li>
-<li><a href="#readTimestamp(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readTimestamp(Row, String)</a></li>
-<li><a href="#readString(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readString(Row, String)</a></li>
-<li><a href="#readInt(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readInt(Row, String)</a></li>
-<li><a href="#readBoolean(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readBoolean(Row, String)</a></li>
-<li><a href="#readFloat(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readFloat(Row, String)</a></li>
-<li><a href="#readByte(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readByte(Row, String)</a></li>
-<li><a href="#readShort(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readShort(Row, String)</a></li>
-<li><a href="#readDouble(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readDouble(Row, String)</a></li>
-<li><a href="#readBigDecimal(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readBigDecimal(Row, String)</a></li>
-<li><a href="#readBytes(io.r2dbc.spi.Row,java.lang.String)" tabindex="0">readBytes(Row, String)</a></li>
-<li><a href="#getRequiredValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" tabindex="0">getRequiredValue(Row, String, Class)</a></li>
+<li><a href="#readDynamic(io.r2dbc.spi.Row,I,io.micronaut.data.model.DataType)" tabindex="0">readDynamic(Row, String, DataType)</a></li>
+<li><a href="#readLong(io.r2dbc.spi.Row,I)" tabindex="0">readLong(Row, String)</a></li>
+<li><a href="#readChar(io.r2dbc.spi.Row,I)" tabindex="0">readChar(Row, String)</a></li>
+<li><a href="#readDate(io.r2dbc.spi.Row,I)" tabindex="0">readDate(Row, String)</a></li>
+<li><a href="#readTimestamp(io.r2dbc.spi.Row,I)" tabindex="0">readTimestamp(Row, String)</a></li>
+<li><a href="#readString(io.r2dbc.spi.Row,I)" tabindex="0">readString(Row, String)</a></li>
+<li><a href="#readInt(io.r2dbc.spi.Row,I)" tabindex="0">readInt(Row, String)</a></li>
+<li><a href="#readBoolean(io.r2dbc.spi.Row,I)" tabindex="0">readBoolean(Row, String)</a></li>
+<li><a href="#readFloat(io.r2dbc.spi.Row,I)" tabindex="0">readFloat(Row, String)</a></li>
+<li><a href="#readByte(io.r2dbc.spi.Row,I)" tabindex="0">readByte(Row, String)</a></li>
+<li><a href="#readShort(io.r2dbc.spi.Row,I)" tabindex="0">readShort(Row, String)</a></li>
+<li><a href="#readDouble(io.r2dbc.spi.Row,I)" tabindex="0">readDouble(Row, String)</a></li>
+<li><a href="#readBigDecimal(io.r2dbc.spi.Row,I)" tabindex="0">readBigDecimal(Row, String)</a></li>
+<li><a href="#readBytes(io.r2dbc.spi.Row,I)" tabindex="0">readBytes(Row, String)</a></li>
+<li><a href="#getRequiredValue(io.r2dbc.spi.Row,I,java.lang.Class)" tabindex="0">getRequiredValue(Row, String, Class)</a></li>
 <li><a href="#next(io.r2dbc.spi.Row)" tabindex="0">next(Row)</a></li>
 </ol>
 </li>
@@ -101,8 +115,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">ColumnNameR2dbcResultReader</span>
-<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements <a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span></div>
+<span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Implementation of <a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> for R2DBC.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -114,6 +127,21 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected final io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second even-row-color"><code><a href="#conversionService" class="member-name-link">conversionService</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -142,104 +170,154 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#columnResolutionKey(io.r2dbc.spi.Row)" class="member-name-link">columnResolutionKey</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The object the resolved column ordinals belong to, compared by identity by callers that cache them.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exceptionForColumn(java.lang.String,java.lang.Exception)" class="member-name-link">exceptionForColumn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;e)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findColumnIndex(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">findColumnIndex</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+and read the values of subsequent rows by index using <a href="../../runtime/mapper/ResultReader.html#getColumnIndexReader()"><code>ResultReader.getColumnIndexReader()</code></a> instead of resolving
+the column name for every row.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a><wbr>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumnIndexReader()" class="member-name-link">getColumnIndexReader</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The reader capable of reading values by the ordinals resolved by <a href="../../runtime/mapper/ResultReader.html#findColumnIndex(RS,java.lang.String)"><code>ResultReader.findColumnIndex(Object, String)</code></a>.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.core.convert.ConversionService</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConversionService()" class="member-name-link">getConversionService</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get conversion service.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredRawValue(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">getRequiredRawValue</a><wbr>(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Reads the raw value of the column for <a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)"><code>ResultReader.getRequiredValue(Row, I, Class)</code></a>, which the reader addressing a column by name
+retries with an upper case name.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;@Nullable T</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredTypedValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" class="member-name-link">getRequiredTypedValue</a><wbr>(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Reads the value of the column as the given type for <a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)"><code>ResultReader.getRequiredValue(Row, I, Class)</code></a>, which the reader addressing a
+column by name retries with an upper case name.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@Nullable T</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRequiredValue(io.r2dbc.spi.Row,I,java.lang.Class)" class="member-name-link">getRequiredValue</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Get a value from the given result set for the given name and type.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getValue(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">getValue</a><wbr>(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Reads the raw value of the column.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;@Nullable T</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)" class="member-name-link">getValue</a><wbr>(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Reads the value of the column as the given type.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#next(io.r2dbc.spi.Row)" class="member-name-link">next</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Move the index to the next result if possible.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBigDecimal(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readBigDecimal</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBigDecimal(io.r2dbc.spi.Row,I)" class="member-name-link">readBigDecimal</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a BigDecimal value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBoolean(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readBoolean</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBoolean(io.r2dbc.spi.Row,I)" class="member-name-link">readBoolean</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a boolean value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readByte(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readByte</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readByte(io.r2dbc.spi.Row,I)" class="member-name-link">readByte</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a byte value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>byte @Nullable []</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBytes(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readBytes</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readBytes(io.r2dbc.spi.Row,I)" class="member-name-link">readBytes</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a byte[] value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>char</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readChar(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readChar</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readChar(io.r2dbc.spi.Row,I)" class="member-name-link">readChar</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a char value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDate(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readDate</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDate(io.r2dbc.spi.Row,I)" class="member-name-link">readDate</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a date value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>double</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDouble(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readDouble</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDouble(io.r2dbc.spi.Row,I)" class="member-name-link">readDouble</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a double value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDynamic(io.r2dbc.spi.Row,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(@NonNull io.r2dbc.spi.Row&nbsp;resultSet,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readDynamic(io.r2dbc.spi.Row,I,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic</a><wbr>(@NonNull io.r2dbc.spi.Row&nbsp;resultSet,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index,
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>float</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readFloat(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readFloat</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readFloat(io.r2dbc.spi.Row,I)" class="member-name-link">readFloat</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a float value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readInt(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readInt</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readInt(io.r2dbc.spi.Row,I)" class="member-name-link">readInt</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read an int value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>long</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readLong(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readLong</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readLong(io.r2dbc.spi.Row,I)" class="member-name-link">readLong</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a long value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>short</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readShort(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readShort</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readShort(io.r2dbc.spi.Row,I)" class="member-name-link">readShort</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a short value for the given name.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readString(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readString</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readString(io.r2dbc.spi.Row,I)" class="member-name-link">readString</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a string value for the given name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTimestamp(io.r2dbc.spi.Row,java.lang.String)" class="member-name-link">readTimestamp</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readTimestamp(io.r2dbc.spi.Row,I)" class="member-name-link">readTimestamp</a><wbr>(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Read a timestamp value for the given index.</div>
@@ -252,13 +330,29 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.runtime.mapper.ResultReader">Methods inherited from interface&nbsp;<a href="../../runtime/mapper/ResultReader.html#method-summary" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></h3>
-<code><a href="../../runtime/mapper/ResultReader.html#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" title="convertRequired(Object, Argument)">convertRequired</a>, <a href="../../runtime/mapper/ResultReader.html#convertRequired(java.lang.Object,java.lang.Class)" title="convertRequired(Object, Class)">convertRequired</a>, <a href="../../runtime/mapper/ResultReader.html#findColumnIndex(RS,java.lang.String)" title="findColumnIndex(Row, String)">findColumnIndex</a>, <a href="../../runtime/mapper/ResultReader.html#getColumnIndexReader()" title="getColumnIndexReader()">getColumnIndexReader</a>, <a href="../../runtime/mapper/ResultReader.html#getRequiredValueNonNull(RS,IDX,java.lang.Class)" title="getRequiredValueNonNull(Row, String, Class)">getRequiredValueNonNull</a>, <a href="../../runtime/mapper/ResultReader.html#readDuration(RS,IDX)" title="readDuration(Row, String)">readDuration</a>, <a href="../../runtime/mapper/ResultReader.html#readPeriod(RS,IDX)" title="readPeriod(Row, String)">readPeriod</a>, <a href="../../runtime/mapper/ResultReader.html#readTime(RS,IDX)" title="readTime(Row, String)">readTime</a>, <a href="../../runtime/mapper/ResultReader.html#readUUID(RS,IDX)" title="readUUID(Row, String)">readUUID</a></code></div>
+<code><a href="../../runtime/mapper/ResultReader.html#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" title="convertRequired(Object, Argument)">convertRequired</a>, <a href="../../runtime/mapper/ResultReader.html#convertRequired(java.lang.Object,java.lang.Class)" title="convertRequired(Object, Class)">convertRequired</a>, <a href="../../runtime/mapper/ResultReader.html#getRequiredValueNonNull(RS,IDX,java.lang.Class)" title="getRequiredValueNonNull(Row, String, Class)">getRequiredValueNonNull</a>, <a href="../../runtime/mapper/ResultReader.html#readDuration(RS,IDX)" title="readDuration(Row, String)">readDuration</a>, <a href="../../runtime/mapper/ResultReader.html#readPeriod(RS,IDX)" title="readPeriod(Row, String)">readPeriod</a>, <a href="../../runtime/mapper/ResultReader.html#readTime(RS,IDX)" title="readTime(Row, String)">readTime</a>, <a href="../../runtime/mapper/ResultReader.html#readUUID(RS,IDX)" title="readUUID(Row, String)">readUUID</a></code></div>
 </section>
 </li>
 </ul>
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="conversionService">
+<h3>conversionService</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">io.micronaut.core.convert.ConversionService</span>&nbsp;<span class="element-name">conversionService</span></div>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -296,6 +390,164 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="getValue(io.r2dbc.spi.Row,java.lang.String)">
+<h3>getValue</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="block">Reads the raw value of the column.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>row</code> - The row</dd>
+<dd><code>name</code> - The column identifier</dd>
+<dt>Returns:</dt>
+<dd>The value, can be null</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)">
+<h3>getValue</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
+<div class="block">Reads the value of the column as the given type.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="getValue(io.r2dbc.spi.Row,I,java.lang.Class)-type-param-T"><code>T</code> - The type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>row</code> - The row</dd>
+<dd><code>name</code> - The column identifier</dd>
+<dd><code>type</code> - The type</dd>
+<dt>Returns:</dt>
+<dd>The value, can be null</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getRequiredTypedValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)">
+<h3>getRequiredTypedValue</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getRequiredTypedValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span></div>
+<div class="block">Reads the value of the column as the given type for <a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)"><code>ResultReader.getRequiredValue(Row, I, Class)</code></a>, which the reader addressing a
+column by name retries with an upper case name.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="getRequiredTypedValue(io.r2dbc.spi.Row,I,java.lang.Class)-type-param-T"><code>T</code> - The type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>row</code> - The row</dd>
+<dd><code>name</code> - The column identifier</dd>
+<dd><code>type</code> - The type</dd>
+<dt>Returns:</dt>
+<dd>The value, can be null</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getRequiredRawValue(io.r2dbc.spi.Row,java.lang.String)">
+<h3>getRequiredRawValue</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getRequiredRawValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;row,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="block">Reads the raw value of the column for <a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)"><code>ResultReader.getRequiredValue(Row, I, Class)</code></a>, which the reader addressing a column by name
+retries with an upper case name.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>row</code> - The row</dd>
+<dd><code>name</code> - The column identifier</dd>
+<dt>Returns:</dt>
+<dd>The value, can be null</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="findColumnIndex(io.r2dbc.spi.Row,java.lang.String)">
+<h3>findColumnIndex</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">findColumnIndex</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName)</span></div>
+<div class="block">Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+and read the values of subsequent rows by index using <a href="../../runtime/mapper/ResultReader.html#getColumnIndexReader()"><code>ResultReader.getColumnIndexReader()</code></a> instead of resolving
+the column name for every row.
+<p>
+The returned ordinal is only valid for the given result set and uses the index convention of the underlying
+driver (for example 1-based for JDBC). Readers that cannot resolve column ordinals return <code>-1</code>, in which
+case callers must keep reading by name.
+
+<p>The ordinal is resolved from the row metadata, matching the column name the way the drivers do, ignoring
+case. A column that cannot be matched is reported as <code>-1</code> so that the caller keeps reading it by name.</p></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>columnName</code> - The column name</dd>
+<dt>Returns:</dt>
+<dd>The column index or <code>-1</code> if the column cannot be resolved</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getColumnIndexReader()">
+<h3>getColumnIndexReader</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;</span>&nbsp;<span class="element-name">getColumnIndexReader</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#getColumnIndexReader()">ResultReader</a></code></span></div>
+<div class="block">The reader capable of reading values by the ordinals resolved by <a href="../../runtime/mapper/ResultReader.html#findColumnIndex(RS,java.lang.String)"><code>ResultReader.findColumnIndex(Object, String)</code></a>.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The column index reader or <code>null</code> if reading by column index is not supported</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="columnResolutionKey(io.r2dbc.spi.Row)">
+<h3>columnResolutionKey</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">columnResolutionKey</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet)</span></div>
+<div class="block">The object the resolved column ordinals belong to, compared by identity by callers that cache them. It is the
+result set itself when the result set spans every row, which is the case for JDBC. Readers whose result set
+object is a single row, which is the case for R2DBC, return something shared by the rows of one result, such
+as the row metadata, so that the ordinals survive from one row to the next.
+<p>
+Returning a different object per row is safe: the ordinals are then resolved again for each row.
+
+<p>An R2DBC <code>Row</code> is only valid for the row being consumed, so the resolved ordinals are tied to the
+<code>RowMetadata</code> instead, which the drivers share between the rows of one result. A driver that returns
+fresh metadata per row simply causes the ordinals to be resolved again for each row.</p></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dt>Returns:</dt>
+<dd>The object the resolved ordinals belong to</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="exceptionForColumn(java.lang.String,java.lang.Exception)">
+<h3>exceptionForColumn</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../../exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></span>&nbsp;<span class="element-name">exceptionForColumn</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;e)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>name</code> - The column identifier</dd>
+<dd><code>e</code> - The cause</dd>
+<dt>Returns:</dt>
+<dd>The exception describing a column that cannot be read</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="getConversionService()">
 <h3>getConversionService</h3>
 <div class="horizontal-scroll">
@@ -304,7 +556,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Get conversion service.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#getConversionService()">getConversionService</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#getConversionService()">getConversionService</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>the instance of <code>ConversionService</code></dd>
 </dl>
@@ -312,17 +564,17 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readDynamic(io.r2dbc.spi.Row,java.lang.String,io.micronaut.data.model.DataType)">
-<h3>readDynamic</h3>
+<section class="detail" id="readDynamic(io.r2dbc.spi.Row,I,io.micronaut.data.model.DataType)">
+<h3 id="readDynamic(io.r2dbc.spi.Row,java.lang.Object,io.micronaut.data.model.DataType)">readDynamic</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">readDynamic</span><wbr><span class="parameters">(@NonNull io.r2dbc.spi.Row&nbsp;resultSet,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index,
  @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)">ResultReader</a></code></span></div>
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)">readDynamic</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)">readDynamic</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>index</code> - The name</dd>
@@ -334,8 +586,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readLong(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readLong</h3>
+<section class="detail" id="readLong(io.r2dbc.spi.Row,I)">
+<h3 id="readLong(io.r2dbc.spi.Row,java.lang.Object)">readLong</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name">readLong</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -343,7 +595,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a long value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readLong(RS,IDX)">readLong</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readLong(RS,IDX)">readLong</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -354,8 +606,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readChar(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readChar</h3>
+<section class="detail" id="readChar(io.r2dbc.spi.Row,I)">
+<h3 id="readChar(io.r2dbc.spi.Row,java.lang.Object)">readChar</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">char</span>&nbsp;<span class="element-name">readChar</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -363,7 +615,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a char value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readChar(RS,IDX)">readChar</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readChar(RS,IDX)">readChar</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -374,8 +626,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readDate(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readDate</h3>
+<section class="detail" id="readDate(io.r2dbc.spi.Row,I)">
+<h3 id="readDate(io.r2dbc.spi.Row,java.lang.Object)">readDate</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readDate</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -383,7 +635,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a date value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readDate(RS,IDX)">readDate</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readDate(RS,IDX)">readDate</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -394,8 +646,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readTimestamp(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readTimestamp</h3>
+<section class="detail" id="readTimestamp(io.r2dbc.spi.Row,I)">
+<h3 id="readTimestamp(io.r2dbc.spi.Row,java.lang.Object)">readTimestamp</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Date.html" title="class or interface in java.util" class="external-link">Date</a></span>&nbsp;<span class="element-name">readTimestamp</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;index)</span></div>
@@ -403,7 +655,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a timestamp value for the given index.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readTimestamp(RS,IDX)">readTimestamp</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readTimestamp(RS,IDX)">readTimestamp</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>index</code> - The index (such as the column name)</dd>
@@ -414,8 +666,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readString(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readString</h3>
+<section class="detail" id="readString(io.r2dbc.spi.Row,I)">
+<h3 id="readString(io.r2dbc.spi.Row,java.lang.Object)">readString</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">readString</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -423,7 +675,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a string value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readString(RS,IDX)">readString</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readString(RS,IDX)">readString</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -434,8 +686,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readInt(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readInt</h3>
+<section class="detail" id="readInt(io.r2dbc.spi.Row,I)">
+<h3 id="readInt(io.r2dbc.spi.Row,java.lang.Object)">readInt</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">readInt</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -443,7 +695,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read an int value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readInt(RS,IDX)">readInt</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readInt(RS,IDX)">readInt</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -454,8 +706,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readBoolean(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readBoolean</h3>
+<section class="detail" id="readBoolean(io.r2dbc.spi.Row,I)">
+<h3 id="readBoolean(io.r2dbc.spi.Row,java.lang.Object)">readBoolean</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">readBoolean</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -463,7 +715,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a boolean value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readBoolean(RS,IDX)">readBoolean</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readBoolean(RS,IDX)">readBoolean</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -474,8 +726,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readFloat(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readFloat</h3>
+<section class="detail" id="readFloat(io.r2dbc.spi.Row,I)">
+<h3 id="readFloat(io.r2dbc.spi.Row,java.lang.Object)">readFloat</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">float</span>&nbsp;<span class="element-name">readFloat</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -483,7 +735,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a float value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readFloat(RS,IDX)">readFloat</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readFloat(RS,IDX)">readFloat</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -494,8 +746,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readByte(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readByte</h3>
+<section class="detail" id="readByte(io.r2dbc.spi.Row,I)">
+<h3 id="readByte(io.r2dbc.spi.Row,java.lang.Object)">readByte</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">byte</span>&nbsp;<span class="element-name">readByte</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -503,7 +755,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a byte value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readByte(RS,IDX)">readByte</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readByte(RS,IDX)">readByte</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -514,8 +766,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readShort(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readShort</h3>
+<section class="detail" id="readShort(io.r2dbc.spi.Row,I)">
+<h3 id="readShort(io.r2dbc.spi.Row,java.lang.Object)">readShort</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">short</span>&nbsp;<span class="element-name">readShort</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -523,7 +775,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a short value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readShort(RS,IDX)">readShort</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readShort(RS,IDX)">readShort</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -534,8 +786,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readDouble(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readDouble</h3>
+<section class="detail" id="readDouble(io.r2dbc.spi.Row,I)">
+<h3 id="readDouble(io.r2dbc.spi.Row,java.lang.Object)">readDouble</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">readDouble</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -543,7 +795,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a double value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readDouble(RS,IDX)">readDouble</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readDouble(RS,IDX)">readDouble</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -554,16 +806,16 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readBigDecimal(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readBigDecimal</h3>
+<section class="detail" id="readBigDecimal(io.r2dbc.spi.Row,I)">
+<h3 id="readBigDecimal(io.r2dbc.spi.Row,java.lang.Object)">readBigDecimal</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name">readBigDecimal</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../runtime/mapper/ResultReader.html#readBigDecimal(RS,IDX)">ResultReader</a></code></span></div>
 <div class="block">Read a BigDecimal value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readBigDecimal(RS,IDX)">readBigDecimal</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readBigDecimal(RS,IDX)">readBigDecimal</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -574,8 +826,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="readBytes(io.r2dbc.spi.Row,java.lang.String)">
-<h3>readBytes</h3>
+<section class="detail" id="readBytes(io.r2dbc.spi.Row,I)">
+<h3 id="readBytes(io.r2dbc.spi.Row,java.lang.Object)">readBytes</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">byte @Nullable []</span>&nbsp;<span class="element-name">readBytes</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
@@ -583,7 +835,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Read a byte[] value for the given name.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#readBytes(RS,IDX)">readBytes</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#readBytes(RS,IDX)">readBytes</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dd><code>name</code> - The name (such as the column name)</dd>
@@ -594,8 +846,8 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 </section>
 </li>
 <li>
-<section class="detail" id="getRequiredValue(io.r2dbc.spi.Row,java.lang.String,java.lang.Class)">
-<h3>getRequiredValue</h3>
+<section class="detail" id="getRequiredValue(io.r2dbc.spi.Row,I,java.lang.Class)">
+<h3 id="getRequiredValue(io.r2dbc.spi.Row,java.lang.Object,java.lang.Class)">getRequiredValue</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@Nullable T</span>&nbsp;<span class="element-name">getRequiredValue</span><wbr><span class="parameters">(io.r2dbc.spi.Row&nbsp;resultSet,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
@@ -605,7 +857,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Get a value from the given result set for the given name and type.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">getRequiredValue</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)">getRequiredValue</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Type Parameters:</dt>
 <dd><span id="getRequiredValue(RS,IDX,java.lang.Class)-type-param-T"><code>T</code> - The generic type</span></dd>
 <dt>Parameters:</dt>
@@ -629,7 +881,7 @@ implements <a href="../../runtime/mapper/ResultReader.html" title="interface in 
 <div class="block">Move the index to the next result if possible.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../runtime/mapper/ResultReader.html#next(RS)">next</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></dd>
+<dd><code><a href="../../runtime/mapper/ResultReader.html#next(RS)">next</a></code>&nbsp;in interface&nbsp;<code><a href="../../runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row, I&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>resultSet</code> - The result set</dd>
 <dt>Returns:</dt>
