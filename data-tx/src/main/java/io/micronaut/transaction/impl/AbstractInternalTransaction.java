@@ -21,8 +21,8 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The abstract internal transaction.
@@ -36,6 +36,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Nullable
     protected List<TransactionSynchronization> synchronizations;
+    private final Object synchronizationLock = new Object();
     private boolean manualRollbackOnly = false;
     private boolean globalRollbackOnly = false;
     private boolean completed = false;
@@ -120,10 +121,12 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
-        if (synchronizations == null) {
-            synchronizations = new ArrayList<>(5);
+        synchronized (synchronizationLock) {
+            if (synchronizations == null) {
+                synchronizations = new CopyOnWriteArrayList<>();
+            }
+            synchronizations.add(synchronization);
+            OrderUtil.sort(synchronizations);
         }
-        synchronizations.add(synchronization);
-        OrderUtil.sort(synchronizations);
     }
 }

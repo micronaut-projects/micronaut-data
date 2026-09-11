@@ -183,6 +183,29 @@ class DefaultTransactionStatusTest {
         propagatedStatuses.forEach(status -> assertSame(transactionStatus, status));
     }
 
+    @Test
+    void synchronizationCanRegisterAnotherSynchronizationDuringBeforeCommit() {
+        DefaultTransactionStatus<Object> transactionStatus = newOuterTx();
+        List<String> events = new ArrayList<>();
+        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void beforeCommit(boolean readOnly) {
+                events.add("beforeCommit");
+                transactionStatus.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        events.add("afterCommit");
+                    }
+                });
+            }
+        });
+
+        transactionStatus.triggerBeforeCommit();
+        transactionStatus.triggerAfterCommit();
+
+        assertEquals(List.of("beforeCommit", "afterCommit"), events);
+    }
+
     @SuppressWarnings("unchecked")
     private static TransactionStatus<Object> currentTransactionStatus() {
         return PropagatedContext.getOrEmpty().find(TransactionStatus.class).orElseThrow();
