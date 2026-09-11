@@ -257,5 +257,11 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
          * An insert returning operation.
          */
         INSERT_RETURNING,
+        /**
+         * An upsert operation.
+         *
+         * @since 5.2.0
+         */
+        UPSERT,
     }
 }

@@ -28,6 +28,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
@@ -629,14 +630,23 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
-     * Does supports batch for update queries.
+     * Does support batch for update queries.
      *
      * @param persistentEntity The persistent entity
      * @param sqlStoredQuery   The sqlStoredQuery
      * @return true if supported
      */
     protected boolean isSupportsBatchUpdate(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
-        return sqlStoredQuery.getOperationType() != OperationType.UPDATE_RETURNING;
+        if (sqlStoredQuery.getOperationType() == OperationType.UPDATE_RETURNING) {
+            return false;
+        }
+        if (sqlStoredQuery.getOperationType() != OperationType.UPSERT
+            || !persistentEntity.hasIdentity()
+            || !persistentEntity.getIdentity().isGenerated()) {
+            return true;
+        }
+        // Generic generated-key results don't identify which item in a mixed upsert batch produced each key.
+        return CollectionUtils.isNotEmpty(sqlStoredQuery.getOutParameterBindings());
     }
 
     /**

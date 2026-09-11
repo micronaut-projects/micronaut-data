@@ -28,6 +28,7 @@ shared:
     title: Accessing data
     inserts: Inserting
     updates: Updating
+    upserts: Upserting
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events

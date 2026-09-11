@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.Flow
  * @author Denis Stepanov
  * @since 3.2
  */
-interface CoroutineJpaSpecificationExecutor<T> {
+interface CoroutineJpaSpecificationExecutor<T : Any> {
 
     /**
      * Returns a single entity matching the given [QuerySpecification].

@@ -37,6 +37,11 @@ import org.slf4j.LoggerFactory;
  * Centralizes the traversal of embedded associations and applies a provided
  * property population strategy. It returns the possibly new instance of the processed object,
  * which allows callers to reattach immutable objects at the root.
+ *
+ * Embedded population is best effort. Existing immutable embedded instances can be updated using
+ * {@link BeanProperty#withValue(Object, Object)}, but a null embedded association can only be
+ * populated when its introspection supports no-argument instantiation. Constructor-only immutable
+ * embedded types are therefore left unchanged when no instance is available.
  */
 @Internal
 final class AutoPopulateUtil {
@@ -66,12 +71,13 @@ final class AutoPopulateUtil {
     }
 
     /**
-     * Traverse all embedded associations at the root level of the given context, instantiate missing
-     * embedded instances if necessary, delegate recursive population to {@link #populateEmbedded(RuntimePersistentEntity, Object, BiFunction)},
-     * and reattach the resulting instance via {@link EntityEventContext#setProperty(BeanProperty, Object)}.
+     * Traverse embedded associations at the root level of the given context that contain auto-populated
+     * properties, instantiate missing embedded instances if necessary, and delegate recursive population
+     * to {@link #populateEmbedded(RuntimePersistentEntity, Object, BiFunction)}, then reattach the resulting
+     * instance via {@link EntityEventContext#setProperty(BeanProperty, Object)}.
      *
      * This method centralizes the boilerplate to:
-     * - find embedded associations of the root entity
+     * - find embedded associations of the root entity with auto-populated properties
      * - lazily instantiate null embedded instances
      * - apply the provided propertySetter within the embedded graph (recursively)
      * - support immutable entities by reattaching the updated instance through the context
@@ -87,7 +93,7 @@ final class AutoPopulateUtil {
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
         for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
-            if (association.isEmbedded()) {
+            if (association.isEmbedded() && association.getAssociatedEntity().hasAutoPopulatedProperties()) {
                 @SuppressWarnings("unchecked")
                 BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
                 Object embedded = embeddedProperty.get(rootEntity);
@@ -123,28 +129,40 @@ final class AutoPopulateUtil {
             current = propertySetter.apply(p, current);
         }
 
-        // Recurse into nested embedded associations
+        return populateNestedEmbedded(embeddedEntity, current, propertySetter);
+    }
+
+    private static Object populateNestedEmbedded(@NonNull RuntimePersistentEntity<?> embeddedEntity,
+                                                 @NonNull Object instance,
+                                                 BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+        Object current = instance;
         for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
-            if (nested.isEmbedded()) {
-                BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
-                Object child = ep.get(current);
-                if (child == null) {
-                    try {
-                        child = nested.getAssociatedEntity().getIntrospection().instantiate();
-                    } catch (Exception e) {
-                        LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
-                        continue;
-                    }
-                }
-                Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
-                if (ep.isReadOnly()) {
-                    current = ep.withValue(current, updatedChild);
-                } else {
-                    ep.set(current, updatedChild);
-                }
+            if (nested.isEmbedded() && nested.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                current = populateNestedEmbedded(current, nested, propertySetter);
             }
         }
+        return current;
+    }
 
+    @SuppressWarnings("unchecked")
+    private static Object populateNestedEmbedded(@NonNull Object current,
+                                                 RuntimeAssociation<?> nested,
+                                                 BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+        BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) nested.getProperty();
+        Object child = ep.get(current);
+        if (child == null) {
+            try {
+                child = nested.getAssociatedEntity().getIntrospection().instantiate();
+            } catch (Exception e) {
+                LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
+                return current;
+            }
+        }
+        Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
+        if (ep.isReadOnly()) {
+            return ep.withValue(current, updatedChild);
+        }
+        ep.set(current, updatedChild);
         return current;
     }
 }
