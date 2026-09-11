@@ -38,7 +38,7 @@ class MongoEmbeddedSpec2 extends Specification implements MongoTestPropertyProvi
 
     @Override
     List<String> getPackageNames() {
-        return ['example', 'io.micronaut.data']
+        return ['io.micronaut.data.document.mongodb', 'io.micronaut.data.document.tck.entities', 'example']
     }
 
     def cleanup() {

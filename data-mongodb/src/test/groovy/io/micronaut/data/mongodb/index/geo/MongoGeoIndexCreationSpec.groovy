@@ -1,0 +1,69 @@
+package io.micronaut.data.mongodb.index.geo
+
+import com.mongodb.client.MongoClient
+import com.mongodb.client.model.geojson.Point
+import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.document.mongodb.MongoIndexInspector
+import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
+import io.micronaut.data.mongodb.annotation.index.MongoGeoIndexed
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
+
+class MongoGeoIndexCreationSpec extends Specification implements MongoTestPropertyProvider {
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext
+
+    @Shared
+    MongoClient mongoClient
+
+    @Override
+    List<String> getPackageNames() {
+        ['io.micronaut.data.mongodb.index.geo']
+    }
+
+    Class<?> expectedCollectionsCreatorBeanType() {
+        io.micronaut.data.mongodb.init.MongoCollectionsCreator
+    }
+
+    def setupSpec() {
+        applicationContext = ApplicationContext.run(getProperties() + [
+                'micronaut.data.mongodb.create-collections': 'true',
+                'micronaut.data.mongodb.create-indexes'    : 'true'
+        ])
+        mongoClient = applicationContext.getBean(MongoClient)
+    }
+
+    void 'creates field 2dsphere index'() {
+        given:
+        def conditions = new PollingConditions(timeout: 10, delay: 0.25)
+
+        expect:
+        applicationContext.containsBean(expectedCollectionsCreatorBeanType())
+        conditions.eventually {
+            def indexes = MongoIndexInspector.listNormalizedIndexes(mongoClient, 'test', 'geo_indexed_entities')
+            assert indexes*.name.contains('geo_location_idx')
+            def index = indexes.find { it.name == 'geo_location_idx' }
+            assert index.fields.size() == 1
+            assert index.fields[0].path() == 'location'
+            assert index.fields[0].order() == null
+            assert index.fields[0].kind() == '2dsphere'
+            assert index.sphereVersion == 3
+        }
+    }
+}
+
+@MappedEntity('geo_indexed_entities')
+class GeoIndexedEntity {
+    @Id
+    @GeneratedValue
+    String id
+
+    @MongoGeoIndexed(name = 'geo_location_idx', sphereVersion = 3)
+    Point location
+}
