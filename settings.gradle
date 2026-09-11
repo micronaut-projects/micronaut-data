@@ -21,6 +21,7 @@ rootProject.name = 'data-parent'
 
 micronautBuild {
     useStandardizedProjectNames = true
+    addSnapshotRepository()
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
     importMicronautCatalog("micronaut-rxjava3")
