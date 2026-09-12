@@ -32,6 +32,7 @@ import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -68,7 +69,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().findAll(preparedQuery)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override
@@ -133,7 +135,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().execute(preparedQuery)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override
@@ -159,9 +162,9 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
 
     @Override
     default <R> Page<R> findPage(PagedQuery<R> query) {
-        return reactive().findPage(query)
+        return Objects.requireNonNull(reactive().findPage(query)
             .contextWrite(getContextView())
-            .block();
+            .block(), "The reactive findPage operation completed without emitting a page");
     }
 
     @Override
