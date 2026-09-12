@@ -56,6 +56,8 @@ public final class SynchronousConnectionOperationsFromReactiveConnectionOperatio
     }
 
     @Override
+    // The callback may return null, which completes the Mono empty and is returned as null by block()
+    @SuppressWarnings("NullAway")
     public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<T>, R> callback) {
         Mono<R> result = reactorConnectionOperations.withConnectionMono(definition, status -> Mono.deferContextual(contextView -> {
             PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
