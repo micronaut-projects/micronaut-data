@@ -182,9 +182,12 @@ class PageSpec extends Specification {
         def json = serdeMapper.writeValueAsString(sort)
 
         then:
-        json == '{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
+        json == '{"orderBy":[{"nullOrdering":"NONE","ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
         def deserializedSort = serdeMapper.readValue(json, Sort)
         deserializedSort == sort
+
+        and: "sort payloads written before nullOrdering existed still deserialize"
+        serdeMapper.readValue('{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property"}]}', Sort) == sort
     }
 
     void "test empty page map"() {
