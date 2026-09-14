@@ -24,7 +24,7 @@
         }
     </script>
     <style type="text/css">
-        .lang-java { display: block }; .lang-python { display: block }; .lang-kotlin { display: block }; .lang-groovy { display: block }; 
+        .lang-java { display: block }; .lang-python { display: block }; .lang-kotlin { display: block }; .lang-groovy { display: block }; .lang-scala { display: block }; 
     </style>
 </head>
 
@@ -819,6 +819,31 @@ void "test annotation metadata"() {
 
 <div class="paragraph">
 <p>This section documents breaking changes between Micronaut versions</p>
+</div>
+<div class="sect1">
+<h2 id="_5_2">5.2</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_kotlin_2_4_generic_repository_bounds">Kotlin 2.4 generic repository bounds</h3>
+<div class="paragraph">
+<p>When using Kotlin 2.4, generic base repositories extending <code>CoroutineCrudRepository</code>,
+<code>CoroutinePageableCrudRepository</code>, or <code>CoroutineJpaSpecificationExecutor</code> must declare non-null
+upper bounds for their type parameters.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">interface Base&lt;E : Any, ID : Any&gt; : CoroutineCrudRepository&lt;E, ID&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is required by Kotlin 2.4&#8217;s handling of JSpecify nullability and can also affect generic
+repositories extending the corresponding Java repository interfaces.</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect1">
 <h2 id="_5_0">5.0</h2>
