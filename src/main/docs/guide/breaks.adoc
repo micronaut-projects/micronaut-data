@@ -1,5 +1,23 @@
 This section documents breaking changes between Micronaut versions
 
+== 5.2
+
+=== Kotlin 2.4 generic repository bounds
+
+When using Kotlin 2.4, generic base repositories extending `CoroutineCrudRepository`,
+`CoroutinePageableCrudRepository`, or `CoroutineJpaSpecificationExecutor` must declare non-null
+upper bounds for their type parameters.
+
+For example:
+
+[source,kotlin]
+----
+interface Base<E : Any, ID : Any> : CoroutineCrudRepository<E, ID>
+----
+
+This is required by Kotlin 2.4's handling of JSpecify nullability and can also affect generic
+repositories extending the corresponding Java repository interfaces.
+
 == 5.0
 
 === Repository save methods now perform save-or-update
