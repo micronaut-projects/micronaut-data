@@ -1,7 +1,21 @@
 plugins {
-    id "java-library"
     id "io.micronaut.build.internal.data-base"
     id "io.micronaut.build.internal.data-dependencies"
+    id "io.micronaut.build.internal.module"
+}
+
+micronautBuild {
+    descriptor {
+        parentModuleId = "io.micronaut.data:micronaut-data-model"
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'micronaut-jakarta-data-tck-support'
+        }
+    }
 }
 
 dependencies {
