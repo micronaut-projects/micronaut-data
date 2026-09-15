@@ -397,4 +397,16 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
     }
 
+    void "test IN on a non-property expression renders"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Test)
+            def testRoot = criteriaQuery.from(Test)
+
+        when: "the IN list hangs off an expression that is not a property path"
+            criteriaQuery.where(criteriaBuilder.upper(testRoot.get("name")).in("A", "B"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then: "the expression renders in place of the property path the builder used to require"
+            query.endsWith('WHERE (UPPER(test_."name") IN (\'A\',\'B\'))')
+    }
 }
