@@ -26,3 +26,4 @@ snippet::example.ETagBook[project-base="doc-examples/jdbc-example-records", sour
 
 When `function` is omitted on `@GeneratedETag`, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to `SYS_ROW_ETAG`; for other dialects you must provide an explicit function value.
 The `function` value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.
+Micronaut Data supplies those columns in a deterministic entity traversal order. The ETag function should not depend on argument order. Oracle's `SYS_ROW_ETAG` treats its column arguments as an unordered set, so reordering mapped properties does not change the ETag when the selected columns remain the same. Changing the selected columns or their mappings does change the ETag inputs.
