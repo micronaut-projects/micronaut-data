@@ -10,7 +10,6 @@ on:
       - master
       - main
       - '[0-9]+.[0-9]+.x'
-      - trpr
   pull_request:
     branches:
       - master
