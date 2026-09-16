@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '8.0.2'
+    id 'io.micronaut.build.shared.settings' version '8.1.1'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -80,10 +80,12 @@ include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
 include 'doc-examples:hibernate-example-kotlin-ksp'
+include 'doc-examples:hibernate-example-python'
 
 include 'doc-examples:hibernate-reactive-example-java'
 include 'doc-examples:hibernate-reactive-example-kotlin'
 include 'doc-examples:hibernate-reactive-example-groovy'
+include 'doc-examples:hibernate-reactive-example-python'
 include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
 include 'doc-examples:hibernate-multitenancy-discriminator-example-java'
@@ -94,9 +96,12 @@ include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-vector-example-java'
 include 'doc-examples:jdbc-vector-example-kotlin'
 include 'doc-examples:jdbc-vector-example-groovy'
+include 'doc-examples:jdbc-vector-example-python'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
+include 'doc-examples:jdbc-example-python'
 include 'doc-examples:jdbc-example-records-java'
+include 'doc-examples:jdbc-example-records-python'
 
 include 'doc-examples:jdbc-sqlite'
 
@@ -115,6 +120,7 @@ include 'doc-examples:jdbc-and-r2dbc-example-java'
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:r2dbc-example-python'
 include 'doc-examples:r2dbc-micrometer-example-java'
 
 include 'doc-examples:r2dbc-multitenancy-datasource-example-java'
@@ -125,6 +131,7 @@ include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
 include 'doc-examples:mongo-example-kotlin-ksp'
+include 'doc-examples:mongo-example-python'
 include 'doc-examples:mongo-reactive-example-kotlin'
 include 'doc-examples:mongo-example-records-java'
 include 'doc-examples:mongo-jackson-example-java'
@@ -136,6 +143,7 @@ include 'doc-examples:mongo-multitenancy-discriminator-example-java'
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
+include 'doc-examples:azure-cosmos-example-python'
 
 include 'doc-examples:coherence-example-java'
 
