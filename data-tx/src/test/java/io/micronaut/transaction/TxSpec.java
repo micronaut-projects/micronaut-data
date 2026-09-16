@@ -17,6 +17,7 @@ package io.micronaut.transaction;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import org.junit.jupiter.api.Assertions;
@@ -250,6 +251,31 @@ public class TxSpec {
 
             assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.SUSPEND);
             assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
+        }
+    }
+
+    @Test
+    public void testReactiveTxReportsOraclePriorityRollback() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
+            OpLogger opLogger = applicationContext.getBean(OpLogger.class);
+
+            OracleTransactionPriorityException exception = Assertions.assertThrows(
+                OracleTransactionPriorityException.class,
+                () -> txManager.withTransactionMono(
+                    TransactionDefinition.DEFAULT,
+                    status -> Mono.error(new RuntimeException("ORA-63300: transaction was automatically rolled back"))
+                ).block()
+            );
+
+            Assertions.assertEquals(
+                "Oracle rolled back this transaction because it blocked a higher-priority transaction",
+                exception.getMessage()
+            );
+            Assertions.assertEquals(
+                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "ROLLBACK TX CONNECTION_1", "CLOSE CONNECTION_1"),
+                opLogger.getLogs()
+            );
         }
     }
 
