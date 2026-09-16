@@ -1,0 +1,30 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
+    implementation mnSql.micronaut.jdbc.hikari
+    implementation(mnSql.jakarta.transaction.api)
+    implementation mnSerde.micronaut.serde.jackson
+    implementation mnReactor.micronaut.reactor
+
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mn.snakeyaml
+
+    testImplementation mn.micronaut.http.client
+}

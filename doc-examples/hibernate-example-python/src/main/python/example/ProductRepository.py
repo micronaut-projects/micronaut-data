@@ -1,0 +1,87 @@
+from jakarta.transaction import Transactional
+from java.util.concurrent import CompletableFuture
+from micronaut.data.annotation import Join, Repository
+from micronaut.data.annotation.sql import Procedure
+from micronaut.data.jpa.annotation import EntityGraph
+from micronaut.data.repository import CrudRepository
+from micronaut.data.repository.jpa.criteria import QuerySpecification
+
+from example.Product import Product
+
+try:
+    from io.reactivex.rxjava3.core import Maybe, Single
+except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
+    from reactivex.rxjava3.core import Maybe, Single
+
+
+# tag::join[]
+# tag::async[]
+# tag::specifications[]
+# tag::procedure[]
+@Repository
+class ProductRepository(CrudRepository[Product, int]):  # TODO(python): JpaSpecificationExecutor's generic methods cannot be bridged yet
+    # end::join[]
+    # end::async[]
+    # end::specifications[]
+    # end::procedure[]
+
+    # tag::join[]
+    @Join(value="manufacturer", type="FETCH")  # <1>
+    def list(self) -> list[Product]: ...
+    # end::join[]
+
+    # tag::entitygraph[]
+    @EntityGraph(attributePaths=["manufacturer", "title"])  # <1>
+    def findAll(self) -> list[Product]: ...
+    # end::entitygraph[]
+
+    # tag::async[]
+    @Join("manufacturer")
+    def findByNameContains(self, str: str) -> CompletableFuture[Product]: ...
+
+    def countByManufacturerName(self, name: str) -> CompletableFuture[int]: ...
+    # end::async[]
+
+    # tag::reactive[]
+    @Join("manufacturer")
+    def queryByNameContains(self, str: str) -> Maybe[Product]: ...
+
+    def countDistinctByManufacturerName(self, name: str) -> Single[int]: ...
+    # end::reactive[]
+
+    # tag::procedure[]
+    @Procedure(named="calculateSum")
+    def calculateSum(self, productId: int) -> int: ...  # <1>
+
+    @Procedure("calculateSumInternal")
+    def calculateSumCustom(self, productId: int) -> int: ...  # <2>
+    # end::procedure[]
+
+    # tag::specifications[]
+    def findAllBySpecification(self, specification: QuerySpecification[Product]) -> list[Product]: ...
+
+    @Transactional
+    def find_by_name(self, name: str, case_insensitive: bool, include_blank: bool) -> list[Product]:
+        if case_insensitive:
+            specification = name_equals_case_insensitive(name)
+        else:
+            specification = name_equals(name)
+        if include_blank:
+            specification = or_(specification, name_equals(""))
+        return self.findAllBySpecification(specification)
+
+
+# tag::spec[]
+def name_equals(name: str):
+    return lambda root, query, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def name_equals_case_insensitive(name: str):
+    return lambda root, query, criteria_builder: criteria_builder.equal(criteria_builder.lower(root.get("name")), name.lower())
+
+
+def or_(specification, other):  # `or` is a Python keyword: the trailing underscore maps to CriteriaBuilder.or
+    return lambda root, query, criteria_builder: criteria_builder.or_(
+        specification(root, query, criteria_builder), other(root, query, criteria_builder))
+# end::spec[]
+# end::specifications[]
