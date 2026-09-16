@@ -1,0 +1,74 @@
+/*
+ * Convention for the Python documentation examples (doc-examples/<name>-python).
+ *
+ * The Python compiler takes the compile classpath as its annotation processor path, so the
+ * Micronaut Data processors are regular `implementation` dependencies of the projects applying
+ * this convention, not `annotationProcessor` ones.
+ */
+plugins {
+    id "io.micronaut.build.internal.data-dependencies"
+    id "io.micronaut.minimal.library"
+    id "io.micronaut.build.internal.java-base"
+    id "io.micronaut.build.internal.python"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+}
+
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    // The Python tests only run with -Ppython-ci (see io.micronaut.build.internal.python)
+    systemProperty "micronaut.python.pool.enabled", "false"
+    // Gradle enables assertions in test JVMs; an internal Truffle host-interop assertion fails when a
+    // Java varargs overload (Vector.of(double...)) is selected for three Python floats
+    enableAssertions = false
+    if (providers.environmentVariable("GITHUB_ACTIONS").map { it.toBoolean() }.getOrElse(false)) {
+        plugins.withId("io.micronaut.test-resources") {
+            finalizedBy("stopTestResourcesService")
+        }
+    }
+}
+
+tasks.matching { it.name == "internalStartTestResourcesService" }.configureEach {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+        setProperty("useClassDataSharing", false)
+    }
+}
+
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
+dependencies {
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnMongo.micronaut.mongo.bom),
+            platform(mnTest.micronaut.test.bom)
+    )
+    implementation mn.micronaut.inject.python
+    implementation mn.micronaut.context.python
+    implementation mn.micronaut.runtime
+
+    testImplementation mn.micronaut.inject.python.test
+    testImplementation mnTest.micronaut.test.junit5
+    testRuntimeOnly mnTest.junit.jupiter.engine
+    testRuntimeOnly mnTest.junit.platform.launcher
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    testRuntimeOnly mnLogging.logback.classic
+    runtimeOnly mn.snakeyaml
+}
+
+// TODO(python): the application code lives in src/main/python (the `source="main"` snippets) and the
+// tests in src/test/python. Compiling them separately yields two GraalPy VFS roots whose generated shim
+// modules shadow each other at test time, so the main sources are compiled together with the tests.
+tasks.named("compilePython") {
+    enabled = false
+}
+tasks.named("compileTestPython") {
+    source.from(layout.projectDirectory.dir("src/main/python"))
+}

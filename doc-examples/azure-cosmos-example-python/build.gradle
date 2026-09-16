@@ -1,0 +1,16 @@
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataDocumentProcessor
+
+    implementation projects.micronautDataAzureCosmos
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnLogging.logback.classic
+
+    testImplementation(platform(mnTestResources.boms.testcontainers))
+    testImplementation libs.testcontainers.azure
+}
