@@ -334,7 +334,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
         try {
             commitInternal(transaction);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(e);
             if (priorityException != null) {
                 throw priorityException;
@@ -522,7 +522,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
         try {
             commitInternal((T) status);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(e);
             if (priorityException != null) {
                 throw priorityException;

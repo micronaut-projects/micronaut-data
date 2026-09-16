@@ -260,12 +260,13 @@ public class TxSpec {
             ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
             OpLogger opLogger = applicationContext.getBean(OpLogger.class);
 
+            Mono<Object> transaction = txManager.withTransactionMono(
+                TransactionDefinition.DEFAULT,
+                status -> Mono.error(new RuntimeException("ORA-63300: transaction was automatically rolled back"))
+            );
             OracleTransactionPriorityException exception = Assertions.assertThrows(
                 OracleTransactionPriorityException.class,
-                () -> txManager.withTransactionMono(
-                    TransactionDefinition.DEFAULT,
-                    status -> Mono.error(new RuntimeException("ORA-63300: transaction was automatically rolled back"))
-                ).block()
+                transaction::block
             );
 
             Assertions.assertEquals(

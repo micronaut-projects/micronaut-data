@@ -46,7 +46,7 @@ class OracleTransactionPriorityExceptionTest {
     }
 
     @Test
-    void recognizesNestedAndChainedSqlExceptions() throws SQLException {
+    void recognizesNestedAndChainedSqlExceptions() {
         SQLException chained = new SQLException("ORA-63302", "99999",
             OracleTransactionPriorityException.ORA_TRANSACTION_MUST_ROLLBACK);
         SQLException driverException = new SQLException("driver error");

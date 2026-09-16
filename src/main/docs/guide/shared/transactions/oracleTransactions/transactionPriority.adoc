@@ -37,4 +37,4 @@ try {
 }
 ----
 
-The exception is a `TransactionSystemException`, so existing handlers for that base type continue to apply. Only code that catches `DataAccessException` specifically needs to add a handler for this transaction-boundary failure.
+The exception is a `TransactionException`, so existing transaction-exception handlers continue to apply. Only code that catches `DataAccessException` specifically needs to add a handler for this transaction-boundary failure.

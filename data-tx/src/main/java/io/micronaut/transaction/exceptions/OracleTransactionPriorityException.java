@@ -30,7 +30,7 @@ import java.util.Set;
  *
  * @since 5.2
  */
-public class OracleTransactionPriorityException extends TransactionSystemException {
+public class OracleTransactionPriorityException extends TransactionException {
 
     /** Oracle automatically rolled back a transaction blocking higher-priority work. */
     public static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
