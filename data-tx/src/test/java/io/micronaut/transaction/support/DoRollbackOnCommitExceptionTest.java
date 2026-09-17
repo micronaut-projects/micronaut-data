@@ -22,6 +22,7 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
@@ -30,6 +31,7 @@ import io.micronaut.transaction.impl.InternalTransaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -160,6 +162,36 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
+    void priorityRollbackFromTransactionalWorkIsReportedAsSpecificException() {
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> txManager.executeWrite(status -> {
+                throw new RuntimeException("update failed", new SQLException(
+                    "ORA-63300", "99999", OracleTransactionPriorityException.ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+                ));
+            })
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
+    }
+
+    @Test
+    void priorityRollbackReportedWhileCommittingIsReportedAsSpecificException() {
+        txManager.commitFailure = new TransactionSystemException("Could not commit JDBC transaction", new SQLException(
+            "ORA-63302", "99999", OracleTransactionPriorityException.ORA_TRANSACTION_MUST_ROLLBACK
+        ));
+
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> txManager.executeWrite(status -> null)
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(List.of("doBegin", "doCommit", "doRollback"), txManager.calls);
+    }
+
+    @Test
     void unsupportedOracleSessionlessModeIsRejectedBeforeTransactionalWork() {
         assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
         assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
@@ -223,6 +255,7 @@ class DoRollbackOnCommitExceptionTest {
         boolean failNestedCommit;
         boolean failCommit;
         boolean failRollback;
+        RuntimeException commitFailure;
         RuntimeException rollbackFailure;
 
         RecordingTransactionManager() {
@@ -243,6 +276,9 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doCommit(DefaultTransactionStatus<String> tx) {
             calls.add("doCommit");
+            if (commitFailure != null) {
+                throw commitFailure;
+            }
             if (failCommit) {
                 throw new TransactionSystemException("simulated commit failure");
             }

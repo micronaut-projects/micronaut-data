@@ -16,3 +16,25 @@ Non-Oracle databases ignore this property.
 
 NOTE: Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
 Older Oracle versions that reject `txn_priority` continue without applying priority.
+For the database-side wait targets and rollback mode, see the https://docs.oracle.com/en/database/oracle/oracle-database/26/admin/managing-transactions.html[Oracle transaction management documentation] and the https://docs.oracle.com/en/database/oracle/oracle-database/26/refrn/PRIORITY_TXNS_MODE.html[`PRIORITY_TXNS_MODE` reference].
+
+If Oracle automatically rolls back a lower-priority transaction that is blocking a higher-priority transaction, it reports ORA-63300 while the blocking statement is executing. Subsequent statements can report ORA-63302 until the session acknowledges the rollback.
+
+Micronaut Data acknowledges the rollback and exposes the failure as api:transaction.exceptions.OracleTransactionPriorityException[] from transaction operations, so application code does not need to inspect Oracle error codes. Retry only after re-reading the current state, and make the operation idempotent when a retry is appropriate.
+
+The transaction manager still performs the normal rollback and cleanup. The specific exception only makes the reason visible at the transaction boundary.
+
+For example, an application can handle this contention separately from other transaction failures:
+
+[source,java]
+----
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
+
+try {
+    checkoutService.checkout(accountId);
+} catch (OracleTransactionPriorityException e) {
+    // The transaction is already rolled back. Re-read the account before retrying.
+}
+----
+
+The exception is a `TransactionException`, so existing transaction-exception handlers continue to apply. Only code that catches `DataAccessException` specifically needs to add a handler for this transaction-boundary failure.

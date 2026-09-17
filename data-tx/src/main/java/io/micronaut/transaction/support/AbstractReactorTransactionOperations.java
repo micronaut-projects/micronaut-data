@@ -26,6 +26,7 @@ import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
@@ -229,9 +230,10 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             new SyncCompleteAndErrorPublisher<>(
                 Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
                     .thenMany(Mono.just(txStatus))
-                    .flatMap(status -> executeCallbackFlux(status, handler)),
+                    .flatMap(status -> executeCallbackFlux(status, handler))
+                    .onErrorMap(AbstractReactorTransactionOperations::normalizePriorityRollback),
                 () -> doCommit(txStatus),
-                throwable -> doRollback(txStatus, throwable),
+                throwable -> doRollback(txStatus, normalizePriorityRollback(throwable)),
                 false)
         );
     }
@@ -260,9 +262,10 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             new SyncCompleteAndErrorPublisher<>(
                 Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
                     .thenMany(Mono.just(txStatus))
-                    .flatMap(status -> executeCallbackMono(status, handler)),
+                    .flatMap(status -> executeCallbackMono(status, handler))
+                    .onErrorMap(AbstractReactorTransactionOperations::normalizePriorityRollback),
                 () -> doCommit(txStatus),
-                throwable -> doRollback(txStatus, throwable),
+                throwable -> doRollback(txStatus, normalizePriorityRollback(throwable)),
                 true)
         );
     }
@@ -356,6 +359,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             // detect and handle these type of errors.
             op = Flux.error(e);
         }
+        op = op.onErrorMap(AbstractReactorTransactionOperations::normalizePriorityRollback);
         return op.as(flux -> doFinish(flux, status));
     }
 
@@ -367,7 +371,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         Flux<Void> abort;
         try {
             TransactionDefinition definition = status.getTransactionDefinition();
-            if (definition.rollbackOn(throwable)) {
+            if (throwable instanceof OracleTransactionPriorityException || definition.rollbackOn(throwable)) {
                 abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
             } else {
                 abort = Flux.error(throwable);
@@ -385,6 +389,19 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             }
             return Mono.error(throwable);
         }).as(flux -> doFinish(flux, status));
+    }
+
+    private static Throwable normalizePriorityRollback(Throwable throwable) {
+        if (throwable instanceof OracleTransactionPriorityException) {
+            return throwable;
+        }
+        if (OracleTransactionPriorityException.isPriorityRollback(throwable)) {
+            return new OracleTransactionPriorityException(
+                "Oracle rolled back this transaction because it blocked a higher-priority transaction",
+                throwable
+            );
+        }
+        return throwable;
     }
 
     private <T> Publisher<Void> doFinish(Flux<T> flux, DefaultReactiveTransactionStatus<C> status) {
