@@ -44,68 +44,11 @@ For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPEND
 Because `SUSPEND` leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction
 until a later `REQUIRES_SUSPENDED` transaction completes it.
 
-== HTTP Propagation
-
-HTTP propagation is provided by an HTTP server filter and is opt-in:
-
-[configuration]
-----
-micronaut:
-  data:
-    oracle:
-      sessionless:
-        http:
-          propagation-enabled: true
-----
-
-By default, the filter uses the `Oracle-Sessionless-Transaction-Id` header.
-You can change the header name:
-
-[configuration]
-----
-micronaut:
-  data:
-    oracle:
-      sessionless:
-        http:
-          propagation-enabled: true
-          header-name: X-Oracle-Sessionless-Transaction-Id
-----
-
-On each HTTP request, the filter creates the request-scoped Oracle sessionless propagation state. If the configured header
-is present, the filter decodes the header and stores the GTRID in that state so a `REQUIRES_SUSPENDED` method can resume it.
-If the request contains a malformed transaction id, the filter fails the request with a bad request response. If another
-component has already created Oracle sessionless transaction state before the filter runs, the filter fails fast because
-the HTTP filter owns the request-level state.
-
-On the response, if the request still has a suspended transaction id, the filter writes it to the configured header.
-After a resumed transaction commits or rolls back, the sessionless transaction handler clears the id, so the response does not contain the header.
-
-The following controller does not need to handle the header directly:
-
-snippet::example.BookingController[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
-
-The HTTP client sends one request that starts and suspends the transaction:
-
-snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-suspend", indent="0"]
-
-Then sends the returned header back on a later request that resumes and completes it:
-
-snippet::example.BookingControllerTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="http-propagation-resume", indent="0"]
-
-The header value is encoded through api:transaction.jdbc.oracle.OracleSessionlessTransactionIdCodec[]. The default codec
-uses URL-safe Base64 without padding. Applications can provide their own `OracleSessionlessTransactionIdCodec` bean to sign,
-encrypt, or otherwise protect the value before it is exposed outside the process.
-
-IMPORTANT: The encoded transaction id is a capability to resume the suspended Oracle transaction.
-Only enable HTTP propagation for trusted workflows, protect the request with normal authentication and transport security,
-and use short transaction timeouts.
-
 == Programmatic Propagation
 
-For non-HTTP workflows, inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] and create
-an explicit propagation scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export
-and import the encoded transaction id itself.
+Inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] to create an explicit propagation
+scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export and import the encoded
+transaction id itself.
 
 snippet::example.BookingServiceTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
 
