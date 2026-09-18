@@ -71,8 +71,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Oracle-specific JDBC transaction support.
 
 <p>Includes sessionless transaction integration for Oracle JDBC connections. Transaction identifiers
-are held in Micronaut's <code>PropagatedContext</code>, installed automatically
-for HTTP requests when HTTP propagation is enabled, or programmatically through
+are held in Micronaut's <code>PropagatedContext</code> through
 <a href="OracleSessionlessTransactionPropagationOperations.html" title="interface in io.micronaut.transaction.jdbc.oracle"><code>OracleSessionlessTransactionPropagationOperations</code></a>. The external
 string representation is handled by <a href="OracleSessionlessTransactionIdCodec.html" title="interface in io.micronaut.transaction.jdbc.oracle"><code>OracleSessionlessTransactionIdCodec</code></a>,
 which applications may replace to add signing, encryption, or another transport encoding.</p></div>
@@ -95,24 +94,18 @@ which applications may replace to add signing, encryption, or another transport 
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button></div>
-<div id="class-summary.tabpanel" role="tabpanel" aria-labelledby="class-summary-tab0">
+<div class="caption"><span>Interfaces</span></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="OracleSessionlessTransactionHttpConfiguration.html" title="class in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionHttpConfiguration</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Configuration for HTTP propagation of Oracle sessionless transaction ids.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="OracleSessionlessTransactionIdCodec.html" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionIdCodec</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="OracleSessionlessTransactionIdCodec.html" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionIdCodec</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Converts Oracle sessionless transaction identifiers between the JDBC binary representation and
 an external string representation suitable for transport propagation.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="OracleSessionlessTransactionPropagationOperations.html" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionPropagationOperations</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Operations for non-HTTP propagation of Oracle sessionless transaction identifiers.</div>
-</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="OracleSessionlessTransactionPropagationOperations.html" title="interface in io.micronaut.transaction.jdbc.oracle">OracleSessionlessTransactionPropagationOperations</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Operations for propagation of Oracle sessionless transaction identifiers.</div>
 </div>
 </div>
 </div>
