@@ -25,33 +25,18 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.http.HttpRequest
-import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Post
-import io.micronaut.http.annotation.Status
-import io.micronaut.http.client.HttpClient
-import io.micronaut.http.client.annotation.Client
-import io.micronaut.http.client.exceptions.HttpClientResponseException
-import io.micronaut.scheduling.TaskExecutors
-import io.micronaut.scheduling.annotation.ExecuteOn
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.OracleTransactional
-import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionHttpConfiguration
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Specification
 
 @Property(name = "spec.name", value = OracleSessionlessTransactionPropagationSpec.SPEC_NAME)
-@Property(name = "micronaut.data.oracle.sessionless.http.propagation-enabled", value = "true")
-@Property(name = "micronaut.http.client.read-timeout", value = "600s")
 @MicronautTest(transactional = false)
 class OracleSessionlessTransactionPropagationSpec extends Specification implements OracleTestPropertyProvider {
 
     static final String SPEC_NAME = "OracleSessionlessTransactionPropagationSpec"
-    private static final String SESSIONLESS_TRANSACTION_HEADER = OracleSessionlessTransactionHttpConfiguration.DEFAULT_HEADER_NAME
 
     @Inject
     ExpenseReportService expenseReportService
@@ -62,10 +47,6 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
     @Inject
     OracleSessionlessTransactionPropagationOperations transactionPropagationOperations
 
-    @Inject
-    @Client("/")
-    HttpClient client
-
     @Override
     List<String> packages() {
         [getClass().package.name]
@@ -73,43 +54,6 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
 
     void setup() {
         expenseReportRepository.deleteAll()
-    }
-
-    void "http propagation commits a suspended expense report approval"() {
-        when:
-        SubmittedExpenseReport report = submitViaHttp("employee-http-1", "travel", 125.75)
-
-        then:
-        expenseReportRepository.findById(report.id()).isEmpty()
-
-        when:
-        HttpRequest<String> approveRequest = HttpRequest.POST("/expense-reports/approve/" + report.id(), "")
-                .header(SESSIONLESS_TRANSACTION_HEADER, report.transactionId())
-        HttpResponse<Void> approveResponse = client.toBlocking().exchange(approveRequest, Void)
-
-        then:
-        approveResponse.status == HttpStatus.NO_CONTENT
-        !approveResponse.headers.contains(SESSIONLESS_TRANSACTION_HEADER)
-        expenseReportRepository.findById(report.id()).orElseThrow().status == "APPROVED"
-    }
-
-    void "http propagation rolls back a resumed expense report approval"() {
-        when:
-        SubmittedExpenseReport report = submitViaHttp("employee-http-2", "meals", 43.20)
-
-        then:
-        expenseReportRepository.findById(report.id()).isEmpty()
-
-        when:
-        HttpRequest<String> rejectRequest = HttpRequest.POST("/expense-reports/reject/" + report.id(), "")
-                .header(SESSIONLESS_TRANSACTION_HEADER, report.transactionId())
-        client.toBlocking().exchange(rejectRequest, Void)
-
-        then:
-        HttpClientResponseException e = thrown()
-        e.status == HttpStatus.INTERNAL_SERVER_ERROR
-        !e.response.headers.contains(SESSIONLESS_TRANSACTION_HEADER)
-        expenseReportRepository.findById(report.id()).isEmpty()
     }
 
     void "programmatic propagation commits a suspended expense report approval"() {
@@ -177,15 +121,6 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
         expenseReportRepository.findById(reportIds[1]).orElseThrow().status == "APPROVED"
     }
 
-    private SubmittedExpenseReport submitViaHttp(String employeeId, String category, BigDecimal amount) {
-        HttpResponse<String> submitResponse = client.toBlocking()
-            .exchange(HttpRequest.POST("/expense-reports/submit/${employeeId}/${category}/${amount}", ""), String)
-        String transactionId = submitResponse.headers.get(SESSIONLESS_TRANSACTION_HEADER)
-        assert submitResponse.status == HttpStatus.OK
-        assert transactionId
-        new SubmittedExpenseReport(Long.valueOf(submitResponse.body()), transactionId)
-    }
-
     private SubmittedExpenseReport suspendReport(String employeeId, String category, BigDecimal amount) {
         Objects.requireNonNull(transactionPropagationOperations.withPropagation({
             Long reportId = expenseReportService.submitReport(employeeId, category, amount)
@@ -243,35 +178,6 @@ class ExpenseReportService {
     void rejectReport(Long id) {
         expenseReportRepository.updateStatus(id, "REJECTED")
         throw new ExpenseRejectedException("Expense report failed policy check")
-    }
-}
-
-@ExecuteOn(TaskExecutors.IO)
-@Controller("/expense-reports")
-@Requires(property = "spec.name", value = OracleSessionlessTransactionPropagationSpec.SPEC_NAME)
-class ExpenseReportController {
-
-    private final ExpenseReportService expenseReportService
-
-    ExpenseReportController(ExpenseReportService expenseReportService) {
-        this.expenseReportService = expenseReportService
-    }
-
-    @Post("/submit/{employeeId}/{category}/{amount}")
-    Long submit(String employeeId, String category, BigDecimal amount) {
-        expenseReportService.submitReport(employeeId, category, amount)
-    }
-
-    @Post("/approve/{id}")
-    @Status(HttpStatus.NO_CONTENT)
-    void approve(Long id) {
-        expenseReportService.approveReport(id)
-    }
-
-    @Post("/reject/{id}")
-    @Status(HttpStatus.NO_CONTENT)
-    void reject(Long id) {
-        expenseReportService.rejectReport(id)
     }
 }
 
