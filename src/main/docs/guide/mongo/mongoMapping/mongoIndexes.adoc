@@ -1,0 +1,241 @@
+Micronaut Data MongoDB supports declaration-based index creation for mapped entities.
+
+To enable startup index creation, set `micronaut.data.mongodb.create-indexes=true`.
+
+Use `micronaut.data.mongodb.create-indexes-failure-policy` to control startup behavior when index initialization fails:
+
+* `FAIL_FAST` (default): fail startup immediately
+* `WARN_AND_CONTINUE`: log the failure and continue startup
+
+NOTE: Index creation is opt-in and runs during startup collection initialization.
+
+When `micronaut.data.mongodb.create-indexes=true` and `micronaut.data.mongodb.create-collections=false`, Micronaut Data still performs index reconciliation/creation for collections that already exist.
+If a mapped collection does not exist and collection creation is disabled, index initialization for that entity is skipped.
+
+== Supported index annotations
+
+Micronaut Data currently supports the following MongoDB index annotations:
+
+* ann:data.mongodb.annotation.index.MongoIndexed[] (single-field indexes)
+* ann:data.mongodb.annotation.index.MongoCompoundIndex[] / ann:data.mongodb.annotation.index.MongoCompoundIndexes[] (compound indexes, including numeric, text, hashed, and geospatial members)
+* ann:data.mongodb.annotation.index.MongoTextIndexed[] (text indexes, including multi-field aggregation)
+* ann:data.mongodb.annotation.index.MongoHashedIndexed[] (hashed indexes)
+* ann:data.mongodb.annotation.index.MongoGeoIndexed[] (geospatial indexes: `2d`, `2dsphere`)
+* ann:data.mongodb.annotation.index.MongoWildcardIndexed[] (field-level wildcard indexes)
+* ann:data.mongodb.annotation.index.MongoWildcardIndex[] (top-level wildcard indexes)
+* ann:data.mongodb.annotation.index.MongoClusteredIndex[] (clustered collection options)
+
+== Single-field indexes
+
+Use ann:data.mongodb.annotation.index.MongoIndexed[] to declare standard single-field indexes.
+
+Supported options include direction, `unique`, `sparse`, `hidden`, `expireAfterSeconds` (TTL), `partialFilterExpression`, `collation`, index-build `comment`, and `storageEngine`.
+
+[source,java]
+----
+@MappedEntity("products")
+class ProductEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    @MongoIndexed(name = "product_sku_idx", unique = true)
+    String sku;
+}
+----
+
+== Compound indexes
+
+Use ann:data.mongodb.annotation.index.MongoCompoundIndex[] for multi-field index declarations at entity level.
+
+Compound declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "order_customer_created_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "customerId", direction = MongoIndexDirection.ASC),
+        @MongoCompoundIndexField(value = "createdAt", direction = MongoIndexDirection.DESC)
+    }
+)
+@MappedEntity("orders")
+class OrderEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    String customerId;
+    Instant createdAt;
+}
+----
+
+NOTE: TTL on compound indexes is rejected during startup validation because MongoDB TTL semantics are single-field oriented. This is fail-fast validation: the application startup fails immediately with a clear error instead of silently creating a non-expiring index definition.
+
+Compound fields may also declare special key kinds:
+
+* `text = true` for compound text members
+* `hashed = true` for a compound hashed member
+* `geo = true` with `geoType` for compound geospatial members
+
+Compound geospatial members with `geoType = GEO_2DSPHERE` also support `sphereVersion`.
+
+=== Compound path examples
+
+Embedded dot-notation path:
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "location_state_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "location.state", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("addresses")
+class AddressEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    AddressLocation location;
+}
+----
+
+Collection/array field (multikey) path:
+
+[source,java]
+----
+@MongoCompoundIndex(
+    name = "tags_idx",
+    fields = {
+        @MongoCompoundIndexField(value = "tags", direction = MongoIndexDirection.ASC)
+    }
+)
+@MappedEntity("articles")
+class ArticleEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    List<String> tags;
+}
+----
+
+== Text indexes
+
+Use ann:data.mongodb.annotation.index.MongoTextIndexed[] on text fields.
+
+Multiple text-indexed fields on the same entity are aggregated into the corresponding MongoDB text index definition.
+
+Text declarations also support `defaultLanguage`, `languageOverride`, and `textIndexVersion`.
+
+NOTE: For aggregated multi-field text indexes, these text-specific options must be declared consistently across all participating ann:data.mongodb.annotation.index.MongoTextIndexed[] fields; conflicting declarations fail fast during startup validation.
+
+== Hashed indexes
+
+Use ann:data.mongodb.annotation.index.MongoHashedIndexed[] to create hashed indexes.
+
+Hashed declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
+== Geospatial indexes
+
+Use ann:data.mongodb.annotation.index.MongoGeoIndexed[] for geospatial indexing (`2d` and `2dsphere`).
+
+MongoDB currently exposes these two geospatial index kinds.
+
+Geospatial declarations also support index-build `comment`, create-index command `commitQuorum`, `storageEngine`, `partialFilterExpression`, and `collation`.
+
+For `2dsphere` indexes, ann:data.mongodb.annotation.index.MongoGeoIndexed[] also supports `sphereVersion`.
+
+NOTE: `sphereVersion` is only valid for `2dsphere` indexes; declaring it for other geospatial kinds is rejected during startup validation (fail-fast).
+
+For `2dsphere` indexes, the supported implicit property model is MongoDB Java driver GeoJSON types such as `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`, and `GeometryCollection`.
+
+For `2d` indexes, Micronaut Data accepts legacy coordinate values backed by maps, lists, and arrays.
+
+For `2dsphere` indexes, Micronaut Data also accepts legacy coordinate values backed by maps, lists, and arrays in addition to MongoDB GeoJSON driver types.
+
+NOTE: For legacy map/list/array coordinate models, Micronaut Data validates declared property type compatibility during startup, but it does not validate the runtime coordinate shape itself (for example element count or numeric contents). Malformed legacy coordinate values are still rejected by MongoDB when documents are written or when the index is built.
+
+NOTE: MongoDB `2d` indexes support only simple binary collation. Micronaut Data rejects non-simple `collation` definitions for `2d` indexes during startup validation (fail-fast).
+
+NOTE: ann:data.mongodb.annotation.index.MongoGeoIndexed[] validates property type compatibility during startup and fails fast for unsupported property types.
+
+== Wildcard indexes
+
+Use ann:data.mongodb.annotation.index.MongoWildcardIndexed[] for field-level wildcard indexes.
+
+Field-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
+Use ann:data.mongodb.annotation.index.MongoWildcardIndex[] for top-level wildcard indexes and `wildcardProjection`.
+
+ann:data.mongodb.annotation.index.MongoWildcardIndex[] is repeatable. Multiple equivalent top-level declarations for the same `$**` key and `wildcardProjection` signature are merged into a single managed index definition.
+
+MongoDB 5.0+ allows multiple top-level `{ "$**": 1 }` indexes on the same collection when `wildcardProjection` differs. Micronaut Data preserves those as separate managed index definitions.
+
+Top-level wildcard declarations also support index-build `comment`, create-index command `commitQuorum`, and `storageEngine`.
+
+NOTE: `storageEngine` must be valid JSON. Invalid declarations are rejected during startup validation (fail-fast).
+
+NOTE: MongoDB allows `wildcardProjection` only for top-level wildcard indexes (`{"$**": 1}`).
+Using `wildcardProjection` on field-level ann:data.mongodb.annotation.index.MongoWildcardIndexed[] is rejected during startup validation (fail-fast), with an explicit error that points to ann:data.mongodb.annotation.index.MongoWildcardIndex[].
+
+NOTE: Equivalent repeated top-level wildcard declarations must still agree on managed options and explicit index name. Distinct `wildcardProjection` signatures are allowed to coexist.
+
+== TTL indexes
+
+Use ann:data.mongodb.annotation.index.MongoIndexed[] with `expireAfterSeconds` to create TTL indexes:
+
+[source,java]
+----
+@MappedEntity("sessions")
+class SessionEntity {
+    @Id
+    @GeneratedValue
+    String id;
+
+    @MongoIndexed(name = "expires_at_ttl_idx", expireAfterSeconds = 60)
+    Instant expiresAt;
+}
+----
+
+== Clustered collections
+
+Use ann:data.mongodb.annotation.index.MongoClusteredIndex[] on the entity to configure clustered collection options during startup collection initialization.
+
+[source,java]
+----
+@MongoClusteredIndex(name = "events_clustered_idx", unique = true, expireAfterSeconds = 3600)
+@MappedEntity("events")
+class EventEntity {
+    @Id
+    Instant id;
+
+    String payload;
+}
+----
+
+Clustered collection support follows MongoDB collection-level rules:
+
+* clustered options are applied through collection creation, not ordinary index creation
+* `unique` must remain `true`
+* when `expireAfterSeconds` is set, the identity type must be one of the supported date/time types (`Date`, `java.sql.Date`, `java.sql.Timestamp`, `LocalDate`, `Instant`, `LocalDateTime`, `OffsetDateTime`, `ZonedDateTime`)
+
+== Existing collections and conflicts
+
+When `create-indexes` is enabled, Micronaut Data checks existing collection indexes before creating new ones.
+If an index with the same key exists but managed options differ, index initialization reports an explicit conflict.
+With `micronaut.data.mongodb.create-indexes-failure-policy=FAIL_FAST`, startup fails immediately. With `WARN_AND_CONTINUE`, the conflict is logged and startup continues.
+
+Managed reconciliation is key-first and option-aware:
+
+* existing indexes with matching key + managed options are accepted (startup continues)
+* if a desired explicit name differs from an existing same-key index name, index initialization reports an explicit name-conflict message and then either fails fast or logs-and-continues according to `micronaut.data.mongodb.create-indexes-failure-policy`
+* if a desired name is omitted, existing same-key indexes are matched by key/options (generated or existing names are not used as primary identity)
+
+Managed option matching includes: uniqueness/sparse/hidden, TTL, partial filter, collation, geospatial/text-specific options, wildcard projection, and storage engine.
+
+`comment` and `commitQuorum` are treated as index-creation command options and are not part of existing-index managed option reconciliation.
+
+For clustered declarations, existing collection options are also compared. Conflicts are then handled according to `micronaut.data.mongodb.create-indexes-failure-policy`.

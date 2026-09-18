@@ -1,5 +1,6 @@
 package io.micronaut.data.document.mongodb.entities;
 
+import com.mongodb.client.model.geojson.MultiPoint;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -30,6 +31,7 @@ class Test {
     private OtherEntity manyToOneOther;
 
     private List<String> colors;
+    private MultiPoint locations;
 
     public Test(String name) {
         this.name = name;
@@ -117,5 +119,13 @@ class Test {
 
     public void setColors(List<String> colors) {
         this.colors = colors;
+    }
+
+    public MultiPoint getLocations() {
+        return locations;
+    }
+
+    public void setLocations(MultiPoint locations) {
+        this.locations = locations;
     }
 }
