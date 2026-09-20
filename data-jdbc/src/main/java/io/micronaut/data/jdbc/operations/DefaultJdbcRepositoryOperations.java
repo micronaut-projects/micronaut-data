@@ -1409,6 +1409,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 Object id = getGeneratedIdentity(generatedKeys, identity, storedQuery.getDialect());
                                 BeanProperty<T, Object> property = identity.getProperty();
                                 entity = updateEntityId(property, entity, id);
+                                entity = bindOtherGeneratedValues(generatedKeys, storedQuery.getDialect());
                             } else {
                                 throw new DataAccessException("Failed to generate ID for entity: " + entity);
                             }
@@ -1416,6 +1417,33 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                 }
             }
+        }
+
+        /**
+         * Bind any {@code @GeneratedValue} properties, other than the identity, that are present in the
+         * generated-keys result set. Only Postgres returns the full inserted row here (its JDBC driver
+         * expands {@code Statement.RETURN_GENERATED_KEYS} into {@code RETURNING *}); other dialects only
+         * ever return the identity column, so this is a no-op for them.
+         *
+         * @param generatedKeys The generated keys result set, positioned on the inserted row
+         * @param dialect       The dialect
+         * @return The entity, with any additional generated values bound
+         */
+        private T bindOtherGeneratedValues(ResultSet generatedKeys, Dialect dialect) {
+            if (dialect != Dialect.POSTGRES) {
+                return entity;
+            }
+            ResultReader<ResultSet, String> generatedValueReader = createColumnNameResultSetReaderWithColumnExistenceAware();
+            for (RuntimePersistentProperty<T> generatedProperty : persistentEntity.getPersistentProperties()) {
+                if (generatedProperty instanceof RuntimeAssociation || !generatedProperty.isGenerated()) {
+                    continue;
+                }
+                Object value = generatedValueReader.readDynamic(generatedKeys, generatedProperty.getPersistedName(), generatedProperty.getDataType());
+                if (value != null) {
+                    entity = updateEntityId(generatedProperty.getProperty(), entity, value);
+                }
+            }
+            return entity;
         }
     }
 
