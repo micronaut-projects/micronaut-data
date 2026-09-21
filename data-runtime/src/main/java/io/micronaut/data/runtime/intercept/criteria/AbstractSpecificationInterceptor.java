@@ -46,6 +46,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionOrder;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
@@ -69,6 +70,7 @@ import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -126,7 +128,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Pageable pageable = super.getPageable(context);
         List<Sort.Order> orders = getOrders(context);
         if (!orders.isEmpty()) {
-            pageable = pageable.orders(orders);
+            // The static @OrderBy criteria take precedence over any dynamically supplied sort criteria
+            List<Sort.Order> combined = new ArrayList<>(orders);
+            combined.addAll(pageable.getSort().getOrderBy());
+            pageable = pageable.withSort(Sort.of(combined));
         }
         return pageable;
     }
@@ -138,7 +143,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 .map(av -> new Sort.Order(
                     av.stringValue().orElseThrow(),
                     av.booleanValue("descending").orElse(false) ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
-                    av.booleanValue("ignoreCase").orElse(false)
+                    av.booleanValue("ignoreCase").orElse(false),
+                    av.enumValue("nullOrdering", Sort.Order.NullOrdering.class).orElse(Sort.Order.NullOrdering.NONE)
                 ))
                 .toList();
         return orders;
@@ -548,6 +554,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         for (Join<K, ?> join : root.getJoins()) {
             // First, we check if the order is for one of the joined entities
             for (Sort.Order order : sort.getOrderBy()) {
+                if (order instanceof ExpressionOrder) {
+                    // Ordering by an expression rather than by an attribute path of a joined entity
+                    continue;
+                }
                 Iterator<String> orderIterator = StringUtils.splitOmitEmptyStrings(order.getProperty(), '.').iterator();
                 if (!orderIterator.hasNext()) {
                     continue;
@@ -569,6 +579,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
         for (Sort.Order order : orders) {
+            if (order instanceof ExpressionOrder expressionOrder) {
+                selection.add(expressionOrder.toExpression(root, criteriaBuilder));
+                continue;
+            }
             // Remaining orders must be for the root entity
             Path<?> path = root;
             for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
@@ -800,13 +814,24 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     private List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
         List<Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<?> path = root;
-            for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
-                path = path.get(orderPath);
+            Expression<?> orderExpression;
+            if (order instanceof ExpressionOrder expressionOrder) {
+                orderExpression = expressionOrder.toExpression(root, cb);
+            } else {
+                Path<?> path = root;
+                for (String orderPath : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                    path = path.get(orderPath);
 
+                }
+                orderExpression = path;
             }
-            Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) path) : path;
-            orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower((Expression<String>) orderExpression) : orderExpression;
+            Nulls nullPrecedence = switch (order.getNullOrdering()) {
+                case FIRST -> Nulls.FIRST;
+                case LAST -> Nulls.LAST;
+                case NONE -> Nulls.NONE;
+            };
+            orders.add(order.isAscending() ? cb.asc(expression, nullPrecedence) : cb.desc(expression, nullPrecedence));
         }
         return orders;
     }

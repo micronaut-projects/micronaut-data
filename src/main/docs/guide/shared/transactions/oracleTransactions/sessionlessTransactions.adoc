@@ -1,0 +1,60 @@
+Oracle sessionless transactions allow a JDBC transaction to be suspended and later resumed, potentially from a different
+request. Micronaut Data supports this for Oracle JDBC with the ann:transaction.annotation.OracleTransactional[] `sessionless`
+attribute:
+
+* api:transaction.annotation.OracleTransactional.Sessionless#SUSPEND[]
+* api:transaction.annotation.OracleTransactional.Sessionless#REQUIRES_SUSPENDED[]
+
+The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another
+active transaction. If a parent transaction is already active, Micronaut rejects the sessionless transaction definition
+instead of allowing it to participate in the existing transaction.
+The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
+They also cannot be combined with `@OracleTransactional.Recoverable`. `SUSPEND` detaches the transaction instead of
+committing it, so there is no ambiguous commit outcome to resolve. Replaying `REQUIRES_SUSPENDED` could attempt to resume
+a transaction whose completion state is already uncertain. Micronaut rejects either combination before transactional work begins.
+
+Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
+For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
+
+The following service starts a sessionless transaction, suspends it, and later resumes it:
+
+snippet::example.BookingService[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+
+For a method annotated with `@OracleTransactional(sessionless = SUSPEND)`, the standard JDBC transaction manager and
+Oracle sessionless transaction handler:
+
+* requires an active Oracle sessionless propagation state
+* begins the JDBC transaction normally
+* starts an Oracle sessionless transaction with `OracleConnection.startTransaction(...)`
+* stores the returned Oracle global transaction identifier, or GTRID, in the propagation state
+* registers work at the resource commit boundary
+* runs all transaction synchronization callbacks before suspending the Oracle transaction and skipping the JDBC commit
+
+If the method declares `@OracleTransactional(timeout = ...)`, that timeout is passed to Oracle when the sessionless transaction is started.
+If no timeout is declared, the Oracle driver and database defaults apply.
+
+For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPENDED)`, the Oracle sessionless transaction handler:
+
+* reads the GTRID from the active propagation state
+* begins the JDBC transaction normally
+* resumes the Oracle sessionless transaction with `OracleConnection.resumeTransaction(...)`
+* commits or rolls back the JDBC transaction normally
+* clears the GTRID from the propagation state after completion
+
+Because `SUSPEND` leaves work uncommitted, data written in the suspended transaction is not visible outside that transaction
+until a later `REQUIRES_SUSPENDED` transaction completes it.
+
+== Programmatic Propagation
+
+Inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations[] to create an explicit propagation
+scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export and import the encoded
+transaction id itself.
+
+snippet::example.BookingServiceTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
+
+The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
+`currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`
+call creates a state that already contains the id, so the `REQUIRES_SUSPENDED` method can resume and complete the transaction.
+
+The programmatic propagation scope is lexical. Code invoked in the same scope sees the same transaction id.
+A nested `withPropagation(...)` call creates a scoped override and restores the previous state after the supplier returns.

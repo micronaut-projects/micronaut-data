@@ -21,13 +21,20 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
+import java.time.Duration;
+
 public class TransactionUtilSpec {
+
+    private static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
+    private static final int ORA_TRANSACTION_MUST_ROLLBACK = 63302;
 
     @Test
     void testOracleTransactionalAnnotationWiring() {
@@ -40,10 +47,19 @@ public class TransactionUtilSpec {
                 OracleTransactional.Priority.MEDIUM,
                 priorityDefinition.getProperties().get(OracleTransactional.ORACLE_PRIORITY)
             );
+            Assertions.assertEquals(
+                OracleTransactional.Sessionless.SUSPEND,
+                priorityDefinition.getProperties().get(OracleTransactional.ORACLE_SESSIONLESS_MODE)
+            );
+            Assertions.assertEquals(
+                Duration.ofSeconds(3600),
+                priorityDefinition.getTimeout().orElseThrow()
+            );
 
             ExecutableMethod<AnnotatedService, Object> methodWithoutPriority = beanDefinition.getRequiredMethod("methodWithoutPriority");
             TransactionDefinition defaultDefinition = TransactionUtil.getTransactionDefinition("test", methodWithoutPriority);
             Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY));
+            Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_SESSIONLESS_MODE));
         }
     }
 
@@ -70,10 +86,95 @@ public class TransactionUtilSpec {
         Assertions.assertEquals("Invalid Oracle transaction priority: invalid", exception.getMessage());
     }
 
+    @Test
+    void testAutomaticOraclePriorityRollbackDetection() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK)
+        ));
+    }
+
+    @Test
+    void testOracleRollbackAcknowledgementErrorDetection() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK)
+        ));
+    }
+
+    @Test
+    void testOraclePriorityRollbackDetectionFromMessage() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63300: transaction was automatically rolled back")
+        ));
+    }
+
+    @Test
+    void testOraclePriorityRollbackDetectionInNestedAndChainedSqlExceptions() {
+        SQLException chained = new SQLException("ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK);
+        SQLException driverException = new SQLException("driver error");
+        driverException.setNextException(chained);
+
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new RuntimeException("repository error", driverException)
+        ));
+    }
+
+    @Test
+    void testOtherOracleErrorsAreNotPriorityRollbacks() {
+        Assertions.assertFalse(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-02248", "99999", 2248)
+        ));
+    }
+
+    @Test
+    void testApplicationExceptionMessagesAreNotOraclePriorityRollbacks() {
+        Assertions.assertFalse(TransactionUtil.isOraclePriorityRollback(
+            new RuntimeException("ORA-63300: this text is not a database error")
+        ));
+    }
+
+    @Test
+    void testOracleSessionlessModeParsing() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " requires_suspended ");
+
+        Assertions.assertEquals(
+            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
+            TransactionUtil.getOracleSessionlessMode(definition)
+        );
+    }
+
+    @Test
+    void testInvalidOracleSessionlessModeFailsWithCannotCreateTransactionException() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, "invalid");
+
+        CannotCreateTransactionException exception = Assertions.assertThrows(
+            CannotCreateTransactionException.class,
+            () -> TransactionUtil.getOracleSessionlessMode(definition)
+        );
+        Assertions.assertEquals("Invalid Oracle sessionless transaction mode: invalid", exception.getMessage());
+    }
+
+    @Test
+    void testOracleSessionlessModeRequiresRequiredPropagation() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setPropagationBehavior(TransactionDefinition.Propagation.SUPPORTS);
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, OracleTransactional.Sessionless.SUSPEND);
+
+        TransactionUsageException exception = Assertions.assertThrows(
+            TransactionUsageException.class,
+            () -> TransactionUtil.validateOracleSessionlessMode(definition, true)
+        );
+        Assertions.assertEquals(
+            "Oracle sessionless transaction mode 'SUSPEND' requires propagation 'REQUIRED'",
+            exception.getMessage()
+        );
+    }
+
     @Singleton
     static class AnnotatedService {
 
-        @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+        @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM, sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 3600)
         void methodWithPriority() {
             // Does nothing, just to test TransactionUtil with OracleTransactional
         }

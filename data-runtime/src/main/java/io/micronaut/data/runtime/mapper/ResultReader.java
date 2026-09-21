@@ -106,6 +106,51 @@ public interface ResultReader<RS, IDX> {
     boolean next(RS resultSet);
 
     /**
+     * Resolves the ordinal of the column with the given name in the result set, so that callers can cache it
+     * and read the values of subsequent rows by index using {@link #getColumnIndexReader()} instead of resolving
+     * the column name for every row.
+     * <p>
+     * The returned ordinal is only valid for the given result set and uses the index convention of the underlying
+     * driver (for example 1-based for JDBC). Readers that cannot resolve column ordinals return {@code -1}, in which
+     * case callers must keep reading by name.
+     *
+     * @param resultSet  The result set
+     * @param columnName The column name
+     * @return The column index or {@code -1} if the column cannot be resolved
+     * @since 5.2.0
+     */
+    default int findColumnIndex(RS resultSet, String columnName) {
+        return -1;
+    }
+
+    /**
+     * The reader capable of reading values by the ordinals resolved by {@link #findColumnIndex(Object, String)}.
+     *
+     * @return The column index reader or {@code null} if reading by column index is not supported
+     * @since 5.2.0
+     */
+    @Nullable
+    default ResultReader<RS, Integer> getColumnIndexReader() {
+        return null;
+    }
+
+    /**
+     * The object the resolved column ordinals belong to, compared by identity by callers that cache them. It is the
+     * result set itself when the result set spans every row, which is the case for JDBC. Readers whose result set
+     * object is a single row, which is the case for R2DBC, return something shared by the rows of one result, such
+     * as the row metadata, so that the ordinals survive from one row to the next.
+     * <p>
+     * Returning a different object per row is safe: the ordinals are then resolved again for each row.
+     *
+     * @param resultSet The result set
+     * @return The object the resolved ordinals belong to
+     * @since 5.2.0
+     */
+    default Object columnResolutionKey(RS resultSet) {
+        return resultSet;
+    }
+
+    /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
      * @param index The name

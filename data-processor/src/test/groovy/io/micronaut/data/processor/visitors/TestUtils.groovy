@@ -105,6 +105,10 @@ class TestUtils {
         return getParameterRoles(metadata.getAnnotation(DataMethod))
     }
 
+    static String[] getParameterTableAliases(AnnotationMetadataProvider metadata) {
+        return getParameterTableAliases(metadata.getAnnotation(DataMethod))
+    }
+
     static DataType[] getDataTypes(AnnotationMetadataProvider metadata) {
         return getDataTypes(metadata.getAnnotation(DataMethod))
     }
@@ -140,6 +144,13 @@ class TestUtils {
                 .map(p -> {
                     p.stringValue(DataMethodQueryParameter.META_MEMBER_ROLE).orElse(null)
                 })
+                .toArray(String[]::new)
+    }
+
+    static String[] getParameterTableAliases(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> p.stringValue(DataMethodQueryParameter.META_MEMBER_TABLE_ALIAS).orElse(null))
                 .toArray(String[]::new)
     }
 

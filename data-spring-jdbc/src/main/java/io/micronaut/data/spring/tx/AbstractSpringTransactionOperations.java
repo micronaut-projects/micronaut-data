@@ -111,6 +111,7 @@ public abstract class AbstractSpringTransactionOperations
 
     @SuppressWarnings("NullAway")
     private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
+        validateTransactionDefinition(definition);
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
@@ -255,4 +256,3 @@ public abstract class AbstractSpringTransactionOperations
         }
     }
 }
-

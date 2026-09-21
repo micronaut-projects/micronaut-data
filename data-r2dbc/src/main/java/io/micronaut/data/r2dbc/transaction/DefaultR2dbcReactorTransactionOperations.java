@@ -25,9 +25,11 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import io.micronaut.transaction.support.ReactiveTransactionExecutionListener;
+import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcException;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -35,10 +37,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.time.Duration;
+import java.util.Set;
 
 /**
  * Defines an implementation of Micronaut Data's core interfaces for R2DBC.
@@ -117,6 +121,34 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             LOG.debug("Rolling back transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
         return connectionStatus.getConnection().rollbackTransaction();
+    }
+
+    @Override
+    protected boolean isOracleTransactionPriorityRollback(DefaultReactiveTransactionStatus<Connection> status, Throwable throwable) {
+        return isOraclePriorityRollback(status.getConnectionStatus().getConnection(), throwable);
+    }
+
+    static boolean isOraclePriorityRollback(Connection connection, Throwable throwable) {
+        boolean priorityRollback = TransactionUtil.isOraclePriorityRollback(throwable)
+            || isR2dbcPriorityRollback(throwable);
+        if (!priorityRollback) {
+            return false;
+        }
+        String productName = connection.getMetadata().getDatabaseProductName();
+        return productName != null && "ORACLE".equalsIgnoreCase(productName);
+    }
+
+    private static boolean isR2dbcPriorityRollback(Throwable throwable) {
+        Throwable current = throwable;
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        while (current != null && visited.add(current)) {
+            if (current instanceof R2dbcException r2dbcException
+                && TransactionUtil.isOraclePriorityRollback(r2dbcException.getErrorCode(), r2dbcException.getMessage())) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     @Nullable

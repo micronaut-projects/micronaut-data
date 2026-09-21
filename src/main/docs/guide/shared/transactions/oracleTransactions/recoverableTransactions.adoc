@@ -40,6 +40,10 @@ The recovery flow is:
 `@OracleTransactional.Recoverable` must be used together with ann:transaction.annotation.Transactional[] or ann:transaction.annotation.OracleTransactional[].
 It does not create a transaction by itself.
 
+It cannot be combined with an ann:transaction.annotation.OracleTransactional[] sessionless mode. A suspended transaction
+does not commit at that boundary, and replaying a resumed transaction could attempt to resume a transaction whose completion
+state is already uncertain. Micronaut rejects the combination before transactional work begins.
+
 Recovery runs only for the synchronous invocation that starts and owns the final commit boundary.
 If the annotated method joins an existing transaction, Micronaut does not run recovery for that method because the outer transaction boundary owns commit.
 
@@ -81,6 +85,7 @@ If the database, service, or client are out of sync for outcome resolution, Micr
 
 - Recovery applies only to synchronous JDBC transactions
 - Recovery applies only when the intercepted execution owns the transaction commit boundary
+- Recovery cannot be combined with an Oracle sessionless transaction mode
 - If a method joins an existing transaction, the outer transaction boundary owns commit and therefore owns recovery
 - R2DBC is not supported by this feature
 - Micronaut does not expose Oracle's `USER_CALL_COMPLETED` flag through the method return type or another public API

@@ -9,4 +9,9 @@ dependencies {
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnSql.h2
     runtimeOnly mn.snakeyaml
+
+    // Drivers for running the result set mapping benchmark against a database other than the default H2
+    jmh mnSql.ojdbc11
+    jmh mnSql.postgresql
+    jmh mnSql.mysql.connector.j
 }

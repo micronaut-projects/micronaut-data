@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.Flow
  * @author Denis Stepanov
  * @since 3.1.0
  */
-interface CoroutineCrudRepository<E, ID> : GenericRepository<E, ID> {
+interface CoroutineCrudRepository<E : Any, ID : Any> : GenericRepository<E, ID> {
 
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state.

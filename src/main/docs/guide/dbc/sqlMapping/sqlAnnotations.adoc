@@ -53,6 +53,8 @@ The following table summarizes the different annotations and what they enable. I
 
 |===
 
+NOTE: Auto-population of embedded properties is best effort. If an embedded property is `null` when an entity is written, the embedded type must support no-argument construction for Micronaut Data to create it and populate its `@AutoPopulated`, `@DateCreated`, or `@DateUpdated` properties. Existing immutable embedded instances can be updated when the bean introspection supports `BeanProperty.withValue`; constructor-only immutable embedded types without a no-argument constructor are left unchanged when no instance is available.
+
 In the case of using JPA only a subset of annotations are supported including the following:
 
 * Basic: `@Table` `@Id` `@Version` `@Column` `@Transient` `@Enumerated`

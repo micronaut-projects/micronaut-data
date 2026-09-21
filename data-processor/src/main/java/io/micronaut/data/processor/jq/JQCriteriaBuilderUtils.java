@@ -37,6 +37,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.visitors.MatchFailedException;
+import io.micronaut.data.processor.visitors.finders.OrderByUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
@@ -429,7 +430,8 @@ public final class JQCriteriaBuilderUtils {
                 orders.add(criteriaBuilder.sort(
                     rootContext.root().get(av.stringValue().orElseThrow()),
                     !av.booleanValue("descending").orElse(false),
-                    av.booleanValue("ignoreCase").orElse(false)
+                    av.booleanValue("ignoreCase").orElse(false),
+                    OrderByUtils.getNullPrecedence(av)
                 ));
             }
         }

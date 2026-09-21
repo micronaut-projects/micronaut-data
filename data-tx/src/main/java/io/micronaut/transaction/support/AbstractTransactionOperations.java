@@ -29,6 +29,7 @@ import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
 import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
@@ -135,7 +136,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             );
         }
         T existingTransaction = existingTransactionOptional.get();
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW ||  definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             return connectionOperations.execute(
@@ -160,6 +161,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     @Override
     public T getTransaction(TransactionDefinition definition) throws TransactionException {
+        validateTransactionDefinition(definition);
         boolean debugEnabled = logger.isDebugEnabled();
         if (debugEnabled) {
             logger.debug("Getting transaction for definition [{}]", definition);
@@ -189,7 +191,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
         }
-        checkNeverTransactionPropagation(definition);
+        validateExistingTransaction(definition);
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
@@ -317,6 +319,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
             result = callback.apply(transaction);
         } catch (Throwable e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            // Oracle requires a rollback acknowledgement after a priority rollback,
+            // even when the transaction definition otherwise opts out of rollback.
+            if (priorityException != null) {
+                rollbackAfterPriorityFailure(transaction, priorityException);
+                throw priorityException;
+            }
             if (definition.rollbackOn(e)) {
                 rollbackInternal(transaction);
             } else {
@@ -324,8 +333,56 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
             throw e;
         }
-        commitInternal(transaction);
+        try {
+            commitInternal(transaction);
+        } catch (Exception e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            if (priorityException != null) {
+                throw priorityException;
+            }
+            throw e;
+        }
         return result;
+    }
+
+    @Nullable
+    private OracleTransactionPriorityException toOracleTransactionPriorityException(T transaction, Throwable exception) {
+        if (exception instanceof OracleTransactionPriorityException priorityException) {
+            return priorityException;
+        }
+        if (isOracleTransactionPriorityRollback(transaction, exception)) {
+            return new OracleTransactionPriorityException(
+                "Oracle rolled back this transaction because it blocked a higher-priority transaction",
+                exception
+            );
+        }
+        return null;
+    }
+
+    private void rollbackAfterPriorityFailure(T transaction,
+                                              OracleTransactionPriorityException priorityException) {
+        try {
+            rollbackInternal(transaction);
+        } catch (RuntimeException | Error rollbackFailure) {
+            logger.warn("Rollback after Oracle priority transaction failure also failed", rollbackFailure);
+            if (!priorityException.equals(rollbackFailure)) {
+                priorityException.addSuppressed(rollbackFailure);
+            }
+        }
+    }
+
+    /**
+     * Determines whether an error represents an Oracle priority rollback for the
+     * current transaction. Vendor-specific transaction managers can override this
+     * method after validating their connection.
+     *
+     * @param transaction The transaction
+     * @param throwable The transaction error
+     * @return Whether the error represents an Oracle priority rollback
+     */
+    protected boolean isOracleTransactionPriorityRollback(@NonNull T transaction,
+                                                          @NonNull Throwable throwable) {
+        return false;
     }
 
     private void begin(T transaction) {
@@ -336,6 +393,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
     }
 
+    // Sonar java:S3776 -- the branching mirrors the commit state machine (rollback-only checks,
+    // synchronization ordering, and the distinct recovery paths per exception type); the sequence
+    // is only correct read as a whole.
+    @SuppressWarnings("java:S3776")
     private void commitInternal(T tx) {
         if (tx.isCompleted()) {
             throw new IllegalTransactionStateException("Transaction is already completed - do not call commit or rollback more than once per transaction");
@@ -361,7 +422,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 beforeCompletionInvoked = true;
 
                 if (tx.isNewTransaction()) {
-                    doCommit(tx);
+                    if (!tx.triggerResourceCommit()) {
+                        doCommit(tx);
+                    }
                 } else if (tx.isNestedTransaction()) {
                     doNestedCommit(tx);
                 }
@@ -452,7 +515,12 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
     }
 
-    private void checkNeverTransactionPropagation(TransactionDefinition definition) {
+    private void validateExistingTransaction(TransactionDefinition definition) {
+        var mode = TransactionUtil.getOracleSessionlessMode(definition);
+        if (mode != null) {
+            throw new TransactionUsageException("Existing transaction found for Oracle sessionless transaction mode '" + mode
+                + "'; a new transaction boundary is required");
+        }
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.NEVER) {
             throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
         }
@@ -479,7 +547,16 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (logger.isDebugEnabled()) {
             logger.debug("Committing transaction status [{}]", status);
         }
-        commitInternal((T) status);
+        T transaction = (T) status;
+        try {
+            commitInternal(transaction);
+        } catch (Exception e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            if (priorityException != null) {
+                throw priorityException;
+            }
+            throw e;
+        }
     }
 
     @Override

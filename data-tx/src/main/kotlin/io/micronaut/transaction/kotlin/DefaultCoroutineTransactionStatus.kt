@@ -27,7 +27,7 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus
  * @since 4.2.0
  */
 @Internal
-class DefaultCoroutineTransactionStatus<T>(var status: ReactiveTransactionStatus<T>) :
+class DefaultCoroutineTransactionStatus<T : Any>(var status: ReactiveTransactionStatus<T>) :
     CoroutineTransactionStatus<T> {
 
     override val connection: T

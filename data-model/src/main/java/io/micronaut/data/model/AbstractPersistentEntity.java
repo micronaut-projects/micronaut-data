@@ -73,12 +73,23 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
                 .stringValue(io.micronaut.data.annotation.NamingStrategy.class)
-                .flatMap(className -> getNamingStrategy(className, getClass().getClassLoader()))
+                .flatMap(this::getNamingStrategy)
                 .orElse(null);
     }
 
+    private Optional<NamingStrategy> getNamingStrategy(String className) {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader definingClassLoader = getClass().getClassLoader();
+        if (contextClassLoader == null || contextClassLoader.equals(definingClassLoader)) {
+            return getNamingStrategy(className, definingClassLoader);
+        }
+        return getNamingStrategy(className, contextClassLoader)
+            .or(() -> getNamingStrategy(className, definingClassLoader));
+    }
+
     private Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
-        NamingStrategy namingStrategy = NAMING_STRATEGIES.get(className);
+        boolean cache = classLoader != null && classLoader.equals(AbstractPersistentEntity.class.getClassLoader());
+        NamingStrategy namingStrategy = cache ? NAMING_STRATEGIES.get(className) : null;
         if (namingStrategy != null) {
             return Optional.of(namingStrategy);
         } else {
@@ -88,7 +99,9 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                     BeanIntrospection<?> beanIntrospection = BeanIntrospection.getIntrospection(namingStrategyClass);
                     Object o = beanIntrospection.instantiate();
                     if (o instanceof NamingStrategy ns) {
-                        NAMING_STRATEGIES.put(className, ns);
+                        if (cache) {
+                            NAMING_STRATEGIES.put(className, ns);
+                        }
                         return Optional.of(ns);
                     }
                 }
@@ -97,7 +110,9 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
             }
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
             if (o instanceof NamingStrategy ns) {
-                NAMING_STRATEGIES.put(className, ns);
+                if (cache) {
+                    NAMING_STRATEGIES.put(className, ns);
+                }
                 return Optional.of(ns);
             }
             return Optional.empty();

@@ -21,6 +21,9 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
+import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
@@ -28,6 +31,7 @@ import io.micronaut.transaction.impl.InternalTransaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -38,6 +42,7 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies that doRollbackOnCommitException dispatches to the correct
@@ -46,6 +51,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
  */
 class DoRollbackOnCommitExceptionTest {
 
+    private static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
+    private static final int ORA_TRANSACTION_MUST_ROLLBACK = 63302;
     private static final TransactionDefinition NESTED_DEFINITION =
         TransactionDefinition.of(TransactionDefinition.Propagation.NESTED);
 
@@ -156,6 +163,116 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
+    @Test
+    void priorityRollbackFromTransactionalWorkIsReportedAsSpecificException() {
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> oracleTxManager.executeWrite(status -> {
+                throw new RuntimeException("update failed", new SQLException(
+                    "ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+                ));
+            })
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(List.of("doBegin", "doRollback"), oracleTxManager.calls);
+    }
+
+    @Test
+    void priorityRollbackRemainsPrimaryWhenNestedRollbackFails() {
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+        TransactionSystemException nestedRollbackFailure = new TransactionSystemException(
+            "Could not roll back to JDBC savepoint",
+            new SQLException("ORA-01086: savepoint never established")
+        );
+        oracleTxManager.nestedRollbackFailure = nestedRollbackFailure;
+
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> oracleTxManager.executeWrite(outerStatus -> {
+                oracleTxManager.execute(NESTED_DEFINITION, nestedStatus -> {
+                    throw new RuntimeException("update failed", new SQLException(
+                        "ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+                    ));
+                });
+                return null;
+            })
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(1, exception.getSuppressed().length);
+        assertSame(nestedRollbackFailure, exception.getSuppressed()[0]);
+        assertEquals(List.of("doBegin", "doNestedBegin", "doNestedRollback", "doRollback"), oracleTxManager.calls);
+    }
+
+    @Test
+    void nonOracleTransactionManagerDoesNotReportPriorityRollback() {
+        RuntimeException applicationException = new RuntimeException("update failed", new SQLException(
+            "vendor error", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+        ));
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> txManager.executeWrite(status -> {
+                throw applicationException;
+            })
+        );
+
+        assertSame(applicationException, exception);
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
+    }
+
+    @Test
+    void applicationExceptionMessageDoesNotOverrideNoRollbackFor() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setDontRollbackOn(List.of(RuntimeException.class));
+        RuntimeException applicationException = new RuntimeException("ORA-63300: this is application text");
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> txManager.execute(definition, status -> {
+                throw applicationException;
+            })
+        );
+
+        assertSame(applicationException, exception);
+        assertEquals(List.of("doBegin", "doCommit"), txManager.calls);
+    }
+
+    @Test
+    void priorityRollbackReportedWhileCommittingIsReportedAsSpecificException() {
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+        oracleTxManager.commitFailure = new TransactionSystemException("Could not commit JDBC transaction", new SQLException(
+            "ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK
+        ));
+
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> oracleTxManager.executeWrite(status -> null)
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(List.of("doBegin", "doCommit", "doRollback"), oracleTxManager.calls);
+    }
+
+    @Test
+    void unsupportedOracleSessionlessModeIsRejectedBeforeTransactionalWork() {
+        assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
+        assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
+
+        assertEquals(List.of(), txManager.calls);
+    }
+
+    @Test
+    void unsupportedOracleSessionlessModeIsRejectedBeforeProgrammaticTransactionCreation() {
+        assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
+        assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
+
+        assertEquals(List.of(), txManager.calls);
+    }
+
     private static void registerThrowingBeforeCommit(Object status) {
         ((InternalTransaction<?>) status).registerInvocationSynchronization(
             new TransactionSynchronization() {
@@ -167,6 +284,34 @@ class DoRollbackOnCommitExceptionTest {
         );
     }
 
+    private void assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless mode) {
+        TransactionSuspensionNotSupportedException exception = assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.execute(oracleSessionlessDefinition(mode), status -> null)
+        );
+        assertEquals(
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
+        );
+    }
+
+    private void assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless mode) {
+        TransactionSuspensionNotSupportedException exception = assertThrows(
+            TransactionSuspensionNotSupportedException.class,
+            () -> txManager.getTransaction(oracleSessionlessDefinition(mode))
+        );
+        assertEquals(
+            "Oracle sessionless transaction mode '" + mode + "' requires Oracle sessionless transaction support",
+            exception.getMessage()
+        );
+    }
+
+    private static TransactionDefinition oracleSessionlessDefinition(OracleTransactional.Sessionless mode) {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, mode);
+        return definition;
+    }
+
     /**
      * Transaction manager that records which doXxx methods are called.
      */
@@ -176,7 +321,9 @@ class DoRollbackOnCommitExceptionTest {
         boolean failNestedCommit;
         boolean failCommit;
         boolean failRollback;
+        RuntimeException commitFailure;
         RuntimeException rollbackFailure;
+        RuntimeException nestedRollbackFailure;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);
@@ -196,6 +343,9 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doCommit(DefaultTransactionStatus<String> tx) {
             calls.add("doCommit");
+            if (commitFailure != null) {
+                throw commitFailure;
+            }
             if (failCommit) {
                 throw new TransactionSystemException("simulated commit failure");
             }
@@ -226,6 +376,18 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doNestedRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doNestedRollback");
+            if (nestedRollbackFailure != null) {
+                throw nestedRollbackFailure;
+            }
+        }
+    }
+
+    static final class OracleRecordingTransactionManager extends RecordingTransactionManager {
+
+        @Override
+        protected boolean isOracleTransactionPriorityRollback(DefaultTransactionStatus<String> transaction,
+                                                              Throwable throwable) {
+            return TransactionUtil.isOraclePriorityRollback(throwable);
         }
     }
 

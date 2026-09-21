@@ -802,6 +802,174 @@ class Test {
         sql == 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`date_created` TIMESTAMP WITH TIME ZONE);'
     }
 
+    void "test build create table for SQL Server sequence generation"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE)
+    private Long id;
+
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        expect:
+        builder.buildBatchCreateTableStatement(List.of(), entity) == 'CREATE SEQUENCE [test_seq] AS BIGINT MINVALUE 1 START WITH 1 INCREMENT BY 1' + System.lineSeparator() +
+            'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY NOT NULL DEFAULT NEXT VALUE FOR [test_seq],[name] VARCHAR(255) NOT NULL);'
+    }
+
+    void "test SQL Server sequence generation uses explicit ref"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "foo_seq")
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        expect:
+        builder.buildBatchCreateTableStatement(List.of(), entity) == 'CREATE SEQUENCE [foo_seq] AS BIGINT MINVALUE 1 START WITH 1 INCREMENT BY 1' + System.lineSeparator() +
+            'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY NOT NULL DEFAULT NEXT VALUE FOR [foo_seq]);'
+    }
+
+    void "test SQL Server sequence generation uses ref with custom definition"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue(
+        value = GeneratedValue.Type.SEQUENCE,
+        ref = "foo_seq",
+        definition = "CREATE SEQUENCE [foo_seq] AS BIGINT START WITH 10 INCREMENT BY 5"
+    )
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        expect:
+        builder.buildBatchCreateTableStatement(List.of(), entity) == 'CREATE SEQUENCE [foo_seq] AS BIGINT START WITH 10 INCREMENT BY 5' + System.lineSeparator() +
+            'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY NOT NULL DEFAULT NEXT VALUE FOR [foo_seq]);'
+    }
+
+    void "test SQL Server custom sequence definition requires ref"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue(
+        value = GeneratedValue.Type.SEQUENCE,
+        definition = "CREATE SEQUENCE foo_seq AS BIGINT START WITH 1"
+    )
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        when:
+        builder.buildBatchCreateTableStatement(List.of(), entity)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.MappingException)
+        e.message == "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: id"
+    }
+
+    void "test SQL Server resolves sequence for its column in mixed generated composite identity"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    private Long identityId;
+
+    @javax.persistence.Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "sequence_id_seq")
+    private Long sequenceId;
+
+    public Long getIdentityId() {
+        return identityId;
+    }
+
+    public void setIdentityId(Long identityId) {
+        this.identityId = identityId;
+    }
+
+    public Long getSequenceId() {
+        return sequenceId;
+    }
+
+    public void setSequenceId(Long sequenceId) {
+        this.sequenceId = sequenceId;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.SQL_SERVER)
+
+        expect:
+        builder.buildBatchCreateTableStatement(List.of(), entity) == 'CREATE SEQUENCE [sequence_id_seq] AS BIGINT MINVALUE 1 START WITH 1 INCREMENT BY 1' + System.lineSeparator() +
+            'CREATE TABLE [test] ([identity_id] BIGINT IDENTITY(1,1) NOT NULL,[sequence_id] BIGINT DEFAULT NEXT VALUE FOR [sequence_id_seq], PRIMARY KEY([identity_id],[sequence_id]));'
+    }
+
     void "test custom parent entity with generics"() {
         given:
         def entity = buildJpaEntity('test.Test', '''

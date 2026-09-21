@@ -33,6 +33,15 @@ class NullValueCoroutinesTest : AbstractTest(false) {
     }
 
     @Test
+    fun `'execute' accepts a nullable result type and propagates a null result`() = runBlocking {
+        // The type parameter of `execute` must stay unbounded so that nullable results keep compiling
+        val bookTitle: String? = transactionOperations.execute {
+            bookRepository.findTitleById(-1L)
+        }
+        assert(bookTitle == null)
+    }
+
+    @Test
     fun `'suspend fun' nullable 'String' return type, record present, value returned when fetching property by entity ID`() = runBlocking {
         transactionOperations.execute {
             val author = Author("Huxley")

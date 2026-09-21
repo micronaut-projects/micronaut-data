@@ -1,0 +1,15 @@
+micronaut:
+  application:
+    name: jdbc-sessionless-transaction-booking-java
+  data:
+    oracle:
+      sessionless:
+        http:
+          propagation-enabled: true
+
+datasources:
+  default:
+    driverClassName: oracle.jdbc.OracleDriver
+    db-type: oracle
+    dialect: ORACLE
+    schema-generate: CREATE_DROP
