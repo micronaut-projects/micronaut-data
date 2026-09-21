@@ -29,6 +29,7 @@ import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
 import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
@@ -318,6 +319,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
             result = callback.apply(transaction);
         } catch (Throwable e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            // Oracle requires a rollback acknowledgement after a priority rollback,
+            // even when the transaction definition otherwise opts out of rollback.
+            if (priorityException != null) {
+                rollbackAfterPriorityFailure(transaction, priorityException);
+                throw priorityException;
+            }
             if (definition.rollbackOn(e)) {
                 rollbackInternal(transaction);
             } else {
@@ -325,8 +333,56 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
             throw e;
         }
-        commitInternal(transaction);
+        try {
+            commitInternal(transaction);
+        } catch (Exception e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            if (priorityException != null) {
+                throw priorityException;
+            }
+            throw e;
+        }
         return result;
+    }
+
+    @Nullable
+    private OracleTransactionPriorityException toOracleTransactionPriorityException(T transaction, Throwable exception) {
+        if (exception instanceof OracleTransactionPriorityException priorityException) {
+            return priorityException;
+        }
+        if (isOracleTransactionPriorityRollback(transaction, exception)) {
+            return new OracleTransactionPriorityException(
+                "Oracle rolled back this transaction because it blocked a higher-priority transaction",
+                exception
+            );
+        }
+        return null;
+    }
+
+    private void rollbackAfterPriorityFailure(T transaction,
+                                              OracleTransactionPriorityException priorityException) {
+        try {
+            rollbackInternal(transaction);
+        } catch (RuntimeException | Error rollbackFailure) {
+            logger.warn("Rollback after Oracle priority transaction failure also failed", rollbackFailure);
+            if (!priorityException.equals(rollbackFailure)) {
+                priorityException.addSuppressed(rollbackFailure);
+            }
+        }
+    }
+
+    /**
+     * Determines whether an error represents an Oracle priority rollback for the
+     * current transaction. Vendor-specific transaction managers can override this
+     * method after validating their connection.
+     *
+     * @param transaction The transaction
+     * @param throwable The transaction error
+     * @return Whether the error represents an Oracle priority rollback
+     */
+    protected boolean isOracleTransactionPriorityRollback(@NonNull T transaction,
+                                                          @NonNull Throwable throwable) {
+        return false;
     }
 
     private void begin(T transaction) {
@@ -491,7 +547,16 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (logger.isDebugEnabled()) {
             logger.debug("Committing transaction status [{}]", status);
         }
-        commitInternal((T) status);
+        T transaction = (T) status;
+        try {
+            commitInternal(transaction);
+        } catch (Exception e) {
+            OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
+            if (priorityException != null) {
+                throw priorityException;
+            }
+            throw e;
+        }
     }
 
     @Override

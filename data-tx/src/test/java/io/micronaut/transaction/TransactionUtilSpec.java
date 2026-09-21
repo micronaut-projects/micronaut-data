@@ -28,9 +28,13 @@ import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
 import java.time.Duration;
 
 public class TransactionUtilSpec {
+
+    private static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
+    private static final int ORA_TRANSACTION_MUST_ROLLBACK = 63302;
 
     @Test
     void testOracleTransactionalAnnotationWiring() {
@@ -80,6 +84,52 @@ public class TransactionUtilSpec {
             () -> TransactionUtil.getOraclePriority(definition)
         );
         Assertions.assertEquals("Invalid Oracle transaction priority: invalid", exception.getMessage());
+    }
+
+    @Test
+    void testAutomaticOraclePriorityRollbackDetection() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK)
+        ));
+    }
+
+    @Test
+    void testOracleRollbackAcknowledgementErrorDetection() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK)
+        ));
+    }
+
+    @Test
+    void testOraclePriorityRollbackDetectionFromMessage() {
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-63300: transaction was automatically rolled back")
+        ));
+    }
+
+    @Test
+    void testOraclePriorityRollbackDetectionInNestedAndChainedSqlExceptions() {
+        SQLException chained = new SQLException("ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK);
+        SQLException driverException = new SQLException("driver error");
+        driverException.setNextException(chained);
+
+        Assertions.assertTrue(TransactionUtil.isOraclePriorityRollback(
+            new RuntimeException("repository error", driverException)
+        ));
+    }
+
+    @Test
+    void testOtherOracleErrorsAreNotPriorityRollbacks() {
+        Assertions.assertFalse(TransactionUtil.isOraclePriorityRollback(
+            new SQLException("ORA-02248", "99999", 2248)
+        ));
+    }
+
+    @Test
+    void testApplicationExceptionMessagesAreNotOraclePriorityRollbacks() {
+        Assertions.assertFalse(TransactionUtil.isOraclePriorityRollback(
+            new RuntimeException("ORA-63300: this text is not a database error")
+        ));
     }
 
     @Test
