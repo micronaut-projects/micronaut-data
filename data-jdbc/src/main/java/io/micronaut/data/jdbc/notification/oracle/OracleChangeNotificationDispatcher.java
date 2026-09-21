@@ -119,7 +119,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void dispatchTables(TableChangeDescription[] tables) {
         for (TableChangeDescription table : tables) {
-            if (!matchesTable(listenerDefinition.tableName(), table.getTableName())) {
+            if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
                 continue;
             }
             if (table.getTableOperations().contains(TableChangeDescription.TableOperation.ALL_ROWS)) {
@@ -153,7 +153,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             invokeListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
         } catch (Exception e) {
             LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID unavailable",
-                listenerDefinition.method().getDescription(true), ChangeOperation.INVALIDATE, listenerDefinition.tableName(), e);
+                listenerDefinition.method().getDescription(true), ChangeOperation.INVALIDATE, listenerDefinition.tableIdentifier().sqlName(), e);
         }
     }
 
@@ -166,21 +166,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             invokeListener(event);
         } catch (Exception e) {
             LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
-                listenerDefinition.method().getDescription(true), operation, listenerDefinition.tableName(), rowId, e);
+                listenerDefinition.method().getDescription(true), operation, listenerDefinition.tableIdentifier().sqlName(), rowId, e);
         }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void invokeListener(ChangeEvent<?> event) {
         ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
-    }
-
-    private static boolean matchesTable(String tableName, String changedTableName) {
-        String normalizedTableName = changedTableName.replace("\"", "");
-        return tableName.equalsIgnoreCase(normalizedTableName)
-            || (normalizedTableName.length() > tableName.length()
-            && normalizedTableName.charAt(normalizedTableName.length() - tableName.length() - 1) == '.'
-            && normalizedTableName.regionMatches(true, normalizedTableName.length() - tableName.length(), tableName, 0, tableName.length()));
     }
 
 }

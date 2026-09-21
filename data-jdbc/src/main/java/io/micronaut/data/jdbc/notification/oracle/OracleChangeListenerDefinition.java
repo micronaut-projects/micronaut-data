@@ -28,14 +28,14 @@ import java.util.Properties;
  *
  * @param beanDefinition The bean definition that owns the listener method.
  * @param method The executable listener method.
- * @param tableName The persistent Oracle table name.
+ * @param tableIdentifier The persistent Oracle table identifier.
  * @param registrationQuery The query associated with the Oracle notification registration.
  * @param entityLoader The loader that resolves current entity state from an Oracle ROWID.
  * @param registrationProperties The Oracle notification registration properties.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,
-                                      String tableName,
+                                      OracleTableIdentifier tableIdentifier,
                                       String registrationQuery,
                                       OracleChangeListenerEntityLoader<?> entityLoader,
                                       Properties registrationProperties) {

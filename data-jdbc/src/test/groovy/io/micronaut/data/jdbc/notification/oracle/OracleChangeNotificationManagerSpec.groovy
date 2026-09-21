@@ -83,6 +83,6 @@ class OracleChangeNotificationManagerSpec extends Specification {
     }
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {
-        return new OracleChangeListenerDefinition(null, method, "BOOK", query, null, new Properties())
+        return new OracleChangeListenerDefinition(null, method, OracleTableIdentifier.parse("BOOK"), query, null, new Properties())
     }
 }

@@ -21,6 +21,9 @@ import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 
@@ -49,15 +52,18 @@ final class OracleChangeListenerDefinitionFactory {
             () -> "@ChangeListener method [" + method.getDescription(true) + "] requires @OracleChangeNotification for an Oracle datasource"
         );
         Argument<?> entityArgument = listenerMethod.entityArgument();
-        String tableName = operations.getEntity(entityArgument.getType()).getPersistedName();
+        RuntimePersistentEntity<?> persistentEntity = operations.getEntity(entityArgument.getType());
+        OracleTableIdentifier tableIdentifier = OracleTableIdentifier.parse(
+            new SqlQueryBuilder(Dialect.ORACLE).getTableName(persistentEntity)
+        );
         String reloadQuery = method.stringValue(OracleChangeListenerQuery.class)
             .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle ROWID reload query"));
         Properties properties = registrationProperties(notification, method);
         return new OracleChangeListenerDefinition(
             listenerMethod.beanDefinition(),
             method,
-            tableName,
-            registrationQuery(notification, method, tableName, properties),
+            tableIdentifier,
+            registrationQuery(notification, method, tableIdentifier, properties),
             new OracleChangeListenerEntityLoader<>(operations, entityArgument.getType(), reloadQuery),
             properties
         );
@@ -86,7 +92,7 @@ final class OracleChangeListenerDefinitionFactory {
 
     private static String registrationQuery(AnnotationValue<OracleChangeNotification> notification,
                                             ExecutableMethod<?, ?> method,
-                                            String tableName,
+                                            OracleTableIdentifier tableIdentifier,
                                             Properties properties) {
         boolean isObjectChange = !Boolean.parseBoolean(properties.getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
         String select = notification.stringValue("select").orElse("*").trim();
@@ -98,7 +104,7 @@ final class OracleChangeListenerDefinitionFactory {
         if (select.isEmpty()) {
             throw invalidChangeListener(method, "must have a non-blank Oracle select value");
         }
-        return "SELECT " + select + " FROM " + tableName + (where.isEmpty() ? "" : " WHERE " + where);
+        return "SELECT " + select + " FROM " + tableIdentifier.sqlName() + (where.isEmpty() ? "" : " WHERE " + where);
     }
 
     private static IllegalStateException invalidChangeListener(ExecutableMethod<?, ?> method, String message) {

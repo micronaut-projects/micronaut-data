@@ -38,7 +38,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         beanContext.getBean(beanDefinition) >> bean
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def definition = new OracleChangeListenerDefinition(beanDefinition, method, "BOOK", "SELECT * FROM BOOK", null, new Properties())
+        def definition = new OracleChangeListenerDefinition(beanDefinition, method, OracleTableIdentifier.parse("BOOK"), "SELECT * FROM BOOK", null, new Properties())
         def table = Mock(TableChangeDescription)
         table.getTableName() >> "BOOK"
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.ALL_ROWS)
@@ -89,7 +89,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     private OracleChangeNotificationDispatcher dispatcher() {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def definition = new OracleChangeListenerDefinition(null, method, "BOOK", "SELECT * FROM BOOK", null, new Properties())
+        def definition = new OracleChangeListenerDefinition(null, method, OracleTableIdentifier.parse("BOOK"), "SELECT * FROM BOOK", null, new Properties())
         return dispatcher(definition, Mock(BeanContext))
     }
 
