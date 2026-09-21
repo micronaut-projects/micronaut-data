@@ -20,7 +20,7 @@ For the database-side wait targets and rollback mode, see the https://docs.oracl
 
 If Oracle automatically rolls back a lower-priority transaction that is blocking a higher-priority transaction, it reports ORA-63300 while the blocking statement is executing. Subsequent statements can report ORA-63302 until the session acknowledges the rollback.
 
-Micronaut Data acknowledges the rollback and exposes the failure as api:transaction.exceptions.OracleTransactionPriorityException[] from transaction operations, so application code does not need to inspect Oracle error codes. Retry only after re-reading the current state, and make the operation idempotent when a retry is appropriate.
+Micronaut Data JDBC and R2DBC transaction operations acknowledge the rollback and expose the failure as api:transaction.exceptions.OracleTransactionPriorityException[], so application code does not need to inspect Oracle error codes. Hibernate/JPA and Hibernate Reactive transaction managers continue to expose the underlying provider exception. Retry only after re-reading the current state, and make the operation idempotent when a retry is appropriate.
 
 The transaction manager still performs the normal rollback and cleanup. The specific exception only makes the reason visible at the transaction boundary.
 
