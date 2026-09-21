@@ -322,13 +322,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             OracleTransactionPriorityException priorityException = toOracleTransactionPriorityException(transaction, e);
             // Oracle requires a rollback acknowledgement after a priority rollback,
             // even when the transaction definition otherwise opts out of rollback.
-            if (priorityException != null || definition.rollbackOn(e)) {
+            if (priorityException != null) {
+                rollbackAfterPriorityFailure(transaction, priorityException);
+                throw priorityException;
+            }
+            if (definition.rollbackOn(e)) {
                 rollbackInternal(transaction);
             } else {
                 commitInternal(transaction);
-            }
-            if (priorityException != null) {
-                throw priorityException;
             }
             throw e;
         }
@@ -356,6 +357,18 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             );
         }
         return null;
+    }
+
+    private void rollbackAfterPriorityFailure(T transaction,
+                                              OracleTransactionPriorityException priorityException) {
+        try {
+            rollbackInternal(transaction);
+        } catch (RuntimeException | Error rollbackFailure) {
+            logger.warn("Rollback after Oracle priority transaction failure also failed", rollbackFailure);
+            if (!priorityException.equals(rollbackFailure)) {
+                priorityException.addSuppressed(rollbackFailure);
+            }
+        }
     }
 
     /**

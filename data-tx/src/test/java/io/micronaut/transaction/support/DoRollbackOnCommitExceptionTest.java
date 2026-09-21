@@ -181,6 +181,33 @@ class DoRollbackOnCommitExceptionTest {
     }
 
     @Test
+    void priorityRollbackRemainsPrimaryWhenNestedRollbackFails() {
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+        TransactionSystemException nestedRollbackFailure = new TransactionSystemException(
+            "Could not roll back to JDBC savepoint",
+            new SQLException("ORA-01086: savepoint never established")
+        );
+        oracleTxManager.nestedRollbackFailure = nestedRollbackFailure;
+
+        OracleTransactionPriorityException exception = assertThrows(
+            OracleTransactionPriorityException.class,
+            () -> oracleTxManager.executeWrite(outerStatus -> {
+                oracleTxManager.execute(NESTED_DEFINITION, nestedStatus -> {
+                    throw new RuntimeException("update failed", new SQLException(
+                        "ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+                    ));
+                });
+                return null;
+            })
+        );
+
+        assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(1, exception.getSuppressed().length);
+        assertSame(nestedRollbackFailure, exception.getSuppressed()[0]);
+        assertEquals(List.of("doBegin", "doNestedBegin", "doNestedRollback", "doRollback"), oracleTxManager.calls);
+    }
+
+    @Test
     void nonOracleTransactionManagerDoesNotReportPriorityRollback() {
         RuntimeException applicationException = new RuntimeException("update failed", new SQLException(
             "vendor error", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
@@ -296,6 +323,7 @@ class DoRollbackOnCommitExceptionTest {
         boolean failRollback;
         RuntimeException commitFailure;
         RuntimeException rollbackFailure;
+        RuntimeException nestedRollbackFailure;
 
         RecordingTransactionManager() {
             super(new StackConnectionOperations(), null);
@@ -348,6 +376,9 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doNestedRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doNestedRollback");
+            if (nestedRollbackFailure != null) {
+                throw nestedRollbackFailure;
+            }
         }
     }
 
