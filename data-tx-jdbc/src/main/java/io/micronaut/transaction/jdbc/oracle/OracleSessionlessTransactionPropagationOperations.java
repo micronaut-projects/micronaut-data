@@ -22,11 +22,9 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Operations for non-HTTP propagation of Oracle sessionless transaction identifiers.
+ * Operations for propagation of Oracle sessionless transaction identifiers.
  *
- * <p>The HTTP server filter installs the same propagation state for HTTP requests. Code running outside
- * HTTP can use this API to create an equivalent propagation scope and exchange encoded transaction
- * identifiers with other transports.</p>
+ * <p>This API creates a propagation scope and exchanges encoded transaction identifiers with other transports.</p>
  *
  * @since 5.2.0
  */
