@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -23,11 +24,11 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import org.jspecify.annotations.Nullable;
-import org.reactivestreams.Publisher;
 
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 
 /**
  * Shared SQL batch-operation capability checks.
@@ -205,7 +206,11 @@ public final class SqlBatchSupport {
     private static Argument<?> unwrapResultArgument(Argument<?> argument) {
         Argument<?> current = argument;
         while (shouldUnwrap(current)) {
-            current = current.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+            Optional<Argument<?>> typeVariable = current.getFirstTypeVariable();
+            if (typeVariable.isEmpty()) {
+                return isReactiveOrFuture(current.getType()) ? Argument.of(Void.class) : Argument.OBJECT_ARGUMENT;
+            }
+            current = typeVariable.get();
         }
         return current;
     }
@@ -216,9 +221,14 @@ public final class SqlBatchSupport {
             return false;
         }
         return Iterable.class.isAssignableFrom(type)
-            || Publisher.class.isAssignableFrom(type)
-            || CompletionStage.class.isAssignableFrom(type)
+            || isReactiveOrFuture(type)
             || Optional.class.isAssignableFrom(type);
+    }
+
+    private static boolean isReactiveOrFuture(Class<?> type) {
+        return Publishers.isConvertibleToPublisher(type)
+            || CompletionStage.class.isAssignableFrom(type)
+            || Future.class.isAssignableFrom(type);
     }
 
     /**

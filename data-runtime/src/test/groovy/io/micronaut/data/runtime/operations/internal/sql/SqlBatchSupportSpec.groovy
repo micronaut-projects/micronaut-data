@@ -23,12 +23,16 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.model.runtime.StoredQuery
 import io.micronaut.data.runtime.operations.internal.sql.SqlBatchSupport.JdbcBatchInsertMode
 import io.micronaut.data.runtime.operations.internal.sql.SqlBatchSupport.JdbcBatchMetadata
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.flow.Flow
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.Optional
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.Future
 
 class SqlBatchSupportSpec extends Specification {
     void "mysql dialect stays conservative for generated identities by default"() {
@@ -95,10 +99,14 @@ class SqlBatchSupportSpec extends Specification {
         resolve(entityWithGeneratedId(), Dialect.MYSQL, mariaDbMetadata(), requiresGeneratedKeys) == mode
 
         where:
-        scenario                                 | resultArgument              || mode
-        "falls back for entity-returning saveAll" | Argument.listOf(TestEntity) || JdbcBatchInsertMode.FALLBACK
-        "can batch for void insertAll"            | Argument.of(Void)           || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
-        "can batch for count-returning insertAll" | Argument.of(Long)           || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        scenario                                          | resultArgument                               || mode
+        "falls back for entity-returning saveAll"          | Argument.listOf(TestEntity)                  || JdbcBatchInsertMode.FALLBACK
+        "can batch for void insertAll"                     | Argument.of(Void)                            || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        "can batch for count-returning insertAll"          | Argument.of(Long)                            || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        "can batch for rxjava count-returning insertAll"   | Argument.of(Single, Argument.of(Long))       || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        "can batch for rxjava void insertAll"              | Argument.of(Completable)                     || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        "can batch for kotlin flow count-returning insertAll" | Argument.of(Flow, Argument.of(Long))       || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
+        "can batch for future count-returning insertAll"   | Argument.of(Future, Argument.of(Long))       || JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS
     }
 
     @Unroll
@@ -212,6 +220,13 @@ class SqlBatchSupportSpec extends Specification {
         "completion stage entity lists"  | false           | false       | Argument.of(CompletionStage, Argument.listOf(TestEntity)) || true
         "optional numeric returns"       | false           | false       | Argument.of(Optional, Argument.of(Long))                  || false
         "publisher numeric returns"      | false           | false       | Argument.of(Publisher, Argument.of(Long))                 || false
+        "rxjava single numeric returns"  | false           | false       | Argument.of(Single, Argument.of(Long))                    || false
+        "rxjava single entity returns"   | false           | false       | Argument.of(Single, Argument.of(TestEntity))              || true
+        "rxjava completable returns"     | false           | false       | Argument.of(Completable)                                  || false
+        "kotlin flow numeric returns"    | false           | false       | Argument.of(Flow, Argument.of(Long))                      || false
+        "kotlin flow entity returns"     | false           | false       | Argument.of(Flow, Argument.of(TestEntity))                || true
+        "future numeric returns"         | false           | false       | Argument.of(Future, Argument.of(Long))                    || false
+        "future entity returns"          | false           | false       | Argument.of(Future, Argument.of(TestEntity))              || true
         "void returns"                   | false           | false       | Argument.of(Void)                                         || false
         "boxed boolean returns"          | false           | false       | Argument.of(Boolean)                                      || false
         "primitive count arrays"         | false           | false       | Argument.of(long[].class)                                 || false
