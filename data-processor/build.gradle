@@ -39,6 +39,7 @@ dependencies {
 	testImplementation projects.micronautDataJdbc
     testImplementation libs.managed.jakarta.data.api
     testImplementation mn.micronaut.sourcegen.annotations
+    testImplementation mn.jackson.annotations
 
     antlr libs.antlr
 }

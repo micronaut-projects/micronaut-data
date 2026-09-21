@@ -43,12 +43,14 @@ import kotlin.coroutines.CoroutineContext
 @EachBean(ReactorReactiveTransactionOperations::class)
 @Singleton
 @Internal
-class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
+class DefaultCoroutineTransactionOperations<C : Any>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun <R> execute(definition: TransactionDefinition,
                                      handler: suspend (CoroutineTransactionStatus<C>) -> R): R {
-        return reactiveTransactionOperations.withTransaction(definition) {
-            mono<R> {
+        // The reactive TX manager cannot carry a `null` result, so it's represented by a sentinel value
+        val result = reactiveTransactionOperations.withTransaction(definition) {
+            mono<Any> {
                 val reactorContext = coroutineContext[ReactorContext.Key]
                 if (reactorContext != null) {
                     val micronautPropagatedContext =
@@ -60,12 +62,13 @@ class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOp
                         )
                         return@mono withContext(newCoroutineContext) {
                             handler(DefaultCoroutineTransactionStatus(it))
-                        }
+                        } ?: NULL_RESULT
                     }
                 }
-                handler(DefaultCoroutineTransactionStatus(it))
+                handler(DefaultCoroutineTransactionStatus(it)) ?: NULL_RESULT
             }
         }.awaitSingle()
+        return (if (result === NULL_RESULT) null else result) as R
     }
 
     override fun findTransactionStatus(coroutineContext: CoroutineContext): CoroutineTransactionStatus<C>? {
@@ -78,4 +81,12 @@ class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOp
         }
         return null
     }
+
+    private companion object {
+        /**
+         * Sentinel representing a `null` value returned by the handler.
+         */
+        private val NULL_RESULT = Any()
+    }
+
 }

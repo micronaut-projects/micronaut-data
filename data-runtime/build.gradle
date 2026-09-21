@@ -32,7 +32,9 @@ dependencies {
 	testImplementation projects.micronautDataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http
+    testImplementation mn.kotlinx.coroutines.core
     testImplementation mn.micronaut.json.core
+    testImplementation mnRxjava3.rxjava3
     testImplementation mnTest.micronaut.test.junit5
 	testImplementation projects.micronautDataTck
 

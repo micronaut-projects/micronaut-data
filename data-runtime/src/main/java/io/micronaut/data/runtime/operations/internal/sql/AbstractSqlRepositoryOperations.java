@@ -28,6 +28,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
@@ -598,11 +599,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
-        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-        if (sqlStoredQuery.getOperationType() == OperationType.INSERT_RETURNING) {
-            return false;
-        }
-        return isSupportsBatchInsert(persistentEntity, sqlStoredQuery.getDialect());
+        return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, sqlStoredQuery);
     }
 
     /**
@@ -613,30 +610,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return true if supported
      */
     protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
-        if (!dialect.allowBatch()) {
-            return false;
-        }
-        return switch (dialect) {
-            case MYSQL, ORACLE -> {
-                if (persistentEntity.hasIdentity()) {
-                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-                    yield !persistentEntity.getIdentity().isGenerated();
-                }
-                yield false;
-            }
-            default -> true;
-        };
+        return SqlBatchSupport.isSupportsBatchInsert(persistentEntity, dialect);
     }
 
     /**
-     * Does supports batch for update queries.
+     * Does support batch for update queries.
      *
      * @param persistentEntity The persistent entity
      * @param sqlStoredQuery   The sqlStoredQuery
      * @return true if supported
      */
     protected boolean isSupportsBatchUpdate(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
-        return sqlStoredQuery.getOperationType() != OperationType.UPDATE_RETURNING;
+        if (sqlStoredQuery.getOperationType() == OperationType.UPDATE_RETURNING) {
+            return false;
+        }
+        if (sqlStoredQuery.getOperationType() != OperationType.UPSERT
+            || !persistentEntity.hasIdentity()
+            || !persistentEntity.getIdentity().isGenerated()) {
+            return true;
+        }
+        // Generic generated-key results don't identify which item in a mixed upsert batch produced each key.
+        return CollectionUtils.isNotEmpty(sqlStoredQuery.getOutParameterBindings());
     }
 
     /**

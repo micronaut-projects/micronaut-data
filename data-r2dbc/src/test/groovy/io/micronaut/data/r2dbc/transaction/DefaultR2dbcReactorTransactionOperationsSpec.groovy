@@ -6,6 +6,7 @@ import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionMetadata
+import io.r2dbc.spi.R2dbcException
 import io.r2dbc.spi.Result
 import io.r2dbc.spi.Statement
 import reactor.core.publisher.Flux
@@ -89,6 +90,44 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         0 * connection.createStatement(_)
         0 * connectionStatus.registerReactiveSynchronization(_)
         noExceptionThrown()
+    }
+
+    void "recognizes priority rollback only from an Oracle R2DBC connection"() {
+        given:
+        def connection = Mock(Connection)
+        def metadata = Mock(ConnectionMetadata)
+        def exception = new R2dbcException("ORA-63302: transaction must be rolled back", "99999", 63302) {}
+
+        when:
+        def result = DefaultR2dbcReactorTransactionOperations.isOraclePriorityRollback(connection, exception)
+
+        then:
+        1 * connection.getMetadata() >> metadata
+        1 * metadata.getDatabaseProductName() >> "Oracle"
+        result
+
+        when:
+        result = DefaultR2dbcReactorTransactionOperations.isOraclePriorityRollback(connection, exception)
+
+        then:
+        1 * connection.getMetadata() >> metadata
+        1 * metadata.getDatabaseProductName() >> "PostgreSQL"
+        !result
+    }
+
+    void "priority rollback detection tolerates a cyclic exception cause chain"() {
+        given:
+        def connection = Mock(Connection)
+        def first = new RuntimeException("first")
+        def second = new RuntimeException("second", first)
+        first.initCause(second)
+
+        when:
+        def result = DefaultR2dbcReactorTransactionOperations.isOraclePriorityRollback(connection, first)
+
+        then:
+        !result
+        0 * connection.getMetadata()
     }
 
     private static List oracleListeners() {

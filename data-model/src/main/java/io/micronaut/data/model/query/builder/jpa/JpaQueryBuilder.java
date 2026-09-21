@@ -85,6 +85,11 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     @Override
     public String getAliasName(PersistentEntity entity) {
+        return getRawAliasName(entity);
+    }
+
+    @Override
+    protected String getRawAliasName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
                 .orElseGet(() -> entity.getDecapitalizedName() + "_");
     }
