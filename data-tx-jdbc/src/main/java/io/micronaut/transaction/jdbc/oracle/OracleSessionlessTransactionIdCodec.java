@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.Experimental;
  * an external string representation suitable for transport propagation.
  *
  * <p>Applications can provide their own bean implementation to apply additional protection, for
- * example signing or encrypting the encoded value before it is exposed over HTTP.</p>
+ * example signing or encrypting the encoded value before it is sent to another process.</p>
  *
  * @since 5.2.0
  */
