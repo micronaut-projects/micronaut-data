@@ -59,6 +59,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getTransactionDefinition(java.lang.String,io.micronaut.core.annotation.AnnotationMetadataProvider)" tabindex="0">getTransactionDefinition(String, AnnotationMetadataProvider)</a></li>
 <li><a href="#getOraclePriority(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getOraclePriority(TransactionDefinition)</a></li>
+<li><a href="#isOraclePriorityRollback(java.lang.Throwable)" tabindex="0">isOraclePriorityRollback(Throwable)</a></li>
+<li><a href="#isOraclePriorityRollback(int,java.lang.String)" tabindex="0">isOraclePriorityRollback(int, String)</a></li>
 <li><a href="#getOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getOracleSessionlessMode(TransactionDefinition)</a></li>
 <li><a href="#validateOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition,boolean)" tabindex="0">validateOracleSessionlessMode(TransactionDefinition, boolean)</a></li>
 </ol>
@@ -117,6 +119,17 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Creates a transaction definition from a given name and annotation metadata provider.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isOraclePriorityRollback(int,java.lang.String)" class="member-name-link">isOraclePriorityRollback</a><wbr>(int&nbsp;errorCode,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Tests an error code and message for an Oracle priority rollback error.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isOraclePriorityRollback(java.lang.Throwable)" class="member-name-link">isOraclePriorityRollback</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;exception)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Tests whether a JDBC exception chain contains an Oracle priority rollback error.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateOracleSessionlessMode(io.micronaut.transaction.TransactionDefinition,boolean)" class="member-name-link">validateOracleSessionlessMode</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  boolean&nbsp;supported)</code></div>
@@ -168,6 +181,38 @@ loadScripts(document, 'script');</script>
 <dd><code>definition</code> - The transaction definition</dd>
 <dt>Returns:</dt>
 <dd>The Oracle transaction priority, or <code>null</code> if none is present</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOraclePriorityRollback(java.lang.Throwable)">
+<h3>isOraclePriorityRollback</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOraclePriorityRollback</span><wbr><span class="parameters">(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;exception)</span></div>
+<div class="block">Tests whether a JDBC exception chain contains an Oracle priority rollback error.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>exception</code> - The exception to inspect</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> if ORA-63300 or ORA-63302 is present in a JDBC exception</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOraclePriorityRollback(int,java.lang.String)">
+<h3>isOraclePriorityRollback</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOraclePriorityRollback</span><wbr><span class="parameters">(int&nbsp;errorCode,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message)</span></div>
+<div class="block">Tests an error code and message for an Oracle priority rollback error.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>errorCode</code> - The vendor error code</dd>
+<dd><code>message</code> - The error message</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> if ORA-63300 or ORA-63302 is present</dd>
 </dl>
 </div>
 </section>

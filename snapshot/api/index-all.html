@@ -20020,6 +20020,26 @@ transaction in the first place.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/SourcePersistentProperty.html#isOptional()" class="member-name-link">isOptional()</a> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/TransactionUtil.html#isOraclePriorityRollback(int,java.lang.String)" class="member-name-link">isOraclePriorityRollback(int, String)</a> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></dt>
+<dd>
+<div class="block">Tests an error code and message for an Oracle priority rollback error.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/TransactionUtil.html#isOraclePriorityRollback(java.lang.Throwable)" class="member-name-link">isOraclePriorityRollback(Throwable)</a> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></dt>
+<dd>
+<div class="block">Tests whether a JDBC exception chain contains an Oracle priority rollback error.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#isOracleTransactionPriorityRollback(T,java.lang.Throwable)" class="member-name-link">isOracleTransactionPriorityRollback(T, Throwable)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#isOracleTransactionPriorityRollback(io.micronaut.transaction.impl.DefaultTransactionStatus,java.lang.Throwable)" class="member-name-link">isOracleTransactionPriorityRollback(DefaultTransactionStatus, Throwable)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html#isOracleTransactionPriorityRollback(io.micronaut.transaction.support.AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus,java.lang.Throwable)" class="member-name-link">isOracleTransactionPriorityRollback(AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus, Throwable)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a></dt>
+<dd>
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current reactive transaction.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity(PersistentEntity)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
 <div class="block">Returns whether the specified entity asserts ownership over this
@@ -24589,6 +24609,15 @@ an external string representation suitable for transport propagation.</div>
 <dd>
 <div class="block">Sessionless transaction mode for Oracle JDBC transactions.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html" class="type-name-link" title="class in io.micronaut.transaction.exceptions">OracleTransactionPriorityException</a> - Exception Class in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
+<dd>
+<div class="block">Thrown when Oracle automatically rolls back a transaction because it was
+blocking a transaction with a higher priority.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">OracleTransactionPriorityException(String)</a> - Constructor for exception class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html" title="class in io.micronaut.transaction.exceptions">OracleTransactionPriorityException</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">OracleTransactionPriorityException(String, Throwable)</a> - Constructor for exception class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html" title="class in io.micronaut.transaction.exceptions">OracleTransactionPriorityException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)" class="member-name-link">OracleVectorFactory(AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)</a> - Constructor for class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorFactory</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#oracleVectorToByteVectorConverter(java.util.function.Function)" class="member-name-link">oracleVectorToByteVectorConverter(Function)</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>

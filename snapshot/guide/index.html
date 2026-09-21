@@ -6791,9 +6791,36 @@ Non-Oracle databases ignore this property.</p>
 <td class="content">
 Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
 Older Oracle versions that reject <code>txn_priority</code> continue without applying priority.
+For the database-side wait targets and rollback mode, see the <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/admin/managing-transactions.html">Oracle transaction management documentation</a> and the <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/refrn/PRIORITY_TXNS_MODE.html"><code>PRIORITY_TXNS_MODE</code> reference</a>.
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>If Oracle automatically rolls back a lower-priority transaction that is blocking a higher-priority transaction, it reports ORA-63300 while the blocking statement is executing. Subsequent statements can report ORA-63302 until the session acknowledges the rollback.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data JDBC and R2DBC transaction operations acknowledge the rollback and expose the failure as <a href="../api/io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html">OracleTransactionPriorityException</a>, so application code does not need to inspect Oracle error codes. Hibernate/JPA and Hibernate Reactive transaction managers continue to expose the underlying provider exception. Retry only after re-reading the current state, and make the operation idempotent when a retry is appropriate.</p>
+</div>
+<div class="paragraph">
+<p>The transaction manager still performs the normal rollback and cleanup. The specific exception only makes the reason visible at the transaction boundary.</p>
+</div>
+<div class="paragraph">
+<p>For example, an application can handle this contention separately from other transaction failures:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
+
+try {
+    checkoutService.checkout(accountId);
+} catch (OracleTransactionPriorityException e) {
+    // The transaction is already rolled back. Re-read the account before retrying.
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The exception is a <code>TransactionException</code>, so existing transaction-exception handlers continue to apply. Only code that catches <code>DataAccessException</code> specifically needs to add a handler for this transaction-boundary failure.</p>
 </div>
 
 <h2 id="recoverableTransactions"><a class="anchor" href="#recoverableTransactions"></a>3.7.3.2 Oracle Transaction Recovery</h2>
@@ -12539,7 +12566,8 @@ public record ETagBook(
 </div>
 <div class="paragraph">
 <p>When <code>function</code> is omitted on <code>@GeneratedETag</code>, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to <code>SYS_ROW_ETAG</code>; for other dialects you must provide an explicit function value.
-The <code>function</code> value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.</p>
+The <code>function</code> value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.
+Micronaut Data supplies those columns in a deterministic entity traversal order. The ETag function should not depend on argument order. Oracle&#8217;s <code>SYS_ROW_ETAG</code> treats its column arguments as an unordered set, so reordering mapped properties does not change the ETag when the selected columns remain the same. Changing the selected columns or their mappings does change the ETag inputs.</p>
 </div>
 
 <h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>6.3.3 Pessimistic Locking</h2>

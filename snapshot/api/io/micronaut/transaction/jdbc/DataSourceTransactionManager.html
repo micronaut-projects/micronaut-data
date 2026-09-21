@@ -73,6 +73,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#doBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doBegin(DefaultTransactionStatus)</a></li>
 <li><a href="#doCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doCommit(DefaultTransactionStatus)</a></li>
 <li><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doRollback(DefaultTransactionStatus)</a></li>
+<li><a href="#isOracleTransactionPriorityRollback(io.micronaut.transaction.impl.DefaultTransactionStatus,java.lang.Throwable)" tabindex="0">isOracleTransactionPriorityRollback(DefaultTransactionStatus, Throwable)</a></li>
 <li><a href="#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doNestedBegin(DefaultTransactionStatus)</a></li>
 <li><a href="#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doNestedCommit(DefaultTransactionStatus)</a></li>
 <li><a href="#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" tabindex="0">doNestedRollback(DefaultTransactionStatus)</a></li>
@@ -214,23 +215,30 @@ definition.</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnforceReadOnly()" class="member-name-link">isEnforceReadOnly</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareTransactionalConnection(java.sql.Connection,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">prepareTransactionalConnection</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&nbsp;con,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOracleTransactionPriorityRollback(io.micronaut.transaction.impl.DefaultTransactionStatus,java.lang.Throwable)" class="member-name-link">isOracleTransactionPriorityRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareTransactionalConnection(java.sql.Connection,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">prepareTransactionalConnection</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&nbsp;con,
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepare the transactional <code>Connection</code> right after transaction begin.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnforceReadOnly(boolean)" class="member-name-link">setEnforceReadOnly</a><wbr>(boolean&nbsp;enforceReadOnly)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnforceReadOnly(boolean)" class="member-name-link">setEnforceReadOnly</a><wbr>(boolean&nbsp;enforceReadOnly)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Specify whether to enforce the read-only nature of a transaction
 (as indicated by <a href="../TransactionDefinition.html#isReadOnly()"><code>TransactionDefinition.isReadOnly()</code></a>)
 through an explicit statement on the transactional connection:
 "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">supportsSessionlessTransactions</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSessionlessTransactions(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">supportsSessionlessTransactions</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -472,6 +480,28 @@ will be performed on the transaction object contained in the passed-in status.</
 <dd><code><a href="../support/AbstractTransactionOperations.html#doRollback(T)">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>status</code> - The transaction</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOracleTransactionPriorityRollback(io.micronaut.transaction.impl.DefaultTransactionStatus,java.lang.Throwable)">
+<h3>isOracleTransactionPriorityRollback</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOracleTransactionPriorityRollback</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;status,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#isOracleTransactionPriorityRollback(T,java.lang.Throwable)">AbstractTransactionOperations</a></code></span></div>
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current transaction. Vendor-specific transaction managers can override this
+method after validating their connection.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractTransactionOperations.html#isOracleTransactionPriorityRollback(T,java.lang.Throwable)">isOracleTransactionPriorityRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>status</code> - The transaction</dd>
+<dd><code>throwable</code> - The transaction error</dd>
+<dt>Returns:</dt>
+<dd>Whether the error represents an Oracle priority rollback</dd>
 </dl>
 </div>
 </section>

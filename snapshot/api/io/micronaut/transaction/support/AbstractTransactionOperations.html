@@ -88,6 +88,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" tabindex="0">determineTimeout(TransactionDefinition)</a></li>
 <li><a href="#doSuspend(T)" tabindex="0">doSuspend(T)</a></li>
 <li><a href="#doResume(T)" tabindex="0">doResume(T)</a></li>
+<li><a href="#isOracleTransactionPriorityRollback(T,java.lang.Throwable)" tabindex="0">isOracleTransactionPriorityRollback(T, Throwable)</a></li>
 <li><a href="#commit(io.micronaut.transaction.TransactionStatus)" tabindex="0">commit(TransactionStatus)</a></li>
 <li><a href="#rollback(io.micronaut.transaction.TransactionStatus)" tabindex="0">rollback(TransactionStatus)</a></li>
 </ol>
@@ -273,15 +274,22 @@ the specified propagation behavior.</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if the connection exists.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#managesTransaction(io.micronaut.transaction.TransactionStatus)" class="member-name-link">managesTransaction</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOracleTransactionPriorityRollback(T,java.lang.Throwable)" class="member-name-link">isOracleTransactionPriorityRollback</a><wbr>(@NonNull <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#managesTransaction(io.micronaut.transaction.TransactionStatus)" class="member-name-link">managesTransaction</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Determine whether the given transaction status refers to a transaction
 managed by this <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform a rollback of the given transaction.</div>
 </div>
 </div>
@@ -654,6 +662,25 @@ transaction definition doesn't specify a non-default value.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>transaction</code> - The transaction</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOracleTransactionPriorityRollback(T,java.lang.Throwable)">
+<h3 id="isOracleTransactionPriorityRollback(io.micronaut.transaction.impl.InternalTransaction,java.lang.Throwable)">isOracleTransactionPriorityRollback</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOracleTransactionPriorityRollback</span><wbr><span class="parameters">(@NonNull <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;throwable)</span></div>
+<div class="block">Determines whether an error represents an Oracle priority rollback for the
+current transaction. Vendor-specific transaction managers can override this
+method after validating their connection.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>transaction</code> - The transaction</dd>
+<dd><code>throwable</code> - The transaction error</dd>
+<dt>Returns:</dt>
+<dd>Whether the error represents an Oracle priority rollback</dd>
 </dl>
 </div>
 </section>

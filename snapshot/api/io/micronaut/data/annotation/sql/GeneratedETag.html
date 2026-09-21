@@ -86,6 +86,10 @@ annotation processing, the <code>@GeneratedETag</code> property is synthesized a
 property. Its read value is computed by applying a SQL function over a set of properties that participate in the ETag.
 Those properties are either explicitly marked with <a href="ETagValue.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>ETagValue</code></a> or implicitly included when the owning
 entity is annotated with <a href="ETaggable.html" title="annotation interface in io.micronaut.data.annotation.sql"><code>ETaggable</code></a>.
+Micronaut Data supplies the resolved input columns in a deterministic entity traversal order. ETag functions
+should not depend on the order of their arguments. For example, Oracle's <code>SYS_ROW_ETAG</code> treats its column
+arguments as an unordered set, so reordering mapped properties does not change the ETag when the selected columns
+remain the same.
 
 The actual mapping to <code>@Version</code>, <code>@GeneratedValue</code> and <code>@ColumnTransformer</code> is performed
 by the MappedEntityVisitor in the data-processor module during annotation processing.</div>
@@ -178,6 +182,7 @@ annotated by <a href="ETagValue.html" title="annotation interface in io.micronau
 The value should be a function name, which may be schema-qualified, such as <code>SYS_ROW_ETAG</code>
 or <code>MY_SCHEMA.MY_ETAG_FUNCTION</code>. Do not include parentheses, argument placeholders, or column
 references; Micronaut Data supplies the resolved ETag input columns.
+The function should produce the same ETag regardless of the order in which those columns are supplied.
 <p>
 If not specified, the function may be resolved from the SQL dialect at query-build time.
 Currently, Oracle defaults to <code>SYS_ROW_ETAG</code>; other dialects require an explicit function.</div>

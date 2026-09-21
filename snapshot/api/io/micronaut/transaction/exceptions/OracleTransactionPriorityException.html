@@ -54,24 +54,12 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
-<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
-<li><a href="#field-detail" tabindex="0">Field Details</a>
-<ol class="toc-list">
-<li><a href="#ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK" tabindex="0">ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK</a></li>
-<li><a href="#ORA_TRANSACTION_MUST_ROLLBACK" tabindex="0">ORA_TRANSACTION_MUST_ROLLBACK</a></li>
-</ol>
-</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(java.lang.String)" tabindex="0">OracleTransactionPriorityException(String)</a></li>
 <li><a href="#%3Cinit%3E(java.lang.String,java.lang.Throwable)" tabindex="0">OracleTransactionPriorityException(String, Throwable)</a></li>
-</ol>
-</li>
-<li><a href="#method-detail" tabindex="0">Method Details</a>
-<ol class="toc-list">
-<li><a href="#isPriorityRollback(java.lang.Throwable)" tabindex="0">isPriorityRollback(Throwable)</a></li>
 </ol>
 </li>
 </ol>
@@ -86,9 +74,7 @@ loadScripts(document, 'script');</script>
 <div class="inheritance"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">java.lang.Exception</a>
 <div class="inheritance"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">java.lang.RuntimeException</a>
 <div class="inheritance"><a href="TransactionException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionException</a>
-<div class="inheritance"><a href="TransactionSystemException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionSystemException</a>
 <div class="inheritance">io.micronaut.transaction.exceptions.OracleTransactionPriorityException</div>
-</div>
 </div>
 </div>
 </div>
@@ -102,7 +88,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">OracleTransactionPriorityException</span>
-<span class="extends-implements">extends <a href="TransactionSystemException.html" title="class in io.micronaut.transaction.exceptions">TransactionSystemException</a></span></div>
+<span class="extends-implements">extends <a href="TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
 <div class="block">Thrown when Oracle automatically rolls back a transaction because it was
 blocking a transaction with a higher priority.
 
@@ -123,28 +109,6 @@ statements until the session acknowledges the rollback.</p></div>
 </section>
 <section class="summary">
 <ul class="summary-list">
-<!-- =========== FIELD SUMMARY =========== -->
-<li>
-<section class="field-summary" id="field-summary">
-<h2>Field Summary</h2>
-<div class="caption"><span>Fields</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Field</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>static final int</code></div>
-<div class="col-second even-row-color"><code><a href="#ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK" class="member-name-link">ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Oracle automatically rolled back a transaction blocking higher-priority work.</div>
-</div>
-<div class="col-first odd-row-color"><code>static final int</code></div>
-<div class="col-second odd-row-color"><code><a href="#ORA_TRANSACTION_MUST_ROLLBACK" class="member-name-link">ORA_TRANSACTION_MUST_ROLLBACK</a></code></div>
-<div class="col-last odd-row-color">
-<div class="block">Oracle requires the session to acknowledge a priority rollback.</div>
-</div>
-</div>
-</section>
-</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -165,24 +129,6 @@ statements until the session acknowledges the rollback.</p></div>
 <li>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
-<div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
-<div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier and Type</div>
-<div class="table-header col-second">Method</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isPriorityRollback(java.lang.Throwable)" class="member-name-link">isPriorityRollback</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;exception)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Tests whether an exception contains an Oracle priority-rollback error.</div>
-</div>
-</div>
-</div>
-</div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.transaction.exceptions.TransactionSystemException">Methods inherited from class&nbsp;<a href="TransactionSystemException.html#method-summary" title="class in io.micronaut.transaction.exceptions">TransactionSystemException</a></h3>
-<code><a href="TransactionSystemException.html#getApplicationException()" title="getApplicationException()">getApplicationException</a>, <a href="TransactionSystemException.html#getOriginalException()" title="getOriginalException()">getOriginalException</a>, <a href="TransactionSystemException.html#initApplicationException(java.lang.Throwable)" title="initApplicationException(Throwable)">initApplicationException</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Throwable">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#method-summary" title="class or interface in java.lang" class="external-link">Throwable</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#addSuppressed(java.lang.Throwable)" title="class or interface in java.lang" class="external-link">addSuppressed</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#fillInStackTrace()" title="class or interface in java.lang" class="external-link">fillInStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#getCause()" title="class or interface in java.lang" class="external-link">getCause</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#getLocalizedMessage()" title="class or interface in java.lang" class="external-link">getLocalizedMessage</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#getMessage()" title="class or interface in java.lang" class="external-link">getMessage</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#getStackTrace()" title="class or interface in java.lang" class="external-link">getStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#getSuppressed()" title="class or interface in java.lang" class="external-link">getSuppressed</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#initCause(java.lang.Throwable)" title="class or interface in java.lang" class="external-link">initCause</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#printStackTrace()" title="class or interface in java.lang" class="external-link">printStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#printStackTrace(java.io.PrintStream)" title="class or interface in java.lang" class="external-link">printStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#printStackTrace(java.io.PrintWriter)" title="class or interface in java.lang" class="external-link">printStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#setStackTrace(java.lang.StackTraceElement%5B%5D)" title="class or interface in java.lang" class="external-link">setStackTrace</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html#toString()" title="class or interface in java.lang" class="external-link">toString</a></code></div>
@@ -195,48 +141,6 @@ statements until the session acknowledges the rollback.</p></div>
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ============ FIELD DETAIL =========== -->
-<li>
-<section class="field-details" id="field-detail">
-<h2>Field Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK">
-<h3>ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK</span></div>
-<div class="block">Oracle automatically rolled back a transaction blocking higher-priority work.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list">
-<li><a href="../../../../constant-values.html#io.micronaut.transaction.exceptions.OracleTransactionPriorityException.ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="ORA_TRANSACTION_MUST_ROLLBACK">
-<h3>ORA_TRANSACTION_MUST_ROLLBACK</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">ORA_TRANSACTION_MUST_ROLLBACK</span></div>
-<div class="block">Oracle requires the session to acknowledge a priority rollback.</div>
-<dl class="notes">
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list">
-<li><a href="../../../../constant-values.html#io.micronaut.transaction.exceptions.OracleTransactionPriorityException.ORA_TRANSACTION_MUST_ROLLBACK">Constant Field Values</a></li>
-</ul>
-</dd>
-</dl>
-</div>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -264,31 +168,6 @@ statements until the session acknowledges the rollback.</p></div>
 <dt>Parameters:</dt>
 <dd><code>message</code> - The detail message</dd>
 <dd><code>cause</code> - The Oracle exception that caused the transaction rollback</dd>
-</dl>
-</div>
-</section>
-</li>
-</ul>
-</section>
-</li>
-<!-- ============ METHOD DETAIL ========== -->
-<li>
-<section class="method-details" id="method-detail">
-<h2>Method Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="isPriorityRollback(java.lang.Throwable)">
-<h3>isPriorityRollback</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isPriorityRollback</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html" title="class or interface in java.lang" class="external-link">Throwable</a>&nbsp;exception)</span></div>
-<div class="block">Tests whether an exception contains an Oracle priority-rollback error.
-Database drivers can expose the error as a nested cause or as a chained
-<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link"><code>SQLException</code></a>, so both forms are checked.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>exception</code> - The exception to inspect</dd>
-<dt>Returns:</dt>
-<dd><code>true</code> if ORA-63300 or ORA-63302 is present</dd>
 </dl>
 </div>
 </section>
