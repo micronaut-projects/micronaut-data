@@ -14,7 +14,7 @@ from example.Book import Book
 class BookRepository(ReactiveStreamsCrudRepository[Book, int]):
 
     @Join("author")
-    def findById(self, id: int | None) -> Mono[Book]: ...  # <2>
+    def findById(self, id: int) -> Mono[Book]: ...  # <2>
 
     @Join("author")
     def findAll(self) -> Flux[Book]: ...
@@ -22,10 +22,10 @@ class BookRepository(ReactiveStreamsCrudRepository[Book, int]):
     # tag::mandatory[]
     @Transactional("MANDATORY")
     def save(self, entity: Book) -> Publisher[Book]: ...
-
-    @Transactional("MANDATORY")
-    def saveAll(self, entities: list[Book]) -> Publisher[Book]: ...
     # end::mandatory[]
+    # TODO(python): overriding the inherited generic `<S extends Book> Publisher<S> saveAll(Iterable<S>)` is not
+    # possible yet: a `list[Book]` hint clashes with the inherited erasure and a `[S: Book]` type parameter is
+    # rejected by the Micronaut Data visitor (`Unsupported return type for a save method: python.S`), see DISABLED_TESTS.md
 
     # tag::procedure[]
     @Procedure

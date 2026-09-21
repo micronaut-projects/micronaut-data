@@ -8,9 +8,11 @@ from micronaut.data.repository.jpa.criteria import DeleteSpecification, Predicat
 from example.Person import Person
 
 
+# TODO(python): the specification methods are declared on the repository instead of extending JpaSpecificationExecutor:
+# its same-arity overloads (PredicateSpecification / QuerySpecification) are ambiguous for a Python lambda, see DISABLED_TESTS.md
 # tag::repository[]
 @JdbcRepository(dialect=Dialect.H2)
-class PersonRepository(CrudRepository[Person, int]):  # TODO(python): JpaSpecificationExecutor's generic methods cannot be bridged yet
+class PersonRepository(CrudRepository[Person, int]):
     # end::repository[]
 
     # tag::find[]

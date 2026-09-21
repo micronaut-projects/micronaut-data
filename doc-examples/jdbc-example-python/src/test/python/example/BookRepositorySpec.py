@@ -5,7 +5,7 @@ from java.lang import String
 from micronaut.context import BeanContext
 from micronaut.data.model import CursoredPageable, Pageable, Sort
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, Test
 
 from example.Book import Book
 from example.BookRepository import BookRepository
@@ -146,7 +146,6 @@ class BookRepositorySpec:
         assert self.bookRepository.findAll().iterator().hasNext()
 
     @Test
-    @Disabled("TODO(python): the generated equals/hashCode of a dataclass recurse over a bidirectional association, see DISABLED_TESTS.md")
     def testOneToManyCustomQuery(self):
         self.bookRepository.save(Book("Dummy Book", 20, [Review("Anonymous", "Lorem Ipsum"), Review("Member", "Interesting")]))
         books = self.bookRepository.searchBooksByTitle("Dummy Book")

@@ -6,7 +6,7 @@ from micronaut.context import BeanContext
 from micronaut.context.annotation import Property
 from micronaut.data.model import Pageable
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, Test
 
 from example.AbstractBookRepository import AbstractBookRepository
 from example.Book import Book
@@ -16,7 +16,6 @@ from example.BookRepository import BookRepository
 @MicronautTest
 @Property(name="datasources.default.name", value="mydb")
 @Property(name="jpa.default.properties.hibernate.hbm2ddl.auto", value="create-drop")
-@Disabled("TODO(python): Hibernate cannot map Python entities, the JPA annotations are not emitted on the generated class, see DISABLED_TESTS.md")
 class BookRepositorySpec:
 
     # tag::inject[]

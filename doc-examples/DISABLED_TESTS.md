@@ -15,35 +15,31 @@ The Python tests only run with `./gradlew pythonCheck -Ppython-ci` (or `-p doc-e
 - Python has no method overloading: Java overloads of the same repository method are ported with distinct names
   (`findAllByPagesGreaterThan(pageCount, pageable)`, `findAll(pageable: CursoredPageable)`, `store(title, pages)`)
   as the Kotlin and Groovy examples do.
-- Java classes are imported (`from micronaut.data.model import Pageable`, `from java.util import Optional`); packages
-  under `io.` other than `io.micronaut` (`io.reactivex.rxjava3.core`) need the `try: from io.reactivex... except ImportError:
-  from reactivex...` form until the compiler resolves them at runtime. `java.type(...)` is only used where the imported
-  form does not work (see "java.type usages" below).
+- Java classes are imported (`from micronaut.data.model import Pageable`, `from java.util import Optional`,
+  `from io.reactivex.rxjava3.core import Maybe, Single`); no `java.type(...)` is used (see "java.type usages" below).
 - Java members whose names are Python keywords are called through the trailing-underscore alias (`Pageable.from_`,
   `criteria_builder.and_` / `or_` / `not_`, `root.get("id").in_`); the criteria specification combinators are plain
   Python functions. Logging uses the `logging` module (`LOG = logging.getLogger(__name__)`).
+- JPA entities (`hibernate-example-python`, `hibernate-reactive-example-python`) are plain `@Entity` dataclasses; the
+  example builds pass `-Amicronaut.introspection.allowReflection=example.*` to the Python compiler
+  (`micronautBuild.python.compilerArgs`) so that the generated classes carry the annotations Hibernate reads reflectively.
+- The Azure Cosmos tests start the Cosmos emulator (Testcontainers) through the Java `support.CosmosEmulatorConfigurer`
+  (`@ContextConfigurer`), the Python counterpart of the `TestPropertyProvider` base class of the Java tests.
 
 ## Active `@Disabled` Tests
 
 | Test | Reason |
 | --- | --- |
-| `hibernate-example-python`: `BookRepositorySpec`, `ProductRepositorySpec`, `UserRepositorySpec` | Hibernate reads the JPA annotations reflectively from the Java class; the Java stub generated for a Python dataclass does not carry `@Entity`/`@Id`/... (`Unknown entity type 'example.Book' ('Book' is not annotated '@Entity')`). The sources compile and the repository queries are generated. |
-| `hibernate-reactive-example-python`: `BookRepositorySpec` | Same as above. |
-| `jdbc-example-python`: `BookRepositorySpec.testOneToManyCustomQuery` | The generated `equals`/`hashCode` of a Python dataclass include every property, so a bidirectional association (`Book.reviews` <-> `Review.book`) recurses (`StackOverflowError`) when Micronaut Data tracks the cascaded entities in a `HashSet`. |
-| `jdbc-example-python`: `UserRepositorySpec` | A Python method overriding an inherited Java interface method with the same signature (`deleteById(Integer)` with a custom `@Query`) is dropped from the generated bean definition; the inherited method is used instead. `SaleRepository.findById` was renamed to `getById` for the same reason. |
-| `mongo-example-python`: `SaleRepositorySpec` | `@MappedProperty(converter=...)` on a Python attribute makes the compiler overflow (`MappedPropertyMapper` re-enters the class element registry while the class element is being built); the member is commented out in `Sale.py`. Same for `Book.itemPrice` in `azure-cosmos-example-python`. |
-| `r2dbc-example-python`: `BookControllerTest` | The Reactor transaction context is not propagated into the publishers returned by Python lambdas inside `operations.withTransaction(...)`: the `@Transactional(MANDATORY)` `BookRepository.save` fails with `NoTransactionException`. Reactive return values reach Python as plain `Publisher` objects, wrap them with `Mono.from_(...)` / `Flux.from_(...)` (see `UpsertTest`). |
-| `azure-cosmos-example-python`: `BookRepositorySpec`, `PersonRepositorySpec` | Not a Python compiler gap: not verified locally, the tests need the Azure Cosmos emulator (Testcontainers). |
-| `jdbc-example-python`, `mongo-example-python`: `PersonRepositorySpec.testFind` (also affects the class-disabled `azure-cosmos-example-python` `PersonRepositorySpec.testFind` and `hibernate-example-python` `ProductRepositorySpec.testFindByNameSpecification`) | Keyword alias on a foreign object: the trailing-underscore alias (`criteria_builder.and_(...)`, `or_`, `not_`, `root.get("id").in_(...)`) is only rewritten for imported Java classes and `java.type` names, not for a lambda parameter (`AttributeError: foreign object has no attribute 'and_'`). The specification combinators keep the alias form so that the samples read as intended. |
+| `jdbc-example-python`, `mongo-example-python`, `azure-cosmos-example-python`: `PersonRepositorySpec.testDelete`, `PersonRepositorySpec.testUpdate` | A Python lambda passed to `deleteAll(spec)` / `updateAll(spec)` is ambiguous between the inherited `CrudRepository.deleteAll(Iterable)` / `updateAll(Iterable)` overload and the `PredicateSpecification` / `UpdateSpecification` one (`TypeError: invalid instantiation of foreign object`): the runtime only selects functional-interface overloads by arity for the `java.util.function` interfaces, and `Iterable` counts as a functional interface for the host interop. `PythonInterop.fn(PredicateSpecification, spec)` works but is not what the samples should show. `findOne`, `findAll`, `count` (no same-arity overload) work. |
 
 ## Adapted Snippet Targets
 
 | Target | Adaptation |
 | --- | --- |
-| `PersonRepository` (jdbc, mongo, cosmos), `ProductRepository` (hibernate), `FamilyRepository` (cosmos) | `JpaSpecificationExecutor` cannot be implemented by a Python class: the generic methods (`<R> R findOne(CriteriaQueryBuilder<R>)`) are not bridged (`is not abstract and does not override abstract method`). The specification methods are declared on the repository (Micronaut Data matches them by parameter type), `Specifications` is a set of module level functions. |
-| `Child` (cosmos) | Dataclass inheritance (`Child extends GenderAware`) is not supported by the stub generator (`no suitable constructor found for GenderAware()`); the `gender` attribute is declared on `Child`. |
+| `PersonRepository` (jdbc, mongo, cosmos), `ProductRepository` (hibernate), `FamilyRepository` (cosmos) | A Python repository extending `JpaSpecificationExecutor` compiles now, but every call passing a lambda is ambiguous between its same-arity overloads (`findOne(PredicateSpecification)` / `findOne(QuerySpecification)`, same error as above), so the specification methods are declared on the repository (Micronaut Data matches them by parameter type) and `Specifications` is a set of module level functions. |
+| `BookRepository.saveAll` (r2dbc) | Overriding the inherited generic `<S extends Book> Publisher<S> saveAll(Iterable<S>)` is not possible: a `list[Book]` hint generates `Publisher<Book> saveAll(Iterable<Book>)` (`name clash: ... have the same erasure, yet neither overrides the other`) and the PEP 695 form `def saveAll[S: Book](self, entities: list[S]) -> Publisher[S]` is rejected by the Micronaut Data visitor (`Unsupported return type for a save method: python.S`). Only `save` carries the `@Transactional("MANDATORY")` in the Python sample. |
+| `UserRepository.listAll` / `queryAll` (hibernate) | A method body consisting of a docstring followed by `...` is not treated as a declaration placeholder: the generated stub bridges to the Python method, which returns `None` (`AttributeError: 'NoneType' object has no attribute 'iterator'`). The Javadoc of the Java example is a `#` comment in the Python sample. |
 | `PersonRepository.typesafe` tag (jdbc) | Java only (static metamodel), like the Kotlin and Groovy examples. |
-| `ContactView`, `AddressSubView`, `StudentView`, `StudentScheduleSubView`, `TeacherSubView` (jdbc, Oracle JSON views) | Not ported: `@JsonView(entity=Contact)` referencing a Python entity fails in the JSON view visitor (`Json View property id doesn't exist in the defined entity class Contact`); the Kotlin and Groovy examples do not have them either. |
 
 ## `java.type` usages
 

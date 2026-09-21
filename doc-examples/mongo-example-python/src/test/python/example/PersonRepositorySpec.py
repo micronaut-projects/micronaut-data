@@ -25,7 +25,6 @@ class PersonRepositorySpec:
         self.personRepository.deleteAll()
 
     @Test
-    @Disabled("TODO(python): keyword alias on foreign object: `criteria_builder.and_`/`or_`/`not_` are not resolved on a lambda parameter, see DISABLED_TESTS.md")
     def testFind(self):
         # tag::find[]
         denis = self.personRepository.findOne(name_equals("Denis")).orElse(None)
@@ -46,6 +45,7 @@ class PersonRepositorySpec:
         assert len(people) == 2
 
     @Test
+    @Disabled("TODO(python): a Python lambda passed to deleteAll/updateAll is ambiguous between the inherited Iterable overload and the specification overload (TypeError: invalid instantiation of foreign object), see DISABLED_TESTS.md")
     def testDelete(self):
         all = self.personRepository.findAll(None)
         assert len(all) == 2
@@ -60,6 +60,7 @@ class PersonRepositorySpec:
         assert len(all) == 1
 
     @Test
+    @Disabled("TODO(python): a Python lambda passed to deleteAll/updateAll is ambiguous between the inherited Iterable overload and the specification overload (TypeError: invalid instantiation of foreign object), see DISABLED_TESTS.md")
     def testUpdate(self):
         all = self.personRepository.findAll(None)
         assert len(all) == 2

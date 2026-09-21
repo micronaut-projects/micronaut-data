@@ -13,7 +13,7 @@ class SaleRepository(CrudRepository[Sale, int]):
 
     @Join("product")
     @Join("product.manufacturer")
-    def getById(self, id: int) -> Optional[Sale]: ...  # TODO(python): overriding the inherited findById(Integer) drops the method
+    def findById(self, id: int) -> Optional[Sale]: ...
 
     @Join("product")
     @Join("product.manufacturer")

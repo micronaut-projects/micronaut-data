@@ -28,7 +28,7 @@ class SaleRepositorySpec:
         assert sale.id is not None
         assert sale.quantity.amount == 1
 
-        sale = self.saleRepository.getById(sale.id).orElse(sale)
+        sale = self.saleRepository.findById(sale.id).orElse(sale)
         assert sale is not None
         assert sale.quantity.amount == 1
         assert self.saleRepository.findByQuantity(sale.quantity).isPresent()

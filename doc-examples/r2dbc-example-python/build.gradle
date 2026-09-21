@@ -25,6 +25,7 @@ dependencies {
     runtimeOnly mnR2dbc.r2dbc.postgresql
     runtimeOnly mnSql.postgresql
     runtimeOnly mn.snakeyaml
+    runtimeOnly mn.micronaut.http.server.netty
 
     testImplementation mn.micronaut.http.client
 }

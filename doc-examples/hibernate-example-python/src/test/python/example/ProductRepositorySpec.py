@@ -3,7 +3,7 @@ from typing import Annotated
 from jakarta.inject import Inject
 from java.util.concurrent import TimeUnit
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import BeforeEach, Disabled, Test
+from org.junit.jupiter.api import BeforeEach, Test
 
 from example.ManufacturerRepository import ManufacturerRepository
 from example.Product import Product
@@ -12,7 +12,6 @@ from example.ProductRepository import ProductRepository
 
 
 @MicronautTest
-@Disabled("TODO(python): Hibernate cannot map Python entities, the JPA annotations are not emitted on the generated class, see DISABLED_TESTS.md")
 class ProductRepositorySpec:
 
     productRepository: Annotated[ProductRepository, Inject]

@@ -2,14 +2,13 @@ from typing import Annotated
 
 from jakarta.inject import Inject
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import Disabled, Test
+from org.junit.jupiter.api import Test
 
 from example.User import User
 from example.UserRepository import UserRepository
 
 
 @MicronautTest
-@Disabled("TODO(python): a Python override of the inherited deleteById(Integer) is dropped from the bean definition, see DISABLED_TESTS.md")
 class UserRepositorySpec:
 
     userRepository: Annotated[UserRepository, Inject]

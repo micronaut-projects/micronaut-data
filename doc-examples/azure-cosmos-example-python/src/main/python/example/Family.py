@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Annotated
 
 from java.util import Date
-from micronaut.data.annotation import Id, MappedEntity, Relation, Transient
+from micronaut.data.annotation import Id, MappedEntity, Relation
 from micronaut.data.cosmos.annotation import ETag, PartitionKey
 
 from example.Address import Address
@@ -25,4 +25,3 @@ class Family:
     # tag::locking[]
     documentVersion: Annotated[str | None, ETag] = None
     # end::locking[]
-    comment: Annotated[str | None, Transient] = None

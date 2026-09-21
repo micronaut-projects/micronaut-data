@@ -1,3 +1,4 @@
+from io.reactivex.rxjava3.core import Maybe, Single
 from jakarta.transaction import Transactional
 from java.util.concurrent import CompletableFuture
 from micronaut.data.annotation import Join, Repository
@@ -8,18 +9,15 @@ from micronaut.data.repository.jpa.criteria import QuerySpecification
 
 from example.Product import Product
 
-try:
-    from io.reactivex.rxjava3.core import Maybe, Single
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from reactivex.rxjava3.core import Maybe, Single
 
-
+# TODO(python): the specification methods are declared on the repository instead of extending JpaSpecificationExecutor:
+# its same-arity overloads (PredicateSpecification / QuerySpecification) are ambiguous for a Python lambda, see DISABLED_TESTS.md
 # tag::join[]
 # tag::async[]
 # tag::specifications[]
 # tag::procedure[]
 @Repository
-class ProductRepository(CrudRepository[Product, int]):  # TODO(python): JpaSpecificationExecutor's generic methods cannot be bridged yet
+class ProductRepository(CrudRepository[Product, int]):
     # end::join[]
     # end::async[]
     # end::specifications[]

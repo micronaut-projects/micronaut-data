@@ -9,9 +9,11 @@ from org.bson.types import ObjectId
 from example.Person import Person
 
 
+# TODO(python): the specification methods are declared on the repository instead of extending JpaSpecificationExecutor:
+# its same-arity overloads (PredicateSpecification / QuerySpecification) are ambiguous for a Python lambda, see DISABLED_TESTS.md
 # tag::repository[]
 @MongoRepository
-class PersonRepository(CrudRepository[Person, ObjectId]):  # TODO(python): JpaSpecificationExecutor's generic methods cannot be bridged yet
+class PersonRepository(CrudRepository[Person, ObjectId]):
     # end::repository[]
 
     # tag::find[]

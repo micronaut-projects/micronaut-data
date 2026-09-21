@@ -18,7 +18,7 @@ class SaleRepository(CrudRepository[Sale, ObjectId]):
 
     @Join("product")
     @Join("product.manufacturer")
-    def getById(self, id: ObjectId) -> Optional[Sale]: ...  # TODO(python): overriding the inherited findById drops the method
+    def findById(self, id: ObjectId) -> Optional[Sale]: ...
 
     @Join("product")
     @Join("product.manufacturer")

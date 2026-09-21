@@ -4,14 +4,13 @@ from jakarta.inject import Inject
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from micronaut.transaction import TransactionOperations
 from org.hibernate import Session
-from org.junit.jupiter.api import AfterEach, BeforeEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 
 from example.User import User
 from example.UserRepository import UserRepository
 
 
 @MicronautTest
-@Disabled("TODO(python): Hibernate cannot map Python entities, the JPA annotations are not emitted on the generated class, see DISABLED_TESTS.md")
 class UserRepositorySpec:
 
     userRepository: Annotated[UserRepository, Inject]
@@ -86,7 +85,7 @@ class UserRepositorySpec:
 
     def seed_users(self, count: int):
         sql = """
-            INSERT INTO user(id, name, enabled)
+            INSERT INTO users(id, name, enabled)
                    SELECT x, 'Name ' || x, true
                    FROM SYSTEM_RANGE(0, ?);
         """

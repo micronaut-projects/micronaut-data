@@ -31,7 +31,7 @@ class BookRepository(ReactorCrudRepository[Book, int]):  # <2>
     @Transactional
     def find_by_id_and_update(self, id: int, book_consumer: Consumer[Book]) -> Mono[Void]:
         def apply(book):
-            book_consumer.accept(book)
+            book_consumer(book)
             return book
         return self.findById(id).map(apply).then()
 

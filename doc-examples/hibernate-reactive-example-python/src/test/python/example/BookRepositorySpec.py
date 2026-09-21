@@ -3,14 +3,13 @@ from typing import Annotated
 from jakarta.inject import Inject
 from micronaut.data.model import Pageable
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, Test
 
 from example.Book import Book
 from example.BookRepository import BookRepository
 
 
 @MicronautTest(transactional=False)
-@Disabled("TODO(python): Hibernate cannot map Python entities, the JPA annotations are not emitted on the generated class, see DISABLED_TESTS.md")
 class BookRepositorySpec:
 
     # tag::inject[]

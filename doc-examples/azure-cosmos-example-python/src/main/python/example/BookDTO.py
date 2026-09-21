@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from micronaut.core.annotation import Introspected
+from micronaut.serde.annotation import Serdeable
 
 
-@Introspected
+@Serdeable
 @dataclass
 class BookDTO:
     title: str | None = None

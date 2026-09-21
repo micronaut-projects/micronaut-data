@@ -14,8 +14,10 @@ from example.GenderAware import GenderAware
 from example.Pet import PetType
 
 
+# TODO(python): the specification methods are declared on the repository instead of extending JpaSpecificationExecutor:
+# its same-arity overloads (PredicateSpecification / QuerySpecification) are ambiguous for a Python lambda, see DISABLED_TESTS.md
 @CosmosRepository
-class FamilyRepository(PageableRepository[Family, str]):  # TODO(python): JpaSpecificationExecutor's generic methods cannot be bridged yet
+class FamilyRepository(PageableRepository[Family, str]):
 
     def updateRegistered(self, id: Annotated[str, Id], registered: bool) -> None: ...
 

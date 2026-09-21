@@ -9,6 +9,6 @@ from example.Author import Author
 @R2dbcRepository(dialect=Dialect.POSTGRES)  # <1>
 class AuthorRepository(ReactiveStreamsCrudRepository[Author, int]):
 
-    def findById(self, id: int | None) -> Mono[Author]: ...  # <2>
+    def findById(self, id: int) -> Mono[Author]: ...  # <2>
 
     def findAll(self) -> Flux[Author]: ...

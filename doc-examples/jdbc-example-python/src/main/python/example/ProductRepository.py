@@ -1,3 +1,4 @@
+from io.reactivex.rxjava3.core import Maybe, Single
 from java.util import Optional
 from java.util.concurrent import CompletableFuture
 from micronaut.data.annotation import Join, Query
@@ -6,11 +7,6 @@ from micronaut.data.model.query.builder.sql import Dialect
 from micronaut.data.repository import CrudRepository
 
 from example.Product import Product
-
-try:
-    from io.reactivex.rxjava3.core import Maybe, Single
-except ImportError:  # TODO(python): packages under `io.` other than `io.micronaut` cannot be imported at runtime
-    from reactivex.rxjava3.core import Maybe, Single
 
 
 # tag::join[]

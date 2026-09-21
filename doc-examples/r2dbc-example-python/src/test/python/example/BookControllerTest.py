@@ -5,7 +5,7 @@ from micronaut.data.r2dbc.operations import R2dbcOperations
 from micronaut.http.annotation import Get
 from micronaut.http.client.annotation import Client
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, BeforeEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 from reactor.core.publisher import Flux
 
 from example.Author import Author
@@ -21,7 +21,6 @@ class BookClient:
 
 
 @MicronautTest(transactional=False)
-@Disabled("TODO(python): the Reactor transaction context is not propagated into publishers returned by Python lambdas (MANDATORY propagation fails), see DISABLED_TESTS.md")
 class BookControllerTest:
 
     bookClient: Annotated[BookClient, Inject]

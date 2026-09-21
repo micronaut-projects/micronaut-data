@@ -5,7 +5,7 @@ from java.lang import String
 from micronaut.context import BeanContext
 from micronaut.data.model import Pageable
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, Test
 
 from example.Book import Book
 from example.BookRepository import BookRepository
@@ -13,7 +13,6 @@ from example.ItemPrice import ItemPrice
 
 
 @MicronautTest
-@Disabled("TODO(python-docs): not verified locally, requires the Azure Cosmos emulator (Testcontainers)")
 class BookRepositorySpec:
 
     # tag::inject[]

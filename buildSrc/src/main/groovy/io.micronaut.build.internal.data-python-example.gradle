@@ -24,9 +24,6 @@ tasks.withType(Test).configureEach {
     useJUnitPlatform()
     // The Python tests only run with -Ppython-ci (see io.micronaut.build.internal.python)
     systemProperty "micronaut.python.pool.enabled", "false"
-    // Gradle enables assertions in test JVMs; an internal Truffle host-interop assertion fails when a
-    // Java varargs overload (Vector.of(double...)) is selected for three Python floats
-    enableAssertions = false
     if (providers.environmentVariable("GITHUB_ACTIONS").map { it.toBoolean() }.getOrElse(false)) {
         plugins.withId("io.micronaut.test-resources") {
             finalizedBy("stopTestResourcesService")
@@ -61,14 +58,4 @@ dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     testRuntimeOnly mnLogging.logback.classic
     runtimeOnly mn.snakeyaml
-}
-
-// TODO(python): the application code lives in src/main/python (the `source="main"` snippets) and the
-// tests in src/test/python. Compiling them separately yields two GraalPy VFS roots whose generated shim
-// modules shadow each other at test time, so the main sources are compiled together with the tests.
-tasks.named("compilePython") {
-    enabled = false
-}
-tasks.named("compileTestPython") {
-    source.from(layout.projectDirectory.dir("src/main/python"))
 }

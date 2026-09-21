@@ -5,6 +5,13 @@ plugins {
     id "io.micronaut.test-resources"
 }
 
+micronautBuild {
+    python {
+        // Hibernate reads the JPA annotations of the entities reflectively from the generated classes
+        compilerArgs.add("-Amicronaut.introspection.allowReflection=example.*")
+    }
+}
+
 micronaut {
     testResources {
         additionalModules.add(KnownModules.HIBERNATE_REACTIVE_MYSQL)
