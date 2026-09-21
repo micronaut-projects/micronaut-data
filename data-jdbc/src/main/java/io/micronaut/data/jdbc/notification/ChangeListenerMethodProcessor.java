@@ -58,13 +58,25 @@ final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<C
     private final List<ChangeListenerMethod> listenerMethods = new CopyOnWriteArrayList<>();
 
     ChangeListenerMethodProcessor(@Parameter String dataSourceName,
-                                  JdbcRepositoryOperations operations,
+                                  @Parameter JdbcRepositoryOperations operations,
                                   ChangeNotificationProviderResolver providerResolver) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;
         this.providerResolver = providerResolver;
     }
 
+    /**
+     * Binds a discovered listener method to this processor's datasource for deferred registration.
+     *
+     * <p>Each processor represents one datasource. A method is recorded only when its
+     * {@link ChangeListener#dataSource() selected datasource} matches that datasource. The
+     * processor retains the listener bean, executable method, and entity type until application
+     * startup, when the selected notification provider registers the listener with the database.</p>
+     *
+     * @param beanDefinition The listener bean definition.
+     * @param method The discovered listener method.
+     * @param <B> The listener bean type.
+     */
     @Override
     public <B> void process(BeanDefinition<B> beanDefinition, ExecutableMethod<B, ?> method) {
         if (!dataSourceName.equals(method.stringValue(ChangeListener.class, "dataSource").orElse("default"))) {
@@ -79,10 +91,17 @@ final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<C
         listenerMethods.add(new ChangeListenerMethod(beanDefinition, method, entityArgument));
     }
 
+    /**
+     * Resolves the notification provider and registers the listener methods collected for this
+     * datasource.
+     *
+     * <p>This runs after schema generation has completed. Deferring provider resolution until this
+     * event avoids opening a datasource connection while executable methods are being discovered.</p>
+     *
+     * @param event The application startup event.
+     */
     @Override
     public void onApplicationEvent(StartupEvent event) {
-        // Schema generation completes before StartupEvent, so provider selection and registration
-        // do not require a database connection while executable methods are being discovered.
         if (listenerMethods.isEmpty()) {
             return;
         }
