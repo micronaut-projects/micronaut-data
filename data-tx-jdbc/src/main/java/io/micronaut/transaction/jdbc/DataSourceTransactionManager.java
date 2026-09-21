@@ -38,6 +38,7 @@ import io.micronaut.transaction.sessionless.SessionlessTransactionHandler;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import io.micronaut.transaction.support.TransactionResourceCommit;
+import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Inject;
 
 import javax.sql.DataSource;
@@ -66,6 +67,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
     // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
+    private static final String ORACLE_DATABASE_PRODUCT_NAME = "ORACLE";
 
     private final DataSource dataSource;
     private final List<TransactionExecutionListener<Connection>> transactionExecutionListeners;
@@ -258,6 +260,23 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             connection.rollback();
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not roll back JDBC transaction", ex);
+        }
+    }
+
+    @Override
+    protected boolean isOracleTransactionPriorityRollback(DefaultTransactionStatus<Connection> status, Throwable throwable) {
+        return isOraclePriorityRollback(status.getConnection(), throwable);
+    }
+
+    static boolean isOraclePriorityRollback(Connection connection, Throwable throwable) {
+        if (!TransactionUtil.isOraclePriorityRollback(throwable)) {
+            return false;
+        }
+        try {
+            String productName = connection.getMetaData().getDatabaseProductName();
+            return productName != null && ORACLE_DATABASE_PRODUCT_NAME.equalsIgnoreCase(productName);
+        } catch (SQLException e) {
+            return false;
         }
     }
 

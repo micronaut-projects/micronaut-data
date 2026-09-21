@@ -51,6 +51,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class DoRollbackOnCommitExceptionTest {
 
+    private static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
+    private static final int ORA_TRANSACTION_MUST_ROLLBACK = 63302;
     private static final TransactionDefinition NESTED_DEFINITION =
         TransactionDefinition.of(TransactionDefinition.Propagation.NESTED);
 
@@ -163,32 +165,69 @@ class DoRollbackOnCommitExceptionTest {
 
     @Test
     void priorityRollbackFromTransactionalWorkIsReportedAsSpecificException() {
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+
         OracleTransactionPriorityException exception = assertThrows(
             OracleTransactionPriorityException.class,
-            () -> txManager.executeWrite(status -> {
+            () -> oracleTxManager.executeWrite(status -> {
                 throw new RuntimeException("update failed", new SQLException(
-                    "ORA-63300", "99999", OracleTransactionPriorityException.ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+                    "ORA-63300", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
                 ));
             })
         );
 
         assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
+        assertEquals(List.of("doBegin", "doRollback"), oracleTxManager.calls);
+    }
+
+    @Test
+    void nonOracleTransactionManagerDoesNotReportPriorityRollback() {
+        RuntimeException applicationException = new RuntimeException("update failed", new SQLException(
+            "vendor error", "99999", ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+        ));
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> txManager.executeWrite(status -> {
+                throw applicationException;
+            })
+        );
+
+        assertSame(applicationException, exception);
         assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
     }
 
     @Test
+    void applicationExceptionMessageDoesNotOverrideNoRollbackFor() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setDontRollbackOn(List.of(RuntimeException.class));
+        RuntimeException applicationException = new RuntimeException("ORA-63300: this is application text");
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> txManager.execute(definition, status -> {
+                throw applicationException;
+            })
+        );
+
+        assertSame(applicationException, exception);
+        assertEquals(List.of("doBegin", "doCommit"), txManager.calls);
+    }
+
+    @Test
     void priorityRollbackReportedWhileCommittingIsReportedAsSpecificException() {
-        txManager.commitFailure = new TransactionSystemException("Could not commit JDBC transaction", new SQLException(
-            "ORA-63302", "99999", OracleTransactionPriorityException.ORA_TRANSACTION_MUST_ROLLBACK
+        RecordingTransactionManager oracleTxManager = new OracleRecordingTransactionManager();
+        oracleTxManager.commitFailure = new TransactionSystemException("Could not commit JDBC transaction", new SQLException(
+            "ORA-63302", "99999", ORA_TRANSACTION_MUST_ROLLBACK
         ));
 
         OracleTransactionPriorityException exception = assertThrows(
             OracleTransactionPriorityException.class,
-            () -> txManager.executeWrite(status -> null)
+            () -> oracleTxManager.executeWrite(status -> null)
         );
 
         assertEquals("Oracle rolled back this transaction because it blocked a higher-priority transaction", exception.getMessage());
-        assertEquals(List.of("doBegin", "doCommit", "doRollback"), txManager.calls);
+        assertEquals(List.of("doBegin", "doCommit", "doRollback"), oracleTxManager.calls);
     }
 
     @Test
@@ -309,6 +348,15 @@ class DoRollbackOnCommitExceptionTest {
         @Override
         protected void doNestedRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doNestedRollback");
+        }
+    }
+
+    static final class OracleRecordingTransactionManager extends RecordingTransactionManager {
+
+        @Override
+        protected boolean isOracleTransactionPriorityRollback(DefaultTransactionStatus<String> transaction,
+                                                              Throwable throwable) {
+            return TransactionUtil.isOraclePriorityRollback(throwable);
         }
     }
 
