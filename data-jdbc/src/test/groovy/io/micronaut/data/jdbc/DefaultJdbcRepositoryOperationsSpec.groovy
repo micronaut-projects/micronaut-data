@@ -120,6 +120,51 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             secondAttempt
     }
 
+    void "successful batch capability metadata is cached across datasource connections"() {
+        given:
+            DefaultJdbcRepositoryOperations operations = newOperations(null)
+            DatabaseMetaData metaData = Mock {
+                getDatabaseProductName() >> "MySQL"
+                getDatabaseProductVersion() >> "8.4.0"
+                getDriverName() >> "MySQL Connector/J"
+                supportsBatchUpdates() >> true
+                supportsGetGeneratedKeys() >> true
+            }
+            Connection firstConnection = Mock()
+            Connection secondConnection = Mock()
+            RuntimePersistentProperty<?> identity = Mock {
+                isGenerated() >> true
+            }
+            RuntimePersistentEntity<?> persistentEntity = Mock {
+                hasIdentity() >> true
+                getIdentity() >> identity
+            }
+            def firstContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                    AnnotationMetadata.EMPTY_METADATA,
+                    null,
+                    Object,
+                    Dialect.MYSQL,
+                    firstConnection
+            )
+            def secondContext = new DefaultJdbcRepositoryOperations.JdbcOperationContext(
+                    AnnotationMetadata.EMPTY_METADATA,
+                    null,
+                    Object,
+                    Dialect.MYSQL,
+                    secondConnection
+            )
+
+        when:
+            boolean firstResult = operations.isSupportsBatchInsert(firstContext, persistentEntity)
+            boolean secondResult = operations.isSupportsBatchInsert(secondContext, persistentEntity)
+
+        then:
+            1 * firstConnection.getMetaData() >> metaData
+            0 * secondConnection.getMetaData()
+            firstResult
+            secondResult
+    }
+
     void "sqlite batch insert stays disabled even when generated keys are not required"() {
         given:
         DefaultJdbcRepositoryOperations operations = newOperations(null)
