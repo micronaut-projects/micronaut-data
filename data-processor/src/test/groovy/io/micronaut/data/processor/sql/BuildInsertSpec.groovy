@@ -2358,6 +2358,92 @@ class GeneratedSharedIdentityAssetMetadata {
         getParameterPropertyPaths(method) == ["title"] as String[]
     }
 
+    void "shared identity upsert omits relation identity column"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.SharedIdentityUpsertRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface SharedIdentityUpsertRepository extends GenericRepository<SharedIdentityUpsertAsset, Long> {
+    SharedIdentityUpsertAsset upsert(SharedIdentityUpsertAsset entity);
+}
+
+@MappedEntity("shared_identity_upsert_asset")
+class SharedIdentityUpsertAsset {
+    @Id
+    private Long id;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private SharedIdentityUpsertMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    SharedIdentityUpsertMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(SharedIdentityUpsertMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("shared_identity_upsert_metadata")
+class SharedIdentityUpsertMetadata {
+    @Id
+    @MappedProperty("id")
+    private Long metadataId;
+
+    private String author;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("upsert")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.SharedIdentityUpsertAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'MERGE INTO `shared_identity_upsert_asset` target USING (VALUES (?,?)) source (c0,c1) ON (target.`id`=source.c1) WHEN MATCHED THEN UPDATE SET target.`title`=source.c0 WHEN NOT MATCHED THEN INSERT (`title`,`id`) VALUES (source.c0,source.c1)'
+        getParameterPropertyPaths(method) == ["title", "id"] as String[]
+    }
+
     // Simulates r2dbc positional parameters
     void "shared identity sequence insert keeps contiguous postgres placeholders"() {
         given:
