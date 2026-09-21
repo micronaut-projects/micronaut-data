@@ -82,6 +82,11 @@ public abstract class AbstractDelegatingResultReader<RS, ID> implements ResultRe
     }
 
     @Override
+    public Object columnResolutionKey(RS resultSet) {
+        return delegate.columnResolutionKey(resultSet);
+    }
+
+    @Override
     @Nullable
     public Object readDynamic(RS resultSet, ID index, DataType dataType) {
         return delegate.readDynamic(resultSet, index, dataType);
