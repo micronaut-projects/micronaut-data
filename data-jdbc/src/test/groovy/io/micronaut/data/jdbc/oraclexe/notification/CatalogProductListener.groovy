@@ -9,13 +9,16 @@ import oracle.jdbc.OracleConnection
 
 @Singleton
 @Requires(property = "query-notification.enabled")
-class QueryChangeNotificationBookListener extends AbstractChangeListener<QueryChangeNotificationBook> {
+class CatalogProductListener extends AbstractChangeListener<CatalogProduct> {
     @ChangeListener
-    @OracleChangeNotification(select = "id, title", where = "title = 'Query Change Notification'", properties = [
+    @OracleChangeNotification(select = "id, category_id", where = '''category_id IN (
+        SELECT id FROM TEST.CATALOG_CATEGORY WHERE enabled = 1
+    )''', properties = [
         @OracleChangeNotification.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true"),
-        @OracleChangeNotification.Property(name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value = "true")
+        @OracleChangeNotification.Property(name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value = "true"),
+        @OracleChangeNotification.Property(name = OracleConnection.DCN_BEST_EFFORT, value = "true")
     ])
-    void onBookChanged(ChangeEvent<QueryChangeNotificationBook> event) {
+    void onProductChanged(ChangeEvent<CatalogProduct> event) {
         add(event)
     }
 }

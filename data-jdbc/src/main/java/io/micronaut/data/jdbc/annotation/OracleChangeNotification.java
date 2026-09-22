@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * defaults. It enables compile-time generation of the Oracle {@code ROWID} reload query. Row IDs
  * are always requested because they identify the affected row and allow inserts and updates to be
  * reloaded. Oracle may instead report a full-table invalidation when row-level details are not
- * available; this is delivered with
+ * available, or report a dependent table for Query Result Change Notification; either is delivered with
  * {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
  * @since 5.2.0

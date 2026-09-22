@@ -37,10 +37,19 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     QueryChangeNotificationBookRepository queryChangeRepository
 
     @Shared
+    CatalogProductRepository catalogProductRepository
+
+    @Shared
+    CatalogCategoryRepository catalogCategoryRepository
+
+    @Shared
     ObjectChangeNotificationBookListener objectChangeListener
 
     @Shared
     QueryChangeNotificationBookListener queryChangeListener
+
+    @Shared
+    CatalogProductListener catalogProductListener
 
     @Override
     List<String> packages() {
@@ -52,13 +61,22 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         context = ApplicationContext.run(properties + ["query-notification.enabled": "true"])
         objectChangeRepository = context.getBean(ObjectChangeNotificationBookRepository)
         queryChangeRepository = context.getBean(QueryChangeNotificationBookRepository)
+        catalogProductRepository = context.getBean(CatalogProductRepository)
+        catalogCategoryRepository = context.getBean(CatalogCategoryRepository)
         objectChangeListener = context.getBean(ObjectChangeNotificationBookListener)
         queryChangeListener = context.getBean(QueryChangeNotificationBookListener)
+        catalogProductListener = context.getBean(CatalogProductListener)
     }
 
     void cleanup() {
         objectChangeRepository.deleteAll()
         queryChangeRepository.deleteAll()
+        catalogProductRepository.deleteAll()
+        catalogCategoryRepository.deleteAll()
+    }
+
+    def cleanupSpec() {
+        context?.close()
     }
 
     private void grantChangeNotificationPrivilege() {
@@ -164,5 +182,22 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         entity.id == saved.id
         entity.title == "Query Change Notification"
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+    }
+
+    void "query change listener dispatches invalidation for a dependent table"() {
+        given:
+        CatalogCategory catalogCategory = catalogCategoryRepository.save(new CatalogCategory(enabled: true))
+        catalogProductRepository.save(new CatalogProduct(categoryId: catalogCategory.id))
+        assert catalogProductListener.poll(ChangeOperation.INSERT)
+
+        when:
+        catalogCategory.enabled = false
+        catalogCategoryRepository.update(catalogCategory)
+
+        then:
+        def notification = catalogProductListener.poll(ChangeOperation.INVALIDATE)
+        notification
+        notification.entity().isEmpty()
+        notification.metadata(OracleChangeEventMetadata).isEmpty()
     }
 }

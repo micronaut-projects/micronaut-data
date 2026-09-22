@@ -9,7 +9,7 @@ import oracle.jdbc.OracleConnection
 
 @Singleton
 @Requires(property = "query-notification.enabled")
-class ObjectChangeNotificationBookListener extends AbstractQueryNotificationBookListener<ObjectChangeNotificationBook> {
+class ObjectChangeNotificationBookListener extends AbstractChangeListener<ObjectChangeNotificationBook> {
     @ChangeListener
     @OracleChangeNotification(properties = [
         @OracleChangeNotification.Property(name = OracleConnection.DCN_CLIENT_INIT_CONNECTION, value = "true")

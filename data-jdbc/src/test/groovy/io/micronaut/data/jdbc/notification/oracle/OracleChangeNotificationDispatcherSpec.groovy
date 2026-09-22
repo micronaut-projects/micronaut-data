@@ -22,7 +22,9 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.DatabaseChangeRegistration
+import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.TableChangeDescription
+import oracle.jdbc.OracleConnection
 import spock.lang.Specification
 
 import java.util.concurrent.Executor
@@ -44,6 +46,39 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.ALL_ROWS)
         def event = Mock(DatabaseChangeEvent)
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition, beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments ->
+            ChangeEvent<?> changeEvent = arguments[0] as ChangeEvent<?>
+            changeEvent.operation() == ChangeOperation.INVALIDATE &&
+                changeEvent.entity().isEmpty() &&
+                changeEvent.metadata(OracleChangeEventMetadata).isEmpty()
+        })
+        0 * table.getRowChangeDescription()
+    }
+
+    void "dispatches one invalidation for a dependent query table"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, "true")
+        def definition = new OracleChangeListenerDefinition(beanDefinition, method, OracleTableIdentifier.parse("BOOK"), "SELECT * FROM BOOK", null, properties)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK_CATEGORY"
+        def query = Mock(QueryChangeDescription)
+        query.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
         def dispatcher = dispatcher(definition, beanContext)
 
         when:

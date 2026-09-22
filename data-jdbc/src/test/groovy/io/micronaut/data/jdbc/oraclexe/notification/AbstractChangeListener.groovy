@@ -6,7 +6,7 @@ import io.micronaut.data.jdbc.notification.ChangeOperation
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractQueryNotificationBookListener<T> {
+abstract class AbstractChangeListener<T> {
     private final LinkedBlockingQueue<ChangeEvent<T>> notifications = new LinkedBlockingQueue<>()
 
     protected void add(ChangeEvent<T> event) {

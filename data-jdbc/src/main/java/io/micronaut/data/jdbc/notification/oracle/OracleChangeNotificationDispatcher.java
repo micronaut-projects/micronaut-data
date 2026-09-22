@@ -42,10 +42,11 @@ import java.util.function.Consumer;
  * tracks accepted tasks so graceful shutdown can reject new work and wait for work already
  * submitted. Inserts and updates reload current entity state by ROWID; deletes are dispatched
  * without entity state because the deleted row can no longer be reloaded. When Oracle reports that
- * all rows were invalidated without row-level details, the dispatcher invokes the listener once
- * with {@link ChangeOperation#INVALIDATE}, no entity state, and no Oracle ROWID metadata. Failures
- * while handling an individual change are logged and do not prevent later changes from being
- * dispatched.</p>
+ * all rows were invalidated without row-level details, or when a Query Result Change Notification
+ * reports a dependent table instead of the listener entity table, the dispatcher invokes the
+ * listener once with {@link ChangeOperation#INVALIDATE}, no entity state, and no Oracle ROWID
+ * metadata. Failures while handling an individual change are logged and do not prevent later
+ * changes from being dispatched.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -57,6 +58,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final OracleChangeNotificationShutdownTracker shutdownTracker;
     private final Consumer<DatabaseChangeRegistration> registrationRemover;
     private final boolean purgeOnNotification;
+    private final boolean queryChangeNotification;
 
     OracleChangeNotificationDispatcher(OracleChangeListenerDefinition listenerDefinition,
                                        DatabaseChangeRegistration registration,
@@ -72,6 +74,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.registrationRemover = registrationRemover;
         this.purgeOnNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
             .getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
+        this.queryChangeNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
+            .getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
     }
 
     @Override
@@ -102,28 +106,46 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void dispatch(DatabaseChangeEvent event) {
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            dispatchTables(tables);
+            if (dispatchTables(tables, queryChangeNotification)) {
+                dispatchInvalidation();
+            }
             return;
         }
         QueryChangeDescription[] queries = event.getQueryChangeDescription();
         if (queries == null) {
             return;
         }
+        boolean invalidated = false;
         for (QueryChangeDescription query : queries) {
             TableChangeDescription[] queryTables = query.getTableChangeDescription();
             if (queryTables != null) {
-                dispatchTables(queryTables);
+                invalidated |= dispatchTables(queryTables, true);
             }
+        }
+        if (invalidated) {
+            dispatchInvalidation();
         }
     }
 
-    private void dispatchTables(TableChangeDescription[] tables) {
+    /**
+     * Dispatches row-level changes and reports whether the listener's query result must be
+     * invalidated. A row from a dependent QRCN table cannot be reloaded as the listener entity,
+     * so it is represented by one invalidation event after the entire Oracle notification is
+     * examined.
+     *
+     * @param tables the table changes supplied by Oracle
+     * @param queryNotification whether the notification represents QRCN
+     * @return whether the listener must receive an invalidation event
+     */
+    private boolean dispatchTables(TableChangeDescription[] tables, boolean queryNotification) {
+        boolean invalidated = false;
         for (TableChangeDescription table : tables) {
             if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
+                invalidated |= queryNotification;
                 continue;
             }
             if (table.getTableOperations().contains(TableChangeDescription.TableOperation.ALL_ROWS)) {
-                dispatchInvalidation();
+                invalidated = true;
                 continue;
             }
             RowChangeDescription[] rows = table.getRowChangeDescription();
@@ -146,6 +168,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 }
             }
         }
+        return invalidated;
     }
 
     private void dispatchInvalidation() {
