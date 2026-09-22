@@ -20,9 +20,13 @@ import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.sql.Connection
+import java.util.concurrent.TimeUnit
 
 class OracleQueryNotificationSpec extends Specification implements OracleTestPropertyProvider {
 
@@ -51,6 +55,9 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     @Shared
     CatalogProductListener catalogProductListener
 
+    @Shared
+    SynchronousTransactionManager<Connection> transactionManager
+
     @Override
     List<String> packages() {
         return Arrays.asList(getClass().package.name)
@@ -66,6 +73,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         objectChangeListener = context.getBean(ObjectChangeNotificationBookListener)
         queryChangeListener = context.getBean(QueryChangeNotificationBookListener)
         catalogProductListener = context.getBean(CatalogProductListener)
+        transactionManager = context.getBean(SynchronousTransactionManager)
     }
 
     void cleanup() {
@@ -171,7 +179,6 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
 
     void "query change listener receives an entity after an Oracle row is inserted"() {
         when:
-        queryChangeRepository.save(new QueryChangeNotificationBook(title: "Ignored by query notification"))
         def saved = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
         def notification = queryChangeListener.poll(ChangeOperation.INSERT)
         def entity = notification?.entity()?.orElse(null)
@@ -181,6 +188,68 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification.operation() == ChangeOperation.INSERT
         entity.id == saved.id
         entity.title == "Query Change Notification"
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+    }
+
+    void "query change listener ignores a row outside the registered query"() {
+        given:
+        queryChangeListener.discardNotifications(250, TimeUnit.MILLISECONDS)
+
+        when:
+        queryChangeRepository.save(new QueryChangeNotificationBook(title: "Ignored by query notification"))
+
+        then:
+        queryChangeListener.poll(1, TimeUnit.SECONDS) == null
+    }
+
+    void "query change listener receives an update when a row enters the registered query"() {
+        given:
+        def book = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Ignored by query notification"))
+        assert queryChangeListener.poll(1, TimeUnit.SECONDS) == null
+
+        when:
+        book.title = "Query Change Notification"
+        queryChangeRepository.update(book)
+        def notification = queryChangeListener.poll(ChangeOperation.UPDATE)
+        def entity = notification?.entity()?.orElse(null)
+
+        then:
+        notification
+        entity.id == book.id
+        entity.title == "Query Change Notification"
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+    }
+
+    void "query change listener receives an update when a row leaves the registered query"() {
+        given:
+        def book = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
+        assert queryChangeListener.poll(ChangeOperation.INSERT)
+
+        when:
+        book.title = "Ignored by query notification"
+        queryChangeRepository.update(book)
+        def notification = queryChangeListener.poll(ChangeOperation.UPDATE)
+        def entity = notification?.entity()?.orElse(null)
+
+        then:
+        notification
+        entity.id == book.id
+        entity.title == "Ignored by query notification"
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+    }
+
+    void "query change listener receives a delete without entity state"() {
+        given:
+        def book = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
+        assert queryChangeListener.poll(ChangeOperation.INSERT)
+
+        when:
+        queryChangeRepository.deleteById(book.id)
+        def notification = queryChangeListener.poll(ChangeOperation.DELETE)
+
+        then:
+        notification
+        notification.entity().isEmpty()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
     }
 
@@ -199,5 +268,37 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification
         notification.entity().isEmpty()
         notification.metadata(OracleChangeEventMetadata).isEmpty()
+    }
+
+    void "dependent table invalidation suppresses row events from the same database event"() {
+        given:
+        CatalogCategory firstCategory = catalogCategoryRepository.save(new CatalogCategory(enabled: true))
+        CatalogCategory secondCategory = catalogCategoryRepository.save(new CatalogCategory(enabled: true))
+        CatalogProduct product = catalogProductRepository.save(new CatalogProduct(categoryId: firstCategory.id))
+        assert catalogProductListener.poll(ChangeOperation.INSERT)
+        catalogProductListener.discardNotifications(250, TimeUnit.MILLISECONDS)
+
+        when:
+        transactionManager.executeWrite { status ->
+            Connection connection = status.connection
+            connection.prepareStatement('UPDATE CATALOG_PRODUCT SET CATEGORY_ID = ? WHERE ID = ?').withCloseable { statement ->
+                statement.setLong(1, secondCategory.id)
+                statement.setLong(2, product.id)
+                assert statement.executeUpdate() == 1
+            }
+            connection.prepareStatement('UPDATE CATALOG_CATEGORY SET ENABLED = 0 WHERE ID = ?').withCloseable { statement ->
+                statement.setLong(1, firstCategory.id)
+                assert statement.executeUpdate() == 1
+            }
+            null
+        }
+        def notification = catalogProductListener.poll(10, TimeUnit.SECONDS)
+
+        then:
+        notification
+        notification.operation() == ChangeOperation.INVALIDATE
+        notification.entity().isEmpty()
+        notification.metadata(OracleChangeEventMetadata).isEmpty()
+        catalogProductListener.poll(1, TimeUnit.SECONDS) == null
     }
 }

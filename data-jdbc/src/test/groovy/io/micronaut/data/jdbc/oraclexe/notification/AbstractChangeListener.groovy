@@ -26,4 +26,15 @@ abstract class AbstractChangeListener<T> {
             }
         }
     }
+
+    ChangeEvent<T> poll(long timeout, TimeUnit unit) {
+        notifications.poll(timeout, unit)
+    }
+
+    void discardNotifications(long quietPeriod, TimeUnit unit) {
+        notifications.clear()
+        while (notifications.poll(quietPeriod, unit) != null) {
+            notifications.clear()
+        }
+    }
 }
