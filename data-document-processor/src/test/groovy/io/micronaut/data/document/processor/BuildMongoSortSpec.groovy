@@ -76,6 +76,6 @@ interface MongoNestedSortRepo extends GenericRepository<Book, String> {
             TestUtils.getQuery(repository.getRequiredMethod("byAuthorName")) ==
                     "[{\$lookup:{from:'author',localField:'author._id',foreignField:'_id',as:'author'}}," +
                     "{\$unwind:{path:'\$author',preserveNullAndEmptyArrays:true}}," +
-                    "{\$sort:{'author.name':1}}]"
+                    "{\$sort:{'author.name':1}}]" 
     }
 }

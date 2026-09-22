@@ -35,6 +35,8 @@ public abstract class FamilyRepository implements PageableRepository<Family, Str
 
     public abstract void updateRegistered(@Id String id, boolean registered, PartitionKey partitionKey);
 
+    public abstract Address findAddressById(String id);
+
     public abstract void updateAddress(@Parameter("id") @Id String id, @NonNull @Parameter("address") Address address);
 
     // Raw query for Cosmos update is not supported and calling this method will throw an error.

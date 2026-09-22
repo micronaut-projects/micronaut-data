@@ -650,25 +650,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             .countQueryResult(countQueryResult);
     }
 
-    private boolean isEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
-        Selection<?> selection = query.getSelection();
-        if (isEmbeddedSelection(selection)) {
-            return true;
-        }
-        Optional<String> projection = findMatchPart(matches, QueryMatchId.PROJECTION);
-        if (projection.isEmpty()) {
-            return false;
-        }
-        Root<?> root = query.getRoots().iterator().next();
-        if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
-            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> propertyPath = findProperty(persistentEntityRoot, projection.get());
-            return propertyPath != null && propertyPath.getProperty() instanceof Embedded;
-        }
-        return false;
-    }
-
-    private boolean isEmbeddedSelection(@Nullable Selection<?> selection) {
-        return selection instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+    private static boolean isEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
+        return query.getSelection() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
             && propertyPath.getProperty() instanceof Embedded;
     }
 

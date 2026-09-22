@@ -6,6 +6,8 @@ import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.azure.entities.Address
 import io.micronaut.data.azure.entities.Family
+import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.DataType
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
@@ -59,6 +61,7 @@ interface CosmosBookRepository extends GenericRepository<Book, String> {
         given:
         def repository = buildRepository('test.FamilyRepository', """
 import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.azure.entities.Address;
 import io.micronaut.data.azure.entities.Family;
 import io.micronaut.data.azure.entities.Child;
 import io.micronaut.data.azure.entities.PetType;
@@ -85,6 +88,8 @@ interface FamilyRepository extends GenericRepository<Family, String> {
     String findLastNameById(String id);
 
     String[] findTagsById(String id);
+
+    Address findAddressById(String id);
 }
 """
         )
@@ -99,6 +104,7 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         def findByTagsArrayContainsQuery = getQuery(repository.getRequiredMethod("findByTagsArrayContains", String))
         def findLastNameByIdQuery = getQuery(repository.getRequiredMethod("findLastNameById", String))
         def findTagsByIdQuery = getQuery(repository.getRequiredMethod("findTagsById", String))
+        def findAddressByIdMethod = repository.getRequiredMethod("findAddressById", String)
         then:
         findByIdQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.id = @p1)"
         findByAddressStateQuery == "SELECT DISTINCT VALUE family_ FROM family family_ JOIN c IN family_.children WHERE (family_.address.state = @p1) ORDER BY c.firstName ASC"
@@ -109,6 +115,8 @@ interface FamilyRepository extends GenericRepository<Family, String> {
         findByTagsArrayContainsQuery == "SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.tags,@p1,true))"
         findLastNameByIdQuery == "SELECT VALUE family_.lastName FROM family family_ WHERE (family_.id = @p1)"
         findTagsByIdQuery == "SELECT VALUE family_.tags FROM family family_ WHERE (family_.id = @p1)"
+        getQuery(findAddressByIdMethod) == "SELECT VALUE family_.address FROM family family_ WHERE (family_.id = @p1)"
+        getResultDataType(findAddressByIdMethod) == DataType.ENTITY
     }
 
     void "test build delete query"() {
@@ -222,5 +230,9 @@ interface FamilyRepository extends GenericRepository<Family, String> {
 
     static String getQuery(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotation(Query).stringValue().get()
+    }
+
+    static DataType getResultDataType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).enumValue(DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType).orElse(null)
     }
 }

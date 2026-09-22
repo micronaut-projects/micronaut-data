@@ -37,4 +37,8 @@ public interface ShipmentRepository extends PageableRepository<Shipment, Shipmen
     List<Shipment> findAllOrderByShipmentIdCountryAndShipmentIdCityDesc();
 
     CursoredPage<Shipment> findByShipmentIdCountry(String country, CursoredPageable pageable);
+
+    ShipmentId findShipmentIdByField(String field);
+
+    List<ShipmentId> findShipmentIdOrderByShipmentIdCity();
 }

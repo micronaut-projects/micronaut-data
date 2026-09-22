@@ -762,7 +762,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     queryDefinition.operationType(),
                     additionalQueryResult,
                     queryDefinition.resultType(),
-                    methodInfo.getResultDataType(),
+                    null,
                     additionalParameterBinding,
                     methodInfo.isEncodeEntityParameters(),
                     queryDefinition.optimisticLock());
