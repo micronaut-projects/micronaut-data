@@ -32,6 +32,51 @@ import java.util.function.Consumer
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
+    void "removes a registration when Oracle reports registration deregistration"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        registration.getRegId() >> 41L
+        def registrationRemover = Mock(Consumer)
+        def registrationUnregisterer = Mock(Consumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration,
+            registrationRemover, registrationUnregisterer)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * registrationRemover.accept(registration)
+        0 * registrationUnregisterer.accept(_)
+        0 * event.getTableChangeDescription()
+    }
+
+    void "unregisters the enclosing registration when Oracle deregisters its listener query"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        registration.getRegId() >> 42L
+        def registrationRemover = Mock(Consumer)
+        def registrationUnregisterer = Mock(Consumer)
+        def query = Mock(QueryChangeDescription)
+        query.getQueryId() >> 7L
+        query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration,
+            registrationRemover, registrationUnregisterer)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * registrationUnregisterer.accept(registration)
+        0 * registrationRemover.accept(_)
+        0 * query.getTableChangeDescription()
+    }
+
     void "dispatches a full-table notification as one invalidation without row details"() {
         given:
         def beanDefinition = Mock(BeanDefinition)
@@ -122,23 +167,39 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     }
 
     private OracleChangeNotificationDispatcher dispatcher() {
+        return dispatcher(definition(), Mock(BeanContext))
+    }
+
+    private OracleChangeListenerDefinition definition() {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def definition = new OracleChangeListenerDefinition(null, method, OracleTableIdentifier.parse("BOOK"), "SELECT * FROM BOOK", null, new Properties())
-        return dispatcher(definition, Mock(BeanContext))
+        return new OracleChangeListenerDefinition(null, method, OracleTableIdentifier.parse("BOOK"), "SELECT * FROM BOOK", null, new Properties())
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext) {
         Executor executor = { Runnable command -> command.run() } as Executor
         Consumer<DatabaseChangeRegistration> registrationRemover = { DatabaseChangeRegistration ignored -> } as Consumer
+        Consumer<DatabaseChangeRegistration> registrationUnregisterer = { DatabaseChangeRegistration ignored -> } as Consumer
+        return dispatcher(definition, beanContext, Mock(DatabaseChangeRegistration),
+            registrationRemover, registrationUnregisterer)
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                            BeanContext beanContext,
+                                                            DatabaseChangeRegistration registration,
+                                                            Consumer<DatabaseChangeRegistration> registrationRemover,
+                                                            Consumer<DatabaseChangeRegistration> registrationUnregisterer) {
+        Executor executor = { Runnable command -> command.run() } as Executor
         return new OracleChangeNotificationDispatcher(
+            "inventory",
             definition,
-            Mock(DatabaseChangeRegistration),
+            registration,
             beanContext,
             executor,
             new OracleChangeNotificationShutdownTracker(),
-            registrationRemover
+            registrationRemover,
+            registrationUnregisterer
         )
     }
 }

@@ -112,8 +112,8 @@ final class OracleChangeNotificationManager {
                 definition.registrationProperties());
             try {
                 registration.addListener(new OracleChangeNotificationDispatcher(
-                    definition, registration, beanContext, blockingExecutor,
-                    shutdownTracker, registrations::remove
+                    dataSourceName, definition, registration, beanContext, blockingExecutor,
+                    shutdownTracker, registrations::remove, this::unregisterDeregisteredQuery
                 ));
                 registrations.add(registration);
                 try (Statement statement = connection.createStatement()) {
@@ -162,6 +162,18 @@ final class OracleChangeNotificationManager {
             }
         }
         registrations.clear();
+    }
+
+    private void unregisterDeregisteredQuery(DatabaseChangeRegistration registration) {
+        if (!registrations.remove(registration)) {
+            return;
+        }
+        try {
+            unregister(registration);
+        } catch (RuntimeException e) {
+            LOG.warn("Unable to unregister deregistered Oracle query notification [{}] for datasource [{}]",
+                registration.getRegId(), dataSourceName, e);
+        }
     }
 
     private void unregister(DatabaseChangeRegistration registration) {

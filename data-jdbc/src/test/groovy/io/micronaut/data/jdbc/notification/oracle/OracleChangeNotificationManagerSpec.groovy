@@ -22,7 +22,10 @@ import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.inject.ExecutableMethod
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.OracleStatement
+import oracle.jdbc.dcn.DatabaseChangeEvent
+import oracle.jdbc.dcn.DatabaseChangeListener
 import oracle.jdbc.dcn.DatabaseChangeRegistration
+import oracle.jdbc.dcn.QueryChangeDescription
 import spock.lang.Specification
 
 import java.sql.Connection
@@ -32,6 +35,54 @@ import java.sql.Statement
 import java.util.concurrent.Executor
 
 class OracleChangeNotificationManagerSpec extends Specification {
+
+    void "unregisters and stops tracking a registration when its listener query is deregistered"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        def registration = Mock(DatabaseChangeRegistration)
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def resultSet = Mock(ResultSet)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        Executor executor = { Runnable command -> command.run() } as Executor
+        def manager = new OracleChangeNotificationManager("inventory", operations, Mock(BeanContext), executor)
+        manager.addDefinition(definition("SELECT * FROM BOOK", method))
+        DatabaseChangeListener listener
+
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
+            try {
+                return callback.call(connection)
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL Callback: ${e.message}", e)
+            }
+        }
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> registration
+        registration.addListener(_ as DatabaseChangeListener) >> { DatabaseChangeListener registeredListener ->
+            listener = registeredListener
+        }
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        statement.executeQuery("SELECT * FROM BOOK") >> resultSet
+        def query = Mock(QueryChangeDescription)
+        query.getQueryId() >> 7L
+        query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+
+        when:
+        manager.start()
+        listener.onDatabaseChangeNotification(event)
+        manager.stop().toCompletableFuture().join()
+
+        then:
+        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
+    }
 
     void "rolls back earlier registrations when startup registration fails"() {
         given:

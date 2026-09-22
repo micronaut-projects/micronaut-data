@@ -51,33 +51,43 @@ import java.util.function.Consumer;
  * and no Oracle ROWID metadata. Invalidation applies to the complete Oracle event and suppresses
  * any row-level changes reported by that same event.</p>
  *
+ * <p>A registration-level deregistration removes the already-closed registration from manager
+ * tracking. A query-level deregistration retires the enclosing registration as well because each
+ * framework registration contains exactly one listener query.</p>
+ *
  * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
  * dispatched.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
 
+    private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
     private final DatabaseChangeRegistration registration;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final OracleChangeNotificationShutdownTracker shutdownTracker;
     private final Consumer<DatabaseChangeRegistration> registrationRemover;
+    private final Consumer<DatabaseChangeRegistration> registrationUnregisterer;
     private final boolean purgeOnNotification;
     private final boolean queryChangeNotification;
 
-    OracleChangeNotificationDispatcher(OracleChangeListenerDefinition listenerDefinition,
+    OracleChangeNotificationDispatcher(String dataSourceName,
+                                       OracleChangeListenerDefinition listenerDefinition,
                                        DatabaseChangeRegistration registration,
                                        BeanContext beanContext,
                                        Executor blockingExecutor,
                                        OracleChangeNotificationShutdownTracker shutdownTracker,
-                                       Consumer<DatabaseChangeRegistration> registrationRemover) {
+                                       Consumer<DatabaseChangeRegistration> registrationRemover,
+                                       Consumer<DatabaseChangeRegistration> registrationUnregisterer) {
+        this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.registration = registration;
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.shutdownTracker = shutdownTracker;
         this.registrationRemover = registrationRemover;
+        this.registrationUnregisterer = registrationUnregisterer;
         this.purgeOnNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
             .getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
         this.queryChangeNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
@@ -127,6 +137,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void dispatch(DatabaseChangeEvent event) {
+        if (event.getEventType() == DatabaseChangeEvent.EventType.DEREG) {
+            handleRegistrationDeregistration();
+            return;
+        }
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
             dispatchTableChanges(tables, queryChangeNotification);
@@ -139,6 +153,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (queries == null) {
             return;
         }
+        for (QueryChangeDescription query : queries) {
+            if (query.getQueryChangeEventType() == QueryChangeDescription.QueryChangeEventType.DEREG) {
+                handleQueryDeregistration(query.getQueryId());
+                return;
+            }
+        }
         if (requiresQueryInvalidation(queries)) {
             dispatchInvalidation();
             return;
@@ -149,6 +169,20 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 dispatchRows(queryTables);
             }
         }
+    }
+
+    private void handleRegistrationDeregistration() {
+        registrationRemover.accept(registration);
+        LOG.warn("Oracle query notification registration [{}] for datasource [{}] and listener method [{}] "
+                + "was deregistered; the listener is unavailable",
+            registration.getRegId(), dataSourceName, listenerDefinition.method().getDescription(true));
+    }
+
+    private void handleQueryDeregistration(long queryId) {
+        LOG.warn("Oracle query notification query [{}] for datasource [{}], listener method [{}], and registration [{}] "
+                + "was deregistered; the listener is unavailable",
+            queryId, dataSourceName, listenerDefinition.method().getDescription(true), registration.getRegId());
+        registrationUnregisterer.accept(registration);
     }
 
     private boolean requiresQueryInvalidation(QueryChangeDescription[] queries) {
