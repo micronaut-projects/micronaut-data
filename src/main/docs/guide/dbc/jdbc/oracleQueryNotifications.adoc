@@ -1,0 +1,196 @@
+Oracle Continuous Query Notification (CQN), also known as Database Change Notification (DCN), lets an application react when committed database changes affect an entity table or a registered query result.
+
+Micronaut Data exposes a database-neutral listener contract through ann:data.jdbc.annotation.ChangeListener[] and Oracle registration options through ann:data.jdbc.annotation.OracleChangeNotification[].
+When Oracle reports a change, the listener receives an api:data.jdbc.notification.ChangeEvent[] containing the reported operation, optional current entity state, and optional provider-specific metadata.
+
+== Prerequisites
+
+Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:
+
+dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
+
+The datasource user must have Oracle's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
+
+[source,sql]
+----
+GRANT CHANGE NOTIFICATION TO application_user;
+----
+
+The entity used by a listener must be a Micronaut Data persistent entity.
+The listener itself must be a Micronaut bean and must be proxyable; in particular, do not declare the listener class or listener method `final`.
+
+== Declaring a Listener
+
+The following listener uses Object Change Notification to observe the complete mapped `BOOK` table:
+
+[source,java]
+----
+import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
+import io.micronaut.data.jdbc.notification.ChangeEvent;
+import jakarta.inject.Singleton;
+
+@Singleton
+class BookChangeListener {
+
+    @ChangeListener
+    @OracleChangeNotification
+    void onBookChanged(ChangeEvent<Book> event) {
+        // React to the committed database change.
+    }
+}
+----
+
+Every Oracle listener must declare both annotations, even when ann:data.jdbc.annotation.OracleChangeNotification[] uses only its defaults.
+The Oracle annotation identifies the provider-specific registration and supplies the information needed to generate the Oracle `ROWID` reload query at compilation time.
+
+Micronaut Data validates the listener contract at compilation time. A method annotated with ann:data.jdbc.annotation.ChangeListener[] must:
+
+* be a non-private, non-static instance method;
+* return `void`;
+* declare exactly one `ChangeEvent<E>` parameter; and
+* use a concrete persistent entity type for `E`.
+
+The listener uses the `default` datasource unless another datasource is selected:
+
+[source,java]
+----
+@ChangeListener(dataSource = "inventory")
+@OracleChangeNotification
+void onBookChanged(ChangeEvent<Book> event) {
+    // Registered against the "inventory" datasource.
+}
+----
+
+One long-lived Oracle registration is created for each listener method. Registrations are application-lifecycle scoped; there is no public API for dynamically registering a callback for only the duration of a method invocation.
+
+== Handling Change Events
+
+api:data.jdbc.notification.ChangeEvent[] provides:
+
+* `operation()` -- the api:data.jdbc.notification.ChangeOperation[] reported for the event;
+* `entity()` -- the current entity state, when it is available; and
+* `metadata(Class)` -- provider-specific metadata, when it is available.
+
+Oracle row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], which exposes the affected row's `ROWID`:
+
+[source,java]
+----
+void onBookChanged(ChangeEvent<Book> event) {
+    switch (event.operation()) {
+        case INSERT, UPDATE -> {
+            event.entity().ifPresent(this::refreshBook);
+            event.metadata(OracleChangeEventMetadata.class)
+                .ifPresent(metadata -> auditRow(metadata.rowId()));
+        }
+        case DELETE -> {
+            String rowId = event.metadata(OracleChangeEventMetadata.class)
+                .orElseThrow()
+                .rowId();
+            removeBook(rowId);
+        }
+        case INVALIDATE -> refreshAllBooks();
+    }
+}
+----
+
+For `INSERT` and `UPDATE`, Oracle supplies a `ROWID` rather than entity values. Micronaut Data reloads the row and maps the complete entity before the application reads `entity()`.
+The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced the notification. Another transaction can therefore change or delete the row before it is reloaded.
+
+For `DELETE`, the entity is empty because the row can no longer be loaded, but Oracle `ROWID` metadata is retained.
+
+Oracle can report that the registered data changed without identifying individual rows. This includes an `ALL_ROWS` or full-table notification and, for a query notification, a change to a dependent table that cannot be represented as the listener entity.
+Micronaut Data delivers one `INVALIDATE` event with no entity or row-specific metadata. An invalidation represents the complete Oracle notification and suppresses partial row events from that same notification. The application decides whether to refresh a cache, rerun a query, or take another appropriate action.
+
+== Object Change Notification
+
+The default ann:data.jdbc.annotation.OracleChangeNotification[] configuration registers the entity's mapped table. Each affected row for which Oracle supplies a `ROWID` is delivered as an `INSERT`, `UPDATE`, or `DELETE` event.
+
+Micronaut Data automatically requests row identifiers with `DCN_NOTIFY_ROWIDS`. Do not configure `DCN_NOTIFY_CHANGELAG` to a non-zero value: grouping changes with a lag prevents Oracle from supplying the row-level operation and `ROWID` details required by this API. A non-zero value is rejected at compilation time.
+
+== Query Result Change Notification
+
+Query Result Change Notification (QRCN) registers a query result instead of the complete mapped table. Enable it with the Oracle JDBC `DCN_QUERY_CHANGE_NOTIFICATION` registration property, then use `select` and `where` to describe the result:
+
+[source,java]
+----
+import oracle.jdbc.OracleConnection;
+
+@ChangeListener
+@OracleChangeNotification(
+    select = "id, title",
+    where = "status = 'AVAILABLE'",
+    properties = @OracleChangeNotification.Property(
+        name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION,
+        value = "true"
+    )
+)
+void onAvailableBookChanged(ChangeEvent<Book> event) {
+    // React when the registered result may have changed.
+}
+----
+
+The `select` value controls the result registered with Oracle; it is not an entity projection. For an `INSERT` or `UPDATE`, Micronaut Data still reloads and maps the complete entity by `ROWID`.
+
+The `select` value must be `*` or a comma-separated list of mapped database column names. Aggregate functions, expressions, aliases, literals, empty selections, and unmapped columns are rejected at compilation time. If a property uses `@MappedProperty`, specify its mapped database column name rather than its Java property name.
+
+The `where` value is appended as Oracle SQL. Micronaut Data verifies at compilation time that `select` or `where` is used only when QRCN is enabled; Oracle determines whether the completed query is eligible for registration when the application starts.
+
+QRCN queries may depend on other tables, including tables in another schema when the datasource user has the required privileges. A change reported only for a dependent table cannot be reloaded as `E`, so the listener receives `INVALIDATE` rather than a misleading row event.
+
+== Oracle Registration Properties
+
+Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value. Prefer the constants defined by `oracle.jdbc.OracleConnection`, for example:
+
+[source,java]
+----
+@OracleChangeNotification(properties = {
+    @OracleChangeNotification.Property(
+        name = OracleConnection.DCN_CLIENT_INIT_CONNECTION,
+        value = "true"
+    ),
+    @OracleChangeNotification.Property(
+        name = OracleConnection.NTF_QOS_PURGE_ON_NTFN,
+        value = "true"
+    )
+})
+----
+
+Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS`.
+`NTF_QOS_PURGE_ON_NTFN` makes a registration one-shot: Oracle removes it after its first notification, and Micronaut Data stops tracking it as a live registration.
+
+Driver properties do not add framework-level reconnection or renewal. In particular, Micronaut Data cannot directly monitor the driver-owned CQN receiver connection because Oracle JDBC does not expose that connection, a heartbeat API, or a callback for a silently lost receiver channel. Setting `NTF_QOS_RELIABLE` does not cause Micronaut Data to recreate a lost channel or re-register a listener.
+
+== Delivery and Concurrency
+
+Oracle invokes its JDBC callback on a driver notification thread. Micronaut Data moves entity loading and listener invocation to the configured blocking executor so application work does not block that driver thread.
+
+Row descriptions within one delivered Oracle notification are processed sequentially. Separate Oracle notifications are submitted independently and may invoke the same listener concurrently. No ordering guarantee is provided between separate notifications. Listener beans must therefore be thread-safe and must not depend on callback order.
+
+A single transaction, such as a bulk update, can produce one Oracle notification containing several row descriptions. The application receives one listener invocation for each affected row unless the notification requires an `INVALIDATE` event.
+
+Notifications describe committed database changes and are not part of the transaction that caused them. The API does not provide durable consumption, automatic redelivery, or event identifiers suitable for generic deduplication. Listener code should tolerate repeated observations and should reconcile state when an invalidation or an application-specific consistency check requires it.
+
+== Transactions, Retry, and Recovery
+
+An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in or roll back the original database transaction because that transaction has already committed before Oracle emits the notification.
+
+ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method. Retry advice covers both deferred entity loading and the listener invocation:
+
+* if loading an inserted or updated row fails, loading can be retried;
+* if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
+* if the method is transactional, each retry attempt runs in a new transaction and a failed attempt is rolled back before the next attempt.
+
+Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure after all retry attempts are exhausted, but recovery does not replay the Oracle notification or restore the transaction that caused it.
+
+== Startup, Shutdown, and Failures
+
+Micronaut Data discovers listener methods while beans are processed, but it resolves the notification provider and creates Oracle registrations only after the application startup event, after generated schema creation has completed.
+
+If any listener registration fails, startup fails with a `DataAccessException` that identifies the datasource and listener method. Registrations already created for that datasource during the same startup attempt are unregistered before the exception is propagated. If the datasource has no supported notification provider, startup instead fails with an `IllegalStateException`.
+
+If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned to Oracle, does not roll back the original change, and does not trigger automatic redelivery. Subsequent notifications continue to be processed.
+
+During graceful shutdown, Micronaut Data stops accepting new callbacks, unregisters live Oracle registrations, and waits for already accepted blocking-executor tasks to finish. Normal non-graceful context destruction also attempts registration cleanup.
+
+An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. Applications can pass `OracleConnection.NTF_TIMEOUT` to limit how long such a registration remains on the server, but Micronaut Data does not currently renew expiring registrations. Expiration and manual re-registration can therefore introduce a window in which notifications are missed.
