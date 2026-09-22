@@ -30,7 +30,6 @@ import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import org.jspecify.annotations.Nullable;
 
@@ -125,7 +124,7 @@ public interface NamingStrategy {
      */
     default  String mappedName(Association association) {
         String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-        if (providedName != null && !providedName.isBlank()) {
+        if (providedName != null) {
             return providedName;
         }
         if (association.isForeignKey()) {
@@ -157,9 +156,12 @@ public interface NamingStrategy {
         }
         StringBuilder sb = new StringBuilder();
         Association foreignAssociation = null;
-        for (Association association : associations) {
+        int foreignAssociationIndex = -1;
+        for (int i = 0; i < associations.size(); i++) {
+            Association association = associations.get(i);
             if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
                 foreignAssociation = association;
+                foreignAssociationIndex = i;
             }
             final String originalAssocName = association.getName();
             String assocName = association.getKind() == Relation.Kind.EMBEDDED
@@ -178,14 +180,14 @@ public interface NamingStrategy {
             }
         }
         if (foreignAssociation != null) {
-            String joinColumnName = resolveJoinColumnName(foreignAssociation, property);
+            String joinColumnName = findJoinColumnName(foreignAssociation, associations.subList(foreignAssociationIndex + 1, associations.size()), property);
             if (joinColumnName != null) {
                 return joinColumnName;
             }
             PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
             if (associatedEntity.equals(property.getOwner()) && associatedEntity.hasIdentity() && associatedEntity.getIdentity().equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-                if (providedName != null && !providedName.isBlank()) {
+                if (providedName != null) {
                     return providedName;
                 }
                 sb.append(getForeignKeySuffix());
@@ -207,28 +209,32 @@ public interface NamingStrategy {
         return mappedName(sb.toString());
     }
 
-    private static @Nullable String resolveJoinColumnName(Association association, PersistentProperty property) {
+    /**
+     * Finds the owner side column name of an explicit {@code @JoinColumn} that references the given associated property.
+     *
+     * @param association The association declaring the join columns
+     * @param associatedPath The embedded path of the property inside the associated entity
+     * @param property The associated property
+     * @return The join column name or null if no join column references the property
+     */
+    private @Nullable String findJoinColumnName(Association association, List<Association> associatedPath, PersistentProperty property) {
         AnnotationValue<JoinColumns> joinColumns = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
         if (joinColumns == null) {
             return null;
         }
-        PersistentEntity associatedEntity = association.getAssociatedEntity();
+        String referencedColumnName = null;
         for (AnnotationValue<?> joinColumn : joinColumns.getAnnotations(AnnotationMetadata.VALUE_MEMBER)) {
-            String referencedColumnName = joinColumn.stringValue("referencedColumnName").orElse(null);
-            if (referencedColumnName != null && referencedColumnName.isBlank()) {
-                referencedColumnName = null;
-            }
-            String joinColumnName = joinColumn.stringValue("name").orElse(null);
-            if (joinColumnName != null && joinColumnName.isBlank()) {
-                joinColumnName = null;
-            }
-            if (referencedColumnName == null
-                ? !PersistentEntityUtils.isImplicitIdentityProperty(associatedEntity, property, joinColumnName)
-                : !referencedColumnName.equals(property.getPersistedName())) {
+            String name = joinColumn.stringValue("name").orElse(null);
+            String referencedColumn = joinColumn.stringValue("referencedColumnName").orElse(null);
+            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(referencedColumn)) {
                 continue;
             }
-            if (joinColumnName != null) {
-                return joinColumnName;
+            if (referencedColumnName == null) {
+                NamingStrategy associatedNamingStrategy = association.getAssociatedEntity().findNamingStrategy().orElse(this);
+                referencedColumnName = associatedNamingStrategy.mappedName(associatedPath, property);
+            }
+            if (referencedColumn.equals(referencedColumnName)) {
+                return name;
             }
         }
         return null;

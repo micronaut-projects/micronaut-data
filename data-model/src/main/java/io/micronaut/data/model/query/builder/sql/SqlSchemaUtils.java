@@ -72,7 +72,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -237,36 +236,26 @@ public final class SqlSchemaUtils {
         List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(sqlColumnDefinitionProviders, identities, namingStrategy, tableName, dialect);
 
         List<SqlColumnMapping> columns = new ArrayList<>();
-        Map<String, String[]> columnPaths = new LinkedHashMap<>();
-        for (PersistentProperty identity : identities) {
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                String columnName = namingStrategy.mappedName(associations, property);
-                String[] path = SqlQueryBuilderUtils.asPath(associations, property);
-                String @Nullable [] existingPath = columnPaths.putIfAbsent(columnName, path);
-                if (existingPath != null && !Arrays.equals(existingPath, path)) {
-                    failOnConflictingIdentityColumn(entity, columnName, existingPath, path);
-                }
-            });
-        }
 
         if (entity.hasVersion()) {
             PersistentProperty version = entity.getVersion();
             if (!version.isGenerated()) {
                 String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
                 SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, version, columnName, tableName, false, true, false, dialect);
-                addTableColumn(entity, columns, columnPaths, columnName, new String[]{version.getName()}, column);
+                columns.add(column);
             }
         }
 
         Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
-            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, property, columnName)) {
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, columnName)) {
+                // The column is already defined by the identity
                 return;
             }
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, tableName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
-            addTableColumn(entity, columns, columnPaths, columnName, SqlQueryBuilderUtils.asPath(associations, property), column);
+            columns.add(column);
         };
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
@@ -282,34 +271,6 @@ public final class SqlSchemaUtils {
             indexes, auxiliaryStatements);
         tables.add(table);
         return tables;
-    }
-
-    private static void failOnConflictingIdentityColumn(PersistentEntity entity, String columnName, String[] existingPath, String[] path) {
-        throw new MappingException("Conflicting identity mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
-            + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
-    }
-
-    /**
-     * Adds a DDL column while detecting multiple property paths mapped to the same physical column.
-     *
-     * <p>Shared identity relation columns are omitted before this method is called. Other duplicate mappings would
-     * generate invalid or ambiguous DDL, so they fail fast instead of silently dropping one property path.</p>
-     */
-    private static void addTableColumn(PersistentEntity entity,
-                                       List<SqlColumnMapping> columns,
-                                       Map<String, String[]> columnPaths,
-                                       String columnName,
-                                       String[] path,
-                                       SqlColumnMapping column) {
-        String @Nullable [] existingPath = columnPaths.putIfAbsent(columnName, path);
-        if (existingPath != null) {
-            if (Arrays.equals(existingPath, path)) {
-                return;
-            }
-            throw new MappingException("Conflicting table mapping for column [" + columnName + "] on entity [" + entity.getName() + "] between paths "
-                + Arrays.toString(existingPath) + " and " + Arrays.toString(path));
-        }
-        columns.add(column);
     }
 
     /**

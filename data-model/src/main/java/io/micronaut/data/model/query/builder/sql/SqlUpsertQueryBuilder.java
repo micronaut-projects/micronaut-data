@@ -185,14 +185,13 @@ final class SqlUpsertQueryBuilder {
         NamingStrategy namingStrategy = sqlQueryBuilder.getNamingStrategy(entity);
         UpsertDataBuilder data = new UpsertDataBuilder(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
+        UpsertColumnContext columnContext = new UpsertColumnContext(namingStrategy, escape, conflictPropertyPaths);
         Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
-        UpsertColumnContext columnContext = new UpsertColumnContext(namingStrategy, escape, conflictPropertyPaths, identityColumns);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
-                String columnName = sqlQueryBuilder.getMappedName(namingStrategy, associations, property);
-                if (SqlQueryBuilderUtils.isSharedIdentityColumn(columnContext.identityColumns(), associations, property, columnName)) {
-                    // The shared identity is emitted once through the root identity path below.
+                if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, sqlQueryBuilder.getMappedName(namingStrategy, associations, property))) {
+                    // The column is written by the identity
                     return;
                 }
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
@@ -504,8 +503,7 @@ final class SqlUpsertQueryBuilder {
 
     private record UpsertColumnContext(NamingStrategy namingStrategy,
                                        boolean escape,
-                                       List<String> conflictPropertyPaths,
-                                       Set<String> identityColumns) {
+                                       List<String> conflictPropertyPaths) {
     }
 
     private record UpsertColumn(String column,
