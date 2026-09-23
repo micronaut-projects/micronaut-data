@@ -125,6 +125,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     private int resolvedGeneration = 1;
     private boolean callNext = true;
+    /**
+     * Whether the mapped entity is an optional embedded property projected as the query result.
+     */
+    private final boolean optionalEmbeddedResult;
 
     /**
      * Default constructor.
@@ -140,7 +144,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             RuntimePersistentEntity<R> entity,
             ResultReader<RS, String> resultReader,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null, null);
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null, null, false);
     }
 
     /**
@@ -157,7 +161,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null, null);
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null, null, false);
     }
 
     /**
@@ -178,7 +182,32 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
             @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService,
             @Nullable DatabaseConversionContextFactory conversionContextFactory) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, conversionContextFactory);
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, conversionContextFactory, false);
+    }
+
+    /**
+     * Constructor used to customize the join paths.
+     *
+     * @param entity                   The entity
+     * @param resultReader             The result reader
+     * @param joinPaths                The join paths
+     * @param jsonColumnReader         The json column reader
+     * @param loadListener             The event listener
+     * @param conversionService        The conversion service
+     * @param conversionContextFactory The conversion context factory
+     * @param optionalEmbeddedResult   Whether the entity is an optional embedded property projected as the query result,
+     *                                 which is then read as {@code null} when none of its values is set
+     * @since 5.2.0
+     */
+    public SqlResultEntityTypeMapper(
+            RuntimePersistentEntity<R> entity,
+            ResultReader<RS, String> resultReader,
+            @Nullable Set<JoinPath> joinPaths,
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService,
+            @Nullable DatabaseConversionContextFactory conversionContextFactory,
+            boolean optionalEmbeddedResult) {
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, conversionContextFactory, optionalEmbeddedResult);
     }
 
     /**
@@ -191,6 +220,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param jsonColumnReader  The json column reader
      * @param eventListener     The event listener used for trigger post load if configured
      * @param conversionService The conversion service
+     * @param optionalEmbeddedResult Whether the entity is an optional embedded property projected as the query result
      */
     private SqlResultEntityTypeMapper(
             RuntimePersistentEntity<R> entity,
@@ -200,7 +230,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
             DataConversionService conversionService,
             @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener,
-            @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+            @Nullable DatabaseConversionContextFactory conversionContextFactory,
+            boolean optionalEmbeddedResult) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
@@ -224,6 +255,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         this.startingPrefix = startingPrefix;
         this.conversionContextFactory = conversionContextFactory;
         this.columnIndexReader = resultReader.getColumnIndexReader();
+        this.optionalEmbeddedResult = optionalEmbeddedResult;
     }
 
     @Override
@@ -257,11 +289,25 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @since 4.2.0
      */
     public R readEntity(RS rs) throws DataAccessException {
-        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix, rootShape), null, null);
+        R entityInstance = readEntityOrNull(rs);
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + entity.getIntrospection().getBeanType() + "]. Missing result data.");
         }
-        return triggerPostLoad(entity, entityInstance);
+        return entityInstance;
+    }
+
+    /**
+     * Read the entity from the result set, or {@code null} when the row has no value for it,
+     * which is the case for an optional embedded projection none of whose columns is set.
+     *
+     * @param rs The result set
+     * @return The entity or null
+     * @since 5.2.0
+     */
+    @Nullable
+    public R readEntityOrNull(RS rs) throws DataAccessException {
+        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix, rootShape), null, null);
+        return entityInstance == null ? null : triggerPostLoad(entity, entityInstance);
     }
 
     @Nullable
@@ -543,7 +589,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         try {
             RuntimePersistentProperty<K> identity = persistentEntity.hasIdentity() ? persistentEntity.getIdentity() : null;
             final boolean isEmbedded = ctx.association instanceof Embedded;
-            final boolean nullableEmbedded = isEmbedded && Objects.requireNonNull(ctx.association).isOptional();
+            final boolean nullableEmbedded = isEmbedded
+                ? Objects.requireNonNull(ctx.association).isOptional()
+                // The root of an optional embedded projection behaves like the optional embedded property itself
+                : ctx.association == null && optionalEmbeddedResult;
 
             Object id = resolveId == null ? readEntityId(rs, ctx) : resolveId;
             if (id == null && !isEmbedded && ctx.association != null) {
@@ -555,7 +604,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             boolean nullIfNoValue = false;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
-                nullIfNoValue = nullableEmbedded || isProjectedEmbeddable(ctx);
+                nullIfNoValue = nullableEmbedded;
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
@@ -727,17 +776,6 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Checks whether the context reads an embeddable selected as the query result, for example {@code Address findAddressById(Long id)}.
-     * Such a result has no identity, so it is null when none of its columns has a value.
-     *
-     * @param ctx The mapping context
-     * @return true if the context is the result embeddable
-     */
-    private static boolean isProjectedEmbeddable(MappingContext<?> ctx) {
-        return ctx.association == null && ctx.persistentEntity.getAnnotationMetadata().hasAnnotation(Embeddable.class);
     }
 
     /**

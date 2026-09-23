@@ -31,6 +31,7 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -623,8 +624,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             false
         );
 
-        boolean embeddedSelection = isEmbeddedSelection(query);
-        boolean dto = result.isDto() && !embeddedSelection;
+        PersistentPropertyPath embeddedSelection = findEmbeddedSelection(query);
+        boolean dto = result.isDto() && embeddedSelection == null;
         ClassElement declaredReturnType = unwrapReactiveReturnType(matchContext.getReturnType());
         applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
         applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType, dto);
@@ -645,14 +646,25 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         )
             .dto(dto)
             .optimisticLock(optimisticLock)
-            .resultDataType(embeddedSelection ? DataType.ENTITY : null)
+            .resultDataType(embeddedSelection != null ? DataType.ENTITY : null)
+            .optionalEmbeddedProjection(embeddedSelection != null && isOptional(embeddedSelection))
             .queryResult(queryResult)
             .countQueryResult(countQueryResult);
     }
 
-    private static boolean isEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
-        return query.getSelection() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
-            && propertyPath.getProperty() instanceof Embedded;
+    @Nullable
+    private static PersistentPropertyPath findEmbeddedSelection(SourcePersistentEntityCriteriaQuery<?> query) {
+        if (query.getSelection() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+            && propertyPath.getProperty() instanceof Embedded) {
+            return propertyPath.getPropertyPath();
+        }
+        return null;
+    }
+
+    // The projected embedded value can be absent when the embedded property, or any embedded property containing it, is optional
+    private static boolean isOptional(PersistentPropertyPath propertyPath) {
+        return propertyPath.getProperty().isOptional()
+            || propertyPath.getAssociations().stream().anyMatch(PersistentProperty::isOptional);
     }
 
     private static ClassElement unwrapReactiveReturnType(ClassElement returnType) {

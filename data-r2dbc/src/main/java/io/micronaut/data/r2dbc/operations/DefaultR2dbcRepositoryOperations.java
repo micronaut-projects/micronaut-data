@@ -788,7 +788,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
                     if (!hasJoins) {
-                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
+                        // An optional embedded projection is mapped to null when none of its columns is set
+                        return executeAndMapEachRowNullable(statement, entityTypeMapper::readEntityOrNull);
                     }
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
@@ -845,6 +846,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             return "";
                         }).collectList().flatMapIterable(ignore -> rowsMapper.getResult());
                     }
+                    // An optional embedded projection is skipped when none of its columns is set
+                    return executeAndMapEachRowNullable(statement, entityTypeMapper::readEntityOrNull);
                 }
                 return executeAndMapEachRowNullable(statement, row -> mapper.map(row, preparedQuery.getResultType()));
             });

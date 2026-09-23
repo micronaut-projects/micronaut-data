@@ -51,6 +51,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final boolean rawQuery;
     private final OperationType operationType;
     private final boolean isDto;
+    private final boolean optionalEmbeddedProjection;
 
     public BasicStoredQuery(String query,
                             String[] expandableQueryParts,
@@ -88,6 +89,39 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             boolean isCount,
                             boolean isDto,
                             OperationType operationType) {
+        this(name, annotationMetadata, query, expandableQueryParts, queryParameterBindings,
+            rootEntity, resultType, pageable, isCount, isDto, false, false, operationType);
+    }
+
+    /**
+     * @param name                       The name
+     * @param annotationMetadata         The annotation metadata
+     * @param query                      The query
+     * @param expandableQueryParts       The expandable query parts
+     * @param queryParameterBindings     The parameter bindings
+     * @param rootEntity                 The root entity
+     * @param resultType                 The result type
+     * @param pageable                   Whether the query is pageable
+     * @param isCount                    Whether the query is a count query
+     * @param isDto                      Whether the query is a DTO projection
+     * @param embeddedProjection         Whether the query projects an embedded property
+     * @param optionalEmbeddedProjection Whether the projected embedded property is optional
+     * @param operationType              The operation type
+     * @since 5.2.0
+     */
+    public BasicStoredQuery(String name,
+                            AnnotationMetadata annotationMetadata,
+                            String query,
+                            String[] expandableQueryParts,
+                            List<QueryParameterBinding> queryParameterBindings,
+                            Class<E> rootEntity,
+                            Class<R> resultType,
+                            boolean pageable,
+                            boolean isCount,
+                            boolean isDto,
+                            boolean embeddedProjection,
+                            boolean optionalEmbeddedProjection,
+                            OperationType operationType) {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
@@ -98,14 +132,20 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.pageable = pageable;
         this.isCount = isCount;
         this.operationType = operationType;
-        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
+        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType || embeddedProjection) ? DataType.ENTITY : DataType.forType(resultType);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         this.isDto = isDto;
+        this.optionalEmbeddedProjection = optionalEmbeddedProjection;
     }
 
     @Override
     public boolean isDtoProjection() {
         return isDto;
+    }
+
+    @Override
+    public boolean isOptionalEmbeddedProjection() {
+        return optionalEmbeddedProjection;
     }
 
     @Override

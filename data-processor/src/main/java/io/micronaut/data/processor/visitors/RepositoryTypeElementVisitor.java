@@ -731,6 +731,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (returnTypeRole != null) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE, returnTypeRole);
             }
+            if (methodInfo.isOptionalEmbeddedProjection()) {
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION, true);
+            }
 
             addQueryDefinition(methodMatchContext,
                 annotationBuilder,

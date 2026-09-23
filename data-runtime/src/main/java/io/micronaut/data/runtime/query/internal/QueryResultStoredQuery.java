@@ -83,6 +83,36 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                   boolean isDto,
                                   OperationType operationType,
                                   Collection<JoinPath> joinPaths) {
+        this(name, annotationMetadata, queryResult, rootEntity, resultType, pageable, isCount, isDto, false, false, operationType, joinPaths);
+    }
+
+    /**
+     * @param name                       The name
+     * @param annotationMetadata         The annotation metadata
+     * @param queryResult                The query result
+     * @param rootEntity                 The root entity
+     * @param resultType                 The result type
+     * @param pageable                   Whether the query is pageable
+     * @param isCount                    Whether the query is a count query
+     * @param isDto                      Whether the query is a DTO projection
+     * @param embeddedProjection         Whether the query projects an embedded property
+     * @param optionalEmbeddedProjection Whether the projected embedded property is optional
+     * @param operationType              The operation type
+     * @param joinPaths                  The join paths
+     * @since 5.2.0
+     */
+    public QueryResultStoredQuery(String name,
+                                  AnnotationMetadata annotationMetadata,
+                                  QueryResult queryResult,
+                                  Class<E> rootEntity,
+                                  Class<R> resultType,
+                                  boolean pageable,
+                                  boolean isCount,
+                                  boolean isDto,
+                                  boolean embeddedProjection,
+                                  boolean optionalEmbeddedProjection,
+                                  OperationType operationType,
+                                  Collection<JoinPath> joinPaths) {
         super(name,
             annotationMetadata,
             queryResult.getQuery(),
@@ -94,6 +124,8 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             pageable,
             isCount,
             isDto,
+            embeddedProjection,
+            optionalEmbeddedProjection,
             operationType);
         this.queryResult = queryResult;
         this.joinPaths = joinPaths == null ? Collections.emptySet() : Set.copyOf(joinPaths);
@@ -156,6 +188,37 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                            boolean isDto,
                                                            Collection<JoinPath> joinPaths) {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, isDto, OperationType.QUERY, joinPaths);
+    }
+
+    /**
+     * Creates a query stored query projecting an embedded property.
+     *
+     * @param operationType      The operation type
+     * @param name               The name
+     * @param annotationMetadata The annotation metadata
+     * @param queryResult        The query result
+     * @param rootEntity         The root entity
+     * @param resultType         The embeddable result type
+     * @param single             Whether the query returns a single result
+     * @param pageable           Whether the query is pageable
+     * @param optional           Whether the projected embedded property is optional
+     * @param joinPaths          The join paths
+     * @param <T>                The root entity type
+     * @param <R>                The result type
+     * @return The stored query
+     * @since 5.2.0
+     */
+    public static <T, R> QueryResultStoredQuery<T, R> embeddedProjection(OperationType operationType,
+                                                                         String name,
+                                                                         AnnotationMetadata annotationMetadata,
+                                                                         QueryResult queryResult,
+                                                                         Class<T> rootEntity,
+                                                                         Class<R> resultType,
+                                                                         boolean single,
+                                                                         boolean pageable,
+                                                                         boolean optional,
+                                                                         Collection<JoinPath> joinPaths) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType, !single && pageable, false, false, true, optional, operationType, joinPaths);
     }
 
     public static <T> QueryResultStoredQuery<T, Long> count(String name,

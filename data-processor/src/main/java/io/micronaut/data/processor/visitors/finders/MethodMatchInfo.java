@@ -54,6 +54,7 @@ public final class MethodMatchInfo {
     private QueryResult countQueryResult;
     @Nullable
     private DataType resultDataType;
+    private boolean optionalEmbeddedProjection;
     private final List<QueryDefinition> additionalQueries = new ArrayList<>(2);
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
@@ -190,6 +191,17 @@ public final class MethodMatchInfo {
     }
 
     /**
+     * Sets whether the query projects an optional embedded property.
+     *
+     * @param optionalEmbeddedProjection Whether the projected embedded property is optional
+     * @return this
+     */
+    public MethodMatchInfo optionalEmbeddedProjection(boolean optionalEmbeddedProjection) {
+        this.optionalEmbeddedProjection = optionalEmbeddedProjection;
+        return this;
+    }
+
+    /**
      * @return Whether this method should read a generated identity value.
      */
     public boolean shouldReadGeneratedId() {
@@ -232,6 +244,13 @@ public final class MethodMatchInfo {
     @Nullable
     public DataType getResultDataType() {
         return resultDataType;
+    }
+
+    /**
+     * @return Whether the query projects an optional embedded property
+     */
+    public boolean isOptionalEmbeddedProjection() {
+        return optionalEmbeddedProjection;
     }
 
     public List<QueryDefinition> getAdditionalQueries() {

@@ -67,6 +67,18 @@ class MongoEmbeddedSpec extends Specification implements MongoTestPropertyProvid
         loadedFirstRestaurant.address.zipCode == firstRestaurant.address.zipCode
         !loadedFirstRestaurant.hqAddress
 
+        when:"Embedded fields are projected"
+        def projectedAddress = restaurantRepository.findAddressById(firstRestaurant.id)
+        def projectedHqAddress = restaurantRepository.findHqAddressById(firstRestaurant.id)
+        def projectedSetHqAddress = restaurantRepository.findHqAddressById(restaurant.id)
+
+        then:"The projected values match and the unset nullable embedded is empty"
+        projectedAddress.street == firstRestaurant.address.street
+        projectedAddress.zipCode == firstRestaurant.address.zipCode
+        projectedHqAddress.isEmpty()
+        projectedSetHqAddress.get().street == '5th Boulevard'
+        projectedSetHqAddress.get().zipCode == '1235'
+
         when:"The object is updated with non-null value"
         restaurant.hqAddress = new Address("John St.", "4567")
         restaurantRepository.update(restaurant)

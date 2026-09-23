@@ -866,7 +866,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 loadListener,
                 conversionService,
-                conversionContextFactory);
+                conversionContextFactory,
+                preparedQuery.isOptionalEmbeddedProjection());
         }
         if (isDtoProjection) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());

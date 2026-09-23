@@ -22,6 +22,7 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
@@ -1651,6 +1652,8 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
         getResultDataType(findAddressByIdMethod) == DataType.ENTITY
         getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
+        !findAddressByIdMethod.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION)
+        findHqAddressByIdMethod.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION)
     }
 
     void "test embeddable type reused as ordinary DTO projection"() {

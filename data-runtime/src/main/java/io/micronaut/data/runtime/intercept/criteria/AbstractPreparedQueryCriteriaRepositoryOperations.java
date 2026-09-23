@@ -21,8 +21,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder;
 import io.micronaut.data.model.query.JoinPath;
@@ -155,12 +158,24 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
         Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
         Selection<?> selection = persistentCriteriaQuery.getSelection();
         boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
+        if (selection instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+            && propertyPath.getProperty() instanceof Embedded) {
+            return QueryResultStoredQuery.embeddedProjection(StoredQuery.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
+                queryResult, (Class<E>) entityRoot, criteriaQuery.getResultType(), isSingle, !pageable.isUnpaged(),
+                isOptional(propertyPath.getPropertyPath()), joinPaths);
+        }
         if (isSingle) {
             return QueryResultStoredQuery.single(StoredQuery.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, (Class<E>) entityRoot, criteriaQuery.getResultType(), isCompoundSelection, joinPaths);
         }
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, (Class<E>) entityRoot,
             criteriaQuery.getResultType(), !pageable.isUnpaged(), isCompoundSelection, joinPaths);
+    }
+
+    // The projected embedded value can be absent when the embedded property, or any embedded property containing it, is optional
+    private static boolean isOptional(PersistentPropertyPath propertyPath) {
+        return propertyPath.getProperty().isOptional()
+            || propertyPath.getAssociations().stream().anyMatch(PersistentProperty::isOptional);
     }
 
     private <E> StoredQuery<E, ?> buildExists(CriteriaQuery<?> criteriaQuery) {

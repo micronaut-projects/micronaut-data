@@ -96,6 +96,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -294,7 +295,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 return false;
             }
         };
-        return StreamSupport.stream(spliterator, false).onClose(iterator::close);
+        Stream<R> results = StreamSupport.stream(spliterator, false).onClose(iterator::close);
+        // An unset embedded property has no projected value
+        return isEmbeddedProjection(preparedQuery, preparedQuery.getResultType()) ? results.filter(Objects::nonNull) : results;
     }
 
     private <T, R> Iterable<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery, boolean stream) {
@@ -414,7 +417,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         } else {
             aggregate = aggregate(clientSession, preparedQuery, resultType);
         }
-        return stream ? aggregate : aggregate.into(new ArrayList<>(limit > 0 ? limit : 20));
+        return stream ? aggregate : toList(preparedQuery, aggregate, limit);
     }
 
     private <T, R> Iterable<R> findAllFiltered(ClientSession clientSession,
@@ -435,7 +438,16 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         } else {
             findIterable = find(clientSession, preparedQuery);
         }
-        return stream ? findIterable : findIterable.into(new ArrayList<>(limit > 0 ? limit : 20));
+        return stream ? findIterable : toList(preparedQuery, findIterable, limit);
+    }
+
+    private static <R> List<R> toList(MongoPreparedQuery<?, R> preparedQuery, MongoIterable<R> iterable, int limit) {
+        List<R> results = iterable.into(new ArrayList<>(limit > 0 ? limit : 20));
+        if (isEmbeddedProjection(preparedQuery, preparedQuery.getResultType())) {
+            // An unset embedded property has no projected value
+            results.removeIf(Objects::isNull);
+        }
+        return results;
     }
 
     private <T, R> FindIterable<R> find(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {

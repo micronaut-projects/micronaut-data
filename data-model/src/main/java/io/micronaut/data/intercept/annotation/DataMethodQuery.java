@@ -97,6 +97,13 @@ public @interface DataMethodQuery {
     String META_MEMBER_DTO = "dto";
 
     /**
+     * Does the query project an optional embedded property.
+     *
+     * @since 5.2.0
+     */
+    String META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION = "optionalEmbeddedProjection";
+
+    /**
      * Does the query contains optimistic lock.
      */
     String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";

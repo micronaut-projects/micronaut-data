@@ -107,6 +107,11 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
         return getPreparedQueryDelegate().isDtoProjection();
     }
 
+    @Override
+    default boolean isOptionalEmbeddedProjection() {
+        return getPreparedQueryDelegate().isOptionalEmbeddedProjection();
+    }
+
     @NonNull
     @Override
     default String getQuery() {

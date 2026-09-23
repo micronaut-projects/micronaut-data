@@ -30,9 +30,12 @@ import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.SupplierUtil;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -209,6 +212,14 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         if (resultType == BsonDocument.class) {
             return (R) result;
         }
+        if (result != null && isEmbeddedProjection(preparedQuery, resultType)) {
+            BsonValue embeddedValue = findEmbeddedProjectionValue(preparedQuery, result, resultType);
+            if (embeddedValue == null || !embeddedValue.isDocument()) {
+                // The projected embedded property is not set
+                return null;
+            }
+            return MongoUtils.toValue(embeddedValue.asDocument(), resultType, codecRegistry);
+        }
 
         Optional<R> maybeConverted = convertUsingIntrospected(preparedQuery, result, resultType);
         if (maybeConverted.isPresent()) {
@@ -245,6 +256,47 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             throw new IllegalStateException("Unrecognized result: " + result);
         }
         return conversionService.convert(MongoUtils.toValue(value), resultType).orElse(null);
+    }
+
+    /**
+     * Checks whether the query projects an embedded property, for example {@code Address findAddressById(String id)}.
+     *
+     * @param preparedQuery The prepared query
+     * @param resultType    The result type
+     * @return true if the query result is an embedded property
+     */
+    protected static boolean isEmbeddedProjection(PreparedQuery<?, ?> preparedQuery, Class<?> resultType) {
+        return preparedQuery.getResultDataType() == DataType.ENTITY
+            && preparedQuery.getRootEntity() != resultType
+            && BeanIntrospector.SHARED.findIntrospection(resultType).filter(introspection -> introspection.hasStereotype(Embeddable.class)).isPresent();
+    }
+
+    /**
+     * Finds the value of the projected embedded property. The result document holds the projected property
+     * next to the implicitly included id, or only the id when the property is not set or is the embedded id itself.
+     * An embedded id is never optional, so an optional projection with only the id means the property is not set.
+     *
+     * @param preparedQuery The prepared query
+     * @param result        The result document
+     * @param resultType    The embeddable type
+     * @return The projected value or null if not set
+     */
+    @Nullable
+    private BsonValue findEmbeddedProjectionValue(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<?> resultType) {
+        for (Map.Entry<String, BsonValue> entry : result.entrySet()) {
+            if (!entry.getKey().equals(MongoUtils.ID)) {
+                return entry.getValue();
+            }
+        }
+        if (preparedQuery.isOptionalEmbeddedProjection()) {
+            return null;
+        }
+        RuntimePersistentEntity<?> persistentEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+        RuntimePersistentProperty<?> identity = persistentEntity.hasIdentity() ? persistentEntity.getIdentity() : null;
+        if (identity instanceof Embedded && identity.getType() == resultType) {
+            return result.get(MongoUtils.ID);
+        }
+        return null;
     }
 
     /**
