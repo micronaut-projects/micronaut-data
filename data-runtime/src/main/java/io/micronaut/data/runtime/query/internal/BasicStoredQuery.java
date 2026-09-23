@@ -62,6 +62,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false, operationType);
     }
 
+    @SuppressWarnings("java:S107")
     public BasicStoredQuery(String name,
                             AnnotationMetadata annotationMetadata,
                             String query,
@@ -78,6 +79,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
             operationType);
     }
 
+    @SuppressWarnings("java:S107")
     public BasicStoredQuery(String name,
                             AnnotationMetadata annotationMetadata,
                             String query,
@@ -109,6 +111,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
      * @param operationType              The operation type
      * @since 5.2.0
      */
+    @SuppressWarnings("java:S107")
     public BasicStoredQuery(String name,
                             AnnotationMetadata annotationMetadata,
                             String query,
@@ -132,10 +135,17 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.pageable = pageable;
         this.isCount = isCount;
         this.operationType = operationType;
-        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType || embeddedProjection) ? DataType.ENTITY : DataType.forType(resultType);
+        this.resultDataType = resolveResultDataType(rootEntity, resultType, isCount, embeddedProjection);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         this.isDto = isDto;
         this.optionalEmbeddedProjection = optionalEmbeddedProjection;
+    }
+
+    private static DataType resolveResultDataType(Class<?> rootEntity, Class<?> resultType, boolean isCount, boolean embeddedProjection) {
+        if (!isCount && (rootEntity == resultType || embeddedProjection)) {
+            return DataType.ENTITY;
+        }
+        return DataType.forType(resultType);
     }
 
     @Override

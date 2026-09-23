@@ -199,6 +199,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      *                                 which is then read as {@code null} when none of its values is set
      * @since 5.2.0
      */
+    @SuppressWarnings("java:S107")
     public SqlResultEntityTypeMapper(
             RuntimePersistentEntity<R> entity,
             ResultReader<RS, String> resultReader,
@@ -222,6 +223,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param conversionService The conversion service
      * @param optionalEmbeddedResult Whether the entity is an optional embedded property projected as the query result
      */
+    @SuppressWarnings("java:S107")
     private SqlResultEntityTypeMapper(
             RuntimePersistentEntity<R> entity,
             ResultReader<RS, String> resultReader,

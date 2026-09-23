@@ -213,12 +213,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             return (R) result;
         }
         if (result != null && isEmbeddedProjection(preparedQuery, resultType)) {
-            BsonValue embeddedValue = findEmbeddedProjectionValue(preparedQuery, result, resultType);
-            if (embeddedValue == null || !embeddedValue.isDocument()) {
-                // The projected embedded property is not set
-                return null;
-            }
-            return MongoUtils.toValue(embeddedValue.asDocument(), resultType, codecRegistry);
+            return convertEmbeddedProjection(preparedQuery, codecRegistry, resultType, result);
         }
 
         Optional<R> maybeConverted = convertUsingIntrospected(preparedQuery, result, resultType);
@@ -269,6 +264,19 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         return preparedQuery.getResultDataType() == DataType.ENTITY
             && preparedQuery.getRootEntity() != resultType
             && BeanIntrospector.SHARED.findIntrospection(resultType).filter(introspection -> introspection.hasStereotype(Embeddable.class)).isPresent();
+    }
+
+    @Nullable
+    private <R> R convertEmbeddedProjection(PreparedQuery<?, ?> preparedQuery,
+                                            CodecRegistry codecRegistry,
+                                            Class<R> resultType,
+                                            BsonDocument result) {
+        BsonValue embeddedValue = findEmbeddedProjectionValue(preparedQuery, result, resultType);
+        if (embeddedValue == null || !embeddedValue.isDocument()) {
+            // The projected embedded property is not set
+            return null;
+        }
+        return MongoUtils.toValue(embeddedValue.asDocument(), resultType, codecRegistry);
     }
 
     /**

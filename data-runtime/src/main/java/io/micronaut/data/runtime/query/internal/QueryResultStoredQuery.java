@@ -101,6 +101,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
      * @param joinPaths                  The join paths
      * @since 5.2.0
      */
+    @SuppressWarnings("java:S107")
     public QueryResultStoredQuery(String name,
                                   AnnotationMetadata annotationMetadata,
                                   QueryResult queryResult,
@@ -208,6 +209,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
      * @return The stored query
      * @since 5.2.0
      */
+    @SuppressWarnings("java:S107")
     public static <T, R> QueryResultStoredQuery<T, R> embeddedProjection(OperationType operationType,
                                                                          String name,
                                                                          AnnotationMetadata annotationMetadata,

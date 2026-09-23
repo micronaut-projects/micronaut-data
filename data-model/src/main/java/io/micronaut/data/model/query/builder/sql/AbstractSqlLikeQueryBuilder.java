@@ -3655,18 +3655,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                     @Nullable
                                     String targetName) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
-            String columnAlias = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
-            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
+            String resultName = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
+            boolean useAlias = StringUtils.isNotEmpty(resultName);
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
+                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? resultName : property.getPersistedName());
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
                 String escapedColumn = escapeColumnIfNeeded(column, escape);
                 String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
                 if (isJsonOrWktGeometry(property)) {
-                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : escapedColumn, property));
+                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(resultName) ? resultName : escapedColumn, property));
                 } else if (useAlias && !column.equals(targetName)) {
-                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
+                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(resultName);
                 } else {
                     sb.append(columnWithTableAlias);
                 }

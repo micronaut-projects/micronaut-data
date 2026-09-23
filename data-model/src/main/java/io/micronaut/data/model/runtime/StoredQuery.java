@@ -130,8 +130,8 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * Returns whether the query projects an optional embedded property, for example {@code Optional<Address> findHqAddressById(Long id)}
-     * where {@code hqAddress} is nullable. Such a result is absent when none of the embedded values is set. Defaults to false.
+     * Returns whether the query result is a nullable embedded property of the root entity. Such a result is absent
+     * when none of the embedded values is set. Defaults to false.
      *
      * @return Whether the query result is an optional embedded property
      * @since 5.2.0
