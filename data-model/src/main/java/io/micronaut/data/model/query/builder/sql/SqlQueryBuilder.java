@@ -2446,9 +2446,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 query.append(COMMA);
 
                 boolean includeIdentity = association.isForeignKey();
+                // Columns shared with the identity can be skipped only when the identity is selected as well
+                Set<String> identityColumns = includeIdentity && computePropertyPaths()
+                    ? SqlQueryBuilderUtils.getIdentityColumns(associatedEntity, namingStrategy)
+                    : Collections.emptySet();
                 // in the case of a foreign key association the ID is not in the table,
                 // so we need to retrieve it
                 PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+                    if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, propertyAssociations, getMappedName(namingStrategy, propertyAssociations, prop))) {
+                        // The column is already selected by the identity
+                        return;
+                    }
 
                     String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);
                     String columnAlias = getColumnAlias(prop);
@@ -2493,9 +2501,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             boolean escape = shouldEscape(entity);
             NamingStrategy namingStrategy = getNamingStrategy(entity);
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
             int length = query.length();
-            PersistentEntityUtils.traversePersistentProperties(entity, (associations, property)
-                -> appendProperty(query, associations, property, namingStrategy, alias, escape));
+            PersistentEntityUtils.traversePersistentProperties(entity, (associations, property) -> {
+                if (!SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, getMappedName(namingStrategy, associations, property))) {
+                    appendProperty(query, associations, property, namingStrategy, alias, escape);
+                }
+            });
             int newLength = query.length();
             if (newLength == length) {
                 selectAllColumns(query, alias);
@@ -2575,10 +2587,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             // Mirror base behavior, but also collect unescaped column names and types for OUT parameter metadata
             boolean escape = shouldEscape(entity);
             NamingStrategy namingStrategy = getNamingStrategy(entity);
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
             int length = query.length();
             PersistentEntityUtils.traversePersistentProperties(entity, (associations, property) -> {
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, columnName)) {
+                    // The column is already returned by the identity
+                    return;
+                }
                 appendProperty(query, associations, property, namingStrategy, alias, escape);
-                unescapedColumns.add(getMappedName(namingStrategy, associations, property));
+                unescapedColumns.add(columnName);
                 resultColumnTypes.add(property.getDataType());
             });
             int newLength = query.length();
