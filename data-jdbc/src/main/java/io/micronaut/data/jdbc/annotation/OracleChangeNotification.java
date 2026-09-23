@@ -32,12 +32,40 @@ import java.lang.annotation.Target;
  * available, or report a dependent table for Query Result Change Notification; either is delivered with
  * {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
+ * <p>Registrations have a finite lifetime. By default, Micronaut Data renews long-lived
+ * registrations by activating a replacement shortly before the previous registration expires.
+ * This avoids a planned delivery gap, but both registrations can briefly report the same database
+ * change.</p>
+ *
  * @since 5.2.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface OracleChangeNotification {
+
+    /**
+     * Controls the finite lifetime of each Oracle registration.
+     *
+     * @return The number of seconds after which Oracle expires the registration. Must be greater
+     * than zero.
+     */
+    int timeoutSeconds() default 3600;
+
+    /**
+     * Controls when Micronaut Data creates a replacement registration.
+     *
+     * @return The strategy used to replace an expiring registration
+     */
+    RenewalMode renewal() default RenewalMode.OVERLAPPING;
+
+    /**
+     * The lead time is used only by {@link RenewalMode#OVERLAPPING}.
+     *
+     * @return How many seconds before expiration the replacement is created. For overlapping
+     * renewal, this must be greater than zero and less than {@link #timeoutSeconds()}.
+     */
+    int renewalLeadTimeSeconds() default 60;
 
     /**
      * The select list to register for Oracle Query Result Change Notification. The value must be
@@ -78,5 +106,21 @@ public @interface OracleChangeNotification {
          * @return The Oracle JDBC registration property value.
          */
         String value();
+    }
+
+    /**
+     * Determines whether successive Oracle registrations overlap.
+     */
+    enum RenewalMode {
+        /**
+         * Activates the replacement before unregistering the previous registration. This avoids
+         * a planned renewal gap but can deliver the same change through both registrations.
+         */
+        OVERLAPPING,
+        /**
+         * Activates the replacement only after the previous registration expires. This avoids
+         * renewal overlap but database changes can be missed while the replacement is created.
+         */
+        AFTER_EXPIRATION
     }
 }

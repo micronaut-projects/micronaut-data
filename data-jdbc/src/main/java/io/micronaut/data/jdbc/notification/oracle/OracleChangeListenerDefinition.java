@@ -23,20 +23,23 @@ import java.util.Properties;
 /**
  * Oracle-specific runtime definition for one {@code @ChangeListener} method.
  *
- * <p>The definition combines the method to invoke, the Oracle registration query and properties,
- * and the ROWID reload query used to obtain the changed entity before dispatch.</p>
+ * <p>The definition contains the listener method, the mapped table identity, the generated
+ * Oracle registration query and properties, the entity loader used to reload non-deleted rows
+ * by {@code ROWID}, and the registration renewal policy.</p>
  *
- * @param beanDefinition The bean definition that owns the listener method.
- * @param method The executable listener method.
- * @param tableIdentifier The persistent Oracle table identifier.
- * @param registrationQuery The query associated with the Oracle notification registration.
- * @param entityLoader The loader that resolves current entity state from an Oracle ROWID.
- * @param registrationProperties The Oracle notification registration properties.
+ * @param beanDefinition         The bean definition that owns the listener method.
+ * @param method                 The executable listener method.
+ * @param tableIdentifier        The persistent Oracle table identifier used for notification matching.
+ * @param registrationQuery      The query associated with the Oracle notification registration.
+ * @param entityLoader           The loader that resolves current entity state from an Oracle {@code ROWID}.
+ * @param registrationProperties The properties passed to the Oracle notification registration.
+ * @param renewalPolicy          The timeout and replacement policy for the registration.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,
                                       OracleTableIdentifier tableIdentifier,
                                       String registrationQuery,
                                       OracleChangeListenerEntityLoader<?> entityLoader,
-                                      Properties registrationProperties) {
+                                      Properties registrationProperties,
+                                      OracleChangeNotificationRenewalPolicy renewalPolicy) {
 }

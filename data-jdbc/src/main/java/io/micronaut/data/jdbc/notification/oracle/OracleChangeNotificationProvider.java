@@ -28,6 +28,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import oracle.jdbc.OracleConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,29 +40,38 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Oracle implementation of the generic JDBC change-notification provider.
  *
- * <p>This singleton is available only when Oracle JDBC is on the classpath. It recognizes Oracle
- * connections during application startup, translates generic listener methods to Oracle
- * definitions, and maintains one {@link OracleChangeNotificationManager} per participating
- * datasource. The provider also aggregates manager shutdown state so Micronaut graceful shutdown
- * waits for all in-flight Oracle notification dispatches.</p>
+ * <p>This singleton is available when the Oracle JDBC driver is present and is selected for
+ * connections that unwrap to {@link OracleConnection}. It converts discovered listener methods
+ * into Oracle listener definitions and maintains one {@link OracleChangeNotificationSubscriptionManager}
+ * for each participating datasource.</p>
+ *
+ * <p>Each subscription manager owns the physical Oracle registrations and their renewal lifecycle.
+ * This provider coordinates graceful shutdown across all datasource managers, including waiting
+ * for already accepted notification tasks to complete. {@link PreDestroy} provides fallback
+ * cleanup when graceful shutdown is not used.</p>
  */
 @Singleton
 @Requires(classes = OracleConnection.class)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 final class OracleChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable {
+    private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationProvider.class);
 
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
-    private final Map<String, OracleChangeNotificationManager> managers = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduledExecutor;
+    private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
 
     OracleChangeNotificationProvider(BeanContext beanContext,
-                                     @Named(TaskExecutors.BLOCKING) Executor blockingExecutor) {
+                                     @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
+                                     @Named(TaskExecutors.SCHEDULED) ScheduledExecutorService scheduledExecutor) {
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
+        this.scheduledExecutor = scheduledExecutor;
     }
 
     @Override
@@ -69,37 +80,43 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     }
 
     @Override
-    public void register(String dataSourceName,
-                         JdbcRepositoryOperations operations,
-                         List<ChangeListenerMethod> listenerMethods) {
-        OracleChangeNotificationManager manager = managers.computeIfAbsent(
+    public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
+        LOG.trace("Registering [{}] Oracle Database change listener methods for datasource [{}]",
+            listenerMethods.size(), dataSourceName);
+        OracleChangeNotificationSubscriptionManager subscriptionManager = subscriptionManagers.computeIfAbsent(
             dataSourceName,
-            ignored -> new OracleChangeNotificationManager(dataSourceName, operations, beanContext, blockingExecutor)
+            ignored -> new OracleChangeNotificationSubscriptionManager(dataSourceName, operations, beanContext, blockingExecutor, scheduledExecutor)
         );
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
-        listenerMethods.forEach(listenerMethod -> manager.addDefinition(definitionFactory.create(listenerMethod)));
-        manager.start();
+        listenerMethods.forEach(listenerMethod -> {
+            OracleChangeListenerDefinition listenerDefinition = definitionFactory.create(listenerMethod);
+            subscriptionManager.addSubscription(listenerDefinition);
+        });
+        subscriptionManager.start();
     }
 
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        return CompletableFuture.allOf(managers.values().stream()
-            .map(OracleChangeNotificationManager::stop)
+        LOG.trace("Starting graceful shutdown of Oracle Database change notifications for [{}] datasource managers",
+            subscriptionManagers.size());
+        return CompletableFuture.allOf(subscriptionManagers.values().stream()
+            .map(OracleChangeNotificationSubscriptionManager::stop)
             .map(CompletionStage::toCompletableFuture)
             .toArray(CompletableFuture[]::new));
     }
 
     @PreDestroy
     void close() {
-        managers.values().forEach(OracleChangeNotificationManager::stop);
+        LOG.trace("Cleaning up Oracle Database change notifications during context destruction");
+        subscriptionManagers.values().forEach(OracleChangeNotificationSubscriptionManager::stop);
     }
 
     @Override
     public OptionalLong reportActiveTasks() {
         long activeTasks = 0;
         boolean shutdownStarted = false;
-        for (OracleChangeNotificationManager manager : managers.values()) {
-            OptionalLong listenerActiveTasks = manager.reportActiveTasks();
+        for (OracleChangeNotificationSubscriptionManager subscriptionManager : subscriptionManagers.values()) {
+            OptionalLong listenerActiveTasks = subscriptionManager.reportActiveTasks();
             if (listenerActiveTasks.isPresent()) {
                 shutdownStarted = true;
                 activeTasks += listenerActiveTasks.getAsLong();

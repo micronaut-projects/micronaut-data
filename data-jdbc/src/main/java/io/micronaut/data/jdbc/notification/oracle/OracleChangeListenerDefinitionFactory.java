@@ -32,11 +32,15 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Creates an Oracle notification definition from a discovered listener method.
+ * Builds the Oracle-specific runtime definition for a discovered change listener.
  *
- * <p>The generic processor has already selected the datasource and resolved the persistent entity
- * argument. This factory consumes the compile-time generated Oracle ROWID query and applies the
- * Oracle registration configuration as a runtime defensive check.</p>
+ * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
+ * {@code ROWID} reload query, copies the annotation's registration properties, adds the required
+ * Oracle {@code ROWID} and timeout settings, derives the renewal policy, and builds the
+ * registration query.</p>
+ *
+ * <p>It also performs defensive runtime validation so invalid Oracle listener configuration
+ * produces an error that identifies the listener method before registration is attempted.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;
@@ -59,14 +63,37 @@ final class OracleChangeListenerDefinitionFactory {
         String reloadQuery = method.stringValue(OracleChangeListenerQuery.class)
             .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle ROWID reload query"));
         Properties properties = registrationProperties(notification, method);
+        OracleChangeNotificationRenewalPolicy renewalPolicy = renewalPolicy(notification, properties, method);
         return new OracleChangeListenerDefinition(
             listenerMethod.beanDefinition(),
             method,
             tableIdentifier,
             registrationQuery(notification, method, tableIdentifier, properties),
             new OracleChangeListenerEntityLoader<>(operations, entityArgument.getType(), reloadQuery),
-            properties
+            properties,
+            renewalPolicy
         );
+    }
+
+    private static OracleChangeNotificationRenewalPolicy renewalPolicy(AnnotationValue<OracleChangeNotification> notification,
+                                                                       Properties properties,
+                                                                       ExecutableMethod<?, ?> method) {
+        int timeoutSeconds = notification.intValue("timeoutSeconds").orElse(3600);
+        int leadTimeSeconds = notification.intValue("renewalLeadTimeSeconds").orElse(60);
+        OracleChangeNotification.RenewalMode mode = notification
+            .enumValue("renewal", OracleChangeNotification.RenewalMode.class)
+            .orElse(OracleChangeNotification.RenewalMode.OVERLAPPING);
+        if (timeoutSeconds <= 0) {
+            throw invalidChangeListener(method, "requires timeoutSeconds to be greater than 0");
+        }
+        if (mode == OracleChangeNotification.RenewalMode.OVERLAPPING
+            && (leadTimeSeconds <= 0 || leadTimeSeconds >= timeoutSeconds)) {
+            throw invalidChangeListener(method,
+                "requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds");
+        }
+        properties.setProperty(OracleConnection.NTF_TIMEOUT, Integer.toString(timeoutSeconds));
+        boolean renewable = !Boolean.parseBoolean(properties.getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
+        return new OracleChangeNotificationRenewalPolicy(timeoutSeconds, mode, leadTimeSeconds, renewable);
     }
 
     private static Properties registrationProperties(AnnotationValue<OracleChangeNotification> notification,
@@ -83,6 +110,9 @@ final class OracleChangeListenerDefinitionFactory {
             if (OracleConnection.DCN_NOTIFY_CHANGELAG.equals(name) && !"0".equals(value.trim())) {
                 throw invalidChangeListener(method, "requires " + OracleConnection.DCN_NOTIFY_CHANGELAG
                     + " to be 0 so row-level operation and ROWID details are available");
+            }
+            if (OracleConnection.NTF_TIMEOUT.equals(name)) {
+                throw invalidChangeListener(method, "must configure Oracle registration timeout with timeoutSeconds");
             }
             properties.setProperty(name, value);
         }

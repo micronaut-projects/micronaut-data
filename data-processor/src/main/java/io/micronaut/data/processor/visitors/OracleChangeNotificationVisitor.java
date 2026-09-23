@@ -42,12 +42,21 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Validates Oracle notification configuration and generates Oracle ROWID reload query metadata.
+ * Processes {@code @OracleChangeNotification} methods during compilation.
+ *
+ * <p>The visitor verifies that the method is also a {@code @ChangeListener}, validates
+ * Oracle registration settings and query-change-notification select columns, and generates
+ * an internal {@link OracleChangeListenerQuery} annotation containing the query used to
+ * reload the mapped entity by its reported Oracle {@code ROWID}.</p>
+ *
+ * <p>This visitor performs compile-time processing only. It does not open a datasource
+ * connection or create an Oracle Database notification registration.</p>
  */
 public final class OracleChangeNotificationVisitor implements TypeElementVisitor<Object, Object> {
     private static final String ORACLE_CHANGE_NOTIFICATION = "io.micronaut.data.jdbc.annotation.OracleChangeNotification";
     private static final String QUERY_CHANGE_NOTIFICATION = "DCN_QUERY_CHANGE_NOTIFICATION";
     private static final String NOTIFY_CHANGE_LAG = "DCN_NOTIFY_CHANGELAG";
+    private static final String NOTIFICATION_TIMEOUT = "NTF_TIMEOUT";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
 
@@ -100,11 +109,26 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         String where = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "where").orElse("").trim();
+        int timeoutSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "timeoutSeconds").orElse(3600);
+        int leadTimeSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "renewalLeadTimeSeconds").orElse(60);
+        String renewal = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "renewal").orElse("OVERLAPPING");
+        if (timeoutSeconds <= 0) {
+            context.fail("@OracleChangeNotification requires timeoutSeconds to be greater than 0", element);
+            return false;
+        }
+        if ("OVERLAPPING".equals(renewal) && (leadTimeSeconds <= 0 || leadTimeSeconds >= timeoutSeconds)) {
+            context.fail("@OracleChangeNotification requires renewalLeadTimeSeconds to be greater than 0 "
+                + "and less than timeoutSeconds", element);
+            return false;
+        }
         boolean queryChangeNotification = false;
         Object properties = annotationMetadata.getValue(ORACLE_CHANGE_NOTIFICATION, "properties").orElse(null);
         if (properties instanceof AnnotationValue<?>[] annotationValues) {
             for (AnnotationValue<?> property : annotationValues) {
                 if (invalidChangeLag(property, context, element)) {
+                    return false;
+                }
+                if (invalidTimeoutProperty(property, context, element)) {
                     return false;
                 }
                 queryChangeNotification |= isEnabled(property, QUERY_CHANGE_NOTIFICATION);
@@ -113,6 +137,9 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             for (Object property : iterable) {
                 if (property instanceof AnnotationValue<?> annotationValue) {
                     if (invalidChangeLag(annotationValue, context, element)) {
+                        return false;
+                    }
+                    if (invalidTimeoutProperty(annotationValue, context, element)) {
                         return false;
                     }
                     queryChangeNotification |= isEnabled(annotationValue, QUERY_CHANGE_NOTIFICATION);
@@ -190,6 +217,16 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             && !"0".equals(property.stringValue("value").orElse("").trim())) {
             context.fail("@OracleChangeNotification requires " + NOTIFY_CHANGE_LAG
                 + " to be 0 so row-level operation and ROWID details are available", element);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean invalidTimeoutProperty(AnnotationValue<?> property,
+                                                  VisitorContext context,
+                                                  MethodElement element) {
+        if (NOTIFICATION_TIMEOUT.equals(property.stringValue("name").orElse(""))) {
+            context.fail("@OracleChangeNotification must configure Oracle registration timeout with timeoutSeconds", element);
             return true;
         }
         return false;
