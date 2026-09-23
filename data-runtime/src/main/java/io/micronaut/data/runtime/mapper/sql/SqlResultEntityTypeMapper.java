@@ -555,7 +555,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             boolean nullIfNoValue = false;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
-                nullIfNoValue = nullableEmbedded;
+                nullIfNoValue = nullableEmbedded || isProjectedEmbeddable(ctx);
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
@@ -727,6 +727,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Checks whether the context reads an embeddable selected as the query result, for example {@code Address findAddressById(Long id)}.
+     * Such a result has no identity, so it is null when none of its columns has a value.
+     *
+     * @param ctx The mapping context
+     * @return true if the context is the result embeddable
+     */
+    private static boolean isProjectedEmbeddable(MappingContext<?> ctx) {
+        return ctx.association == null && ctx.persistentEntity.getAnnotationMetadata().hasAnnotation(Embeddable.class);
     }
 
     /**

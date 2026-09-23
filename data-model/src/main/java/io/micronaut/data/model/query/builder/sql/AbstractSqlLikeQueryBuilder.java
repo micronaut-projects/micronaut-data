@@ -3643,7 +3643,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @param namingStrategy The naming strategy used to resolve the column name
          * @param tableAlias     The table alias
          * @param escape         Whether to escape the column
-         * @param targetName     The result column name, if not set the property column alias is used
+         * @param targetName     The result column name, escaped like the column. If not set, the property column alias is used
          */
         private void appendProperty(StringBuilder sb,
                                     List<Association> associations,
@@ -3655,7 +3655,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                     @Nullable
                                     String targetName) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
-            String columnAlias = targetName != null ? targetName : getColumnAlias(property);
+            String columnAlias = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(columnAlias);
             if (transformed != null) {
                 sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());

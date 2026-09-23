@@ -352,11 +352,11 @@ interface MyRepository {
 
         where:
         dialect            || expectedProjection
-        Dialect.ORACLE     || 'SDO_UTIL.TO_GEOJSON(school_."POINT") AS point'
-        Dialect.MYSQL      || 'ST_AsGeoJSON(school_.`point`) AS point'
-        Dialect.H2         || 'ST_AsGeoJSON(school_.`point`) AS point'
-        Dialect.POSTGRES   || 'ST_AsGeoJSON(school_."point") AS point'
-        Dialect.SQL_SERVER || 'school_.[point].STAsText() AS point'
+        Dialect.ORACLE     || 'SDO_UTIL.TO_GEOJSON(school_."POINT") AS "POINT"'
+        Dialect.MYSQL      || 'ST_AsGeoJSON(school_.`point`) AS `point`'
+        Dialect.H2         || 'ST_AsGeoJSON(school_.`point`) AS `point`'
+        Dialect.POSTGRES   || 'ST_AsGeoJSON(school_."point") AS "point"'
+        Dialect.SQL_SERVER || 'school_.[point].STAsText() AS [point]'
     }
 
     void "test aliased embedded projection with multiple columns throws"() {

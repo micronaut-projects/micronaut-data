@@ -1647,7 +1647,7 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         saveQuery == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
         findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
         findAddressByIdQuery == 'SELECT restaurant_.`street`,restaurant_.`zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
-        findHqAddressByIdQuery == 'SELECT restaurant_.`hqaddress_street` AS street,restaurant_.`hqaddress_zip_code` AS zip_code FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
+        findHqAddressByIdQuery == 'SELECT restaurant_.`hqaddress_street` AS `street`,restaurant_.`hqaddress_zip_code` AS `zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`id` = ?)'
         getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
         getResultDataType(findAddressByIdMethod) == DataType.ENTITY
         getResultDataType(findHqAddressByIdMethod) == DataType.ENTITY
@@ -1728,9 +1728,9 @@ interface VehicleRepository extends GenericRepository<Vehicle, Long> {
 
         expect:
         findFirstRegistrationByIdQuery == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        findSecondRegistrationByIdQuery == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        findFirstRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        findSecondRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationByIdQuery == 'SELECT vehicle_.`second_plate_number` AS `plate_number`,vehicle_.`second_status` AS `status`,vehicle_.`second_jurisdiction_country_code` AS `jurisdiction_country_code`,vehicle_.`second_jurisdiction_region_code` AS `jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findFirstRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`jurisdiction_country_code` AS `country_code`,vehicle_.`jurisdiction_region_code` AS `region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        findSecondRegistrationJurisdictionByIdQuery == 'SELECT vehicle_.`second_jurisdiction_country_code` AS `country_code`,vehicle_.`second_jurisdiction_region_code` AS `region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
     }
 
     void "test embedded projection result preserves leaf aliases and read transformers"() {
@@ -1802,7 +1802,7 @@ interface LocationRestaurantRepository extends GenericRepository<LocationRestaur
         def findLocationByIdMethod = repository.getRequiredMethod("findLocationById", Long)
 
         expect:
-        getQuery(findLocationByIdMethod) == 'SELECT location_restaurant_.`pref_label` AS ll,LOWER(location_restaurant_.pref_normalized_code) AS normalized_code FROM `location_restaurant` location_restaurant_ WHERE (location_restaurant_.`id` = ?)'
+        getQuery(findLocationByIdMethod) == 'SELECT location_restaurant_.`pref_label` AS `ll`,LOWER(location_restaurant_.pref_normalized_code) AS `normalized_code` FROM `location_restaurant` location_restaurant_ WHERE (location_restaurant_.`id` = ?)'
         getResultDataType(findLocationByIdMethod) == DataType.ENTITY
     }
 
@@ -1856,9 +1856,9 @@ interface VehicleRepository extends GenericRepository<Vehicle, Long> {
 
         expect:
         getQuery(firstRegistrationMethod) == 'SELECT vehicle_.`plate_number`,vehicle_.`status`,vehicle_.`jurisdiction_country_code`,vehicle_.`jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        getQuery(secondRegistrationMethod) == 'SELECT vehicle_.`second_plate_number` AS plate_number,vehicle_.`second_status` AS status,vehicle_.`second_jurisdiction_country_code` AS jurisdiction_country_code,vehicle_.`second_jurisdiction_region_code` AS jurisdiction_region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        getQuery(firstJurisdictionMethod) == 'SELECT vehicle_.`jurisdiction_country_code` AS country_code,vehicle_.`jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
-        getQuery(secondJurisdictionMethod) == 'SELECT vehicle_.`second_jurisdiction_country_code` AS country_code,vehicle_.`second_jurisdiction_region_code` AS region_code FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondRegistrationMethod) == 'SELECT vehicle_.`second_plate_number` AS `plate_number`,vehicle_.`second_status` AS `status`,vehicle_.`second_jurisdiction_country_code` AS `jurisdiction_country_code`,vehicle_.`second_jurisdiction_region_code` AS `jurisdiction_region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(firstJurisdictionMethod) == 'SELECT vehicle_.`jurisdiction_country_code` AS `country_code`,vehicle_.`jurisdiction_region_code` AS `region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
+        getQuery(secondJurisdictionMethod) == 'SELECT vehicle_.`second_jurisdiction_country_code` AS `country_code`,vehicle_.`second_jurisdiction_region_code` AS `region_code` FROM `vehicle` vehicle_ WHERE (vehicle_.`id` = ?)'
         getResultDataType(firstRegistrationMethod) == DataType.ENTITY
         getResultDataType(secondRegistrationMethod) == DataType.ENTITY
         getResultDataType(firstJurisdictionMethod) == DataType.ENTITY
