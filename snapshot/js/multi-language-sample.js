@@ -2,6 +2,7 @@ var BUILD_MAVEN = "maven";
 var BUILD_GRADLE = "gradle";
 var BUILD_GRADLE_GROOVY = "gradle-groovy";
 var BUILD_GRADLE_KOTLIN = "gradle-kotlin";
+var BUILD_PYRONAUT = "pyronaut";
 var LANG_JAVA = "java";
 var LANG_GROOVY = "groovy";
 var LANG_KOTLIN = "kotlin";
@@ -12,7 +13,9 @@ var CONFIG_HOCON = "hocon";
 var CONFIG_JSON = "json-config";
 var CONFIG_PROPERTIES = "properties";
 var CONFIG_GROOVY = "groovy-config";
-var MICRONAUT_SUPPORTED_BUILDS = [BUILD_GRADLE, BUILD_GRADLE_GROOVY, BUILD_GRADLE_KOTLIN, BUILD_MAVEN];
+var MICRONAUT_SUPPORTED_BUILDS = [BUILD_GRADLE, BUILD_GRADLE_GROOVY, BUILD_GRADLE_KOTLIN, BUILD_MAVEN, BUILD_PYRONAUT];
+// JVM builds: selecting one of them while Python is the preferred language switches the language back to Java
+var MICRONAUT_JVM_BUILDS = [BUILD_GRADLE, BUILD_GRADLE_GROOVY, BUILD_GRADLE_KOTLIN, BUILD_MAVEN];
 var MICRONAUT_SUPPORTED_LANGS = [LANG_JAVA, LANG_GROOVY, LANG_KOTLIN, LANG_PYTHON];
 var MICRONAUT_SUPPORTED_CONFIG_LANGS = [CONFIG_YAML, CONFIG_TOML, CONFIG_HOCON, CONFIG_PROPERTIES, CONFIG_GROOVY, CONFIG_JSON];
 var DEFAULT_SUPPORTED_LANG = LANG_JAVA;
@@ -39,7 +42,7 @@ function postProcessCodeBlocks() {
 
 
     var preferredLanguage = initPreferredLanguage();
-    var preferredBuild = initPreferredBuild();
+    var preferredBuild = reconcilePreferredBuild(preferredLanguage, initPreferredBuild());
     var preferredConfig = initPreferredConfig();
 
     function isBuild(optionId) {
@@ -68,6 +71,19 @@ function postProcessCodeBlocks() {
         if (MICRONAUT_SUPPORTED_BUILDS.indexOf(build) === -1) {
             window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, DEFAULT_BUILD);
             build = DEFAULT_BUILD;
+        }
+        return build;
+    }
+
+    // Python projects are built with Pyronaut and JVM languages with Gradle or Maven,
+    // so a persisted build which doesn't match the persisted language is corrected
+    function reconcilePreferredBuild(lang, build) {
+        if (lang === LANG_PYTHON && build !== BUILD_PYRONAUT) {
+            build = BUILD_PYRONAUT;
+            window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, build);
+        } else if (lang !== LANG_PYTHON && build === BUILD_PYRONAUT) {
+            build = DEFAULT_BUILD;
+            window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, build);
         }
         return build;
     }
@@ -229,15 +245,27 @@ function postProcessCodeBlocks() {
                             var isOptionConfig = isConfig(optionId);
                             if (isOptionBuild) {
                                 window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, optionId);
+                                // Pyronaut is the Python build tool: keep the language and the build in sync
+                                if (optionId === BUILD_PYRONAUT) {
+                                    window.localStorage.setItem(LOCALSTORAGE_KEY_LANG, LANG_PYTHON);
+                                } else if (initPreferredLanguage() === LANG_PYTHON) {
+                                    window.localStorage.setItem(LOCALSTORAGE_KEY_LANG, DEFAULT_SUPPORTED_LANG);
+                                }
                             }
                             if (isOptionLang) {
                                 window.localStorage.setItem(LOCALSTORAGE_KEY_LANG, optionId);
+                                // Python projects are built with Pyronaut, JVM languages with Gradle or Maven
+                                if (optionId === LANG_PYTHON) {
+                                    window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, BUILD_PYRONAUT);
+                                } else if (MICRONAUT_JVM_BUILDS.indexOf(initPreferredBuild()) === -1) {
+                                    window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, DEFAULT_BUILD);
+                                }
                             }
                             if (isOptionConfig) {
                                 window.localStorage.setItem(LOCALSTORAGE_KEY_CONFIG, optionId);
                             }
 
-                            switchSampleLanguage(isOptionLang ? optionId : initPreferredLanguage(), isOptionBuild ? optionId : initPreferredBuild(), isOptionConfig ? optionId : initPreferredConfig());
+                            switchSampleLanguage(initPreferredLanguage(), initPreferredBuild(), isOptionConfig ? optionId : initPreferredConfig());
 
                             // scroll to multi-lange selector. Offset the scroll a little bit to focus.
                             optionEl.scrollIntoView();
