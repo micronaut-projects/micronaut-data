@@ -2,7 +2,7 @@ from typing import Annotated
 
 from jakarta.inject import Inject
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from org.junit.jupiter.api import AfterEach, BeforeEach, Disabled, Test
+from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 
 from example.Person import Person
 from example.PersonRepository import PersonRepository, age_is_less_than, and_, long_name_equals, name_equals, not_, or_, set_new_name
@@ -50,7 +50,6 @@ class PersonRepositorySpec:
         assert len(people) == 2
 
     @Test
-    @Disabled("TODO(python): a Python lambda passed to deleteAll/updateAll is ambiguous between the inherited Iterable overload and the specification overload (TypeError: invalid instantiation of foreign object), see DISABLED_TESTS.md")
     def testDelete(self):
         all = self.personRepository.findAll(None)
         assert len(all) == 2
@@ -65,7 +64,6 @@ class PersonRepositorySpec:
         assert len(all) == 1
 
     @Test
-    @Disabled("TODO(python): a Python lambda passed to deleteAll/updateAll is ambiguous between the inherited Iterable overload and the specification overload (TypeError: invalid instantiation of foreign object), see DISABLED_TESTS.md")
     def testUpdate(self):
         all = self.personRepository.findAll(None)
         assert len(all) == 2

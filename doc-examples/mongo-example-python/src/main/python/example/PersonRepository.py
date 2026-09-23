@@ -10,7 +10,9 @@ from example.Person import Person
 
 
 # TODO(python): the specification methods are declared on the repository instead of extending JpaSpecificationExecutor:
-# its same-arity overloads (PredicateSpecification / QuerySpecification) are ambiguous for a Python lambda, see DISABLED_TESTS.md
+# with that base type a Python lambda passed to deleteAll/updateAll is ambiguous again between its
+# PredicateSpecification and DeleteSpecification/UpdateSpecification overloads (TypeError: invalid
+# instantiation of foreign object), and Python cannot declare the findOne/findAll overload pairs anyway
 # tag::repository[]
 @MongoRepository
 class PersonRepository(CrudRepository[Person, ObjectId]):
