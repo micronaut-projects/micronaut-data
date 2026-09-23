@@ -52,6 +52,10 @@ public final class MethodMatchInfo {
     private QueryResult queryResult;
     @Nullable
     private QueryResult countQueryResult;
+    /**
+     * Overrides the result data type resolved from the result type. It is set to {@link DataType#ENTITY}
+     * for an embedded property projection, which is then read as a structured result instead of a single value.
+     */
     @Nullable
     private DataType resultDataType;
     private boolean optionalEmbeddedProjection;
@@ -185,6 +189,12 @@ public final class MethodMatchInfo {
         return this;
     }
 
+    /**
+     * Sets the result data type, overriding the one resolved from the result type.
+     *
+     * @param resultDataType The result data type or null to resolve it from the result type
+     * @return this
+     */
     public MethodMatchInfo resultDataType(@Nullable DataType resultDataType) {
         this.resultDataType = resultDataType;
         return this;
@@ -241,6 +251,9 @@ public final class MethodMatchInfo {
         return encodeEntityParameters;
     }
 
+    /**
+     * @return The result data type overriding the one resolved from the result type, or null if not overridden
+     */
     @Nullable
     public DataType getResultDataType() {
         return resultDataType;
