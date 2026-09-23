@@ -25,7 +25,6 @@ class PersonRepositorySpec:
         self.personRepository.deleteAll()
 
     @Test
-    # TODO(python): keyword alias on foreign object: `criteria_builder.and_`/`or_`/`not_` are not resolved on a lambda parameter, see DISABLED_TESTS.md
     def testFind(self):
         # tag::find[]
         denis = self.personRepository.findOne(name_equals("Denis")).orElse(None)
