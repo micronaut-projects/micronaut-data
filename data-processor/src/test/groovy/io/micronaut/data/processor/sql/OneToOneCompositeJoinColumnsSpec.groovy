@@ -157,4 +157,46 @@ record ReportMetadata(@EmbeddedId ReportMetadataId id, String author) {
         getQuery(saveMethod) == 'INSERT INTO `report` (`title`,`meta_container`,`metadata_asset_id`,`id`) VALUES (?,?,?,?)'
         getParameterPropertyPaths(saveMethod) == ["title", "metadata.id.containerId", "metadata.id.assetId", "id"] as String[]
     }
+
+    void "join column is matched using the naming strategy of the associated entity"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.naming.NamingStrategies;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends GenericRepository<Book, Long> {
+    Book save(Book entity);
+    @Join("writer")
+    List<Book> findByTitle(String title);
+}
+
+@Embeddable
+record WriterId(String code, String region) {
+}
+
+// The owner uses the raw naming strategy while the associated entity uses the default one
+@MappedEntity(value = "book", namingStrategy = NamingStrategies.Raw.class)
+record Book(@Id Long id,
+            String title,
+            @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+            @JoinColumn(name = "book_writer_code", referencedColumnName = "writer_code")
+            @JoinColumn(name = "book_writer_region", referencedColumnName = "writer_region")
+            Writer writer) {
+}
+
+@MappedEntity("writer")
+record Writer(@EmbeddedId @MappedProperty("writer") WriterId id, String name) {
+}
+""")
+        def saveMethod = repository.findPossibleMethods("save").findFirst().get()
+        def findMethod = repository.findPossibleMethods("findByTitle").findFirst().get()
+
+        expect:
+        getQuery(saveMethod) == 'INSERT INTO `book` (`title`,`book_writer_code`,`book_writer_region`,`id`) VALUES (?,?,?,?)'
+        getParameterPropertyPaths(saveMethod) == ["title", "writer.id.code", "writer.id.region", "id"] as String[]
+        getQuery(findMethod).contains('ON book_.`book_writer_code`=book_writer_.`writer_code` AND book_.`book_writer_region`=book_writer_.`writer_region`')
+    }
 }

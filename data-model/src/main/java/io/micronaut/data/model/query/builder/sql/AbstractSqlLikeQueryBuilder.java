@@ -1102,7 +1102,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     needsTrimming[0] = true;
                 }
             }
-            if (!needsTrimming[0] && generatedEntityUpdate && sharedIdentityBindingParameter != null) {
+            if (!needsTrimming[0] && sharedIdentityBindingParameter != null) {
+                if (!generatedEntityUpdate) {
+                    throw new IllegalArgumentException("Cannot generate update statement for entity [" + entity.getName()
+                        + "] because all update properties are mapped to identity columns shared with an association and cannot be updated");
+                }
                 // Only the identity shared with an association remains, update the identity to itself to produce a valid statement
                 appendIdentityUpdate(queryState, namingStrategy, sharedIdentityBindingParameter);
                 needsTrimming[0] = true;

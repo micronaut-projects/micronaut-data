@@ -777,6 +777,7 @@ class MetadataKey {
         sql.count("`asset_id`") == 2
     }
 
+    @Unroll
     void "test build create table for JSON type for dialect #dialect"() {
         given:
         def entity = buildJpaEntity('test.Test', '''

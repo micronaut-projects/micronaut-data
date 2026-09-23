@@ -230,7 +230,8 @@ public interface NamingStrategy {
                 continue;
             }
             if (referencedColumnName == null) {
-                NamingStrategy associatedNamingStrategy = association.getAssociatedEntity().findNamingStrategy().orElse(this);
+                // The referenced column belongs to the associated entity, resolve it using its effective naming strategy
+                NamingStrategy associatedNamingStrategy = association.getAssociatedEntity().getNamingStrategy();
                 referencedColumnName = associatedNamingStrategy.mappedName(associatedPath, property);
             }
             if (referencedColumn.equals(referencedColumnName)) {

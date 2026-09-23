@@ -1061,6 +1061,71 @@ class SharedIdentityOnlyMetadata {
         getParameterPropertyPaths(method) == ["assetId", "assetId"] as String[]
     }
 
+    void "explicit update of relation backed only by shared identity columns is rejected"() {
+        when:
+        buildRepository('test.ExplicitSharedIdentityOnlyAssetRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ExplicitSharedIdentityOnlyAssetRepository extends GenericRepository<ExplicitSharedIdentityOnlyAsset, Long> {
+    void updateMetadata(@Id Long assetId, ExplicitSharedIdentityOnlyMetadata metadata);
+}
+
+@MappedEntity("explicit_shared_identity_only_asset")
+class ExplicitSharedIdentityOnlyAsset {
+    @Id
+    @MappedProperty("asset_id")
+    private Long assetId;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "asset_id", referencedColumnName = "metadata_id")
+    private ExplicitSharedIdentityOnlyMetadata metadata;
+
+    Long getAssetId() {
+        return assetId;
+    }
+
+    void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    ExplicitSharedIdentityOnlyMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(ExplicitSharedIdentityOnlyMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("explicit_shared_identity_only_metadata")
+class ExplicitSharedIdentityOnlyMetadata {
+    @Id
+    @MappedProperty("metadata_id")
+    private Long metadataId;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("all update properties are mapped to identity columns shared with an association")
+    }
+
     void "generated shared identity only entity update falls back to identity assignment"() {
         given:
         def repository = buildRepository('test.GeneratedSharedIdentityOnlyAssetRepository', """
