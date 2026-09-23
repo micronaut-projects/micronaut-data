@@ -30,6 +30,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * property. Its read value is computed by applying a SQL function over a set of properties that participate in the ETag.
  * Those properties are either explicitly marked with {@link ETagValue} or implicitly included when the owning
  * entity is annotated with {@link ETaggable}.
+ * Micronaut Data supplies the resolved input columns in a deterministic entity traversal order. ETag functions
+ * should not depend on the order of their arguments. For example, Oracle's {@code SYS_ROW_ETAG} treats its column
+ * arguments as an unordered set, so reordering mapped properties does not change the ETag when the selected columns
+ * remain the same.
  *
  * The actual mapping to {@code @Version}, {@code @GeneratedValue} and {@code @ColumnTransformer} is performed
  * by the MappedEntityVisitor in the data-processor module during annotation processing.
@@ -53,6 +57,7 @@ public @interface GeneratedETag {
      * The value should be a function name, which may be schema-qualified, such as {@code SYS_ROW_ETAG}
      * or {@code MY_SCHEMA.MY_ETAG_FUNCTION}. Do not include parentheses, argument placeholders, or column
      * references; Micronaut Data supplies the resolved ETag input columns.
+     * The function should produce the same ETag regardless of the order in which those columns are supplied.
      * <p>
      * If not specified, the function may be resolved from the SQL dialect at query-build time.
      * Currently, Oracle defaults to {@code SYS_ROW_ETAG}; other dialects require an explicit function.

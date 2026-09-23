@@ -183,6 +183,41 @@ class OracleTransactionPrioritySpec extends Specification {
         0 * connection.createStatement()
     }
 
+    def "recognizes priority rollback only from an Oracle JDBC connection"() {
+        given:
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        def exception = new SQLException('ORA-63302: transaction must be rolled back', '99999', 63302)
+
+        when:
+        def result = DataSourceTransactionManager.isOraclePriorityRollback(connection, exception)
+
+        then:
+        1 * connection.getMetaData() >> metadata
+        1 * metadata.getDatabaseProductName() >> 'Oracle'
+        result
+
+        when:
+        result = DataSourceTransactionManager.isOraclePriorityRollback(connection, exception)
+
+        then:
+        1 * connection.getMetaData() >> metadata
+        1 * metadata.getDatabaseProductName() >> 'PostgreSQL'
+        !result
+    }
+
+    def "does not inspect JDBC metadata for an unrelated failure"() {
+        given:
+        def connection = Mock(Connection)
+
+        when:
+        def result = DataSourceTransactionManager.isOraclePriorityRollback(connection, new RuntimeException('ORA-63302'))
+
+        then:
+        !result
+        0 * connection.getMetaData()
+    }
+
     private DataSourceTransactionManager newTxManager() {
         new DataSourceTransactionManager(Mock(DataSource), Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
     }
