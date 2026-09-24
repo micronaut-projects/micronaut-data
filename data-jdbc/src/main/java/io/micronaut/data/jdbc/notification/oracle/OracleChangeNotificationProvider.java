@@ -24,6 +24,7 @@ import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
 import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.TaskScheduler;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -40,7 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Oracle implementation of the generic JDBC change-notification provider.
@@ -63,15 +63,15 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
-    private final ScheduledExecutorService scheduledExecutor;
+    private final TaskScheduler taskScheduler;
     private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
 
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
-                                     @Named(TaskExecutors.SCHEDULED) ScheduledExecutorService scheduledExecutor) {
+                                     @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler) {
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
-        this.scheduledExecutor = scheduledExecutor;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -81,11 +81,11 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     @Override
     public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
-        LOG.trace("Registering [{}] Oracle Database change listener methods for datasource [{}]",
+        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
             listenerMethods.size(), dataSourceName);
         OracleChangeNotificationSubscriptionManager subscriptionManager = subscriptionManagers.computeIfAbsent(
             dataSourceName,
-            ignored -> new OracleChangeNotificationSubscriptionManager(dataSourceName, operations, beanContext, blockingExecutor, scheduledExecutor)
+            ignored -> new OracleChangeNotificationSubscriptionManager(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler)
         );
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
         listenerMethods.forEach(listenerMethod -> {
@@ -97,8 +97,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        LOG.trace("Starting graceful shutdown of Oracle Database change notifications for [{}] datasource managers",
-            subscriptionManagers.size());
+        LOG.trace("Stopping DCN subscription managers during graceful shutdown");
         return CompletableFuture.allOf(subscriptionManagers.values().stream()
             .map(OracleChangeNotificationSubscriptionManager::stop)
             .map(CompletionStage::toCompletableFuture)
@@ -107,7 +106,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     @PreDestroy
     void close() {
-        LOG.trace("Cleaning up Oracle Database change notifications during context destruction");
+        LOG.trace("Stopping DCN subscription managers during context destruction");
         subscriptionManagers.values().forEach(OracleChangeNotificationSubscriptionManager::stop);
     }
 

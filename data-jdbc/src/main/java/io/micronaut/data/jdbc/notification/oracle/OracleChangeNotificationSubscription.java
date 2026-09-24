@@ -16,17 +16,18 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
+import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
@@ -52,7 +53,7 @@ final class OracleChangeNotificationSubscription {
     private final OracleChangeListenerDefinition definition;
     private final OracleChangeNotificationRegistrar registrar;
     private final Executor blockingExecutor;
-    private final ScheduledExecutorService scheduledExecutor;
+    private final TaskScheduler taskScheduler;
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final LongSupplier nanoTimeSupplier;
 
@@ -74,27 +75,30 @@ final class OracleChangeNotificationSubscription {
                                          OracleChangeListenerDefinition definition,
                                          OracleChangeNotificationRegistrar registrar,
                                          Executor blockingExecutor,
-                                         ScheduledExecutorService scheduledExecutor,
+                                         TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
                                          LongSupplier nanoTimeSupplier) {
         this.dataSourceName = dataSourceName;
         this.definition = definition;
         this.registrar = registrar;
         this.blockingExecutor = blockingExecutor;
-        this.scheduledExecutor = scheduledExecutor;
+        this.taskScheduler = taskScheduler;
         this.taskTracker = taskTracker;
         this.nanoTimeSupplier = nanoTimeSupplier;
     }
 
-    OracleChangeListenerDefinition definition() {
+    OracleChangeListenerDefinition getDefinition() {
         return definition;
+    }
+
+    String getMethodDescription() {
+        return definition.method().getDescription(true);
     }
 
     void start() {
         OracleRegistrationLease registrationLease = registrar.createRegistration(this);
         if (!activate(registrationLease)) {
-            LOG.trace("Discarding inactive Oracle Database query notification registration [{}] for datasource [{}] "
-                    + "and listener method [{}]",
+            LOG.trace("Discarding inactive DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registrationLease.registration().getRegId(), dataSourceName, definition.method().getDescription(true));
             unregisterInactive(registrationLease.registration());
         }
@@ -118,7 +122,7 @@ final class OracleChangeNotificationSubscription {
      * @param registration the Oracle Database registration that was purged
      */
     void handleRegistrationPurged(DatabaseChangeRegistration registration) {
-        LOG.trace("Handling purged Oracle Database query notification [{}] for datasource [{}] and listener method [{}]",
+        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]",
             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
         untrack(registration);
         closeIfCurrent(registration);
@@ -158,34 +162,30 @@ final class OracleChangeNotificationSubscription {
             }
         }
         if (renew) {
-            LOG.trace("Scheduling Oracle Database query notification renewal after timeout deregistration [{}] "
-                    + "for datasource [{}] and listener method [{}]",
+            LOG.trace("Scheduling DCN renewal after timeout deregistration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
             submitRenewal(State.UNREGISTERED, null);
         } else if (closed) {
-            LOG.trace("Closing Oracle Database query notification subscription after deregistration [{}] "
-                    + "for datasource [{}], listener method [{}], and reason [{}]",
+            LOG.trace("Closing DCN subscription after deregistration [{}] for datasource [{}], listener method [{}], and reason [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true), additionalEventType);
         }
     }
 
     void handleQueryDeregistered(DatabaseChangeRegistration registration) {
-        LOG.trace("Closing Oracle Database query notification subscription after query deregistration [{}] "
-                + "for datasource [{}] and listener method [{}]",
+        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
         closeIfCurrent(registration);
         try {
             unregisterIfOwned(registration);
         } catch (RuntimeException e) {
-            LOG.warn("Unable to unregister deregistered Oracle Database query notification [{}] for datasource [{}] "
-                    + "and listener method [{}]",
+            LOG.warn("Unable to unregister deregistered DCN [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true), e);
         }
     }
 
     synchronized void stopRenewal() {
         if (state != State.CLOSED) {
-            LOG.trace("Stopping Oracle Database query notification renewal for datasource [{}] and listener method [{}]",
+            LOG.trace("Stopping DCN renewal for datasource [{}] and listener method [{}]",
                 dataSourceName, definition.method().getDescription(true));
         }
         state = State.CLOSED;
@@ -204,8 +204,7 @@ final class OracleChangeNotificationSubscription {
             try {
                 unregisterIfOwned(registration);
             } catch (RuntimeException e) {
-                LOG.warn("Unable to unregister Oracle Database query notification [{}] for datasource [{}] "
-                        + "and listener method [{}]",
+                LOG.warn("Unable to unregister DCN [{}] for datasource [{}] and listener method [{}]",
                     registration.getRegId(), dataSourceName, definition.method().getDescription(true), e);
             }
         }
@@ -244,8 +243,7 @@ final class OracleChangeNotificationSubscription {
         currentLease = registrationLease;
         state = State.ACTIVE;
         renewalTask = nextRenewal;
-        LOG.trace("Activated Oracle Database query notification registration [{}] for datasource [{}], listener method [{}], "
-                + "and renewal mode [{}]",
+        LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
             registrationLease.registration().getRegId(), dataSourceName, definition.method().getDescription(true),
             definition.renewalPolicy().mode());
         return true;
@@ -253,18 +251,17 @@ final class OracleChangeNotificationSubscription {
 
     private void submitRenewal(State expectedState, @Nullable OracleRegistrationLease expectedLease) {
         if (!taskTracker.tryStartTask()) {
-            LOG.trace("Skipping Oracle Database query notification renewal for datasource [{}] and listener method [{}] "
-                    + "because shutdown has started",
+            LOG.trace("Skipping DCN renewal for datasource [{}] and listener method [{}] because shutdown has started",
                 dataSourceName, definition.method().getDescription(true));
             return;
         }
         if (!beginRenewal(expectedState, expectedLease)) {
-            LOG.trace("Skipping stale Oracle Database query notification renewal for datasource [{}] and listener method [{}]",
+            LOG.trace("Skipping stale DCN renewal for datasource [{}] and listener method [{}]",
                 dataSourceName, definition.method().getDescription(true));
             taskTracker.completeTask();
             return;
         }
-        LOG.trace("Accepted Oracle Database query notification renewal for datasource [{}] and listener method [{}]",
+        LOG.trace("Accepted DCN renewal for datasource [{}] and listener method [{}]",
             dataSourceName, definition.method().getDescription(true));
         try {
             blockingExecutor.execute(() -> renew(expectedLease));
@@ -288,14 +285,12 @@ final class OracleChangeNotificationSubscription {
         boolean replacementActivated = false;
         try {
             OracleChangeNotificationRenewalPolicy renewalPolicy = definition.renewalPolicy();
-            LOG.trace("Creating replacement Oracle Database query notification registration for datasource [{}], "
-                    + "listener method [{}], and previous registration [{}]",
+            LOG.trace("Creating replacement DCN registration for datasource [{}], listener method [{}], and previous registration [{}]",
                 dataSourceName, definition.method().getDescription(true),
                 previousLease == null ? null : previousLease.registration().getRegId());
             replacementLease = registrar.createRegistration(this);
             if (!activate(replacementLease)) {
-                LOG.trace("Discarding inactive replacement Oracle Database query notification registration [{}] "
-                        + "for datasource [{}] and listener method [{}]",
+                LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
                     replacementLease.registration().getRegId(), dataSourceName, definition.method().getDescription(true));
                 unregisterInactive(replacementLease.registration());
                 return;
@@ -303,8 +298,7 @@ final class OracleChangeNotificationSubscription {
             replacementActivated = true;
             if (renewalPolicy.mode() == OracleChangeNotification.RenewalMode.OVERLAPPING
                 && previousLease != null) {
-                LOG.trace("Cleaning up replaced Oracle Database query notification registration [{}] after activating "
-                        + "replacement [{}] for datasource [{}] and listener method [{}]",
+                LOG.trace("Cleaning up replaced DCN registration [{}] after activating replacement [{}] for datasource [{}] and listener method [{}]",
                     previousLease.registration().getRegId(), replacementLease.registration().getRegId(), dataSourceName,
                     definition.method().getDescription(true));
                 unregister(previousLease.registration(), RegistrationCleanup.REPLACED);
@@ -332,12 +326,10 @@ final class OracleChangeNotificationSubscription {
             unregisterIfOwned(registration);
         } catch (RuntimeException e) {
             if (cleanup == RegistrationCleanup.REPLACED) {
-                LOG.warn("Unable to unregister replaced Oracle Database query notification [{}] for datasource [{}] "
-                        + "and listener method [{}]",
+                LOG.warn("Unable to unregister replaced DCN [{}] for datasource [{}] and listener method [{}]",
                     registration.getRegId(), dataSourceName, definition.method().getDescription(true), e);
             } else {
-                LOG.debug("Unable to unregister inactive Oracle Database query notification [{}] for datasource [{}] "
-                        + "and listener method [{}]",
+                LOG.debug("Unable to unregister inactive DCN [{}] for datasource [{}] and listener method [{}]",
                     registration.getRegId(), dataSourceName, definition.method().getDescription(true), e);
             }
         }
@@ -350,8 +342,7 @@ final class OracleChangeNotificationSubscription {
                 state = expectedLease == null ? State.UNREGISTERED : State.ACTIVE;
                 try {
                     renewalTask = scheduleRetry(expectedLease);
-                    LOG.trace("Scheduled Oracle Database query notification renewal retry in [{}] seconds for datasource [{}], "
-                            + "listener method [{}], and current registration [{}]",
+                    LOG.trace("Scheduled DCN renewal retry in [{}] seconds for datasource [{}], listener method [{}], and current registration [{}]",
                         RENEWAL_RETRY_DELAY_SECONDS, dataSourceName, definition.method().getDescription(true),
                         expectedLease == null ? null : expectedLease.registration().getRegId());
                 } catch (RuntimeException schedulingFailure) {
@@ -360,7 +351,7 @@ final class OracleChangeNotificationSubscription {
                 }
             }
         }
-        LOG.error("Unable to renew Oracle Database query notification for datasource [{}] and listener method [{}]",
+        LOG.error("Unable to renew DCN for datasource [{}] and listener method [{}]",
             dataSourceName, definition.method().getDescription(true), failure);
     }
 
@@ -383,17 +374,16 @@ final class OracleChangeNotificationSubscription {
         long renewalDeadlineNanos = registrationLease.expirationNanos()
             - TimeUnit.SECONDS.toNanos(definition.renewalPolicy().leadTimeSeconds());
         long delayNanos = Math.max(0, renewalDeadlineNanos - nanoTimeSupplier.getAsLong());
-        LOG.trace("Scheduled Oracle Database query notification renewal for registration [{}] after [{}] nanoseconds "
-                + "for datasource [{}] and listener method [{}]",
+        LOG.trace("Scheduled DCN renewal for registration [{}] after [{}] nanoseconds for datasource [{}] and listener method [{}]",
             registrationLease.registration().getRegId(), delayNanos, dataSourceName, definition.method().getDescription(true));
-        return scheduledExecutor.schedule(
-            () -> submitRenewal(State.ACTIVE, registrationLease), delayNanos, TimeUnit.NANOSECONDS);
+        return taskScheduler.schedule(
+            Duration.ofNanos(delayNanos), () -> submitRenewal(State.ACTIVE, registrationLease));
     }
 
     private ScheduledFuture<?> scheduleRetry(@Nullable OracleRegistrationLease expectedLease) {
         State expectedState = expectedLease == null ? State.UNREGISTERED : State.ACTIVE;
-        return scheduledExecutor.schedule(
-            () -> submitRenewal(expectedState, expectedLease), RENEWAL_RETRY_DELAY_SECONDS, TimeUnit.SECONDS);
+        return taskScheduler.schedule(
+            Duration.ofSeconds(RENEWAL_RETRY_DELAY_SECONDS), () -> submitRenewal(expectedState, expectedLease));
     }
 
     private boolean isCurrent(DatabaseChangeRegistration registration) {

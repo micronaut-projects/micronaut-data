@@ -21,6 +21,7 @@ import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.OracleStatement
 import oracle.jdbc.dcn.DatabaseChangeEvent
@@ -33,9 +34,9 @@ import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -61,10 +62,10 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def scheduledTasks = []
         def scheduledDelays = []
-        def scheduler = Mock(ScheduledExecutorService)
-        scheduler.schedule(_ as Runnable, _ as Long, TimeUnit.NANOSECONDS) >> { Runnable task, Long delay, TimeUnit ignored ->
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
             scheduledTasks << task
-            scheduledDelays << delay
+            scheduledDelays << delay.toNanos()
             Mock(ScheduledFuture)
         }
         def nanoTimeSupplier = new AtomicLong()
@@ -115,8 +116,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def scheduledTasks = []
-        def scheduler = Mock(ScheduledExecutorService)
-        scheduler.schedule(_ as Runnable, _ as Long, TimeUnit.NANOSECONDS) >> { Runnable task, Long ignoredDelay, TimeUnit ignored ->
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignoredDelay, Runnable task ->
             scheduledTasks << task
             Mock(ScheduledFuture)
         }
@@ -181,9 +182,9 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def scheduledDelays = []
-        def scheduler = Mock(ScheduledExecutorService)
-        scheduler.schedule(_ as Runnable, _ as Long, TimeUnit.NANOSECONDS) >> { Runnable ignoredTask, Long delay, TimeUnit ignored ->
-            scheduledDelays << delay
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable ignoredTask ->
+            scheduledDelays << delay.toNanos()
             Mock(ScheduledFuture)
         }
         def nanoTimeSupplier = new AtomicLong()
@@ -344,7 +345,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def scheduler = Mock(ScheduledExecutorService)
+        def scheduler = Mock(TaskScheduler)
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler)
         manager.addSubscription(definition("SELECT * FROM BOOK", method,
             new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true)))
@@ -369,7 +370,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         then:
         2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [original, replacement]
         2 * statement.executeQuery("SELECT * FROM BOOK") >> resultSet
-        0 * scheduler.schedule(_ as Runnable, _ as Long, _ as TimeUnit)
+        0 * scheduler.schedule(_ as Duration, _ as Runnable)
         0 * oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
@@ -482,9 +483,9 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
             new Properties(), renewalPolicy)
     }
 
-    private ScheduledExecutorService scheduler() {
-        def scheduler = Mock(ScheduledExecutorService)
-        scheduler.schedule(_ as Runnable, _ as Long, _ as java.util.concurrent.TimeUnit) >> Mock(ScheduledFuture)
+    private TaskScheduler scheduler() {
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> Mock(ScheduledFuture)
         return scheduler
     }
 }

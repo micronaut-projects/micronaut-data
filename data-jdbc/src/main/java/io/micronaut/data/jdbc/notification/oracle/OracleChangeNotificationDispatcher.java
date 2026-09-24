@@ -112,20 +112,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void submitDispatch(DatabaseChangeEvent event) {
         if (!taskTracker.tryStartTask()) {
-            LOG.trace("Ignoring Oracle Database query notification callback for datasource [{}], registration [{}], "
-                    + "and listener method [{}] because graceful shutdown has started",
+            LOG.trace("Ignoring DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
             return;
         }
-        LOG.trace("Accepted Oracle Database query notification callback for datasource [{}], registration [{}], "
-                + "and listener method [{}]",
+        LOG.trace("Accepted DCN callback for datasource [{}], registration [{}], and listener method [{}]",
             dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
         try {
             blockingExecutor.execute(() -> dispatchSafely(event));
         } catch (RuntimeException e) {
             taskTracker.completeTask();
-            LOG.warn("Unable to submit Oracle Database query notification for datasource [{}], registration [{}], "
-                    + "and listener method [{}]",
+            LOG.warn("Unable to submit DCN for datasource [{}], registration [{}], and listener method [{}]",
                 dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true), e);
         }
     }
@@ -140,7 +137,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         try {
             dispatch(event);
         } catch (RuntimeException e) {
-            LOG.error("Unexpected error dispatching Oracle Database query notification to listener method [{}]",
+            LOG.error("Unexpected error dispatching DCN to listener method [{}]",
                 listenerDefinition.method().getDescription(true), e);
         } finally {
             taskTracker.completeTask();
@@ -185,13 +182,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void handleRegistrationDeregistration(DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         deregistrationHandler.accept(registration, additionalEventType);
-        LOG.warn("Oracle Database query notification registration [{}] for datasource [{}] and listener method [{}] "
-                + "was deregistered; the listener is unavailable",
+        LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; the listener is unavailable",
             registration.getRegId(), dataSourceName, listenerDefinition.method().getDescription(true));
     }
 
     private void handleQueryDeregistration(long queryId) {
-        LOG.warn("Oracle Database query notification query [{}] for datasource [{}], listener method [{}], and registration [{}] "
+        LOG.warn("DCN query [{}] for datasource [{}], listener method [{}], and registration [{}] "
                 + "was deregistered; the listener is unavailable",
             queryId, dataSourceName, listenerDefinition.method().getDescription(true), registration.getRegId());
         queryDeregistrationHandler.accept(registration);
@@ -294,8 +290,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void dispatchInvalidation() {
-        LOG.trace("Dispatching INVALIDATE event for Oracle Database query notification for datasource [{}], "
-                + "registration [{}], and listener method [{}]",
+        LOG.trace("Dispatching INVALIDATE event for DCN for datasource [{}], registration [{}], and listener method [{}]",
             dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
         dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
@@ -320,10 +315,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             invokeListener(event);
         } catch (Exception e) {
             if (rowId == null) {
-                LOG.error("Error handling Oracle Database query notification for listener method [{}], operation [{}], table [{}], ROWID unavailable",
+                LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID unavailable",
                     listenerDefinition.method().getDescription(true), event.operation(), listenerDefinition.tableIdentifier().sqlName(), e);
             } else {
-                LOG.error("Error handling Oracle Database query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
+                LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID [{}]",
                     listenerDefinition.method().getDescription(true), event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
             }
         }

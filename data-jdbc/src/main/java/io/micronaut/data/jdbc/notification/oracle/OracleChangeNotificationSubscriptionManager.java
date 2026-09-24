@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
+import io.micronaut.scheduling.TaskScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,6 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongSupplier;
 
@@ -54,7 +54,7 @@ final class OracleChangeNotificationSubscriptionManager {
 
     private final String dataSourceName;
     private final Executor blockingExecutor;
-    private final ScheduledExecutorService scheduledExecutor;
+    private final TaskScheduler taskScheduler;
     private final LongSupplier nanoTimeSupplier;
     private final List<OracleChangeNotificationSubscription> subscriptions = new CopyOnWriteArrayList<>();
     private final OracleChangeNotificationTaskTracker taskTracker = new OracleChangeNotificationTaskTracker();
@@ -65,19 +65,19 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 JdbcOperations operations,
                                                 BeanContext beanContext,
                                                 Executor blockingExecutor,
-                                                ScheduledExecutorService scheduledExecutor) {
-        this(dataSourceName, operations, beanContext, blockingExecutor, scheduledExecutor, System::nanoTime);
+                                                TaskScheduler taskScheduler) {
+        this(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, System::nanoTime);
     }
 
     OracleChangeNotificationSubscriptionManager(String dataSourceName,
                                                 JdbcOperations operations,
                                                 BeanContext beanContext,
                                                 Executor blockingExecutor,
-                                                ScheduledExecutorService scheduledExecutor,
+                                                TaskScheduler taskScheduler,
                                                 LongSupplier nanoTimeSupplier) {
         this.dataSourceName = dataSourceName;
         this.blockingExecutor = blockingExecutor;
-        this.scheduledExecutor = scheduledExecutor;
+        this.taskScheduler = taskScheduler;
         this.nanoTimeSupplier = nanoTimeSupplier;
         this.registrar = new OracleChangeNotificationRegistrar(
             dataSourceName, operations, beanContext, blockingExecutor, taskTracker, nanoTimeSupplier);
@@ -94,7 +94,7 @@ final class OracleChangeNotificationSubscriptionManager {
             definition,
             registrar,
             blockingExecutor,
-            scheduledExecutor,
+            taskScheduler,
             taskTracker,
             nanoTimeSupplier
         ));
@@ -104,20 +104,17 @@ final class OracleChangeNotificationSubscriptionManager {
         if (taskTracker.isShutdownStarted() || !started.compareAndSet(false, true)) {
             return;
         }
-        LOG.trace("Starting [{}] Oracle Database change notification subscriptions for datasource [{}]",
-            subscriptions.size(), dataSourceName);
+        LOG.trace("Starting [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         try {
             for (OracleChangeNotificationSubscription subscription : subscriptions) {
                 try {
                     subscription.start();
                 } catch (RuntimeException e) {
-                    throw new DataAccessException("Unable to register Oracle Database query notification for datasource ["
-                        + dataSourceName + "] and listener method ["
-                        + subscription.definition().method().getDescription(true) + "]", e);
+                    throw new DataAccessException("Unable to start DCN subscription for datasource ["
+                        + dataSourceName + "] and listener method [" + subscription.getMethodDescription() + "]", e);
                 }
             }
-            LOG.trace("Started [{}] Oracle Database change notification subscriptions for datasource [{}]",
-                subscriptions.size(), dataSourceName);
+            LOG.trace("Started [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         } catch (RuntimeException | Error registrationFailure) {
             rollback(registrationFailure);
             throw registrationFailure;
@@ -125,8 +122,7 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     CompletionStage<?> stop() {
-        LOG.trace("Stopping [{}] Oracle Database change notification subscriptions for datasource [{}]",
-            subscriptions.size(), dataSourceName);
+        LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         subscriptions.forEach(OracleChangeNotificationSubscription::stopRenewal);
         CompletionStage<?> completion = taskTracker.shutdownGracefully();
         subscriptions.forEach(OracleChangeNotificationSubscription::unregisterAll);

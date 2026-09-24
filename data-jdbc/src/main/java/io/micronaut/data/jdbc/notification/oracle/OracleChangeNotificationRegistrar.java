@@ -67,14 +67,14 @@ final class OracleChangeNotificationRegistrar {
     }
 
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
-        OracleChangeListenerDefinition definition = subscription.definition();
+        OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
             // Oracle database timeout can start while the registration call is in progress. Measuring
             // before the call makes the local renewal deadline conservative rather than late.
             long startedNanos = nanoTimeSupplier.getAsLong();
             DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(definition.registrationProperties());
-            LOG.trace("Created Oracle Database change notification registration [{}] for datasource [{}] and listener method [{}]",
+            LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
             long expirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
             OracleRegistrationLease lease = new OracleRegistrationLease(registration, expirationNanos);
@@ -90,7 +90,7 @@ final class OracleChangeNotificationRegistrar {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
                         // Executing the statement associates its query and tables with the registration.
-                        LOG.trace("Associated Oracle Database change notification registration [{}] for datasource [{}] with listener method [{}]",
+                        LOG.trace("Associated DCN registration [{}] for datasource [{}] with listener method [{}]",
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
@@ -109,8 +109,7 @@ final class OracleChangeNotificationRegistrar {
 
     void unregisterRegistration(DatabaseChangeRegistration registration) {
         operations.execute(connection -> {
-            LOG.trace("Unregistering Oracle Database change notification registration [{}] for datasource [{}]",
-                registration.getRegId(), dataSourceName);
+            LOG.trace("Unregistering DCN registration [{}] for datasource [{}]", registration.getRegId(), dataSourceName);
             connection.unwrap(OracleConnection.class).unregisterDatabaseChangeNotification(registration);
             return registration;
         });
