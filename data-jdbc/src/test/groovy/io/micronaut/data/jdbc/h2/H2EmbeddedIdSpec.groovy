@@ -66,6 +66,24 @@ class H2EmbeddedIdSpec extends Specification {
         entity.getItems().size() == 0
     }
 
+    void "test embedded id projection"() {
+        given:
+        repository.deleteAll()
+        repository.insert(new Shipment(new ShipmentId("c", "d"), "second"))
+        repository.insert(new Shipment(new ShipmentId("a", "b"), "first"))
+
+        when:
+        def shipmentId = repository.findShipmentIdByField("first")
+        def shipmentIds = repository.findShipmentIdOrderByShipmentIdCity()
+
+        then:
+        shipmentId == new ShipmentId("a", "b")
+        shipmentIds == [new ShipmentId("a", "b"), new ShipmentId("c", "d")]
+
+        cleanup:
+        repository.deleteAll()
+    }
+
     void "test CRUD"() {
         given:
         repository.deleteAll()

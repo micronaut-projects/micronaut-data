@@ -130,6 +130,17 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Returns whether the query result is a nullable embedded property of the root entity. Such a result is absent
+     * when none of the embedded values is set. Defaults to false.
+     *
+     * @return Whether the query result is an optional embedded property
+     * @since 5.2.0
+     */
+    default boolean isOptionalEmbeddedProjection() {
+        return false;
+    }
+
+    /**
      * @return Is this a count query.
      */
     boolean isCount();

@@ -15,12 +15,13 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import org.jspecify.annotations.Nullable;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,13 @@ public final class MethodMatchInfo {
     private QueryResult queryResult;
     @Nullable
     private QueryResult countQueryResult;
+    /**
+     * Overrides the result data type resolved from the result type. It is set to {@link DataType#ENTITY}
+     * for an embedded property projection, which is then read as a structured result instead of a single value.
+     */
+    @Nullable
+    private DataType resultDataType;
+    private boolean optionalEmbeddedProjection;
     private final List<QueryDefinition> additionalQueries = new ArrayList<>(2);
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
@@ -182,6 +190,28 @@ public final class MethodMatchInfo {
     }
 
     /**
+     * Sets the result data type, overriding the one resolved from the result type.
+     *
+     * @param resultDataType The result data type or null to resolve it from the result type
+     * @return this
+     */
+    public MethodMatchInfo resultDataType(@Nullable DataType resultDataType) {
+        this.resultDataType = resultDataType;
+        return this;
+    }
+
+    /**
+     * Sets whether the query projects an optional embedded property.
+     *
+     * @param optionalEmbeddedProjection Whether the projected embedded property is optional
+     * @return this
+     */
+    public MethodMatchInfo optionalEmbeddedProjection(boolean optionalEmbeddedProjection) {
+        this.optionalEmbeddedProjection = optionalEmbeddedProjection;
+        return this;
+    }
+
+    /**
      * @return Whether this method should read a generated identity value.
      */
     public boolean shouldReadGeneratedId() {
@@ -219,6 +249,21 @@ public final class MethodMatchInfo {
 
     public boolean isEncodeEntityParameters() {
         return encodeEntityParameters;
+    }
+
+    /**
+     * @return The result data type overriding the one resolved from the result type, or null if not overridden
+     */
+    @Nullable
+    public DataType getResultDataType() {
+        return resultDataType;
+    }
+
+    /**
+     * @return Whether the query projects an optional embedded property
+     */
+    public boolean isOptionalEmbeddedProjection() {
+        return optionalEmbeddedProjection;
     }
 
     public List<QueryDefinition> getAdditionalQueries() {

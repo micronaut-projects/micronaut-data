@@ -436,7 +436,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
+                .mapNotNull(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
         }
         return Mono.from(aggregate(clientSession, preparedQuery).first())
             .map(r -> {
@@ -455,7 +455,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
-                .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, isDtoProjection));
+                .mapNotNull(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, isDtoProjection));
         } else {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery));
         }
