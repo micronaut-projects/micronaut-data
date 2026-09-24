@@ -17,8 +17,6 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntityUtils;
-import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
@@ -27,7 +25,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,14 +61,8 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPro
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
         if (runtimePersistentProperty instanceof RuntimeAssociation<?> association
             && parentPath instanceof AbstractPersistentEntityFrom<?, ?> from) {
-            RuntimePersistentProperty<?> target = association.getAssociatedEntity().getPropertyByNameIgnoreCase(attributeName);
-            if (target != null && PersistentEntityUtils.isAccessibleWithoutJoin(association, target)) {
-                List<Association> associations = new ArrayList<>(getAssociations());
-                associations.add(association);
-                return new RuntimePersistentPropertyPathImpl<>(parentPath, associations, (RuntimePersistentProperty) target, criteriaBuilder);
-            }
-            PersistentAssociationPath<?, ?> join = from.join(association.getName());
-            return join.get(attributeName);
+            return getThroughAssociation(from, association, attributeName,
+                (associations, target) -> new RuntimePersistentPropertyPathImpl<>(parentPath, associations, (RuntimePersistentProperty) target, criteriaBuilder));
         }
         return super.get(attributeName);
     }

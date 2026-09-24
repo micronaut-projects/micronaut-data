@@ -416,9 +416,8 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
             String query = getSqlQuery(criteriaQuery)
 
-        then:
-            query.contains('INNER JOIN "test"')
-            query.contains('test_."name"')
+        then: "the join only filters, the associated columns are not fetched"
+            query == 'SELECT other_entity_."id",other_entity_."name",other_entity_."enabled2",other_entity_."enabled",other_entity_."age",other_entity_."amount",other_entity_."budget",other_entity_."test_id",other_entity_."simple_id" FROM "other_entity" other_entity_ INNER JOIN "test" other_entity_test_ ON other_entity_."test_id"=other_entity_test_."id" WHERE (other_entity_test_."name" = ?)'
 
         when: "navigating using the static metamodel"
             criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
@@ -427,8 +426,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query2 = getSqlQuery(criteriaQuery)
 
         then:
-            query2.contains('INNER JOIN "test"')
-            query2.contains('test_."name"')
+            query2 == query
     }
 
     void "test criteria navigation to the association's own identity does not require a join"() {
@@ -441,8 +439,62 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         then: "the FK column is used directly instead of joining to the associated table"
-            !query.contains('JOIN')
-            query.contains('"test_id"')
+            query == 'SELECT other_entity_."id",other_entity_."name",other_entity_."enabled2",other_entity_."enabled",other_entity_."age",other_entity_."amount",other_entity_."budget",other_entity_."test_id",other_entity_."simple_id" FROM "other_entity" other_entity_ WHERE (other_entity_."test_id" = ?)'
+    }
+
+    void "test criteria navigation through an identity-less association joins the nested association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+
+        when: "the leaf lives on an association reached through an identity-less association"
+            holderRoot.get("wrapper").get("target").get("name")
+
+        then: "the join follows the whole path, not a same-named association of the root"
+            joinPaths(holderRoot) == ["wrapper", "wrapper.target"]
+    }
+
+    void "test criteria navigation through an identity-less association from a join joins relative to that join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+
+        when:
+            holderRoot.join("parent").get("wrapper").get("target").get("name")
+
+        then:
+            joinPaths(holderRoot) == ["parent", "parent.wrapper", "parent.wrapper.target"]
+    }
+
+    void "test the SQL builder rejects a join through an identity-less association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+            criteriaQuery.where(criteriaBuilder.equal(holderRoot.get("wrapper").get("target").get("name"), "v"))
+
+        when:
+            getSqlQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalArgumentException)
+            e.message.contains("Wrapper] defines no ID. Cannot join.")
+    }
+
+    void "test criteria navigation through an identity-less association to a stored id does not require a join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+            criteriaQuery.where(criteriaBuilder.equal(holderRoot.get("wrapper").get("target").get("id"), 1L))
+
+        expect:
+            getSqlQuery(criteriaQuery) == 'SELECT holder_."id",holder_."target_id",holder_."wrapper_label",holder_."wrapper_target_id",holder_."parent_id" FROM "holder" holder_ WHERE (holder_."wrapper_target_id" = ?)'
+    }
+
+    private static List<String> joinPaths(PersistentEntityFrom<?, ?> from, String prefix = "") {
+        from.persistentJoins.collectMany { join ->
+            String path = prefix + join.property.name
+            [path] + joinPaths(join, path + ".")
+        }
     }
 
     void "test IN on a non-property expression renders"() {
