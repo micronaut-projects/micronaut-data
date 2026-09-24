@@ -1,9 +1,14 @@
 package example;
 
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
@@ -39,6 +44,10 @@ class BookR2dbcSchemaMultiTenancySpec {
 
     @Inject
     R2dbcSchemaHandler schemaHandler;
+
+    @Inject
+    @Client("/")
+    HttpClient httpClient;
 
     @AfterEach
     public void cleanup() {
@@ -81,6 +90,25 @@ class BookR2dbcSchemaMultiTenancySpec {
         assertEquals(0, fooBookClient.findAll().size());
     }
 
+    @Test
+    void invalidTenantIdCannotExecuteSql() {
+        String payload = "PUBLIC; CREATE TABLE PWNED(id int); --";
+        boolean failed = false;
+
+        try {
+            httpClient.toBlocking().exchange(
+                HttpRequest.GET("/books").header("tenantId", payload),
+                Argument.listOf(BookDto.class)
+            );
+        } catch (HttpClientResponseException | DataAccessException ignored) {
+            // The quoted schema does not exist, so the repository operation is expected to fail.
+            failed = true;
+        }
+
+        assertTrue(failed);
+        assertEquals(0, getTableCount("PWNED"));
+    }
+
     private void deleteSchema(String schemaName) {
         Mono.from(cf.create())
             .flatMap(c -> Flux.from(c.createStatement("DROP SCHEMA " + schemaName + ";").execute())
@@ -93,6 +121,13 @@ class BookR2dbcSchemaMultiTenancySpec {
         return Mono.from(cf.create())
             .flatMap(c -> Mono.from(schemaHandler.useSchema(c, conf.getDialect(), schemaName)).thenReturn(c))
             .flatMap(c -> Mono.from(c.createStatement("select count(*) from book").execute()))
+            .flatMap(r -> Mono.from(r.map(readable -> (Long) readable.get(0))))
+            .block();
+    }
+
+    private long getTableCount(String tableName) {
+        return Mono.from(cf.create())
+            .flatMap(c -> Mono.from(c.createStatement("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '" + tableName + "'").execute()))
             .flatMap(r -> Mono.from(r.map(readable -> (Long) readable.get(0))))
             .block();
     }

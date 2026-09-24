@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.sqlite;
 
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
@@ -133,12 +135,14 @@ class SQLitePaginationTest {
         Pageable pageable = Pageable.from(0, 10);
         Page<Person> page = personRepository.findByNameLike("A%", pageable);
         Page<Person> page2 = personRepository.findPeople("A%", pageable);
+        Page<Person> page3 = personRepository.findPeopleNative("A%", pageable.order("name"));
         var slice = personRepository.queryByNameLike("A%", pageable);
 
         assertEquals(0, page.getOffset());
         assertEquals(0, page.getPageNumber());
         assertEquals(50, page.getTotalSize());
         assertEquals(page.getTotalSize(), page2.getTotalSize());
+        assertEquals(page.getTotalSize(), page3.getTotalSize());
         assertEquals(0, slice.getOffset());
         assertEquals(0, slice.getPageNumber());
         assertEquals(10, slice.getSize());
@@ -152,6 +156,16 @@ class SQLitePaginationTest {
         assertEquals(50, page.getTotalSize());
         assertEquals(20, page.nextPageable().getOffset());
         assertEquals(2, page.nextPageable().getNumber());
+    }
+
+    @Test
+    void testNativeQueryRejectsUnsafeSortProperty() {
+        Pageable pageable = Pageable.from(0, 10).order("(SELECT password FROM users)");
+
+        DataAccessException exception = assertThrows(DataAccessException.class,
+            () -> personRepository.findPeopleNative("A%", pageable));
+
+        assertEquals("Invalid native query sort property: (SELECT password FROM users)", exception.getCause().getMessage());
     }
 
     @Test

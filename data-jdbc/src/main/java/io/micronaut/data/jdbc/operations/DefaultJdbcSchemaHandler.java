@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.multitenancy.internal.SchemaNameUtils;
 import jakarta.inject.Singleton;
 
 import java.sql.Connection;
@@ -38,26 +39,30 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
     @Override
     public void createSchema(Connection connection, Dialect dialect, String name) {
         try {
+            String schemaName = SchemaNameUtils.render(dialect, name);
             if (dialect == Dialect.ORACLE) {
-                executeQuery(connection, "CREATE DATABASE " + name + ";");
+                executeQuery(connection, "CREATE DATABASE " + schemaName + ";");
             } else {
-                executeQuery(connection, "CREATE SCHEMA " + name + ";");
+                executeQuery(connection, "CREATE SCHEMA " + schemaName + ";");
             }
         } catch (SQLException e) {
             throw new DataAccessException("Failed to create the schema: " + e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException("Invalid schema name: " + e.getMessage(), e);
         }
     }
 
     @Override
     public void useSchema(Connection connection, Dialect dialect, String name) {
         try {
+            String schemaName = SchemaNameUtils.render(dialect, name);
             switch (dialect) {
                 case ORACLE:
-                    executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + name);
+                    executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + schemaName);
                     break;
                 case SQL_SERVER:
                 case MYSQL:
-                    executeQuery(connection, "USE " + name + ";");
+                    executeQuery(connection, "USE " + schemaName + ";");
                     break;
                 case POSTGRES:
                     if (DataSettings.QUERY_LOG.isTraceEnabled()) {
@@ -66,11 +71,13 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
                     connection.setSchema(name);
                     break;
                 default:
-                    executeQuery(connection, "SET SCHEMA " + name + ";");
+                    executeQuery(connection, "SET SCHEMA " + schemaName + ";");
                     break;
             }
         } catch (SQLException e) {
             throw new DataAccessException("Failed to change the schema: " + e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException("Invalid schema name: " + e.getMessage(), e);
         }
     }
 

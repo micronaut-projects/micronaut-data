@@ -13,6 +13,18 @@ micronaut {
 }
 
 dependencies {
+    constraints {
+        api(libs.jackson.core.override) {
+            because("Azure Cosmos currently brings a vulnerable Jackson 2 version")
+        }
+        api(libs.jackson.databind.override) {
+            because("Azure Cosmos currently brings a vulnerable Jackson 2 version")
+        }
+        api(libs.micrometer.core.override) {
+            because("Azure Cosmos currently brings a vulnerable Micrometer version")
+        }
+    }
+
     annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
