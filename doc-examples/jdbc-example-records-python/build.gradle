@@ -1,0 +1,37 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        enabled = true
+        inferClasspath = false
+        if (providers.environmentVariable('TESTPILOT_USERNAME').isPresent()) {
+            additionalModules.add(KnownModules.JDBC_ORACLE_TEST_PILOT)
+        } else {
+            additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        }
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataProcessor
+    implementation mnValidation.micronaut.validation.processor
+
+    implementation projects.micronautDataJdbc
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.ojdbc11
+
+    testResourcesService mnSql.ojdbc11
+}

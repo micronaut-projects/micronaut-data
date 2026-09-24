@@ -4,4 +4,7 @@ To implement queries that cannot be defined at the compile-time Micronaut Data i
 
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="repository",indent="0"]
 
+[.lang-python]
+NOTE: In Python declare the specification methods on the repository itself: Micronaut Data matches them by their `PredicateSpecification` / `QuerySpecification` / `UpdateSpecification` / `DeleteSpecification` parameter types. A specification is a plain Python function or lambda, and since `and`, `or` and `not` are Python keywords, the corresponding `CriteriaBuilder` methods are called as `and_`, `or_` and `not_`.
+
 Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.
