@@ -1049,11 +1049,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         } else {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
+            BindingParameter sharedIdentityBindingParameter = null;
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
+                    boolean[] sharedIdentity = {false};
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+                        String columnName = getMappedName(namingStrategy, associations, property);
+                        if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, columnName)) {
+                            // The column is the identity, it cannot be updated using the association
+                            sharedIdentity[0] = true;
+                            return;
+                        }
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
                         if (generated || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                             return;
@@ -1062,7 +1071,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = getMappedName(namingStrategy, associations, property);
                         if (queryState.escape) {
                             columnName = quote(columnName);
                         }
@@ -1075,6 +1083,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         queryString.append(COMMA);
                         needsTrimming[0] = true;
                     });
+                    if (sharedIdentity[0] && sharedIdentityBindingParameter == null) {
+                        sharedIdentityBindingParameter = bindingParameter;
+                    }
                 } else {
                     String tableAlias = propertyPath.getTableAlias();
                     if (tableAlias != null) {
@@ -1091,9 +1102,39 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     needsTrimming[0] = true;
                 }
             }
+            if (!needsTrimming[0] && sharedIdentityBindingParameter != null) {
+                if (!generatedEntityUpdate) {
+                    throw new IllegalArgumentException("Cannot generate update statement for entity [" + entity.getName()
+                        + "] because all update properties are mapped to identity columns shared with an association and cannot be updated");
+                }
+                // Only the identity shared with an association remains, update the identity to itself to produce a valid statement
+                appendIdentityUpdate(queryState, namingStrategy, sharedIdentityBindingParameter);
+                needsTrimming[0] = true;
+            }
         }
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
+        }
+    }
+
+    private void appendIdentityUpdate(QueryState queryState, NamingStrategy namingStrategy, BindingParameter bindingParameter) {
+        StringBuilder queryString = queryState.getQuery();
+        String tableAlias = queryState.getRootAlias();
+        for (PersistentProperty identity : queryState.getEntity().getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (tableAlias != null) {
+                    queryString.append(tableAlias).append(DOT);
+                }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (queryState.escape) {
+                    columnName = quote(columnName);
+                }
+                queryString.append(columnName).append('=');
+                appendUpdateSetParameter(queryString, tableAlias, property, () ->
+                    queryState.pushParameter(bindingParameter, newBindingContext(PersistentPropertyPath.of(associations, property)))
+                );
+                queryString.append(COMMA);
+            });
         }
     }
 
@@ -3217,6 +3258,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 if (property instanceof Association association && !property.isEmbedded()) {
                     appendAssociationProjection(new PersistentAssociationPath(propertyPath.getAssociations(), association));
+                } else if (computePropertyPaths() && property instanceof Embedded embedded) {
+                    appendEmbeddedPropertyProjection(propertyPath, embedded);
                 } else {
                     appendPropertyProjection(findProperty(propertyPath.getPath()));
                 }
@@ -3451,6 +3494,46 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
+         * Appends an embedded projection with column aliases matching the projected embeddable type.
+         *
+         * @param propertyPath The property path
+         * @param embedded     The projected embedded property
+         */
+        private void appendEmbeddedPropertyProjection(PersistentPropertyPath propertyPath, Embedded embedded) {
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                // The result is read using the embeddable column names, an alias would make them unresolvable
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            boolean escape = shouldEscape(propertyPath.findPropertyOwner().orElse(embedded.getOwner()));
+            NamingStrategy sourceNamingStrategy = getNamingStrategy(propertyPath);
+            NamingStrategy targetNamingStrategy = getNamingStrategy(embedded.getAssociatedEntity());
+            // Associations up to and including the projected embedded property
+            int projectedPathSize = propertyPath.getAssociations().size() + 1;
+            boolean[] needsTrimming = {false};
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> {
+                List<Association> relativeAssociations = associations.size() > projectedPathSize
+                    ? associations.subList(projectedPathSize, associations.size())
+                    : Collections.emptyList();
+                String targetName = getEmbeddedProjectionTargetName(targetNamingStrategy, relativeAssociations, p);
+                appendProperty(query, associations, p, sourceNamingStrategy, queryState.rootAlias, escape, targetName);
+                needsTrimming[0] = true;
+            });
+            if (needsTrimming[0]) {
+                query.setLength(query.length() - 1);
+            }
+        }
+
+        private String getEmbeddedProjectionTargetName(NamingStrategy targetNamingStrategy,
+                                                       List<Association> relativeAssociations,
+                                                       PersistentProperty property) {
+            String columnAlias = getColumnAlias(property);
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                return columnAlias;
+            }
+            return getMappedName(targetNamingStrategy, relativeAssociations, property);
+        }
+
+        /**
          * Append the property projection.
          *
          * @param propertyPath The property
@@ -3589,19 +3672,42 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                             @Nullable
                                             String tableAlias,
                                             boolean escape) {
+            appendProperty(sb, associations, property, namingStrategy, tableAlias, escape, null);
+        }
+
+        /**
+         * Appends the property column followed by a comma.
+         *
+         * @param sb             The query builder
+         * @param associations   The associations
+         * @param property       The property
+         * @param namingStrategy The naming strategy used to resolve the column name
+         * @param tableAlias     The table alias
+         * @param escape         Whether to escape the column
+         * @param targetName     The result column name, escaped like the column. If not set, the property column alias is used
+         */
+        private void appendProperty(StringBuilder sb,
+                                    List<Association> associations,
+                                    PersistentProperty property,
+                                    NamingStrategy namingStrategy,
+                                    @Nullable
+                                    String tableAlias,
+                                    boolean escape,
+                                    @Nullable
+                                    String targetName) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
-            String columnAlias = getColumnAlias(property);
-            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
+            String resultName = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
+            boolean useAlias = StringUtils.isNotEmpty(resultName);
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
+                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? resultName : property.getPersistedName());
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
-                column = escapeColumnIfNeeded(column, escape);
-                String columnWithTableAlias = tableAlias == null ? column : tableAlias + DOT + column;
+                String escapedColumn = escapeColumnIfNeeded(column, escape);
+                String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
                 if (isJsonOrWktGeometry(property)) {
-                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(columnAlias) ? columnAlias : column, property));
-                } else if (useAlias) {
-                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(columnAlias);
+                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(resultName) ? resultName : escapedColumn, property));
+                } else if (useAlias && !column.equals(targetName)) {
+                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(resultName);
                 } else {
                     sb.append(columnWithTableAlias);
                 }

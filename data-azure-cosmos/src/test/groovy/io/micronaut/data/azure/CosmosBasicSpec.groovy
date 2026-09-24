@@ -373,6 +373,12 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
             optFamily1.get().address.county == "Los Angeles"
             optFamily1.get().address.city == "LA"
             optFamily1.get().address.state == "CA"
+        when:"The embedded address is projected"
+            def projectedAddress = familyRepository.findAddressById(ANDERSEN_FAMILY.id)
+        then:
+            projectedAddress.county == "Los Angeles"
+            projectedAddress.city == "LA"
+            projectedAddress.state == "CA"
         when:
             familyRepository.updateRegistered(ANDERSEN_FAMILY.id, true)
             optFamily1 = familyRepository.findById(ANDERSEN_FAMILY.id)
