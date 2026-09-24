@@ -22,25 +22,15 @@ class CriteriaInTest {
         return new LiteralExpression<>(Long.class);
     }
 
-    private static List<?> literalValues(InPredicate<?> in) {
-        return in.getValues().stream().map(v -> ((LiteralExpression<?>) v).getValue()).toList();
+    @Test
+    void inObjectVarargsIsRejected() {
+        // A plain value would be inlined into the query, it has to be bound by the criteria builder
+        assertThrows(IllegalStateException.class, () -> expression().in((Object) 1L, 2L));
     }
 
     @Test
-    void inObjectVarargsWrapsValuesAsLiterals() {
-        AbstractExpression<Long> expression = expression();
-
-        Predicate predicate = expression.in(1L, 2L);
-
-        assertInstanceOf(InPredicate.class, predicate);
-        InPredicate<?> in = (InPredicate<?>) predicate;
-        assertSame(expression, in.getExpression());
-        assertEquals(List.of(1L, 2L), literalValues(in));
-    }
-
-    @Test
-    void inNullObjectVarargsIsRejected() {
-        assertThrows(NullPointerException.class, () -> expression().in((Object[]) null));
+    void inCollectionIsRejected() {
+        assertThrows(IllegalStateException.class, () -> expression().in(List.of(1L, 2L)));
     }
 
     @Test
@@ -48,27 +38,17 @@ class CriteriaInTest {
         AbstractExpression<Long> expression = expression();
         LiteralExpression<Long> value = new LiteralExpression<>(5L);
 
-        InPredicate<?> in = (InPredicate<?>) expression.in(value);
+        Predicate predicate = expression.in(value);
 
+        assertInstanceOf(InPredicate.class, predicate);
+        InPredicate<?> in = (InPredicate<?>) predicate;
+        assertSame(expression, in.getExpression());
         assertEquals(List.of(value), in.getValues());
     }
 
     @Test
-    void inCollectionWrapsLiteralsAndKeepsExpressions() {
-        AbstractExpression<Long> expression = expression();
-        LiteralExpression<Long> expressionValue = new LiteralExpression<>(5L);
-
-        InPredicate<?> in = (InPredicate<?>) expression.in(List.of(1L, expressionValue));
-
-        List<Expression<?>> values = in.getValues();
-        assertEquals(2, values.size());
-        assertEquals(1L, ((LiteralExpression<?>) values.get(0)).getValue());
-        assertSame(expressionValue, values.get(1));
-    }
-
-    @Test
-    void inNullCollectionIsRejected() {
-        assertThrows(NullPointerException.class, () -> expression().in((Collection<?>) null));
+    void inNullExpressionVarargsIsRejected() {
+        assertThrows(NullPointerException.class, () -> expression().in((Expression<?>[]) null));
     }
 
     @Test
@@ -87,12 +67,9 @@ class CriteriaInTest {
     }
 
     @Test
-    void inPredicateValueWithoutCriteriaBuilderWrapsAsLiteral() {
-        AbstractExpression<Long> expression = expression();
+    void inPredicateValueWithoutCriteriaBuilderIsRejected() {
+        InPredicate<Long> in = new InPredicate<>(expression(), List.of(), null);
 
-        InPredicate<Long> in = new InPredicate<>(expression, List.of(), null);
-        in.value(42L);
-
-        assertEquals(List.of(42L), literalValues(in));
+        assertThrows(IllegalStateException.class, () -> in.value(42L));
     }
 }

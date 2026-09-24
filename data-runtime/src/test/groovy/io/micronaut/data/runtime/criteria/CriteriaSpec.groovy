@@ -497,16 +497,36 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         }
     }
 
-    void "test IN on a non-property expression renders"() {
+    void "test IN on a non-property expression binds the values as parameters"() {
         given:
             def criteriaQuery = criteriaBuilder.createQuery(Test)
             def testRoot = criteriaQuery.from(Test)
 
         when: "the IN list hangs off an expression that is not a property path"
-            criteriaQuery.where(criteriaBuilder.upper(testRoot.get("name")).in("A", "B"))
+            criteriaQuery.where(criteriaBuilder.upper(testRoot.get("name")).in(criteriaBuilder.literal("A"), criteriaBuilder.literal("B")))
             String query = getSqlQuery(criteriaQuery)
 
-        then: "the expression renders in place of the property path the builder used to require"
-            query.endsWith('WHERE (UPPER(test_."name") IN (\'A\',\'B\'))')
+        then: "runtime values are never inlined into the query"
+            query.endsWith('WHERE (UPPER(test_."name") IN (?,?))')
+
+        when: "the values are added to the builder IN predicate"
+            criteriaQuery = criteriaBuilder.createQuery(Test)
+            testRoot = criteriaQuery.from(Test)
+            criteriaQuery.where(criteriaBuilder.in(criteriaBuilder.upper(testRoot.get("name"))).value("A").value("B"))
+            query = getSqlQuery(criteriaQuery)
+
+        then:
+            query.endsWith('WHERE (UPPER(test_."name") IN (?,?))')
+    }
+
+    void "test IN with plain values on a non-property expression is rejected"() {
+        given:
+            def testRoot = criteriaBuilder.createQuery(Test).from(Test)
+
+        when: "a plain value cannot be bound without the builder"
+            criteriaBuilder.upper(testRoot.get("name")).in("A", "B")
+
+        then:
+            thrown(IllegalStateException)
     }
 }

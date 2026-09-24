@@ -53,25 +53,11 @@ public abstract class AbstractExpression<E> implements IExpression<E> {
         return expressionType;
     }
 
-    @Override
-    public Predicate in(Object... values) {
-        return in(Arrays.asList(Objects.requireNonNull(values)));
-    }
-
+    // Only expression values are accepted: a plain value needs the criteria builder to become a bound parameter,
+    // use CriteriaBuilder.in(expression).value(..) or CriteriaBuilder.literal(..)
     @Override
     public Predicate in(Expression<?>... values) {
-        return new InPredicate<>(this, Arrays.asList(values), null);
-    }
-
-    @Override
-    public Predicate in(Collection<?> values) {
-        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(value -> {
-            if (value instanceof Expression<?> expression) {
-                return expression;
-            }
-            return new LiteralExpression<>(value);
-        }).toList();
-        return new InPredicate<>(this, expressions, null);
+        return new InPredicate<>(this, Arrays.asList(Objects.requireNonNull(values)), null);
     }
 
     @Override

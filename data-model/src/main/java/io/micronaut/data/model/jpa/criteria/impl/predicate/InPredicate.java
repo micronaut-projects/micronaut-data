@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
@@ -62,7 +61,11 @@ public final class InPredicate<T> extends AbstractPredicate implements CriteriaB
 
     @Override
     public InPredicate<T> value(T value) {
-        values.add(criteriaBuilder == null ? new LiteralExpression<>(value) : criteriaBuilder.literal(value));
+        if (criteriaBuilder == null) {
+            // The builder decides how a value is bound, a runtime value must not be inlined into the query
+            throw new IllegalStateException("IN predicate created without a criteria builder, add the value as an expression");
+        }
+        values.add(criteriaBuilder.literal(value));
         return this;
     }
 

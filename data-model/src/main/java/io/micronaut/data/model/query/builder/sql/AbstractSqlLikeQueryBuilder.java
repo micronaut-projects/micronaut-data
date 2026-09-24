@@ -2887,11 +2887,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendExpression(expression);
             query.append(negated ? " NOT IN (" : " IN (");
             boolean hasOneParameter = values.stream().filter(v -> v instanceof ParameterExpression).count() == 1;
+            // A computed expression, like a function, has no property to bind the parameters against
+            PersistentPropertyPath propertyPath = expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath
+                ? persistentPropertyPath.getPropertyPath()
+                : null;
             Iterator<?> iterator = values.iterator();
             while (iterator.hasNext()) {
                 Object value = iterator.next();
                 if (value instanceof ParameterExpression) {
-                    PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                     BindingParameter.BindingContext bindingContext = newBindingContext(propertyPath);
                     if (hasOneParameter) {
                         bindingContext = bindingContext.expandable();
