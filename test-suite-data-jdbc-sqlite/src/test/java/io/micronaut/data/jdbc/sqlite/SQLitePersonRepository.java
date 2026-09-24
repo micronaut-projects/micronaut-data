@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.sqlite;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Person;
 
@@ -46,6 +48,11 @@ public abstract class SQLitePersonRepository implements io.micronaut.data.tck.re
     @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     public abstract int saveCustom(String name, int age);
+
+    @Query(value = "SELECT * FROM person WHERE name LIKE :name",
+        countQuery = "SELECT COUNT(*) FROM person WHERE name LIKE :name",
+        nativeQuery = true)
+    public abstract Page<Person> findPeopleNative(String name, Pageable pageable);
 
     public Stream<Map<String, Object>> findAllAndStream() {
         return jdbcOperations.prepareStatement("SELECT * from person order by name asc", statement -> {

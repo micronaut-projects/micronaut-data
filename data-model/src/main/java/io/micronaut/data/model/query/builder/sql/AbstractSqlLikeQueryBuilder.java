@@ -171,6 +171,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
     private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
+    private static final Pattern NATIVE_QUERY_SORT_PROPERTY_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*");
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
     private static final Set<String> NO_ARG_KEYWORD_FUNCTIONS = Set.of(
@@ -1331,7 +1332,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
      * @param sort               The sort
-     * @param nativeQuery        Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @param nativeQuery        Whether the query is native query, in which case sort field names must be dot-separated, unquoted ASCII SQL identifiers
      * @param tableAlias         The table alias
      * @return The encoded query
      */
@@ -1409,7 +1410,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param query              The query
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
-     * @param nativeQuery        Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @param nativeQuery        Whether the query is native query, in which case the property name must be a dot-separated, unquoted ASCII SQL identifier
      * @param tableAlias         The table alias
      * @return The encoded query
      */
@@ -1421,6 +1422,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                       @Nullable
                                       String tableAlias) {
         if (nativeQuery) {
+            if (!NATIVE_QUERY_SORT_PROPERTY_PATTERN.matcher(propertyName).matches()) {
+                throw new IllegalArgumentException("Invalid native query sort property: " + propertyName);
+            }
             return propertyName;
         }
 
