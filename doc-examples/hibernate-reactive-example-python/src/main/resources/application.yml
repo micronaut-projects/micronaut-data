@@ -1,0 +1,12 @@
+jpa:
+  default:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+    compileTimeHibernateProxies: true
+test-resources:
+  containers:
+    mysql:
+      image-name: container-registry.oracle.com/mysql/community-server:9.6.0

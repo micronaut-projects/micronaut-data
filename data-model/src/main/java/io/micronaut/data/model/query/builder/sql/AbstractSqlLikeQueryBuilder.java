@@ -1049,11 +1049,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         } else {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
+            Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
+            BindingParameter sharedIdentityBindingParameter = null;
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
                 Object value = unwrapUpdateValue(entry.getValue());
                 if (value instanceof BindingParameter bindingParameter) {
+                    boolean[] sharedIdentity = {false};
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+                        String columnName = getMappedName(namingStrategy, associations, property);
+                        if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, columnName)) {
+                            // The column is the identity, it cannot be updated using the association
+                            sharedIdentity[0] = true;
+                            return;
+                        }
                         boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, associations);
                         if (generated || property.getAnnotationMetadata().hasAnnotation(Reservable.class)) {
                             return;
@@ -1062,7 +1071,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName = getMappedName(namingStrategy, associations, property);
                         if (queryState.escape) {
                             columnName = quote(columnName);
                         }
@@ -1075,6 +1083,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         queryString.append(COMMA);
                         needsTrimming[0] = true;
                     });
+                    if (sharedIdentity[0] && sharedIdentityBindingParameter == null) {
+                        sharedIdentityBindingParameter = bindingParameter;
+                    }
                 } else {
                     String tableAlias = propertyPath.getTableAlias();
                     if (tableAlias != null) {
@@ -1091,9 +1102,39 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     needsTrimming[0] = true;
                 }
             }
+            if (!needsTrimming[0] && sharedIdentityBindingParameter != null) {
+                if (!generatedEntityUpdate) {
+                    throw new IllegalArgumentException("Cannot generate update statement for entity [" + entity.getName()
+                        + "] because all update properties are mapped to identity columns shared with an association and cannot be updated");
+                }
+                // Only the identity shared with an association remains, update the identity to itself to produce a valid statement
+                appendIdentityUpdate(queryState, namingStrategy, sharedIdentityBindingParameter);
+                needsTrimming[0] = true;
+            }
         }
         if (needsTrimming[0]) {
             queryString.setLength(queryString.length() - 1);
+        }
+    }
+
+    private void appendIdentityUpdate(QueryState queryState, NamingStrategy namingStrategy, BindingParameter bindingParameter) {
+        StringBuilder queryString = queryState.getQuery();
+        String tableAlias = queryState.getRootAlias();
+        for (PersistentProperty identity : queryState.getEntity().getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (tableAlias != null) {
+                    queryString.append(tableAlias).append(DOT);
+                }
+                String columnName = getMappedName(namingStrategy, associations, property);
+                if (queryState.escape) {
+                    columnName = quote(columnName);
+                }
+                queryString.append(columnName).append('=');
+                appendUpdateSetParameter(queryString, tableAlias, property, () ->
+                    queryState.pushParameter(bindingParameter, newBindingContext(PersistentPropertyPath.of(associations, property)))
+                );
+                queryString.append(COMMA);
+            });
         }
     }
 

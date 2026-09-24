@@ -1,0 +1,28 @@
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+}
+
+micronautBuild {
+    python {
+        // Hibernate reads the JPA annotations of the entities reflectively from the generated classes
+        compilerArgs.add("-Amicronaut.introspection.allowReflection=example.*")
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataProcessor
+    implementation mnValidation.micronaut.validation.processor
+    implementation mnSql.hibernate.jpamodelgen
+    implementation mnSerde.micronaut.serde.api
+    implementation mn.micronaut.http.client
+    implementation(mnRxjava3.micronaut.rxjava3)
+    implementation mnSql.micronaut.hibernate.jpa
+    implementation projects.micronautDataHibernateJpa
+    implementation mnValidation.validation
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+    runtimeOnly mnValidation.micronaut.validation
+}

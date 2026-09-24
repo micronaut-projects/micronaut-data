@@ -694,6 +694,110 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fresh", "fid"] as String[]
     }
 
+    void "explicit non-shared join column name is used for insert and update"() {
+        given:
+        def repository = buildRepository('test.ArticleRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ArticleRepository extends CrudRepository<Article, Long> {
+}
+
+@MappedEntity("article")
+class Article {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String title;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn(name = "writer_key", referencedColumnName = "writer_code")
+    private Writer author;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    Writer getAuthor() {
+        return author;
+    }
+
+    void setAuthor(Writer author) {
+        this.author = author;
+    }
+}
+
+@MappedEntity("writer")
+class Writer {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @MappedProperty("writer_code")
+    private Long code;
+
+    private String name;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    Long getCode() {
+        return code;
+    }
+
+    void setCode(Long code) {
+        this.code = code;
+    }
+
+    String getName() {
+        return name;
+    }
+
+    void setName(String name) {
+        this.name = name;
+    }
+}
+""")
+
+        def saveMethod = repository.findPossibleMethods("save")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.Article' }
+        def updateMethod = repository.findPossibleMethods("update").findFirst().get()
+
+        expect:
+        saveMethod != null
+        getQuery(saveMethod) == 'INSERT INTO `article` (`title`,`writer_key`) VALUES (?,?)'
+        getParameterPropertyPaths(saveMethod) == ["title", "author.code"] as String[]
+        getQuery(updateMethod) == 'UPDATE `article` SET `title`=?,`writer_key`=? WHERE (`id` = ?)'
+        getParameterPropertyPaths(updateMethod) == ["title", "author.code", "id"] as String[]
+    }
+
     void "test build custom SQL insert"() {
         given:
             BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
@@ -1985,6 +2089,293 @@ interface BookRepository extends GenericRepository<Book, Long> {
         then:
         def ex = thrown(RuntimeException)
         ex.message.contains("must declare explicit returned columns instead of RETURNING *")
+    }
+
+    void "shared identity generated insert omits generated physical id column"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.GeneratedSharedIdentityAssetRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface GeneratedSharedIdentityAssetRepository extends GenericRepository<GeneratedSharedIdentityAsset, Long> {
+    GeneratedSharedIdentityAsset insert(GeneratedSharedIdentityAsset entity);
+}
+
+@MappedEntity("generated_asset")
+class GeneratedSharedIdentityAsset {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private GeneratedSharedIdentityAssetMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    GeneratedSharedIdentityAssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(GeneratedSharedIdentityAssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("generated_assetmetadata")
+class GeneratedSharedIdentityAssetMetadata {
+    @Id
+    @MappedProperty("id")
+    private Long metadataId;
+
+    private String author;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("insert")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.GeneratedSharedIdentityAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'INSERT INTO `generated_asset` (`title`) VALUES (?)'
+        getParameterPropertyPaths(method) == ["title"] as String[]
+    }
+
+    void "shared identity upsert omits relation identity column"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.SharedIdentityUpsertRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface SharedIdentityUpsertRepository extends GenericRepository<SharedIdentityUpsertAsset, Long> {
+    SharedIdentityUpsertAsset upsert(SharedIdentityUpsertAsset entity);
+}
+
+@MappedEntity("shared_identity_upsert_asset")
+class SharedIdentityUpsertAsset {
+    @Id
+    private Long id;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private SharedIdentityUpsertMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    SharedIdentityUpsertMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(SharedIdentityUpsertMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("shared_identity_upsert_metadata")
+class SharedIdentityUpsertMetadata {
+    @Id
+    @MappedProperty("id")
+    private Long metadataId;
+
+    private String author;
+
+    Long getMetadataId() {
+        return metadataId;
+    }
+
+    void setMetadataId(Long metadataId) {
+        this.metadataId = metadataId;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("upsert")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.SharedIdentityUpsertAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'MERGE INTO `shared_identity_upsert_asset` target USING (VALUES (?,?)) source (c0,c1) ON (target.`id`=source.c1) WHEN MATCHED THEN UPDATE SET target.`title`=source.c0 WHEN NOT MATCHED THEN INSERT (`title`,`id`) VALUES (source.c0,source.c1)'
+        getParameterPropertyPaths(method) == ["title", "id"] as String[]
+    }
+
+    // Simulates r2dbc positional parameters
+    void "shared identity sequence insert keeps contiguous postgres placeholders"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.SharedSequenceAssetRepository', """
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@RepositoryConfiguration(queryBuilder = SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "\$%s"
+    )
+)
+@io.micronaut.context.annotation.Executable
+interface SharedSequenceAssetRepository extends GenericRepository<SharedSequenceAsset, Long> {
+    SharedSequenceAsset insert(SharedSequenceAsset entity);
+}
+
+@MappedEntity("sequence_asset")
+class SharedSequenceAsset {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "sequence_asset_seq")
+    private Long id;
+
+    private String title;
+
+    @Version
+    private Long version;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    private SharedSequenceAssetMetadata metadata;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    Long getVersion() {
+        return version;
+    }
+
+    void setVersion(Long version) {
+        this.version = version;
+    }
+
+    SharedSequenceAssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(SharedSequenceAssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@MappedEntity("sequence_assetmetadata")
+class SharedSequenceAssetMetadata {
+    @Id
+    private Long id;
+
+    private String author;
+
+    Long getId() {
+        return id;
+    }
+
+    void setId(Long id) {
+        this.id = id;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("insert")
+            .toList()
+            .find { it.arguments.length == 1 && it.arguments[0].type.name == 'test.SharedSequenceAsset' }
+
+        expect:
+        method != null
+        getQuery(method) == 'INSERT INTO "sequence_asset" ("title","version","id") VALUES ($1,$2,nextval(\'sequence_asset_seq\'))'
+        getParameterPropertyPaths(method) == ["title", "version"] as String[]
     }
 
 }
