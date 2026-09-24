@@ -7,12 +7,12 @@ dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mnValidation.micronaut.validation.processor
 
-    implementation projects.micronautDataModel
-    implementation mnValidation.micronaut.validation
-    implementation projects.micronautDataTx
-    implementation mnTest.micronaut.test.spock
-    implementation mnTest.micronaut.test.core
-    implementation(mnSql.jakarta.persistence.api)
+    api projects.micronautDataModel
+    api mnValidation.micronaut.validation
+    api projects.micronautDataTx
+    api mnTest.micronaut.test.spock
+    api mnTest.micronaut.test.core
+    api(mnSql.jakarta.persistence.api)
 
     compileOnly mn.micronaut.inject.groovy
 }

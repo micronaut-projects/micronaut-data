@@ -12,4 +12,8 @@ micronautBuild {
     descriptor {
         parentModuleId = "io.micronaut.data:micronaut-data-model"
     }
+    // TCK artifacts are test fixtures, not a stable public API
+    binaryCompatibility {
+        enabled = false
+    }
 }

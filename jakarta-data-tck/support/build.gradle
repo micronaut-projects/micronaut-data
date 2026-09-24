@@ -8,13 +8,9 @@ micronautBuild {
     descriptor {
         parentModuleId = "io.micronaut.data:micronaut-data-model"
     }
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            artifactId = 'micronaut-jakarta-data-tck-support'
-        }
+    // TCK artifacts are test fixtures, not a stable public API
+    binaryCompatibility {
+        enabled = false
     }
 }
 
@@ -34,10 +30,8 @@ dependencies {
     api libs.managed.jakarta.data.stateful
 
     api mnLogging.slf4j.jul.to.slf4j
-    api("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    api libs.jakarta.servlet.api
     api mnSql.jakarta.persistence.api
-
-    runtimeOnly(mnLogging.logback.classic)
 
     api mnTest.junit.jupiter.api
     api libs.junit.platform.suite.engine

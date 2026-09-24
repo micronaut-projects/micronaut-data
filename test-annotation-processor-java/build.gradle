@@ -1,5 +1,11 @@
 plugins {
-    id "io.micronaut.build.internal.data-tck"
+    id "java"
+    id "io.micronaut.build.internal.data-base"
+    id "io.micronaut.build.internal.java-base"
+}
+
+ext {
+    skipDocumentation = true
 }
 
 tasks.named("test") {

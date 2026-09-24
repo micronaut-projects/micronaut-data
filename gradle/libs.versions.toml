@@ -26,6 +26,7 @@ groovy = "5.1.2"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M4"
+jakarta-servlet-api = "6.1.0"
 managed-pg-vector = "0.1.6"
 
 spring-data = "4.1.1"
@@ -115,6 +116,7 @@ groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 
 jakarta-data-tck = { module = 'jakarta.data:jakarta.data-tck', version.ref = "managed-jakarta-data" }
+jakarta-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = "jakarta-servlet-api" }
 junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
