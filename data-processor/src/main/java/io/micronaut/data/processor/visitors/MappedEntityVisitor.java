@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
@@ -431,7 +432,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         AnnotationValue<JoinColumn> joinColumnAnnotationValue = joinColumnsAnnotationValueAnnotations.get(0);
         String joinColumnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
-        if (joinColumnName != null) {
+        if (StringUtils.isNotEmpty(joinColumnName)) {
             propertyElement.annotate(MappedProperty.class, builder -> builder.member(AnnotationMetadata.VALUE_MEMBER, joinColumnName));
         }
     }
