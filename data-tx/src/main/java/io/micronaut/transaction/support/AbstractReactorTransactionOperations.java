@@ -26,6 +26,7 @@ import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
@@ -229,9 +230,10 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             new SyncCompleteAndErrorPublisher<>(
                 Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
                     .thenMany(Mono.just(txStatus))
-                    .flatMap(status -> executeCallbackFlux(status, handler)),
+                    .flatMap(status -> executeCallbackFlux(status, handler))
+                    .onErrorMap(throwable -> normalizePriorityRollback(txStatus, throwable)),
                 () -> doCommit(txStatus),
-                throwable -> doRollback(txStatus, throwable),
+                throwable -> doRollback(txStatus, normalizePriorityRollback(txStatus, throwable)),
                 false)
         );
     }
@@ -260,9 +262,10 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             new SyncCompleteAndErrorPublisher<>(
                 Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
                     .thenMany(Mono.just(txStatus))
-                    .flatMap(status -> executeCallbackMono(status, handler)),
+                    .flatMap(status -> executeCallbackMono(status, handler))
+                    .onErrorMap(throwable -> normalizePriorityRollback(txStatus, throwable)),
                 () -> doCommit(txStatus),
-                throwable -> doRollback(txStatus, throwable),
+                throwable -> doRollback(txStatus, normalizePriorityRollback(txStatus, throwable)),
                 true)
         );
     }
@@ -356,7 +359,34 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             // detect and handle these type of errors.
             op = Flux.error(e);
         }
+        op = op.onErrorMap(throwable -> normalizePriorityRollback(status, throwable))
+            .onErrorResume(OracleTransactionPriorityException.class,
+                exception -> status.isRollbackOnly()
+                    ? Mono.error(exception)
+                    : rollbackAfterPriorityCommitFailure(status, exception));
         return op.as(flux -> doFinish(flux, status));
+    }
+
+    private Publisher<Void> rollbackAfterPriorityCommitFailure(@NonNull DefaultReactiveTransactionStatus<C> status,
+                                                               @NonNull OracleTransactionPriorityException commitException) {
+        Flux<Void> rollback;
+        try {
+            rollback = Flux.from(rollbackTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
+        } catch (Exception rollbackException) {
+            commitException.addSuppressed(rollbackException);
+            return Mono.error(commitException);
+        }
+        return rollback
+            .onErrorResume(rollbackException -> {
+                if (LOG.isWarnEnabled()) {
+                    LOG.warn("Error occurred during Oracle priority transaction rollback: " + rollbackException.getMessage(), rollbackException);
+                }
+                if (!commitException.equals(rollbackException)) {
+                    commitException.addSuppressed(rollbackException);
+                }
+                return Mono.empty();
+            })
+            .then(Mono.error(commitException));
     }
 
     @NonNull
@@ -367,7 +397,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         Flux<Void> abort;
         try {
             TransactionDefinition definition = status.getTransactionDefinition();
-            if (definition.rollbackOn(throwable)) {
+            if (throwable instanceof OracleTransactionPriorityException || definition.rollbackOn(throwable)) {
                 abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
             } else {
                 abort = Flux.error(throwable);
@@ -385,6 +415,34 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             }
             return Mono.error(throwable);
         }).as(flux -> doFinish(flux, status));
+    }
+
+    /**
+     * Determines whether an error represents an Oracle priority rollback for the
+     * current reactive transaction. Implementations backed by a vendor-specific
+     * driver can override this to validate the connection and driver exception.
+     *
+     * @param status The transaction status
+     * @param throwable The transaction error
+     * @return Whether the error represents an Oracle priority rollback
+     */
+    protected boolean isOracleTransactionPriorityRollback(@NonNull DefaultReactiveTransactionStatus<C> status,
+                                                          @NonNull Throwable throwable) {
+        return false;
+    }
+
+    private Throwable normalizePriorityRollback(@NonNull DefaultReactiveTransactionStatus<C> status,
+                                                @NonNull Throwable throwable) {
+        if (throwable instanceof OracleTransactionPriorityException) {
+            return throwable;
+        }
+        if (isOracleTransactionPriorityRollback(status, throwable)) {
+            return new OracleTransactionPriorityException(
+                "Oracle rolled back this transaction because it blocked a higher-priority transaction",
+                throwable
+            );
+        }
+        return throwable;
     }
 
     private <T> Publisher<Void> doFinish(Flux<T> flux, DefaultReactiveTransactionStatus<C> status) {

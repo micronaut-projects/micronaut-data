@@ -28,9 +28,13 @@ import io.micronaut.transaction.exceptions.TransactionUsageException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Transaction utils.
@@ -40,6 +44,9 @@ import java.util.Locale;
  */
 @Internal
 public final class TransactionUtil {
+
+    private static final int ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK = 63300;
+    private static final int ORA_TRANSACTION_MUST_ROLLBACK = 63302;
 
     private TransactionUtil() {
     }
@@ -106,6 +113,45 @@ public final class TransactionUtil {
             return parseOraclePriority(priority.name());
         }
         return null;
+    }
+
+    /**
+     * Tests whether a JDBC exception chain contains an Oracle priority rollback error.
+     *
+     * @param exception The exception to inspect
+     * @return {@code true} if ORA-63300 or ORA-63302 is present in a JDBC exception
+     */
+    public static boolean isOraclePriorityRollback(@NonNull Throwable exception) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        return containsOraclePriorityRollback(exception, visited);
+    }
+
+    /**
+     * Tests an error code and message for an Oracle priority rollback error.
+     *
+     * @param errorCode The vendor error code
+     * @param message The error message
+     * @return {@code true} if ORA-63300 or ORA-63302 is present
+     */
+    public static boolean isOraclePriorityRollback(int errorCode, @Nullable String message) {
+        return errorCode == ORA_TRANSACTION_AUTOMATICALLY_ROLLED_BACK
+            || errorCode == ORA_TRANSACTION_MUST_ROLLBACK
+            || (message != null && (message.contains("ORA-63300") || message.contains("ORA-63302")));
+    }
+
+    private static boolean containsOraclePriorityRollback(@Nullable Throwable exception, Set<Throwable> visited) {
+        if (exception == null || !visited.add(exception)) {
+            return false;
+        }
+        if (exception instanceof SQLException sqlException) {
+            if (isOraclePriorityRollback(sqlException.getErrorCode(), sqlException.getMessage())) {
+                return true;
+            }
+            if (containsOraclePriorityRollback(sqlException.getNextException(), visited)) {
+                return true;
+            }
+        }
+        return containsOraclePriorityRollback(exception.getCause(), visited);
     }
 
     /**
