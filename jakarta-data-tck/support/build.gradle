@@ -4,6 +4,10 @@ plugins {
     id "io.micronaut.build.internal.module"
 }
 
+ext {
+    skipDocumentation = true
+}
+
 micronautBuild {
     descriptor {
         parentModuleId = "io.micronaut.data:micronaut-data-model"
@@ -12,6 +16,11 @@ micronautBuild {
     binaryCompatibility {
         enabled = false
     }
+}
+
+// TCK sources are test fixtures and are not held to the production checkstyle rules
+tasks.withType(Checkstyle).configureEach {
+    enabled = false
 }
 
 dependencies {
@@ -38,4 +47,11 @@ dependencies {
 
     compileOnly projects.micronautDataJdbc
     compileOnly projects.micronautDataMongodb
+}
+
+spotless {
+    java {
+        // derived from the Jakarta Data TCK, keeps its Eclipse Foundation (EPL-2.0) header
+        targetExclude("src/main/java/io/micronaut/data/jakarta/tck/TCKArchiveProcessor.java")
+    }
 }

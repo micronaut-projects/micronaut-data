@@ -17,3 +17,8 @@ micronautBuild {
         enabled = false
     }
 }
+
+// TCK sources are test fixtures and are not held to the production checkstyle rules
+tasks.withType(Checkstyle).configureEach {
+    enabled = false
+}
