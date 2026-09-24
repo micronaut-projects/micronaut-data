@@ -56,6 +56,8 @@ groovy_yaml = "5.1.2"
 
 antlr = "4.13.2"
 
+commons-lang3 = "3.18.0"
+
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
@@ -124,6 +126,8 @@ error-prone-core = { module = "com.google.errorprone:error_prone_core", version.
 groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
 
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
+
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 
 # Benchmark
 

@@ -31,6 +31,14 @@ dependencies {
     compileOnly projects.micronautDataMongodb
 }
 
+dependencies {
+    constraints {
+        api(libs.commons.lang3) {
+            because("GHSA-j288-q9x7-2f5v, via jakarta.data-tck -> sigtest-maven-plugin -> maven-core")
+        }
+    }
+}
+
 spotless {
     java {
         // derived from the Jakarta Data TCK, keeps its Eclipse Foundation (EPL-2.0) header
