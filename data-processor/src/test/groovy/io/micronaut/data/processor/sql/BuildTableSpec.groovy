@@ -650,6 +650,130 @@ class Account {
         sql.contains("\"street\" VARCHAR(255) NOT NULL,")
     }
 
+    void "shared identity join columns do not duplicate embedded id columns in ddl"() {
+        given:
+        def entity = buildEntity('test.Asset', '''
+import java.util.UUID;
+import jakarta.persistence.JoinColumn;
+
+@MappedEntity("asset")
+class Asset {
+    @EmbeddedId
+    private AssetKey ownerKey;
+
+    private String title;
+
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.NONE)
+    @JoinColumn(name = "container_id", referencedColumnName = "container_id")
+    @JoinColumn(name = "asset_id", referencedColumnName = "asset_id")
+    private AssetMetadata metadata;
+
+    AssetKey getOwnerKey() {
+        return ownerKey;
+    }
+
+    void setOwnerKey(AssetKey ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    void setTitle(String title) {
+        this.title = title;
+    }
+
+    AssetMetadata getMetadata() {
+        return metadata;
+    }
+
+    void setMetadata(AssetMetadata metadata) {
+        this.metadata = metadata;
+    }
+}
+
+@Embeddable
+class AssetKey {
+    @MappedProperty("container_id")
+    private UUID ownerContainer;
+
+    @MappedProperty("asset_id")
+    private Integer ownerAsset;
+
+    UUID getOwnerContainer() {
+        return ownerContainer;
+    }
+
+    void setOwnerContainer(UUID ownerContainer) {
+        this.ownerContainer = ownerContainer;
+    }
+
+    Integer getOwnerAsset() {
+        return ownerAsset;
+    }
+
+    void setOwnerAsset(Integer ownerAsset) {
+        this.ownerAsset = ownerAsset;
+    }
+}
+
+@MappedEntity("assetmetadata")
+class AssetMetadata {
+    @EmbeddedId
+    private MetadataKey metadataKey;
+
+    private String author;
+
+    MetadataKey getMetadataKey() {
+        return metadataKey;
+    }
+
+    void setMetadataKey(MetadataKey metadataKey) {
+        this.metadataKey = metadataKey;
+    }
+
+    String getAuthor() {
+        return author;
+    }
+
+    void setAuthor(String author) {
+        this.author = author;
+    }
+}
+
+@Embeddable
+class MetadataKey {
+    @MappedProperty("container_id")
+    private UUID metadataContainer;
+
+    @MappedProperty("asset_id")
+    private Integer metadataAsset;
+
+    UUID getMetadataContainer() {
+        return metadataContainer;
+    }
+
+    void setMetadataContainer(UUID metadataContainer) {
+        this.metadataContainer = metadataContainer;
+    }
+
+    Integer getMetadataAsset() {
+        return metadataAsset;
+    }
+
+    void setMetadataAsset(Integer metadataAsset) {
+        this.metadataAsset = metadataAsset;
+    }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+        def sql = builder.buildBatchCreateTableStatement(List.of(), entity)
+
+        expect:
+        sql == 'CREATE TABLE `asset` (`container_id` UUID NOT NULL,`asset_id` INT NOT NULL,`title` VARCHAR(255) NOT NULL, PRIMARY KEY(`container_id`,`asset_id`));'
+    }
+
     @Unroll
     void "test build create table for JSON type for dialect #dialect"() {
         given:

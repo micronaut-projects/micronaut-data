@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
@@ -185,9 +186,14 @@ final class SqlUpsertQueryBuilder {
         UpsertDataBuilder data = new UpsertDataBuilder(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         List<String> conflictPropertyPaths = resolveUpsertConflictPropertyPaths(entity, conflictProperties);
         UpsertColumnContext columnContext = new UpsertColumnContext(namingStrategy, escape, conflictPropertyPaths);
+        Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
 
         for (PersistentProperty prop : entity.getPersistentProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
+                if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, sqlQueryBuilder.getMappedName(namingStrategy, associations, property))) {
+                    // The column is written by the identity
+                    return;
+                }
                 if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                     return;
                 }
