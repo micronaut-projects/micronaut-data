@@ -458,6 +458,13 @@ public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository  # <b class="conum">(1)</b>
+class BookRepository(CrudRepository[Book, int]):  # <b class="conum">(2)</b>
+    def find(self, title: str) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
@@ -524,6 +531,20 @@ protected void testAnnotationMetadata() {
             "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)", query);
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">beanContext: Annotated[BeanContext, Inject]
+
+@Test
+def testAnnotationMetadata(self):
+    query = (self.beanContext.getBeanDefinition(BookRepository)  # <b class="conum">(1)</b>
+             .getRequiredMethod("find", String)  # <b class="conum">(2)</b>
+             .getAnnotationMetadata().stringValue("io.micronaut.data.annotation.Query")  # <b class="conum">(3)</b>
+             .orElse(None))
+
+    assert query == "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)"  # <b class="conum">(4)</b></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -1022,6 +1043,23 @@ public class Project {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import EmbeddedId, MappedEntity
+
+from example.ProjectId import ProjectId
+
+
+@MappedEntity
+@dataclass
+class Project:
+    projectId: Annotated[ProjectId, EmbeddedId]
+    name: str</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.EmbeddedId
@@ -1108,6 +1146,20 @@ public class ProjectId {
         return Objects.hash(departmentId, projectId);
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.data.annotation import Embeddable
+
+
+@Embeddable
+@dataclass(frozen=True)
+class ProjectId:
+    departmentId: int
+    projectId: int</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -1692,6 +1744,27 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.persistence import EntityManager
+from micronaut.data.annotation import Repository
+from micronaut.data.repository import CrudRepository
+
+from example.Book import Book
+
+
+@Repository
+class AbstractBookRepository(CrudRepository[Book, int]):
+
+    def __init__(self, entity_manager: EntityManager):
+        self.entity_manager = entity_manager
+
+    def findByTitle(self, title: str) -&gt; list[Book]:
+        return (self.entity_manager.createQuery("FROM Book book WHERE book.title = :title", Book)
+                .setParameter("title", title)
+                .getResultList())</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Repository
@@ -1770,6 +1843,23 @@ public interface AccountRepository extends CrudRepository&lt;@Valid Account, @Mi
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import Annotated
+
+from jakarta.validation import Valid
+from jakarta.validation.constraints import Min
+from micronaut.data.annotation import Repository
+from micronaut.data.repository import CrudRepository
+
+from example.Account import Account
+
+
+@Repository
+class AccountRepository(CrudRepository[Annotated[Account, Valid], Annotated[int, Min(0)]]):
+    pass</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Repository
@@ -1826,6 +1916,15 @@ interface AccountRepository extends CrudRepository&lt;@jakarta.validation.Valid 
 Book getByTitle(String title);
 
 Book retrieveByTitle(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findByTitle(self, title: str) -&gt; Book: ...
+
+def getByTitle(self, title: str) -&gt; Book: ...
+
+def retrieveByTitle(self, title: str) -&gt; Book: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2040,6 +2139,11 @@ More details about the batch update variants of these methods is covered in the 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def find(self, title: str) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Executable
 fun find(title: String): Book</code></pre>
 </div>
@@ -2075,6 +2179,11 @@ Book find(String title)</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">List&lt;Book&gt; findByPagesGreaterThan(int pageCount);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findByPagesGreaterThan(self, pageCount: int) -&gt; list[Book]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2237,6 +2346,11 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findByPagesGreaterThanOrTitleLike(self, pageCount: int, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findByPagesGreaterThanOrTitleLike(pageCount: Int, title: String): List&lt;Book&gt;</code></pre>
 </div>
 </div>
@@ -2281,6 +2395,15 @@ Slice&lt;Book&gt; list(Pageable pageable);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findAllByPagesGreaterThan(self, pageCount: int, pageable: Pageable) -&gt; list[Book]: ...
+
+def findByTitleLike(self, title: str, pageable: Pageable) -&gt; Page[Book]: ...
+
+def list(self, pageable: Pageable) -&gt; Slice[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findByPagesGreaterThan(pageCount: Int, pageable: Pageable): List&lt;Book&gt;
 
 fun findByTitleLike(title: String, pageable: Pageable): Page&lt;Book&gt;
@@ -2306,6 +2429,20 @@ Slice&lt;Book&gt; list(Pageable pageable)</code></pre>
         new Book("The Power of the Dog", 500), new Book("The Border", 700),
         new Book("Along Came a Spider", 300), new Book("Pet Cemetery", 400), new Book("A Game of Thrones", 900),
         new Book("A Clash of Kings", 1100)));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.saveAll([
+    Book("The Stand", 1000),
+    Book("The Shining", 600),
+    Book("The Power of the Dog", 500),
+    Book("The Border", 700),
+    Book("Along Came a Spider", 300),
+    Book("Pet Cemetery", 400),
+    Book("A Game of Thrones", 900),
+    Book("A Clash of Kings", 1100),
+])</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2344,6 +2481,13 @@ Slice&lt;Book&gt; list(Pageable pageable)</code></pre>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Slice&lt;Book&gt; slice = bookRepository.list(Pageable.from(0, 3));
 List&lt;Book&gt; resultList = bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3));
 Page&lt;Book&gt; page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">slice = self.bookRepository.list(Pageable.from_(0, 3))
+result_list = self.bookRepository.findAllByPagesGreaterThan(500, Pageable.from_(0, 3))
+page = self.bookRepository.findByTitleLike("The%", Pageable.from_(0, 3))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2407,6 +2551,15 @@ Page&lt;Book&gt; findByTitleStartingWith(String title, Pageable pageable); // <b
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findAll(self, pageable: CursoredPageable) -&gt; CursoredPage[Book]: ...  # <b class="conum">(1)</b>
+
+def findByPagesBetween(self, minPageCount: int, maxPageCount: int, pageable: Pageable) -&gt; CursoredPage[Book]: ...  # <b class="conum">(2)</b>
+
+def findByTitleStartingWith(self, title: str, pageable: Pageable) -&gt; Page[Book]: ...  # <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun find(pageable: CursoredPageable): CursoredPage&lt;Book&gt; // <b class="conum">(1)</b>
 
 fun findByPagesBetween(minPageCount: Int, maxPageCount: Int, pageable: Pageable): CursoredPage&lt;Book&gt; // <b class="conum">(2)</b>
@@ -2451,6 +2604,14 @@ CursoredPage&lt;Book&gt; pageByPagesBetween = // <b class="conum">(3)</b>
     bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3));
 Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
     bookRepository.findByTitleStartingWith("The", CursoredPageable.from( 3, Sort.unsorted()));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">page = self.bookRepository.findAll(CursoredPageable.from_(5, Sort.of(Sort.Order.asc("title"))))  # <b class="conum">(1)</b>
+page2 = self.bookRepository.findAll(page.nextPageable())  # <b class="conum">(2)</b>
+pageByPagesBetween = self.bookRepository.findByPagesBetween(400, 700, Pageable.from_(0, 3))  # <b class="conum">(3)</b>
+pageByTitleStarts = self.bookRepository.findByTitleStartingWith("The", CursoredPageable.from_(3, Sort.unsorted()))  # <b class="conum">(4)</b></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2536,6 +2697,13 @@ List&lt;Book&gt; listOrderByTitleDesc();</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def listOrderByTitle(self) -&gt; list[Book]: ...
+
+def listOrderByTitleDesc(self) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun listOrderByTitle(): List&lt;Book&gt;
 
 fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
@@ -2570,6 +2738,11 @@ List&lt;Book&gt; listOrderByTitleDesc()</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">List&lt;String&gt; findTitleByPagesGreaterThan(int pageCount);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findTitleByPagesGreaterThan(self, pageCount: int) -&gt; list[str]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2663,6 +2836,11 @@ If the projected property type and the return generic type do not match up then 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findTop3ByTitleLike(self, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun findTop3ByTitleLike(title: String): List&lt;Book&gt;</code></pre>
 </div>
 </div>
@@ -2722,6 +2900,20 @@ public class BookDTO {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.core.annotation import Introspected
+
+
+@Introspected
+@dataclass
+class BookDTO:
+    title: str | None = None
+    pages: int = 0</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.core.annotation.Introspected
@@ -2755,6 +2947,11 @@ class BookDTO {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">BookDTO findOne(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findOne(self, title: str) -&gt; BookDTO: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2799,6 +2996,12 @@ You can use <a href="../api/io/micronaut/data/annotation/NamingStrategy.html">@N
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
 List&lt;Book&gt; listBooks(String t);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+def listBooks(self, t: str) -&gt; list[Book]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2895,6 +3098,24 @@ public class User {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Where
+from micronaut.data.model.naming import NamingStrategies
+
+
+@MappedEntity(value="users", namingStrategy=NamingStrategies.Raw)
+@Where("@.userEnabled = true")  # <b class="conum">(1)</b>
+@dataclass
+class User:
+    userName: str
+    userEnabled: bool = True  # <b class="conum">(2)</b>
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -2976,6 +3197,26 @@ public interface UserRepository extends CrudRepository&lt;User, Long&gt; { // <b
     @Query("SELECT * FROM users WHERE userEnabled = false") // <b class="conum">(3)</b>
     List&lt;User&gt; findDisabled();
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Query
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.repository import CrudRepository
+
+from example.User import User
+
+
+@JdbcRepository(dialect=Dialect.H2)
+class UserRepository(CrudRepository[User, int]):  # <b class="conum">(1)</b>
+
+    @Query("UPDATE users SET userEnabled = false WHERE id = :id")  # <b class="conum">(2)</b>
+    def deleteById(self, id: int) -&gt; None: ...
+
+    @Query("SELECT * FROM users WHERE userEnabled = false")  # <b class="conum">(3)</b>
+    def findDisabled(self) -&gt; list[User]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3064,6 +3305,21 @@ public interface UserRepositoryWithWhere {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Where
+
+from example.User import User
+
+
+class UserRepositoryWithWhere:
+
+    # ...
+
+    @Where("@.enabled = false")
+    def findDisabled(self) -&gt; list[User]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Where
@@ -3125,6 +3381,16 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository
+class ProductRepository(CrudRepository[Product, int]):
+    @Join("manufacturer")
+    def findByNameContains(self, str: str) -&gt; CompletableFuture[Product]: ...
+
+    def countByManufacturerName(self, name: str) -&gt; CompletableFuture[int]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository
 interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer")
@@ -3158,6 +3424,15 @@ Assertions.assertEquals(
         2,
         total
 );</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">total = (self.productRepository.findByNameContains("o")
+         .thenCompose(lambda product: self.productRepository.countByManufacturerName(product.manufacturer.name))
+         .get(1000, TimeUnit.SECONDS))
+
+assert total == 2</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3227,6 +3502,14 @@ Single&lt;Long&gt; countDistinctByManufacturerName(String name);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Join("manufacturer")
+def queryByNameContains(self, str: str) -&gt; Maybe[Product]: ...
+
+def countDistinctByManufacturerName(self, name: str) -&gt; Single[int]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Join("manufacturer")
 fun queryByNameContains(str: String): Maybe&lt;Product&gt;
 
@@ -3256,6 +3539,16 @@ Assertions.assertEquals(
         2,
         total
 );</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">total = (self.productRepository.queryByNameContains("o")
+         .flatMap(lambda product: self.productRepository.countDistinctByManufacturerName(product.manufacturer.name).toMaybe())
+         .defaultIfEmpty(0)
+         .blockingGet())
+
+assert total == 2</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3398,6 +3691,11 @@ This fallback is not applied to entities that define a version property for opti
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def persist(self, title: str, pages: int) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun persist(title: String, pages: Int): Book</code></pre>
 </div>
 </div>
@@ -3424,6 +3722,20 @@ void insertOne(Book book);
 
 @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
 void insertMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+@ParameterExpression(name="title", expression="#{book.title + 'ABC'}")
+@ParameterExpression(name="pages", expression="#{book.pages}")
+def insertCustomExp(self, book: Book) -&gt; None: ...
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+def insertOne(self, book: Book) -&gt; None: ...
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+def insertMany(self, books: list[Book]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3483,6 +3795,11 @@ Book update(Book newBook);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, newBook: Book) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun update(newBook: Book): Book</code></pre>
 </div>
 </div>
@@ -3502,6 +3819,11 @@ However, generally it is more efficient to use batch updates to only update the 
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id Long id, int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def updatePagesById(self, id: Annotated[int, Id], pages: int) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3527,6 +3849,11 @@ However, generally it is more efficient to use batch updates to only update the 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def updateByTitle(self, title: str, pages: int) -&gt; None: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateByTitle(title: String, pages: Int)</code></pre>
 </div>
 </div>
@@ -3548,6 +3875,15 @@ void updateOne(Book book);
 
 @Query("UPDATE book SET title = :title where id = :id")
 void updateMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("UPDATE book SET title = :title where id = :id")
+def updateOne(self, book: Book) -&gt; None: ...
+
+@Query("UPDATE book SET title = :title where id = :id")
+def updateMany(self, books: list[Book]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3659,6 +3995,22 @@ public class Flight {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import Id, MappedEntity
+
+
+@MappedEntity
+@dataclass
+class Flight:
+    number: Annotated[str, Id]
+    origin: str | None = None
+    destination: str | None = None</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>Its repository declares single and iterable upsert methods by name, uses <a href="../api/io/micronaut/data/annotation/Upsert.html">@Upsert</a> with another method name, and includes asynchronous variants:</p>
 </div>
@@ -3683,6 +4035,28 @@ public interface FlightRepository extends CrudRepository&lt;Flight, String&gt; {
     @Upsert
     CompletableFuture&lt;Void&gt; upsertFuture(Iterable&lt;Flight&gt; flights);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.H2)
+class FlightRepository(CrudRepository[Flight, str]):
+
+    def upsert(self, flight: Flight) -&gt; None: ...
+
+    def upsertAll(self, flights: list[Flight]) -&gt; None: ...
+
+    @Upsert
+    def put(self, flight: Flight) -&gt; None: ...
+
+    @Upsert
+    def putAll(self, flights: list[Flight]) -&gt; None: ...
+
+    @Upsert
+    def upsertFuture(self, flight: Flight) -&gt; CompletableFuture[Void]: ...
+
+    @Upsert
+    def upsertAllFuture(self, flights: list[Flight]) -&gt; CompletableFuture[Void]: ...</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3741,6 +4115,24 @@ public class Passenger {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, Index, MappedEntity
+
+
+@MappedEntity
+@Index(columns=["email"], unique=True)
+@dataclass
+class Passenger:
+    email: str
+    firstName: str | None = None
+    lastName: str | None = None
+    id: Annotated[int | None, Id, GeneratedValue("IDENTITY")] = None</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>Its repository uses <code>email</code> as the conflict target and returns the persisted passenger for single-item operations:</p>
 </div>
@@ -3763,6 +4155,24 @@ public interface PassengerRepository extends CrudRepository&lt;Passenger, Long&g
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.H2)
+class PassengerRepository(CrudRepository[Passenger, int]):
+
+    @Upsert(conflictsOn="email")
+    def upsertByEmail(self, passenger: Passenger) -&gt; Passenger: ...
+
+    @Upsert(conflictsOn="email")
+    def upsertAllByEmail(self, passengers: list[Passenger]) -&gt; list[Passenger]: ...
+
+    @Upsert(conflictsOn="email")
+    def upsertByEmailFuture(self, passenger: Passenger) -&gt; CompletableFuture[Passenger]: ...
+
+    @Upsert(conflictsOn="email")
+    def upsertAllByEmailFuture(self, passengers: list[Passenger]) -&gt; CompletableFuture[list[Passenger]]: ...</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The same repository method shapes are supported for reactive repositories where the repository type supports those return types.
 The following R2DBC example returns a <code>Mono</code> for one flight and a <code>Flux</code> for an iterable of flights:</p>
@@ -3778,6 +4188,18 @@ public interface FlightRepository extends CrudRepository&lt;Flight, String&gt; {
     @Upsert
     Flux&lt;Flight&gt; upsertFlux(Iterable&lt;Flight&gt; flights);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@R2dbcRepository(dialect=Dialect.POSTGRES)
+class FlightRepository(CrudRepository[Flight, str]):
+
+    @Upsert
+    def upsertMono(self, flight: Flight) -&gt; Mono[Flight]: ...
+
+    @Upsert
+    def upsertFlux(self, flights: list[Flight]) -&gt; Flux[Flight]: ...</code></pre>
 </div>
 </div>
 </div>
@@ -4085,6 +4507,11 @@ void deleteAll();</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def deleteAll(self) -&gt; None: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">override fun deleteAll()</code></pre>
 </div>
 </div>
@@ -4115,6 +4542,11 @@ void deleteAll();</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def delete(self, title: str) -&gt; None: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun delete(title: String)</code></pre>
 </div>
 </div>
@@ -4129,6 +4561,11 @@ void deleteAll();</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void deleteByTitleLike(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def deleteByTitleLike(self, title: str) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4151,6 +4588,15 @@ void deleteOne(Book book);
 
 @Query("DELETE FROM Book WHERE title = :title")
 void deleteMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("DELETE FROM Book WHERE title = :title")
+def deleteOne(self, book: Book) -&gt; None: ...
+
+@Query("DELETE FROM Book WHERE title = :title")
+def deleteMany(self, books: list[Book]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4435,6 +4881,31 @@ public class Account {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">import base64
+from dataclasses import dataclass
+from java.time import MonthDay
+from typing import Annotated
+
+from jakarta.persistence import Column, Convert, Entity, GeneratedValue, Id, PrePersist
+
+from example.MonthDayDateAttributeConverter import MonthDayDateAttributeConverter
+
+
+@Entity
+@dataclass
+class Account:
+    username: str | None = None
+    password: str | None = None
+    paymentDay: Annotated[MonthDay | None, Column(columnDefinition="date"), Convert(converter=MonthDayDateAttributeConverter)] = None
+    id: Annotated[int | None, Id, GeneratedValue] = None
+
+    @PrePersist
+    def encode_password(self) -&gt; None:
+        self.password = base64.b64encode(self.password.encode("utf-8")).decode("ascii")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import java.nio.charset.StandardCharsets
@@ -4502,6 +4973,26 @@ public class AccountUsernameValidator {
         }
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">import re
+
+from jakarta.inject import Singleton
+from jakarta.persistence import PrePersist
+
+from example.Account import Account
+
+
+@Singleton
+class AccountUsernameValidator:
+
+    @PrePersist
+    def validate_username(self, account: Account) -&gt; None:
+        username = account.username
+        if username is None or not re.fullmatch("[a-z0-9]+", username):
+            raise ValueError("Invalid username")</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4616,6 +5107,34 @@ public class BookListeners {
         return (book) -&gt; LOG.debug("Book inserted: {}", book.getTitle() );
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">import logging
+
+from jakarta.inject import Singleton
+from micronaut.context.annotation import Factory
+from micronaut.data.event.listeners import PostPersistEventListener, PrePersistEventListener
+
+from example.Book import Book
+
+LOG = logging.getLogger(__name__)
+
+
+@Factory
+class BookListeners:
+
+    @Singleton
+    def before_book_persist(self) -&gt; PrePersistEventListener[Book]:  # <b class="conum">(1)</b>
+        def listener(book):
+            LOG.debug("Inserting book: %s", book.title)
+            return True  # <b class="conum">(2)</b>
+        return listener
+
+    @Singleton
+    def after_book_persist(self) -&gt; PostPersistEventListener[Book]:  # <b class="conum">(3)</b>
+        return lambda book: LOG.debug("Book inserted: %s", book.title)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5134,6 +5653,12 @@ public interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, Jp
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.H2)
+class PersonRepository(CrudRepository[Person, int]):</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
 interface PersonRepository : KotlinCrudRepository&lt;Person, Long&gt;, KotlinJpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
@@ -5145,6 +5670,18 @@ interface PersonRepository : KotlinCrudRepository&lt;Person, Long&gt;, KotlinJpa
 interface PersonRepository extends CrudRepository&lt;Person, Long&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
+</div>
+<div class="admonitionblock note lang-python">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In Python declare the specification methods on the repository itself: Micronaut Data matches them by their <code>PredicateSpecification</code> / <code>QuerySpecification</code> / <code>UpdateSpecification</code> / <code>DeleteSpecification</code> parameter types. A specification is a plain Python function or lambda, and since <code>and</code>, <code>or</code> and <code>not</code> are Python keywords, the corresponding <code>CriteriaBuilder</code> methods are called as <code>and_</code>, <code>or_</code> and <code>not_</code>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.</p>
@@ -5179,6 +5716,17 @@ List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort);
 Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable);
 
 Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findOne(self, spec: PredicateSpecification[Person]) -&gt; Optional[Person]: ...
+
+def findAll(self, spec: PredicateSpecification[Person] | None) -&gt; list[Person]: ...
+
+def findAllSorted(self, spec: PredicateSpecification[Person], sort: Sort) -&gt; list[Person]: ...
+
+def findPage(self, spec: PredicateSpecification[Person], pageable: Pageable) -&gt; Page[Person]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5310,6 +5858,11 @@ long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def count(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun count(spec: PredicateSpecification&lt;Person&gt;?): Long
 
 fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
@@ -5342,6 +5895,33 @@ long count(QuerySpecification&lt;Person&gt; spec)</code></pre>
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def long_name_equals(long_name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("longName"), long_name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5390,6 +5970,21 @@ long countAgeLess20 = personRepository.count(ageIsLessThan(20));
 long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))));
 
 List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">denis = self.personRepository.findOne(name_equals("Denis")).orElse(None)
+
+josh = self.personRepository.findOne(long_name_equals("Josh PM")).orElse(None)
+
+count_age_less_30 = self.personRepository.count(age_is_less_than(30))
+
+count_age_less_20 = self.personRepository.count(age_is_less_than(20))
+
+count_age_less_30_not_denis = self.personRepository.count(and_(age_is_less_than(30), not_(name_equals("Denis"))))
+
+people = self.personRepository.findAll(or_(name_equals("Denis"), name_equals("Josh")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5464,6 +6059,11 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def updateAll(self, spec: UpdateSpecification[Person]) -&gt; int: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateAll(spec: UpdateSpecification&lt;Person&gt;?): Long</code></pre>
 </div>
 </div>
@@ -5521,6 +6121,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">query.set(root.get("name"), new_name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">query.set(root.get("name"), newName)</code></pre>
 </div>
 </div>
@@ -5555,6 +6160,40 @@ public interface UpdateSpecification&lt;T&gt; {
         };
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def long_name_equals(long_name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("longName"), long_name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))
+
+
+def set_new_name(new_name: str, where):
+    def specification(root, query, criteria_builder):
+        query.set(root.get("name"), new_name)
+        return where(root, criteria_builder)
+    return specification</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5638,6 +6277,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_updated = self.personRepository.updateAll(set_new_name("Steven", where=name_equals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(setNewName("Steven").where(nameEquals("Denis")))</code></pre>
 </div>
 </div>
@@ -5664,6 +6308,11 @@ public interface UpdateSpecification&lt;T&gt; {
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long deleteAll(PredicateSpecification&lt;Person&gt; spec);
 
 long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def deleteAll(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5749,6 +6398,33 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def long_name_equals(long_name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("longName"), long_name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
 
     fun nameEquals(name: String?) = PredicateSpecification&lt;Person&gt; { root, criteriaBuilder -&gt;
@@ -5783,6 +6459,11 @@ public interface DeleteSpecification&lt;T&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_deleted = self.personRepository.deleteAll(name_equals("Denis"))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6113,6 +6794,11 @@ static UpdateSpecification&lt;Person&gt; setNewName(String newName) {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python"></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin"></code></pre>
 </div>
 </div>
@@ -6276,6 +6962,39 @@ public class ProductManager {
         );
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from jakarta.persistence import EntityManager
+from micronaut.transaction import TransactionOperations
+from org.hibernate import Session
+
+from example.Manufacturer import Manufacturer
+from example.Product import Product
+
+
+@Singleton
+class ProductManager:
+
+    def __init__(self, entity_manager: EntityManager, transaction_manager: TransactionOperations[Session]):  # <b class="conum">(1)</b>
+        self.entity_manager = entity_manager
+        self.transaction_manager = transaction_manager
+
+    def save(self, name: str, manufacturer: Manufacturer) -&gt; Product:
+        def persist(status):  # <b class="conum">(2)</b>
+            product = Product(name, manufacturer)
+            self.entity_manager.persist(product)
+            return product
+        return self.transaction_manager.executeWrite(persist)
+
+    def find(self, name: str) -&gt; Product:
+        return self.transaction_manager.executeRead(  # <b class="conum">(3)</b>
+            lambda status: status.getConnection().createQuery("from Product p where p.name = :name", Product)
+            .setParameter("name", name)
+            .getSingleResult()
+        )</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6448,6 +7167,69 @@ public class ProductManager {
         });
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from java.sql import Connection
+from micronaut.transaction import TransactionOperations
+
+from example.Manufacturer import Manufacturer
+from example.Product import Product
+from example.ProductRepository import ProductRepository
+
+
+@Singleton
+class ProductManager:
+    def __init__(self,
+                 connection: Connection,
+                 transaction_manager: TransactionOperations[Connection],  # <b class="conum">(1)</b>
+                 product_repository: ProductRepository):
+        self.connection = connection
+        self.transaction_manager = transaction_manager
+        self.product_repository = product_repository
+
+    def save(self, name: str, manufacturer: Manufacturer) -&gt; Product:
+        def insert(status):  # <b class="conum">(2)</b>
+            product = Product(name, manufacturer)
+            ps = self.connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")
+            try:
+                ps.setString(1, name)
+                ps.setLong(2, manufacturer.id)
+                ps.execute()
+            finally:
+                ps.close()
+            return product
+        return self.transaction_manager.executeWrite(insert)
+
+    def find(self, name: str) -&gt; Product | None:
+        def select(status):  # <b class="conum">(3)</b>
+            ps = status.getConnection().prepareStatement("select * from product p where p.name = ?")
+            try:
+                ps.setString(1, name)
+                rs = ps.executeQuery()
+                try:
+                    if rs.next():
+                        return Product(rs.getString("name"), None)
+                    return None
+                finally:
+                    rs.close()
+            finally:
+                ps.close()
+        return self.transaction_manager.executeRead(select)
+
+    def save_using_repo(self, name: str, manufacturer: Manufacturer) -&gt; Product:
+        """Creates new product using transaction operations and product repository."""
+        return self.transaction_manager.executeWrite(  # <b class="conum">(4)</b>
+            lambda status: self.product_repository.save(Product(name, manufacturer))
+        )
+
+    def find_using_repo(self, name: str) -&gt; Product | None:
+        """Finds product by name using transaction manager and product repository."""
+        return self.transaction_manager.executeRead(  # <b class="conum">(5)</b>
+            lambda status: self.product_repository.findByName(name).orElse(None)
+        )</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6686,6 +7468,42 @@ public class BookManager {
         }
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from jakarta.inject import Singleton
+from jakarta.transaction import Transactional
+from micronaut.context.event import ApplicationEventPublisher
+from micronaut.transaction.annotation import TransactionalEventListener
+
+from example.Book import Book
+from example.BookRepository import BookRepository
+
+
+@dataclass
+class NewBookEvent:
+    book: Book
+
+
+@Singleton
+class BookManager:
+
+    def __init__(self, book_repository: BookRepository, event_publisher: ApplicationEventPublisher[NewBookEvent]):  # <b class="conum">(1)</b>
+        self.book_repository = book_repository
+        self.event_publisher = event_publisher
+
+    @Transactional
+    def save_book(self, title: str, pages: int) -&gt; None:
+        book = Book(title, pages)
+        self.book_repository.save(book)
+        self.event_publisher.publishEvent(NewBookEvent(book))  # <b class="conum">(2)</b>
+
+    @TransactionalEventListener
+    def on_new_book(self, event: NewBookEvent) -&gt; None:
+        print(f"book = {event.book}")  # <b class="conum">(3)</b></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8367,6 +9185,24 @@ public class Book {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Entity, GeneratedValue, Id
+from micronaut.serde.annotation import Serdeable
+
+
+@Serdeable
+@Entity
+@dataclass
+class Book:
+    title: str | None = None
+    pages: int = 0
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.Entity
@@ -8437,6 +9273,13 @@ public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository  # <b class="conum">(1)</b>
+class BookRepository(CrudRepository[Book, int]):  # <b class="conum">(2)</b>
+    def find(self, title: str) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
@@ -8495,6 +9338,11 @@ BookRepository bookRepository;</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">bookRepository: Annotated[BookRepository, Inject]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Inject
 lateinit var bookRepository: BookRepository</code></pre>
 </div>
@@ -8515,6 +9363,12 @@ lateinit var bookRepository: BookRepository</code></pre>
 book.setTitle("The Stand");
 book.setPages(1000);
 bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book("The Stand", 1000)
+book = self.bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8542,6 +9396,11 @@ bookRepository.save(book)</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = self.bookRepository.findById(id).orElse(None)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
 </div>
 </div>
@@ -8564,6 +9423,12 @@ bookRepository.save(book);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book.title = "Changed"
+self.bookRepository.save(book)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book.title = "Changed"
 bookRepository.save(book)</code></pre>
 </div>
@@ -8581,6 +9446,12 @@ bookRepository.save(book)</code></pre>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
 void updatePages(@Id Long id, @Parameter("pages") int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@QueryHint(name="jakarta.persistence.FlushModeType", value="AUTO")
+def updatePages(self, id: Annotated[int, Id], pages: Annotated[int, Parameter("pages")]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8610,6 +9481,11 @@ void updatePages(@Id Long id, @Parameter("pages") int pages)</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.deleteById(id)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8714,6 +9590,20 @@ class Product {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Entity, GeneratedValue, Id, ManyToOne, NamedStoredProcedureQuery, StoredProcedureParameter
+@Entity
+@dataclass
+class Product:
+    name: str | None = None
+    manufacturer: Annotated[Manufacturer | None, ManyToOne(optional=False, fetch="LAZY")] = None
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.persistence.*
 
 @Entity
@@ -8793,6 +9683,25 @@ public class Manufacturer {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Entity, GeneratedValue, Id
+from micronaut.configuration.hibernate.jpa.proxy import GenerateProxy
+from org.hibernate.annotations import BatchSize
+
+
+@Entity
+@GenerateProxy
+@BatchSize(size=10)
+@dataclass
+class Manufacturer:
+    name: str | None = None
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.*
@@ -8839,6 +9748,14 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository
+class ProductRepository(CrudRepository[Product, int]):
+    @Join(value="manufacturer", type="FETCH")  # <b class="conum">(1)</b>
+    def list(self) -&gt; list[Product]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository
 interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
@@ -8876,6 +9793,12 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
 @EntityGraph(attributePaths = {"manufacturer", "title"}) // <b class="conum">(1)</b>
 List&lt;Product&gt; findAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@EntityGraph(attributePaths=["manufacturer", "title"])  # <b class="conum">(1)</b>
+def findAll(self) -&gt; list[Product]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -8926,6 +9849,12 @@ List&lt;Book&gt; listBooks(String t);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+def listBooks(self, t: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
 fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 </div>
@@ -8960,6 +9889,12 @@ List&lt;Book&gt; listBooks(String t)</code></pre>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query(value = "select * from books b where b.title like :title limit 5",
        nativeQuery = true)
 List&lt;Book&gt; findNativeBooks(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query(value="select * from books b where b.title like :title limit 5", nativeQuery=True)
+def findNativeBooks(self, title: str) -&gt; list[Book]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -9047,6 +9982,26 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">        def count_users(status):
+            session = status.getConnection()
+            # Execute query with annotated FetchSize
+            stream = self.userRepository.listAll()
+            try:
+                count = 0
+                for user in stream.iterator():
+                    session.detach(user)
+                    count += 1
+                    if count % 50_000 == 0:
+                        session.clear()
+                return count
+            finally:
+                stream.close()
+
+        entity_count = self.transactionOperations.executeRead(count_users)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">        var entityCount: Long = transactionOperations.executeRead { status -&gt;
             val session = status.connection
             var count = 0L
@@ -9118,6 +10073,31 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
      * @return a Stream of all users
      */
     Stream&lt;User&gt; queryAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @Fetch(1500)
+    def listAll(self) -&gt; Stream[User]:
+        """Retrieves all users from the data store in batches.
+
+        The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+        The fetch size is set to 1500, which controls the number of rows fetched from the database at a time.
+        It is the caller's responsibility to close the Stream to release any underlying resources.
+
+        :return: a Stream of all enabled users
+        """
+        ...
+
+    def queryAll(self) -&gt; Stream[User]:
+        """Retrieves all users from the data store.
+
+        The returned Stream is lazily evaluated, meaning that it will only fetch data as it is consumed.
+        It is the caller's responsibility to close the Stream to release any underlying resources.
+
+        :return: a Stream of all users
+        """
+        ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -9210,6 +10190,12 @@ It also shows how to periodically clear the session which might not be required 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @Fetch(1000)
+    def listAll(self) -&gt; Stream[BookDTO]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    @Fetch(1000)
     fun listAll(): Stream&lt;BookDTO&gt;</code></pre>
 </div>
@@ -9269,6 +10255,17 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository
+class ProductRepository(CrudRepository[Product, int]):
+    @Procedure(named="calculateSum")
+    def calculateSum(self, productId: int) -&gt; int: ...  # <b class="conum">(1)</b>
+
+    @Procedure("calculateSumInternal")
+    def calculateSumCustom(self, productId: int) -&gt; int: ...  # <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository
 interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Procedure(named = "calculateSum")
@@ -9307,6 +10304,28 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 )
 @Entity
 class Product {</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Entity, GeneratedValue, Id, ManyToOne, NamedStoredProcedureQuery, StoredProcedureParameter
+from java.lang import Long
+
+from example.Manufacturer import Manufacturer
+
+
+@NamedStoredProcedureQuery(name="calculateSum",
+                           procedureName="calculateSumInternal",
+                           parameters=[
+                               StoredProcedureParameter(name="productId", mode="IN", type=Long),
+                               StoredProcedureParameter(name="result", mode="OUT", type=Long)
+                           ])
+@Entity
+@dataclass
+class Product:</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -9735,6 +10754,39 @@ interface BookRepository extends ReactorCrudRepository&lt;Book, Long&gt; { // <b
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Repository  # <b class="conum">(1)</b>
+class BookRepository(ReactorCrudRepository[Book, int]):  # <b class="conum">(2)</b>
+
+    def find(self, title: str) -&gt; Mono[Book]: ...
+
+    def findOne(self, title: str) -&gt; Mono[BookDTO]: ...
+
+    def findByPagesGreaterThan(self, pageCount: int, pageable: Pageable) -&gt; Flux[Book]: ...
+
+    def findByTitleLike(self, title: str, pageable: Pageable) -&gt; Mono[Page[Book]]: ...
+
+    def list(self, pageable: Pageable) -&gt; Mono[Slice[Book]]: ...
+
+    @Transactional
+    def find_by_id_and_update(self, id: int, book_consumer: Consumer[Book]) -&gt; Mono[Void]:
+        def apply(book):
+            book_consumer(book)
+            return book
+        return self.findById(id).map(apply).then()
+
+    def save(self, entity: Book) -&gt; Mono[Book]: ...
+
+    def update(self, newBook: Book) -&gt; Mono[Book]: ...
+
+    def updatePagesById(self, id: Annotated[int, Id], pages: int) -&gt; Mono[Void]: ...
+
+    def deleteAll(self) -&gt; Mono[int]: ...
+
+    def delete(self, title: str) -&gt; Mono[Void]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository // <b class="conum">(1)</b>
 interface BookRepository : CoroutineCrudRepository&lt;Book, Long&gt; { // <b class="conum">(2)</b>
 
@@ -9829,6 +10881,12 @@ bookRepository.save(book).block();</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book("The Stand", 1000)
+book = self.bookRepository.save(book).block()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">var book = Book(0, "The Stand", 1000)
 bookRepository.save(book)</code></pre>
 </div>
@@ -9848,6 +10906,11 @@ bookRepository.save(book).block()</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">book = bookRepository.findById(id).block();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = self.bookRepository.findById(id).block()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -9875,6 +10938,14 @@ bookRepository.save(book).block()</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def change_title(found_book):
+    found_book.title = "Changed"
+
+self.bookRepository.find_by_id_and_update(id, change_title).block()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.findByIdAndUpdate(id) {
     it!!.title = "Changed"
 }</code></pre>
@@ -9896,6 +10967,11 @@ bookRepository.save(book).block()</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id).block();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.deleteById(id).block()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -10422,6 +11498,26 @@ public class Book {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Relation
+
+if TYPE_CHECKING:
+    from example.Review import Review
+
+
+@MappedEntity
+@dataclass
+class Book:
+    title: str
+    pages: int
+    reviews: Annotated["list[Review]", Relation(value="ONE_TO_MANY", mappedBy="book", cascade="ALL")] = field(default_factory=list)
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Relation
@@ -10513,6 +11609,25 @@ public interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import Annotated
+
+from micronaut.data.annotation import Id, Join, ParameterExpression, Query
+from micronaut.data.annotation.sql import Procedure
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model import CursoredPage, CursoredPageable, Page, Pageable, Slice
+from micronaut.data.repository import CrudRepository
+
+from example.Book import Book
+from example.BookDTO import BookDTO
+
+
+@JdbcRepository(dialect="H2")  # <b class="conum">(1)</b>
+class BookRepository(CrudRepository[Book, int]):  # <b class="conum">(2)</b>
+    def find(self, title: str) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
@@ -10576,6 +11691,11 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">bookRepository: Annotated[BookRepository, Inject]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Inject
 lateinit var bookRepository: BookRepository</code></pre>
 </div>
@@ -10594,6 +11714,12 @@ lateinit var bookRepository: BookRepository</code></pre>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book("The Stand", 1000);
 bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book("The Stand", 1000)
+book = self.bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -10632,6 +11758,11 @@ Unlike the JPA implementation there is no dirty checking. <code>save</code> inse
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = self.bookRepository.findById(id).orElse(None)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id)!!</code></pre>
 </div>
 </div>
@@ -10651,6 +11782,11 @@ Unlike the JPA implementation there is no dirty checking. <code>save</code> inse
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id Long id, int pages);
 
 void update(@Id Long id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, id: Annotated[int, Id], title: str) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -10677,6 +11813,11 @@ void update(@Id Long id, String title);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.update(book.id, "Changed")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(book.id, "Changed")</code></pre>
 </div>
 </div>
@@ -10694,6 +11835,11 @@ void update(@Id Long id, String title);</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.deleteById(id)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -11333,6 +12479,23 @@ public class Author {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+from micronaut.serde.annotation import Serdeable
+
+
+@Serdeable
+@MappedEntity
+@dataclass
+class Author:
+    name: str
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -11396,6 +12559,24 @@ public interface AuthorRepository extends ReactiveStreamsCrudRepository&lt;Autho
     @Override
     Flux&lt;Author&gt; findAll();
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.r2dbc.annotation import R2dbcRepository
+from micronaut.data.repository.reactive import ReactiveStreamsCrudRepository
+from reactor.core.publisher import Flux, Mono
+
+from example.Author import Author
+
+
+@R2dbcRepository(dialect=Dialect.POSTGRES)  # <b class="conum">(1)</b>
+class AuthorRepository(ReactiveStreamsCrudRepository[Author, int]):
+
+    def findById(self, id: int) -&gt; Mono[Author]: ...  # <b class="conum">(2)</b>
+
+    def findAll(self) -&gt; Flux[Author]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -11483,6 +12664,30 @@ public class AuthorController {
         return repository.findById(id);
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.http.annotation import Controller, Get
+from reactor.core.publisher import Flux, Mono
+
+from example.Author import Author
+from example.AuthorRepository import AuthorRepository
+
+
+@Controller("/authors")
+class AuthorController:
+
+    def __init__(self, repository: AuthorRepository):
+        self.repository = repository
+
+    @Get
+    def all(self) -&gt; Flux[Author]:  # <b class="conum">(1)</b>
+        return self.repository.findAll()
+
+    @Get("/id")
+    def get(self, id: int) -&gt; Mono[Author]:  # <b class="conum">(2)</b>
+        return self.repository.findById(id)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -11959,6 +13164,38 @@ public class AuthorService {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from jakarta.transaction import Transactional
+from java.lang import Void
+from reactor.core.publisher import Mono
+
+from example.Author import Author
+from example.AuthorRepository import AuthorRepository
+from example.Book import Book
+from example.BookRepository import BookRepository
+
+
+@Singleton
+class AuthorService:
+
+    def __init__(self, author_repository: AuthorRepository, book_repository: BookRepository):  # <b class="conum">(1)</b>
+        self.author_repository = author_repository
+        self.book_repository = book_repository
+
+    @Transactional  # <b class="conum">(2)</b>
+    def setup_data(self) -&gt; Mono[Void]:
+        return (Mono.from_(self.author_repository.save(Author("Stephen King")))
+                .flatMapMany(lambda author: self.book_repository.saveAll([
+                    Book("The Stand", 1000, author),
+                    Book("The Shining", 400, author),
+                ]))
+                .then(Mono.from_(self.author_repository.save(Author("James Patterson"))))
+                .flatMapMany(lambda author: self.book_repository.save(Book("Along Came a Spider", 300, author)))
+                .then())</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import reactor.core.publisher.Mono
@@ -12053,6 +13290,20 @@ class AuthorService {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">Flux.from_(operations.withTransaction(lambda status:
+    Flux.from_(authorRepository.save(Author("Stephen King")))
+        .flatMap(lambda author: bookRepository.saveAll([
+            Book("The Stand", 1000, author),
+            Book("The Shining", 400, author),
+        ]))
+        .thenMany(Flux.from_(authorRepository.save(Author("James Patterson"))))
+        .flatMap(lambda author: bookRepository.save(Book("Along Came a Spider", 300, author)))
+        .then()
+)).collectList().block()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">Flux.from(operations.withTransaction {
     Flux.from(authorRepository.save(Author("Stephen King")))
             .flatMap { author: Author -&gt;
@@ -12111,6 +13362,12 @@ class AuthorService {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Transactional("MANDATORY")
+def save(self, entity: Book) -&gt; Publisher[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Transactional(Transactional.TxType.MANDATORY)
 override suspend fun &lt;S : Book&gt; save(entity: S): S
 
@@ -12147,6 +13404,18 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
                                 new Book("Disclosure", 400, author)
                         )))))
 )).collectList().block();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">Flux.from_(operations.withTransaction(lambda status:  # <b class="conum">(1)</b>
+    Flux.from_(authorRepository.save(Author("Michael Crichton")))
+        .flatMap(lambda author: operations.withTransaction(status, lambda s:  # <b class="conum">(2)</b>
+            bookRepository.saveAll([
+                Book("Jurassic Park", 300, author),
+                Book("Disclosure", 400, author),
+            ])))
+)).collectList().block()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -12318,6 +13587,35 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
         });
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.transaction import Transactional
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.jdbc.runtime import JdbcOperations
+from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.repository import CrudRepository
+
+from example.Book import Book
+
+
+@JdbcRepository(dialect=Dialect.H2)
+class AbstractBookRepository(CrudRepository[Book, int]):
+
+    def __init__(self, jdbc_operations: JdbcOperations):
+        self.jdbc_operations = jdbc_operations
+
+    @Transactional
+    def findByTitle(self, title: str) -&gt; list[Book]:
+        sql = "SELECT * FROM Book AS book WHERE book.title = ?"
+
+        def query(statement):
+            statement.setString(1, title)
+            result_set = statement.executeQuery()
+            return self.jdbc_operations.entityStream(result_set, Book).toList()
+
+        return self.jdbc_operations.prepareStatement(sql, query)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -12607,6 +13905,11 @@ void update(@Id Long id, String title);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, id: Annotated[int, Id], title: str) -&gt; None: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun update(@Id id: Long?, pages: Int)
 
 fun update(@Id id: Long?, title: String)</code></pre>
@@ -12674,6 +13977,21 @@ public class Student {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Entity, GeneratedValue, Id, Version
+
+
+@Entity
+@dataclass
+class Student:
+    id: Annotated[int | None, Id, GeneratedValue] = None
+    version: Annotated[int | None, Version] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Entity
 data class Student(
         @Id @GeneratedValue
@@ -12706,6 +14024,24 @@ public interface StudentRepository extends CrudRepository&lt;Student, Long&gt; {
 
     void delete(@Id Long id, @Version Long version);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import Annotated
+
+from micronaut.data.annotation import Id, Repository, Version
+from micronaut.data.repository import CrudRepository
+
+from example.Student import Student
+
+
+@Repository
+class StudentRepository(CrudRepository[Student, int]):
+
+    def update(self, id: Annotated[int, Id], version: Annotated[int, Version], name: str) -&gt; None: ...
+
+    def delete(self, id: Annotated[int, Id], version: Annotated[int, Version]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -12760,6 +14096,32 @@ public record ETagBook(
             int chapters) {
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import Embeddable, GeneratedValue, Id, MappedEntity, Relation
+from micronaut.data.annotation.sql import ETagValue, ETaggable, GeneratedETag
+
+
+@Embeddable
+@dataclass(frozen=True)
+class BookDetails:
+    pages: int
+    chapters: Annotated[int, ETagValue(exclude=True)]
+
+
+@MappedEntity("etag_book")
+@ETaggable
+@dataclass(frozen=True)
+class ETagBook:
+    id: Annotated[int | None, Id, GeneratedValue]
+    title: str
+    bookDetails: Annotated[BookDetails, Relation("EMBEDDED")]
+    etag: Annotated[str | None, GeneratedETag]</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -12937,40 +14299,16 @@ runtime = [
 <div class="paragraph">
 <p>An example of mapping with Micronaut Data annotations can be seen below:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Micronaut Data Annotation Mapping Example</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">/*
- * Copyright 2017-2020 original authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package io.micronaut.data.tck.entities;
-
-import io.micronaut.data.annotation.AutoPopulated;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
-
-import java.util.Set;
-import java.util.UUID;
-
-@MappedEntity
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
 public class Country {
 
     @Id
     @AutoPopulated
     private UUID uuid;
+
     private String name;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
@@ -12998,6 +14336,53 @@ public class Country {
 
     public void setRegions(Set&lt;CountryRegion&gt; regions) {
         this.regions = regions;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Annotation Mapping Example</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MappedEntity
+@dataclass
+class Country:
+    name: str
+    regions: Annotated["set[CountryRegion]", Relation(value="ONE_TO_MANY", mappedBy="country")] = field(default_factory=set)
+    uuid: Annotated[UUID | None, Id, AutoPopulated] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Annotation Mapping Example</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
+class Country(val name: String) {
+
+    @Id
+    @AutoPopulated
+    var uuid: UUID? = null
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
+    var regions: Set&lt;CountryRegion&gt;? = null
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Annotation Mapping Example</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MappedEntity
+class Country {
+
+    @Id
+    @AutoPopulated
+    UUID uuid
+
+    final String name
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
+    Set&lt;CountryRegion&gt; regions
+
+    Country(String name) {
+        this.name = name
     }
 }</code></pre>
 </div>
@@ -13275,6 +14660,20 @@ public class ProjectId {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.data.annotation import Embeddable
+
+
+@Embeddable
+@dataclass(frozen=True)
+class ProjectId:
+    departmentId: int
+    projectId: int</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.Embeddable
@@ -13345,6 +14744,23 @@ public class Project {
         return name;
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import EmbeddedId, MappedEntity
+
+from example.ProjectId import ProjectId
+
+
+@MappedEntity
+@dataclass
+class Project:
+    projectId: Annotated[ProjectId, EmbeddedId]
+    name: str</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -13454,6 +14870,21 @@ public class Manufacturer {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+
+
+@MappedEntity
+@dataclass
+class Manufacturer:
+    name: str
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.*
@@ -13508,12 +14939,39 @@ class Manufacturer {
 <div class="paragraph">
 <p>If this is not satisfactory then you can customize this by setting the <code>namingStrategy</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation on the entity:</p>
 </div>
-<div class="listingblock">
+<div class="listingblock multi-language-sample">
 <div class="title">Micronaut Data Naming Strategy</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 public class CountryRegion {
-    ...
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Naming Strategy</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MappedEntity(namingStrategy=NamingStrategies.Raw)
+@dataclass
+class CountryRegion:
+    # ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Naming Strategy</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity(namingStrategy = NamingStrategies.Raw::class)
+class CountryRegion(
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Naming Strategy</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MappedEntity(namingStrategy = NamingStrategies.Raw)
+class CountryRegion {
+    // ...
 }</code></pre>
 </div>
 </div>
@@ -13704,6 +15162,24 @@ public class Product {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Relation
+
+from example.Manufacturer import Manufacturer
+
+
+@MappedEntity
+@dataclass
+class Product:
+    name: str
+    manufacturer: Annotated[Manufacturer | None, Relation(value="MANY_TO_ONE")]
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.*
@@ -13889,6 +15365,23 @@ public class Person {
         this.longName = longName;
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, MappedProperty
+
+
+@MappedEntity
+@dataclass
+class Person:
+    name: str
+    age: int
+    longName: Annotated[str | None, MappedProperty(value="long_name_column_legacy_system", alias="long_name")] = None
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -14892,6 +16385,24 @@ public record Account(
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.validation.constraints import PositiveOrZero
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+from micronaut.data.annotation import Reservable
+
+
+@MappedEntity("account")
+@dataclass(frozen=True)
+class Account:
+    id: Annotated[int | None, Id, GeneratedValue]
+    name: str
+    balance: Annotated[int, Reservable, PositiveOrZero]</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>The generated Oracle DDL includes the <code>RESERVABLE</code> column modifier and, when supported validation annotations are present, a column <code>CHECK</code> constraint:</p>
 </div>
@@ -14929,6 +16440,14 @@ public interface AccountRepository extends CrudRepository&lt;Account, Long&gt; {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.ORACLE)
+class AccountRepository(CrudRepository[Account, int]):
+
+    def reserveIncrementBalance(self, id: Annotated[int, Id], balance: int) -&gt; int: ...</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>For reservation updates that cannot be expressed by the derived method grammar, use an explicit <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> method:</p>
 </div>
@@ -14940,6 +16459,15 @@ interface AccountRawQueryRepository extends CrudRepository&lt;Account, Long&gt; 
     @Query("UPDATE \"ACCOUNT\" SET \"BALANCE\" = \"BALANCE\" + :amount WHERE \"ID\" = :id")
     int reserveBalance(Long id, Long amount);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.ORACLE)
+class AccountRawQueryRepository(CrudRepository[Account, int]):
+
+    @Query('UPDATE "ACCOUNT" SET "BALANCE" = "BALANCE" + :amount WHERE "ID" = :id')
+    def reserveBalance(self, id: int, amount: int) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15044,6 +16572,18 @@ public record ContactView (
 ) {}</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JsonView(value="CONTACT_VIEW", alias="cv", entity=Contact)
+@dataclass
+class ContactView:
+    name: str
+    age: int
+    startDateTime: LocalDateTime | None = None
+    active: bool = False
+    id: Annotated[int | None, Id, GeneratedValue("IDENTITY")] = None</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23c.
 More about Oracle JSON VIEW can be read here <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html" class="bare">https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html</a>.</p>
@@ -15065,6 +16605,15 @@ public record AddressSubView(
     Long addressID,
     String street
 ) {}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JsonSubView(entity=Address, operations=["UPDATE", "INSERT"])
+@dataclass
+class AddressSubView:
+    street: str
+    addressID: Annotated[int | None, Id, GeneratedValue("IDENTITY"), MappedProperty("id")] = None</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15111,6 +16660,16 @@ public class StudentView {
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JsonView(entity=Student)
+@dataclass
+class StudentView:
+    name: str
+    schedule: Annotated[list[StudentScheduleSubView], JoinColumn(name="id", referencedColumnName="student_id"), Relation("ONE_TO_MANY")] = field(default_factory=list)
+    id: Annotated[int | None, Id, GeneratedValue("IDENTITY")] = None</code></pre>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_using_mappedproperty_annotation">Using <code>@MappedProperty</code> annotation</h4>
@@ -15138,6 +16697,15 @@ public class TeacherSubView {
     @MappedProperty(value = "name")
     private String teacher;
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JsonSubView(entity=Teacher)
+@dataclass
+class TeacherSubView:
+    teachID: Annotated[int | None, Id, MappedProperty(value="id")] = None
+    teacher: Annotated[str | None, MappedProperty(value="name")] = None</code></pre>
 </div>
 </div>
 </div>
@@ -15204,6 +16772,13 @@ public class TeacherSubView {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JsonSubView(entity = StudentClass.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
 public class StudentScheduleSubView {</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JsonSubView(entity=StudentClass, operations=["UPDATE", "INSERT"])
+@dataclass
+class StudentScheduleSubView:</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15708,6 +17283,23 @@ public record DocumentEmbedding(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from jakarta.persistence import Column
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, VectorIndex
+from micronaut.data.model.vector import Vector
+
+
+@MappedEntity("document_embedding")
+@dataclass(frozen=True)
+class DocumentEmbedding:
+    id: Annotated[int | None, Id, GeneratedValue]
+    embedding: Annotated[Vector, VectorIndex(vectorIndexType="IVF", distanceType="COSINE", accuracy=90), Column(length=3)]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -15818,6 +17410,30 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
                                                            Score maxDistance,
                                                            ScoringFunction function);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Repository
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.model.vector import Vector
+from micronaut.data.model.vector.search import Score, ScoringFunction, SearchResults
+from micronaut.data.repository import CrudRepository
+
+from example.DocumentEmbedding import DocumentEmbedding
+
+
+@JdbcRepository(dialect=Dialect.ORACLE)
+@Repository
+class DocumentEmbeddingRepository(CrudRepository[DocumentEmbedding, int]):
+
+    # Example showing vector as a parameter
+    def save(self, embedding: Vector) -&gt; DocumentEmbedding: ...
+
+    def findTop2ByEmbeddingNear(self, vec: Vector, maxDistance: float) -&gt; list[DocumentEmbedding]: ...
+
+    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16015,6 +17631,30 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Repository
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.model.vector import Vector
+from micronaut.data.model.vector.search import Score, ScoringFunction, SearchResults
+from micronaut.data.repository import CrudRepository
+
+from example.DocumentEmbedding import DocumentEmbedding
+
+
+@JdbcRepository(dialect=Dialect.ORACLE)
+@Repository
+class DocumentEmbeddingRepository(CrudRepository[DocumentEmbedding, int]):
+
+    # Example showing vector as a parameter
+    def save(self, embedding: Vector) -&gt; DocumentEmbedding: ...
+
+    def findTop2ByEmbeddingNear(self, vec: Vector, maxDistance: float) -&gt; list[DocumentEmbedding]: ...
+
+    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Repository
@@ -16149,6 +17789,22 @@ public record SparseDocumentEmbedding(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, VectorStorage
+from micronaut.data.model.vector import Vector
+
+
+@MappedEntity("sparse_document_embedding")
+@dataclass(frozen=True)
+class SparseDocumentEmbedding:
+    id: Annotated[int | None, Id, GeneratedValue]
+    embedding: Annotated[Vector, VectorStorage(length=5, shape="SPARSE")]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -16218,6 +17874,12 @@ class SparseDocumentEmbedding {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">        Vector vec = Vector.of(0.1d, 0.2d, 0.3d);
         repository.save(vec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">        vec = Vector.of(0.1, 0.2, 0.3)
+        self.repository.save(vec)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16462,6 +18124,24 @@ record Book(
 }</code></pre>
 </div>
 </div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from java.util import Date
+from micronaut.data.annotation import DateCreated, GeneratedValue, Id, MappedEntity
+
+
+@MappedEntity  # <b class="conum">(1)</b>
+@dataclass(frozen=True)
+class Book:
+    id: Annotated[int | None, Id, GeneratedValue]  # <b class="conum">(2)</b>
+    dateCreated: Annotated[Date | None, DateCreated]
+    title: str
+    pages: int</code></pre>
+</div>
+</div>
 <div class="colist arabic">
 <table>
 <tr>
@@ -16476,6 +18156,12 @@ record Book(
 </div>
 <div class="paragraph">
 <p>Since records are immutable constructor arguments that are generated values need to be marked as <code>@Nullable</code> and you should pass <code>null</code> for those arguments. The following presents an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book(None, None, "The Stand", 1000)
+book = self.bookRepository.save(book)</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
@@ -16645,6 +18331,25 @@ public class Sale {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Relation
+
+from example.Product import Product
+from example.Quantity import Quantity
+
+
+@MappedEntity
+@dataclass
+class Sale:
+    product: Annotated[Product, Relation(value="MANY_TO_ONE")]
+    quantity: Quantity
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.*
@@ -16719,6 +18424,21 @@ public class Quantity {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.data.annotation import TypeDef
+
+from example.QuantityAttributeConverter import QuantityAttributeConverter
+
+
+@TypeDef(type="INTEGER", converter=QuantityAttributeConverter)
+@dataclass(frozen=True)
+class Quantity:
+    amount: int</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.TypeDef
@@ -16783,6 +18503,29 @@ public class QuantityAttributeConverter implements AttributeConverter&lt;Quantit
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import TYPE_CHECKING
+
+from jakarta.inject import Singleton
+from micronaut.core.convert import ConversionContext
+from micronaut.data.model.runtime.convert import AttributeConverter
+
+if TYPE_CHECKING:
+    from example.Quantity import Quantity
+
+
+@Singleton  # <b class="conum">(1)</b>
+class QuantityAttributeConverter(AttributeConverter["Quantity", int]):
+
+    def convertToPersistedValue(self, quantity: "Quantity | None", context: ConversionContext) -&gt; int | None:  # <b class="conum">(2)</b>
+        return None if quantity is None else quantity.amount
+
+    def convertToEntityValue(self, value: int | None, context: ConversionContext) -&gt; "Quantity | None":  # <b class="conum">(3)</b>
+        from example.Quantity import Quantity
+        return None if value is None else Quantity(value)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16916,6 +18659,21 @@ public class Manufacturer {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+
+
+@MappedEntity
+@dataclass
+class Manufacturer:
+    name: str
+    id: Annotated[int | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import jakarta.persistence.*
@@ -16965,6 +18723,14 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@JdbcRepository(dialect=Dialect.H2)
+class ProductRepository(CrudRepository[Product, int]):
+    @Join(value="manufacturer", type="FETCH")  # <b class="conum">(1)</b>
+    def list(self) -&gt; list[Product]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17035,6 +18801,12 @@ List&lt;Book&gt; findBooks(String title);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("select * from book b where b.title like :title limit 5")
+def findBooks(self, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("select * from book b where b.title like :title limit 5")
 fun findBooks(title: String): List&lt;Book&gt;</code></pre>
 </div>
@@ -17080,6 +18852,17 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
         WHERE p.name like :name limit 5""")
     @Join(value = "manufacturer", alias = "m_")
     List&lt;Product&gt; searchProducts(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @Query("""
+        SELECT *, m_.name as m_name, m_.id as m_id
+        FROM product p
+        INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
+        WHERE p.name like :name limit 5""")
+    @Join(value="manufacturer", alias="m_")
+    def searchProducts(self, name: str) -&gt; list[Product]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17135,6 +18918,19 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @Query("""
+        SELECT book_.*,
+               reviews_.id AS reviews_id, reviews_.reviewer AS reviews_reviewer,
+               reviews_.content AS reviews_content, reviews_.book_id AS reviews_book_id
+        FROM book book_ INNER JOIN review reviews_ ON book_.id = reviews_.book_id
+        WHERE book_.title = :title
+        """)
+    @Join("reviews")
+    def searchBooksByTitle(self, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    @Query("""
         SELECT book_.*,
                reviews_.id AS reviews_id, reviews_.reviewer AS reviews_reviewer,
@@ -17182,6 +18978,12 @@ By default, the method name will be used as the procedure name, to customize the
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Procedure
 Long calculateSum(@NonNull Long bookId);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Procedure
+def calculateSum(self, bookId: int) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17617,6 +19419,24 @@ public class Book {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+from org.bson.types import ObjectId
+
+
+@MappedEntity
+@dataclass
+class Book:
+    title: str
+    pages: int
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None
+    # ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Book(@field:Id
                 @GeneratedValue
@@ -17669,6 +19489,13 @@ import java.util.List;
 interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { // <b class="conum">(2)</b>
     Book find(String title);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MongoRepository  # <b class="conum">(1)</b>
+class BookRepository(CrudRepository[Book, ObjectId]):  # <b class="conum">(2)</b>
+    def find(self, title: str) -&gt; Book: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17735,6 +19562,11 @@ interface BookRepository extends CrudRepository&lt;Book, ObjectId&gt; { // <b cl
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">bookRepository: Annotated[BookRepository, Inject]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Inject
 lateinit var bookRepository: BookRepository</code></pre>
 </div>
@@ -17753,6 +19585,12 @@ lateinit var bookRepository: BookRepository</code></pre>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book("The Stand", 1000);
 bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book("The Stand", 1000)
+book = self.bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17780,6 +19618,11 @@ bookRepository.save(book)</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = self.bookRepository.findById(id).orElse(None)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
 </div>
 </div>
@@ -17799,6 +19642,11 @@ bookRepository.save(book)</code></pre>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id ObjectId id, int pages);
 
 void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, id: Annotated[ObjectId, Id], title: str) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17825,6 +19673,11 @@ void update(@Id ObjectId id, String title);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.update(book.id, "Changed")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(id, "Changed")</code></pre>
 </div>
 </div>
@@ -17842,6 +19695,11 @@ void update(@Id ObjectId id, String title);</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.deleteById(id)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -17936,6 +19794,21 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.mongodb.annotation import MongoRepository
+from micronaut.data.repository import CrudRepository
+from org.bson.types import ObjectId
+
+from example.Book import Book
+
+
+@MongoRepository
+class AbstractBookRepository(CrudRepository[Book, ObjectId]):
+
+    def findByTitle(self, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.mongodb.annotation.MongoRepository
@@ -17998,6 +19871,11 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">List&lt;Person&gt; findByInterestsCollectionContains(String interest);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findByInterestsCollectionContains(self, interest: str) -&gt; list[Person]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18095,6 +19973,11 @@ If you need to require an update, use <code>update(MyEntity)</code> or define an
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id ObjectId id, int pages);
 
 void update(@Id ObjectId id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, id: Annotated[ObjectId, Id], title: str) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18241,6 +20124,21 @@ void customDelete(String t);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MongoFindQuery(filter="{title:{$regex: :t}}", sort="{title: 1}")
+def customFind(self, t: str) -&gt; list[Book]: ...
+
+@MongoAggregateQuery("[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]")
+def customAggregate(self, t: str) -&gt; list[Person]: ...
+
+@MongoUpdateQuery(filter="{title:{$regex: :t}}", update="{$set:{name: 'tom'}}")
+def customUpdate(self, t: str) -&gt; None: ...
+
+@MongoDeleteQuery(filter="{title:{$regex: :t}}", collation="{locale:'en_US', numericOrdering:true}")
+def customDelete(self, t: str) -&gt; None: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoFindQuery(filter = "{title:{\$regex: :t}}", sort = "{title: 1}")
 fun customFind(t: String): List&lt;Book&gt;
 
@@ -18291,6 +20189,15 @@ Filter, update and pipeline JSON can reference method parameters. The <code>proj
 @MongoCollation("{ locale: 'en_US', numericOrdering: true}")
 @MongoRepository
 public interface SaleRepository extends CrudRepository&lt;Sale, ObjectId&gt; {</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MongoFindOptions(allowDiskUse=True, maxTimeMS=1000)
+@MongoAggregateOptions(allowDiskUse=True, maxTimeMS=100)
+@MongoCollation("{ locale: 'en_US', numericOrdering: true}")
+@MongoRepository
+class SaleRepository(CrudRepository[Sale, ObjectId]):</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18346,6 +20253,28 @@ public class Country {
 
     // ...
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title">Micronaut Data Annotation Mapping Example</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Annotated
+
+from micronaut.data.annotation import Id, MappedEntity, Relation
+from org.bson.types import ObjectId
+
+if TYPE_CHECKING:
+    from example.CountryRegion import CountryRegion
+
+
+@MappedEntity  # <b class="conum">(1)</b>
+@dataclass
+class Country:
+    name: str  # <b class="conum">(4)</b>
+    regions: Annotated["set[CountryRegion]", Relation(value="ONE_TO_MANY", mappedBy="country")] = field(default_factory=set)  # <b class="conum">(3)</b>
+    id: Annotated[ObjectId | None, Id] = None  # <b class="conum">(2)</b>
+    # ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18576,6 +20505,20 @@ public class ProjectId {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.data.annotation import Embeddable
+
+
+@Embeddable
+@dataclass(frozen=True)
+class ProjectId:
+    departmentId: int
+    projectId: int</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Embeddable
@@ -18643,6 +20586,23 @@ public class Project {
         return name;
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import EmbeddedId, MappedEntity
+
+from example.ProjectId import ProjectId
+
+
+@MappedEntity
+@dataclass
+class Project:
+    projectId: Annotated[ProjectId, EmbeddedId]
+    name: str</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18747,6 +20707,22 @@ public class Manufacturer {
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+from org.bson.types import ObjectId
+
+
+@MappedEntity("${mapping.custom.manufacturer}")
+@dataclass
+class Manufacturer:
+    name: str
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -18968,6 +20944,25 @@ public class Product {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Relation
+from org.bson.types import ObjectId
+
+from example.Manufacturer import Manufacturer
+
+
+@MappedEntity("${mapping.custom.product}")
+@dataclass
+class Product:
+    name: str
+    manufacturer: Annotated[Manufacturer | None, Relation("MANY_TO_ONE")] = None
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -19088,6 +21083,22 @@ public class Manufacturer {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity
+from org.bson.types import ObjectId
+
+
+@MappedEntity("${mapping.custom.manufacturer}")
+@dataclass
+class Manufacturer:
+    name: str
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -19140,6 +21151,14 @@ public interface ProductRepository extends CrudRepository&lt;Product, ObjectId&g
     @Join("manufacturer") // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MongoRepository
+class ProductRepository(CrudRepository[Product, ObjectId]):
+    @Join("manufacturer")  # <b class="conum">(1)</b>
+    def list(self) -&gt; list[Product]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -19273,6 +21292,27 @@ public class Sale {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, MappedProperty, Relation
+from org.bson.types import ObjectId
+
+from example.Product import Product
+from example.Quantity import Quantity
+from example.QuantityAttributeConverter import QuantityAttributeConverter
+
+
+@MappedEntity
+@dataclass
+class Sale:
+    product: Annotated[Product, Relation("MANY_TO_ONE")]
+    quantity: Annotated[Quantity, MappedProperty(converter=QuantityAttributeConverter)]
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.*
@@ -19343,6 +21383,16 @@ public class Quantity {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Quantity:
+    amount: int</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 data class Quantity(val amount: Int)</code></pre>
@@ -19400,6 +21450,29 @@ public class QuantityAttributeConverter implements AttributeConverter&lt;Quantit
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import TYPE_CHECKING
+
+from jakarta.inject import Singleton
+from micronaut.core.convert import ConversionContext
+from micronaut.data.model.runtime.convert import AttributeConverter
+
+if TYPE_CHECKING:
+    from example.Quantity import Quantity
+
+
+@Singleton  # <b class="conum">(1)</b>
+class QuantityAttributeConverter(AttributeConverter["Quantity", int]):
+
+    def convertToPersistedValue(self, quantity: "Quantity | None", context: ConversionContext) -&gt; int | None:  # <b class="conum">(2)</b>
+        return None if quantity is None else quantity.amount
+
+    def convertToEntityValue(self, value: int | None, context: ConversionContext) -&gt; "Quantity | None":  # <b class="conum">(3)</b>
+        from example.Quantity import Quantity
+        return None if value is None else Quantity(value)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -19531,6 +21604,12 @@ public interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@MongoRepository
+class PersonRepository(CrudRepository[Person, ObjectId]):</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
 interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
     }</code></pre>
@@ -19542,6 +21621,18 @@ interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecific
 interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
+</div>
+<div class="admonitionblock note lang-python">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In Python declare the specification methods on the repository itself: Micronaut Data matches them by their <code>PredicateSpecification</code> / <code>QuerySpecification</code> / <code>UpdateSpecification</code> / <code>DeleteSpecification</code> parameter types. A specification is a plain Python function or lambda, and since <code>and</code>, <code>or</code> and <code>not</code> are Python keywords, the corresponding <code>CriteriaBuilder</code> methods are called as <code>and_</code>, <code>or_</code> and <code>not_</code>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.</p>
@@ -19615,6 +21706,17 @@ Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable p
 
 @Override
 Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findOne(self, spec: PredicateSpecification[Person]) -&gt; Optional[Person]: ...
+
+def findAll(self, spec: PredicateSpecification[Person] | None) -&gt; list[Person]: ...
+
+def findAllSorted(self, spec: PredicateSpecification[Person], sort: Sort) -&gt; list[Person]: ...
+
+def findPage(self, spec: PredicateSpecification[Person], pageable: Pageable) -&gt; Page[Person]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -19748,6 +21850,11 @@ long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def count(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun count(spec: PredicateSpecification&lt;Person&gt;?): Long
 
 fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
@@ -19776,6 +21883,29 @@ long count(QuerySpecification&lt;Person&gt; spec)</code></pre>
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -19828,6 +21958,19 @@ long countAgeLess20 = personRepository.count(ageIsLessThan(20));
 long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))));
 
 List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").or(nameEquals("Josh"))));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">denis = self.personRepository.findOne(name_equals("Denis")).orElse(None)
+
+count_age_less_30 = self.personRepository.count(age_is_less_than(30))
+
+count_age_less_20 = self.personRepository.count(age_is_less_than(20))
+
+count_age_less_30_not_denis = self.personRepository.count(and_(age_is_less_than(30), not_(name_equals("Denis"))))
+
+people = self.personRepository.findAll(or_(name_equals("Denis"), name_equals("Josh")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -19890,6 +22033,11 @@ long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def updateAll(self, spec: UpdateSpecification[Person]) -&gt; int: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateAll(spec: UpdateSpecification&lt;Person&gt;?): Long</code></pre>
 </div>
 </div>
@@ -19947,6 +22095,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">query.set(root.get("name"), new_name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
     set(Person::name, newName)
     where {
@@ -19988,6 +22141,40 @@ public interface UpdateSpecification&lt;T&gt; {
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))
+
+
+def set_new_name(new_name: str, where):
+    def specification(root, query, criteria_builder):
+        query.set(root.get("name"), new_name)
+        return where(root, criteria_builder)
+    return specification
+
+
+def interests_contains(interest: str):
+    return lambda root, criteria_builder: criteria_builder.arrayContains(root.get("interests"), criteria_builder.literal(interest))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20077,6 +22264,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_updated = self.personRepository.updateAll(set_new_name("Steven", where=name_equals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))</code></pre>
 </div>
 </div>
@@ -20105,6 +22297,11 @@ long deleteAll(PredicateSpecification&lt;Person&gt; spec);
 
 @Override
 long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def deleteAll(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20186,6 +22383,29 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
     fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
@@ -20226,6 +22446,11 @@ public interface DeleteSpecification&lt;T&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_deleted = self.personRepository.deleteAll(name_equals("Denis"))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20342,6 +22567,22 @@ public class Student {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, Version
+from org.bson.types import ObjectId
+
+
+@MappedEntity
+@dataclass
+class Student:
+    id: Annotated[ObjectId | None, Id, GeneratedValue] = None
+    version: Annotated[int | None, Version] = None</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Student(
         @field:Id @GeneratedValue
@@ -20374,6 +22615,26 @@ public interface StudentRepository extends CrudRepository&lt;Student, ObjectId&g
 
     void delete(@Id ObjectId id, @Version Long version);
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from typing import Annotated
+
+from micronaut.data.annotation import Id, Version
+from micronaut.data.mongodb.annotation import MongoRepository
+from micronaut.data.repository import CrudRepository
+from org.bson.types import ObjectId
+
+from example.Student import Student
+
+
+@MongoRepository
+class StudentRepository(CrudRepository[Student, ObjectId]):
+
+    def update(self, id: Annotated[ObjectId, Id], version: Annotated[int, Version], name: str) -&gt; None: ...
+
+    def delete(self, id: Annotated[ObjectId, Id], version: Annotated[int, Version]) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20682,6 +22943,31 @@ public class Book {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from java.util import Date
+from micronaut.data.annotation import DateCreated, DateUpdated, GeneratedValue, Id, MappedEntity, MappedProperty
+from micronaut.data.cosmos.annotation import PartitionKey
+
+from example.ItemPrice import ItemPrice
+from example.ItemPriceAttributeConverter import ItemPriceAttributeConverter
+
+
+@MappedEntity
+@dataclass
+class Book:
+    title: str
+    pages: int
+    itemPrice: Annotated[ItemPrice | None, MappedProperty(converter=ItemPriceAttributeConverter)] = None
+    createdDate: Annotated[Date | None, DateCreated] = None
+    updatedDate: Annotated[Date | None, DateUpdated] = None
+    id: Annotated[str | None, Id, GeneratedValue, PartitionKey] = None
+    # ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Book(@field:Id
                 @GeneratedValue
@@ -20741,6 +23027,13 @@ interface BookRepository extends CrudRepository&lt;Book, String&gt; { // <b clas
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@CosmosRepository  # <b class="conum">(1)</b>
+class BookRepository(CrudRepository[Book, str]):  # <b class="conum">(2)</b>
+    def find(self, title: str) -&gt; Book: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.annotation.Id
@@ -20794,6 +23087,11 @@ BookRepository bookRepository;</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">bookRepository: Annotated[BookRepository, Inject]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Inject
 lateinit var bookRepository: BookRepository</code></pre>
 </div>
@@ -20817,6 +23115,13 @@ The simple name of the class annotated with @MappedEntity will be used as the co
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book book = new Book("The Stand", 1000);
 book.setItemPrice(new ItemPrice(200));
 book = bookRepository.insert(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = Book("The Stand", 1000)
+book.itemPrice = ItemPrice(200)
+book = self.bookRepository.insert(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20846,6 +23151,11 @@ def id = book.id</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">book = self.bookRepository.findById(id).orElse(None)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
 </div>
 </div>
@@ -20865,6 +23175,11 @@ def id = book.id</code></pre>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void update(@Id String id, int pages);
 
 void update(@Id String id, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def update(self, id: Annotated[str, Id], title: str) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -20891,6 +23206,11 @@ void update(@Id String id, String title)</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.update(book.id, "Changed")</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">bookRepository.update(book.id.orEmpty(), "Changed")</code></pre>
 </div>
 </div>
@@ -20908,6 +23228,11 @@ void update(@Id String id, String title)</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">bookRepository.deleteById(id);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">self.bookRepository.deleteById(id)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21227,6 +23552,20 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.cosmos.annotation import CosmosRepository
+from micronaut.data.repository import CrudRepository
+
+from example.Book import Book
+
+
+@CosmosRepository
+class AbstractBookRepository(CrudRepository[Book, str]):
+
+    def findByTitle(self, title: str) -&gt; list[Book]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.data.cosmos.annotation.CosmosRepository
@@ -21304,6 +23643,12 @@ public interface PersonRepository extends CrudRepository&lt;Person, String&gt;, 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@CosmosRepository
+class PersonRepository(CrudRepository[Person, str]):</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@CosmosRepository
 interface PersonRepository : CrudRepository&lt;Person, String&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
@@ -21315,6 +23660,18 @@ interface PersonRepository : CrudRepository&lt;Person, String&gt;, JpaSpecificat
 interface PersonRepository extends CrudRepository&lt;Person, String&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
+</div>
+<div class="admonitionblock note lang-python">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In Python declare the specification methods on the repository itself: Micronaut Data matches them by their <code>PredicateSpecification</code> / <code>QuerySpecification</code> / <code>UpdateSpecification</code> / <code>DeleteSpecification</code> parameter types. A specification is a plain Python function or lambda, and since <code>and</code>, <code>or</code> and <code>not</code> are Python keywords, the corresponding <code>CriteriaBuilder</code> methods are called as <code>and_</code>, <code>or_</code> and <code>not_</code>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.</p>
@@ -21388,6 +23745,17 @@ Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable p
 
 @Override
 Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findOne(self, spec: PredicateSpecification[Person]) -&gt; Optional[Person]: ...
+
+def findAll(self, spec: PredicateSpecification[Person] | None) -&gt; list[Person]: ...
+
+def findAllSorted(self, spec: PredicateSpecification[Person], sort: Sort) -&gt; list[Person]: ...
+
+def findPage(self, spec: PredicateSpecification[Person], pageable: Pageable) -&gt; Page[Person]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21521,6 +23889,11 @@ long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def count(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun count(spec: PredicateSpecification&lt;Person&gt;?): Long
 
 fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
@@ -21549,6 +23922,29 @@ long count(QuerySpecification&lt;Person&gt; spec)</code></pre>
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21610,6 +24006,19 @@ List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis").o
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">denis = self.personRepository.findOne(name_equals("Denis")).orElse(None)
+
+count_age_less_30 = self.personRepository.count(age_is_less_than(30))
+
+count_age_less_20 = self.personRepository.count(age_is_less_than(20))
+
+count_age_less_30_not_denis = self.personRepository.count(and_(age_is_less_than(30), not_(name_equals("Denis"))))
+
+people = self.personRepository.findAll(or_(name_equals("Denis"), name_equals("Josh")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val denis: Person? = personRepository.findOne(nameEquals("Denis")).orElse(null)
 
 val countAgeLess30: Long = personRepository.count(ageIsLessThan(30))
@@ -21644,6 +24053,11 @@ List&lt;Person&gt; people = personRepository.findAll(PredicateSpecification.wher
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def findByTagsArrayContains(self, tag: str) -&gt; list[Family]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">abstract fun findByTagsArrayContains(tag: String): List&lt;Family&gt;</code></pre>
 </div>
 </div>
@@ -21660,6 +24074,12 @@ List&lt;Person&gt; people = personRepository.findAll(PredicateSpecification.wher
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public static PredicateSpecification&lt;Family&gt; tagsContain(String tag) {
     return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.get("tags"), criteriaBuilder.literal(tag));
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def tags_contain(tag: str):
+    return lambda root, criteria_builder: criteria_builder.arrayContains(root.get("tags"), criteria_builder.literal(tag))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21693,6 +24113,12 @@ public abstract List&lt;Family&gt; childrenArrayContainsGender(Map.Entry&lt;Stri
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
+def childrenArrayContainsGender(self, gender: Map.Entry[str, object]) -&gt; list[Family]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("SELECT DISTINCT VALUE f FROM family f WHERE ARRAY_CONTAINS(f.children, :gender, true)")
 abstract fun childrenArrayContainsGender(gender: Map.Entry&lt;String, Any&gt;): List&lt;Family&gt;</code></pre>
 </div>
@@ -21713,6 +24139,12 @@ It can be also achieved by using predicate specification:</p>
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public static PredicateSpecification&lt;Family&gt; childrenArrayContainsGender(GenderAware gender) {
     return (root, criteriaBuilder) -&gt; ((PersistentEntityCriteriaBuilder) criteriaBuilder).arrayContains(root.join("children"), criteriaBuilder.literal(gender));
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def children_array_contains_gender(gender: GenderAware):
+    return lambda root, criteria_builder: criteria_builder.arrayContains(root.join("children"), criteria_builder.literal(gender))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21764,6 +24196,11 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
 long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def updateAll(self, spec: UpdateSpecification[Person]) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21825,6 +24262,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">query.set(root.get("name"), new_name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
     set(Person::name, newName)
     where {
@@ -21861,6 +24303,36 @@ public interface UpdateSpecification&lt;T&gt; {
         };
     }
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))
+
+
+def set_new_name(new_name: str, where):
+    def specification(root, query, criteria_builder):
+        query.set(root.get("name"), new_name)
+        return where(root, criteria_builder)
+    return specification</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -21941,6 +24413,11 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_updated = self.personRepository.updateAll(set_new_name("Steven", where=name_equals("Denis")))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))</code></pre>
 </div>
 </div>
@@ -21969,6 +24446,11 @@ long deleteAll(PredicateSpecification&lt;Person&gt; spec);
 
 @Override
 long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def deleteAll(self, spec: PredicateSpecification[Person]) -&gt; int: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -22050,6 +24532,29 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def name_equals(name: str):
+    return lambda root, criteria_builder: criteria_builder.equal(root.get("name"), name)
+
+
+def age_is_less_than(age: int):
+    return lambda root, criteria_builder: criteria_builder.lessThan(root.get("age"), age)
+
+
+# `and`, `or` and `not` are Python keywords: the trailing underscore maps to the CriteriaBuilder method
+def and_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.and_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def or_(spec, other):
+    return lambda root, criteria_builder: criteria_builder.or_(spec(root, criteria_builder), other(root, criteria_builder))
+
+
+def not_(spec):
+    return lambda root, criteria_builder: criteria_builder.not_(spec(root, criteria_builder))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">object Specifications {
     fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
@@ -22095,6 +24600,11 @@ public interface DeleteSpecification&lt;T&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">records_deleted = self.personRepository.deleteAll(name_equals("Denis"))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -22151,6 +24661,28 @@ public class Family {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass, field
+from typing import Annotated
+
+from java.util import Date
+from micronaut.data.annotation import Id, MappedEntity, Relation
+from micronaut.data.cosmos.annotation import ETag, PartitionKey
+
+from example.Address import Address
+from example.Child import Child
+
+
+@MappedEntity
+@dataclass
+class Family:
+    id: Annotated[str | None, Id] = None
+    lastName: Annotated[str | None, PartitionKey] = None
+    address: Annotated[Address | None, Relation("EMBEDDED")] = None
+    children: Annotated[list[Child], Relation("ONE_TO_MANY")] = field(default_factory=list)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Family(
     @field:Id
@@ -22191,6 +24723,18 @@ class Family {
     public abstract List&lt;Family&gt; findByChildrenPetsType(PetType type);
 
     public abstract List&lt;Child&gt; findChildrenByChildrenPetsGivenName(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    def findByAddressStateAndAddressCityOrderByAddressCity(self, state: str, city: str) -&gt; list[Family]: ...
+
+    def updateByAddressCounty(self, county: str, registered: bool, registeredDate: Date | None) -&gt; None: ...
+
+    @Join(value="children.pets", alias="pets")
+    def findByChildrenPetsType(self, type: PetType) -&gt; list[Family]: ...
+
+    def findChildrenByChildrenPetsGivenName(self, name: str) -&gt; list[Child]: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -22241,6 +24785,17 @@ Micronaut Data Cosmos tries to use a partition key whenever possible. Here are s
     public abstract void deleteByLastName(String lastName, PartitionKey partitionKey);
 
     public abstract void deleteById(String id, PartitionKey partitionKey);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    def queryById(self, id: str, partitionKey: PartitionKey) -&gt; Optional[Family]: ...
+
+    def updateRegisteredById(self, id: Annotated[str, Id], registered: bool, partitionKey: PartitionKey) -&gt; None: ...
+
+    def deleteByLastName(self, lastName: str, partitionKey: PartitionKey) -&gt; None: ...
+
+    def removeById(self, id: str, partitionKey: PartitionKey) -&gt; None: ...</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -22338,6 +24893,31 @@ public class Book {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from java.util import Date
+from micronaut.data.annotation import DateCreated, DateUpdated, GeneratedValue, Id, MappedEntity, MappedProperty
+from micronaut.data.cosmos.annotation import PartitionKey
+
+from example.ItemPrice import ItemPrice
+from example.ItemPriceAttributeConverter import ItemPriceAttributeConverter
+
+
+@MappedEntity
+@dataclass
+class Book:
+    title: str
+    pages: int
+    itemPrice: Annotated[ItemPrice | None, MappedProperty(converter=ItemPriceAttributeConverter)] = None
+    createdDate: Annotated[Date | None, DateCreated] = None
+    updatedDate: Annotated[Date | None, DateUpdated] = None
+    id: Annotated[str | None, Id, GeneratedValue, PartitionKey] = None
+    # ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MappedEntity
 data class Book(@field:Id
                 @GeneratedValue
@@ -22402,6 +24982,19 @@ public class ItemPrice {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+
+from micronaut.core.annotation import Introspected
+
+
+@Introspected
+@dataclass(frozen=True)
+class ItemPrice:
+    price: float</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 data class ItemPrice(val price: Double)</code></pre>
@@ -22447,6 +25040,25 @@ public class ItemPriceAttributeConverter implements AttributeConverter&lt;ItemPr
     }
 
 }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from jakarta.inject import Singleton
+from micronaut.core.convert import ConversionContext
+from micronaut.data.model.runtime.convert import AttributeConverter
+
+from example.ItemPrice import ItemPrice
+
+
+@Singleton
+class ItemPriceAttributeConverter(AttributeConverter[ItemPrice, float]):
+
+    def convertToPersistedValue(self, book_price: ItemPrice | None, context: ConversionContext) -&gt; float | None:
+        return None if book_price is None else book_price.price
+
+    def convertToEntityValue(self, value: float | None, context: ConversionContext) -&gt; ItemPrice | None:
+        return None if value is None else ItemPrice(value)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -22550,6 +25162,11 @@ It&#8217;s possible to define the converter result type using <a href="../api/io
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ETag
 private String documentVersion;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">documentVersion: Annotated[str | None, ETag] = None</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">

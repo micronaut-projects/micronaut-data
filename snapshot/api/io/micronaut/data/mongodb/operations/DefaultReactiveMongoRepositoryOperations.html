@@ -107,6 +107,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" tabindex="0">decorate(PreparedQuery)</a></li>
 <li><a href="#decorate(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery)" tabindex="0">decorate(MethodInvocationContext, StoredQuery)</a></li>
 <li><a href="#convertResult(io.micronaut.data.model.runtime.PreparedQuery,org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" tabindex="0">convertResult(PreparedQuery, CodecRegistry, Class, BsonDocument, boolean)</a></li>
+<li><a href="#isEmbeddedProjection(io.micronaut.data.model.runtime.PreparedQuery,java.lang.Class)" tabindex="0">isEmbeddedProjection(PreparedQuery, Class)</a></li>
 <li><a href="#convertUsingIntrospected(io.micronaut.data.model.runtime.PreparedQuery,org.bson.BsonDocument,java.lang.Class)" tabindex="0">convertUsingIntrospected(PreparedQuery, BsonDocument, Class)</a></li>
 <li><a href="#association(org.bson.codecs.configuration.CodecRegistry,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" tabindex="0">association(CodecRegistry, Object, RuntimePersistentEntity, Object, RuntimePersistentEntity)</a></li>
 <li><a href="#createFilterIdAndVersion(io.micronaut.data.model.runtime.RuntimePersistentEntity,T,org.bson.codecs.configuration.CodecRegistry)" tabindex="0">createFilterIdAndVersion(RuntimePersistentEntity, T, CodecRegistry)</a></li>
@@ -194,7 +195,7 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -352,83 +353,89 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final com.mongodb.client.model.ReplaceOptions</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logAggregate(io.micronaut.data.mongodb.operations.MongoAggregation)" class="member-name-link">logAggregate</a><wbr>(<a href="MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;aggregation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isEmbeddedProjection(io.micronaut.data.model.runtime.PreparedQuery,java.lang.Class)" class="member-name-link">isEmbeddedProjection</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Checks whether the query projects an embedded property, for example <code>Address findAddressById(String id)</code>.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logFind(io.micronaut.data.mongodb.operations.MongoFind)" class="member-name-link">logFind</a><wbr>(<a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a>&nbsp;find)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logAggregate(io.micronaut.data.mongodb.operations.MongoAggregation)" class="member-name-link">logAggregate</a><wbr>(<a href="MongoAggregation.html" title="class in io.micronaut.data.mongodb.operations">MongoAggregation</a>&nbsp;aggregation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(<a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logFind(io.micronaut.data.mongodb.operations.MongoFind)" class="member-name-link">logFind</a><wbr>(<a href="MongoFind.html" title="class in io.micronaut.data.mongodb.operations">MongoFind</a>&nbsp;find)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist</a><wbr>(<a href="../../model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist the entity returning a possibly new entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(<a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistAll(io.micronaut.data.model.runtime.InsertBatchOperation)" class="member-name-link">persistAll</a><wbr>(<a href="../../model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist all the given entities.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;&nbsp;values,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;T&gt;&nbsp;predicate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist multiple entities in batch during cascade.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociation(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationship.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>reactor.core.publisher.Mono<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistManyAssociationBatch(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Iterable,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.Predicate)" class="member-name-link">persistManyAssociationBatch</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  <a href="../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&nbsp;runtimeAssociation,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;child,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Predicate.html" title="class or interface in java.util.function" class="external-link">Predicate</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;veto)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist JOIN table relationships in batch.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#persistOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  T&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Persist one entity during cascade.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(io.micronaut.data.model.runtime.UpdateOperation)" class="member-name-link">update</a><wbr>(<a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#update(io.micronaut.data.model.runtime.UpdateOperation)" class="member-name-link">update</a><wbr>(<a href="../../model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Updates the entity returning a possibly new entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll</a><wbr>(<a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll</a><wbr>(<a href="../../model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Updates the entities for the given operation.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">updateOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateOne(io.micronaut.data.mongodb.operations.DefaultReactiveMongoRepositoryOperations.MongoOperationContext,T,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">updateOne</a><wbr>(<a href="DefaultReactiveMongoRepositoryOperations.MongoOperationContext.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations.MongoOperationContext</a>&nbsp;ctx,
  T&nbsp;value,
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Update one entity during cascade.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSession(java.util.function.Function)" class="member-name-link">withClientSession</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withClientSessionMany(java.util.function.Function)" class="member-name-link">withClientSessionMany</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;com.mongodb.reactivestreams.client.ClientSession, reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;function)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Starts a new session or reuses one from the context.</div>
 </div>
 </div>
@@ -1229,6 +1236,23 @@ return the number of objects updated, then do so.</div>
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  org.bson.BsonDocument&nbsp;result,
  boolean&nbsp;isDtoProjection)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isEmbeddedProjection(io.micronaut.data.model.runtime.PreparedQuery,java.lang.Class)">
+<h3>isEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEmbeddedProjection</span><wbr><span class="parameters">(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</span></div>
+<div class="block">Checks whether the query projects an embedded property, for example <code>Address findAddressById(String id)</code>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>preparedQuery</code> - The prepared query</dd>
+<dd><code>resultType</code> - The result type</dd>
+<dt>Returns:</dt>
+<dd>true if the query result is an embedded property</dd>
+</dl>
 </div>
 </section>
 </li>

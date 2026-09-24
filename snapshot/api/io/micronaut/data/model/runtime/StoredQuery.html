@@ -71,6 +71,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#isProcedure()" tabindex="0">isProcedure()</a></li>
 <li><a href="#getOperationType()" tabindex="0">getOperationType()</a></li>
 <li><a href="#isDtoProjection()" tabindex="0">isDtoProjection()</a></li>
+<li><a href="#isOptionalEmbeddedProjection()" tabindex="0">isOptionalEmbeddedProjection()</a></li>
 <li><a href="#isCount()" tabindex="0">isCount()</a></li>
 <li><a href="#getQueryHints()" tabindex="0">getQueryHints()</a></li>
 <li><a href="#getJoinPaths()" tabindex="0">getJoinPaths()</a></li>
@@ -253,13 +254,18 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="block">Is with an optimistic lock.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isProcedure()" class="member-name-link">isProcedure</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isOptionalEmbeddedProjection()" class="member-name-link">isOptionalEmbeddedProjection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isProcedure()" class="member-name-link">isProcedure</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Is the query a procedure.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Gets an indicator telling whether underlying query is raw query.</div>
 </div>
 </div>
@@ -442,6 +448,22 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the query is a DTO projection query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOptionalEmbeddedProjection()">
+<h3>isOptionalEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOptionalEmbeddedProjection</span>()</div>
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity. Such a result is absent
+when none of the embedded values is set. Defaults to false.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether the query result is an optional embedded property</dd>
+<dt>Since:</dt>
+<dd>5.2.0</dd>
 </dl>
 </div>
 </section>

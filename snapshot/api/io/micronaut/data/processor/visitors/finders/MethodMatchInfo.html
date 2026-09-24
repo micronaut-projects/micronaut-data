@@ -80,6 +80,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#isRawQuery(boolean)" tabindex="0">isRawQuery(boolean)</a></li>
 <li><a href="#encodeEntityParameters(boolean)" tabindex="0">encodeEntityParameters(boolean)</a></li>
 <li><a href="#optimisticLock(boolean)" tabindex="0">optimisticLock(boolean)</a></li>
+<li><a href="#resultDataType(io.micronaut.data.model.DataType)" tabindex="0">resultDataType(DataType)</a></li>
+<li><a href="#optionalEmbeddedProjection(boolean)" tabindex="0">optionalEmbeddedProjection(boolean)</a></li>
 <li><a href="#shouldReadGeneratedId()" tabindex="0">shouldReadGeneratedId()</a></li>
 <li><a href="#readGeneratedId(boolean)" tabindex="0">readGeneratedId(boolean)</a></li>
 <li><a href="#getInterceptor()" tabindex="0">getInterceptor()</a></li>
@@ -87,6 +89,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#getCountQueryResult()" tabindex="0">getCountQueryResult()</a></li>
 <li><a href="#isRawQuery()" tabindex="0">isRawQuery()</a></li>
 <li><a href="#isEncodeEntityParameters()" tabindex="0">isEncodeEntityParameters()</a></li>
+<li><a href="#getResultDataType()" tabindex="0">getResultDataType()</a></li>
+<li><a href="#isOptionalEmbeddedProjection()" tabindex="0">isOptionalEmbeddedProjection()</a></li>
 <li><a href="#getAdditionalQueries()" tabindex="0">getAdditionalQueries()</a></li>
 </ol>
 </li>
@@ -205,29 +209,35 @@ which is readable at runtime.</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResult()" class="member-name-link">getQueryResult</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.TypedElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultDataType()" class="member-name-link">getResultDataType</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>io.micronaut.inject.ast.TypedElement</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getResultType()" class="member-name-link">getResultType</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The computed result type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRuntimeInterceptor()" class="member-name-link">getRuntimeInterceptor</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRuntimeInterceptor()" class="member-name-link">getRuntimeInterceptor</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The runtime interceptor that will handle the method.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDto()" class="member-name-link">isDto</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDto()" class="member-name-link">isDto</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is the query result a DTO query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEncodeEntityParameters()" class="member-name-link">isEncodeEntityParameters</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptimisticLock()" class="member-name-link">isOptimisticLock</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEncodeEntityParameters()" class="member-name-link">isEncodeEntityParameters</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptimisticLock()" class="member-name-link">isOptimisticLock</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets optimistic lock value.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptionalEmbeddedProjection()" class="member-name-link">isOptionalEmbeddedProjection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -238,12 +248,22 @@ which is readable at runtime.</div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#optimisticLock(boolean)" class="member-name-link">optimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#queryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">queryResult</a><wbr>(@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#optionalEmbeddedProjection(boolean)" class="member-name-link">optionalEmbeddedProjection</a><wbr>(boolean&nbsp;optionalEmbeddedProjection)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets whether the query projects an optional embedded property.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readGeneratedId(boolean)" class="member-name-link">readGeneratedId</a><wbr>(boolean&nbsp;readGeneratedId)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#queryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">queryResult</a><wbr>(@Nullable <a href="../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;queryResult)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#readGeneratedId(boolean)" class="member-name-link">readGeneratedId</a><wbr>(boolean&nbsp;readGeneratedId)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets whether this method should read a generated identity value.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resultDataType(io.micronaut.data.model.DataType)" class="member-name-link">resultDataType</a><wbr>(@Nullable <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;resultDataType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the result data type, overriding the one resolved from the result type.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setOptimisticLock(boolean)" class="member-name-link">setOptimisticLock</a><wbr>(boolean&nbsp;optimisticLock)</code></div>
@@ -476,6 +496,36 @@ somehow in the query.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="resultDataType(io.micronaut.data.model.DataType)">
+<h3>resultDataType</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">resultDataType</span><wbr><span class="parameters">(@Nullable <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;resultDataType)</span></div>
+<div class="block">Sets the result data type, overriding the one resolved from the result type.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>resultDataType</code> - The result data type or null to resolve it from the result type</dd>
+<dt>Returns:</dt>
+<dd>this</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="optionalEmbeddedProjection(boolean)">
+<h3>optionalEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></span>&nbsp;<span class="element-name">optionalEmbeddedProjection</span><wbr><span class="parameters">(boolean&nbsp;optionalEmbeddedProjection)</span></div>
+<div class="block">Sets whether the query projects an optional embedded property.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>optionalEmbeddedProjection</code> - Whether the projected embedded property is optional</dd>
+<dt>Returns:</dt>
+<dd>this</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="shouldReadGeneratedId()">
 <h3>shouldReadGeneratedId</h3>
 <div class="horizontal-scroll">
@@ -539,6 +589,30 @@ somehow in the query.</div>
 <h3>isEncodeEntityParameters</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEncodeEntityParameters</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getResultDataType()">
+<h3>getResultDataType</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></span>&nbsp;<span class="element-name">getResultDataType</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The result data type overriding the one resolved from the result type, or null if not overridden</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOptionalEmbeddedProjection()">
+<h3>isOptionalEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOptionalEmbeddedProjection</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether the query projects an optional embedded property</dd>
+</dl>
 </div>
 </section>
 </li>

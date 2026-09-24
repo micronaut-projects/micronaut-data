@@ -63,11 +63,13 @@ loadScripts(document, 'script');</script>
 <li><a href="#%3Cinit%3E(java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.StoredQuery.OperationType)" tabindex="0">BasicStoredQuery(String, String[], List, Class, Class, StoredQuery.OperationType)</a></li>
 <li><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" tabindex="0">BasicStoredQuery(String, AnnotationMetadata, String, String[], List, Class, Class, boolean, boolean, StoredQuery.OperationType)</a></li>
 <li><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" tabindex="0">BasicStoredQuery(String, AnnotationMetadata, String, String[], List, Class, Class, boolean, boolean, boolean, StoredQuery.OperationType)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" tabindex="0">BasicStoredQuery(String, AnnotationMetadata, String, String[], List, Class, Class, boolean, boolean, boolean, boolean, boolean, StoredQuery.OperationType)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#isDtoProjection()" tabindex="0">isDtoProjection()</a></li>
+<li><a href="#isOptionalEmbeddedProjection()" tabindex="0">isOptionalEmbeddedProjection()</a></li>
 <li><a href="#getOperationType()" tabindex="0">getOperationType()</a></li>
 <li><a href="#getAnnotationMetadata()" tabindex="0">getAnnotationMetadata()</a></li>
 <li><a href="#getName()" tabindex="0">getName()</a></li>
@@ -151,7 +153,21 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;expandableQueryParts,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;&nbsp;queryParameterBindings,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-E" title="type parameter in BasicStoredQuery">E</a>&gt;&nbsp;rootEntity,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BasicStoredQuery">R</a>&gt;&nbsp;resultType,
+ boolean&nbsp;pageable,
+ boolean&nbsp;isCount,
+ boolean&nbsp;isDto,
+ boolean&nbsp;embeddedProjection,
+ boolean&nbsp;optionalEmbeddedProjection,
+ <a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;expandableQueryParts,
@@ -162,8 +178,8 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
  boolean&nbsp;isCount,
  boolean&nbsp;isDto,
  <a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;expandableQueryParts,
@@ -173,14 +189,14 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
  boolean&nbsp;pageable,
  boolean&nbsp;isCount,
  <a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;expandableQueryParts,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;&nbsp;queryParameterBindings,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-E" title="type parameter in BasicStoredQuery">E</a>&gt;&nbsp;rootEntity,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BasicStoredQuery">R</a>&gt;&nbsp;resultType,
  <a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -256,8 +272,13 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isOptionalEmbeddedProjection()" class="member-name-link">isOptionalEmbeddedProjection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets an indicator telling whether underlying query is raw query.</div>
 </div>
 </div>
@@ -334,6 +355,44 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 </div>
 </section>
 </li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String[],java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)">
+<h3>BasicStoredQuery</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">BasicStoredQuery</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]&nbsp;expandableQueryParts,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a>&gt;&nbsp;queryParameterBindings,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-E" title="type parameter in BasicStoredQuery">E</a>&gt;&nbsp;rootEntity,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="#type-param-R" title="type parameter in BasicStoredQuery">R</a>&gt;&nbsp;resultType,
+ boolean&nbsp;pageable,
+ boolean&nbsp;isCount,
+ boolean&nbsp;isDto,
+ boolean&nbsp;embeddedProjection,
+ boolean&nbsp;optionalEmbeddedProjection,
+ <a href="../../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>name</code> - The name</dd>
+<dd><code>annotationMetadata</code> - The annotation metadata</dd>
+<dd><code>query</code> - The query</dd>
+<dd><code>expandableQueryParts</code> - The expandable query parts</dd>
+<dd><code>queryParameterBindings</code> - The parameter bindings</dd>
+<dd><code>rootEntity</code> - The root entity</dd>
+<dd><code>resultType</code> - The result type</dd>
+<dd><code>pageable</code> - Whether the query is pageable</dd>
+<dd><code>isCount</code> - Whether the query is a count query</dd>
+<dd><code>isDto</code> - Whether the query is a DTO projection</dd>
+<dd><code>embeddedProjection</code> - Whether the query projects an embedded property</dd>
+<dd><code>optionalEmbeddedProjection</code> - Whether the projected embedded property is optional</dd>
+<dd><code>operationType</code> - The operation type</dd>
+<dt>Since:</dt>
+<dd>5.2.0</dd>
+</dl>
+</div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -354,6 +413,23 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <dd><code><a href="../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in BasicStoredQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in BasicStoredQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>Whether the query is a DTO projection query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOptionalEmbeddedProjection()">
+<h3>isOptionalEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOptionalEmbeddedProjection</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#isOptionalEmbeddedProjection()">StoredQuery</a></code></span></div>
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity. Such a result is absent
+when none of the embedded values is set. Defaults to false.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/runtime/StoredQuery.html#isOptionalEmbeddedProjection()">isOptionalEmbeddedProjection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in BasicStoredQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in BasicStoredQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>Whether the query result is an optional embedded property</dd>
 </dl>
 </div>
 </section>

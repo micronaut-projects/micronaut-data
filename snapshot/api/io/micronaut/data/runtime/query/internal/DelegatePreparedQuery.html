@@ -72,6 +72,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getArguments()" tabindex="0">getArguments()</a></li>
 <li><a href="#getPageable()" tabindex="0">getPageable()</a></li>
 <li><a href="#isDtoProjection()" tabindex="0">isDtoProjection()</a></li>
+<li><a href="#isOptionalEmbeddedProjection()" tabindex="0">isOptionalEmbeddedProjection()</a></li>
 <li><a href="#getQuery()" tabindex="0">getQuery()</a></li>
 <li><a href="#getAttributes()" tabindex="0">getAttributes()</a></li>
 <li><a href="#getAttribute(java.lang.CharSequence)" tabindex="0">getAttribute(CharSequence)</a></li>
@@ -216,8 +217,13 @@ extends <a href="../../../model/runtime/PreparedQuery.html" title="interface in 
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isOptionalEmbeddedProjection()" class="member-name-link">isOptionalEmbeddedProjection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Gets an indicator telling whether underlying query is raw query.</div>
 </div>
 </div>
@@ -459,6 +465,25 @@ extends <a href="../../../model/runtime/PreparedQuery.html" title="interface in 
 <dd><code><a href="../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DelegatePreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DelegatePreparedQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>Whether the query is a DTO projection query</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isOptionalEmbeddedProjection()">
+<h3>isOptionalEmbeddedProjection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isOptionalEmbeddedProjection</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#isOptionalEmbeddedProjection()">StoredQuery</a></code></span></div>
+<div class="block">Returns whether the query result is a nullable embedded property of the root entity. Such a result is absent
+when none of the embedded values is set. Defaults to false.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="DelegateStoredQuery.html#isOptionalEmbeddedProjection()">isOptionalEmbeddedProjection</a></code>&nbsp;in interface&nbsp;<code><a href="DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DelegatePreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DelegatePreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/runtime/StoredQuery.html#isOptionalEmbeddedProjection()">isOptionalEmbeddedProjection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="#type-param-E" title="type parameter in DelegatePreparedQuery">E</a>,<wbr><a href="#type-param-R" title="type parameter in DelegatePreparedQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>Whether the query result is an optional embedded property</dd>
 </dl>
 </div>
 </section>
