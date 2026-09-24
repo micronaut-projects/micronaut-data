@@ -111,7 +111,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
      * @param operationType              The operation type
      * @since 5.2.0
      */
-    @SuppressWarnings("java:S107")
+    @SuppressWarnings({"java:S107", "checkstyle:ParameterNumber"})
     public BasicStoredQuery(String name,
                             AnnotationMetadata annotationMetadata,
                             String query,
