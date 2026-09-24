@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -45,11 +46,11 @@ import java.util.function.Consumer;
  * work to complete. Inserts and updates reload current entity state by ROWID. Deletes are
  * dispatched without entity state because the deleted row can no longer be reloaded.</p>
  *
- * <p>When Oracle reports that all rows were invalidated without row-level details, or when a Query
- * Result Change Notification reports a dependent table instead of the listener entity table, the
- * dispatcher invokes the listener once with {@link ChangeOperation#INVALIDATE}, no entity state,
- * and no Oracle ROWID metadata. Invalidation applies to the complete Oracle event and suppresses
- * any row-level changes reported by that same event.</p>
+ * <p>When an event cannot be represented completely using entity ROWIDs, the dispatcher invokes
+ * the listener once with {@link ChangeOperation#INVALIDATE}, no entity state, and no ROWID metadata.
+ * This includes full-table and DDL changes, missing row details, and Query Result Change Notifications
+ * for dependent tables. Invalidation applies to the complete event and suppresses any row-level
+ * changes reported by that same event.</p>
  *
  * <p>A registration-level deregistration removes the already-closed registration from manager
  * tracking. A query-level deregistration retires the enclosing registration as well because each
@@ -66,31 +67,34 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final DatabaseChangeRegistration registration;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
-    private final OracleChangeNotificationShutdownTracker shutdownTracker;
-    private final Consumer<DatabaseChangeRegistration> registrationRemover;
-    private final Consumer<DatabaseChangeRegistration> registrationUnregisterer;
-    private final boolean purgeOnNotification;
-    private final boolean queryChangeNotification;
+    private final OracleChangeNotificationTaskTracker taskTracker;
+    private final Consumer<DatabaseChangeRegistration> registrationPurgedHandler;
+    private final BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
+    private final Consumer<DatabaseChangeRegistration> queryDeregistrationHandler;
+    private final boolean purgeOnNotificationEnabled;
+    private final boolean queryChangeNotificationEnabled;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
                                        DatabaseChangeRegistration registration,
                                        BeanContext beanContext,
                                        Executor blockingExecutor,
-                                       OracleChangeNotificationShutdownTracker shutdownTracker,
-                                       Consumer<DatabaseChangeRegistration> registrationRemover,
-                                       Consumer<DatabaseChangeRegistration> registrationUnregisterer) {
+                                       OracleChangeNotificationTaskTracker taskTracker,
+                                       Consumer<DatabaseChangeRegistration> registrationPurgedHandler,
+                                       BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                       Consumer<DatabaseChangeRegistration> queryDeregistrationHandler) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.registration = registration;
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
-        this.shutdownTracker = shutdownTracker;
-        this.registrationRemover = registrationRemover;
-        this.registrationUnregisterer = registrationUnregisterer;
-        this.purgeOnNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
+        this.taskTracker = taskTracker;
+        this.registrationPurgedHandler = registrationPurgedHandler;
+        this.deregistrationHandler = deregistrationHandler;
+        this.queryDeregistrationHandler = queryDeregistrationHandler;
+        this.purgeOnNotificationEnabled = Boolean.parseBoolean(listenerDefinition.registrationProperties()
             .getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
-        this.queryChangeNotification = Boolean.parseBoolean(listenerDefinition.registrationProperties()
+        this.queryChangeNotificationEnabled = Boolean.parseBoolean(listenerDefinition.registrationProperties()
             .getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
     }
 
@@ -101,21 +105,28 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void removePurgedRegistration() {
-        if (purgeOnNotification) {
-            registrationRemover.accept(registration);
+        if (purgeOnNotificationEnabled) {
+            registrationPurgedHandler.accept(registration);
         }
     }
 
     private void submitDispatch(DatabaseChangeEvent event) {
-        if (!shutdownTracker.tryStartTask()) {
+        if (!taskTracker.tryStartTask()) {
+            LOG.trace("Ignoring Oracle Database query notification callback for datasource [{}], registration [{}], "
+                    + "and listener method [{}] because graceful shutdown has started",
+                dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
             return;
         }
+        LOG.trace("Accepted Oracle Database query notification callback for datasource [{}], registration [{}], "
+                + "and listener method [{}]",
+            dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
         try {
             blockingExecutor.execute(() -> dispatchSafely(event));
         } catch (RuntimeException e) {
-            shutdownTracker.completeTask();
-            LOG.warn("Unable to submit Oracle query notification for listener method [{}]",
-                listenerDefinition.method().getDescription(true), e);
+            taskTracker.completeTask();
+            LOG.warn("Unable to submit Oracle Database query notification for datasource [{}], registration [{}], "
+                    + "and listener method [{}]",
+                dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true), e);
         }
     }
 
@@ -123,34 +134,35 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * Dispatches one accepted task and always marks that task complete. Unexpected runtime
      * exceptions are logged, while JVM errors propagate to the executor's error handling.
      *
-     * @param event the Oracle database change event
+     * @param event the database change event
      */
     private void dispatchSafely(DatabaseChangeEvent event) {
         try {
             dispatch(event);
         } catch (RuntimeException e) {
-            LOG.error("Unexpected error dispatching Oracle query notification to listener method [{}]",
+            LOG.error("Unexpected error dispatching Oracle Database query notification to listener method [{}]",
                 listenerDefinition.method().getDescription(true), e);
         } finally {
-            shutdownTracker.completeTask();
+            taskTracker.completeTask();
         }
     }
 
     private void dispatch(DatabaseChangeEvent event) {
         if (event.getEventType() == DatabaseChangeEvent.EventType.DEREG) {
-            handleRegistrationDeregistration();
+            handleRegistrationDeregistration(event.getAdditionalEventType());
             return;
         }
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            dispatchTableChanges(tables, queryChangeNotification);
+            dispatchTableChanges(tables, queryChangeNotificationEnabled);
         } else {
             dispatchQueryChanges(event.getQueryChangeDescription());
         }
     }
 
     private void dispatchQueryChanges(QueryChangeDescription @Nullable [] queries) {
-        if (queries == null) {
+        if (queries == null || queries.length == 0) {
+            dispatchInvalidation();
             return;
         }
         for (QueryChangeDescription query : queries) {
@@ -171,24 +183,24 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
     }
 
-    private void handleRegistrationDeregistration() {
-        registrationRemover.accept(registration);
-        LOG.warn("Oracle query notification registration [{}] for datasource [{}] and listener method [{}] "
+    private void handleRegistrationDeregistration(DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+        deregistrationHandler.accept(registration, additionalEventType);
+        LOG.warn("Oracle Database query notification registration [{}] for datasource [{}] and listener method [{}] "
                 + "was deregistered; the listener is unavailable",
             registration.getRegId(), dataSourceName, listenerDefinition.method().getDescription(true));
     }
 
     private void handleQueryDeregistration(long queryId) {
-        LOG.warn("Oracle query notification query [{}] for datasource [{}], listener method [{}], and registration [{}] "
+        LOG.warn("Oracle Database query notification query [{}] for datasource [{}], listener method [{}], and registration [{}] "
                 + "was deregistered; the listener is unavailable",
             queryId, dataSourceName, listenerDefinition.method().getDescription(true), registration.getRegId());
-        registrationUnregisterer.accept(registration);
+        queryDeregistrationHandler.accept(registration);
     }
 
     private boolean requiresQueryInvalidation(QueryChangeDescription[] queries) {
         for (QueryChangeDescription query : queries) {
             TableChangeDescription[] queryTables = query.getTableChangeDescription();
-            if (queryTables != null && requiresInvalidation(queryTables, true)) {
+            if (queryTables == null || requiresInvalidation(queryTables, true)) {
                 return true;
             }
         }
@@ -201,7 +213,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * complete notification and prevents partial row-level dispatch. Unmatched tables invalidate
      * QRCN events but are ignored for Object Change Notification events.
      *
-     * @param tables the table changes supplied by Oracle
+     * @param tables the table changes supplied by Oracle Database
      * @param invalidateOnUnmatchedTable whether an unmatched dependent table invalidates the query result
      */
     private void dispatchTableChanges(TableChangeDescription[] tables, boolean invalidateOnUnmatchedTable) {
@@ -213,23 +225,42 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Determines whether the complete Oracle event must be represented as an invalidation. An
-     * {@link TableChangeDescription.TableOperation#ALL_ROWS} operation on the listener entity table
-     * always requires invalidation. An unmatched table also requires invalidation for QRCN because
-     * it represents a dependent table whose rows cannot be loaded as the listener entity.
+     * Determines whether the complete event must be represented as an invalidation. Full-table
+     * and DDL changes, missing row details, and rows without a usable ROWID cannot be represented as
+     * entity row changes. An unmatched table also requires invalidation for QRCN because it represents
+     * a dependent table whose rows cannot be loaded as the listener entity.
      *
-     * @param tables the table changes supplied by Oracle
+     * @param tables the table changes supplied by Oracle Database
      * @param invalidateOnUnmatchedTable whether an unmatched dependent table invalidates the query result
      * @return {@code true} if row-level dispatch must be suppressed in favor of one invalidation
      */
     private boolean requiresInvalidation(TableChangeDescription[] tables, boolean invalidateOnUnmatchedTable) {
+        if (tables.length == 0) {
+            return true;
+        }
         for (TableChangeDescription table : tables) {
             if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
                 if (invalidateOnUnmatchedTable) {
                     return true;
                 }
-            } else if (table.getTableOperations().contains(TableChangeDescription.TableOperation.ALL_ROWS)) {
+                continue;
+            }
+            var tableOperations = table.getTableOperations();
+            if (tableOperations == null
+                || tableOperations.contains(TableChangeDescription.TableOperation.ALL_ROWS)
+                || tableOperations.contains(TableChangeDescription.TableOperation.ALTER)
+                || tableOperations.contains(TableChangeDescription.TableOperation.DROP)) {
                 return true;
+            }
+            RowChangeDescription[] rows = table.getRowChangeDescription();
+            if (rows == null || rows.length == 0) {
+                return true;
+            }
+            for (RowChangeDescription row : rows) {
+                var rowOperations = row.getRowOperations();
+                if (row.getRowid() == null || rowOperations == null || rowOperations.isEmpty()) {
+                    return true;
+                }
             }
         }
         return false;
@@ -240,21 +271,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * checked for invalidation before this method is called, so every dispatched row belongs to an
      * event that can be represented completely using row-level changes.
      *
-     * @param tables the table changes supplied by Oracle
+     * @param tables the table changes supplied by Oracle Database
      */
     private void dispatchRows(TableChangeDescription[] tables) {
         for (TableChangeDescription table : tables) {
             if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
                 continue;
             }
-            RowChangeDescription[] rows = table.getRowChangeDescription();
-            if (rows == null) {
-                continue;
-            }
-            for (RowChangeDescription row : rows) {
-                if (row.getRowid() == null) {
-                    continue;
-                }
+            for (RowChangeDescription row : table.getRowChangeDescription()) {
                 String rowId = row.getRowid().stringValue();
                 for (RowChangeDescription.RowOperation operation : row.getRowOperations()) {
                     if (operation == RowChangeDescription.RowOperation.INSERT) {
@@ -270,6 +294,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void dispatchInvalidation() {
+        LOG.trace("Dispatching INVALIDATE event for Oracle Database query notification for datasource [{}], "
+                + "registration [{}], and listener method [{}]",
+            dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
         dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
 
@@ -293,10 +320,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             invokeListener(event);
         } catch (Exception e) {
             if (rowId == null) {
-                LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID unavailable",
+                LOG.error("Error handling Oracle Database query notification for listener method [{}], operation [{}], table [{}], ROWID unavailable",
                     listenerDefinition.method().getDescription(true), event.operation(), listenerDefinition.tableIdentifier().sqlName(), e);
             } else {
-                LOG.error("Error handling Oracle query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
+                LOG.error("Error handling Oracle Database query notification for listener method [{}], operation [{}], table [{}], ROWID [{}]",
                     listenerDefinition.method().getDescription(true), event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
             }
         }

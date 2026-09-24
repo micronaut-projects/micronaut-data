@@ -21,19 +21,22 @@ import io.micronaut.inject.ExecutableMethod;
 import java.util.Properties;
 
 /**
- * Oracle-specific runtime definition for one {@code @ChangeListener} method.
+ * Runtime definition for one {@code @ChangeListener} method.
  *
- * <p>The definition contains the listener method, the mapped table identity, the generated
- * Oracle registration query and properties, the entity loader used to reload non-deleted rows
- * by {@code ROWID}, and the registration renewal policy.</p>
+ * <p>The definition contains the listener method, the mapped table identity used to match
+ * notification table names, the SQL query associated with the notification registration, the
+ * effective registration properties, the entity loader used to reload current state for
+ * non-deleted rows by {@code ROWID}, and the registration renewal policy.</p>
  *
  * @param beanDefinition         The bean definition that owns the listener method.
  * @param method                 The executable listener method.
- * @param tableIdentifier        The persistent Oracle table identifier used for notification matching.
- * @param registrationQuery      The query associated with the Oracle notification registration.
- * @param entityLoader           The loader that resolves current entity state from an Oracle {@code ROWID}.
- * @param registrationProperties The properties passed to the Oracle notification registration.
- * @param renewalPolicy          The timeout and replacement policy for the registration.
+ * @param tableIdentifier        The mapped table identifier used to match notification table names.
+ * @param registrationQuery      The SQL query associated with the notification registration.
+ * @param entityLoader           The loader that resolves current entity state for a non-deleted row from its
+ *                               {@code ROWID}; deleted rows cannot be reloaded.
+ * @param registrationProperties The effective registration properties, including framework-required
+ *                               {@code ROWID} notification and registration timeout settings.
+ * @param renewalPolicy          The finite registration lifetime and replacement policy.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,
