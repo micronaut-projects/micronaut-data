@@ -18,11 +18,11 @@ package io.micronaut.data.jdbc.notification.oracle;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
 
 /**
- * Associates one physical Oracle registration with its server-side timeout deadline.
+ * Associates one physical Oracle registration with its local logical expiration deadline.
  *
- * @param registration    the physical Oracle registration
- * @param expirationNanos the timeout deadline measured by the registrar's monotonic clock
+ * @param registration           the physical Oracle registration
+ * @param logicalExpirationNanos the local expiration deadline measured by the registrar's monotonic clock
  */
 record OracleRegistrationLease(DatabaseChangeRegistration registration,
-                               long expirationNanos) {
+                               long logicalExpirationNanos) {
 }

@@ -332,7 +332,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         noExceptionThrown()
     }
 
-    void "renews an after-expiration registration only when Oracle reports timeout deregistration"() {
+    void "unregisters an after-expiration registration before activating its replacement"() {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
@@ -345,10 +345,83 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
+        def scheduledTasks = []
+        def scheduledDelays = []
         def scheduler = Mock(TaskScheduler)
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
+            scheduledDelays << delay.toNanos()
+            scheduledTasks << task
+            Mock(ScheduledFuture)
+        }
+        def nanoTimeSupplier = new AtomicLong()
+        def manager = new OracleChangeNotificationSubscriptionManager(
+            "inventory", operations, Mock(BeanContext), executor, scheduler,
+            { nanoTimeSupplier.get() } as LongSupplier)
         manager.addSubscription(definition("SELECT * FROM BOOK", method,
             new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true)))
+        def lifecycle = []
+        def registrationIndex = new AtomicInteger()
+        DatabaseChangeListener listener
+
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> {
+            int index = registrationIndex.incrementAndGet()
+            lifecycle << "register-$index"
+            index == 1 ? original : replacement
+        }
+        original.addListener(_ as DatabaseChangeListener) >> { DatabaseChangeListener registeredListener ->
+            listener = registeredListener
+        }
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        def deregistrationEvent = Mock(DatabaseChangeEvent)
+        deregistrationEvent.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        deregistrationEvent.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.NONE
+
+        when:
+        manager.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        scheduledTasks.first().run()
+
+        then:
+        scheduledDelays.first() == TimeUnit.SECONDS.toNanos(10)
+        lifecycle == ['register-1', 'associate-1', 'unregister-1', 'register-2', 'associate-2']
+        2 * statement.executeQuery("SELECT * FROM BOOK") >> {
+            lifecycle << "associate-${registrationIndex.get()}"
+            resultSet
+        }
+        1 * oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            lifecycle << 'unregister-1'
+            listener.onDatabaseChangeNotification(deregistrationEvent)
+        }
+    }
+
+    void "uses timeout deregistration instead of the pending after-expiration timer"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def resultSet = Mock(ResultSet)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def scheduledTasks = []
+        def scheduledFuture = Mock(ScheduledFuture)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignoredDelay, Runnable task ->
+            scheduledTasks << task
+            scheduledFuture
+        }
+        Executor executor = { Runnable command -> command.run() } as Executor
+        def manager = new OracleChangeNotificationSubscriptionManager(
+            "inventory", operations, Mock(BeanContext), executor, scheduler)
+        manager.addSubscription(definition("SELECT * FROM BOOK", method,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true)))
         DatabaseChangeListener listener
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
@@ -366,11 +439,69 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         when:
         manager.start()
         listener.onDatabaseChangeNotification(event)
+        scheduledTasks.first().run()
 
         then:
         2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [original, replacement]
         2 * statement.executeQuery("SELECT * FROM BOOK") >> resultSet
-        0 * scheduler.schedule(_ as Duration, _ as Runnable)
+        1 * scheduledFuture.cancel(false)
+        0 * oracleConnection.unregisterDatabaseChangeNotification(original)
+    }
+
+    void "delays after-expiration replacement until the server timeout when unregister fails"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def resultSet = Mock(ResultSet)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
+            scheduledDelays << delay.toNanos()
+            scheduledTasks << task
+            Mock(ScheduledFuture)
+        }
+        def nanoTimeSupplier = new AtomicLong()
+        Executor executor = { Runnable command -> command.run() } as Executor
+        def manager = new OracleChangeNotificationSubscriptionManager(
+            "inventory", operations, Mock(BeanContext), executor, scheduler,
+            { nanoTimeSupplier.get() } as LongSupplier)
+        manager.addSubscription(definition("SELECT * FROM BOOK", method,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true)))
+
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        connection.unwrap(OracleConnection) >> oracleConnection
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        statement.executeQuery("SELECT * FROM BOOK") >> resultSet
+
+        when:
+        manager.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        scheduledTasks.first().run()
+
+        then:
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60)]
+        1 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> original
+        1 * oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException("Unable to unregister")
+        }
+
+        when:
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(70))
+        scheduledTasks[1].run()
+
+        then:
+        1 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> replacement
+        scheduledDelays[2] == TimeUnit.SECONDS.toNanos(10)
         0 * oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
@@ -463,7 +594,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
         then:
         def exception = thrown(DataAccessException)
-        exception.message == "Unable to register Oracle Database query notification for datasource [inventory] and listener method [void failingListener(ChangeEvent<Book>)]"
+        exception.message == "Unable to start DCN subscription for datasource [inventory] and listener method [void failingListener(ChangeEvent<Book>)]"
         exception.cause instanceof DataAccessException
         exception.cause.cause instanceof SQLException
         exception.cause.cause.message == "Invalid registration query"

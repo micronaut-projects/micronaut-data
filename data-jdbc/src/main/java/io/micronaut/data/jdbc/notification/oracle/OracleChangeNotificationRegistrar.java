@@ -70,14 +70,14 @@ final class OracleChangeNotificationRegistrar {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
-            // Oracle database timeout can start while the registration call is in progress. Measuring
-            // before the call makes the local renewal deadline conservative rather than late.
+            // The registration lifetime can start while this call is in progress. Measuring before
+            // the call prevents local renewal from running later than its configured logical deadline.
             long startedNanos = nanoTimeSupplier.getAsLong();
             DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(definition.registrationProperties());
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
-            long expirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
-            OracleRegistrationLease lease = new OracleRegistrationLease(registration, expirationNanos);
+            long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
+            OracleRegistrationLease lease = new OracleRegistrationLease(registration, logicalExpirationNanos);
             try {
                 registration.addListener(new OracleChangeNotificationDispatcher(
                     dataSourceName, definition, registration, beanContext, blockingExecutor, taskTracker,

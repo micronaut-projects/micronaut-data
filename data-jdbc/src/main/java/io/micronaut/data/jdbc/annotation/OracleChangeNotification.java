@@ -46,8 +46,9 @@ public @interface OracleChangeNotification {
     /**
      * Controls the finite lifetime of each registration.
      *
-     * @return The number of seconds after which Oracle Database expires the registration.
-     * Must be greater than zero.
+     * @return The logical registration lifetime in seconds. Must be greater than zero. For
+     * {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data configures a slightly longer Oracle
+     * Database timeout as a cleanup fallback if local deregistration cannot run.
      */
     int timeoutSeconds() default 3600;
 
@@ -117,9 +118,10 @@ public @interface OracleChangeNotification {
          */
         OVERLAPPING,
         /**
-         * Waits for Oracle Database to report that the previous registration expired before activating
-         * its replacement. This avoids renewal overlap, but renewal depends on receiving the timeout
-         * deregistration event and database changes can be missed while the replacement is created.
+         * Unregisters the previous registration at its local expiration deadline, then activates its
+         * replacement. This avoids planned renewal overlap, but database changes can be missed while
+         * the replacement is created. A longer Oracle Database timeout removes abandoned registrations
+         * if local deregistration cannot run.
          */
         AFTER_EXPIRATION
     }
