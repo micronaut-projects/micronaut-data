@@ -71,6 +71,14 @@ public final class PersistentEntityUtils {
             // An identity-less association is stored embedded in the owning document
             return contains(associatedEntity.getPersistentProperties(), persistentProperty, new HashSet<>());
         }
+        if (identityProperties.size() == 1) {
+            // A JoinColumn referencing another column stores that column instead of the identity,
+            // mirrors traversePersistentProperties
+            PersistentProperty joinColumnProperty = getJoinColumnAssocIdentity(association, associatedEntity);
+            if (joinColumnProperty != null) {
+                return joinColumnProperty == persistentProperty;
+            }
+        }
         for (PersistentProperty identity : identityProperties) {
             if (identity == persistentProperty) {
                 return true;

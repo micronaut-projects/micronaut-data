@@ -3858,6 +3858,67 @@ record LegacyOtherEntity(@Id @GeneratedValue Long id, String someColumn) {
         findAllQuery == 'SELECT legacy_some_entity_.`primary_key_some_column`,legacy_some_entity_.`primary_key_other_entity_id`,legacy_some_entity_.`col` FROM `some_table` legacy_some_entity_'
     }
 
+    void "join column referencedColumnName decides which associated property is accessible without a join"() {
+        given: "a many-to-one whose FK references a non-identity property of the target"
+        def repository = buildRepository('test.ArticleRepository', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface ArticleRepository extends GenericRepository<Article, Long> {
+    List<Article> findByAuthorCode(Long code);
+    List<Article> findByAuthorId(Long id);
+}
+
+@MappedEntity
+class Writer {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private Long code;
+    private String name;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getCode() { return code; }
+    public void setCode(Long code) { this.code = code; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity
+class Article {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String title;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JoinColumn(name = "author_code", referencedColumnName = "code")
+    private Writer author;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Writer getAuthor() { return author; }
+    public void setAuthor(Writer author) { this.author = author; }
+}
+""")
+
+        when: "querying by the referenced property, which the owning table stores as author_code"
+        def findByAuthorCode = getQuery(repository.getRequiredMethod("findByAuthorCode", Long))
+
+        then: "no join is needed, the predicate reads the FK column"
+        findByAuthorCode == 'SELECT article_.`id`,article_.`title`,article_.`author_code` FROM `article` article_ WHERE (article_.`author_code` = ?)'
+
+        when: "querying by the target identity, which the owning table does not store"
+        def findByAuthorId = getQuery(repository.getRequiredMethod("findByAuthorId", Long))
+
+        then: "the identity has to be read from the joined table"
+        findByAuthorId == 'SELECT article_.`id`,article_.`title`,article_.`author_code` FROM `article` article_ INNER JOIN `writer` article_author_ ON article_.`author_code`=article_author_.`code` WHERE (article_author_.`id` = ?)'
+    }
+
     private <T> T withDialectOptionsVersion(Dialect dialect, String version, Closure<T> closure) {
         def configuration = SqlDialectOptions.versionConfiguration(dialect)
         def previous = System.getProperty(configuration)
