@@ -1,5 +1,6 @@
 plugins {
     id "io.micronaut.build.internal.data-tck"
+    id "io.micronaut.build.internal.data-tck-module"
 }
 
 dependencies {

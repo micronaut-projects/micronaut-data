@@ -1,24 +1,9 @@
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-base"
-    id "io.micronaut.build.internal.module"
+    id "io.micronaut.build.internal.java-base"
 }
 
 ext {
     skipDocumentation = true
-}
-
-micronautBuild {
-    descriptor {
-        parentModuleId = "io.micronaut.data:micronaut-data-model"
-    }
-    // TCK artifacts are test fixtures, not a stable public API
-    binaryCompatibility {
-        enabled = false
-    }
-}
-
-// TCK sources are test fixtures and are not held to the production checkstyle rules
-tasks.withType(Checkstyle).configureEach {
-    enabled = false
 }
