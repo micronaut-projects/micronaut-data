@@ -12,6 +12,11 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
+tasks.withType(GroovyCompile).configureEach {
+    // Larger examples with annotation processing can exceed Gradle's 512 MiB worker default.
+    groovyOptions.forkOptions.memoryMaximumSize = '1g'
+}
+
 tasks.withType(Javadoc).configureEach {
     // Disable doclint warnings for example projects to avoid "no comment" noise in generated Javadoc
     options.addBooleanOption('Xdoclint:none', true)
