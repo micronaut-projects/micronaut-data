@@ -97,21 +97,42 @@ final class OracleChangeNotificationSubscription {
         return methodDescription;
     }
 
+    /**
+     * Creates the initial registration for this listener and activates its lease.
+     *
+     * <p>If the subscription has stopped while the registration was being created, the new
+     * registration is unregistered instead. Exceptions from registration creation or lease
+     * activation propagate to the manager so it can roll back registrations started earlier.</p>
+     *
+     * @throws RuntimeException if registration creation or activation fails
+     */
     void start() {
         OracleRegistrationLease registrationLease = registrar.createRegistration(this);
         if (!activateLease(registrationLease)) {
             LOG.trace("Discarding inactive DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registrationLease.registration().getRegId(), dataSourceName, methodDescription);
-            unregisterInactive(registrationLease.registration());
+            unregister(registrationLease.registration(), RegistrationCleanup.INACTIVE);
         }
     }
 
+    /**
+     * Records a registration owned by this subscription so shutdown and rollback can unregister it.
+     *
+     * @param registration the registration to track
+     */
     void track(DatabaseChangeRegistration registration) {
         synchronized (registrations) {
             registrations.add(registration);
         }
     }
 
+    /**
+     * Removes the same registration instance from this subscription's ownership tracking.
+     * This only updates local tracking; it does not unregister the registration from Oracle Database.
+     *
+     * @param registration the registration to remove
+     * @return {@code true} if the registration was tracked and removed
+     */
     boolean untrack(DatabaseChangeRegistration registration) {
         synchronized (registrations) {
             for (int i = 0; i < registrations.size(); i++) {
@@ -141,7 +162,8 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Handles a registration deregistration event reported by Oracle Database.
+     * Handles a registration deregistration event {@link DatabaseChangeEvent.EventType#DEREG}
+     * reported by Oracle Database.
      *
      * <p>The deregistered registration is removed from local tracking. If it is the current
      * registration and Oracle Database reports {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT}
@@ -383,7 +405,7 @@ final class OracleChangeNotificationSubscription {
             if (!activateLease(replacementLease)) {
                 LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
                     replacementLease.registration().getRegId(), dataSourceName, methodDescription);
-                unregisterInactive(replacementLease.registration());
+                unregister(replacementLease.registration(), RegistrationCleanup.INACTIVE);
                 return null;
             }
             return replacementLease;
@@ -395,10 +417,6 @@ final class OracleChangeNotificationSubscription {
             }
             throw activationFailure;
         }
-    }
-
-    private void unregisterInactive(DatabaseChangeRegistration registration) {
-        unregister(registration, RegistrationCleanup.INACTIVE);
     }
 
     private void unregister(DatabaseChangeRegistration registration, RegistrationCleanup cleanup) {
@@ -462,8 +480,18 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private boolean unregisterAtLogicalExpiration(OracleRegistrationLease expectedLease) {
-        DatabaseChangeRegistration registration = expectedLease.registration();
+    /**
+     * Unregisters the registration when its local logical lifetime expires.
+     *
+     * <p>If unregistering fails, replacement is deferred until Oracle Database's server-side
+     * timeout unless a concurrent deregistration callback confirms that the registration is gone.</p>
+     *
+     * @param registrationLease the lease reaching its logical expiration
+     * @return {@code true} if the replacement can be attempted now; {@code false} if it must be
+     *         deferred or this lease is no longer eligible for replacement
+     */
+    private boolean unregisterAtLogicalExpiration(OracleRegistrationLease registrationLease) {
+        DatabaseChangeRegistration registration = registrationLease.registration();
         if (!isTracked(registration)) {
             return true;
         }
@@ -473,50 +501,60 @@ final class OracleChangeNotificationSubscription {
             unregisterIfOwned(registration);
             return true;
         } catch (RuntimeException failure) {
-            return handleExpirationUnregisterFailure(expectedLease, failure);
+            return handleUnregisterFailureAtExpiration(registrationLease, failure);
         }
     }
 
-    private boolean handleExpirationUnregisterFailure(OracleRegistrationLease expectedLease,
-                                                      RuntimeException failure) {
-        long delayNanos = 0;
-        boolean scheduled = false;
-        synchronized (this) {
-            if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
-                return false;
-            }
-            if (currentLease == null) {
-                // A concurrent timeout callback confirmed that the registration is already gone.
-                return true;
-            }
-            if (currentLease != expectedLease) {
-                return false;
-            }
-            state = State.ACTIVE;
-            long serverExpirationNanos = expectedLease.logicalExpirationNanos()
-                + TimeUnit.SECONDS.toNanos(OracleChangeNotificationRenewalPolicy.SERVER_TIMEOUT_GRACE_SECONDS);
-            delayNanos = Math.max(0, serverExpirationNanos - nanoTimeSupplier.getAsLong());
-            try {
-                renewalTask = taskScheduler.schedule(
-                    Duration.ofNanos(delayNanos),
-                    () -> submitRenewal(State.ACTIVE, expectedLease, RenewalTrigger.SERVER_TIMEOUT_FALLBACK));
-                scheduled = true;
-            } catch (RuntimeException schedulingFailure) {
-                failure.addSuppressed(schedulingFailure);
-                currentLease = null;
-                state = State.CLOSED;
-            }
+    /**
+     * Handles a failed local unregister at the registration's logical expiration.
+     *
+     * <p>If the lease is still current, replacement is delayed until Oracle Database's server-side
+     * timeout should have removed it. If a concurrent deregistration callback has already cleared
+     * the lease, replacement can proceed immediately.</p>
+     *
+     * @param registrationLease the lease whose registration could not be unregistered
+     * @param failure           the local unregistration failure
+     * @return {@code true} if replacement can proceed immediately; {@code false} if it must be
+     * delayed or this subscription can no longer renew
+     */
+    private synchronized boolean handleUnregisterFailureAtExpiration(OracleRegistrationLease registrationLease,
+                                                                     RuntimeException failure) {
+        if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
+            return false;
         }
-        if (scheduled) {
-            LOG.error("Unable to unregister expired DCN [{}] for datasource [{}] and listener method [{}]; "
-                    + "replacement is delayed for [{}] nanoseconds until the Oracle Database timeout",
-                expectedLease.registration().getRegId(), dataSourceName, methodDescription,
-                delayNanos, failure);
-        } else {
+        // The callback for DEREG event may clear the lease after expiration while local unregistration is in progress
+        if (currentLease == null) {
+            return true;
+        }
+        // The unregister failure belongs to a stale lease; leave the replacement subscription untouched.
+        if (currentLease != registrationLease) {
+            return false;
+        }
+        // Keep the current registration active during the timeout grace period.
+        // The fallback renewal expects the subscription to be ACTIVE.
+        state = State.ACTIVE;
+        // Wait until Oracle Database's timeout, extended by the grace period, before retrying replacement.
+        // Calculate the remaining delay with the monotonic clock and clamp elapsed deadlines to zero.
+        long serverExpirationNanos = registrationLease.logicalExpirationNanos()
+            + TimeUnit.SECONDS.toNanos(OracleChangeNotificationRenewalPolicy.SERVER_TIMEOUT_GRACE_SECONDS);
+        long delayNanos = Math.max(0, serverExpirationNanos - nanoTimeSupplier.getAsLong());
+        try {
+            renewalTask = taskScheduler.schedule(
+                Duration.ofNanos(delayNanos),
+                () -> submitRenewal(State.ACTIVE, registrationLease, RenewalTrigger.SERVER_TIMEOUT_FALLBACK));
+        } catch (RuntimeException schedulingFailure) {
+            failure.addSuppressed(schedulingFailure);
+            currentLease = null;
+            state = State.CLOSED;
             LOG.error("Unable to unregister expired DCN [{}] for datasource [{}] and listener method [{}]",
-                expectedLease.registration().getRegId(), dataSourceName,
+                registrationLease.registration().getRegId(), dataSourceName,
                 methodDescription, failure);
+            return false;
         }
+        LOG.error("Unable to unregister expired DCN [{}] for datasource [{}] and listener method [{}]; "
+                + "replacement is delayed for [{}] nanoseconds until the Oracle Database timeout",
+            registrationLease.registration().getRegId(), dataSourceName, methodDescription,
+            delayNanos, failure);
         return false;
     }
 
