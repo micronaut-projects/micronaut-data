@@ -111,7 +111,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void submitDispatch(DatabaseChangeEvent event) {
-        if (!taskTracker.tryStartTask()) {
+        if (!taskTracker.acceptTask()) {
             LOG.trace("Ignoring DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, registration.getRegId(), listenerDefinition.method().getDescription(true));
             return;

@@ -124,7 +124,7 @@ final class OracleChangeNotificationSubscriptionManager {
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         subscriptions.forEach(OracleChangeNotificationSubscription::stopRenewal);
-        CompletionStage<?> completion = taskTracker.shutdownGracefully();
+        CompletionStage<Void> completion = taskTracker.shutdownGracefully();
         subscriptions.forEach(OracleChangeNotificationSubscription::unregisterAll);
         return completion;
     }

@@ -20,11 +20,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
- * Tracks asynchronous Oracle Database notification dispatch and renewal tasks for one datasource
- * manager during graceful shutdown.
+ * Tracks accepted Oracle Database notification dispatch and renewal tasks for one datasource
+ * manager so it can await outstanding work during graceful shutdown.
  *
  * <p>The dispatcher and subscription renewal work share one tracker. A task is counted only after
- * {@link #tryStartTask()} successfully reserves it. Once {@link #shutdownGracefully()} is called,
+ * {@link #acceptTask()} successfully reserves it. Once {@link #shutdownGracefully()} is called,
  * no new task is accepted. The returned completion stage completes after every task accepted before
  * shutdown has finished, allowing the provider to await all remaining work.</p>
  *
@@ -44,7 +44,7 @@ final class OracleChangeNotificationTaskTracker {
      *
      * @return {@code true} when the task was accepted; {@code false} after shutdown started
      */
-    synchronized boolean tryStartTask() {
+    synchronized boolean acceptTask() {
         if (shutdownStarted) {
             return false;
         }
@@ -57,8 +57,13 @@ final class OracleChangeNotificationTaskTracker {
      *
      * <p>Completion may finish the stage returned by {@link #shutdownGracefully()} when no
      * accepted tasks remain.</p>
+     *
+     * @throws IllegalStateException if no accepted asynchronous task is active
      */
     synchronized void completeTask() {
+        if (activeTasks == 0) {
+            throw new IllegalStateException("No accepted asynchronous task is active");
+        }
         activeTasks--;
         completeIfIdle();
     }
@@ -71,16 +76,16 @@ final class OracleChangeNotificationTaskTracker {
      *
      * @return a stage completed after all tasks accepted before shutdown finish
      */
-    synchronized CompletionStage<?> shutdownGracefully() {
+    synchronized CompletionStage<Void> shutdownGracefully() {
         shutdownStarted = true;
         completeIfIdle();
         return completion;
     }
 
     /**
-     * Reports the number of tasks still active after shutdown has begun.
+     * Reports the number of accepted tasks that have not completed after shutdown has begun.
      *
-     * @return the active-task count after shutdown starts, or empty while the tracker is running
+     * @return the outstanding-task count after shutdown starts, or empty while the tracker is running
      */
     synchronized OptionalLong reportActiveTasks() {
         return shutdownStarted ? OptionalLong.of(activeTasks) : OptionalLong.empty();

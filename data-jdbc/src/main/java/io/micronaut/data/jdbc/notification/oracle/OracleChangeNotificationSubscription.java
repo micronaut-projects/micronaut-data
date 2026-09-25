@@ -272,7 +272,7 @@ final class OracleChangeNotificationSubscription {
     private void submitRenewal(State expectedState,
                                @Nullable OracleRegistrationLease expectedLease,
                                RenewalTrigger trigger) {
-        if (!taskTracker.tryStartTask()) {
+        if (!taskTracker.acceptTask()) {
             LOG.trace("Skipping DCN renewal for datasource [{}] and listener method [{}] because shutdown has started",
                 dataSourceName, methodDescription);
             return;
