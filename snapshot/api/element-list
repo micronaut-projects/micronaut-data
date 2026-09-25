@@ -44,6 +44,8 @@ io.micronaut.data.intercept
 io.micronaut.data.intercept.annotation
 io.micronaut.data.intercept.async
 io.micronaut.data.intercept.reactive
+io.micronaut.data.jakarta.tck
+io.micronaut.data.jakarta.tck.runtime
 io.micronaut.data.jdbc.annotation
 io.micronaut.data.jdbc.config
 io.micronaut.data.jdbc.convert
