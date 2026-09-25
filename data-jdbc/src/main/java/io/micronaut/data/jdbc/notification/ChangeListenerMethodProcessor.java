@@ -43,8 +43,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * per datasource.</p>
  *
  * <p>Registration is deferred to {@link StartupEvent}, after schema generation. The processor
- * then uses operations and a connection from its datasource to select a notification provider and
- * register the listener methods it collected.</p>
+ * then uses a connection from its datasource to select a notification provider. Registration
+ * begins after that connection has been released.</p>
  */
 @Context
 @EachBean(DataSource.class)
@@ -105,14 +105,14 @@ final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<C
         if (listenerMethods.isEmpty()) {
             return;
         }
-        operations.execute(connection -> {
-            ChangeNotificationProvider provider = providerResolver.resolve(connection);
-            if (provider == null) {
+        ChangeNotificationProvider provider = operations.execute(connection -> {
+            ChangeNotificationProvider resolved = providerResolver.resolve(connection);
+            if (resolved == null) {
                 throw new IllegalStateException("@ChangeListener datasource [" + dataSourceName + "] has no change notification provider");
             }
-            provider.register(dataSourceName, operations, listenerMethods);
-            return Boolean.TRUE;
+            return resolved;
         });
+        provider.register(dataSourceName, operations, listenerMethods);
     }
 
     private static IllegalStateException invalidChangeListener(ExecutableMethod<?, ?> method, String message) {

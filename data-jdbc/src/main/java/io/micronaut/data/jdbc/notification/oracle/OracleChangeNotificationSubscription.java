@@ -98,7 +98,7 @@ final class OracleChangeNotificationSubscription {
 
     void start() {
         OracleRegistrationLease registrationLease = registrar.createRegistration(this);
-        if (!activate(registrationLease)) {
+        if (!activateLease(registrationLease)) {
             LOG.trace("Discarding inactive DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registrationLease.registration().getRegId(), dataSourceName, methodDescription);
             unregisterInactive(registrationLease.registration());
@@ -253,17 +253,15 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private synchronized boolean activate(OracleRegistrationLease registrationLease) {
+    private synchronized boolean activateLease(OracleRegistrationLease registrationLease) {
         if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
             return false;
         }
-        ScheduledFuture<?> nextRenewal = null;
         if (renewalPolicy.renewable()) {
-            nextRenewal = scheduleRenewal(registrationLease);
+            renewalTask = scheduleRenewal(registrationLease);
         }
         currentLease = registrationLease;
         state = State.ACTIVE;
-        renewalTask = nextRenewal;
         LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
             registrationLease.registration().getRegId(), dataSourceName, methodDescription, renewalPolicy.mode());
         return true;
@@ -358,7 +356,7 @@ final class OracleChangeNotificationSubscription {
             previousLease == null ? null : previousLease.registration().getRegId());
         OracleRegistrationLease replacementLease = registrar.createRegistration(this);
         try {
-            if (!activate(replacementLease)) {
+            if (!activateLease(replacementLease)) {
                 LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
                     replacementLease.registration().getRegId(), dataSourceName, methodDescription);
                 unregisterInactive(replacementLease.registration());

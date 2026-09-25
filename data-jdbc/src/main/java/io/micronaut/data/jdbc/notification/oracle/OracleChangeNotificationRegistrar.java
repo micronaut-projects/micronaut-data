@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
+import oracle.jdbc.NotificationRegistration;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.OracleStatement;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -44,6 +45,7 @@ import java.util.function.LongSupplier;
  */
 final class OracleChangeNotificationRegistrar {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationRegistrar.class);
+    private static final int REGISTRATION_NOT_FOUND_ERROR_CODE = 29970;
 
     private final String dataSourceName;
     private final JdbcOperations operations;
@@ -108,9 +110,22 @@ final class OracleChangeNotificationRegistrar {
     }
 
     void unregisterRegistration(DatabaseChangeRegistration registration) {
+        if (registration.getState() == NotificationRegistration.RegistrationState.CLOSED) {
+            LOG.trace("Skipping already closed DCN registration [{}] for datasource [{}]", registration.getRegId(), dataSourceName);
+            return;
+        }
         operations.execute(connection -> {
             LOG.trace("Unregistering DCN registration [{}] for datasource [{}]", registration.getRegId(), dataSourceName);
-            connection.unwrap(OracleConnection.class).unregisterDatabaseChangeNotification(registration);
+            try {
+                connection.unwrap(OracleConnection.class).unregisterDatabaseChangeNotification(registration);
+            } catch (SQLException e) {
+                // The database can remove a registration before the driver observes its DEREG event.
+                if (e.getErrorCode() != REGISTRATION_NOT_FOUND_ERROR_CODE) {
+                    throw e;
+                }
+                LOG.trace("DCN registration [{}] for datasource [{}] was already absent from Oracle Database",
+                    registration.getRegId(), dataSourceName);
+            }
             return registration;
         });
     }

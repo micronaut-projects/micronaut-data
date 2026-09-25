@@ -30,6 +30,7 @@ import spock.lang.Specification
 
 import java.sql.Connection
 import java.sql.ResultSet
+import java.sql.SQLException
 import java.sql.Statement
 import java.time.Duration
 import java.util.concurrent.Executor
@@ -98,6 +99,35 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         scheduledDelays.first() == TimeUnit.SECONDS.toNanos(10)
         lifecycle == ['register-1', 'associate-1', 'unregister-1', 'register-2', 'associate-2']
+    }
+
+    void "replaces an after-expiration registration already absent from Oracle Database"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def scheduler = scheduler(scheduledTasks, scheduledDelays)
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def nanoTimeSupplier = new AtomicLong()
+        def lifecycle = []
+        def clock = { nanoTimeSupplier.get() } as LongSupplier
+        def fixture = registrarFixture([original, replacement], clock, lifecycle)
+        def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true))
+        fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new SQLException('Specified registration id does not exist', '72000', 29970)
+        }
+
+        when:
+        subscription.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        scheduledTasks.first().run()
+
+        then:
+        lifecycle == ['register-1', 'associate-1', 'register-2', 'associate-2']
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(10)]
     }
 
     void "uses timeout deregistration instead of the pending after-expiration timer"() {
