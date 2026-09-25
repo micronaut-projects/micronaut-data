@@ -55,7 +55,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         Executor executor = { Runnable task -> queuedRenewals << task } as Executor
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true), executor)
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2), executor)
 
         when:
         subscription.start()
@@ -89,7 +89,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         Executor executor = { Runnable ignored -> throw new RejectedExecutionException('Executor rejected renewal') } as Executor
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true), executor)
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2), executor)
 
         when:
         subscription.start()
@@ -114,7 +114,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def fixture = registrarFixture([original, replacement], clock, lifecycle)
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true))
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             lifecycle << "unregister-1"
         }
@@ -142,7 +142,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def fixture = registrarFixture([original, replacement], clock, lifecycle)
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true))
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             lifecycle << 'unregister-1'
             subscription.handleRegistrationDeregistered(
@@ -173,7 +173,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def fixture = registrarFixture([original, replacement], clock, lifecycle)
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true))
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             throw new SQLException('Specified registration id does not exist', '72000', 29970)
         }
@@ -205,7 +205,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def fixture = registrarFixture([original, replacement], clock, [])
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true))
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
 
         when:
         subscription.start()
@@ -232,7 +232,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def fixture = registrarFixture([original, replacement], clock, [])
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0, true))
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
 
         when:
         subscription.start()
@@ -268,7 +268,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             new OracleChangeNotificationTaskTracker(),
             clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true))
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
         def cleanupOrder = []
         subscription.track(first)
         subscription.track(second)

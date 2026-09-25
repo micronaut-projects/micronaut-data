@@ -157,7 +157,7 @@ Use `OracleChangeNotification.Property` to pass Oracle JDBC registration propert
 ----
 
 Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and derives `NTF_TIMEOUT` from `timeoutSeconds` and the renewal strategy.
-`NTF_QOS_PURGE_ON_NTFN` makes a registration one-shot: Oracle removes it after its first notification, and Micronaut Data stops tracking it as a live registration.
+`NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. If the registration reaches its timeout before any notification arrives, Micronaut Data renews it according to the configured renewal strategy.
 
 Configure the registration lifetime and replacement strategy with the typed annotation members instead of passing `OracleConnection.NTF_TIMEOUT` in `properties`:
 
@@ -197,7 +197,7 @@ If creating or associating a replacement registration fails, Micronaut Data logs
 
 If Oracle deregisters a registration for a reason other than a renewable timeout, Micronaut Data closes that subscription and does not recreate it automatically. The same applies when Oracle deregisters a registered QRCN query. The application must correct the database or registration condition and restart the application if a new registration is required.
 
-Micronaut Data does not renew one-shot registrations configured with `NTF_QOS_PURGE_ON_NTFN`. It also cannot directly monitor the driver-owned CQN receiver connection because Oracle JDBC does not expose that connection, a heartbeat API, or a callback for a silently lost receiver channel. Setting `NTF_QOS_RELIABLE` does not cause Micronaut Data to recreate a lost channel or re-register a listener.
+Micronaut Data renews registrations that reach their timeout before a notification arrives, including those configured with `NTF_QOS_PURGE_ON_NTFN`. If Oracle purges a registration after delivering a notification, Micronaut Data closes that listener subscription and does not recreate it. Micronaut Data also cannot directly monitor the driver-owned CQN receiver connection because Oracle JDBC does not expose that connection, a heartbeat API, or a callback for a silently lost receiver channel. Setting `NTF_QOS_RELIABLE` does not cause Micronaut Data to recreate a lost channel or re-register a listener.
 
 == Delivery and Concurrency
 

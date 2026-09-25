@@ -166,9 +166,9 @@ final class OracleChangeNotificationSubscription {
      * reported by Oracle Database.
      *
      * <p>The deregistered registration is removed from local tracking. If it is the current
-     * registration and Oracle Database reports {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT}
-     * for a renewable subscription, a replacement registration is scheduled. Other deregistration
-     * reasons close the subscription because the registration is no longer available for delivery.</p>
+     * registration and Oracle Database reports {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT},
+     * a replacement registration is scheduled. Other deregistration reasons close the subscription
+     * because the registration is no longer available for delivery.</p>
      *
      * @param registration the Oracle Database registration that was deregistered
      * @param additionalEventType the additional reason reported for the deregistration
@@ -199,8 +199,7 @@ final class OracleChangeNotificationSubscription {
             return DeregistrationAction.NONE;
         }
         if (state != State.CLOSED
-            && additionalEventType == DatabaseChangeEvent.AdditionalEventType.TIMEOUT
-            && renewalPolicy.renewable()) {
+            && additionalEventType == DatabaseChangeEvent.AdditionalEventType.TIMEOUT) {
             state = State.UNREGISTERED;
             return DeregistrationAction.RENEW;
         }
@@ -279,9 +278,7 @@ final class OracleChangeNotificationSubscription {
         if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
             return false;
         }
-        if (renewalPolicy.renewable()) {
-            renewalTask = scheduleRenewal(registrationLease);
-        }
+        renewalTask = scheduleRenewal(registrationLease);
         currentLease = registrationLease;
         state = State.ACTIVE;
         LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",

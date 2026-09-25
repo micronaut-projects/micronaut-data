@@ -91,9 +91,8 @@ final class OracleChangeListenerDefinitionFactory {
             throw invalidChangeListener(method,
                 "requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds");
         }
-        boolean renewable = !Boolean.parseBoolean(properties.getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
         OracleChangeNotificationRenewalPolicy renewalPolicy =
-            new OracleChangeNotificationRenewalPolicy(timeoutSeconds, mode, leadTimeSeconds, renewable);
+            new OracleChangeNotificationRenewalPolicy(timeoutSeconds, mode, leadTimeSeconds);
         properties.setProperty(OracleConnection.NTF_TIMEOUT, Integer.toString(renewalPolicy.serverTimeoutSeconds()));
         return renewalPolicy;
     }

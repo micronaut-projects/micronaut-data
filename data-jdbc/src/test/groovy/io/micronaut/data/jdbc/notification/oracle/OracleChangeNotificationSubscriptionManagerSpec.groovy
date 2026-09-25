@@ -138,7 +138,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler,
             { nanoTimeSupplier.get() } as LongSupplier)
         manager.addSubscription(definition("SELECT * FROM BOOK", method,
-            new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true)))
+            new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2)))
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -377,7 +377,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {
         return definition(query, method,
-            new OracleChangeNotificationRenewalPolicy(3600, OracleChangeNotification.RenewalMode.OVERLAPPING, 60, true))
+            new OracleChangeNotificationRenewalPolicy(3600, OracleChangeNotification.RenewalMode.OVERLAPPING, 60))
     }
 
     private static OracleChangeListenerDefinition definition(String query,

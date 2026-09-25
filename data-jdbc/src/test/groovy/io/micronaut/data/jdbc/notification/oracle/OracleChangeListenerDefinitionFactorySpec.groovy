@@ -58,7 +58,6 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '3600'
         definition.renewalPolicy().timeoutSeconds() == 3600
         definition.renewalPolicy().leadTimeSeconds() == 60
-        definition.renewalPolicy().renewable()
     }
 
     void "builds a query result registration query and preserves its Oracle properties"() {
@@ -83,14 +82,14 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN) == 'true'
         definition.registrationProperties().getProperty('CUSTOM_PROPERTY') == 'custom-value'
         definition.registrationProperties().getProperty(OracleConnection.DCN_NOTIFY_ROWIDS) == 'true'
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '120'
+        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '180'
         definition.renewalPolicy().timeoutSeconds() == 120
         definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.AFTER_EXPIRATION
-        !definition.renewalPolicy().renewable()
+        definition.renewalPolicy().serverTimeoutSeconds() == 180
         0 * operations.execute(_)
     }
 
-    void "adds a server cleanup grace period for renewable after-expiration registrations"() {
+    void "adds a server cleanup grace period for after-expiration registrations"() {
         given:
         def operations = operations()
         def listenerMethod = listenerMethod(notification([

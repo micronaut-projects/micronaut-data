@@ -570,7 +570,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                                Properties properties) {
         return new OracleChangeListenerDefinition(beanDefinition, method, OracleTableIdentifier.parse("BOOK"),
             "SELECT * FROM BOOK", null, properties,
-            new OracleChangeNotificationRenewalPolicy(3600, io.micronaut.data.jdbc.annotation.OracleChangeNotification.RenewalMode.OVERLAPPING, 60, true))
+            new OracleChangeNotificationRenewalPolicy(3600, io.micronaut.data.jdbc.annotation.OracleChangeNotification.RenewalMode.OVERLAPPING, 60))
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
