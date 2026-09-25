@@ -1,0 +1,34 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronautBuild {
+    python {
+        // Hibernate reads the JPA annotations of the entities reflectively from the generated classes
+        compilerArgs.add("-Amicronaut.introspection.allowReflection=example.*")
+    }
+}
+
+micronaut {
+    testResources {
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_MYSQL)
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataProcessor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateReactive
+    implementation mnReactor.micronaut.reactor
+    implementation mnValidation.validation
+    implementation mnSerde.micronaut.serde.api
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.vertx.mysql.client
+    // Testcontainers wait function needs the driver
+    runtimeOnly mnSql.mysql.connector.j
+}

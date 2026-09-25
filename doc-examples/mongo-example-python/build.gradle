@@ -1,0 +1,33 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataDocumentProcessor
+
+    implementation(mnRxjava3.micronaut.rxjava3)
+    implementation mnReactor.micronaut.reactor
+
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
+
+    runtimeOnly mnLogging.logback.classic
+}

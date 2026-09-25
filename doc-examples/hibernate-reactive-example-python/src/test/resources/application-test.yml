@@ -1,0 +1,7 @@
+jpa:
+  default:
+    properties:
+      hibernate:
+        connection:
+          db-type: "mysql"
+        show_sql: true

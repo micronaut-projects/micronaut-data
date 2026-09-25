@@ -32,4 +32,6 @@ dependencies {
     runtimeOnly mnLogging.logback.classic
 
     testResourcesService mnSerde.micronaut.serde.jackson
+    // The Oracle container checks its readiness over JDBC
+    testResourcesService mnSql.ojdbc11
 }

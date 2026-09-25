@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,13 +38,13 @@ public final class InPredicate<T> extends AbstractPredicate implements CriteriaB
 
     private final Expression<T> expression;
     private final List<Expression<?>> values;
-    private final CriteriaBuilder criteriaBuilder;
+    private final @Nullable CriteriaBuilder criteriaBuilder;
 
     public InPredicate(Expression<T> expression, CriteriaBuilder criteriaBuilder) {
         this(expression, Collections.emptyList(), criteriaBuilder);
     }
 
-    public InPredicate(Expression<T> expression, Collection<Expression<?>> values, CriteriaBuilder criteriaBuilder) {
+    public InPredicate(Expression<T> expression, Collection<Expression<?>> values, @Nullable CriteriaBuilder criteriaBuilder) {
         this.expression = expression;
         this.values = new ArrayList<>(values);
         this.criteriaBuilder = criteriaBuilder;
@@ -60,6 +61,10 @@ public final class InPredicate<T> extends AbstractPredicate implements CriteriaB
 
     @Override
     public InPredicate<T> value(T value) {
+        if (criteriaBuilder == null) {
+            // The builder decides how a value is bound, a runtime value must not be inlined into the query
+            throw new IllegalStateException("IN predicate created without a criteria builder, add the value as an expression");
+        }
         values.add(criteriaBuilder.literal(value));
         return this;
     }

@@ -43,7 +43,17 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
             @Override
              <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new)
+                RuntimeEntityRegistry entityRegistry = this
+                // Properties are compared by identity, so every lookup for a type has to return
+                // the same entity instance, including entities reached through an association.
+                return map.computeIfAbsent(type, { Class entityType ->
+                    new RuntimePersistentEntity<Object>(entityType) {
+                        @Override
+                        protected RuntimePersistentEntity<Object> getEntity(Class<Object> nestedType) {
+                            return entityRegistry.getEntity(nestedType)
+                        }
+                    }
+                })
             }
 
             @Override
@@ -96,7 +106,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ INNER JOIN "author" book_book_author_ ON book_book_."author_id"=book_book_author_."id" WHERE (book_book_author_."id" = book_book_author_."id"))) ORDER BY book_."title" ASC'''
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."author_id" = book_book_."author_id"))) ORDER BY book_."title" ASC'''
     }
 
     void "test subquery IN with JOIN"() {
@@ -397,4 +407,126 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             "amount"  | BigDecimal.valueOf(100) | "le"                   | '(NOT(test_."amount" <= ?))'
     }
 
+    void "test criteria navigation across MANY_TO_ONE association creates an implicit join for a non-FK leaf"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "navigating to a property that lives on the associated table using chained get()"
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("name"), "testValue"))
+            String query = getSqlQuery(criteriaQuery)
+
+        then: "the join only filters, the associated columns are not fetched"
+            query == 'SELECT other_entity_."id",other_entity_."name",other_entity_."enabled2",other_entity_."enabled",other_entity_."age",other_entity_."amount",other_entity_."budget",other_entity_."test_id",other_entity_."simple_id" FROM "other_entity" other_entity_ INNER JOIN "test" other_entity_test_ ON other_entity_."test_id"=other_entity_test_."id" WHERE (other_entity_test_."name" = ?)'
+
+        when: "navigating using the static metamodel"
+            criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            otherEntityRoot = criteriaQuery.from(OtherEntity)
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get(OtherEntity_.test).get(Test_.name), "testValue"))
+            String query2 = getSqlQuery(criteriaQuery)
+
+        then:
+            query2 == query
+    }
+
+    void "test criteria navigation to the association's own identity does not require a join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(OtherEntity)
+            def otherEntityRoot = criteriaQuery.from(OtherEntity)
+
+        when: "navigating to the association's id, which the owning table already stores as a FK column"
+            criteriaQuery.where(criteriaBuilder.equal(otherEntityRoot.get("test").get("id"), 1L))
+            String query = getSqlQuery(criteriaQuery)
+
+        then: "the FK column is used directly instead of joining to the associated table"
+            query == 'SELECT other_entity_."id",other_entity_."name",other_entity_."enabled2",other_entity_."enabled",other_entity_."age",other_entity_."amount",other_entity_."budget",other_entity_."test_id",other_entity_."simple_id" FROM "other_entity" other_entity_ WHERE (other_entity_."test_id" = ?)'
+    }
+
+    void "test criteria navigation through an identity-less association joins the nested association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+
+        when: "the leaf lives on an association reached through an identity-less association"
+            holderRoot.get("wrapper").get("target").get("name")
+
+        then: "the join follows the whole path, not a same-named association of the root"
+            joinPaths(holderRoot) == ["wrapper", "wrapper.target"]
+    }
+
+    void "test criteria navigation through an identity-less association from a join joins relative to that join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+
+        when:
+            holderRoot.join("parent").get("wrapper").get("target").get("name")
+
+        then:
+            joinPaths(holderRoot) == ["parent", "parent.wrapper", "parent.wrapper.target"]
+    }
+
+    void "test the SQL builder rejects a join through an identity-less association"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+            criteriaQuery.where(criteriaBuilder.equal(holderRoot.get("wrapper").get("target").get("name"), "v"))
+
+        when:
+            getSqlQuery(criteriaQuery)
+
+        then:
+            def e = thrown(IllegalArgumentException)
+            e.message.contains("Wrapper] defines no ID. Cannot join.")
+    }
+
+    void "test criteria navigation through an identity-less association to a stored id does not require a join"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Holder)
+            def holderRoot = criteriaQuery.from(Holder)
+            criteriaQuery.where(criteriaBuilder.equal(holderRoot.get("wrapper").get("target").get("id"), 1L))
+
+        expect:
+            getSqlQuery(criteriaQuery) == 'SELECT holder_."id",holder_."target_id",holder_."wrapper_label",holder_."wrapper_target_id",holder_."parent_id" FROM "holder" holder_ WHERE (holder_."wrapper_target_id" = ?)'
+    }
+
+    private static List<String> joinPaths(PersistentEntityFrom<?, ?> from, String prefix = "") {
+        from.persistentJoins.collectMany { join ->
+            String path = prefix + join.property.name
+            [path] + joinPaths(join, path + ".")
+        }
+    }
+
+    void "test IN on a non-property expression binds the values as parameters"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Test)
+            def testRoot = criteriaQuery.from(Test)
+
+        when: "the IN list hangs off an expression that is not a property path"
+            criteriaQuery.where(criteriaBuilder.upper(testRoot.get("name")).in(criteriaBuilder.literal("A"), criteriaBuilder.literal("B")))
+            String query = getSqlQuery(criteriaQuery)
+
+        then: "runtime values are never inlined into the query"
+            query.endsWith('WHERE (UPPER(test_."name") IN (?,?))')
+
+        when: "the values are added to the builder IN predicate"
+            criteriaQuery = criteriaBuilder.createQuery(Test)
+            testRoot = criteriaQuery.from(Test)
+            criteriaQuery.where(criteriaBuilder.in(criteriaBuilder.upper(testRoot.get("name"))).value("A").value("B"))
+            query = getSqlQuery(criteriaQuery)
+
+        then:
+            query.endsWith('WHERE (UPPER(test_."name") IN (?,?))')
+    }
+
+    void "test IN with plain values on a non-property expression is rejected"() {
+        given:
+            def testRoot = criteriaBuilder.createQuery(Test).from(Test)
+
+        when: "a plain value cannot be bound without the builder"
+            criteriaBuilder.upper(testRoot.get("name")).in("A", "B")
+
+        then:
+            thrown(IllegalStateException)
+    }
 }

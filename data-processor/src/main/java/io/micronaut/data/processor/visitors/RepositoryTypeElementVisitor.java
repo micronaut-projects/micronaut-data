@@ -714,12 +714,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (returnTypeRole != null) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE, returnTypeRole);
             }
+            if (methodInfo.isOptionalEmbeddedProjection()) {
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION, true);
+            }
 
             addQueryDefinition(methodMatchContext,
                 annotationBuilder,
                 methodInfo.getOperationType(),
                 queryResult,
                 methodInfo.getResultType(),
+                methodInfo.getResultDataType(),
                 parameterBinding,
                 methodInfo.isEncodeEntityParameters(),
                 methodInfo.isOptimisticLock());
@@ -744,6 +748,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     queryDefinition.operationType(),
                     additionalQueryResult,
                     queryDefinition.resultType(),
+                    null,
                     additionalParameterBinding,
                     methodInfo.isEncodeEntityParameters(),
                     queryDefinition.optimisticLock());
@@ -775,6 +780,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     DataMethod.OperationType.COUNT,
                     countQuery,
                     methodMatchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(),
+                    null,
                     countParametersBindings,
                     methodInfo.isEncodeEntityParameters(),
                     false);
@@ -791,6 +797,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     QueryResult queryResult,
                                     @Nullable
                                     TypedElement resultType,
+                                    @Nullable
+                                    DataType resultDataType,
                                     List<QueryParameterBinding> parameterBinding,
                                     boolean encodeEntityParameters,
                                     boolean optimisticLock) {
@@ -812,7 +820,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(stringType));
             ClassElement type = resultType.getType();
             if (!TypeUtils.isVoid(type)) {
-                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE,
+                    resultDataType == null ? TypeUtils.resolveDataType(type, dataTypes) : resultDataType);
             }
         }
 

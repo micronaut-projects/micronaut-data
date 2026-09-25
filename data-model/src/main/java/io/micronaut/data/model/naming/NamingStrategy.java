@@ -26,10 +26,12 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -154,9 +156,12 @@ public interface NamingStrategy {
         }
         StringBuilder sb = new StringBuilder();
         Association foreignAssociation = null;
-        for (Association association : associations) {
+        int foreignAssociationIndex = -1;
+        for (int i = 0; i < associations.size(); i++) {
+            Association association = associations.get(i);
             if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
                 foreignAssociation = association;
+                foreignAssociationIndex = i;
             }
             final String originalAssocName = association.getName();
             String assocName = association.getKind() == Relation.Kind.EMBEDDED
@@ -175,6 +180,10 @@ public interface NamingStrategy {
             }
         }
         if (foreignAssociation != null) {
+            String joinColumnName = findJoinColumnName(foreignAssociation, associations.subList(foreignAssociationIndex + 1, associations.size()), property);
+            if (joinColumnName != null) {
+                return joinColumnName;
+            }
             PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
             if (associatedEntity.equals(property.getOwner()) && associatedEntity.hasIdentity() && associatedEntity.getIdentity().equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
@@ -198,6 +207,38 @@ public interface NamingStrategy {
             sb.append(property.getName());
         }
         return mappedName(sb.toString());
+    }
+
+    /**
+     * Finds the owner side column name of an explicit {@code @JoinColumn} that references the given associated property.
+     *
+     * @param association The association declaring the join columns
+     * @param associatedPath The embedded path of the property inside the associated entity
+     * @param property The associated property
+     * @return The join column name or null if no join column references the property
+     */
+    private @Nullable String findJoinColumnName(Association association, List<Association> associatedPath, PersistentProperty property) {
+        AnnotationValue<JoinColumns> joinColumns = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        if (joinColumns == null) {
+            return null;
+        }
+        String referencedColumnName = null;
+        for (AnnotationValue<?> joinColumn : joinColumns.getAnnotations(AnnotationMetadata.VALUE_MEMBER)) {
+            String name = joinColumn.stringValue("name").orElse(null);
+            String referencedColumn = joinColumn.stringValue("referencedColumnName").orElse(null);
+            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(referencedColumn)) {
+                continue;
+            }
+            if (referencedColumnName == null) {
+                // The referenced column belongs to the associated entity, resolve it using its effective naming strategy
+                NamingStrategy associatedNamingStrategy = association.getAssociatedEntity().getNamingStrategy();
+                referencedColumnName = associatedNamingStrategy.mappedName(associatedPath, property);
+            }
+            if (referencedColumn.equals(referencedColumnName)) {
+                return name;
+            }
+        }
+        return null;
     }
 
     default String mappedJoinTableColumn(PersistentEntity associated, List<Association> associations, PersistentProperty property) {

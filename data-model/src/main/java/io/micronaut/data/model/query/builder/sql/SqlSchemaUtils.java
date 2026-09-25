@@ -246,8 +246,13 @@ public final class SqlSchemaUtils {
             }
         }
 
+        Set<String> identityColumns = SqlQueryBuilderUtils.getIdentityColumns(entity, namingStrategy);
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
+            if (SqlQueryBuilderUtils.isSharedIdentityColumn(identityColumns, associations, columnName)) {
+                // The column is already defined by the identity
+                return;
+            }
             SqlColumnMapping column = getColumnDefinition(sqlColumnDefinitionProviders, property, columnName, tableName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations), dialect);
             columns.add(column);
