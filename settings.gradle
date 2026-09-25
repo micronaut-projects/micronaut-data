@@ -171,6 +171,8 @@ include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'
 
 include 'jakarta-data-tck:support'
+// the -tck suffix keeps it out of the BOM
+project(':jakarta-data-tck:support').name = 'jakarta-data-support-tck'
 include 'jakarta-data-tck:hibernate'
 include 'jakarta-data-tck:jdbc'
 include 'jakarta-data-tck:mongodb'

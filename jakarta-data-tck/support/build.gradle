@@ -1,7 +1,8 @@
 plugins {
-    id "java-library"
     id "io.micronaut.build.internal.data-base"
     id "io.micronaut.build.internal.data-dependencies"
+    id "java-library"
+    id "io.micronaut.build.internal.data-tck-module"
 }
 
 dependencies {
@@ -20,14 +21,27 @@ dependencies {
     api libs.managed.jakarta.data.stateful
 
     api mnLogging.slf4j.jul.to.slf4j
-    api("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    api libs.jakarta.servlet.api
     api mnSql.jakarta.persistence.api
-
-    runtimeOnly(mnLogging.logback.classic)
 
     api mnTest.junit.jupiter.api
     api libs.junit.platform.suite.engine
 
     compileOnly projects.micronautDataJdbc
     compileOnly projects.micronautDataMongodb
+}
+
+dependencies {
+    constraints {
+        api(libs.commons.lang3) {
+            because("GHSA-j288-q9x7-2f5v, via jakarta.data-tck -> sigtest-maven-plugin -> maven-core")
+        }
+    }
+}
+
+spotless {
+    java {
+        // derived from the Jakarta Data TCK, keeps its Eclipse Foundation (EPL-2.0) header
+        targetExclude("src/main/java/io/micronaut/data/jakarta/tck/TCKArchiveProcessor.java")
+    }
 }

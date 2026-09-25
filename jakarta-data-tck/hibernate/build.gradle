@@ -8,7 +8,7 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
 
-    testImplementation projects.micronautJakartaDataTck.micronautSupport
+    testImplementation projects.micronautJakartaDataTck.micronautJakartaDataSupportTck
     testImplementation projects.micronautDataHibernateJpa
     testImplementation projects.micronautDataProcessor
     testImplementation mnValidation.micronaut.validation.processor
