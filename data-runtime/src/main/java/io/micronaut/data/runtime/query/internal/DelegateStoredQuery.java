@@ -116,6 +116,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default boolean isOptionalEmbeddedProjection() {
+        return getStoredQueryDelegate().isOptionalEmbeddedProjection();
+    }
+
+    @Override
     default boolean isCount() {
         return getStoredQueryDelegate().isCount();
     }

@@ -39,10 +39,12 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -122,6 +124,41 @@ final class SqlQueryBuilderUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Resolves the columns of the entity identity.
+     *
+     * @param entity The entity
+     * @param namingStrategy The naming strategy
+     * @return The identity column names
+     */
+    static Set<String> getIdentityColumns(PersistentEntity entity, NamingStrategy namingStrategy) {
+        Set<String> identityColumns = new HashSet<>();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity,
+                (associations, property) -> identityColumns.add(namingStrategy.mappedName(associations, property)));
+        }
+        return identityColumns;
+    }
+
+    /**
+     * Checks whether the association column is shared with the entity identity.
+     * For example, a one-to-one relation that uses the entity primary key as the join column.
+     * Such column is written only through the identity.
+     *
+     * @param identityColumns The entity identity columns, see {@link #getIdentityColumns(PersistentEntity, NamingStrategy)}
+     * @param associations The associations path
+     * @param columnName The column name
+     * @return true if the column is an association column shared with the identity
+     */
+    static boolean isSharedIdentityColumn(Set<String> identityColumns, List<Association> associations, String columnName) {
+        if (isNotForeign(associations) || !identityColumns.contains(columnName)) {
+            return false;
+        }
+        // The identity path itself can contain an association (for example an embedded id with a many-to-one)
+        Association root = associations.get(0);
+        return !root.getOwner().getIdentityProperties().contains(root);
     }
 
     /**

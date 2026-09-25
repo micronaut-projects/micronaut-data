@@ -9,7 +9,7 @@ plugins {
 
 dependencies {
 
-    testImplementation projects.micronautJakartaDataTck.micronautSupport
+    testImplementation projects.micronautJakartaDataTck.micronautJakartaDataSupportTck
     testImplementation projects.micronautDataMongodb
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation mnValidation.micronaut.validation.processor

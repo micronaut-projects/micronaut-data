@@ -43,6 +43,7 @@ import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
@@ -60,6 +61,7 @@ import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.entities.Vehicle
+import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -333,6 +335,42 @@ interface MyRepository {
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
+    }
+
+    @Unroll
+    void "test #dialect embedded geometry projection applies read conversion"() {
+        given:
+        def criteriaQuery = builder.createQuery(Location)
+        def root = criteriaQuery.from(School)
+        criteriaQuery.select(root.get("location"))
+
+        when:
+        def encoded = criteriaQuery.build(new SqlQueryBuilder(dialect))
+
+        then:
+        encoded.query.contains(expectedProjection)
+
+        where:
+        dialect            || expectedProjection
+        Dialect.ORACLE     || 'SDO_UTIL.TO_GEOJSON(school_."POINT") AS "POINT"'
+        Dialect.MYSQL      || 'ST_AsGeoJSON(school_.`point`) AS `point`'
+        Dialect.H2         || 'ST_AsGeoJSON(school_.`point`) AS `point`'
+        Dialect.POSTGRES   || 'ST_AsGeoJSON(school_."point") AS "point"'
+        Dialect.SQL_SERVER || 'school_.[point].STAsText() AS [point]'
+    }
+
+    void "test aliased embedded projection with multiple columns throws"() {
+        given:
+        def criteriaQuery = builder.createQuery(Address)
+        def root = criteriaQuery.from(Restaurant)
+        criteriaQuery.select(root.get("hqAddress").alias("address_alias"))
+
+        when:
+        criteriaQuery.build(new SqlQueryBuilder(Dialect.H2))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("Cannot apply a column alias: address_alias with expanded property:")
     }
 
     void "test h2 crud"() {
@@ -795,6 +833,81 @@ interface MyRepository {
         then:
         firstEntity.getAliasName().hashCode() == secondEntity.getAliasName().hashCode()
         firstQuery != secondQuery
+    }
+
+    @Unroll
+    void "test encode native order by identifier #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        query == " ORDER BY ${property} ASC"
+
+        where:
+        property << ['name', 'person_name', 'person.name', 'schema.table.column']
+    }
+
+    @Unroll
+    void "test non-native order by rejects non-existent property #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy('', entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Cannot sort on non-existent property path: ${property}"
+
+        where:
+        property << ['notAProperty', 'person.notAProperty']
+    }
+
+    @Unroll
+    void "test reject unsafe native order by property #property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(Sort.Order.asc(property))
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Invalid native query sort property: ${property}"
+
+        where:
+        property << [
+                '(SELECT password FROM users)',
+                'name DESC',
+                'name, id',
+                'name; DELETE FROM person',
+                'name--',
+                'name/*comment*/',
+                'LOWER(name)',
+                'person..name',
+                '',
+                '1name',
+                "name\n"
+        ]
+    }
+
+    void "test reject unsafe case-insensitive native order by property"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        Sort sort = Sort.of(new Sort.Order('LOWER(name)', Sort.Order.Direction.ASC, true))
+
+        when:
+        new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, true, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Invalid native query sort property: LOWER(name)'
     }
 
     void "test encode insert statement"() {

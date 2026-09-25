@@ -16,10 +16,25 @@
 package io.micronaut.data.r2dbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Address
+import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
+
+    void "test nullable embedded projection"() {
+        given:
+        def repository = context.getBean(H2RestaurantRepository)
+        def restaurant = repository.save(new Restaurant("No HQ", new Address("Main", "123")))
+
+        expect:
+        repository.findAddressById(restaurant.id).street == "Main"
+        repository.findHqAddressById(restaurant.id).isEmpty()
+
+        cleanup:
+        repository.deleteAll()
+    }
 
     @Memoized
     @Override

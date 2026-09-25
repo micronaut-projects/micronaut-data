@@ -17,7 +17,9 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
@@ -28,10 +30,13 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Bindable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
@@ -136,6 +141,40 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
             throw new IllegalStateException("An association: " + Arrays.toString(propertyPath.getArrayPath()) + " needs to be joined before it can be accessed");
         }
         throw new IllegalArgumentException("Property path doesn't support get operation: " + Arrays.toString(propertyPath.getArrayPath()));
+    }
+
+    /**
+     * Resolves an attribute of the association this path points to. An attribute the owning side stores,
+     * such as the association's id, is read without a join; any other attribute joins the association.
+     *
+     * @param from          The from this path was created on
+     * @param association   The association this path points to
+     * @param attributeName The attribute name
+     * @param pathFactory   Creates the path to an attribute the owning side stores
+     * @param <Y>           The attribute type
+     * @return The attribute path
+     */
+    protected final <Y> PersistentPropertyPath<Y> getThroughAssociation(AbstractPersistentEntityFrom<?, ?> from,
+                                                                      Association association,
+                                                                      String attributeName,
+                                                                      BiFunction<List<Association>, PersistentProperty, PersistentPropertyPath<Y>> pathFactory) {
+        List<Association> associations = getAssociations();
+        PersistentProperty target = association.getAssociatedEntity().getPropertyByNameIgnoreCase(attributeName);
+        if (target != null && PersistentEntityUtils.isAccessibleWithoutJoin(association, target)) {
+            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
+            newAssociations.addAll(associations);
+            newAssociations.add(association);
+            return pathFactory.apply(newAssociations, target);
+        }
+        // The associations start with the path of the from, the join has to be relative to it
+        int fromPathSize = from instanceof PersistentAssociationPath<?, ?> fromAssociation ? fromAssociation.asPath().size() : 0;
+        StringJoiner joinPath = new StringJoiner(".");
+        for (Association pathAssociation : associations.subList(Math.min(fromPathSize, associations.size()), associations.size())) {
+            joinPath.add(pathAssociation.getName());
+        }
+        joinPath.add(association.getName());
+        PersistentAssociationPath<?, ?> join = from.join(joinPath.toString());
+        return join.get(attributeName);
     }
 
     @Override

@@ -1,5 +1,5 @@
 [versions]
-micronaut = "5.2.5"
+micronaut = "5.2.6"
 micronaut-platform = "5.1.5"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.2"
@@ -8,12 +8,12 @@ micronaut-testresources = "4.3.0"
 micronaut-azure = "6.1.0"
 micronaut-reactor = "4.3.0"
 micronaut-rxjava3 = "4.1.0"
-micronaut-r2dbc = "7.1.0"
+micronaut-r2dbc = "7.2.0"
 micronaut-sql = "7.2.0"
-micronaut-serde = "3.2.1"
+micronaut-serde = "3.2.2"
 micronaut-spring = "6.1.0"
 micronaut-test = "5.1.1"
-micronaut-mongo = "6.1.0"
+micronaut-mongo = "6.2.0"
 micronaut-kotlin = "5.1.0"
 micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.2.0"
@@ -26,6 +26,7 @@ groovy = "5.1.2"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M4"
+jakarta-servlet-api = "6.1.0"
 managed-pg-vector = "0.1.6"
 
 spring-data = "4.1.1"
@@ -54,6 +55,10 @@ error_prone_core = "2.50.0"
 groovy_yaml = "5.1.2"
 
 antlr = "4.13.2"
+
+jackson-override = "2.18.10"
+micrometer-override = "1.15.12"
+commons-lang3 = "3.18.0"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -101,6 +106,9 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 # AZURE COSMOS
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+jackson-core-override = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-override" }
+jackson-databind-override = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-override" }
+micrometer-core-override = { module = "io.micrometer:micrometer-core", version.ref = "micrometer-override" }
 
 # Antlr
 
@@ -115,6 +123,7 @@ groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 
 jakarta-data-tck = { module = 'jakarta.data:jakarta.data-tck', version.ref = "managed-jakarta-data" }
+jakarta-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = "jakarta-servlet-api" }
 junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
@@ -122,6 +131,8 @@ error-prone-core = { module = "com.google.errorprone:error_prone_core", version.
 groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_yaml" }
 
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
+
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 
 # Benchmark
 

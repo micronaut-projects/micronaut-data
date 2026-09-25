@@ -17,7 +17,10 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
@@ -37,6 +40,7 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPro
 
     private final Path<?> parentPath;
     private final RuntimePersistentProperty<I> runtimePersistentProperty;
+    private final CriteriaBuilder criteriaBuilder;
 
     RuntimePersistentPropertyPathImpl(Path<?> parentPath,
                                              List<Association> path,
@@ -45,11 +49,22 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPro
         super(persistentProperty, path, criteriaBuilder);
         this.parentPath = parentPath;
         this.runtimePersistentProperty = persistentProperty;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
     public Path<?> getParentPath() {
         return parentPath;
+    }
+
+    @Override
+    public <Y> PersistentPropertyPath<Y> get(String attributeName) {
+        if (runtimePersistentProperty instanceof RuntimeAssociation<?> association
+            && parentPath instanceof AbstractPersistentEntityFrom<?, ?> from) {
+            return getThroughAssociation(from, association, attributeName,
+                (associations, target) -> new RuntimePersistentPropertyPathImpl<>(parentPath, associations, (RuntimePersistentProperty) target, criteriaBuilder));
+        }
+        return super.get(attributeName);
     }
 
     @Override

@@ -79,4 +79,19 @@ abstract class AbstractJdbcMultitenancySpec extends AbstractMultitenancySpec {
         }
     }
 
+    @Override
+    protected void assertNoInjectedTable(BeanContext beanContext, String tableName) {
+        DataSource dataSource = beanContext.getBean(DataSource)
+        if (dataSource instanceof DelegatingDataSource) {
+            dataSource = ((DelegatingDataSource) dataSource).targetDataSource
+        }
+        dataSource.connection.withCloseable { connection ->
+            connection.metaData.getTables(null, null, null, null).withCloseable { tables ->
+                while (tables.next()) {
+                    assert !tables.getString('TABLE_NAME').equalsIgnoreCase(tableName)
+                }
+            }
+        }
+    }
+
 }

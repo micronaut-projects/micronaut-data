@@ -12,6 +12,15 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
+tasks.withType(GroovyCompile).configureEach {
+    // Larger examples with annotation processing can exceed Gradle's 512 MiB worker default.
+    groovyOptions.forkOptions.memoryMaximumSize = '1g'
+    // Gradle reuses any compiler daemon whose heap and JVM args cover the request, so without a marker
+    // the examples land in the module daemons that already compiled every module's Groovy sources and
+    // run out of heap. The marker gives the examples their own daemon.
+    groovyOptions.forkOptions.jvmArgs.add('-Dmicronaut.data.example.compiler=true')
+}
+
 tasks.withType(Javadoc).configureEach {
     // Disable doclint warnings for example projects to avoid "no comment" noise in generated Javadoc
     options.addBooleanOption('Xdoclint:none', true)
