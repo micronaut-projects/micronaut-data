@@ -7,10 +7,8 @@ plugins {
 
 micronautBuild {
     python {
-        // Hibernate reads the JPA annotations of the entities reflectively from the generated classes.
-        // The repositories are left out: Micronaut 5.2.5 copies their internal @DataMethod annotations
-        // onto the generated source, which does not compile (fixed in 5.2.6, micronaut-core#13401)
-        compilerArgs.add("-Amicronaut.introspection.allowReflection=example.Book")
+        // Hibernate reads the JPA annotations of the entities reflectively from the generated classes
+        compilerArgs.add("-Amicronaut.introspection.allowReflection=example.*")
     }
 }
 
