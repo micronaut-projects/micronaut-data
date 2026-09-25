@@ -38,12 +38,13 @@ import java.util.function.LongSupplier;
  * <p>A subscription is logical and long-lived, while its physical {@link DatabaseChangeRegistration}
  * is finite-lived and replaceable. During overlapping renewal, the subscription can temporarily own
  * both the current and replacement registrations. After-expiration renewal locally unregisters the
- * current registration at its logical expiration deadline before creating a replacement. Oracle
- * Database uses a later timeout as fallback cleanup if local deregistration cannot run.</p>
+ * current registration at its logical expiration deadline before creating a replacement. In this
+ * mode, the Oracle Database registration timeout includes a grace period as fallback cleanup if
+ * local deregistration cannot complete.</p>
  *
  * <p>All state transitions are synchronized on this subscription. Physical registration ownership
  * is guarded separately so Oracle callbacks, renewal work, and shutdown cleanup can safely compete
- * to release a registration while only one path performs the physical deregistration.</p>
+ * to claim a tracked registration for deregistration, while only one path can make that attempt.</p>
  */
 @SuppressWarnings("ReferenceEquality")
 final class OracleChangeNotificationSubscription {
@@ -166,9 +167,11 @@ final class OracleChangeNotificationSubscription {
      * reported by Oracle Database.
      *
      * <p>The deregistered registration is removed from local tracking. If it is the current
-     * registration and Oracle Database reports {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT},
-     * a replacement registration is scheduled. Other deregistration reasons close the subscription
-     * because the registration is no longer available for delivery.</p>
+     * registration, a {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT} normally schedules a
+     * replacement, while another reason closes the subscription. If an in-progress renewal already
+     * handles the deregistration, the callback does not start another renewal or close the
+     * subscription. Deregistration events for a registration that is no longer current do not change
+     * the subscription state.</p>
      *
      * @param registration the Oracle Database registration that was deregistered
      * @param additionalEventType the additional reason reported for the deregistration
@@ -214,6 +217,15 @@ final class OracleChangeNotificationSubscription {
             || renewalPolicy.mode() == OracleChangeNotification.RenewalMode.AFTER_EXPIRATION);
     }
 
+    /**
+     * Handles Oracle Database deregistration of the query associated with a registration.
+     *
+     * <p>If the registration is current, its renewal is canceled and the subscription is closed.
+     * The method then attempts to unregister the registration if it is still locally owned. A
+     * runtime cleanup failure is logged and does not propagate to the caller.</p>
+     *
+     * @param registration the registration whose query was deregistered
+     */
     void handleQueryDeregistered(DatabaseChangeRegistration registration) {
         LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
             registration.getRegId(), dataSourceName, methodDescription);
@@ -228,10 +240,9 @@ final class OracleChangeNotificationSubscription {
 
     synchronized void stopRenewal() {
         if (state != State.CLOSED) {
-            LOG.trace("Stopping DCN renewal for datasource [{}] and listener method [{}]",
-                dataSourceName, methodDescription);
+            LOG.trace("Stopping DCN renewal for datasource [{}] and listener method [{}]", dataSourceName, methodDescription);
+            state = State.CLOSED;
         }
-        state = State.CLOSED;
         cancelRenewal();
     }
 
@@ -274,6 +285,16 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Makes a newly created lease current and schedules its next renewal.
+     *
+     * <p>Activation is rejected if this subscription has closed, shutdown has started, or the
+     * registration is no longer locally tracked. The check and state update are synchronized so a
+     * concurrent shutdown or callback cannot reactivate a closed subscription.</p>
+     *
+     * @param registrationLease the lease to activate
+     * @return {@code true} if the lease became current; {@code false} if it is no longer eligible
+     */
     private synchronized boolean activateLease(OracleRegistrationLease registrationLease) {
         if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
             return false;
@@ -286,6 +307,16 @@ final class OracleChangeNotificationSubscription {
         return true;
     }
 
+    /**
+     * Schedules renewal relative to the lease's logical expiration deadline.
+     *
+     * <p>Overlapping renewal is scheduled {@code leadTimeSeconds} before expiration; after-expiration
+     * renewal is scheduled at expiration. The scheduled task submits the actual renewal work to the
+     * blocking executor.</p>
+     *
+     * @param registrationLease the lease whose expiration determines the renewal time
+     * @return the scheduled renewal task, which can be canceled if the lease is replaced or closed
+     */
     private ScheduledFuture<?> scheduleRenewal(OracleRegistrationLease registrationLease) {
         long renewalDeadlineNanos = registrationLease.logicalExpirationNanos();
         if (renewalPolicy.mode() == OracleChangeNotification.RenewalMode.OVERLAPPING) {
@@ -301,6 +332,18 @@ final class OracleChangeNotificationSubscription {
             () -> submitRenewal(State.ACTIVE, registrationLease, RenewalTrigger.NORMAL));
     }
 
+    /**
+     * Submits renewal work to the blocking executor so registration operations do not run on the
+     * scheduler or notification thread.
+     *
+     * <p>If the executor rejects the task, the rejection is handled using the same retry path as an
+     * unsuccessful renewal, provided the expected subscription state is still current.</p>
+     *
+     * @param expectedState the subscription state expected when the renewal starts
+     * @param expectedLease the lease expected to remain current, or {@code null} when renewal follows
+     *                      a timeout deregistration and no lease is current
+     * @param trigger the reason for the renewal attempt
+     */
     private void submitRenewal(State expectedState,
                                @Nullable OracleRegistrationLease expectedLease,
                                RenewalTrigger trigger) {
@@ -311,6 +354,18 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Runs a submitted renewal if shutdown has not started and the expected state is still current.
+     *
+     * <p>The task tracker prevents renewal work from starting after graceful shutdown begins and
+     * counts accepted work so shutdown can wait for it to finish. Stale tasks are ignored. An
+     * accepted task is always reported complete, whether it proceeds with renewal or not.</p>
+     *
+     * @param expectedState the subscription state expected when this task was submitted
+     * @param expectedLease the lease expected to remain current, or {@code null} after timeout
+     *                      deregistration
+     * @param trigger the reason for the renewal attempt
+     */
     private void executeRenewal(State expectedState,
                                 @Nullable OracleRegistrationLease expectedLease,
                                 RenewalTrigger trigger) {
@@ -333,6 +388,17 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Atomically verifies the expected subscription state and claims the renewal attempt.
+     *
+     * <p>Claiming the attempt changes the state to {@link State#RENEWING} and clears the completed
+     * scheduled task reference. The lease comparison prevents a stale task from renewing a lease
+     * that has since been replaced.</p>
+     *
+     * @param expectedState the state the submitting task observed
+     * @param expectedLease the expected current lease, or {@code null} when no lease is current
+     * @return {@code true} if this task claimed the renewal; {@code false} if its state is stale
+     */
     private synchronized boolean markRenewing(State expectedState, @Nullable OracleRegistrationLease expectedLease) {
         if (state != expectedState || currentLease != expectedLease) {
             return false;
@@ -342,6 +408,16 @@ final class OracleChangeNotificationSubscription {
         return true;
     }
 
+    /**
+     * Renews the subscription according to its configured policy and the trigger.
+     *
+     * <p>Server-timeout fallback renewal bypasses the normal unregister step. Other attempts use
+     * the configured overlapping or after-expiration strategy. Runtime failures schedule a retry
+     * when the subscription is still eligible and are logged; {@link Error} instances propagate.</p>
+     *
+     * @param previousLease the lease being replaced, or {@code null} if Oracle already deregistered it
+     * @param trigger the reason for this renewal attempt
+     */
     private void renew(@Nullable OracleRegistrationLease previousLease, RenewalTrigger trigger) {
         try {
             if (trigger == RenewalTrigger.SERVER_TIMEOUT_FALLBACK) {
@@ -359,6 +435,15 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Activates a replacement before attempting to unregister the previous lease.
+     *
+     * <p>This ordering minimizes delivery gaps by activating the replacement before requesting
+     * cleanup of the previous registration. Cleanup is best-effort; a failure is logged without
+     * discarding the replacement.</p>
+     *
+     * @param previousLease the lease being replaced, or {@code null} if no previous lease remains
+     */
     private void renewOverlapping(@Nullable OracleRegistrationLease previousLease) {
         OracleRegistrationLease replacementLease = createAndActivateReplacement(previousLease);
         if (replacementLease != null && previousLease != null) {
@@ -369,6 +454,16 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Unregisters the previous lease at its logical expiration before creating a replacement.
+     *
+     * <p>If local unregistration fails while the subscription remains eligible for renewal,
+     * replacement is deferred until the server-timeout fallback. If Oracle Database has already
+     * deregistered the lease, it is no longer tracked and replacement can proceed immediately.</p>
+     *
+     * @param previousLease the expired lease, or {@code null} if Oracle Database already
+     *                      deregistered it
+     */
     private void renewAfterExpiration(@Nullable OracleRegistrationLease previousLease) {
         if (previousLease != null) {
             if (!unregisterAtLogicalExpiration(previousLease)) {
@@ -380,10 +475,16 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Creates the replacement after the server-side timeout grace period without attempting to
-     * unregister the previous registration again. This path is used only when local deregistration
-     * at the logical expiration failed and the registration was therefore already removed from
-     * this subscription's ownership tracking.
+     * Creates a replacement after the server-side timeout grace period without retrying local
+     * unregistration of the previous lease.
+     *
+     * <p>This fallback runs after local unregistration failed at logical expiration. The old
+     * registration has already been removed from this subscription's ownership tracking, and the
+     * Oracle Database timeout provides the remaining cleanup, so this method clears the old current
+     * lease and creates the replacement directly.</p>
+     *
+     * @param previousLease the lease whose unregister could not be confirmed, or {@code null} if
+     *                      there is no previous lease
      */
     private void renewAfterServerTimeout(@Nullable OracleRegistrationLease previousLease) {
         if (previousLease != null) {
