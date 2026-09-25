@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
@@ -188,7 +189,6 @@ final class OracleChangeNotificationSubscription {
     private boolean renewalAlreadyHandlesDeregistration(
         DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         return state == State.RENEWING
-            && renewalPolicy.renewable()
             && (additionalEventType == DatabaseChangeEvent.AdditionalEventType.TIMEOUT
             || renewalPolicy.mode() == OracleChangeNotification.RenewalMode.AFTER_EXPIRATION);
     }
@@ -267,32 +267,55 @@ final class OracleChangeNotificationSubscription {
         return true;
     }
 
+    private ScheduledFuture<?> scheduleRenewal(OracleRegistrationLease registrationLease) {
+        long renewalDeadlineNanos = registrationLease.logicalExpirationNanos();
+        if (renewalPolicy.mode() == OracleChangeNotification.RenewalMode.OVERLAPPING) {
+            renewalDeadlineNanos -= TimeUnit.SECONDS.toNanos(renewalPolicy.leadTimeSeconds());
+        }
+        long delayNanos = Math.max(0, renewalDeadlineNanos - nanoTimeSupplier.getAsLong());
+        LOG.trace("Scheduled DCN renewal for registration [{}] after [{}] nanoseconds for datasource [{}], "
+                + "listener method [{}], and renewal mode [{}]",
+            registrationLease.registration().getRegId(), delayNanos, dataSourceName,
+            methodDescription, renewalPolicy.mode());
+        return taskScheduler.schedule(
+            Duration.ofNanos(delayNanos),
+            () -> submitRenewal(State.ACTIVE, registrationLease, RenewalTrigger.NORMAL));
+    }
+
     private void submitRenewal(State expectedState,
                                @Nullable OracleRegistrationLease expectedLease,
                                RenewalTrigger trigger) {
+        try {
+            blockingExecutor.execute(() -> executeRenewal(expectedState, expectedLease, trigger));
+        } catch (RejectedExecutionException e) {
+            handleRejectedRenewal(expectedState, expectedLease, e);
+        }
+    }
+
+    private void executeRenewal(State expectedState,
+                                @Nullable OracleRegistrationLease expectedLease,
+                                RenewalTrigger trigger) {
         if (!taskTracker.acceptTask()) {
             LOG.trace("Skipping DCN renewal for datasource [{}] and listener method [{}] because shutdown has started",
                 dataSourceName, methodDescription);
             return;
         }
-        if (!beginRenewal(expectedState, expectedLease)) {
-            LOG.trace("Skipping stale DCN renewal for datasource [{}] and listener method [{}]",
-                dataSourceName, methodDescription);
-            taskTracker.completeTask();
-            return;
-        }
-        LOG.trace("Accepted DCN renewal for datasource [{}], listener method [{}], and trigger [{}]",
-            dataSourceName, methodDescription, trigger);
         try {
-            blockingExecutor.execute(() -> renew(expectedLease, trigger));
-        } catch (RuntimeException e) {
-            renewalFailed(e);
+            if (markRenewing(expectedState, expectedLease)) {
+                LOG.trace("Accepted DCN renewal for datasource [{}], listener method [{}], and trigger [{}]",
+                    dataSourceName, methodDescription, trigger);
+                renew(expectedLease, trigger);
+            } else {
+                LOG.trace("Skipping stale DCN renewal for datasource [{}] and listener method [{}]",
+                    dataSourceName, methodDescription);
+            }
+        } finally {
             taskTracker.completeTask();
         }
     }
 
-    private synchronized boolean beginRenewal(State expectedState, @Nullable OracleRegistrationLease expectedLease) {
-        if (state != expectedState || currentLease != expectedLease || !renewalPolicy.renewable()) {
+    private synchronized boolean markRenewing(State expectedState, @Nullable OracleRegistrationLease expectedLease) {
+        if (state != expectedState || currentLease != expectedLease) {
             return false;
         }
         state = State.RENEWING;
@@ -310,9 +333,10 @@ final class OracleChangeNotificationSubscription {
                 renewOverlapping(previousLease);
             }
         } catch (RuntimeException renewalFailure) {
-            renewalFailed(renewalFailure);
-        } finally {
-            taskTracker.completeTask();
+            synchronized (this) {
+                scheduleRetryAfterRenewalFailure(renewalFailure);
+            }
+            logRenewalFailure(renewalFailure);
         }
     }
 
@@ -391,22 +415,34 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private void renewalFailed(RuntimeException failure) {
-        synchronized (this) {
-            if (state != State.CLOSED && !taskTracker.isShutdownStarted()) {
-                OracleRegistrationLease expectedLease = currentLease;
-                state = expectedLease == null ? State.UNREGISTERED : State.ACTIVE;
-                try {
-                    renewalTask = scheduleRetry(expectedLease);
-                    LOG.trace("Scheduled DCN renewal retry in [{}] seconds for datasource [{}], listener method [{}], and current registration [{}]",
-                        RENEWAL_RETRY_DELAY_SECONDS, dataSourceName, methodDescription,
-                        expectedLease == null ? null : expectedLease.registration().getRegId());
-                } catch (RuntimeException schedulingFailure) {
-                    failure.addSuppressed(schedulingFailure);
-                    state = currentLease == null ? State.CLOSED : State.ACTIVE;
-                }
-            }
+    private synchronized void handleRejectedRenewal(State expectedState,
+                                                    @Nullable OracleRegistrationLease expectedLease,
+                                                    RejectedExecutionException failure) {
+        if (state != expectedState || currentLease != expectedLease) {
+            return;
         }
+        scheduleRetryAfterRenewalFailure(failure);
+        logRenewalFailure(failure);
+    }
+
+    private void scheduleRetryAfterRenewalFailure(RuntimeException failure) {
+        if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
+            return;
+        }
+        OracleRegistrationLease expectedLease = currentLease;
+        state = expectedLease == null ? State.UNREGISTERED : State.ACTIVE;
+        try {
+            renewalTask = scheduleRetry(expectedLease);
+            LOG.trace("Scheduled DCN renewal retry in [{}] seconds for datasource [{}], listener method [{}], and current registration [{}]",
+                RENEWAL_RETRY_DELAY_SECONDS, dataSourceName, methodDescription,
+                expectedLease == null ? null : expectedLease.registration().getRegId());
+        } catch (RuntimeException schedulingFailure) {
+            failure.addSuppressed(schedulingFailure);
+            state = currentLease == null ? State.CLOSED : State.ACTIVE;
+        }
+    }
+
+    private void logRenewalFailure(RuntimeException failure) {
         LOG.error("Unable to renew DCN for datasource [{}] and listener method [{}]",
             dataSourceName, methodDescription, failure);
     }
@@ -424,21 +460,6 @@ final class OracleChangeNotificationSubscription {
             cancelRenewal();
             state = State.CLOSED;
         }
-    }
-
-    private ScheduledFuture<?> scheduleRenewal(OracleRegistrationLease registrationLease) {
-        long renewalDeadlineNanos = registrationLease.logicalExpirationNanos();
-        if (renewalPolicy.mode() == OracleChangeNotification.RenewalMode.OVERLAPPING) {
-            renewalDeadlineNanos -= TimeUnit.SECONDS.toNanos(renewalPolicy.leadTimeSeconds());
-        }
-        long delayNanos = Math.max(0, renewalDeadlineNanos - nanoTimeSupplier.getAsLong());
-        LOG.trace("Scheduled DCN renewal for registration [{}] after [{}] nanoseconds for datasource [{}], "
-                + "listener method [{}], and renewal mode [{}]",
-            registrationLease.registration().getRegId(), delayNanos, dataSourceName,
-            methodDescription, renewalPolicy.mode());
-        return taskScheduler.schedule(
-            Duration.ofNanos(delayNanos),
-            () -> submitRenewal(State.ACTIVE, registrationLease, RenewalTrigger.NORMAL));
     }
 
     private boolean unregisterAtLogicalExpiration(OracleRegistrationLease expectedLease) {

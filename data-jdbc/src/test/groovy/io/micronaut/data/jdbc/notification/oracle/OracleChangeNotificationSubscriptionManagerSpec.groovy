@@ -101,12 +101,14 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         renewalThread.start()
         def replacementWasTracked = replacementAssociationStarted.await(5, TimeUnit.SECONDS)
         def shutdown = manager.stop()
+        def shutdownWaitedForRenewal = !shutdown.toCompletableFuture().isDone()
         continueReplacementAssociation.countDown()
         renewalThread.join(5000)
         shutdown.toCompletableFuture().join()
 
         then:
         replacementWasTracked
+        shutdownWaitedForRenewal
         !renewalThread.alive
         renewalFailure.get() == null
         2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [original, replacement]

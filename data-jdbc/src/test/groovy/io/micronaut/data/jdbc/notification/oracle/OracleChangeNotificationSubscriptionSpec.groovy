@@ -34,6 +34,7 @@ import java.sql.SQLException
 import java.sql.Statement
 import java.time.Duration
 import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -41,6 +42,63 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.LongSupplier
 
 class OracleChangeNotificationSubscriptionSpec extends Specification {
+
+    void "does not wait for or run a renewal queued before shutdown"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduler = scheduler(scheduledTasks, [])
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([registration], clock, [])
+        def queuedRenewals = []
+        Executor executor = { Runnable task -> queuedRenewals << task } as Executor
+        def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true), executor)
+
+        when:
+        subscription.start()
+        scheduledTasks.first().run()
+        subscription.stopRenewal()
+        def shutdown = taskTracker.shutdownGracefully()
+        subscription.unregisterAll()
+
+        then:
+        shutdown.toCompletableFuture().isDone()
+        queuedRenewals.size() == 1
+        fixture.registrationIndex.get() == 1
+
+        when:
+        queuedRenewals.first().run()
+
+        then:
+        fixture.registrationIndex.get() == 1
+        taskTracker.reportActiveTasks().orElseThrow() == 0
+    }
+
+    void "retries renewal when the blocking executor rejects it"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def scheduler = scheduler(scheduledTasks, scheduledDelays)
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([registration], clock, [])
+        Executor executor = { Runnable ignored -> throw new RejectedExecutionException('Executor rejected renewal') } as Executor
+        def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2, true), executor)
+
+        when:
+        subscription.start()
+        scheduledTasks.first().run()
+
+        then:
+        fixture.registrationIndex.get() == 1
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(8), TimeUnit.SECONDS.toNanos(5)]
+    }
 
     void "activates an overlapping replacement before unregistering the previous registration"() {
         given:
@@ -265,6 +323,17 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         OracleChangeNotificationTaskTracker taskTracker,
         LongSupplier nanoTimeSupplier,
         OracleChangeNotificationRenewalPolicy renewalPolicy) {
+        Executor executor = { Runnable command -> command.run() } as Executor
+        return subscription(registrar, scheduler, taskTracker, nanoTimeSupplier, renewalPolicy, executor)
+    }
+
+    private OracleChangeNotificationSubscription subscription(
+        OracleChangeNotificationRegistrar registrar,
+        TaskScheduler scheduler,
+        OracleChangeNotificationTaskTracker taskTracker,
+        LongSupplier nanoTimeSupplier,
+        OracleChangeNotificationRenewalPolicy renewalPolicy,
+        Executor executor) {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def definition = new OracleChangeListenerDefinition(
@@ -276,7 +345,6 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             new Properties(),
             renewalPolicy
         )
-        Executor executor = { Runnable command -> command.run() } as Executor
         return new OracleChangeNotificationSubscription(
             "inventory", definition, registrar, executor, scheduler, taskTracker, nanoTimeSupplier)
     }
