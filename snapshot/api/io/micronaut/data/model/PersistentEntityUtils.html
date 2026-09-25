@@ -130,7 +130,7 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#isAccessibleWithoutJoin(io.micronaut.data.model.Association,io.micronaut.data.model.PersistentProperty)" class="member-name-link">isAccessibleWithoutJoin</a><wbr>(<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Check if the property is an association ID that can be accessed without join.</div>
+<div class="block">Check if the property is stored on the owning side, and so can be accessed without a join.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traverse(io.micronaut.data.model.PersistentPropertyPath,java.util.function.Consumer)" class="member-name-link">traverse</a><wbr>(<a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
@@ -170,7 +170,9 @@ loadScripts(document, 'script');</script>
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
  boolean&nbsp;traverseEmbedded,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;, <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Traverses the properties that should be persisted for the given property.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
@@ -199,7 +201,10 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isAccessibleWithoutJoin</span><wbr><span class="parameters">(<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty)</span></div>
-<div class="block">Check if the property is an association ID that can be accessed without join. In a case it's not an ID stored outside the associated table.</div>
+<div class="block">Check if the property is stored on the owning side, and so can be accessed without a join.
+This does not mirror <a href="#traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,boolean,java.util.function.BiConsumer)"><code>traversePersistentProperties(List, PersistentProperty, boolean, BiConsumer)</code></a>,
+which also descends through non-foreign-key associations: a leaf several associations deep has to be
+checked one association at a time.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>association</code> - The association</dd>
@@ -339,6 +344,16 @@ loadScripts(document, 'script');</script>
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
  boolean&nbsp;traverseEmbedded,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;, <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</span></div>
+<div class="block">Traverses the properties that should be persisted for the given property. An association contributes
+the columns the owning side stores for it: its identity properties, or, when the target has no
+identity, its own properties, as a document store stores such a target inline.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>associations</code> - The associations traversed so far, prefixed to every emitted leaf</dd>
+<dd><code>property</code> - The property to traverse</dd>
+<dd><code>traverseEmbedded</code> - Whether to descend into an embedded property or emit it whole</dd>
+<dd><code>consumerProperty</code> - The function to invoke on every leaf property</dd>
+</dl>
 </div>
 </section>
 </li>
