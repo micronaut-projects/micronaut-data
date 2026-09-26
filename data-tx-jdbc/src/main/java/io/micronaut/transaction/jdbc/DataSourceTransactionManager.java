@@ -29,6 +29,7 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
+import io.micronaut.transaction.ExternalTransactionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -63,7 +64,8 @@ import java.util.Objects;
 @EachBean(DataSource.class)
 @Requires(condition = JdbcTransactionManagerCondition.class)
 @TypeHint(DataSourceTransactionManager.class)
-public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
+public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection>
+    implements ExternalTransactionOperations<Connection> {
 
     // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
     private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
@@ -126,6 +128,12 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
         this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
+    }
+
+    @Override
+    public <R extends @Nullable Object> R bindExternal(Connection connection,
+                                                       ExternalTransactionCallback<Connection, R> callback) {
+        return doBindExternal(connection, callback);
     }
 
     @Override
