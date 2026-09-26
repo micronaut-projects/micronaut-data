@@ -1032,7 +1032,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (sequence.definition() != null) {
                 addToCollectionIfNotContains(createStatements, sequence.definition());
             } else {
-                GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
+                GeneratedValue.Type idGeneratorType = SqlSchemaUtils.resolveGeneratedValueType(sequence, dialect);
                 boolean isSequence = idGeneratorType == SEQUENCE;
                 if (isSequence) {
                     addToCollectionIfNotContains(createStatements, createSequenceStmt(table, sequence, escape));
@@ -1274,15 +1274,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String resolveSequenceName(SqlTableMapping table, SqlSequenceMapping sequence) {
-        if (StringUtils.isNotEmpty(sequence.definedName())) {
-            return Objects.requireNonNull(sequence.definedName());
-        }
-        if (sequence.definition() != null && dialect == Dialect.SQL_SERVER) {
-            throw new MappingException(
-                "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: " + sequence.columnName()
-            );
-        }
-        return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
+        return SqlSchemaUtils.resolveSequenceName(table, sequence, dialect);
     }
 
     private List<String> resolveJoinTableAssociatedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
@@ -2247,13 +2239,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private GeneratedValue.Type defaultSelectAutoStrategy(DataType dataType, Dialect dialect) {
-        if (dataType == DataType.UUID) {
-            return UUID;
-        }
-        if (dialect == Dialect.ORACLE) {
-            return SEQUENCE;
-        }
-        return AUTO;
+        return SqlSchemaUtils.defaultAutoStrategy(dataType, dialect);
     }
 
     /**

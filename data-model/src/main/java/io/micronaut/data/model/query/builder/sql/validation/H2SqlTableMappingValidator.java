@@ -17,23 +17,13 @@ package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
-import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import jakarta.inject.Singleton;
 
-import java.sql.Types;
-
 /**
- * A validator for SQL table mappings specific to the H2 database dialect.
+ * A validator for H2 table mappings.
  * <p>
- * This class extends {@link BaseSqlTableMappingValidator} and provides H2-specific logic for validating
- * column types between the expected {@link SqlColumnMapping} and the actual {@link SqlColumnMetadata}
- * retrieved from the database.
- * <p>
- * It supports the H2 dialect and includes custom type matching for cases where the default comparison
- * in {@link BaseSqlTableMappingValidator#matchingColumnType(SqlColumnMapping, SqlColumnMetadata, Dialect)}
- * is insufficient.
+ * This class extends {@link BaseSqlTableMappingValidator} and supports the {@link Dialect#H2} dialect.
+ * The generic type matching covers the H2 types, the validator only provides the query reading the sequences.
  *
  * @since 4.13.0
  */
@@ -46,10 +36,7 @@ final class H2SqlTableMappingValidator extends BaseSqlTableMappingValidator {
     }
 
     @Override
-    protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
-        if (columnMapping.getDbType() == SqlDbType.BINARY) {
-            return columnMetadata.type() == Types.BLOB;
-        }
-        return false;
+    public String getSequenceNamesQuery() {
+        return "SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_SCHEMA = ?";
     }
 }

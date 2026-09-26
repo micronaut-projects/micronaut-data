@@ -20,6 +20,8 @@ import spock.lang.Specification
 
 abstract class AbstractSchemaSpec extends Specification {
 
+    static final String SCHEMA_ENTITIES_PACKAGE = "io.micronaut.data.tck.entities.schema"
+
     abstract Map<String, String> getProperties()
 
     /**
@@ -27,11 +29,11 @@ abstract class AbstractSchemaSpec extends Specification {
      */
     void 'validate schema'() {
         given:
-        def props = properties
-        props["datasources.default.packages"] = "io.micronaut.data.tck.entities.schema"
+        def props = new HashMap<>(properties)
+        props["datasources.default.packages"] = SCHEMA_ENTITIES_PACKAGE
         def initialContext = ApplicationContext.run(props)
         when:
-        def schemaValidateProperties = props
+        def schemaValidateProperties = new HashMap<>(props)
         schemaValidateProperties["datasources.default.schema-generate"] =  "validate"
         def validationContext = ApplicationContext.run(schemaValidateProperties)
         then:

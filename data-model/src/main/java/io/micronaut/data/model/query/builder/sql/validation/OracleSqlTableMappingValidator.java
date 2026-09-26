@@ -19,20 +19,16 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
-import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import jakarta.inject.Singleton;
-
-import java.sql.Types;
 
 /**
  * An implementation of {@link SqlTableMappingValidator} for Oracle databases.
  * <p>
  * This class extends {@link BaseSqlTableMappingValidator} and provides Oracle-specific logic for validating
- * SQL table mappings against actual table metadata from an Oracle database.
- * <p>
- * It overrides the {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)} method to handle
- * Oracle-specific type mappings, such as UUIDs stored as VARCHAR(36) and numeric types represented as NUMBER.
+ * SQL table mappings against the actual table metadata from the database.
+ * Oracle stores all the integral types as {@code NUMBER} with precision, which is matched by the generic
+ * type name matching, and a smaller precision is reported as a warning.
  *
  * @since 4.13.0
  */
@@ -45,23 +41,21 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
     }
 
     @Override
+    public String getSequenceNamesQuery() {
+        return "SELECT SEQUENCE_NAME FROM ALL_SEQUENCES WHERE SEQUENCE_OWNER = ?";
+    }
+
+    @Override
+    public String getColumnTypeDefinitionsQuery() {
+        // The vector dimension and format are only available in VECTOR_INFO (Oracle 23ai)
+        return "SELECT TABLE_NAME, COLUMN_NAME, VECTOR_INFO FROM ALL_TAB_COLS WHERE OWNER = ? AND VECTOR_INFO IS NOT NULL";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
                                                 SqlColumnMetadata columnMetadata,
                                                 SqlDialectOptions dialectOptions) {
-        if (columnMapping.getDbType() == SqlDbType.UUID) {
-            return uuidMatchesVarchar(columnMetadata);
-        } else if (columnMetadata.type() == Types.NUMERIC) {
-            // Custom sql type name for ORACLE
-            String oracleSqlType = "NUMBER";
-            if (columnMetadata.columnSize() > 0) {
-                oracleSqlType += "(" + columnMetadata.columnSize();
-                if (columnMetadata.decimalDigits() > 0) {
-                    oracleSqlType += "," + columnMetadata.decimalDigits();
-                }
-                oracleSqlType += ")";
-            }
-            return columnMapping.getSqlType(dialectOptions).equalsIgnoreCase(oracleSqlType);
-        } else if (isOracleBinaryDoubleOrFloat(columnMetadata.typeName())) {
+        if (isOracleBinaryDoubleOrFloat(columnMetadata.typeName())) {
             return isFloatOrRealOrDouble(columnMapping.getDbType().getType());
         }
         return false;

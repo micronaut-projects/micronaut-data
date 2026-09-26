@@ -287,7 +287,7 @@ public final class SqlColumnMapping {
             case TIME -> {
                 if (dialect == Dialect.ORACLE) {
                     // OracleDB doesn't have a TIME type, so DATE is used
-                    yield "DATE ";
+                    yield "DATE";
                 } else {
                     yield "TIME(6)";
                 }

@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
 
 /**
  * An implementation of {@link SqlTableMappingValidator} that validates SQL table mappings against
- * actual table metadata from the database, specifically for ANSI SQL compliant databases.
+ * ANSI SQL standards.
  *
  * @since 4.13.0
  */
@@ -31,5 +31,10 @@ final class AnsiSqlTableMappingValidator extends BaseSqlTableMappingValidator {
     @Override
     public Dialect getSupportedDialect() {
         return Dialect.ANSI;
+    }
+
+    @Override
+    public String getSequenceNamesQuery() {
+        return "SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_SCHEMA = ?";
     }
 }

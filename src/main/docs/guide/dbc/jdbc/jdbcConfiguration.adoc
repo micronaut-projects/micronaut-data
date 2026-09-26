@@ -32,11 +32,31 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
+==== Unique Constraints
+
+JPA unique constraints are generated as unique indexes: a column annotated with `@Column(unique = true)` and the columns of `@Table(uniqueConstraints = @UniqueConstraint(...))`. The same can be declared with `@Index(unique = true)`.
+
 ==== Schema Validation
 
 In order to validate mapped entities against current schema state set `schema-generate=validate` in the configuration.
-If mapped entity does not have corresponding table in the schema or some field does not have column in the database table or
-types are not matching then the application will report an error and stop.
+All the problems found are reported together. The following differences are errors, and the application will report them and stop:
+
+* A mapped entity or join table does not have a corresponding table in the schema
+* A mapped property does not have a column in the table
+* The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, `TEXT` or `CLOB` for strings, or any type name synonym (`int4` for `INTEGER`). Columns with an explicit definition (`@MappedProperty(definition = "...")`) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL/MariaDB).
+* A sequence used to generate the identity values does not exist
+* An Oracle JSON relational duality view (`@JsonView`) does not exist, is not valid, has a different root table, or a JSON field of the view entity is missing or stored in a different column
+
+The following differences are only logged as warnings, since they only fail for some values or don't affect the mapping:
+
+* A column is shorter or has smaller precision than the mapped type
+* A column nullability is different from the mapped property nullability
+* The table primary key is different from the mapped identity
+* A declared index (`@Index`, `@VectorIndex`) or unique constraint does not exist
+* A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
+* A JSON view allows different operations than declared, or has fields not mapped by the view entity
+
+The schema metadata is read in bulk (a single call per schema for the tables, columns, primary keys and indexes when the JDBC driver supports it) and validated in memory.
 
 Please note this option is currently regarded as experimental.
 

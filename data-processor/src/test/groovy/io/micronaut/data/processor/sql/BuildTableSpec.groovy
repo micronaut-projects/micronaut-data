@@ -1284,7 +1284,7 @@ class Test {
         Dialect.H2       | 'CREATE TABLE `test` (`wakeup_time` TIME(6) NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`wakeup_time` TIME(6) NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("wakeup_time" TIME(6) NOT NULL);'
-        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE  NOT NULL)'
+        Dialect.ORACLE   | 'CREATE TABLE "TEST" ("WAKEUP_TIME" DATE NOT NULL)'
     }
 
     void "test create table MappedProperty with Embedded"() {

@@ -29,6 +29,9 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.VectorIndex;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
@@ -55,6 +58,7 @@ import io.micronaut.data.model.schema.sql.SqlColumnMapping.ReservableOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping.SqlCheckConstraint;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
@@ -72,9 +76,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -117,6 +125,11 @@ public final class SqlSchemaUtils {
 
     private static final int MAX_CONSTRAINT_NAME_LENGTH = 128;
     private static final int CONSTRAINT_NAME_HASH_LENGTH = 12;
+    // The lowest common identifier length limit (Oracle before 12.2)
+    private static final int MAX_SHORT_CONSTRAINT_NAME_LENGTH = 30;
+    private static final int SHORT_CONSTRAINT_NAME_HASH_LENGTH = 8;
+    private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
 
     private static final String JAKARTA_SIZE = "jakarta.validation.constraints.Size";
     private static final String JAKARTA_POSITIVE = "jakarta.validation.constraints.Positive";
@@ -776,12 +789,13 @@ public final class SqlSchemaUtils {
                                                              List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         NamingStrategy namingStrategy = entity.getNamingStrategy();
         Set<SqlIndexMapping> indexMappings = new LinkedHashSet<>();
-        addSqlIndexMappings(entity, namingStrategy, Collections.emptyList(), indexMappings, dialect, sqlIndexDefinitionProviders);
+        addSqlIndexMappings(entity.getPersistedName(), entity, namingStrategy, Collections.emptyList(), indexMappings, dialect, sqlIndexDefinitionProviders);
         return new ArrayList<>(indexMappings);
     }
 
-    @SuppressWarnings("java:S3776")
-    private static void addSqlIndexMappings(PersistentEntity entity,
+    @SuppressWarnings({"java:S3776", "java:S107"})
+    private static void addSqlIndexMappings(String tableName,
+                                            PersistentEntity entity,
                                             NamingStrategy namingStrategy,
                                             List<Association> associations,
                                             Set<SqlIndexMapping> indexMappings,
@@ -838,12 +852,20 @@ public final class SqlSchemaUtils {
             }
         }
 
+        // JPA @Column(unique = true) columns
+        for (PersistentProperty prop : entity.getPersistentProperties()) {
+            if (!(prop instanceof Association) && SqlQueryBuilderUtils.isUniqueColumn(prop.getAnnotationMetadata())) {
+                String columnName = namingStrategy.mappedName(associations, prop);
+                indexMappings.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(columnName)), true, new String[]{columnName}));
+            }
+        }
+
         for (PersistentProperty property : entity.getPersistentProperties()) {
             if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
                 PersistentEntity embeddedEntity = association.getAssociatedEntity();
                 List<Association> newAssociations = new ArrayList<>(associations);
                 newAssociations.add(association);
-                addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings, dialect, sqlIndexDefinitionProviders);
+                addSqlIndexMappings(tableName, embeddedEntity, namingStrategy, newAssociations, indexMappings, dialect, sqlIndexDefinitionProviders);
             }
         }
     }
@@ -897,6 +919,194 @@ public final class SqlSchemaUtils {
             }
         }
         return primaryKeyColumns;
+    }
+
+    /**
+     * Returns the Oracle JSON relational duality view mapping of the {@link JsonView} entity: the view name, its root table,
+     * the allowed operations and the JSON fields with the tables and columns storing them. The JSON keys and columns are
+     * resolved the same way as when the view is created, see {@link SqlQueryBuilder#buildCreateTableStatements(PersistentEntity)}.
+     *
+     * @param viewEntity The {@link JsonView} entity
+     * @return The view mapping or null if the entity is not a JSON view
+     * @since 5.3.0
+     */
+    public static @Nullable SqlJsonViewMapping getSqlJsonViewMapping(PersistentEntity viewEntity) {
+        AnnotationMetadata annotationMetadata = viewEntity.getAnnotationMetadata();
+        PersistentEntity entity = annotationMetadata.classValue(JsonView.class, "entity").map(PersistentEntity::of).orElse(null);
+        if (entity == null) {
+            return null;
+        }
+        Set<String> tables = new LinkedHashSet<>();
+        Set<SqlJsonViewMapping.Field> fields = new LinkedHashSet<>();
+        collectJsonViewFields(viewEntity, entity, tables, fields);
+        JsonView.Operation[] operations = annotationMetadata.enumValues(JsonView.class, "operations", JsonView.Operation.class);
+        return new SqlJsonViewMapping(
+            SqlQueryBuilderUtils.getSchemaName(viewEntity),
+            viewEntity.getPersistedName(),
+            entity.getPersistedName(),
+            operations.length == 0 ? EnumSet.allOf(JsonView.Operation.class) : EnumSet.copyOf(Arrays.asList(operations)),
+            tables,
+            new ArrayList<>(fields)
+        );
+    }
+
+    private static void collectJsonViewFields(PersistentEntity viewEntity,
+                                              PersistentEntity entity,
+                                              Set<String> tables,
+                                              Set<SqlJsonViewMapping.Field> fields) {
+        String table = entity.getPersistedName();
+        tables.add(table);
+        for (PersistentProperty identity : viewEntity.getIdentityProperties()) {
+            AnnotationMetadata identityMetadata = identity.getAnnotationMetadata();
+            String key = jsonViewKey(identity);
+            if (identityMetadata.hasAnnotation(MappedProperty.class)) {
+                fields.add(new SqlJsonViewMapping.Field(table, key, identity.getPersistedName()));
+            } else if (identityMetadata.hasAnnotation(EmbeddedId.class) && identity instanceof Association embeddedId) {
+                // The embedded id fields are keyed by the property names, their columns are resolved by position
+                for (PersistentProperty idProperty : embeddedId.getAssociatedEntity().getPersistentProperties()) {
+                    fields.add(new SqlJsonViewMapping.Field(table, idProperty.getName(), null));
+                }
+            } else {
+                addJsonViewField(entity, table, key, fields);
+            }
+        }
+        for (PersistentProperty property : viewEntity.getPersistentProperties()) {
+            if (property.getDataType() != DataType.OBJECT || isFlexColumn(property)) {
+                collectJsonViewProperty(property, entity, tables, fields);
+            }
+        }
+    }
+
+    private static void collectJsonViewProperty(PersistentProperty property,
+                                                PersistentEntity entity,
+                                                Set<String> tables,
+                                                Set<SqlJsonViewMapping.Field> fields) {
+        String table = entity.getPersistedName();
+        if (property instanceof Association association) {
+            if (association.getKind() == Relation.Kind.EMBEDDED) {
+                for (PersistentProperty embeddedProperty : association.getAssociatedEntity().getPersistentProperties()) {
+                    collectJsonViewProperty(embeddedProperty, entity, tables, fields);
+                }
+            } else {
+                PersistentEntity subView = association.getAssociatedEntity();
+                subView.getAnnotationMetadata().classValue(JsonSubView.class, "entity")
+                    .map(PersistentEntity::of)
+                    .ifPresent(subEntity -> collectJsonViewFields(subView, subEntity, tables, fields));
+            }
+        } else if (property.getDataType() != DataType.OBJECT) {
+            String key = jsonViewKey(property);
+            if (property.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
+                fields.add(new SqlJsonViewMapping.Field(table, key, property.getPersistedName()));
+            } else {
+                addJsonViewField(entity, table, key, fields);
+            }
+        }
+    }
+
+    private static void addJsonViewField(PersistentEntity entity, String table, String key, Set<SqlJsonViewMapping.Field> fields) {
+        PersistentProperty entityProperty = entity.getPropertyByName(key);
+        if (entityProperty != null) {
+            fields.add(new SqlJsonViewMapping.Field(table, key, entityProperty.getPersistedName()));
+        }
+    }
+
+    private static String jsonViewKey(PersistentProperty property) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        return annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
+            .orElseGet(() -> annotationMetadata.stringValue(JSON_PROPERTY_ANNOTATION).orElse(property.getName()));
+    }
+
+    private static boolean isFlexColumn(PersistentProperty property) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        return annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class);
+    }
+
+    /**
+     * Resolves the generation strategy of the sequence mapping for the given dialect, using the dialect default
+     * when no strategy is declared.
+     *
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return The effective generation type
+     * @since 5.3.0
+     */
+    public static GeneratedValue.Type resolveGeneratedValueType(SqlSequenceMapping sequence, Dialect dialect) {
+        return sequence.generatedValueType()
+            .orElseGet(() -> defaultAutoStrategy(sequence.dataType(), dialect));
+    }
+
+    /**
+     * Returns the default generation type used for {@link GeneratedValue.Type#AUTO}.
+     *
+     * @param dataType The data type of the generated property
+     * @param dialect The dialect
+     * @return The default generation type
+     * @since 5.3.0
+     */
+    public static GeneratedValue.Type defaultAutoStrategy(DataType dataType, Dialect dialect) {
+        if (dataType == DataType.UUID) {
+            return GeneratedValue.Type.UUID;
+        }
+        if (dialect == Dialect.ORACLE) {
+            return GeneratedValue.Type.SEQUENCE;
+        }
+        return AUTO;
+    }
+
+    /**
+     * Whether a database sequence is expected to exist for the given sequence mapping.
+     *
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return true if schema generation creates a sequence for the mapping
+     * @since 5.3.0
+     */
+    public static boolean requiresSequence(SqlSequenceMapping sequence, Dialect dialect) {
+        if (sequence.definition() != null) {
+            return StringUtils.isNotEmpty(sequence.definedName());
+        }
+        return resolveGeneratedValueType(sequence, dialect) == GeneratedValue.Type.SEQUENCE;
+    }
+
+    /**
+     * Resolves the (unqualified and unquoted) name of the sequence.
+     *
+     * @param table The table mapping owning the sequence
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return The sequence name
+     * @since 5.3.0
+     */
+    public static String resolveSequenceName(SqlTableMapping table, SqlSequenceMapping sequence, Dialect dialect) {
+        if (StringUtils.isNotEmpty(sequence.definedName())) {
+            return Objects.requireNonNull(sequence.definedName());
+        }
+        if (sequence.definition() != null && dialect == Dialect.SQL_SERVER) {
+            throw new MappingException(
+                "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: " + sequence.columnName()
+            );
+        }
+        return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
+    }
+
+    /**
+     * Builds a deterministic unique constraint (index) name that fits the identifier length limit of all supported databases.
+     *
+     * @param tableName The owning table
+     * @param columns The unique columns
+     * @return The constraint name
+     */
+    static String uniqueConstraintName(String tableName, List<String> columns) {
+        return shortConstraintName("UK_", tableName, columns);
+    }
+
+    private static String shortConstraintName(String prefix, String tableName, List<String> columns) {
+        String name = prefix + sanitize(tableName) + "_" + sanitize(String.join("_", columns));
+        if (name.length() <= MAX_SHORT_CONSTRAINT_NAME_LENGTH) {
+            return name;
+        }
+        String hash = constraintNameHash(name).substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
+        return name.substring(0, MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1) + "_" + hash;
     }
 
     private record ColumnOptions(@Nullable Integer length,

@@ -19,15 +19,27 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Types;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * An abstract base class for validating SQL table mappings against actual table metadata from the database.
@@ -35,6 +47,9 @@ import java.util.List;
  * This class provides a basic implementation of the {@link SqlTableMappingValidator} interface,
  * including validation of table and column definitions extracted from a {@link PersistentEntity}
  * against the corresponding metadata from the database.
+ * <p>
+ * Missing columns and incompatible column types are reported as errors. Nullability, length and precision differences,
+ * and missing primary keys and indexes are reported as warnings.
  * <p>
  * Subclasses are expected to implement the {@link #getSupportedDialect()} method to specify the SQL dialect
  * supported by the validator and optionally override {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)}
@@ -45,39 +60,96 @@ import java.util.List;
  */
 abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator {
 
+    /**
+     * Types defined through a column definition (by a definition provider or a spatial type) that are verified strictly.
+     * Other custom definitions are verified on the best effort basis and a difference is only reported as a warning.
+     */
+    private static final Set<String> STRICT_DEFINITION_TYPES = Set.of(
+        "VECTOR", "SPARSEVEC", "HALFVEC", "GEOMETRY", "GEOGRAPHY", "SDO_GEOMETRY"
+    );
+
+    private static final Set<String> VECTOR_TYPES = Set.of("VECTOR", "SPARSEVEC", "HALFVEC");
+
+    /**
+     * Keywords that can follow the type name in a column definition.
+     */
+    private static final Set<String> TYPE_MODIFIER_KEYWORDS = Set.of(
+        "NOT", "NULL", "DEFAULT", "PRIMARY", "UNIQUE", "CHECK", "REFERENCES", "GENERATED", "AUTO_INCREMENT",
+        "IDENTITY", "CONSTRAINT", "COLLATE", "RESERVABLE", "UNSIGNED", "SIGNED", "ZEROFILL"
+    );
+
+    /**
+     * Synonyms of the type names used by the supported databases.
+     */
+    private static final Map<String, String> TYPE_ALIASES = Map.ofEntries(
+        Map.entry("INT", "INTEGER"),
+        Map.entry("INT4", "INTEGER"),
+        Map.entry("SERIAL", "INTEGER"),
+        Map.entry("SERIAL4", "INTEGER"),
+        Map.entry("INT8", "BIGINT"),
+        Map.entry("BIGSERIAL", "BIGINT"),
+        Map.entry("SERIAL8", "BIGINT"),
+        Map.entry("INT2", "SMALLINT"),
+        Map.entry("SMALLSERIAL", "SMALLINT"),
+        Map.entry("FLOAT8", "DOUBLE"),
+        Map.entry("DOUBLE PRECISION", "DOUBLE"),
+        Map.entry("FLOAT4", "REAL"),
+        Map.entry("BOOL", "BOOLEAN"),
+        Map.entry("VARCHAR2", "VARCHAR"),
+        Map.entry("CHARACTER VARYING", "VARCHAR"),
+        Map.entry("NVARCHAR2", "NVARCHAR"),
+        Map.entry("NATIONAL CHARACTER VARYING", "NVARCHAR"),
+        Map.entry("CHARACTER", "CHAR"),
+        Map.entry("BPCHAR", "CHAR"),
+        Map.entry("DECIMAL", "NUMERIC"),
+        Map.entry("DEC", "NUMERIC"),
+        Map.entry("NUMBER", "NUMERIC"),
+        Map.entry("TIMESTAMP WITH TIME ZONE", "TIMESTAMPTZ"),
+        Map.entry("TIMESTAMP WITHOUT TIME ZONE", "TIMESTAMP"),
+        Map.entry("TIME WITH TIME ZONE", "TIMETZ"),
+        Map.entry("TIME WITHOUT TIME ZONE", "TIME"),
+        Map.entry("BINARY LARGE OBJECT", "BLOB"),
+        Map.entry("CHARACTER LARGE OBJECT", "CLOB")
+    );
+
+    private static final Pattern TYPE_ARGUMENTS = Pattern.compile("\\(\\s*(\\d+)\\s*(?:,\\s*(\\d+)\\s*)?\\)");
+    private static final Pattern PARENTHESES = Pattern.compile("\\([^()]*\\)");
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
     @Override
     public final void validateTable(SqlTableMapping tableMapping,
                                     SqlTableMetadata tableMetadata,
-                                    SqlDialectOptions dialectOptions) {
-        List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
-        List<SqlColumnMapping> columns = tableMapping.columns();
-        List<SqlColumnMapping> allColumns = new ArrayList<>(columns.size() + (primaryKeyColumns != null ? primaryKeyColumns.size() : 0));
-        if (primaryKeyColumns != null) {
-            allColumns.addAll(primaryKeyColumns);
+                                    SqlDialectOptions dialectOptions,
+                                    SchemaValidationResult result) {
+        List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns() == null ? List.of() : tableMapping.primaryKeyColumns();
+        for (SqlColumnMapping columnMapping : primaryKeyColumns) {
+            validateColumn(tableMapping, columnMapping, tableMetadata, dialectOptions, true, result);
         }
-        allColumns.addAll(columns);
-        for (SqlColumnMapping columnMapping : allColumns) {
-            String name = columnMapping.getName();
-            SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase());
-            if (columnMetadata == null) {
-                throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
+        for (SqlColumnMapping columnMapping : tableMapping.columns()) {
+            validateColumn(tableMapping, columnMapping, tableMetadata, dialectOptions, false, result);
+        }
+        validatePrimaryKey(tableMapping, tableMetadata, result);
+        validateIndexes(tableMapping, tableMetadata, result);
+    }
+
+    @Override
+    public void validateSequences(SqlTableMapping tableMapping, Set<String> sequenceNames, SqlDialectOptions dialectOptions, SchemaValidationResult result) {
+        Dialect dialect = dialectOptions.dialect();
+        for (SqlSequenceMapping sequence : tableMapping.sequences()) {
+            if (!SqlSchemaUtils.requiresSequence(sequence, dialect)) {
+                continue;
             }
-            validateColumn(columnMapping, columnMetadata, dialectOptions, tableMetadata.getName());
+            String sequenceName = SqlSchemaUtils.resolveSequenceName(tableMapping, sequence, dialect);
+            if (!sequenceNames.contains(sequenceName.toLowerCase(Locale.ENGLISH))) {
+                result.addError(String.format("Expected sequence [%s] for column [%s] in table [%s] not found",
+                    sequenceName, sequence.columnName(), tableMapping.name()));
+            }
         }
     }
 
     /**
      * Checks if the column type defined in the {@link SqlColumnMapping} matches the actual column type
      * retrieved from the database metadata ({@link SqlColumnMetadata}) for the given SQL dialect.
-     * <p>
-     * The method performs a multi-step comparison:
-     * <ol>
-     *     <li>Compares the database-specific type code from {@link SqlColumnMapping#getDbType()} with the type code from {@link SqlColumnMetadata#type()}.</li>
-     *     <li>If the type codes do not match, it compares the SQL type representation generated by {@link SqlColumnMapping#getSqlType(SqlDialectOptions)}
-     *         with the type name from {@link SqlColumnMetadata#typeName()}.</li>
-     *     <li>If the above checks fail, it delegates to {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)}
-     *         for dialect-specific matching logic.</li>
-     * </ol>
      *
      * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
      * @param columnMetadata the SQL column metadata from the database
@@ -92,6 +164,17 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     /**
      * Checks if the column type defined in the {@link SqlColumnMapping} matches the actual column type
      * retrieved from the database metadata ({@link SqlColumnMetadata}) for the given SQL dialect.
+     * <p>
+     * The method performs a multi-step comparison:
+     * <ol>
+     *     <li>Compares the type code of {@link SqlColumnMapping#getDbType()} with the type code from {@link SqlColumnMetadata#type()},
+     *         accepting compatible types of the same family (for example widening integral types or character types).</li>
+     *     <li>Compares the SQL type generated by {@link SqlColumnMapping#getSqlType(SqlDialectOptions)} with the type name
+     *         from {@link SqlColumnMetadata#typeName()}, ignoring type arguments and synonyms (see {@link #normalizeTypeName(String)}).</li>
+     *     <li>Delegates to {@link #matchingDialectColumnType(SqlColumnMapping, SqlColumnMetadata, SqlDialectOptions)}
+     *         for dialect-specific matching logic.</li>
+     * </ol>
+     * Length and precision are not part of the type comparison, see {@link #validateTypeArguments}.
      *
      * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
      * @param columnMetadata the SQL column metadata from the database
@@ -108,16 +191,16 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         if (sqlType.equalsIgnoreCase(columnMetadata.typeName())) {
             return true;
         }
+        String expectedType = normalizeTypeName(sqlType);
+        if (!expectedType.isEmpty() && expectedType.equals(normalizeTypeName(columnMetadata.typeName()))) {
+            return true;
+        }
         return matchingDialectColumnType(columnMapping, columnMetadata, dialectOptions);
     }
 
     /**
      * Provides dialect-specific logic for matching the column type defined in the {@link SqlColumnMapping}
      * with the actual column type retrieved from the database metadata ({@link SqlColumnMetadata}).
-     * <p>
-     * This method is called when the default type comparison in {@link #matchingColumnType(SqlColumnMapping, SqlColumnMetadata, Dialect)}
-     * fails to match the column types. Implementations should provide custom logic to handle dialect-specific
-     * type mappings or exceptions.
      * <p>
      * The default implementation always returns false, indicating that the column types are not matching. Subclasses
      * can override this method to provide more specific type matching logic for their supported dialect.
@@ -146,6 +229,62 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     }
 
     /**
+     * Provides dialect-specific logic for matching the type of column declared with an explicit definition
+     * (for example {@code @MappedProperty(definition = "...")}, a vector or a spatial type) with the actual column type.
+     *
+     * @param expectedType   the normalized type name of the definition, see {@link #normalizeTypeName(String)}
+     * @param columnMetadata the SQL column metadata from the database
+     * @param dialectOptions the dialect options
+     * @return true if the column type matches according to the dialect-specific logic, false otherwise
+     */
+    protected boolean matchingDialectDefinedColumnType(String expectedType,
+                                                       SqlColumnMetadata columnMetadata,
+                                                       SqlDialectOptions dialectOptions) {
+        return false;
+    }
+
+    /**
+     * Normalizes the type name, so that type names reported by the database can be compared with the declared types.
+     * The type arguments (length, precision, scale), quotes, schema prefix and the modifiers following the type are removed,
+     * and the synonyms are replaced with a single name (for example {@code int4}, {@code INT} and {@code INTEGER}
+     * are all normalized to {@code INTEGER}).
+     *
+     * @param typeName the type name or column definition
+     * @return the normalized type name
+     */
+    protected static String normalizeTypeName(@Nullable String typeName) {
+        if (typeName == null) {
+            return "";
+        }
+        String type = typeName.toUpperCase(Locale.ENGLISH)
+            .replace("\"", "")
+            .replace("`", "")
+            .replace("[", "")
+            .replace("]", "");
+        String previous;
+        do {
+            previous = type;
+            type = PARENTHESES.matcher(type).replaceAll(" ");
+        } while (!type.equals(previous));
+        StringBuilder normalized = new StringBuilder();
+        for (String token : WHITESPACE.splitAsStream(type.trim()).filter(t -> !t.isEmpty()).toList()) {
+            if (!normalized.isEmpty() && TYPE_MODIFIER_KEYWORDS.contains(token)) {
+                break;
+            }
+            if (!normalized.isEmpty()) {
+                normalized.append(' ');
+            }
+            normalized.append(token);
+        }
+        String name = normalized.toString();
+        int schemaSeparator = name.lastIndexOf('.');
+        if (schemaSeparator >= 0 && name.indexOf(' ') < 0) {
+            name = name.substring(schemaSeparator + 1);
+        }
+        return TYPE_ALIASES.getOrDefault(name, name);
+    }
+
+    /**
      * Checks if the given column metadata represents a VARCHAR column with a size of 36,
      * typically used to store UUIDs.
      *
@@ -170,39 +309,242 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     }
 
     /**
-     * Validates a single column mapping definition against its corresponding metadata from the database.
+     * Checks if the given JDBC type code represents a character data type.
      *
-     * @param columnMapping     the SQL column mapping from {@link PersistentEntity} field to validate
-     * @param columnMetadata    the SQL column metadata from the database to compare against
-     * @param tableName         the name of the table where column is stored
-     * @throws SchemaValidationException when the expected column does not match the actual column metadata
+     * @param typeCode the JDBC type code to check
+     * @return true if the type code is a character (including character large object) type
      */
-    private void validateColumn(SqlColumnMapping columnMapping,
-                                SqlColumnMetadata columnMetadata,
+    protected static boolean isCharacterType(int typeCode) {
+        return switch (typeCode) {
+            case Types.CHAR, Types.VARCHAR, Types.LONGVARCHAR, Types.NCHAR, Types.NVARCHAR, Types.LONGNVARCHAR,
+                 Types.CLOB, Types.NCLOB -> true;
+            default -> false;
+        };
+    }
+
+    private void validateColumn(SqlTableMapping tableMapping,
+                                SqlColumnMapping columnMapping,
+                                SqlTableMetadata tableMetadata,
                                 SqlDialectOptions dialectOptions,
-                                String tableName) {
-        if (StringUtils.isNotEmpty(columnMapping.getDefinition())) {
-            // Don't compare columns with custom SQL definition
-            // and let user be responsible for mapping of that field
+                                boolean primaryKey,
+                                SchemaValidationResult result) {
+        String name = columnMapping.getName();
+        SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase(Locale.ENGLISH));
+        if (columnMetadata == null) {
+            result.addError("Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             return;
         }
-        if (matchingColumnType(columnMapping, columnMetadata, dialectOptions)) {
+        String tableName = tableMetadata.getName();
+        String definition = columnMapping.getDefinition();
+        if (StringUtils.isNotEmpty(definition)) {
+            validateDefinedColumnType(definition, columnMetadata, tableMetadata.getColumnTypeDefinition(name.toLowerCase(Locale.ENGLISH)),
+                dialectOptions, tableName, result);
+            // Nullability is part of the definition, which is the responsibility of the user
             return;
         }
-        throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",
-            columnMetadata.name(), tableName, columnMetadata.typeName(), columnMapping.getDbType()));
+        if (!matchingColumnType(columnMapping, columnMetadata, dialectOptions)) {
+            result.addError(String.format("Column [%s] in table [%s] of type [%s] is mapped to [%s]",
+                columnMetadata.name(), tableName, columnMetadata.typeName(), columnMapping.getDbType()));
+            return;
+        }
+        validateTypeArguments(columnMapping, columnMetadata, dialectOptions, tableName, result);
+        if (!primaryKey && !columnMapping.isAutoGenerated()) {
+            validateNullability(columnMapping, columnMetadata, tableName, result);
+        }
+    }
+
+    private void validateDefinedColumnType(String definition,
+                                           SqlColumnMetadata columnMetadata,
+                                           @Nullable String actualDefinition,
+                                           SqlDialectOptions dialectOptions,
+                                           String tableName,
+                                           SchemaValidationResult result) {
+        String expectedType = normalizeTypeName(definition);
+        String actualType = normalizeTypeName(columnMetadata.typeName());
+        if (expectedType.isEmpty()) {
+            return;
+        }
+        if (expectedType.equals(actualType)
+            || (actualDefinition != null && expectedType.equals(normalizeTypeName(actualDefinition)))
+            || matchingDialectDefinedColumnType(expectedType, columnMetadata, dialectOptions)) {
+            if (VECTOR_TYPES.contains(expectedType) && actualDefinition != null) {
+                validateVectorArguments(definition, actualDefinition, columnMetadata, tableName, result);
+            }
+            return;
+        }
+        String message = String.format("Column [%s] in table [%s] of type [%s] is mapped to definition [%s]",
+            columnMetadata.name(), tableName, columnMetadata.typeName(), definition);
+        if (STRICT_DEFINITION_TYPES.contains(expectedType) || STRICT_DEFINITION_TYPES.contains(actualType)) {
+            result.addError(message);
+        } else {
+            // A custom definition can use any of the database type synonyms, don't fail on a difference that could be a false positive
+            result.addWarning(message + " (custom column definitions are not verified strictly)");
+        }
+    }
+
+    /**
+     * Compares the vector dimension and element format, for example {@code VECTOR(3,FLOAT32)} with {@code VECTOR(3,FLOAT32,DENSE)}
+     * or {@code vector(3)} with {@code vector(3)}. A flexible ({@code *}) dimension or format matches any value.
+     */
+    private static void validateVectorArguments(String definition,
+                                                String actualDefinition,
+                                                SqlColumnMetadata columnMetadata,
+                                                String tableName,
+                                                SchemaValidationResult result) {
+        List<String> expected = typeArguments(definition);
+        List<String> actual = typeArguments(actualDefinition);
+        if (expected.isEmpty() || actual.isEmpty()) {
+            return;
+        }
+        String expectedDimension = expected.getFirst();
+        String actualDimension = actual.getFirst();
+        if (!isFlexible(expectedDimension) && !isFlexible(actualDimension) && !expectedDimension.equalsIgnoreCase(actualDimension)) {
+            result.addError(String.format("Column [%s] in table [%s] has vector dimension [%s] but the mapped dimension is [%s]",
+                columnMetadata.name(), tableName, actualDimension, expectedDimension));
+            return;
+        }
+        if (expected.size() > 1 && actual.size() > 1) {
+            String expectedFormat = expected.get(1);
+            String actualFormat = actual.get(1);
+            if (!isFlexible(expectedFormat) && !isFlexible(actualFormat) && !expectedFormat.equalsIgnoreCase(actualFormat)) {
+                result.addWarning(String.format("Column [%s] in table [%s] has vector format [%s] but the mapped format is [%s]",
+                    columnMetadata.name(), tableName, actualFormat, expectedFormat));
+            }
+        }
+    }
+
+    private static boolean isFlexible(String argument) {
+        return "*".equals(argument);
+    }
+
+    /**
+     * @return the arguments of the first parenthesized type arguments list, e.g. [3, FLOAT32] for {@code VECTOR(3, FLOAT32) NOT NULL}
+     */
+    private static List<String> typeArguments(String definition) {
+        int start = definition.indexOf('(');
+        int end = start < 0 ? -1 : definition.indexOf(')', start);
+        if (end < 0) {
+            return List.of();
+        }
+        return Arrays.stream(definition.substring(start + 1, end).split(","))
+            .map(String::trim)
+            .filter(argument -> !argument.isEmpty())
+            .toList();
+    }
+
+    /**
+     * Reports columns that are shorter or less precise than the mapped column type.
+     */
+    private void validateTypeArguments(SqlColumnMapping columnMapping,
+                                       SqlColumnMetadata columnMetadata,
+                                       SqlDialectOptions dialectOptions,
+                                       String tableName,
+                                       SchemaValidationResult result) {
+        if (columnMetadata.columnSize() <= 0) {
+            return;
+        }
+        String sqlType = columnMapping.getSqlType(dialectOptions);
+        String expectedType = normalizeTypeName(sqlType);
+        Matcher matcher = TYPE_ARGUMENTS.matcher(sqlType);
+        if (!matcher.find()) {
+            return;
+        }
+        int expectedSize = Integer.parseInt(matcher.group(1));
+        switch (expectedType) {
+            case "VARCHAR", "NVARCHAR", "CHAR" -> {
+                if (isCharacterType(columnMetadata.type()) && columnMetadata.columnSize() < expectedSize) {
+                    result.addWarning(String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
+                        columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize));
+                }
+            }
+            case "NUMERIC" -> {
+                if (columnMetadata.type() != Types.NUMERIC && columnMetadata.type() != Types.DECIMAL) {
+                    return;
+                }
+                int expectedScale = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
+                if (columnMetadata.columnSize() < expectedSize || columnMetadata.decimalDigits() != expectedScale) {
+                    result.addWarning(String.format("Column [%s] in table [%s] has precision and scale [%d,%d] which is different from the mapped [%d,%d]",
+                        columnMetadata.name(), tableName, columnMetadata.columnSize(), columnMetadata.decimalDigits(), expectedSize, expectedScale));
+                }
+            }
+            default -> {
+                // Other type arguments (fractional seconds, float binary precision) are not checked
+            }
+        }
+    }
+
+    private void validateNullability(SqlColumnMapping columnMapping,
+                                     SqlColumnMetadata columnMetadata,
+                                     String tableName,
+                                     SchemaValidationResult result) {
+        if (columnMapping.isRequired() && columnMetadata.nullable()) {
+            result.addWarning(String.format("Column [%s] in table [%s] is nullable but the mapped property is required",
+                columnMetadata.name(), tableName));
+        } else if (!columnMapping.isRequired() && !columnMetadata.nullable()) {
+            result.addWarning(String.format("Column [%s] in table [%s] is NOT NULL but the mapped property is nullable, storing null values will fail",
+                columnMetadata.name(), tableName));
+        }
+    }
+
+    private void validatePrimaryKey(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
+        List<String> actualPrimaryKey = tableMetadata.getPrimaryKeyColumns();
+        List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
+        if (actualPrimaryKey == null || primaryKeyColumns == null || primaryKeyColumns.isEmpty()) {
+            return;
+        }
+        List<String> expectedPrimaryKey = primaryKeyColumns.stream().map(SqlColumnMapping::getName).toList();
+        if (actualPrimaryKey.isEmpty()) {
+            result.addWarning(String.format("Table [%s] has no primary key, the mapped primary key is %s", tableMapping.name(), expectedPrimaryKey));
+        } else if (!toLowerCaseSet(actualPrimaryKey).equals(toLowerCaseSet(expectedPrimaryKey))) {
+            result.addWarning(String.format("Table [%s] has primary key %s which is different from the mapped primary key %s",
+                tableMapping.name(), actualPrimaryKey, expectedPrimaryKey));
+        }
+    }
+
+    private void validateIndexes(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
+        List<SqlIndexMetadata> indexes = tableMetadata.getIndexes();
+        if (indexes == null) {
+            return;
+        }
+        for (SqlIndexMapping indexMapping : tableMapping.indexes()) {
+            List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
+            boolean special = indexMapping.spatial() || indexMapping.sqlIndexDefinitionProvider() != null;
+            boolean found = indexes.stream().anyMatch(index -> {
+                List<String> indexColumns = index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
+                if (special) {
+                    // Spatial and vector indexes are not always reported with their columns in the same way
+                    return indexColumns.isEmpty() || indexColumns.containsAll(columns);
+                }
+                return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
+            });
+            if (!found) {
+                String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? "[" + indexMapping.name() + "] " : "";
+                result.addWarning(String.format("%s %son columns %s not found in table [%s]",
+                    indexMapping.unique() ? "Unique index" : "Index", indexName, Arrays.toString(indexMapping.columns()), tableMapping.name()));
+            }
+        }
+    }
+
+    private static Set<String> toLowerCaseSet(List<String> values) {
+        return values.stream().map(value -> value.toLowerCase(Locale.ENGLISH)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
         int mappedTypeCode = dbType.getType();
         return mappedTypeCode == typeCode
             || isCompatibleIntegralType(mappedTypeCode, typeCode)
-            || isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode)
-            || isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode)
-            || isVarcharType(mappedTypeCode) && isVarcharType(typeCode)
-            || isVarbinaryType(mappedTypeCode) && isVarbinaryType(typeCode)
-            || isEnumType(mappedTypeCode) && isVarcharType(typeCode);
-        // Add more checks/fallbacks during testing and/or reported issues
+            || (isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode))
+            || (isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode))
+            || (isMappedToCharacterType(dbType) && isCharacterType(typeCode))
+            || (isBinaryType(mappedTypeCode) && isBinaryType(typeCode))
+            || (isBooleanOrBit(mappedTypeCode) && isBooleanOrBit(typeCode));
+    }
+
+    private static boolean isMappedToCharacterType(SqlDbType dbType) {
+        return switch (dbType) {
+            case CHAR, VARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, LONGNVARCHAR, CLOB, NCLOB, ENUM -> true;
+            default -> false;
+        };
     }
 
     private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {
@@ -230,21 +572,14 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         };
     }
 
-    private static boolean isVarcharType(int typeCode) {
+    private static boolean isBinaryType(int typeCode) {
         return switch (typeCode) {
-            case Types.VARCHAR, Types.LONGVARCHAR, Types.NVARCHAR, Types.LONGNVARCHAR -> true;
+            case Types.BINARY, Types.VARBINARY, Types.LONGVARBINARY, Types.BLOB -> true;
             default -> false;
         };
     }
 
-    private static boolean isVarbinaryType(int typeCode) {
-        return switch (typeCode) {
-            case Types.VARBINARY, Types.LONGVARBINARY -> true;
-            default -> false;
-        };
-    }
-
-    private static boolean isEnumType(int typeCode) {
-        return typeCode == SqlDbType.ENUM.getType();
+    private static boolean isBooleanOrBit(int typeCode) {
+        return typeCode == Types.BOOLEAN || typeCode == Types.BIT;
     }
 }
