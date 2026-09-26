@@ -23,9 +23,11 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult
@@ -40,6 +42,9 @@ import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
+import io.micronaut.data.tck.entities.schema.SchemaAuthor
+import io.micronaut.data.tck.entities.schema.SchemaBook
+import io.micronaut.data.tck.entities.schema.SchemaTag
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -461,6 +466,47 @@ class H2SchemaValidationSpec extends Specification {
 
         then:
         result.errors == ['Column [note] in table [h2_validate_item] of type [REAL] is mapped to [VARCHAR]']
+    }
+
+    void 'foreign keys are derived from associations'() {
+        given:
+        def registry = context.getBean(RuntimeEntityRegistry)
+        PersistentEntity[] entities = [SchemaBook, SchemaAuthor, SchemaTag].collect { registry.getEntity(it) } as PersistentEntity[]
+
+        when:
+        def tables = SqlSchemaUtils.getSqlTableMappings(entities[0], Dialect.H2)
+        def bookTable = tables.find { it.name() == 'schema_book' }
+        def joinTable = tables.find { it.name() == 'schema_book_schema_tag' }
+
+        then:
+        bookTable.foreignKeys().collect { [it.columns(), it.referencedTable(), it.referencedColumns()] } as Set == [
+                [['author_id'], 'schema_author', ['id']],
+                [['editor_id'], 'schema_author', ['id']]
+        ] as Set
+        joinTable.foreignKeys().collect { [it.columns(), it.referencedTable(), it.referencedColumns()] } as Set == [
+                [['schema_book_id'], 'schema_book', ['id']],
+                [['schema_tag_id'], 'schema_tag', ['id']]
+        ] as Set
+        (bookTable.foreignKeys() + joinTable.foreignKeys()).every { it.name().length() <= 30 }
+
+        when:
+        def createStatements = new SqlQueryBuilder(Dialect.H2).buildCreateForeignKeyStatements([], entities)
+        def dropStatements = new SqlQueryBuilder(Dialect.H2).buildDropForeignKeyStatements([], entities)
+
+        then:
+        createStatements.length == 4
+        createStatements.collect { it.replace('`', '') }.any { it ==~ /ALTER TABLE schema_book ADD CONSTRAINT FK_SCHEMA_BOOK_AUTHOR\w*_[0-9A-F]{8} FOREIGN KEY \(author_id\) REFERENCES schema_author \(id\);/ }
+        dropStatements.collect { it.replace('`', '') }.any { it ==~ /ALTER TABLE schema_book DROP CONSTRAINT FK_SCHEMA_BOOK_AUTHOR\w*_[0-9A-F]{8};/ }
+
+        when:"Foreign keys are only generated for tables of the given entities"
+        createStatements = new SqlQueryBuilder(Dialect.H2).buildCreateForeignKeyStatements([], [entities[0], entities[1]] as PersistentEntity[])
+
+        then:
+        createStatements.length == 3
+        createStatements.every { !it.contains('REFERENCES `schema_tag`') }
+
+        expect:"SQLite cannot add constraints to existing tables"
+        new SqlQueryBuilder(Dialect.SQLITE).buildCreateForeignKeyStatements([], entities).length == 0
     }
 
     private static SchemaValidationException findValidationException(Throwable e) {

@@ -41,7 +41,7 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
 
     void 'views are marked and the tables without a primary key are not'() {
         when:
-        def tables = new JdbcSchemaMetadataReader(connection, Dialect.H2).readTables(null, ['READER_ITEM', 'READER_PLAIN', 'READER_VIEW'] as Set, false).tables()
+        def tables = new JdbcSchemaMetadataReader(connection, Dialect.H2).readTables(null, ['READER_ITEM', 'READER_PLAIN', 'READER_VIEW'] as Set, false, false).tables()
 
         then:
         !tables['READER_ITEM'].view
@@ -69,8 +69,8 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         def reader = new JdbcSchemaMetadataReader(connection, Dialect.H2)
 
         expect:
-        reader.readTables(null, ['READER_ITEM'] as Set, false).tables()['READER_ITEM'].indexes == null
-        reader.readTables(null, ['READER_ITEM'] as Set, true).tables()['READER_ITEM'].indexes*.name().contains('IDX_READER_ITEM_NAME')
+        reader.readTables(null, ['READER_ITEM'] as Set, false, false).tables()['READER_ITEM'].indexes == null
+        reader.readTables(null, ['READER_ITEM'] as Set, true, false).tables()['READER_ITEM'].indexes*.name().contains('IDX_READER_ITEM_NAME')
     }
 
     void 'the quoted current schema keeps its case'() {
@@ -81,7 +81,7 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         schemaConnection.setSchema('Foo Bar')
 
         when:
-        def tables = new JdbcSchemaMetadataReader(schemaConnection, Dialect.H2).readTables(null, ['CURRENT_ITEM'] as Set, false).tables()
+        def tables = new JdbcSchemaMetadataReader(schemaConnection, Dialect.H2).readTables(null, ['CURRENT_ITEM'] as Set, false, false).tables()
 
         then:
         tables['CURRENT_ITEM'].schema == 'Foo Bar'
@@ -111,7 +111,7 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         ] as Connection
 
         when:
-        def schemaTables = new JdbcSchemaMetadataReader(stubConnection, Dialect.MYSQL).readTables(null, ['USER'] as Set, false)
+        def schemaTables = new JdbcSchemaMetadataReader(stubConnection, Dialect.MYSQL).readTables(null, ['USER'] as Set, false, false)
 
         then:
         schemaTables.schema() == 'app'

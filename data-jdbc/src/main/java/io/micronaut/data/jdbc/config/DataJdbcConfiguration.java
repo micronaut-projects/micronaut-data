@@ -47,6 +47,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
     private boolean schemaGenerateUniqueConstraints = false;
+    private boolean schemaGenerateForeignKeys = false;
     private Dialect dialect = Dialect.ANSI;
     @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
     private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
@@ -129,6 +130,27 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setSchemaGenerateUniqueConstraints(boolean schemaGenerateUniqueConstraints) {
         this.schemaGenerateUniqueConstraints = schemaGenerateUniqueConstraints;
+    }
+
+    /**
+     * @return Whether the schema generation creates foreign key constraints for the entity associations
+     * and whether the schema validation checks them.
+     * @since 5.3.0
+     */
+    public boolean isSchemaGenerateForeignKeys() {
+        return schemaGenerateForeignKeys;
+    }
+
+    /**
+     * Sets whether the schema generation ({@link SchemaGenerate#CREATE} and {@link SchemaGenerate#CREATE_DROP}) creates
+     * foreign key constraints for the entity associations and whether the schema validation ({@link SchemaGenerate#VALIDATE})
+     * reports missing foreign keys. Default value is false.
+     *
+     * @param schemaGenerateForeignKeys Whether to generate foreign keys
+     * @since 5.3.0
+     */
+    public void setSchemaGenerateForeignKeys(boolean schemaGenerateForeignKeys) {
+        this.schemaGenerateForeignKeys = schemaGenerateForeignKeys;
     }
 
     /**

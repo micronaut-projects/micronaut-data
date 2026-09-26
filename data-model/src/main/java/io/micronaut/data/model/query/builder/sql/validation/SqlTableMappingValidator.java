@@ -20,9 +20,11 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
+import io.micronaut.data.model.schema.sql.SqlForeignKeyMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlForeignKeyMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
@@ -87,6 +89,35 @@ public interface SqlTableMappingValidator {
             validateTable(tableMapping, tableMetadata, dialectOptions);
         } catch (SchemaValidationException e) {
             result.addError(SchemaValidationResult.errorOf(e, tableMapping));
+        }
+    }
+
+    /**
+     * Validates that the foreign keys derived from the entity associations exist in the database.
+     * Missing foreign keys are reported as warnings since they don't affect reading or writing entities.
+     *
+     * @param tableMapping    The SQL table mapping from {@link PersistentEntity} to validate
+     * @param tableMetadata   The SQL table metadata from the database, see {@link SqlTableMetadata#getForeignKeys()}
+     * @param result          The validation result collecting the problems found
+     * @since 5.3.0
+     */
+    default void validateForeignKeys(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
+        List<SqlForeignKeyMetadata> foreignKeys = tableMetadata.getForeignKeys();
+        if (foreignKeys == null) {
+            return;
+        }
+        // The foreign key is created with the escaping of its table, for the referenced table and columns too
+        SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
+        boolean escape = tableMapping.escape();
+        for (SqlForeignKeyMapping foreignKey : tableMapping.foreignKeys()) {
+            String referencedTable = matcher.mappedTableKey(foreignKey.referencedTable(), escape);
+            Set<String> columns = foreignKey.columns().stream().map(column -> matcher.mappedColumnKey(column, escape)).collect(Collectors.toSet());
+            boolean found = foreignKeys.stream().anyMatch(fk -> matcher.tableKey(fk.referencedTable()).equals(referencedTable)
+                && fk.columns().stream().map(matcher::columnKey).collect(Collectors.toSet()).equals(columns));
+            if (!found) {
+                result.addWarning(String.format("Foreign key on columns %s of table [%s] referencing table [%s] %s not found",
+                    foreignKey.columns(), tableMapping.name(), foreignKey.referencedTable(), foreignKey.referencedColumns()));
+            }
         }
     }
 

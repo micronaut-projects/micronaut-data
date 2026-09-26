@@ -37,6 +37,7 @@ public final class SqlTableMetadata {
     private final Map<String, SqlColumnMetadata> columns = new LinkedHashMap<>();
     private @Nullable List<String> primaryKeyColumns;
     private @Nullable List<SqlIndexMetadata> indexes;
+    private @Nullable List<SqlForeignKeyMetadata> foreignKeys;
     private final Map<String, String> columnTypeDefinitions = new LinkedHashMap<>();
     private final SqlIdentifierMatcher identifierMatcher;
     private boolean view;
@@ -214,5 +215,21 @@ public final class SqlTableMetadata {
      */
     public void setIndexes(List<SqlIndexMetadata> indexes) {
         this.indexes = new ArrayList<>(indexes);
+    }
+
+    /**
+     * @return the table foreign keys, or null if the foreign keys were not read
+     * @since 5.3.0
+     */
+    public @Nullable List<SqlForeignKeyMetadata> getForeignKeys() {
+        return foreignKeys;
+    }
+
+    /**
+     * @param foreignKeys the table foreign keys
+     * @since 5.3.0
+     */
+    public void setForeignKeys(List<SqlForeignKeyMetadata> foreignKeys) {
+        this.foreignKeys = new ArrayList<>(foreignKeys);
     }
 }

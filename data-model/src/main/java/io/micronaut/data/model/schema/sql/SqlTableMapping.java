@@ -36,6 +36,7 @@ import java.util.function.UnaryOperator;
  * @param auxiliaryStatements Optional additional statements associated with this table, emitted after table creation and before indexes
  * @param uniqueConstraints The JPA unique constraints ({@code @Column(unique = true)}, {@code @Table(uniqueConstraints = ...)}) represented as unique indexes,
  * created and validated only when enabled in the configuration. See {@link SqlIndexMapping}
+ * @param foreignKeys The list of foreign keys derived from the entity associations. See {@link SqlForeignKeyMapping}
  *
  * @author radovanradic
  * @since 4.13.0
@@ -52,24 +53,31 @@ public record SqlTableMapping(
     List<SqlSequenceMapping> sequences,
     List<SqlIndexMapping> indexes,
     List<String> auxiliaryStatements,
-    List<SqlIndexMapping> uniqueConstraints) {
+    List<SqlIndexMapping> uniqueConstraints,
+    List<SqlForeignKeyMapping> foreignKeys) {
 
     public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns,
                            List<SqlColumnMapping> columns, List<SqlSequenceMapping> sequences, List<SqlIndexMapping> indexes,
                            List<String> auxiliaryStatements) {
-        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, List.of());
+        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, List.of(), List.of());
+    }
+
+    public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns,
+                           List<SqlColumnMapping> columns, List<SqlSequenceMapping> sequences, List<SqlIndexMapping> indexes,
+                           List<String> auxiliaryStatements, List<SqlIndexMapping> uniqueConstraints) {
+        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, uniqueConstraints, List.of());
     }
 
     public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns) {
-        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, List.of(), List.of(), List.of(), List.of());
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, List.of(), List.of(), List.of(), List.of(), List.of());
     }
 
     public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns, @Nullable List<SqlSequenceMapping> sequences) {
-        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, sequences == null ? List.of() : sequences, List.of(), List.of(), List.of());
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, sequences == null ? List.of() : sequences, List.of(), List.of(), List.of(), List.of());
     }
 
     /**
-     * Maps all the names of the mapping: the schema, table, column, sequence, index and unique constraint names,
+     * Maps all the names of the mapping: the schema, table, column, sequence, index, unique constraint and foreign key names,
      * used to resolve their property placeholders.
      *
      * @param nameMapper The function mapping a name
@@ -91,7 +99,15 @@ public record SqlTableMapping(
             }).toList(),
             mapIndexes(indexes, nameMapper),
             auxiliaryStatements,
-            mapIndexes(uniqueConstraints, nameMapper));
+            mapIndexes(uniqueConstraints, nameMapper),
+            foreignKeys.stream().map(foreignKey -> {
+                String referencedSchema = foreignKey.referencedSchema();
+                return new SqlForeignKeyMapping(nameMapper.apply(foreignKey.name()),
+                    foreignKey.columns().stream().map(nameMapper).toList(),
+                    referencedSchema == null ? null : nameMapper.apply(referencedSchema),
+                    nameMapper.apply(foreignKey.referencedTable()),
+                    foreignKey.referencedColumns().stream().map(nameMapper).toList());
+            }).toList());
     }
 
     private static List<SqlColumnMapping> mapColumns(List<SqlColumnMapping> columns, UnaryOperator<String> nameMapper) {

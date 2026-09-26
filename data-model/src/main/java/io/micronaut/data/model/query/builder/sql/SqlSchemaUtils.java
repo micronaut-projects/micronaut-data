@@ -58,6 +58,7 @@ import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping.ReservableOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping.SqlCheckConstraint;
 import io.micronaut.data.model.schema.sql.SqlDbType;
+import io.micronaut.data.model.schema.sql.SqlForeignKeyMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
@@ -78,6 +79,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -128,6 +130,7 @@ public final class SqlSchemaUtils {
     // The lowest common identifier length limit (Oracle before 12.2)
     private static final int MAX_SHORT_CONSTRAINT_NAME_LENGTH = 30;
     private static final int SHORT_CONSTRAINT_NAME_HASH_LENGTH = 8;
+    private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     private static final List<String> JPA_TABLE_ANNOTATIONS = List.of("jakarta.persistence.Table", "javax.persistence.Table");
     /**
      * The entity argument name, and the entity member of {@link JsonView} and {@link JsonSubView}.
@@ -244,8 +247,16 @@ public final class SqlSchemaUtils {
                     -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
                 List<SqlColumnMapping> joinColumns = new ArrayList<>();
                 addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, leftProperties, leftJoinTableColumns, dialect, joinColumns);
+                int leftColumnCount = joinColumns.size();
                 addJoinTableColumns(sqlColumnDefinitionProviders, entity, namingStrategy, rightProperties, rightJoinTableColumns, dialect, joinColumns);
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns, Collections.emptyList());
+                List<String> joinColumnNames = joinColumns.stream().map(SqlColumnMapping::getName).toList();
+                List<SqlForeignKeyMapping> joinForeignKeys = new ArrayList<>(2);
+                addJoinTableForeignKey(joinForeignKeys, joinTableName, joinColumnNames.subList(0, leftColumnCount),
+                    entity, SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, isAssociationOwner, REFERENCED_COLUMN_NAME), leftProperties);
+                addJoinTableForeignKey(joinForeignKeys, joinTableName, joinColumnNames.subList(leftColumnCount, joinColumnNames.size()),
+                    associatedEntity, SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, !isAssociationOwner, REFERENCED_COLUMN_NAME), rightProperties);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, joinColumns,
+                    Collections.emptyList(), List.of(), List.of(), List.of(), List.of(), joinForeignKeys);
                 tables.add(joinTable);
             }
         }
@@ -287,9 +298,10 @@ public final class SqlSchemaUtils {
             Stream.concat(primaryKeyColumns.stream(), columns.stream()).map(SqlColumnMapping::getName).toList());
         // The unique constraints are only created when enabled, they are checked when the statements are built
         validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
+        List<SqlForeignKeyMapping> foreignKeys = getSqlForeignKeyMappings(entity, tableName, namingStrategy);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
-            indexes, auxiliaryStatements, uniqueConstraints);
+            indexes, auxiliaryStatements, uniqueConstraints, foreignKeys);
         tables.add(table);
         return tables;
     }
@@ -1308,6 +1320,108 @@ public final class SqlSchemaUtils {
     }
 
     /**
+     * Resolves foreign keys for the columns the entity table stores for its associations
+     * ({@code @ManyToOne}, owning {@code @OneToOne}, associations inside embedded values and embedded ids).
+     * A foreign key is only produced when the referenced columns are the primary key of the associated entity.
+     */
+    private static List<SqlForeignKeyMapping> getSqlForeignKeyMappings(PersistentEntity entity, String tableName, NamingStrategy namingStrategy) {
+        Map<String, ForeignKeyColumns> foreignKeyColumns = new LinkedHashMap<>();
+        BiConsumer<List<Association>, PersistentProperty> collector = (associations, property) -> {
+            int foreignAssociationIndex = -1;
+            for (int i = 0; i < associations.size(); i++) {
+                if (associations.get(i).getKind() != Relation.Kind.EMBEDDED) {
+                    foreignAssociationIndex = i;
+                    break;
+                }
+            }
+            if (foreignAssociationIndex < 0) {
+                return;
+            }
+            List<Association> ownerPath = associations.subList(0, foreignAssociationIndex + 1);
+            Association foreignAssociation = associations.get(foreignAssociationIndex);
+            PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
+            String key = ownerPath.stream().map(Association::getName).collect(Collectors.joining("."));
+            String column = namingStrategy.mappedName(associations, property);
+            String referencedColumn = associatedEntity.getNamingStrategy()
+                .mappedName(associations.subList(foreignAssociationIndex + 1, associations.size()), property);
+            foreignKeyColumns.computeIfAbsent(key, k -> new ForeignKeyColumns(associatedEntity, new ArrayList<>(), new ArrayList<>()))
+                .add(column, referencedColumn);
+        };
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, collector);
+        }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, collector);
+        }
+        List<SqlForeignKeyMapping> foreignKeys = new ArrayList<>(foreignKeyColumns.size());
+        for (ForeignKeyColumns fk : foreignKeyColumns.values()) {
+            addForeignKey(foreignKeys, tableName, fk.columns, fk.associatedEntity, fk.referencedColumns);
+        }
+        return foreignKeys;
+    }
+
+    private static void addJoinTableForeignKey(List<SqlForeignKeyMapping> foreignKeys,
+                                               String joinTableName,
+                                               List<String> columns,
+                                               PersistentEntity referencedEntity,
+                                               List<String> explicitReferencedColumns,
+                                               List<PersistentPropertyPath> referencedProperties) {
+        List<String> referencedColumns;
+        if (!explicitReferencedColumns.isEmpty()) {
+            referencedColumns = explicitReferencedColumns;
+        } else {
+            NamingStrategy referencedNamingStrategy = referencedEntity.getNamingStrategy();
+            referencedColumns = referencedProperties.stream()
+                .map(pp -> referencedNamingStrategy.mappedName(pp.getAssociations(), pp.getProperty()))
+                .toList();
+        }
+        addForeignKey(foreignKeys, joinTableName, columns, referencedEntity, referencedColumns);
+    }
+
+    private static void addForeignKey(List<SqlForeignKeyMapping> foreignKeys,
+                                      String tableName,
+                                      List<String> columns,
+                                      PersistentEntity referencedEntity,
+                                      List<String> referencedColumns) {
+        if (columns.isEmpty() || columns.size() != referencedColumns.size() || !referencedEntity.hasIdentity()
+            || referencedEntity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            return;
+        }
+        Set<String> primaryKeyColumns = SqlQueryBuilderUtils.getIdentityColumns(referencedEntity, referencedEntity.getNamingStrategy())
+            .stream().map(c -> c.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
+        Set<String> referenced = referencedColumns.stream().map(c -> c.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
+        if (!primaryKeyColumns.equals(referenced)) {
+            // A foreign key must reference a primary or unique key, skip references to non-key columns
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Skipping foreign key of table [{}] columns {} that reference non primary key columns {} of [{}]",
+                    tableName, columns, referencedColumns, referencedEntity.getName());
+            }
+            return;
+        }
+        SqlForeignKeyMapping foreignKey = new SqlForeignKeyMapping(
+            foreignKeyName(tableName, columns),
+            columns,
+            SqlQueryBuilderUtils.getSchemaName(referencedEntity),
+            referencedEntity.getPersistedName(),
+            referencedColumns
+        );
+        if (!foreignKeys.contains(foreignKey)) {
+            foreignKeys.add(foreignKey);
+        }
+    }
+
+    /**
+     * Builds a deterministic foreign key constraint name that fits the identifier length limit of all supported databases.
+     *
+     * @param tableName The owning table
+     * @param columns The foreign key columns
+     * @return The constraint name
+     */
+    static String foreignKeyName(String tableName, List<String> columns) {
+        return shortConstraintName("FK_", tableName, columns);
+    }
+
+    /**
      * Builds a deterministic unique constraint (index) name that fits the identifier length limit of all supported databases:
      * a readable part followed by a hash of the table and column names, which keeps the names of different column lists distinct.
      *
@@ -1328,6 +1442,13 @@ public final class SqlSchemaUtils {
         String hash = constraintNameHash(prefix + '\0' + tableName + '\0' + String.join("\0", columns))
             .substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
         return name.substring(0, Math.min(name.length(), MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1)) + "_" + hash;
+    }
+
+    private record ForeignKeyColumns(PersistentEntity associatedEntity, List<String> columns, List<String> referencedColumns) {
+        void add(String column, String referencedColumn) {
+            columns.add(column);
+            referencedColumns.add(referencedColumn);
+        }
     }
 
     private record ColumnOptions(@Nullable Integer length,

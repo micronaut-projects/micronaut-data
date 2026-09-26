@@ -201,6 +201,13 @@ public class SchemaGenerator {
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
             .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
+        boolean foreignKeys = configuration.isSchemaGenerateForeignKeys();
+        if (foreignKeys && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP) {
+            // Drop the constraints first, so that the tables can be dropped in any order
+            for (String sql : builder.buildDropForeignKeyStatements(definitionProviders, entities)) {
+                executeIgnoringFailure(connection, resolveSql(propertyPlaceholderResolver, sql), "Dropping Foreign Key");
+            }
+        }
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -272,6 +279,36 @@ public class SchemaGenerator {
                     // do nothing
             }
         }
+        if (foreignKeys) {
+            // Foreign keys are added once all the tables exist, each one separately so that a failure
+            // (for example an existing constraint when using CREATE) doesn't prevent adding the others
+            for (String stmt : builder.buildCreateForeignKeyStatements(definitionProviders, entities)) {
+                stmt = resolveSql(propertyPlaceholderResolver, stmt);
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Adding Foreign Key: \n{}", stmt);
+                }
+                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                        DataSettings.QUERY_LOG.warn("Foreign Key Statement Unsuccessful: " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void executeIgnoringFailure(Connection connection, String sql, String description) {
+        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+            DataSettings.QUERY_LOG.debug("{}: \n{}", description, sql);
+        }
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                DataSettings.QUERY_LOG.trace("{} Unsuccessful: {}", description, e.getMessage());
+            }
+        }
     }
 
     @SuppressWarnings("java:S3776")
@@ -284,6 +321,7 @@ public class SchemaGenerator {
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
         }
+        boolean validateForeignKeys = configuration.isSchemaGenerateForeignKeys();
         SchemaValidationResult result = new SchemaValidationResult();
         JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect,
             JdbcSchemaMetadataReader.MetadataQueries.of(sqlTableMappingValidator));
@@ -297,7 +335,7 @@ public class SchemaGenerator {
             boolean readIndexes = sqlTableMappings.values().stream().anyMatch(mapping -> !mapping.indexes().isEmpty()
                 || (configuration.isSchemaGenerateUniqueConstraints() && !mapping.uniqueConstraints().isEmpty()));
             JdbcSchemaMetadataReader.SchemaTables schemaTables = metadataReader.readTables(
-                StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null, sqlTableMappings.keySet(), readIndexes);
+                StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null, sqlTableMappings.keySet(), readIndexes, validateForeignKeys);
             String columnTypeDefinitionsQuery = sqlTableMappingValidator.getColumnTypeDefinitionsQuery();
             if (columnTypeDefinitionsQuery != null && sqlTableMappings.values().stream().anyMatch(SchemaGenerator::hasDefinedColumns)) {
                 // Needed to verify the type arguments of columns with a definition, like the vector dimension
@@ -316,6 +354,9 @@ public class SchemaGenerator {
                 sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata, dialectOptions, result);
                 if (configuration.isSchemaGenerateUniqueConstraints()) {
                     sqlTableMappingValidator.validateUniqueConstraints(sqlTableMapping, dbSqlTableMetadata, result);
+                }
+                if (validateForeignKeys) {
+                    sqlTableMappingValidator.validateForeignKeys(sqlTableMapping, dbSqlTableMetadata, result);
                 }
                 if (sqlTableMapping.sequences().stream().anyMatch(sequence -> SqlSchemaUtils.requiresSequence(sequence, dialect))) {
                     if (!sequencesRead) {

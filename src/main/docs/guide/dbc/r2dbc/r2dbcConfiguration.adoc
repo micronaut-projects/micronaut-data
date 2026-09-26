@@ -62,7 +62,7 @@ include::doc-examples/r2dbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
-Set `schema-generate-unique-constraints=true` to generate the JPA unique constraints, see the JDBC configuration for details.
+Set `schema-generate-unique-constraints=true` to generate the JPA unique constraints and `schema-generate-foreign-keys=true` to generate foreign key constraints for the entity associations, see the JDBC configuration for details.
 
 Please note that currently schema validation is not supported for Micronaut Data R2DBC.
 

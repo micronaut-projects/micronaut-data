@@ -66,6 +66,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlForeignKeyMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
@@ -649,6 +650,103 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String indexName = createIndexName(table, uniqueConstraint, escape);
             addToCollectionIfNotContains(createStatements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
         }
+    }
+
+    /**
+     * Builds the statements adding foreign key constraints for the associations of the given entities.
+     * Designed for testing and not production usage. For production a SQL migration tool such as Flyway or Liquibase is recommended.
+     * <p>
+     * The statements are meant to be executed after the tables were created (see {@link #buildCreateTableStatements(List, PersistentEntity[], Dialect)}).
+     * Only foreign keys referencing tables of the given entities are produced. SQLite does not support adding constraints
+     * to existing tables and no statements are produced for it.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The entities
+     * @return The {@code ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY} statements
+     * @since 5.3.0
+     */
+    @Experimental
+    public final String[] buildCreateForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
+        return buildForeignKeyStatements(definitionProviders, entities, true);
+    }
+
+    /**
+     * Builds the statements dropping the foreign key constraints produced by {@link #buildCreateForeignKeyStatements(List, PersistentEntity...)}.
+     * Designed for testing and not production usage.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The entities
+     * @return The {@code ALTER TABLE ... DROP CONSTRAINT} statements
+     * @since 5.3.0
+     */
+    @Experimental
+    public final String[] buildDropForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
+        return buildForeignKeyStatements(definitionProviders, entities, false);
+    }
+
+    private String[] buildForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity[] entities, boolean create) {
+        if (dialect == Dialect.SQLITE) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Foreign key constraints cannot be added to existing tables for dialect {}", dialect);
+            }
+            return StringUtils.EMPTY_STRING_ARRAY;
+        }
+        Map<String, SqlTableMapping> sqlTableMappingByTableName = getSqlTableMappingsByTableName(definitionProviders, entities);
+        Set<String> tableKeys = sqlTableMappingByTableName.values().stream()
+            .map(table -> tableKey(table.schema(), table.name()))
+            .collect(Collectors.toSet());
+        Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+        List<String> statements = new ArrayList<>();
+        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+            boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
+            String tableName = getObjectName(table.schema(), table.name(), escape, true);
+            for (SqlForeignKeyMapping foreignKey : table.foreignKeys()) {
+                if (!tableKeys.contains(tableKey(foreignKey.referencedSchema(), foreignKey.referencedTable()))) {
+                    continue;
+                }
+                String constraintName = escape ? quote(foreignKey.name()) : foreignKey.name();
+                StringBuilder statement = new StringBuilder("ALTER TABLE ").append(tableName);
+                if (create) {
+                    statement.append(" ADD CONSTRAINT ").append(constraintName)
+                        .append(" FOREIGN KEY (").append(joinColumnNames(foreignKey.columns(), escape)).append(")")
+                        .append(" REFERENCES ").append(getObjectName(foreignKey.referencedSchema(), foreignKey.referencedTable(), escape, true))
+                        .append(" (").append(joinColumnNames(foreignKey.referencedColumns(), escape)).append(")");
+                } else if (dialect == Dialect.MYSQL) {
+                    statement.append(" DROP FOREIGN KEY ").append(constraintName);
+                } else {
+                    statement.append(" DROP CONSTRAINT ").append(constraintName);
+                }
+                if (dialect != Dialect.ORACLE) {
+                    statement.append(';');
+                }
+                addToCollectionIfNotContains(statements, statement.toString());
+            }
+        }
+        return statements.toArray(new String[0]);
+    }
+
+    /**
+     * @return The table mappings of the entities (skipping JSON views), with the join tables of the entities replaced by the mapped tables
+     */
+    private Map<String, SqlTableMapping> getSqlTableMappingsByTableName(List<DefinitionProvider> definitionProviders, PersistentEntity[] entities) {
+        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
+        for (PersistentEntity entity : entities) {
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                continue;
+            }
+            for (SqlTableMapping table : SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect)) {
+                addTable(table, sqlTableMappingByTableName);
+            }
+        }
+        return sqlTableMappingByTableName;
+    }
+
+    private String joinColumnNames(List<String> columns, boolean escape) {
+        return columns.stream().map(column -> escape ? quote(column) : column).collect(Collectors.joining(","));
+    }
+
+    private static String tableKey(@Nullable String schema, String table) {
+        return (schema == null ? "" : schema.toLowerCase(Locale.ENGLISH)) + "." + table.toLowerCase(Locale.ENGLISH);
     }
 
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {

@@ -22,6 +22,7 @@ import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlForeignKeyMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlJsonViewMetadata;
@@ -54,8 +55,8 @@ import java.util.TreeMap;
  * the tables and their columns are read with a single call. The primary keys and the indexes are read with a single
  * dialect query for the schema (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()} and
  * {@link SqlTableMappingValidator#getIndexesQuery()}). Without such a query, or when it fails, they are read with a call
- * per table: the drivers require the table name, they either reject a null table name or return no rows for it.
- * Entities can also be mapped to views, since the tables are resolved from the columns.
+ * per table, as are the foreign keys: the drivers require the table name, they either reject a null table name or return
+ * no rows for it. Entities can also be mapped to views, since the tables are resolved from the columns.
  *
  * @author radovanradic
  * @since 5.3.0
@@ -135,19 +136,20 @@ final class JdbcSchemaMetadataReader {
      * @param schema The schema name as stored in the database (see {@link #resolveSchema(String, boolean)}), null for the connection default schema
      * @param wantedTableNames The keys of the tables to read (see {@link SqlIdentifierMatcher#mappedTableKey(String, boolean)}), other tables are skipped
      * @param readIndexes Whether to read the indexes, only needed when they are validated
+     * @param readForeignKeys Whether to read the foreign keys
      * @return The schema tables
      * @throws SQLException If reading the metadata fails
      */
-    SchemaTables readTables(@Nullable String schema, Set<String> wantedTableNames, boolean readIndexes) throws SQLException {
+    SchemaTables readTables(@Nullable String schema, Set<String> wantedTableNames, boolean readIndexes, boolean readForeignKeys) throws SQLException {
         // The connection catalog and schema are the names as stored in the database, a quoted name keeps its case
         String catalog = connection.getCatalog();
         if (schema == null) {
             String currentSchema = databaseAsCatalog ? null : connection.getSchema();
-            return readTables(catalog, currentSchema, wantedTableNames, readIndexes);
+            return readTables(catalog, currentSchema, wantedTableNames, readIndexes, readForeignKeys);
         }
         return databaseAsCatalog
-            ? readTables(schema, null, wantedTableNames, readIndexes)
-            : readTables(catalog, schema, wantedTableNames, readIndexes);
+            ? readTables(schema, null, wantedTableNames, readIndexes, readForeignKeys)
+            : readTables(catalog, schema, wantedTableNames, readIndexes, readForeignKeys);
     }
 
     /**
@@ -276,7 +278,8 @@ final class JdbcSchemaMetadataReader {
     private SchemaTables readTables(@Nullable String catalog,
                                     @Nullable String schema,
                                     Set<String> wantedTableNames,
-                                    boolean readIndexes) throws SQLException {
+                                    boolean readIndexes,
+                                    boolean readForeignKeys) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
         String expectedSchema = databaseAsCatalog ? catalog : schema;
         String resolvedSchema = expectedSchema;
@@ -298,6 +301,9 @@ final class JdbcSchemaMetadataReader {
         markViews(catalog, schema, tables);
         if (readIndexes) {
             readIndexes(resolvedSchema, tables);
+        }
+        if (readForeignKeys) {
+            readForeignKeys(tables);
         }
         return new SchemaTables(resolvedSchema, tables);
     }
@@ -418,6 +424,31 @@ final class JdbcSchemaMetadataReader {
             indexes.getOrDefault(tableKey, Map.of()).forEach((name, index) ->
                 indexMetadata.add(new SqlIndexMetadata(name, index.unique(), new ArrayList<>(index.columns().values()))));
             Objects.requireNonNull(tables.get(tableKey)).setIndexes(indexMetadata);
+        }
+    }
+
+    private void readForeignKeys(Map<String, SqlTableMetadata> tables) {
+        Map<String, Map<String, ForeignKeyColumns>> foreignKeys = new HashMap<>();
+        Set<String> readTables = readTablesMetadata("foreign keys", tables,
+            (catalog, schema, table) -> metaData.getImportedKeys(catalog, schema, table),
+            (tableKey, resultSet) -> {
+                String referencedTable = resultSet.getString("PKTABLE_NAME");
+                String referencedSchema = resultSet.getString("PKTABLE_SCHEM");
+                String name = resultSet.getString("FK_NAME");
+                String key = StringUtils.isNotEmpty(name) ? name : referencedSchema + "." + referencedTable;
+                ForeignKeyColumns foreignKey = foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>()).computeIfAbsent(key,
+                    k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
+                int keySeq = resultSet.getInt("KEY_SEQ");
+                foreignKey.columns().put(keySeq, resultSet.getString("FKCOLUMN_NAME"));
+                foreignKey.referencedColumns().put(keySeq, resultSet.getString("PKCOLUMN_NAME"));
+            });
+        for (String tableKey : readTables) {
+            List<SqlForeignKeyMetadata> foreignKeyMetadata = new ArrayList<>();
+            for (ForeignKeyColumns fk : foreignKeys.getOrDefault(tableKey, Map.of()).values()) {
+                foreignKeyMetadata.add(new SqlForeignKeyMetadata(fk.name(), new ArrayList<>(fk.columns().values()),
+                    fk.referencedSchema(), fk.referencedTable(), new ArrayList<>(fk.referencedColumns().values())));
+            }
+            Objects.requireNonNull(tables.get(tableKey)).setForeignKeys(foreignKeyMetadata);
         }
     }
 
@@ -585,6 +616,13 @@ final class JdbcSchemaMetadataReader {
     }
 
     private record IndexColumns(boolean unique, Map<Integer, String> columns) {
+    }
+
+    private record ForeignKeyColumns(@Nullable String name,
+                                     @Nullable String referencedSchema,
+                                     String referencedTable,
+                                     Map<Integer, String> columns,
+                                     Map<Integer, String> referencedColumns) {
     }
 
     private static final class JsonViewBuilder {

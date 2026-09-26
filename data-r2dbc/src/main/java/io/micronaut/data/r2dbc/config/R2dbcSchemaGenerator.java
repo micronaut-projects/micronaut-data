@@ -43,6 +43,7 @@ import reactor.core.publisher.Mono;
 import jakarta.annotation.PostConstruct;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -140,9 +141,14 @@ public class R2dbcSchemaGenerator {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
             .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
-        List<String> createStatements = Arrays.asList(
+        boolean foreignKeys = configuration.isSchemaGenerateForeignKeys();
+        List<String> createStatements = new ArrayList<>(Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect(), createOptions)
-        );
+        ));
+        if (foreignKeys) {
+            // Foreign keys are added once all the tables exist
+            createStatements.addAll(Arrays.asList(builder.buildCreateForeignKeyStatements(definitionProviders, entities)));
+        }
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -159,8 +165,13 @@ public class R2dbcSchemaGenerator {
                 });
         return switch (schemaGenerate) {
             case CREATE_DROP -> {
-                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                        .toList();
+                List<String> dropStatements = new ArrayList<>();
+                if (foreignKeys) {
+                    // Drop the constraints first, so that the tables can be dropped in any order
+                    dropStatements.addAll(Arrays.asList(builder.buildDropForeignKeyStatements(definitionProviders, entities)));
+                }
+                Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+                        .forEach(dropStatements::add);
                 yield Flux.fromIterable(dropStatements)
                         .concatMap(sql -> {
                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {

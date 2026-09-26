@@ -32,6 +32,22 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
+==== Foreign Keys
+
+By default, the generated schema doesn't contain foreign key constraints. Set `schema-generate-foreign-keys=true` to add a foreign key constraint for every association stored in the entity table (`@ManyToOne`, owning side of `@OneToOne`, associations of embedded values and embedded ids) and for both sides of join tables.
+The constraints are added with `ALTER TABLE` statements once all the tables are created, and with `create-drop` they are dropped before dropping the tables. Only associations between the entities included in the schema generation (see the `packages` option) get a foreign key.
+
+.Generating foreign keys
+[source,yaml]
+----
+datasources:
+  default:
+    schema-generate: create-drop
+    schema-generate-foreign-keys: true
+----
+
+NOTE: SQLite doesn't support adding constraints to existing tables, no foreign keys are generated for it.
+
 ==== Unique Constraints
 
 By default, JPA unique constraints are not generated. Set `schema-generate-unique-constraints=true` to create a unique index for every column annotated with `@Column(unique = true)`, for every to-one association join column annotated with `@JoinColumn(unique = true)` (also a single join column of a composite `@JoinColumns`), and for the columns of `@Table(uniqueConstraints = @UniqueConstraint(...))`, which can be any table column, including embedded and association columns (the combined columns of a composite join are made unique this way). The constraint column names are the table column names, a property name (like `firstName` for the column `first_name`) is accepted too. An unnamed constraint gets a generated name that fits the identifier length limit of all the supported databases. The unique indexes of a table are created after the table, and with the option enabled the schema validation reports missing unique constraints.
@@ -66,12 +82,13 @@ The following differences are only logged as warnings, since they only fail for 
 * The table primary key is different from the mapped identity
 * A declared index (`@Index`, `@VectorIndex`) does not exist. Spatial and vector indexes are matched by their name, the declared or the generated one, since the index method is not reported by the database metadata
 * A unique constraint does not exist, validated only when `schema-generate-unique-constraints` is enabled
+* A foreign key does not exist, validated only when `schema-generate-foreign-keys` is enabled
 * A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
 * A JSON view or one of its sub views allows different operations than declared, or the view has fields or sub views not mapped by the view entity
 
 The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (`@MappedEntity(escape = true)`, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (`lower_case_table_names=0`).
 
-The schema metadata is read in bulk and validated in memory: a single call per schema reads the tables and columns, and a single catalog query per schema reads the primary keys, and another one the indexes, only when some are validated (H2, PostgreSQL, MySQL, MariaDB, SQL Server and Oracle). For the other databases they are read with a call per table, since the JDBC drivers require the table name.
+The schema metadata is read in bulk and validated in memory: a single call per schema reads the tables and columns, and a single catalog query per schema reads the primary keys, and another one the indexes, only when some are validated (H2, PostgreSQL, MySQL, MariaDB, SQL Server and Oracle). For the other databases they are read with a call per table, as are the validated foreign keys, since the JDBC drivers require the table name.
 
 Please note this option is currently regarded as experimental.
 
