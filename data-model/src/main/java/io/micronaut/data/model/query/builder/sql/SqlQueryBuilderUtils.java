@@ -266,13 +266,6 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
-     * Finds int value for javax.persistence.Column given value, if not present falls back to jakarta.persistence.Column.
-     *
-     * @param annotationMetadata the annotation metadata
-     * @param value the annotation value to be looked at
-     * @return OptionalInt for given annotation value
-     */
-    /**
      * Whether the property is declared unique with JPA {@code @Column(unique = true)}.
      *
      * @param annotationMetadata The property annotation metadata
@@ -283,6 +276,13 @@ final class SqlQueryBuilderUtils {
             || annotationMetadata.booleanValue("javax.persistence.Column", "unique").orElse(false);
     }
 
+    /**
+     * Finds int value for javax.persistence.Column given value, if not present falls back to jakarta.persistence.Column.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param value the annotation value to be looked at
+     * @return OptionalInt for given annotation value
+     */
     static OptionalInt findPersistenceColumnValue(AnnotationMetadata annotationMetadata, String value) {
         String annotationName = "javax.persistence.Column";
         OptionalInt optionalInt = annotationMetadata.intValue(annotationName, value);

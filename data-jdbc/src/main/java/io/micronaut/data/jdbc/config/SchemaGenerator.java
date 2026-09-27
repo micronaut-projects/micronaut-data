@@ -333,6 +333,10 @@ public class SchemaGenerator {
                                           PersistentEntity[] entities,
                                           Dialect dialect,
                                           SchemaValidationResult result) {
+        if (dialect != Dialect.ORACLE) {
+            // JSON views are only created for Oracle
+            return;
+        }
         List<SqlJsonViewMapping> jsonViewMappings = new ArrayList<>();
         for (PersistentEntity entity : entities) {
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
@@ -343,12 +347,6 @@ public class SchemaGenerator {
             }
         }
         if (jsonViewMappings.isEmpty()) {
-            return;
-        }
-        if (dialect != Dialect.ORACLE) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("JSON views are not supported for dialect {}, skipping their validation", dialect);
-            }
             return;
         }
         Map<String, List<SqlJsonViewMapping>> jsonViewMappingsBySchema = jsonViewMappings.stream()
