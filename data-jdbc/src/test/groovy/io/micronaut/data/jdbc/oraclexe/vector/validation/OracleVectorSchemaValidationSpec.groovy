@@ -18,10 +18,14 @@ package io.micronaut.data.jdbc.oraclexe.vector.validation
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorShape
+import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.vector.FloatVector
+import io.micronaut.data.model.vector.Vector
 import jakarta.persistence.Column
 import spock.lang.Specification
 
@@ -63,9 +67,31 @@ class OracleVectorSchemaValidationSpec extends Specification implements OracleTe
         then:"It's only a warning"
         noExceptionThrown()
 
+        when:"A dense vector is mapped to a sparse vector column"
+        execute(dataSource, "DROP TABLE VECTOR_VALIDATION_DOC")
+        execute(dataSource, "CREATE TABLE VECTOR_VALIDATION_DOC (ID NUMBER(19) NOT NULL PRIMARY KEY, EMBEDDING VECTOR(3, FLOAT32, SPARSE) NOT NULL)")
+        ApplicationContext.run(validateProperties).close()
+
+        then:
+        e = thrown(Exception)
+        rootMessage(e).contains('Column [EMBEDDING] in table [VECTOR_VALIDATION_DOC] has vector storage [SPARSE] but the mapped storage is [DENSE]')
+
+        when:"A sparse vector is mapped to a dense vector column"
+        execute(dataSource, "DROP TABLE VECTOR_VALIDATION_DOC")
+        execute(dataSource, "CREATE TABLE VECTOR_VALIDATION_DOC (ID NUMBER(19) NOT NULL PRIMARY KEY, EMBEDDING VECTOR(3, FLOAT32) NOT NULL)")
+        execute(dataSource, "DROP TABLE SPARSE_VECTOR_VALIDATION_DOC")
+        execute(dataSource, "CREATE TABLE SPARSE_VECTOR_VALIDATION_DOC (ID NUMBER(19) NOT NULL PRIMARY KEY, EMBEDDING VECTOR(5, FLOAT64, DENSE))")
+        ApplicationContext.run(validateProperties).close()
+
+        then:
+        e = thrown(Exception)
+        rootMessage(e).contains('Column [EMBEDDING] in table [SPARSE_VECTOR_VALIDATION_DOC] has vector storage [DENSE] but the mapped storage is [SPARSE]')
+
         cleanup:
         executeSilently(dataSource, "DROP TABLE VECTOR_VALIDATION_DOC")
         executeSilently(dataSource, "DROP SEQUENCE VECTOR_VALIDATION_DOC_SEQ")
+        executeSilently(dataSource, "DROP TABLE SPARSE_VECTOR_VALIDATION_DOC")
+        executeSilently(dataSource, "DROP SEQUENCE SPARSE_VECTOR_VALIDATION_DOC_SEQ")
         context?.close()
     }
 
@@ -101,4 +127,16 @@ class VectorValidationDoc {
 
     @Column(length = 3)
     FloatVector embedding
+}
+
+@MappedEntity("sparse_vector_validation_doc")
+class SparseVectorValidationDoc {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @Nullable
+    @VectorStorage(length = 5, shape = VectorShape.SPARSE)
+    Vector embedding
 }

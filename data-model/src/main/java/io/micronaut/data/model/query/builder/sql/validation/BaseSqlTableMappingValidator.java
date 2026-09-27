@@ -70,6 +70,8 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
 
     private static final Set<String> VECTOR_TYPES = Set.of("VECTOR", "SPARSEVEC", "HALFVEC");
 
+    private static final String DENSE_VECTOR_STORAGE = "DENSE";
+
     /**
      * Keywords that can follow the type name in a column definition.
      */
@@ -383,8 +385,11 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     }
 
     /**
-     * Compares the vector dimension and element format, for example {@code VECTOR(3,FLOAT32)} with {@code VECTOR(3,FLOAT32,DENSE)}
-     * or {@code vector(3)} with {@code vector(3)}. A flexible ({@code *}) dimension or format matches any value.
+     * Compares the vector dimension, element format and storage, for example {@code VECTOR(3,FLOAT32)} with
+     * {@code VECTOR(3,FLOAT32,DENSE)} or {@code vector(3)} with {@code vector(3)}. A flexible ({@code *}) argument matches any value.
+     * <p>
+     * A different dimension or storage (dense or sparse) is an error, since such vectors cannot be stored in the column.
+     * A different element format is a warning, since the database converts the elements.
      */
     private static void validateVectorArguments(String definition,
                                                 String actualDefinition,
@@ -398,19 +403,31 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         }
         String expectedDimension = expected.getFirst();
         String actualDimension = actual.getFirst();
-        if (!isFlexible(expectedDimension) && !isFlexible(actualDimension) && !expectedDimension.equalsIgnoreCase(actualDimension)) {
+        if (differentVectorArgument(expectedDimension, actualDimension)) {
             result.addError(String.format("Column [%s] in table [%s] has vector dimension [%s] but the mapped dimension is [%s]",
                 columnMetadata.name(), tableName, actualDimension, expectedDimension));
-            return;
         }
         if (expected.size() > 1 && actual.size() > 1) {
             String expectedFormat = expected.get(1);
             String actualFormat = actual.get(1);
-            if (!isFlexible(expectedFormat) && !isFlexible(actualFormat) && !expectedFormat.equalsIgnoreCase(actualFormat)) {
+            if (differentVectorArgument(expectedFormat, actualFormat)) {
                 result.addWarning(String.format("Column [%s] in table [%s] has vector format [%s] but the mapped format is [%s]",
                     columnMetadata.name(), tableName, actualFormat, expectedFormat));
             }
         }
+        if (actual.size() > 2) {
+            // The storage is reported by Oracle, a definition without the storage declares a dense vector
+            String expectedStorage = expected.size() > 2 ? expected.get(2) : DENSE_VECTOR_STORAGE;
+            String actualStorage = actual.get(2);
+            if (differentVectorArgument(expectedStorage, actualStorage)) {
+                result.addError(String.format("Column [%s] in table [%s] has vector storage [%s] but the mapped storage is [%s]",
+                    columnMetadata.name(), tableName, actualStorage, expectedStorage));
+            }
+        }
+    }
+
+    private static boolean differentVectorArgument(String expected, String actual) {
+        return !isFlexible(expected) && !isFlexible(actual) && !expected.equalsIgnoreCase(actual);
     }
 
     private static boolean isFlexible(String argument) {
