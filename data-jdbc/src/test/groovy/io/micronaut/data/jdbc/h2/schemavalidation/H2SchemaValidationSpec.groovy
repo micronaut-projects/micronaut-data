@@ -84,6 +84,23 @@ class H2SchemaValidationSpec extends Specification {
         noExceptionThrown()
     }
 
+    void 'entity can be mapped to a view'() {
+        given:
+        execute("CREATE SEQUENCE h2_validate_item_seq")
+        execute("CREATE TABLE h2_validate_item_base (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, quantity INT NOT NULL, reading_time VARCHAR(255), note VARCHAR(255))")
+        execute("CREATE VIEW h2_validate_item AS SELECT id, name, quantity, reading_time, note FROM h2_validate_item_base")
+
+        when:
+        ApplicationContext.run(VALIDATE_PROPERTIES).close()
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        execute("DROP VIEW IF EXISTS h2_validate_item")
+        execute("DROP TABLE IF EXISTS h2_validate_item_base")
+    }
+
     void 'validation reports all errors together'() {
         given:"A table with a wrong column type, a missing column and a missing sequence"
         execute("CREATE TABLE h2_validate_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, quantity VARCHAR(20) NOT NULL, reading_time VARCHAR(255))")

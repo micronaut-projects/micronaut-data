@@ -48,9 +48,9 @@ import java.util.TreeMap;
  * Reads the schema metadata used by the schema validation using JDBC {@link DatabaseMetaData}.
  * <p>
  * The metadata is read for the whole schema with as few database calls as possible and kept in memory:
- * the tables and the columns are read with a single call each. Primary keys and indexes are
+ * the tables and their columns are read with a single call. Primary keys and indexes are
  * read with a single call for all the tables when the driver supports it (a null table name),
- * otherwise with a call per table.
+ * otherwise with a call per table. Entities can also be mapped to views, since the tables are resolved from the columns.
  *
  * @author radovanradic
  * @since 5.3.0
@@ -61,7 +61,6 @@ final class JdbcSchemaMetadataReader {
     private static final Logger LOG = LoggerFactory.getLogger(JdbcSchemaMetadataReader.class);
 
     private static final String MATCH_ALL = "%";
-    private static final String[] TABLE_TYPES = {SqlSchemaUtils.TABLE_TYPE};
 
     private static final String JSON_DUALITY_VIEWS_QUERY = """
         SELECT VIEW_NAME, ROOT_TABLE_NAME, ALLOW_INSERT, ALLOW_UPDATE, ALLOW_DELETE, STATUS
@@ -220,49 +219,47 @@ final class JdbcSchemaMetadataReader {
                                     Set<String> wantedTableNames) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
         String resolvedSchema = dialect == Dialect.MYSQL ? catalog : schema;
-        try (ResultSet resultSet = metaData.getTables(catalog, schema, MATCH_ALL, TABLE_TYPES)) {
+        // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns
+        try (ResultSet resultSet = metaData.getColumns(catalog, schema, null, MATCH_ALL)) {
             while (resultSet.next()) {
                 String tableName = resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
                 String tableNameLowerCase = tableName.toLowerCase(Locale.ENGLISH);
-                if (!wantedTableNames.contains(tableNameLowerCase) || tables.containsKey(tableNameLowerCase)) {
-                    // Skip table that does not have entity mapped
+                if (!wantedTableNames.contains(tableNameLowerCase)) {
+                    // No need to read columns of the table which does not have mapped entity
                     continue;
                 }
                 String tableCatalog = resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
                 String tableSchema = resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-                resolvedSchema = dialect == Dialect.MYSQL ? tableCatalog : tableSchema;
-                tables.put(tableNameLowerCase, new SqlTableMetadata(tableCatalog, tableSchema, tableName));
+                SqlTableMetadata table = tables.get(tableNameLowerCase);
+                if (table == null) {
+                    table = new SqlTableMetadata(tableCatalog, tableSchema, tableName);
+                    tables.put(tableNameLowerCase, table);
+                    resolvedSchema = dialect == Dialect.MYSQL ? tableCatalog : tableSchema;
+                } else if (!Objects.equals(table.getCatalog(), tableCatalog) || !Objects.equals(table.getSchema(), tableSchema)) {
+                    // A table with the same name in another schema (the schema pattern can match more schemas)
+                    continue;
+                }
+                addColumn(table, resultSet);
             }
         }
         if (tables.isEmpty()) {
             return new SchemaTables(resolvedSchema, tables);
         }
-        readColumns(catalog, schema, tables);
         readPrimaryKeys(tables);
         readIndexes(tables);
         return new SchemaTables(resolvedSchema, tables);
     }
 
-    private void readColumns(@Nullable String catalog, @Nullable String schema, Map<String, SqlTableMetadata> tables) throws SQLException {
-        // All the columns of the schema are read with a single call
-        try (ResultSet resultSet = metaData.getColumns(catalog, schema, null, MATCH_ALL)) {
-            while (resultSet.next()) {
-                SqlTableMetadata table = tables.get(resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN).toLowerCase(Locale.ENGLISH));
-                if (table == null) {
-                    // No need to read columns of the table which does not have mapped entity
-                    continue;
-                }
-                String columnName = resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN);
-                int columnType = resultSet.getInt(SqlSchemaUtils.DATA_TYPE_COLUMN);
-                String typeName = resultSet.getString(SqlSchemaUtils.TYPE_NAME_COLUMN);
-                int columnSize = resultSet.getInt(SqlSchemaUtils.COLUMN_SIZE_COLUMN);
-                // The number of fractional digits, null (read as 0) for data types where it is not applicable
-                int decimalDigits = resultSet.getInt(SqlSchemaUtils.DECIMAL_DIGITS_COLUMN);
-                // Unknown nullability is treated as nullable
-                boolean nullable = resultSet.getInt(SqlSchemaUtils.NULLABLE_COLUMN) != DatabaseMetaData.columnNoNulls;
-                table.addColumn(new SqlColumnMetadata(columnName, columnType, typeName, columnSize, decimalDigits, nullable));
-            }
-        }
+    private static void addColumn(SqlTableMetadata table, ResultSet resultSet) throws SQLException {
+        String columnName = resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN);
+        int columnType = resultSet.getInt(SqlSchemaUtils.DATA_TYPE_COLUMN);
+        String typeName = resultSet.getString(SqlSchemaUtils.TYPE_NAME_COLUMN);
+        int columnSize = resultSet.getInt(SqlSchemaUtils.COLUMN_SIZE_COLUMN);
+        // The number of fractional digits, null (read as 0) for data types where it is not applicable
+        int decimalDigits = resultSet.getInt(SqlSchemaUtils.DECIMAL_DIGITS_COLUMN);
+        // Unknown nullability is treated as nullable
+        boolean nullable = resultSet.getInt(SqlSchemaUtils.NULLABLE_COLUMN) != DatabaseMetaData.columnNoNulls;
+        table.addColumn(new SqlColumnMetadata(columnName, columnType, typeName, columnSize, decimalDigits, nullable));
     }
 
     private void readPrimaryKeys(Map<String, SqlTableMetadata> tables) {
