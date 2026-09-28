@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.config;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
@@ -85,9 +86,24 @@ final class JdbcSchemaMetadataReader {
     }
 
     /**
+     * Resolves the schema name as stored in the database, the same way as the generated SQL refers to it:
+     * an escaped (quoted) name is stored as declared, otherwise the database stores the name in its identifier case.
+     *
+     * @param schema The schema name as declared in the mapping
+     * @param escape Whether the mapping escapes the names
+     * @return The schema name as stored in the database, null for the connection default schema
+     */
+    @Nullable String resolveSchema(@Nullable String schema, boolean escape) {
+        if (StringUtils.isEmpty(schema)) {
+            return null;
+        }
+        return escape ? schema : namingStrategy.apply(schema);
+    }
+
+    /**
      * Reads the metadata of the given tables in the schema.
      *
-     * @param schema The schema name as declared in the mapping, null for the connection default schema
+     * @param schema The schema name as stored in the database (see {@link #resolveSchema(String, boolean)}), null for the connection default schema
      * @param wantedTableNames The lower case names of the tables to read, other tables are skipped
      * @return The schema tables
      * @throws SQLException If reading the metadata fails
@@ -98,20 +114,9 @@ final class JdbcSchemaMetadataReader {
             String currentSchema = dialect == Dialect.MYSQL ? null : connection.getSchema();
             return readTables(apply(catalog), apply(currentSchema), wantedTableNames);
         }
-        // The schema can be stored as declared (created with an escaped name) or in the database identifier case
-        Set<String> candidates = new LinkedHashSet<>();
-        candidates.add(schema);
-        candidates.add(namingStrategy.apply(schema));
-        SchemaTables result = null;
-        for (String candidate : candidates) {
-            result = dialect == Dialect.MYSQL
-                ? readTables(candidate, null, wantedTableNames)
-                : readTables(apply(catalog), candidate, wantedTableNames);
-            if (!result.tables().isEmpty()) {
-                return result;
-            }
-        }
-        return new SchemaTables(namingStrategy.apply(schema), result == null ? Map.of() : result.tables());
+        return dialect == Dialect.MYSQL
+            ? readTables(schema, null, wantedTableNames)
+            : readTables(apply(catalog), schema, wantedTableNames);
     }
 
     /**
@@ -170,12 +175,12 @@ final class JdbcSchemaMetadataReader {
     /**
      * Reads the Oracle JSON relational duality views of the schema.
      *
-     * @param declaredSchema The schema (view owner) as declared in the mapping, null for the connection default schema
+     * @param viewSchema The schema (view owner) as stored in the database, null for the connection default schema
      * @return The views by lower case view name
      * @throws SQLException If the views cannot be read
      */
-    Map<String, SqlJsonViewMetadata> readJsonDualityViews(@Nullable String declaredSchema) throws SQLException {
-        String schema = declaredSchema == null ? connection.getSchema() : namingStrategy.apply(declaredSchema);
+    Map<String, SqlJsonViewMetadata> readJsonDualityViews(@Nullable String viewSchema) throws SQLException {
+        String schema = viewSchema == null ? connection.getSchema() : viewSchema;
         Map<String, JsonViewBuilder> views = new LinkedHashMap<>();
         query(JSON_DUALITY_VIEWS_QUERY, schema, resultSet -> {
             String viewName = resultSet.getString(1);

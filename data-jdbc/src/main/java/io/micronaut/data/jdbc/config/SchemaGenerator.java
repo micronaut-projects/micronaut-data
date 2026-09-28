@@ -298,15 +298,16 @@ public class SchemaGenerator {
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
         }
-        // Tables grouped by the schema declared in the mapping (empty for the connection default schema)
-        Map<String, Map<String, SqlTableMapping>> sqlTableMappingsBySchema = getSqlTableMappingsBySchema(entities, dialect);
-
         SchemaValidationResult result = new SchemaValidationResult();
         JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect);
-        for (Map<String, SqlTableMapping> sqlTableMappings : sqlTableMappingsBySchema.values()) {
+        // Tables grouped by the schema as stored in the database (empty for the connection default schema)
+        Map<String, Map<String, SqlTableMapping>> sqlTableMappingsBySchema = getSqlTableMappingsBySchema(entities, dialect, metadataReader);
+
+        for (Map.Entry<String, Map<String, SqlTableMapping>> schemaEntry : sqlTableMappingsBySchema.entrySet()) {
+            Map<String, SqlTableMapping> sqlTableMappings = schemaEntry.getValue();
             String schema = sqlTableMappings.values().iterator().next().schema();
             JdbcSchemaMetadataReader.SchemaTables schemaTables = metadataReader.readTables(
-                StringUtils.isNotEmpty(schema) ? schema : null, sqlTableMappings.keySet());
+                StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null, sqlTableMappings.keySet());
             String columnTypeDefinitionsQuery = sqlTableMappingValidator.getColumnTypeDefinitionsQuery();
             if (columnTypeDefinitionsQuery != null && sqlTableMappings.values().stream().anyMatch(SchemaGenerator::hasDefinedColumns)) {
                 // Needed to verify the type arguments of columns with a definition, like the vector dimension
@@ -371,13 +372,15 @@ public class SchemaGenerator {
         if (jsonViewMappings.isEmpty()) {
             return;
         }
+        // The JSON view is created with an unescaped schema name
         Map<String, List<SqlJsonViewMapping>> jsonViewMappingsBySchema = jsonViewMappings.stream()
-            .collect(Collectors.groupingBy(mapping -> schemaKey(mapping.schema()), LinkedHashMap::new, Collectors.toList()));
-        for (List<SqlJsonViewMapping> schemaJsonViewMappings : jsonViewMappingsBySchema.values()) {
+            .collect(Collectors.groupingBy(mapping -> schemaKey(metadataReader, mapping.schema(), false), LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<SqlJsonViewMapping>> schemaEntry : jsonViewMappingsBySchema.entrySet()) {
+            List<SqlJsonViewMapping> schemaJsonViewMappings = schemaEntry.getValue();
             String schema = schemaJsonViewMappings.getFirst().schema();
             Map<String, SqlJsonViewMetadata> jsonViews;
             try {
-                jsonViews = metadataReader.readJsonDualityViews(StringUtils.isNotEmpty(schema) ? schema : null);
+                jsonViews = metadataReader.readJsonDualityViews(StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null);
             } catch (SQLException e) {
                 result.addWarning("Unable to read the JSON views of schema [" + schema + "], the JSON views are not validated: " + e.getMessage());
                 continue;
@@ -388,7 +391,9 @@ public class SchemaGenerator {
         }
     }
 
-    private Map<String, Map<String, SqlTableMapping>> getSqlTableMappingsBySchema(PersistentEntity[] entities, Dialect dialect) {
+    private Map<String, Map<String, SqlTableMapping>> getSqlTableMappingsBySchema(PersistentEntity[] entities,
+                                                                                  Dialect dialect,
+                                                                                  JdbcSchemaMetadataReader metadataReader) {
         // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
@@ -398,7 +403,8 @@ public class SchemaGenerator {
             }
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
-                String key = schemaKey(sqlTableMapping.schema()) + "." + sqlTableMapping.name().toLowerCase(Locale.ENGLISH);
+                String key = schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape())
+                    + "." + sqlTableMapping.name().toLowerCase(Locale.ENGLISH);
                 SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
                 if (existingSqlTableMapping != null) {
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
@@ -413,7 +419,7 @@ public class SchemaGenerator {
             }
         }
         return sqlTableMappingByTableName.values().stream()
-            .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(sqlTableMapping.schema()), LinkedHashMap::new,
+            .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()), LinkedHashMap::new,
                 Collectors.toMap(sqlTableMapping -> sqlTableMapping.name().toLowerCase(Locale.ENGLISH), sqlTableMapping -> sqlTableMapping,
                     (first, second) -> first, LinkedHashMap::new)));
     }
@@ -444,10 +450,12 @@ public class SchemaGenerator {
     }
 
     /**
-     * The schema names are compared as declared, the escaped (quoted) schema names differing only in case are different schemas.
+     * The schema as stored in the database, the escaped (quoted) schema names differing only in case are different schemas
+     * and the unescaped schema names are stored in the database identifier case.
      */
-    private static String schemaKey(@Nullable String schema) {
-        return schema == null ? "" : schema;
+    private static String schemaKey(JdbcSchemaMetadataReader metadataReader, @Nullable String schema, boolean escape) {
+        String resolvedSchema = metadataReader.resolveSchema(schema, escape);
+        return resolvedSchema == null ? "" : resolvedSchema;
     }
 
     /**

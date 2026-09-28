@@ -42,13 +42,18 @@ class H2QuotedSchemaValidationSpec extends Specification {
     @AutoCleanup
     ApplicationContext context = ApplicationContext.run(PROPERTIES)
 
-    void 'quoted schemas differing only in case are validated separately'() {
+    void 'schemas are resolved the same way as the generated SQL refers to them'() {
         given:"The escaped schemas \"Foo\" and \"foo\" with a different table each"
         Connection connection = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource)).connection
         execute(connection, 'CREATE SCHEMA "Foo"')
         execute(connection, 'CREATE SCHEMA "foo"')
         execute(connection, 'CREATE TABLE "Foo"."upper_item" ("id" BIGINT NOT NULL PRIMARY KEY, "name" VARCHAR(255) NOT NULL)')
         execute(connection, 'CREATE TABLE "foo"."lower_item" ("id" BIGINT NOT NULL PRIMARY KEY, "name" VARCHAR(255) NOT NULL)')
+
+        and:"The unescaped schema foo stored as FOO, and a same named table without the name column in the escaped schema \"foo\""
+        execute(connection, 'CREATE SCHEMA foo')
+        execute(connection, 'CREATE TABLE foo.plain_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(connection, 'CREATE TABLE "foo"."plain_item" ("id" BIGINT NOT NULL PRIMARY KEY)')
 
         when:
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -59,6 +64,7 @@ class H2QuotedSchemaValidationSpec extends Specification {
         cleanup:
         execute(connection, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
         execute(connection, 'DROP SCHEMA IF EXISTS "foo" CASCADE')
+        execute(connection, 'DROP SCHEMA IF EXISTS FOO CASCADE')
         connection.close()
     }
 
@@ -76,6 +82,13 @@ class UpperItem {
 
 @MappedEntity(value = "lower_item", schema = "foo", escape = true)
 class LowerItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "plain_item", schema = "foo", escape = false)
+class PlainItem {
     @Id
     Long id
     String name
