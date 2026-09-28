@@ -202,9 +202,9 @@ public class SchemaGenerator {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
-            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
-        boolean foreignKeys = configuration.isSchemaGenerateForeignKeys();
-        if (foreignKeys && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP) {
+            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints())
+            .withForeignKeys(configuration.isSchemaGenerateForeignKeys());
+        if (createOptions.foreignKeys() && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP) {
             // Drop the constraints first, so that the tables can be dropped in any order
             for (String sql : builder.buildDropForeignKeyStatements(definitionProviders, entities)) {
                 executeIgnoringFailure(connection, resolveSql(propertyPlaceholderResolver, sql), "Dropping Foreign Key");
@@ -279,23 +279,6 @@ public class SchemaGenerator {
                     break;
                 default:
                     // do nothing
-            }
-        }
-        if (foreignKeys) {
-            // Foreign keys are added once all the tables exist, each one separately so that a failure
-            // (for example an existing constraint when using CREATE) doesn't prevent adding the others
-            for (String stmt : builder.buildCreateForeignKeyStatements(definitionProviders, entities)) {
-                stmt = resolveSql(propertyPlaceholderResolver, stmt);
-                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                    DataSettings.QUERY_LOG.debug("Adding Foreign Key: \n{}", stmt);
-                }
-                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                        DataSettings.QUERY_LOG.warn("Foreign Key Statement Unsuccessful: " + e.getMessage());
-                    }
-                }
             }
         }
     }

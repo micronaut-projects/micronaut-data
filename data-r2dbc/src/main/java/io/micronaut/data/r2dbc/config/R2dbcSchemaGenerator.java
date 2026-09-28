@@ -140,15 +140,11 @@ public class R2dbcSchemaGenerator {
                                 SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
-            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
-        boolean foreignKeys = configuration.isSchemaGenerateForeignKeys();
-        List<String> createStatements = new ArrayList<>(Arrays.asList(
+            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints())
+            .withForeignKeys(configuration.isSchemaGenerateForeignKeys());
+        List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect(), createOptions)
-        ));
-        if (foreignKeys) {
-            // Foreign keys are added once all the tables exist
-            createStatements.addAll(Arrays.asList(builder.buildCreateForeignKeyStatements(definitionProviders, entities)));
-        }
+        );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -166,7 +162,7 @@ public class R2dbcSchemaGenerator {
         return switch (schemaGenerate) {
             case CREATE_DROP -> {
                 List<String> dropStatements = new ArrayList<>();
-                if (foreignKeys) {
+                if (createOptions.foreignKeys()) {
                     // Drop the constraints first, so that the tables can be dropped in any order
                     dropStatements.addAll(Arrays.asList(builder.buildDropForeignKeyStatements(definitionProviders, entities)));
                 }

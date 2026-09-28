@@ -23,22 +23,32 @@ import io.micronaut.core.annotation.Experimental;
  *
  * @param uniqueConstraints Whether to create the JPA unique constraints ({@code @Column(unique = true)} and
  * {@code @Table(uniqueConstraints = ...)}) as unique indexes
+ * @param foreignKeys Whether to create the foreign key constraints of the associations referencing the created tables,
+ * added once all the tables are created. Not supported by SQLite, which cannot add constraints to existing tables
  * @author radovanradic
  * @since 5.3.0
  */
 @Experimental
-public record SqlSchemaCreateOptions(boolean uniqueConstraints) {
+public record SqlSchemaCreateOptions(boolean uniqueConstraints, boolean foreignKeys) {
 
     /**
      * The default options.
      */
-    public static final SqlSchemaCreateOptions DEFAULT = new SqlSchemaCreateOptions(false);
+    public static final SqlSchemaCreateOptions DEFAULT = new SqlSchemaCreateOptions(false, false);
 
     /**
      * @param uniqueConstraints Whether to create the JPA unique constraints
      * @return The options with the given unique constraints option
      */
     public SqlSchemaCreateOptions withUniqueConstraints(boolean uniqueConstraints) {
-        return new SqlSchemaCreateOptions(uniqueConstraints);
+        return new SqlSchemaCreateOptions(uniqueConstraints, foreignKeys);
+    }
+
+    /**
+     * @param foreignKeys Whether to create the foreign key constraints
+     * @return The options with the given foreign keys option
+     */
+    public SqlSchemaCreateOptions withForeignKeys(boolean foreignKeys) {
+        return new SqlSchemaCreateOptions(uniqueConstraints, foreignKeys);
     }
 }

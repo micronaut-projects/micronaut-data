@@ -28,6 +28,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult
@@ -490,23 +491,38 @@ class H2SchemaValidationSpec extends Specification {
         (bookTable.foreignKeys() + joinTable.foreignKeys()).every { it.name().length() <= 30 }
 
         when:
-        def createStatements = new SqlQueryBuilder(Dialect.H2).buildCreateForeignKeyStatements([], entities)
+        def options = SqlSchemaCreateOptions.DEFAULT.withForeignKeys(true)
+        def statements = new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements([], entities, Dialect.H2, options) as List<String>
+        def createStatements = foreignKeyStatements(statements)
         def dropStatements = new SqlQueryBuilder(Dialect.H2).buildDropForeignKeyStatements([], entities)
 
-        then:
-        createStatements.length == 4
+        then:"The foreign keys are added once all the tables are created"
+        createStatements.size() == 4
+        statements.findLastIndexOf { it.startsWith('CREATE TABLE') } < statements.findIndexOf { it.contains('FOREIGN KEY') }
         createStatements.collect { it.replace('`', '') }.any { it ==~ /ALTER TABLE schema_book ADD CONSTRAINT FK_SCHEMA_BOOK_AUTHOR\w*_[0-9A-F]{8} FOREIGN KEY \(author_id\) REFERENCES schema_author \(id\);/ }
         dropStatements.collect { it.replace('`', '') }.any { it ==~ /ALTER TABLE schema_book DROP CONSTRAINT FK_SCHEMA_BOOK_AUTHOR\w*_[0-9A-F]{8};/ }
+        foreignKeyStatements(new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements([], entities, Dialect.H2) as List<String>).isEmpty()
 
-        when:"Foreign keys are only generated for tables of the given entities"
-        createStatements = new SqlQueryBuilder(Dialect.H2).buildCreateForeignKeyStatements([], [entities[0], entities[1]] as PersistentEntity[])
+        when:"The batch statement adds the foreign keys once all the tables are created"
+        def batch = new SqlQueryBuilder(Dialect.H2).buildBatchCreateTableStatement([], options, entities)
 
         then:
-        createStatements.length == 3
+        batch.count('FOREIGN KEY') == 4
+        batch.lastIndexOf('CREATE TABLE') < batch.indexOf('FOREIGN KEY')
+
+        when:"Foreign keys are only generated for tables of the given entities"
+        createStatements = foreignKeyStatements(new SqlQueryBuilder(Dialect.H2).buildCreateTableStatements([], [entities[0], entities[1]] as PersistentEntity[], Dialect.H2, options) as List<String>)
+
+        then:
+        createStatements.size() == 3
         createStatements.every { !it.contains('REFERENCES `schema_tag`') }
 
         expect:"SQLite cannot add constraints to existing tables"
-        new SqlQueryBuilder(Dialect.SQLITE).buildCreateForeignKeyStatements([], entities).length == 0
+        foreignKeyStatements(new SqlQueryBuilder(Dialect.SQLITE).buildCreateTableStatements([], entities, Dialect.SQLITE, options) as List<String>).isEmpty()
+    }
+
+    private static List<String> foreignKeyStatements(List<String> statements) {
+        statements.findAll { it.contains('FOREIGN KEY') }
     }
 
     void 'only the created foreign keys are validated'() {

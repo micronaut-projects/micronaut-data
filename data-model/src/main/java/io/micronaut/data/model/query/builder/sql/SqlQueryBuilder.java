@@ -377,9 +377,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public String buildBatchCreateTableStatement(List<DefinitionProvider> columnDefinitionProviders,
                                                  SqlSchemaCreateOptions options,
                                                  PersistentEntity... entities) {
-        return Arrays.stream(entities)
-            .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders, options)))
-            .collect(Collectors.joining(System.lineSeparator()));
+        SqlSchemaCreateOptions tableOptions = options.withForeignKeys(false);
+        List<String> statements = new ArrayList<>();
+        for (PersistentEntity entity : entities) {
+            statements.addAll(Arrays.asList(buildCreateTableStatements(entity, columnDefinitionProviders, tableOptions)));
+        }
+        if (options.foreignKeys()) {
+            // Foreign keys are added once all the tables exist
+            addForeignKeyStatements(statements, getSqlTableMappingsByTableName(columnDefinitionProviders, entities).values(), true);
+        }
+        return String.join(System.lineSeparator(), statements);
     }
 
     /**
@@ -542,6 +549,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
            addTableCreateStatements(createStatements, table, schema, escape);
            addOptionalStatements(createStatements, table, escape, options);
         }
+        if (options.foreignKeys()) {
+            // Only the foreign keys referencing the tables of the entity, other tables might not exist yet
+            addForeignKeyStatements(createStatements, tables, true);
+        }
 
         return createStatements.toArray(new String[0]);
     }
@@ -625,6 +636,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addTableCreateStatements(createStatements, table, table.schema(), escape);
             addOptionalStatements(createStatements, table, escape, options);
         }
+        if (options.foreignKeys()) {
+            // Foreign keys are added once all the tables exist
+            addForeignKeyStatements(createStatements, sqlTableMappingByTableName.values(), true);
+        }
 
         createStatements.addAll(jsonViewCreateStatements);
         return createStatements.toArray(new String[0]);
@@ -653,25 +668,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the statements adding foreign key constraints for the associations of the given entities.
-     * Designed for testing and not production usage. For production a SQL migration tool such as Flyway or Liquibase is recommended.
-     * <p>
-     * The statements are meant to be executed after the tables were created (see {@link #buildCreateTableStatements(List, PersistentEntity[], Dialect)}).
-     * Only foreign keys referencing tables of the given entities are produced. SQLite does not support adding constraints
-     * to existing tables and no statements are produced for it.
-     *
-     * @param definitionProviders The definition providers
-     * @param entities The entities
-     * @return The {@code ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY} statements
-     * @since 5.3.0
-     */
-    @Experimental
-    public final String[] buildCreateForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
-        return buildForeignKeyStatements(definitionProviders, entities, true);
-    }
-
-    /**
-     * Builds the statements dropping the foreign key constraints produced by {@link #buildCreateForeignKeyStatements(List, PersistentEntity...)}.
+     * Builds the statements dropping the foreign key constraints created with {@link SqlSchemaCreateOptions#foreignKeys()}.
      * Designed for testing and not production usage.
      *
      * @param definitionProviders The definition providers
@@ -681,21 +678,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public final String[] buildDropForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
-        return buildForeignKeyStatements(definitionProviders, entities, false);
+        List<String> statements = new ArrayList<>();
+        addForeignKeyStatements(statements, getSqlTableMappingsByTableName(definitionProviders, entities).values(), false);
+        return statements.toArray(new String[0]);
     }
 
-    private String[] buildForeignKeyStatements(List<DefinitionProvider> definitionProviders, PersistentEntity[] entities, boolean create) {
+    /**
+     * Adds the statements creating or dropping the foreign key constraints of the given tables referencing one of the given tables.
+     * SQLite does not support adding constraints to existing tables and no statements are added for it.
+     */
+    private void addForeignKeyStatements(List<String> statements, Collection<SqlTableMapping> tables, boolean create) {
         if (dialect == Dialect.SQLITE) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Foreign key constraints cannot be added to existing tables for dialect {}", dialect);
             }
-            return StringUtils.EMPTY_STRING_ARRAY;
+            return;
         }
-        Map<String, SqlTableMapping> sqlTableMappingByTableName = getSqlTableMappingsByTableName(definitionProviders, entities);
-        java.util.function.Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(sqlTableMappingByTableName.values(), dialect);
+        java.util.function.Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(tables, dialect);
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
-        List<String> statements = new ArrayList<>();
-        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+        for (SqlTableMapping table : tables) {
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             String tableName = getObjectName(table.schema(), table.name(), escape, true);
             for (SqlForeignKeyMapping foreignKey : table.foreignKeys()) {
@@ -720,7 +721,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addToCollectionIfNotContains(statements, statement.toString());
             }
         }
-        return statements.toArray(new String[0]);
     }
 
     /**
