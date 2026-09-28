@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.schema.sql.SqlTableMapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,6 +73,23 @@ public final class SchemaValidationResult {
      */
     public boolean hasErrors() {
         return !errors.isEmpty();
+    }
+
+    /**
+     * Creates the error message for a validation exception thrown by a validator, see
+     * {@link SqlTableMappingValidator#validateTable(SqlTableMapping, io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata, io.micronaut.data.model.query.builder.sql.SqlDialectOptions, SchemaValidationResult)}.
+     *
+     * @param exception The exception
+     * @param tableMapping The validated table
+     * @return The error message without the common prefix
+     */
+    static String errorOf(SchemaValidationException exception, SqlTableMapping tableMapping) {
+        String message = exception.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Table [" + tableMapping.name() + "] is not valid";
+        }
+        String prefix = FAILED_PREFIX + ". ";
+        return message.startsWith(prefix) ? message.substring(prefix.length()) : message;
     }
 
     /**

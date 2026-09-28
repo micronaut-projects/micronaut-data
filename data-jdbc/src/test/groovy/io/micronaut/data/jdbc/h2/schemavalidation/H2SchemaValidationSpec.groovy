@@ -193,19 +193,46 @@ class H2SchemaValidationSpec extends Specification {
         validateLobItem(validator, mapping, [Types.VARCHAR, 'text', Integer.MAX_VALUE], [Types.BINARY, 'bytea', Integer.MAX_VALUE]).errors.isEmpty()
     }
 
-    void 'columnless index only matches the expected index'() {
+    void 'spatial index only matches the expected index'() {
         given:
         def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
         def mapping = new SqlTableMapping(null, 'geo_item', false, SqlTableMapping.TableType.MAIN, [], [], [],
                 [new SqlIndexMapping('', false, ['location'] as String[], true)], [])
+        def missingWarning = 'Spatial index [idx_geo_item_location] on columns [location] not found in table [geo_item]'
 
         expect:"An unrelated index without reported columns does not match"
-        validateGeoItem(validator, mapping, new SqlIndexMetadata('idx_geo_item_expression', false, [])).warnings ==
-                ['Index on columns [location] not found in table [geo_item]']
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('idx_geo_item_expression', false, [])).warnings == [missingWarning]
 
-        and:"The index created for the mapping matches"
+        and:"An ordinary index on the same column does not match"
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('any_name', false, ['LOCATION'])).warnings == [missingWarning]
+
+        and:"The index created for the mapping matches, with or without reported columns"
         validateGeoItem(validator, mapping, new SqlIndexMetadata('IDX_GEO_ITEM_LOCATION', false, [])).warnings.isEmpty()
-        validateGeoItem(validator, mapping, new SqlIndexMetadata('any_name', false, ['LOCATION'])).warnings.isEmpty()
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('IDX_GEO_ITEM_LOCATION', false, ['LOCATION'])).warnings.isEmpty()
+    }
+
+    void 'validators implementing the previous contract keep working'() {
+        given:"A validator implementing only the three argument validateTable"
+        def legacyValidator = new SqlTableMappingValidator() {
+            @Override
+            void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SqlDialectOptions dialectOptions) {
+                throw new SchemaValidationException("Schema validation failed. Column [x] not found in the table [" + tableMapping.name() + "]")
+            }
+
+            @Override
+            Dialect getSupportedDialect() {
+                return Dialect.H2
+            }
+        }
+        def mapping = new SqlTableMapping(null, 'legacy_item', false, SqlTableMapping.TableType.MAIN, [], [])
+        def result = new SchemaValidationResult()
+
+        when:
+        legacyValidator.validateTable(mapping, new SqlTableMetadata(null, null, 'legacy_item'), SqlDialectOptions.defaults(Dialect.H2), result)
+        legacyValidator.validateSequences(mapping, [] as Set, SqlDialectOptions.defaults(Dialect.H2), result)
+
+        then:"Its error is collected without repeating the prefix"
+        result.errors == ['Column [x] not found in the table [legacy_item]']
     }
 
     private static SchemaValidationResult validateLobItem(SqlTableMappingValidator validator, SqlTableMapping mapping,

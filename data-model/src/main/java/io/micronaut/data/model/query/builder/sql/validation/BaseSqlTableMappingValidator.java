@@ -23,7 +23,6 @@ import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
-import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
@@ -121,6 +120,15 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     @Override
     public final void validateTable(SqlTableMapping tableMapping,
                                     SqlTableMetadata tableMetadata,
+                                    SqlDialectOptions dialectOptions) {
+        SchemaValidationResult result = new SchemaValidationResult();
+        validateTable(tableMapping, tableMetadata, dialectOptions, result);
+        result.throwIfErrors();
+    }
+
+    @Override
+    public final void validateTable(SqlTableMapping tableMapping,
+                                    SqlTableMetadata tableMetadata,
                                     SqlDialectOptions dialectOptions,
                                     SchemaValidationResult result) {
         List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns() == null ? List.of() : tableMapping.primaryKeyColumns();
@@ -132,21 +140,6 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         }
         validatePrimaryKey(tableMapping, tableMetadata, result);
         validateIndexes(tableMapping, tableMetadata, result);
-    }
-
-    @Override
-    public void validateSequences(SqlTableMapping tableMapping, Set<String> sequenceNames, SqlDialectOptions dialectOptions, SchemaValidationResult result) {
-        Dialect dialect = dialectOptions.dialect();
-        for (SqlSequenceMapping sequence : tableMapping.sequences()) {
-            if (!SqlSchemaUtils.requiresSequence(sequence, dialect)) {
-                continue;
-            }
-            String sequenceName = SqlSchemaUtils.resolveSequenceName(tableMapping, sequence, dialect);
-            if (!sequenceNames.contains(sequenceName.toLowerCase(Locale.ENGLISH))) {
-                result.addError(String.format("Expected sequence [%s] for column [%s] in table [%s] not found",
-                    sequenceName, sequence.columnName(), tableMapping.name()));
-            }
-        }
     }
 
     /**
@@ -530,19 +523,24 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             boolean found = indexes.stream().anyMatch(index -> {
                 List<String> indexColumns = index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
                 if (special) {
-                    // Spatial and vector indexes are not always reported with their columns in the same way
-                    if (indexColumns.isEmpty()) {
-                        // No columns are reported (also for unrelated expression indexes), only the index with the expected name matches
-                        return expectedName.equalsIgnoreCase(index.name());
-                    }
-                    return indexColumns.containsAll(columns);
+                    // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
+                    // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
+                    return expectedName.equalsIgnoreCase(index.name()) && (indexColumns.isEmpty() || indexColumns.containsAll(columns));
                 }
                 return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
             });
             if (!found) {
-                String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? "[" + indexMapping.name() + "] " : "";
+                String kind;
+                String indexName;
+                if (special) {
+                    kind = indexMapping.spatial() ? "Spatial index" : "Vector index";
+                    indexName = "[" + expectedName + "] ";
+                } else {
+                    kind = indexMapping.unique() ? "Unique index" : "Index";
+                    indexName = StringUtils.isNotEmpty(indexMapping.name()) ? "[" + indexMapping.name() + "] " : "";
+                }
                 result.addWarning(String.format("%s %son columns %s not found in table [%s]",
-                    indexMapping.unique() ? "Unique index" : "Index", indexName, Arrays.toString(indexMapping.columns()), tableMapping.name()));
+                    kind, indexName, Arrays.toString(indexMapping.columns()), tableMapping.name()));
             }
         }
     }
