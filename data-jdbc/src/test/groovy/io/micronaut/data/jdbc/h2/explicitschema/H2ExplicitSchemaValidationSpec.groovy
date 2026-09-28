@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2.quotedschema
+package io.micronaut.data.jdbc.h2.explicitschema
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Id
@@ -26,15 +26,15 @@ import spock.lang.Specification
 import javax.sql.DataSource
 import java.sql.Connection
 
-class H2QuotedSchemaValidationSpec extends Specification {
+class H2ExplicitSchemaValidationSpec extends Specification {
 
     static final Map<String, String> PROPERTIES = [
-            'datasources.default.url'            : 'jdbc:h2:mem:quotedSchemaValidation;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1',
+            'datasources.default.url'            : 'jdbc:h2:mem:explicitSchemaValidation;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1',
             'datasources.default.schema-generate': 'NONE',
             'datasources.default.dialect'        : 'H2',
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
-            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.quotedschema',
+            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.explicitschema',
             'datasources.default.driverClassName': 'org.h2.Driver'
     ]
 
@@ -42,18 +42,23 @@ class H2QuotedSchemaValidationSpec extends Specification {
     @AutoCleanup
     ApplicationContext context = ApplicationContext.run(PROPERTIES)
 
-    void 'schemas are resolved the same way as the generated SQL refers to them'() {
-        given:"The escaped schemas \"Foo\" and \"foo\" with a different table each"
+    void 'the explicit schema is resolved the same way as the generated SQL refers to it'() {
+        given:"The schema foo stored as FOO, and the quoted schema \"foo\" with same named tables without the name column"
         Connection connection = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource)).connection
-        execute(connection, 'CREATE SCHEMA "Foo"')
-        execute(connection, 'CREATE SCHEMA "foo"')
-        execute(connection, 'CREATE TABLE "Foo"."upper_item" ("id" BIGINT NOT NULL PRIMARY KEY, "name" VARCHAR(255) NOT NULL)')
-        execute(connection, 'CREATE TABLE "foo"."lower_item" ("id" BIGINT NOT NULL PRIMARY KEY, "name" VARCHAR(255) NOT NULL)')
-
-        and:"The unescaped schema foo stored as FOO, and a same named table without the name column in the escaped schema \"foo\""
         execute(connection, 'CREATE SCHEMA foo')
+        execute(connection, 'CREATE SCHEMA "foo"')
         execute(connection, 'CREATE TABLE foo.plain_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(connection, 'CREATE TABLE "foo"."plain_item" ("id" BIGINT NOT NULL PRIMARY KEY)')
+
+        and:"An escaped table created the same way as the schema generation, H2 stores the backtick quoted names in upper case"
+        execute(connection, 'CREATE TABLE `foo`.`escaped_item` (`id` BIGINT NOT NULL PRIMARY KEY, `name` VARCHAR(255) NOT NULL)')
+        execute(connection, 'CREATE TABLE "foo"."escaped_item" ("id" BIGINT NOT NULL PRIMARY KEY)')
+
+        and:"The schema FOO_BAR, and the schema FOOXBAR matching FOO_BAR as a pattern with a same named table without the name column"
+        execute(connection, 'CREATE SCHEMA FOO_BAR')
+        execute(connection, 'CREATE SCHEMA FOOXBAR')
+        execute(connection, 'CREATE TABLE FOO_BAR.pattern_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(connection, 'CREATE TABLE FOOXBAR.pattern_item (id BIGINT NOT NULL PRIMARY KEY)')
 
         when:
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -62,9 +67,10 @@ class H2QuotedSchemaValidationSpec extends Specification {
         noExceptionThrown()
 
         cleanup:
-        execute(connection, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
-        execute(connection, 'DROP SCHEMA IF EXISTS "foo" CASCADE')
         execute(connection, 'DROP SCHEMA IF EXISTS FOO CASCADE')
+        execute(connection, 'DROP SCHEMA IF EXISTS "foo" CASCADE')
+        execute(connection, 'DROP SCHEMA IF EXISTS FOO_BAR CASCADE')
+        execute(connection, 'DROP SCHEMA IF EXISTS FOOXBAR CASCADE')
         connection.close()
     }
 
@@ -73,22 +79,22 @@ class H2QuotedSchemaValidationSpec extends Specification {
     }
 }
 
-@MappedEntity(value = "upper_item", schema = "Foo", escape = true)
-class UpperItem {
-    @Id
-    Long id
-    String name
-}
-
-@MappedEntity(value = "lower_item", schema = "foo", escape = true)
-class LowerItem {
-    @Id
-    Long id
-    String name
-}
-
 @MappedEntity(value = "plain_item", schema = "foo", escape = false)
 class PlainItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "escaped_item", schema = "foo", escape = true)
+class EscapedItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "pattern_item", schema = "FOO_BAR")
+class PatternItem {
     @Id
     Long id
     String name

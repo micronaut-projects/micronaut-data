@@ -77,34 +77,73 @@ final class JdbcSchemaMetadataReader {
     private final DatabaseMetaData metaData;
     private final Dialect dialect;
     private final IdentifierNamingStrategy namingStrategy;
+    private final String searchStringEscape;
 
     JdbcSchemaMetadataReader(Connection connection, Dialect dialect) throws SQLException {
         this.connection = connection;
         this.metaData = connection.getMetaData();
         this.dialect = dialect;
         this.namingStrategy = getIdentifierNamingStrategy(metaData);
+        String escape = metaData.getSearchStringEscape();
+        this.searchStringEscape = escape == null ? "" : escape;
     }
 
     /**
-     * Resolves the schema name as stored in the database, the same way as the generated SQL refers to it:
-     * an escaped (quoted) name is stored as declared, otherwise the database stores the name in its identifier case.
+     * Resolves a schema or table name as stored in the database, the same way as the generated SQL refers to it.
+     * An unescaped name is stored in the database identifier case. So is an escaped name for Oracle, whose quoted names
+     * are upper case, and for H2, which converts the backtick quoted names like the unquoted ones. The other dialects
+     * store an escaped name as declared.
+     *
+     * @param name The name as declared in the mapping
+     * @param escape Whether the mapping escapes the names
+     * @return The name as stored in the database
+     */
+    String resolveIdentifier(String name, boolean escape) {
+        if (escape && dialect != Dialect.ORACLE && dialect != Dialect.H2) {
+            return name;
+        }
+        return namingStrategy.apply(name);
+    }
+
+    /**
+     * Resolves the schema name as stored in the database, see {@link #resolveIdentifier(String, boolean)}.
      *
      * @param schema The schema name as declared in the mapping
      * @param escape Whether the mapping escapes the names
      * @return The schema name as stored in the database, null for the connection default schema
      */
     @Nullable String resolveSchema(@Nullable String schema, boolean escape) {
-        if (StringUtils.isEmpty(schema)) {
-            return null;
-        }
-        return escape ? schema : namingStrategy.apply(schema);
+        return StringUtils.isEmpty(schema) ? null : resolveIdentifier(schema, escape);
+    }
+
+    /**
+     * The key of the table, see {@link #identifierKey(String)}.
+     *
+     * @param name The table name as declared in the mapping
+     * @param escape Whether the mapping escapes the names
+     * @return The table key
+     */
+    String tableKey(String name, boolean escape) {
+        return identifierKey(resolveIdentifier(name, escape));
+    }
+
+    /**
+     * The key of a name as stored in the database. When the database stores the identifiers in upper or lower case,
+     * the names are compared exactly, an escaped name can differ from an unescaped one only by the case.
+     * The databases storing mixed case identifiers (MySQL, SQL Server) typically compare them case-insensitively.
+     *
+     * @param storedName The name as stored in the database
+     * @return The key
+     */
+    private String identifierKey(String storedName) {
+        return namingStrategy == IdentifierNamingStrategy.MIXED ? storedName.toLowerCase(Locale.ENGLISH) : storedName;
     }
 
     /**
      * Reads the metadata of the given tables in the schema.
      *
      * @param schema The schema name as stored in the database (see {@link #resolveSchema(String, boolean)}), null for the connection default schema
-     * @param wantedTableNames The lower case names of the tables to read, other tables are skipped
+     * @param wantedTableNames The keys of the tables to read (see {@link #tableKey(String, boolean)}), other tables are skipped
      * @return The schema tables
      * @throws SQLException If reading the metadata fails
      */
@@ -159,7 +198,7 @@ final class JdbcSchemaMetadataReader {
                     String tableName = resultSet.getString(1);
                     String columnName = resultSet.getString(2);
                     String typeDefinition = resultSet.getString(3);
-                    SqlTableMetadata table = tableName == null ? null : schemaTables.tables().get(tableName.toLowerCase(Locale.ENGLISH));
+                    SqlTableMetadata table = tableName == null ? null : schemaTables.tables().get(identifierKey(tableName));
                     if (table != null && columnName != null && typeDefinition != null) {
                         table.setColumnTypeDefinition(columnName, typeDefinition);
                     }
@@ -224,21 +263,25 @@ final class JdbcSchemaMetadataReader {
                                     Set<String> wantedTableNames) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
         String resolvedSchema = dialect == Dialect.MYSQL ? catalog : schema;
-        // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns
-        try (ResultSet resultSet = metaData.getColumns(catalog, schema, null, MATCH_ALL)) {
+        // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns.
+        // The schema is a pattern, its wildcard characters are escaped and the rows of the other schemas are skipped.
+        try (ResultSet resultSet = metaData.getColumns(catalog, schema == null ? null : escapePattern(schema), null, MATCH_ALL)) {
             while (resultSet.next()) {
                 String tableName = resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
-                String tableNameLowerCase = tableName.toLowerCase(Locale.ENGLISH);
-                if (!wantedTableNames.contains(tableNameLowerCase)) {
+                String tableKey = identifierKey(tableName);
+                if (!wantedTableNames.contains(tableKey)) {
                     // No need to read columns of the table which does not have mapped entity
                     continue;
                 }
                 String tableCatalog = resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
                 String tableSchema = resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-                SqlTableMetadata table = tables.get(tableNameLowerCase);
+                if (!sameOrUnknown(dialect == Dialect.MYSQL ? catalog : schema, dialect == Dialect.MYSQL ? tableCatalog : tableSchema)) {
+                    continue;
+                }
+                SqlTableMetadata table = tables.get(tableKey);
                 if (table == null) {
                     table = new SqlTableMetadata(tableCatalog, tableSchema, tableName);
-                    tables.put(tableNameLowerCase, table);
+                    tables.put(tableKey, table);
                     resolvedSchema = dialect == Dialect.MYSQL ? tableCatalog : tableSchema;
                 } else if (!Objects.equals(table.getCatalog(), tableCatalog) || !Objects.equals(table.getSchema(), tableSchema)) {
                     // A table with the same name in another schema (the schema pattern can match more schemas)
@@ -312,7 +355,7 @@ final class JdbcSchemaMetadataReader {
      * Reads the table metadata for all the tables with a single call (null table name), which many drivers support.
      * When the driver rejects it, or it returns no rows, the metadata is read with a call per table.
      *
-     * @return The lower case names of the tables whose metadata was read
+     * @return The keys of the tables whose metadata was read
      */
     @SuppressWarnings("java:S107")
     private Set<String> readTablesMetadata(String what,
@@ -332,7 +375,7 @@ final class JdbcSchemaMetadataReader {
                 if (tableName == null) {
                     continue;
                 }
-                String tableKey = tableName.toLowerCase(Locale.ENGLISH);
+                String tableKey = identifierKey(tableName);
                 SqlTableMetadata table = tables.get(tableKey);
                 if (table != null && isSameSchema(table, resultSet.getString(catalogColumn), resultSet.getString(schemaColumn))) {
                     rowReader.read(tableKey, resultSet);
@@ -368,12 +411,24 @@ final class JdbcSchemaMetadataReader {
      * A row read for all the tables (null table name) can belong to a same-named table in another catalog or schema
      * matched by the pattern. Some drivers don't report the catalog or schema, only a different reported value is a mismatch.
      */
-    private static boolean isSameSchema(SqlTableMetadata table, @Nullable String catalog, @Nullable String schema) {
+    private boolean isSameSchema(SqlTableMetadata table, @Nullable String catalog, @Nullable String schema) {
         return sameOrUnknown(table.getCatalog(), catalog) && sameOrUnknown(table.getSchema(), schema);
     }
 
-    private static boolean sameOrUnknown(@Nullable String expected, @Nullable String actual) {
-        return expected == null || actual == null || expected.equalsIgnoreCase(actual);
+    private boolean sameOrUnknown(@Nullable String expected, @Nullable String actual) {
+        return expected == null || actual == null || identifierKey(expected).equals(identifierKey(actual));
+    }
+
+    /**
+     * @return The name as a metadata pattern matching only the name
+     */
+    private String escapePattern(String name) {
+        if (searchStringEscape.isEmpty()) {
+            return name;
+        }
+        return name.replace(searchStringEscape, searchStringEscape + searchStringEscape)
+            .replace("_", searchStringEscape + "_")
+            .replace("%", searchStringEscape + "%");
     }
 
     private @Nullable String apply(@Nullable String identifier) {
@@ -395,7 +450,7 @@ final class JdbcSchemaMetadataReader {
      * The tables read from a schema.
      *
      * @param schema The schema (database for MySQL) as stored in the database, can be null
-     * @param tables The table metadata by lower case table name
+     * @param tables The table metadata by table key, see {@link #tableKey(String, boolean)}
      */
     record SchemaTables(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
     }

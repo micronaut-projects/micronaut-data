@@ -1,0 +1,118 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.jdbc.postgres.explicitschema
+
+import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
+import io.micronaut.data.runtime.config.SchemaGenerate
+import spock.lang.Specification
+
+import javax.sql.DataSource
+
+class PostgresExplicitSchemaValidationSpec extends Specification implements PostgresTestPropertyProvider {
+
+    @Override
+    SchemaGenerate schemaGenerate() {
+        return SchemaGenerate.NONE
+    }
+
+    @Override
+    List<String> packages() {
+        return [getClass().package.name]
+    }
+
+    void 'quoted and unquoted schemas and tables differing only in case are validated separately'() {
+        given:"The quoted schema \"Foo\" and the unquoted schema Foo stored as foo"
+        def context = ApplicationContext.run(properties)
+        def dataSource = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource))
+        def validateProperties = properties + ['datasources.default.schema-generate': 'VALIDATE']
+        // The database is shared with the other specs
+        execute(dataSource, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
+        execute(dataSource, 'DROP SCHEMA IF EXISTS foo CASCADE')
+        execute(dataSource, 'CREATE SCHEMA "Foo"')
+        execute(dataSource, 'CREATE SCHEMA foo')
+        execute(dataSource, 'CREATE TABLE "Foo".quoted_schema_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE TABLE foo.unquoted_schema_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+
+        and:"The unquoted table t_item and the quoted table \"T_ITEM\""
+        execute(dataSource, 'CREATE TABLE foo.t_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE TABLE foo."T_ITEM" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+
+        when:
+        ApplicationContext.run(validateProperties).close()
+
+        then:
+        noExceptionThrown()
+
+        when:"The quoted table is missing"
+        execute(dataSource, 'DROP TABLE foo."T_ITEM"')
+        ApplicationContext.run(validateProperties).close()
+
+        then:
+        def e = thrown(Exception)
+        rootMessage(e) == 'Schema validation failed. Expected table [foo.T_ITEM] not found'
+
+        cleanup:
+        execute(dataSource, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
+        execute(dataSource, 'DROP SCHEMA IF EXISTS foo CASCADE')
+        context?.close()
+    }
+
+    private static void execute(DataSource dataSource, String sql) {
+        dataSource.connection.withCloseable { connection ->
+            connection.prepareStatement(sql).withCloseable { it.executeUpdate() }
+        }
+    }
+
+    private static String rootMessage(Throwable e) {
+        Throwable current = e
+        while (current.cause != null) {
+            current = current.cause
+        }
+        return current.message
+    }
+}
+
+@MappedEntity(value = "quoted_schema_item", schema = "Foo", escape = true)
+class QuotedSchemaItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "unquoted_schema_item", schema = "Foo", escape = false)
+class UnquotedSchemaItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "t_item", schema = "foo", escape = false)
+class UnquotedTableItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "T_ITEM", schema = "foo", escape = true)
+class QuotedTableItem {
+    @Id
+    Long id
+    String name
+}

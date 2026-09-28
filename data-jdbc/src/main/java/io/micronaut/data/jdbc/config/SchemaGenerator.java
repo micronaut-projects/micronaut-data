@@ -404,7 +404,7 @@ public class SchemaGenerator {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String key = schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape())
-                    + "." + sqlTableMapping.name().toLowerCase(Locale.ENGLISH);
+                    + "." + metadataReader.tableKey(sqlTableMapping.name(), sqlTableMapping.escape());
                 SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
                 if (existingSqlTableMapping != null) {
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
@@ -420,7 +420,7 @@ public class SchemaGenerator {
         }
         return sqlTableMappingByTableName.values().stream()
             .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()), LinkedHashMap::new,
-                Collectors.toMap(sqlTableMapping -> sqlTableMapping.name().toLowerCase(Locale.ENGLISH), sqlTableMapping -> sqlTableMapping,
+                Collectors.toMap(sqlTableMapping -> metadataReader.tableKey(sqlTableMapping.name(), sqlTableMapping.escape()), sqlTableMapping -> sqlTableMapping,
                     (first, second) -> first, LinkedHashMap::new)));
     }
 
@@ -450,8 +450,7 @@ public class SchemaGenerator {
     }
 
     /**
-     * The schema as stored in the database, the escaped (quoted) schema names differing only in case are different schemas
-     * and the unescaped schema names are stored in the database identifier case.
+     * The schema as stored in the database, resolved the same way as the generated SQL refers to it.
      */
     private static String schemaKey(JdbcSchemaMetadataReader metadataReader, @Nullable String schema, boolean escape) {
         String resolvedSchema = metadataReader.resolveSchema(schema, escape);
