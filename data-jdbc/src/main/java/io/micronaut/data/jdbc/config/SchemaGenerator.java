@@ -36,6 +36,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult;
 import io.micronaut.data.model.query.builder.sql.validation.SqlJsonViewValidator;
@@ -198,6 +199,8 @@ public class SchemaGenerator {
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
+        SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
+            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -215,7 +218,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, entities));
+                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, createOptions, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }
@@ -248,7 +251,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
+                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect, createOptions);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -267,23 +270,6 @@ public class SchemaGenerator {
                     break;
                 default:
                     // do nothing
-            }
-        }
-        if (configuration.isSchemaGenerateUniqueConstraints()) {
-            // Unique constraints are added once all the tables exist, each one separately so that a failure
-            // (for example an existing index when using CREATE) doesn't prevent adding the others
-            for (String stmt : builder.buildCreateUniqueConstraintStatements(definitionProviders, entities)) {
-                stmt = resolveSql(propertyPlaceholderResolver, stmt);
-                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                    DataSettings.QUERY_LOG.debug("Adding Unique Constraint: \n{}", stmt);
-                }
-                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                        DataSettings.QUERY_LOG.warn("Unique Constraint Statement Unsuccessful: " + e.getMessage());
-                    }
-                }
             }
         }
     }

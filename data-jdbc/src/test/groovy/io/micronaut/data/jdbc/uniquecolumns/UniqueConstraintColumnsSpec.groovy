@@ -17,8 +17,10 @@ package io.micronaut.data.jdbc.uniquecolumns
 
 import io.micronaut.data.annotation.Reservable
 import io.micronaut.data.exceptions.MappingException
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import jakarta.persistence.Column
@@ -79,18 +81,43 @@ class UniqueConstraintColumnsSpec extends Specification {
         mapping.uniqueConstraints()*.columns() == [['first_name', 'last_name'] as String[], ['last_name'] as String[]]
     }
 
+    void 'unique constraints are created after the table only when enabled by the options'() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def entity = new RuntimePersistentEntity(ColumnListUniqueItem)
+        def options = SqlSchemaCreateOptions.DEFAULT.withUniqueConstraints(true)
+
+        when:
+        def defaultStatements = builder.buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.POSTGRES) as List<String>
+        def statements = builder.buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.POSTGRES, options) as List<String>
+        def singleStatements = builder.buildCreateTableStatements(entity, [], options) as List<String>
+        def batch = builder.buildBatchCreateTableStatement([], options, entity)
+
+        then:
+        defaultStatements.every { !it.contains('UNIQUE INDEX') }
+        statements.size() == defaultStatements.size() + 2
+        statements.take(defaultStatements.size()) == defaultStatements
+        statements.drop(defaultStatements.size()).every { it.startsWith('CREATE UNIQUE INDEX') }
+        singleStatements.count { it.startsWith('CREATE UNIQUE INDEX') } == 2
+        batch.count('CREATE UNIQUE INDEX') == 2
+    }
+
     void 'reservable column in a unique constraint fails only when the unique constraints are generated'() {
         given:
         def entity = new RuntimePersistentEntity(ReservableUniqueItem)
 
-        when:"The mapping is resolved"
+        def builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:"The mapping is resolved and the tables are created without the unique constraints"
         SqlSchemaUtils.getSqlTableMappings(entity, Dialect.ORACLE)
+        def statements = builder.buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.ORACLE)
 
         then:
         noExceptionThrown()
+        statements.every { !it.contains('UNIQUE INDEX') }
 
-        when:"The unique constraint statements are built"
-        new SqlQueryBuilder(Dialect.ORACLE).buildCreateUniqueConstraintStatements([], entity)
+        when:"The tables are created with the unique constraints"
+        builder.buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.ORACLE, SqlSchemaCreateOptions.DEFAULT.withUniqueConstraints(true))
 
         then:
         def e = thrown(MappingException)

@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
@@ -42,7 +43,6 @@ import reactor.core.publisher.Mono;
 import jakarta.annotation.PostConstruct;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -138,13 +138,11 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        List<String> createStatements = new ArrayList<>(Arrays.asList(
-            builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
-        ));
-        if (configuration.isSchemaGenerateUniqueConstraints()) {
-            // Unique constraints are added once all the tables exist
-            createStatements.addAll(Arrays.asList(builder.buildCreateUniqueConstraintStatements(definitionProviders, entities)));
-        }
+        SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
+            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
+        List<String> createStatements = Arrays.asList(
+            builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect(), createOptions)
+        );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {

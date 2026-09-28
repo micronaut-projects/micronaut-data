@@ -363,6 +363,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
+     * Builds a batch create tables statement with the given options. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
+     * @param options the options of the created schema objects
+     * @param entities the entities
+     * @return The table
+     * @since 5.3.0
+     */
+    @Experimental
+    public String buildBatchCreateTableStatement(List<DefinitionProvider> columnDefinitionProviders,
+                                                 SqlSchemaCreateOptions options,
+                                                 PersistentEntity... entities) {
+        return Arrays.stream(entities)
+            .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders, options)))
+            .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    /**
      * Builds a batch drop tables statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
@@ -486,6 +505,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
+        return buildCreateTableStatements(entity, definitionProviders, SqlSchemaCreateOptions.DEFAULT);
+    }
+
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity with the given options.
+     *
+     * @param entity The entity
+     * @param definitionProviders The definition providers
+     * @param options The options of the created schema objects
+     * @return The {@code CREATE TABLE} statements
+     * @since 5.3.0
+     */
+    @Experimental
+    public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders, SqlSchemaCreateOptions options) {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
@@ -506,6 +539,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         for (SqlTableMapping table : tables) {
            addTableCreateStatements(createStatements, table, schema, escape);
+           addOptionalStatements(createStatements, table, escape, options);
         }
 
         return createStatements.toArray(new String[0]);
@@ -540,6 +574,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
                                                      Dialect dialect) {
+        return buildCreateTableStatements(definitionProviders, entities, dialect, SqlSchemaCreateOptions.DEFAULT);
+    }
+
+    /**
+     * Builds the create table statements for a collection of entities with the given options. Designed for testing and not production usage.
+     * For production a SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The collection of entities
+     * @param dialect The dialect
+     * @param options The options of the created schema objects
+     * @return The tables for the given entities
+     * @since 5.3.0
+     */
+    @Experimental
+    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect,
+                                                     SqlSchemaCreateOptions options) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -569,6 +622,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             addTableCreateStatements(createStatements, table, table.schema(), escape);
+            addOptionalStatements(createStatements, table, escape, options);
         }
 
         createStatements.addAll(jsonViewCreateStatements);
@@ -576,46 +630,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
-     * Builds the statements creating the JPA unique constraints ({@code @Column(unique = true)} and
-     * {@code @Table(uniqueConstraints = ...)}) of the given entities as unique indexes.
-     * Designed for testing and not production usage. For production a SQL migration tool such as Flyway or Liquibase is recommended.
-     * <p>
-     * The statements are meant to be executed after the tables were created (see {@link #buildCreateTableStatements(List, PersistentEntity[], Dialect)}).
-     *
-     * @param definitionProviders The definition providers
-     * @param entities The entities
-     * @return The {@code CREATE UNIQUE INDEX} statements
-     * @since 5.3.0
+     * Adds the statements of the optional schema objects of the table enabled by the options: the JPA unique constraints
+     * ({@code @Column(unique = true)} and {@code @Table(uniqueConstraints = ...)}) as unique indexes, after the table indexes.
      */
-    @Experimental
-    public final String[] buildCreateUniqueConstraintStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
-        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
-        for (PersistentEntity entity : entities) {
-            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-                continue;
-            }
-            for (SqlTableMapping table : SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect)) {
-                addTable(table, sqlTableMappingByTableName);
-            }
+    private void addOptionalStatements(List<String> createStatements, SqlTableMapping table, boolean escape, SqlSchemaCreateOptions options) {
+        if (!options.uniqueConstraints() || table.uniqueConstraints().isEmpty()) {
+            return;
         }
-        Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
-        List<String> statements = new ArrayList<>();
-        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
-            boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
-            String tableName = getObjectName(table.schema(), table.name(), escape, true);
-            Set<String> reservableColumns = table.columns().stream().filter(SqlColumnMapping::isReservable)
-                .map(SqlColumnMapping::getName).collect(Collectors.toSet());
-            for (SqlIndexMapping uniqueConstraint : table.uniqueConstraints()) {
-                for (String column : uniqueConstraint.columns()) {
-                    if (reservableColumns.contains(column)) {
-                        throw new MappingException("@Reservable column [" + column + "] of table [" + table.name() + "] cannot be indexed");
-                    }
+        String tableName = getObjectName(table.schema(), table.name(), escape, true);
+        Set<String> reservableColumns = table.columns().stream().filter(SqlColumnMapping::isReservable)
+            .map(SqlColumnMapping::getName).collect(Collectors.toSet());
+        for (SqlIndexMapping uniqueConstraint : table.uniqueConstraints()) {
+            for (String column : uniqueConstraint.columns()) {
+                if (reservableColumns.contains(column)) {
+                    throw new MappingException("@Reservable column [" + column + "] of table [" + table.name() + "] cannot be indexed");
                 }
-                String indexName = createIndexName(table, uniqueConstraint, escape);
-                addToCollectionIfNotContains(statements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
             }
+            String indexName = createIndexName(table, uniqueConstraint, escape);
+            addToCollectionIfNotContains(createStatements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
         }
-        return statements.toArray(new String[0]);
     }
 
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {
