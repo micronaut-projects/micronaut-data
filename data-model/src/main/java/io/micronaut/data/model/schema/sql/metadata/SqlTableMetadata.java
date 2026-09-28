@@ -39,6 +39,7 @@ public final class SqlTableMetadata {
     private @Nullable List<SqlIndexMetadata> indexes;
     private final Map<String, String> columnTypeDefinitions = new LinkedHashMap<>();
     private final SqlIdentifierMatcher identifierMatcher;
+    private boolean view;
 
     /**
      * Constructs a new instance of SqlTableMetadata with the specified table name, the column names are compared case-insensitively.
@@ -82,6 +83,22 @@ public final class SqlTableMetadata {
      */
     public SqlIdentifierMatcher getIdentifierMatcher() {
         return identifierMatcher;
+    }
+
+    /**
+     * @return whether the table is a view, which has no primary key, indexes or foreign keys
+     * @since 5.3.0
+     */
+    public boolean isView() {
+        return view;
+    }
+
+    /**
+     * @param view whether the table is a view
+     * @since 5.3.0
+     */
+    public void setView(boolean view) {
+        this.view = view;
     }
 
     /**

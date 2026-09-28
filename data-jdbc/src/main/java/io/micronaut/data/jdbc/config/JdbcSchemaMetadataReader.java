@@ -114,18 +114,19 @@ final class JdbcSchemaMetadataReader {
      *
      * @param schema The schema name as stored in the database (see {@link #resolveSchema(String, boolean)}), null for the connection default schema
      * @param wantedTableNames The keys of the tables to read (see {@link SqlIdentifierMatcher#mappedTableKey(String, boolean)}), other tables are skipped
+     * @param readIndexes Whether to read the indexes, only needed when they are validated
      * @return The schema tables
      * @throws SQLException If reading the metadata fails
      */
-    SchemaTables readTables(@Nullable String schema, Set<String> wantedTableNames) throws SQLException {
+    SchemaTables readTables(@Nullable String schema, Set<String> wantedTableNames, boolean readIndexes) throws SQLException {
         String catalog = connection.getCatalog();
         if (schema == null) {
             String currentSchema = dialect == Dialect.MYSQL ? null : connection.getSchema();
-            return readTables(apply(catalog), apply(currentSchema), wantedTableNames);
+            return readTables(apply(catalog), apply(currentSchema), wantedTableNames, readIndexes);
         }
         return dialect == Dialect.MYSQL
-            ? readTables(schema, null, wantedTableNames)
-            : readTables(apply(catalog), schema, wantedTableNames);
+            ? readTables(schema, null, wantedTableNames, readIndexes)
+            : readTables(apply(catalog), schema, wantedTableNames, readIndexes);
     }
 
     /**
@@ -230,7 +231,8 @@ final class JdbcSchemaMetadataReader {
 
     private SchemaTables readTables(@Nullable String catalog,
                                     @Nullable String schema,
-                                    Set<String> wantedTableNames) throws SQLException {
+                                    Set<String> wantedTableNames,
+                                    boolean readIndexes) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
         String resolvedSchema = dialect == Dialect.MYSQL ? catalog : schema;
         // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns.
@@ -264,8 +266,38 @@ final class JdbcSchemaMetadataReader {
             return new SchemaTables(resolvedSchema, tables);
         }
         readPrimaryKeys(tables);
-        readIndexes(tables);
+        markViews(catalog, schema, tables);
+        if (readIndexes) {
+            readIndexes(tables);
+        }
         return new SchemaTables(resolvedSchema, tables);
+    }
+
+    /**
+     * Marks the views, which have no primary key or indexes. The entities can be mapped to views, since the tables
+     * are resolved from the columns. Only a table without a primary key can be a view, the views are read
+     * with a single call only when there is such a table.
+     */
+    private void markViews(@Nullable String catalog, @Nullable String schema, Map<String, SqlTableMetadata> tables) {
+        boolean withoutPrimaryKey = tables.values().stream()
+            .anyMatch(table -> table.getPrimaryKeyColumns() != null && table.getPrimaryKeyColumns().isEmpty());
+        if (!withoutPrimaryKey) {
+            return;
+        }
+        try (ResultSet resultSet = metaData.getTables(catalog, schema == null ? null : escapePattern(schema), MATCH_ALL, new String[]{"VIEW"})) {
+            while (resultSet.next()) {
+                String tableName = resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
+                SqlTableMetadata table = tableName == null ? null : tables.get(identifierMatcher.tableKey(tableName));
+                if (table != null && isSameSchema(table, resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN),
+                    resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN))) {
+                    table.setView(true);
+                }
+            }
+        } catch (SQLException | RuntimeException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to read the views, the tables without a primary key are validated as tables: {}", e.getMessage());
+            }
+        }
     }
 
     private static void addColumn(SqlTableMetadata table, ResultSet resultSet) throws SQLException {

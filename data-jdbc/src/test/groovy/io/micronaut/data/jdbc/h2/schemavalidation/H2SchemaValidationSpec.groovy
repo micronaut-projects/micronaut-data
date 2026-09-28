@@ -197,6 +197,40 @@ class H2SchemaValidationSpec extends Specification {
         validateLobItem(validator, mapping, [Types.VARCHAR, 'CHARACTER VARYING', 1_000_000_000], [Types.VARBINARY, 'BINARY VARYING', 1_000_000_000]).errors.isEmpty()
     }
 
+    void 'views and MySQL byte array identities have no primary key'() {
+        given:
+        def h2Validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
+        def mysqlValidator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.MYSQL }
+        def viewMapping = new SqlTableMapping(null, 'view_item', false, SqlTableMapping.TableType.MAIN,
+                [new SqlColumnMapping('id', DataType.LONG, SqlDbType.BIGINT)], [], [], [new SqlIndexMapping('', false, ['id'] as String[])], [])
+        def viewMetadata = new SqlTableMetadata(null, null, 'VIEW_ITEM')
+        viewMetadata.addColumn(new SqlColumnMetadata('ID', Types.BIGINT, 'BIGINT', 64, 0, false))
+        viewMetadata.setPrimaryKeyColumns([])
+        viewMetadata.setIndexes([])
+        viewMetadata.setView(true)
+        def bytesMapping = new SqlTableMapping(null, 'bytes_item', false, SqlTableMapping.TableType.MAIN,
+                [new SqlColumnMapping('id', DataType.BYTE_ARRAY, SqlDbType.BLOB)], [])
+        def bytesMetadata = new SqlTableMetadata(null, null, 'bytes_item')
+        bytesMetadata.addColumn(new SqlColumnMetadata('id', Types.LONGVARBINARY, 'BLOB', 65535, 0, false))
+        bytesMetadata.setPrimaryKeyColumns([])
+        def viewResult = new SchemaValidationResult()
+        def bytesResult = new SchemaValidationResult()
+        def h2BytesResult = new SchemaValidationResult()
+
+        when:
+        h2Validator.validateTable(viewMapping, viewMetadata, SqlDialectOptions.defaults(Dialect.H2), viewResult)
+        mysqlValidator.validateTable(bytesMapping, bytesMetadata, SqlDialectOptions.defaults(Dialect.MYSQL), bytesResult)
+        h2Validator.validateTable(bytesMapping, bytesMetadata, SqlDialectOptions.defaults(Dialect.H2), h2BytesResult)
+
+        then:"The view primary key and indexes are not validated, nor the MySQL byte array primary key, which is not created"
+        viewResult.errors.isEmpty()
+        viewResult.warnings.isEmpty()
+        !bytesResult.warnings.any { it.contains('has no primary key') }
+
+        and:"The other databases create the byte array primary key"
+        h2BytesResult.warnings.any { it.contains('Table [bytes_item] has no primary key') }
+    }
+
     void 'UUID stored as a string requires the full length'() {
         given:
         def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.MYSQL }

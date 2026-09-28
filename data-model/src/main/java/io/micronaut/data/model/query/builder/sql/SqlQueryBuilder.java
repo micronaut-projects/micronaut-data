@@ -603,7 +603,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             String tableName = getObjectName(table.schema(), table.name(), escape, true);
+            Set<String> reservableColumns = table.columns().stream().filter(SqlColumnMapping::isReservable)
+                .map(SqlColumnMapping::getName).collect(Collectors.toSet());
             for (SqlIndexMapping uniqueConstraint : table.uniqueConstraints()) {
+                for (String column : uniqueConstraint.columns()) {
+                    if (reservableColumns.contains(column)) {
+                        throw new MappingException("@Reservable column [" + column + "] of table [" + table.name() + "] cannot be indexed");
+                    }
+                }
                 String indexName = createIndexName(table, uniqueConstraint, escape);
                 addToCollectionIfNotContains(statements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
             }

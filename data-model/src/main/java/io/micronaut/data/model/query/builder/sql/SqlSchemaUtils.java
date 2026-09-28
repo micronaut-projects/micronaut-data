@@ -280,7 +280,8 @@ public final class SqlSchemaUtils {
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
         List<SqlIndexMapping> uniqueConstraints = getSqlUniqueConstraintMappings(entity,
             Stream.concat(primaryKeyColumns.stream(), columns.stream()).map(SqlColumnMapping::getName).toList());
-        validateReservableColumns(entity, primaryKeyColumns, columns, Stream.concat(indexes.stream(), uniqueConstraints.stream()).toList());
+        // The unique constraints are only created when enabled, they are checked when the statements are built
+        validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
             indexes, auxiliaryStatements, uniqueConstraints);
@@ -859,24 +860,46 @@ public final class SqlSchemaUtils {
     }
 
     /**
-     * Finds the table column of a unique constraint column name. The column with the exact name is preferred, since
-     * a database with case-sensitive names can have columns differing only by the case, otherwise the name must match
-     * a single column case-insensitively.
+     * Resolves the table column of a unique constraint column name, the name can be quoted. The column with the exact name
+     * is preferred, since a database with case-sensitive names can have columns differing only by the case, then a single
+     * column matching the name case-insensitively, then the column of the property with the name (like the Hibernate logical
+     * column names). The mappings are resolved regardless of whether the unique constraints are generated,
+     * so an unresolved name doesn't fail, it is kept as declared.
      */
-    private static String findUniqueConstraintColumn(PersistentEntity entity, String tableName, List<String> tableColumns, String declaredColumn) {
-        if (tableColumns.contains(declaredColumn)) {
-            return declaredColumn;
+    private static String resolveUniqueConstraintColumn(PersistentEntity entity, List<String> tableColumns, String declaredColumn) {
+        String name = unquote(declaredColumn.trim());
+        if (tableColumns.contains(name)) {
+            return name;
         }
-        List<String> matchingColumns = tableColumns.stream().filter(column -> column.equalsIgnoreCase(declaredColumn)).distinct().toList();
+        List<String> matchingColumns = tableColumns.stream().filter(column -> column.equalsIgnoreCase(name)).distinct().toList();
         if (matchingColumns.size() == 1) {
             return matchingColumns.getFirst();
         }
         if (matchingColumns.isEmpty()) {
-            throw new MappingException("Unique constraint column [" + declaredColumn + "] not found in table ["
-                + tableName + "] of entity [" + entity.getName() + "]");
+            PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
+            if (propertyPath != null && !(propertyPath.getProperty() instanceof Association)) {
+                String column = entity.getNamingStrategy().mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
+                if (tableColumns.contains(column)) {
+                    return column;
+                }
+            }
         }
-        throw new MappingException("Unique constraint column [" + declaredColumn + "] matches the columns " + matchingColumns
-            + " differing only by the case in table [" + tableName + "] of entity [" + entity.getName() + "], use the exact column name");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unique constraint column [{}] of entity [{}] doesn't match a single table column {}, using it as declared",
+                declaredColumn, entity.getName(), matchingColumns.isEmpty() ? tableColumns : matchingColumns);
+        }
+        return name;
+    }
+
+    private static String unquote(String name) {
+        if (name.length() > 1) {
+            char first = name.charAt(0);
+            char last = name.charAt(name.length() - 1);
+            if ((first == '"' && last == '"') || (first == '`' && last == '`') || (first == '[' && last == ']')) {
+                return name.substring(1, name.length() - 1);
+            }
+        }
+        return name;
     }
 
     /**
@@ -900,7 +923,7 @@ public final class SqlSchemaUtils {
                 }
                 List<String> columns = new ArrayList<>(declaredColumns.length);
                 for (String declaredColumn : declaredColumns) {
-                    columns.add(findUniqueConstraintColumn(entity, tableName, tableColumns, declaredColumn));
+                    columns.add(resolveUniqueConstraintColumn(entity, tableColumns, declaredColumn));
                 }
                 String name = uniqueConstraint.stringValue("name")
                     .filter(StringUtils::isNotEmpty)

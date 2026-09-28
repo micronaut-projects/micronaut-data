@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.jdbc.uniquecolumns
 
+import io.micronaut.data.annotation.Reservable
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import jakarta.persistence.Column
@@ -37,14 +39,71 @@ class UniqueConstraintColumnsSpec extends Specification {
         mapping.uniqueConstraints().first().columns() == ['code'] as String[]
     }
 
-    void 'unique constraint column matching more columns case-insensitively is rejected'() {
+    void 'unique constraint column not matching a single column is kept as declared'() {
+        when:"The name matches more columns case-insensitively or no column, the mapping must not fail since unique constraints are opt-in"
+        def ambiguous = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(AmbiguousUniqueItem), Dialect.POSTGRES).first()
+        def unknown = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(UnknownUniqueItem), Dialect.POSTGRES).first()
+
+        then:
+        ambiguous.uniqueConstraints().first().columns() == ['CODE'] as String[]
+        unknown.uniqueConstraints().first().columns() == ['missing'] as String[]
+    }
+
+    void 'unique constraint columns are resolved by the property name and the quoted name'() {
         when:
-        SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(AmbiguousUniqueItem), Dialect.POSTGRES)
+        def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(PropertyUniqueItem), Dialect.POSTGRES).first()
+
+        then:
+        mapping.uniqueConstraints()*.columns() == [['first_name', 'last_name'] as String[], ['last_name'] as String[]]
+    }
+
+    void 'reservable column in a unique constraint fails only when the unique constraints are generated'() {
+        given:
+        def entity = new RuntimePersistentEntity(ReservableUniqueItem)
+
+        when:"The mapping is resolved"
+        SqlSchemaUtils.getSqlTableMappings(entity, Dialect.ORACLE)
+
+        then:
+        noExceptionThrown()
+
+        when:"The unique constraint statements are built"
+        new SqlQueryBuilder(Dialect.ORACLE).buildCreateUniqueConstraintStatements([], entity)
 
         then:
         def e = thrown(MappingException)
-        e.message.contains('Unique constraint column [CODE] matches the columns [Code, code]')
+        e.message.contains('@Reservable column [quantity] of table [reservable_unique_item] cannot be indexed')
     }
+}
+
+@Entity
+@Table(name = "unknown_unique_item", uniqueConstraints = @UniqueConstraint(columnNames = "missing"))
+class UnknownUniqueItem {
+    @Id
+    Long id
+    String code
+}
+
+@Entity
+@Table(name = "property_unique_item", uniqueConstraints = [
+        @UniqueConstraint(columnNames = ["firstName", "lastName"]),
+        @UniqueConstraint(columnNames = "\"last_name\"")
+])
+class PropertyUniqueItem {
+    @Id
+    Long id
+    String firstName
+    String lastName
+}
+
+@Entity
+@Table(name = "reservable_unique_item")
+class ReservableUniqueItem {
+    @Id
+    Long id
+    @Reservable
+    @Column(unique = true)
+    Integer quantity
 }
 
 @Entity

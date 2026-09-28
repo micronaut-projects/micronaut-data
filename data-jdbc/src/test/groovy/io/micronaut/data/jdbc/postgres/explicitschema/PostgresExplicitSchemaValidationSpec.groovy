@@ -61,6 +61,9 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         execute(dataSource, 'CREATE TABLE foo."Sequence_item" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE SEQUENCE foo."Sequence_item_seq"')
 
+        and:"A table and a column with names longer than 63 bytes, truncated by PostgreSQL"
+        execute(dataSource, "CREATE TABLE foo.${LongNameItem.TABLE} (id BIGINT NOT NULL PRIMARY KEY, ${LongNameItem.COLUMN} VARCHAR(255) NOT NULL)")
+
         when:
         ApplicationContext.run(validateProperties).close()
 
@@ -137,6 +140,16 @@ class ColumnCaseItem {
     Long id
     @MappedProperty("Name")
     String name
+}
+
+@MappedEntity(value = LongNameItem.TABLE, schema = "foo", escape = true)
+class LongNameItem {
+    static final String TABLE = "long_name_item_with_a_table_name_exceeding_the_postgres_identifier_limit"
+    static final String COLUMN = "long_name_column_with_a_column_name_exceeding_the_postgres_identifier_limit"
+    @Id
+    Long id
+    @MappedProperty(COLUMN)
+    String longName
 }
 
 @MappedEntity(value = "Sequence_item", schema = "foo", escape = true)

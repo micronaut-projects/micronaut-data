@@ -129,7 +129,7 @@ public interface SqlTableMappingValidator {
      */
     default void validateUniqueConstraints(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
         List<SqlIndexMetadata> indexes = tableMetadata.getIndexes();
-        if (indexes == null) {
+        if (indexes == null || tableMetadata.isView()) {
             return;
         }
         SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();

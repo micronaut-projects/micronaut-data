@@ -45,6 +45,8 @@ public record SqlIdentifierMatcher(Dialect dialect,
                                    boolean caseSensitiveTables,
                                    boolean caseSensitiveColumns) {
 
+    private static final int POSTGRES_MAX_IDENTIFIER_BYTES = 63;
+
     private static final SqlIdentifierMatcher CASE_INSENSITIVE = new SqlIdentifierMatcher(Dialect.ANSI, IdentifierNamingStrategy.MIXED, false, false);
 
     /**
@@ -83,10 +85,30 @@ public record SqlIdentifierMatcher(Dialect dialect,
      * @return The name as stored in the database
      */
     public String resolve(String name, boolean escape) {
-        if (escape && dialect != Dialect.ORACLE && dialect != Dialect.H2) {
-            return name;
+        String resolved = (escape && dialect != Dialect.ORACLE && dialect != Dialect.H2) ? name : namingStrategy.apply(name);
+        // PostgreSQL truncates the longer identifiers when creating and when querying
+        return dialect == Dialect.POSTGRES ? truncatePostgresIdentifier(resolved) : resolved;
+    }
+
+    /**
+     * PostgreSQL truncates the identifiers to 63 bytes (UTF-8 database encoding) without splitting a multibyte character.
+     *
+     * @param identifier The identifier
+     * @return The identifier as stored by PostgreSQL
+     */
+    public static String truncatePostgresIdentifier(String identifier) {
+        int bytes = 0;
+        int index = 0;
+        while (index < identifier.length()) {
+            int codePoint = identifier.codePointAt(index);
+            int codePointBytes = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
+            if (bytes + codePointBytes > POSTGRES_MAX_IDENTIFIER_BYTES) {
+                break;
+            }
+            bytes += codePointBytes;
+            index += Character.charCount(codePoint);
         }
-        return namingStrategy.apply(name);
+        return identifier.substring(0, index);
     }
 
     /**
