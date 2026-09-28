@@ -39,7 +39,7 @@ import java.util.function.LongSupplier;
  * Maintains the Oracle registrations and renewal state for one listener definition.
  *
  * <p>A subscription is logical and long-lived, while its physical {@link DatabaseChangeRegistration}
- * is finite-lived and replaceable. During overlapping renewal, the subscription can temporarily own
+ * can be finite-lived or indefinite. During overlapping renewal, the subscription can temporarily own
  * both the current and replacement registrations. After-expiration renewal locally unregisters the
  * current registration at its logical expiration deadline before creating a replacement. In this
  * mode, the Oracle Database registration timeout includes a grace period as fallback cleanup if

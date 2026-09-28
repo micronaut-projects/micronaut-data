@@ -109,10 +109,14 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         String where = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "where").orElse("").trim();
-        int timeoutSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "timeoutSeconds").orElse(3600);
+        int timeoutSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "timeoutSeconds").orElse(0);
         int leadTimeSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "renewalLeadTimeSeconds").orElse(60);
-        String renewal = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "renewal").orElse("OVERLAPPING");
-        if (!"NONE".equals(renewal) && timeoutSeconds <= 0) {
+        String renewal = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "renewal").orElse("NONE");
+        if (timeoutSeconds < 0) {
+            context.fail("@OracleChangeNotification requires timeoutSeconds to be at least 0", element);
+            return false;
+        }
+        if (!"NONE".equals(renewal) && timeoutSeconds == 0) {
             context.fail("@OracleChangeNotification requires timeoutSeconds to be greater than 0", element);
             return false;
         }

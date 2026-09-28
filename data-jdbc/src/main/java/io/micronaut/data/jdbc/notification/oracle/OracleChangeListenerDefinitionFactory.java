@@ -78,12 +78,15 @@ final class OracleChangeListenerDefinitionFactory {
     private static OracleChangeNotificationRenewalPolicy renewalPolicy(AnnotationValue<OracleChangeNotification> notification,
                                                                        Properties properties,
                                                                        ExecutableMethod<?, ?> method) {
-        int timeoutSeconds = notification.intValue("timeoutSeconds").orElse(3600);
+        int timeoutSeconds = notification.intValue("timeoutSeconds").orElse(0);
         int leadTimeSeconds = notification.intValue("renewalLeadTimeSeconds").orElse(60);
         OracleChangeNotification.RenewalMode mode = notification
             .enumValue("renewal", OracleChangeNotification.RenewalMode.class)
-            .orElse(OracleChangeNotification.RenewalMode.OVERLAPPING);
-        if (mode != OracleChangeNotification.RenewalMode.NONE && timeoutSeconds <= 0) {
+            .orElse(OracleChangeNotification.RenewalMode.NONE);
+        if (timeoutSeconds < 0) {
+            throw invalidChangeListener(method, "requires timeoutSeconds to be at least 0");
+        }
+        if (mode != OracleChangeNotification.RenewalMode.NONE && timeoutSeconds == 0) {
             throw invalidChangeListener(method, "requires timeoutSeconds to be greater than 0");
         }
         if (mode == OracleChangeNotification.RenewalMode.OVERLAPPING

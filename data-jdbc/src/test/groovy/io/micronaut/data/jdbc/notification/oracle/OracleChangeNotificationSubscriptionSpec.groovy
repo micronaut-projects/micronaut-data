@@ -83,7 +83,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def subscription = subscription(fixture.registrar, scheduler([], []),
             new OracleChangeNotificationTaskTracker(), clock,
             new OracleChangeNotificationRenewalPolicy(
-                0, OracleChangeNotification.RenewalMode.NONE, 0))
+                10, OracleChangeNotification.RenewalMode.NONE, 0))
 
         when:
         subscription.start()

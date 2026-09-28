@@ -123,6 +123,19 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
     }
 
+    void "test finite timeout without renewal"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(timeoutSeconds = 10)
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+    }
+
     @Unroll
     void "test invalid Oracle notification configuration fails compilation: #description"() {
         when:
@@ -143,10 +156,12 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         'select without QCN' | '@OracleChangeNotification(select = "id")'                                                                                                                     | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'where without QCN'  | '@OracleChangeNotification(where = "book_title = \'Query Change Notification\'")'                                                                              | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'nonzero change lag' | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "DCN_NOTIFY_CHANGELAG", value = "1"))'                                       | 'requires DCN_NOTIFY_CHANGELAG to be 0'
-        'zero timeout'       | '@OracleChangeNotification(timeoutSeconds = 0)'                                                                                                                | 'requires timeoutSeconds to be greater than 0'
-        'zero lead time'     | '@OracleChangeNotification(timeoutSeconds = 60, renewalLeadTimeSeconds = 0)'                                                                                   | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
-        'negative lead time' | '@OracleChangeNotification(timeoutSeconds = 60, renewalLeadTimeSeconds = -1)'                                                                                  | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
-        'invalid lead time'  | '@OracleChangeNotification(timeoutSeconds = 60, renewalLeadTimeSeconds = 60)'                                                                                  | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
+        'negative timeout'   | '@OracleChangeNotification(timeoutSeconds = -1)'                                                                                                               | 'requires timeoutSeconds to be at least 0'
+        'zero timeout'       | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.OVERLAPPING)'                                                                         | 'requires timeoutSeconds to be greater than 0'
+        'zero after timeout' | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.AFTER_EXPIRATION)'                                                                    | 'requires timeoutSeconds to be greater than 0'
+        'zero lead time'     | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = 0)'                       | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
+        'negative lead time' | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = -1)'                      | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
+        'invalid lead time'  | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = 60)'                       | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
         'raw timeout'        | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "60"))'                                               | 'must configure Oracle registration timeout with timeoutSeconds'
         'aggregate select'   | '@OracleChangeNotification(select = "COUNT(*)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'      | 'unsupported selection [COUNT(*)]'
         'expression select'  | '@OracleChangeNotification(select = "UPPER(title)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'  | 'unsupported selection [UPPER(title)]'

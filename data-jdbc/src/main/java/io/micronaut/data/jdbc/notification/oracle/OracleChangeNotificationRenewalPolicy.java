@@ -20,7 +20,7 @@ import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 /**
  * Immutable scheduling policy for one Oracle notification listener.
  *
- * @param timeoutSeconds  Micronaut Data's logical registration lifetime when renewal is enabled
+ * @param timeoutSeconds  registration lifetime, or zero for no timeout
  * @param mode            replacement strategy
  * @param leadTimeSeconds time reserved for overlapping replacement
  */
@@ -42,12 +42,9 @@ record OracleChangeNotificationRenewalPolicy(int timeoutSeconds,
     /**
      * Returns the Oracle Database timeout. After-expiration registrations receive a grace period so
      * this timeout acts as crash cleanup rather than the normal renewal trigger. Without renewal,
-     * the Oracle Database timeout is zero, leaving cleanup to explicit deregistration.
+     * Oracle Database uses the configured timeout directly, including zero for no expiration.
      */
     int serverTimeoutSeconds() {
-        if (!renewable()) {
-            return 0;
-        }
         if (mode != OracleChangeNotification.RenewalMode.AFTER_EXPIRATION) {
             return timeoutSeconds;
         }

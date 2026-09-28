@@ -157,15 +157,27 @@ Use `OracleChangeNotification.Property` to pass Oracle JDBC registration propert
 ----
 
 Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and controls `NTF_TIMEOUT` according to the renewal strategy.
-`NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. With a timed renewal strategy, a registration that reaches its timeout before any notification arrives is renewed.
+`NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. With renewal enabled, a registration that reaches its timeout before any notification arrives is renewed.
 
-Configure the registration lifetime and replacement strategy with the typed annotation members instead of passing `OracleConnection.NTF_TIMEOUT` in `properties`:
+By default, `renewal = NONE` and `timeoutSeconds = 0`. Oracle Database does not expire the registration, and Micronaut Data does not renew it. To have Oracle Database expire a registration without replacing it, set a positive timeout:
+
+[source,java]
+----
+@ChangeListener
+@OracleChangeNotification(timeoutSeconds = 3600)
+void onBookChanged(ChangeEvent<Book> event) {
+    // ...
+}
+----
+
+After the timeout, that listener no longer receives notifications. To renew registrations, choose a renewal mode and a positive timeout. For example, `OVERLAPPING` creates a replacement before the old registration expires:
 
 [source,java]
 ----
 @ChangeListener
 @OracleChangeNotification(
     timeoutSeconds = 3600,
+    renewal = OracleChangeNotification.RenewalMode.OVERLAPPING,
     renewalLeadTimeSeconds = 60
 )
 void onBookChanged(ChangeEvent<Book> event) {
@@ -173,7 +185,7 @@ void onBookChanged(ChangeEvent<Book> event) {
 }
 ----
 
-With a timed renewal strategy, each registration has a finite logical lifetime. Time spent associating the registration query counts toward that lifetime, and Micronaut Data calculates renewal from the creation time of the physical Oracle registration. The default `OVERLAPPING` strategy activates and associates the replacement `renewalLeadTimeSeconds` before the old registration expires, and only then unregisters the old registration. This provides at-least-once behavior across a successful planned renewal handoff, but the overlap can deliver the same database change through both registrations. It is not a durable-delivery guarantee, and listeners must be idempotent.
+With a renewal strategy, each registration has a finite logical lifetime. Time spent associating the registration query counts toward that lifetime, and Micronaut Data calculates renewal from the creation time of the physical Oracle registration. The `OVERLAPPING` strategy activates and associates the replacement `renewalLeadTimeSeconds` before the old registration expires, and only then unregisters the old registration. This provides at-least-once behavior across a successful planned renewal handoff, but the overlap can deliver the same database change through both registrations. It is not a durable-delivery guarantee, and listeners must be idempotent. The default `renewalLeadTimeSeconds` remains `60`; it is used only for `OVERLAPPING`, and must be less than `timeoutSeconds`.
 
 To avoid duplicates caused specifically by overlapping registrations, select `AFTER_EXPIRATION`:
 
@@ -193,18 +205,9 @@ This strategy uses a local timer. At `timeoutSeconds`, Micronaut Data explicitly
 
 For `AFTER_EXPIRATION`, the Oracle `NTF_TIMEOUT` is configured with a short grace period beyond `timeoutSeconds`. The longer server-side timeout normally remains unused; it removes an abandoned registration if the process is interrupted before local deregistration or if local deregistration fails. If deregistration fails while the application is running, Micronaut Data delays replacement until Oracle's timeout boundary to avoid creating overlapping registrations. A timeout deregistration event received before the local fallback can trigger replacement sooner, but renewal does not depend on that event being delivered.
 
-To keep one registration for the application lifetime without scheduled renewal, select `NONE`:
+With `NONE`, Micronaut Data passes `timeoutSeconds` directly as Oracle's `NTF_TIMEOUT` and never schedules a time-based replacement. Zero means no expiration; a positive value makes Oracle Database expire the registration without replacement. `renewalLeadTimeSeconds` is ignored. Driver-reported notification receiver failures can still trigger a recovery registration; `NONE` disables planned renewal rather than failure recovery.
 
-[source,java]
-----
-@ChangeListener
-@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.NONE)
-void onBookChanged(ChangeEvent<Book> event) {
-    // ...
-}
-----
-
-In this mode, Micronaut Data sets `NTF_TIMEOUT` to `0`, so Oracle does not automatically expire the registration. `timeoutSeconds` and `renewalLeadTimeSeconds` are ignored. Normal shutdown still unregisters it, but after an abrupt service termination the operator must identify and manually remove any abandoned registration. Driver-reported notification receiver failures can still trigger a recovery registration; `NONE` disables planned, time-based renewal rather than failure recovery.
+This changes the defaults from earlier versions of this feature. To retain the previous behavior, explicitly set `renewal = OVERLAPPING` and `timeoutSeconds = 3600`.
 
 If creating or associating a replacement registration fails, Micronaut Data logs the failure and schedules another renewal attempt while the scheduler remains available. With `OVERLAPPING`, the previous registration can continue delivering notifications while the replacement is retried. With `AFTER_EXPIRATION`, the previous registration has already been unregistered, so notifications can be missed until a replacement is successfully created.
 
@@ -244,4 +247,25 @@ If entity loading or listener execution fails and retry or recovery advice does 
 
 During graceful shutdown, Micronaut Data stops accepting new callbacks, unregisters live Oracle registrations, and waits for already accepted blocking-executor tasks to finish. Normal non-graceful context destruction also attempts registration cleanup.
 
-An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. With timed renewal, the finite Oracle timeout eventually removes an abandoned registration. For `AFTER_EXPIRATION`, that server timeout includes a short cleanup grace period after the locally managed `timeoutSeconds` deadline. With `NONE`, no server timeout is configured, so abandoned registrations require manual removal.
+An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. A positive timeout eventually removes an abandoned registration. For `AFTER_EXPIRATION`, that server timeout includes a short cleanup grace period after the locally managed `timeoutSeconds` deadline. With the default zero timeout, Oracle Database does not expire an abandoned registration; the operator must remove it manually.
+
+To inspect registrations, connect to the same pluggable database as the application using the registration-owning user, then query link:https://docs.oracle.com/en/database/oracle/oracle-database/26/refrn/USER_CHANGE_NOTIFICATION_REGS.html[`USER_CHANGE_NOTIFICATION_REGS`]:
+
+[source,sql]
+----
+SELECT DISTINCT regid, callback, table_name
+FROM user_change_notification_regs
+ORDER BY regid, table_name;
+----
+
+Verify that the chosen registration ID belongs to a stopped instance before removing it: another healthy instance may use the same database user and table. To remove one confirmed abandoned registration, run the following as its owning user (or as `SYS`), replacing `1202` with the verified `REGID`:
+
+[source,sql]
+----
+BEGIN
+    DBMS_CQ_NOTIFICATION.DEREGISTER(1202);
+END;
+/
+----
+
+Oracle documents link:https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/DBMS_CQ_NOTIFICATION.html[`DBMS_CQ_NOTIFICATION.DEREGISTER`] as accepting a registration ID; only the registration creator or `SYS` can deregister it. Do not bulk-delete all registrations for a user or table, since those may include active instances.

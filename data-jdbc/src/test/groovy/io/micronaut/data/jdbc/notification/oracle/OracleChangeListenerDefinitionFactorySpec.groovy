@@ -55,8 +55,9 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationQuery() == 'SELECT * FROM "SALES"."ORDER.ITEMS"'
         definition.tableIdentifier().matches('"SALES"."ORDER.ITEMS"')
         !definition.tableIdentifier().matches('"OTHER"."ORDER.ITEMS"')
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '3600'
-        definition.renewalPolicy().timeoutSeconds() == 3600
+        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
+        definition.renewalPolicy().timeoutSeconds() == 0
+        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
         definition.renewalPolicy().leadTimeSeconds() == 60
     }
 
@@ -106,7 +107,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '180'
     }
 
-    void "disables Oracle timeout when renewal is none"() {
+    void "accepts zero timeout with no renewal"() {
         given:
         def operations = operations()
         def listenerMethod = listenerMethod(notification([
@@ -122,6 +123,33 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
         definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
         !definition.renewalPolicy().renewable()
+    }
+
+    void "sets an Oracle timeout without renewal"() {
+        given:
+        def operations = operations()
+        def listenerMethod = listenerMethod(notification([timeoutSeconds: 10]))
+
+        when:
+        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
+
+        then:
+        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '10'
+        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
+        !definition.renewalPolicy().renewable()
+    }
+
+    void "rejects a negative timeout without renewal"() {
+        given:
+        def operations = operations()
+        def listenerMethod = listenerMethod(notification([timeoutSeconds: -1]))
+
+        when:
+        new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
+
+        then:
+        def exception = thrown(IllegalStateException)
+        exception.message.contains('requires timeoutSeconds to be at least 0')
     }
 
     void "rejects select or where for object change notifications"() {
