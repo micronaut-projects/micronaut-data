@@ -23,13 +23,13 @@ import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -93,20 +93,25 @@ public interface SqlTableMappingValidator {
     /**
      * Validates that the sequences used to generate identity values of the table exist in the database.
      *
-     * @param tableMapping    The SQL table mapping from {@link PersistentEntity} to validate
-     * @param sequenceNames   The names of the sequences existing in the table schema, in lower case
-     * @param dialectOptions  The dialect options
-     * @param result          The validation result collecting the problems found
+     * @param tableMapping      The SQL table mapping from {@link PersistentEntity} to validate
+     * @param sequenceNames     The keys of the sequence names existing in the table schema, see {@link SqlIdentifierMatcher#tableKey(String)}
+     * @param identifierMatcher The matcher of the mapped names to the database names
+     * @param dialectOptions    The dialect options
+     * @param result            The validation result collecting the problems found
      * @since 5.3.0
      */
-    default void validateSequences(SqlTableMapping tableMapping, Set<String> sequenceNames, SqlDialectOptions dialectOptions, SchemaValidationResult result) {
+    default void validateSequences(SqlTableMapping tableMapping,
+                                   Set<String> sequenceNames,
+                                   SqlIdentifierMatcher identifierMatcher,
+                                   SqlDialectOptions dialectOptions,
+                                   SchemaValidationResult result) {
         Dialect dialect = dialectOptions.dialect();
         for (SqlSequenceMapping sequence : tableMapping.sequences()) {
             if (!SqlSchemaUtils.requiresSequence(sequence, dialect)) {
                 continue;
             }
             String sequenceName = SqlSchemaUtils.resolveSequenceName(tableMapping, sequence, dialect);
-            if (!sequenceNames.contains(sequenceName.toLowerCase(Locale.ENGLISH))) {
+            if (!sequenceNames.contains(identifierMatcher.mappedTableKey(sequenceName, tableMapping.escape()))) {
                 result.addError(String.format("Expected sequence [%s] for column [%s] in table [%s] not found",
                     sequenceName, sequence.columnName(), tableMapping.name()));
             }
@@ -127,12 +132,13 @@ public interface SqlTableMappingValidator {
         if (indexes == null) {
             return;
         }
+        SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
         for (SqlIndexMapping uniqueConstraint : tableMapping.uniqueConstraints()) {
             Set<String> columns = Arrays.stream(uniqueConstraint.columns())
-                .map(column -> column.toLowerCase(Locale.ENGLISH))
+                .map(column -> matcher.mappedColumnKey(column, tableMapping.escape()))
                 .collect(Collectors.toSet());
             boolean found = indexes.stream().anyMatch(index -> index.unique()
-                && index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet()).equals(columns));
+                && index.columns().stream().map(matcher::columnKey).collect(Collectors.toSet()).equals(columns));
             if (!found) {
                 result.addWarning(String.format("Unique constraint [%s] on columns %s not found in table [%s]",
                     uniqueConstraint.name(), Arrays.toString(uniqueConstraint.columns()), tableMapping.name()));

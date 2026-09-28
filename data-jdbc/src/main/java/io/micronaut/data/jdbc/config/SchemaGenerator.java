@@ -333,7 +333,8 @@ public class SchemaGenerator {
                         sequencesRead = true;
                     }
                     if (sequenceNames != null) {
-                        sqlTableMappingValidator.validateSequences(sqlTableMapping, sequenceNames, dialectOptions, result);
+                        sqlTableMappingValidator.validateSequences(sqlTableMapping, sequenceNames, metadataReader.identifierMatcher(),
+                            dialectOptions, result);
                     }
                 }
             }
@@ -404,7 +405,7 @@ public class SchemaGenerator {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String key = schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape())
-                    + "." + metadataReader.tableKey(sqlTableMapping.name(), sqlTableMapping.escape());
+                    + "." + metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape());
                 SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
                 if (existingSqlTableMapping != null) {
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
@@ -420,7 +421,7 @@ public class SchemaGenerator {
         }
         return sqlTableMappingByTableName.values().stream()
             .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()), LinkedHashMap::new,
-                Collectors.toMap(sqlTableMapping -> metadataReader.tableKey(sqlTableMapping.name(), sqlTableMapping.escape()), sqlTableMapping -> sqlTableMapping,
+                Collectors.toMap(sqlTableMapping -> metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape()), sqlTableMapping -> sqlTableMapping,
                     (first, second) -> first, LinkedHashMap::new)));
     }
 

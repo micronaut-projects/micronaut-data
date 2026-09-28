@@ -36,6 +36,7 @@ import io.micronaut.data.model.schema.sql.SqlDbType
 import io.micronaut.data.model.schema.sql.SqlIndexMapping
 import io.micronaut.data.model.schema.sql.SqlTableMapping
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
+import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
 import spock.lang.AutoCleanup
@@ -312,7 +313,7 @@ class H2SchemaValidationSpec extends Specification {
 
         when:
         legacyValidator.validateTable(mapping, new SqlTableMetadata(null, null, 'legacy_item'), SqlDialectOptions.defaults(Dialect.H2), result)
-        legacyValidator.validateSequences(mapping, [] as Set, SqlDialectOptions.defaults(Dialect.H2), result)
+        legacyValidator.validateSequences(mapping, [] as Set, SqlIdentifierMatcher.caseInsensitive(), SqlDialectOptions.defaults(Dialect.H2), result)
 
         then:"Its error is collected without repeating the prefix"
         result.errors == ['Column [x] not found in the table [legacy_item]']

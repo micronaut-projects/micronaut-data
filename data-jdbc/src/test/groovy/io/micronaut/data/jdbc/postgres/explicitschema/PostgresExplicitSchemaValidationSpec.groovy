@@ -16,8 +16,10 @@
 package io.micronaut.data.jdbc.postgres.explicitschema
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.runtime.config.SchemaGenerate
@@ -37,7 +39,7 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         return [getClass().package.name]
     }
 
-    void 'quoted and unquoted schemas and tables differing only in case are validated separately'() {
+    void 'quoted and unquoted names differing only in case are validated separately'() {
         given:"The quoted schema \"Foo\" and the unquoted schema Foo stored as foo"
         def context = ApplicationContext.run(properties)
         def dataSource = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource))
@@ -54,19 +56,31 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         execute(dataSource, 'CREATE TABLE foo.t_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE TABLE foo."T_ITEM" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
 
+        and:"The quoted column \"Name\" and the quoted sequence \"Sequence_item_seq\""
+        execute(dataSource, 'CREATE TABLE foo.column_case_item (id BIGINT NOT NULL PRIMARY KEY, "Name" VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE TABLE foo."Sequence_item" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE SEQUENCE foo."Sequence_item_seq"')
+
         when:
         ApplicationContext.run(validateProperties).close()
 
         then:
         noExceptionThrown()
 
-        when:"The quoted table is missing"
+        when:"The quoted table, column and sequence only exist unquoted"
         execute(dataSource, 'DROP TABLE foo."T_ITEM"')
+        execute(dataSource, 'ALTER TABLE foo.column_case_item RENAME COLUMN "Name" TO name')
+        execute(dataSource, 'DROP SEQUENCE foo."Sequence_item_seq"')
+        execute(dataSource, 'CREATE SEQUENCE foo.sequence_item_seq')
         ApplicationContext.run(validateProperties).close()
 
         then:
         def e = thrown(Exception)
-        rootMessage(e) == 'Schema validation failed. Expected table [foo.T_ITEM] not found'
+        def message = rootMessage(e)
+        message.startsWith('Schema validation failed with 3 errors')
+        message.contains('Expected table [foo.T_ITEM] not found')
+        message.contains('Column [Name] not found in the table [column_case_item]')
+        message.contains('Expected sequence [Sequence_item_seq] for column [id] in table [Sequence_item] not found')
 
         cleanup:
         execute(dataSource, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
@@ -113,6 +127,22 @@ class UnquotedTableItem {
 @MappedEntity(value = "T_ITEM", schema = "foo", escape = true)
 class QuotedTableItem {
     @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "column_case_item", schema = "foo", escape = true)
+class ColumnCaseItem {
+    @Id
+    Long id
+    @MappedProperty("Name")
+    String name
+}
+
+@MappedEntity(value = "Sequence_item", schema = "foo", escape = true)
+class SequenceCaseItem {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.SEQUENCE)
     Long id
     String name
 }

@@ -69,6 +69,8 @@ The following differences are only logged as warnings, since they only fail for 
 * A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
 * A JSON view allows different operations than declared, or has fields not mapped by the view entity
 
+The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (`@MappedEntity(escape = true)`, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (`lower_case_table_names=0`).
+
 The schema metadata is read in bulk (a single call per schema for the tables, columns, primary keys and indexes when the JDBC driver supports it) and validated in memory.
 
 Please note this option is currently regarded as experimental.

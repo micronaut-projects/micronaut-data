@@ -26,6 +26,7 @@ import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import org.jspecify.annotations.Nullable;
@@ -321,7 +322,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
                                 boolean primaryKey,
                                 SchemaValidationResult result) {
         String name = columnMapping.getName();
-        SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase(Locale.ENGLISH));
+        SqlColumnMetadata columnMetadata = tableMetadata.getMappedColumn(name, tableMapping.escape());
         if (columnMetadata == null) {
             result.addError("Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             return;
@@ -329,7 +330,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         String tableName = tableMetadata.getName();
         String definition = columnMapping.getDefinition();
         if (StringUtils.isNotEmpty(definition)) {
-            validateDefinedColumnType(definition, columnMetadata, tableMetadata.getColumnTypeDefinition(name.toLowerCase(Locale.ENGLISH)),
+            validateDefinedColumnType(definition, columnMetadata, tableMetadata.getColumnTypeDefinition(columnMetadata.name()),
                 dialectOptions, tableName, result);
             // Nullability is part of the definition, which is the responsibility of the user
             return;
@@ -509,7 +510,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         List<String> expectedPrimaryKey = primaryKeyColumns.stream().map(SqlColumnMapping::getName).toList();
         if (actualPrimaryKey.isEmpty()) {
             result.addWarning(String.format("Table [%s] has no primary key, the mapped primary key is %s", tableMapping.name(), expectedPrimaryKey));
-        } else if (!toLowerCaseSet(actualPrimaryKey).equals(toLowerCaseSet(expectedPrimaryKey))) {
+        } else if (!storedColumnKeys(tableMetadata, actualPrimaryKey).equals(mappedColumnKeys(tableMapping, tableMetadata, expectedPrimaryKey))) {
             result.addWarning(String.format("Table [%s] has primary key %s which is different from the mapped primary key %s",
                 tableMapping.name(), actualPrimaryKey, expectedPrimaryKey));
         }
@@ -524,11 +525,12 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             return;
         }
         for (SqlIndexMapping indexMapping : tableMapping.indexes()) {
-            List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
+            SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
+            List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> matcher.mappedColumnKey(column, tableMapping.escape())).toList();
             boolean special = indexMapping.spatial() || indexMapping.sqlIndexDefinitionProvider() != null;
             String expectedName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
             boolean found = indexes.stream().anyMatch(index -> {
-                List<String> indexColumns = index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
+                List<String> indexColumns = index.columns().stream().map(matcher::columnKey).toList();
                 if (special) {
                     // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
                     // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
@@ -591,8 +593,15 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         return identifier.substring(0, index);
     }
 
-    private static Set<String> toLowerCaseSet(List<String> values) {
-        return values.stream().map(value -> value.toLowerCase(Locale.ENGLISH)).collect(Collectors.toCollection(LinkedHashSet::new));
+    private static Set<String> storedColumnKeys(SqlTableMetadata tableMetadata, List<String> columns) {
+        SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
+        return columns.stream().map(matcher::columnKey).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private static Set<String> mappedColumnKeys(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, List<String> columns) {
+        SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
+        return columns.stream().map(column -> matcher.mappedColumnKey(column, tableMapping.escape()))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private static boolean matchingColumnTypes(SqlDbType dbType, SqlColumnMetadata columnMetadata) {
