@@ -60,7 +60,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata)" tabindex="0">validateTable(SqlTableMapping, SqlTableMetadata)</a></li>
 <li><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions)" tabindex="0">validateTable(SqlTableMapping, SqlTableMetadata, SqlDialectOptions)</a></li>
 <li><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" tabindex="0">validateTable(SqlTableMapping, SqlTableMetadata, SqlDialectOptions, SchemaValidationResult)</a></li>
-<li><a href="#validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" tabindex="0">validateSequences(SqlTableMapping, Set, SqlDialectOptions, SchemaValidationResult)</a></li>
+<li><a href="#validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" tabindex="0">validateSequences(SqlTableMapping, Set, SqlIdentifierMatcher, SqlDialectOptions, SchemaValidationResult)</a></li>
+<li><a href="#validateUniqueConstraints(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" tabindex="0">validateUniqueConstraints(SqlTableMapping, SqlTableMetadata, SchemaValidationResult)</a></li>
 <li><a href="#getSequenceNamesQuery()" tabindex="0">getSequenceNamesQuery()</a></li>
 <li><a href="#getColumnTypeDefinitionsQuery()" tabindex="0">getColumnTypeDefinitionsQuery()</a></li>
 <li><a href="#getSupportedDialect()" tabindex="0">getSupportedDialect()</a></li>
@@ -121,12 +122,13 @@ by the standard metadata (like the vector dimension).</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the SQL dialect supported by this validator.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" class="member-name-link">validateSequences</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" class="member-name-link">validateSequences</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;sequenceNames,
+ <a href="../../../../schema/sql/metadata/SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a>&nbsp;identifierMatcher,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions,
  <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Validates that the sequences used to generate identity values of the table exist in the database.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
@@ -135,21 +137,29 @@ by the standard metadata (like the vector dimension).</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Validates a table definition based on <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions)" class="member-name-link">validateTable</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions)" class="member-name-link">validateTable</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Validates a table definition based on <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" class="member-name-link">validateTable</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" class="member-name-link">validateTable</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions,
  <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Validates a table definition based on <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database,
 collecting all errors and warnings into the given result instead of failing on the first one.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#validateUniqueConstraints(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)" class="member-name-link">validateUniqueConstraints</a><wbr>(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+ <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
+ <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Validates that the JPA unique constraints of the table (<a href="../../../../schema/sql/SqlTableMapping.html#uniqueConstraints()"><code>SqlTableMapping.uniqueConstraints()</code></a>) exist in the database
+as unique indexes or unique constraints (reported as unique indexes).</div>
 </div>
 </div>
 </div>
@@ -186,7 +196,7 @@ collecting all errors and warnings into the given result instead of failing on t
 <section class="detail" id="validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions)">
 <h3>validateTable</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions)</span></div>
 <div class="block">Validates a table definition based on <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
@@ -205,12 +215,16 @@ collecting all errors and warnings into the given result instead of failing on t
 <section class="detail" id="validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)">
 <h3>validateTable</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions,
  <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</span></div>
 <div class="block">Validates a table definition based on <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database,
-collecting all errors and warnings into the given result instead of failing on the first one.</div>
+collecting all errors and warnings into the given result instead of failing on the first one.
+<p>
+The default implementation delegates to <a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.SqlDialectOptions)"><code>validateTable(SqlTableMapping, SqlTableMetadata, SqlDialectOptions)</code></a>
+and collects the thrown <a href="SchemaValidationException.html" title="class in io.micronaut.data.model.query.builder.sql.validation"><code>SchemaValidationException</code></a> as an error, so that implementations of the previous
+contract keep working.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>tableMapping</code> - The SQL table mapping from <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> to validate</dd>
@@ -224,19 +238,41 @@ collecting all errors and warnings into the given result instead of failing on t
 </section>
 </li>
 <li>
-<section class="detail" id="validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)">
+<section class="detail" id="validateSequences(io.micronaut.data.model.schema.sql.SqlTableMapping,java.util.Set,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher,io.micronaut.data.model.query.builder.sql.SqlDialectOptions,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)">
 <h3>validateSequences</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">validateSequences</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateSequences</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;sequenceNames,
+ <a href="../../../../schema/sql/metadata/SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a>&nbsp;identifierMatcher,
  <a href="../SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a>&nbsp;dialectOptions,
  <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</span></div>
 <div class="block">Validates that the sequences used to generate identity values of the table exist in the database.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>tableMapping</code> - The SQL table mapping from <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> to validate</dd>
-<dd><code>sequenceNames</code> - The names of the sequences existing in the table schema, in lower case</dd>
+<dd><code>sequenceNames</code> - The keys of the sequence names existing in the table schema, see <a href="../../../../schema/sql/metadata/SqlIdentifierMatcher.html#tableKey(java.lang.String)"><code>SqlIdentifierMatcher.tableKey(String)</code></a></dd>
+<dd><code>identifierMatcher</code> - The matcher of the mapped names to the database names</dd>
 <dd><code>dialectOptions</code> - The dialect options</dd>
+<dd><code>result</code> - The validation result collecting the problems found</dd>
+<dt>Since:</dt>
+<dd>5.3.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="validateUniqueConstraints(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult)">
+<h3>validateUniqueConstraints</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateUniqueConstraints</span><wbr><span class="parameters">(<a href="../../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+ <a href="../../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
+ <a href="SchemaValidationResult.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationResult</a>&nbsp;result)</span></div>
+<div class="block">Validates that the JPA unique constraints of the table (<a href="../../../../schema/sql/SqlTableMapping.html#uniqueConstraints()"><code>SqlTableMapping.uniqueConstraints()</code></a>) exist in the database
+as unique indexes or unique constraints (reported as unique indexes). Missing unique constraints are reported as warnings.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>tableMapping</code> - The SQL table mapping from <a href="../../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> to validate</dd>
+<dd><code>tableMetadata</code> - The SQL table metadata from the database, see <a href="../../../../schema/sql/metadata/SqlTableMetadata.html#getIndexes()"><code>SqlTableMetadata.getIndexes()</code></a></dd>
 <dd><code>result</code> - The validation result collecting the problems found</dd>
 <dt>Since:</dt>
 <dd>5.3.0</dd>

@@ -74,6 +74,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(PersistentEntity, Dialect)</a></li>
 <li><a href="#getSqlTableMappings(java.util.List,io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(List, PersistentEntity, Dialect)</a></li>
+<li><a href="#resolveIndexName(java.lang.String,io.micronaut.data.model.schema.sql.SqlIndexMapping)" tabindex="0">resolveIndexName(String, SqlIndexMapping)</a></li>
 <li><a href="#getSqlJsonViewMapping(io.micronaut.data.model.PersistentEntity)" tabindex="0">getSqlJsonViewMapping(PersistentEntity)</a></li>
 <li><a href="#resolveGeneratedValueType(io.micronaut.data.model.schema.sql.SqlSequenceMapping,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">resolveGeneratedValueType(SqlSequenceMapping, Dialect)</a></li>
 <li><a href="#defaultAutoStrategy(io.micronaut.data.model.DataType,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">defaultAutoStrategy(DataType, Dialect)</a></li>
@@ -170,8 +171,8 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @Nullable <a href="../../../schema/sql/SqlJsonViewMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlJsonViewMapping(io.micronaut.data.model.PersistentEntity)" class="member-name-link">getSqlJsonViewMapping</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;viewEntity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Returns the Oracle JSON relational duality view mapping of the <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity: the view name, its root table,
-the allowed operations and the JSON fields with the tables and columns storing them.</div>
+<div class="block">Returns the Oracle JSON relational duality view mapping of the <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity: the view name and the tree
+of its tables, each with its JSON key, relationship, allowed operations and JSON fields.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">getSqlTableMappings</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
@@ -200,10 +201,17 @@ the allowed operations and the JSON fields with the tables and columns storing t
 when no strategy is declared.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveSequenceName(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.SqlSequenceMapping,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">resolveSequenceName</a><wbr>(<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;table,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveIndexName(java.lang.String,io.micronaut.data.model.schema.sql.SqlIndexMapping)" class="member-name-link">resolveIndexName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableName,
+ <a href="../../../schema/sql/SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&nbsp;indexMapping)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Resolves the name of the index: the declared name, or the name generated by the schema generation
+(<code>idx_</code> followed by the table and column names) for an unnamed index.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#resolveSequenceName(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.SqlSequenceMapping,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">resolveSequenceName</a><wbr>(<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;table,
  <a href="../../../schema/sql/SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&nbsp;sequence,
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Resolves the (unqualified and unquoted) name of the sequence.</div>
 </div>
 </div>
@@ -436,13 +444,33 @@ and potentially joined tables.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="resolveIndexName(java.lang.String,io.micronaut.data.model.schema.sql.SqlIndexMapping)">
+<h3>resolveIndexName</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">resolveIndexName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableName,
+ <a href="../../../schema/sql/SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&nbsp;indexMapping)</span></div>
+<div class="block">Resolves the name of the index: the declared name, or the name generated by the schema generation
+(<code>idx_</code> followed by the table and column names) for an unnamed index.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>tableName</code> - The (unescaped) table name</dd>
+<dd><code>indexMapping</code> - The index mapping</dd>
+<dt>Returns:</dt>
+<dd>The index name</dd>
+<dt>Since:</dt>
+<dd>5.3.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="getSqlJsonViewMapping(io.micronaut.data.model.PersistentEntity)">
 <h3>getSqlJsonViewMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">@Nullable <a href="../../../schema/sql/SqlJsonViewMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping</a></span>&nbsp;<span class="element-name">getSqlJsonViewMapping</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;viewEntity)</span></div>
-<div class="block">Returns the Oracle JSON relational duality view mapping of the <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity: the view name, its root table,
-the allowed operations and the JSON fields with the tables and columns storing them. The JSON keys and columns are
-resolved the same way as when the view is created, see <a href="SqlQueryBuilder.html#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)"><code>SqlQueryBuilder.buildCreateTableStatements(PersistentEntity)</code></a>.</div>
+<div class="block">Returns the Oracle JSON relational duality view mapping of the <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity: the view name and the tree
+of its tables, each with its JSON key, relationship, allowed operations and JSON fields. The tree, JSON keys and columns
+are resolved the same way as when the view is created, see <a href="SqlQueryBuilder.html#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)"><code>SqlQueryBuilder.buildCreateTableStatements(PersistentEntity)</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>viewEntity</code> - The <a href="../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity</dd>

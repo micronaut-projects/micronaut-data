@@ -12018,7 +12018,28 @@ entity {
 <div class="sect3">
 <h4 id="_unique_constraints">Unique Constraints</h4>
 <div class="paragraph">
-<p>JPA unique constraints are generated as unique indexes: a column annotated with <code>@Column(unique = true)</code> and the columns of <code>@Table(uniqueConstraints = @UniqueConstraint(&#8230;&#8203;))</code>. The same can be declared with <code>@Index(unique = true)</code>.</p>
+<p>By default, JPA unique constraints are not generated. Set <code>schema-generate-unique-constraints=true</code> to create a unique index for every column annotated with <code>@Column(unique = true)</code> and for the columns of <code>@Table(uniqueConstraints = @UniqueConstraint(&#8230;&#8203;))</code>, which can be any table column, including embedded and association columns. The constraint column names are the table column names, a property name (like <code>firstName</code> for the column <code>first_name</code>) is accepted too. An unnamed constraint gets a generated name that fits the identifier length limit of all the supported databases. The unique indexes are created once all the tables exist, and with the option enabled the schema validation reports missing unique constraints.</p>
+</div>
+<div class="listingblock">
+<div class="title">Generating unique constraints</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    schema-generate: create-drop
+    schema-generate-unique-constraints: true</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Unique indexes declared with <code>@Index(unique = true)</code> are always generated.
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -12036,13 +12057,16 @@ All the problems found are reported together. The following differences are erro
 <p>A mapped property does not have a column in the table</p>
 </li>
 <li>
-<p>The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, <code>TEXT</code> or <code>CLOB</code> for strings, or any type name synonym (<code>int4</code> for <code>INTEGER</code>). Columns with an explicit definition (<code>@MappedProperty(definition = "&#8230;&#8203;")</code>) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL/MariaDB).</p>
+<p>The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, <code>TEXT</code> or <code>CLOB</code> for strings, or any type name synonym (<code>int4</code> for <code>INTEGER</code>). Columns with an explicit definition (<code>@MappedProperty(definition = "&#8230;&#8203;")</code>) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL) and the Oracle vector storage (dense or sparse).</p>
+</li>
+<li>
+<p>A <code>UUID</code> stored as a string in a column shorter than 36 characters</p>
 </li>
 <li>
 <p>A sequence used to generate the identity values does not exist</p>
 </li>
 <li>
-<p>An Oracle JSON relational duality view (<code>@JsonView</code>) does not exist, is not valid, has a different root table, or a JSON field of the view entity is missing or stored in a different column</p>
+<p>An Oracle JSON relational duality view (<code>@JsonView</code>) does not exist, is not valid, has a different root table, a sub view (<code>@JsonSubView</code>) is missing under its JSON key or is an object instead of an array (or the opposite), or a JSON field of the view entity is missing or stored in a different column</p>
 </li>
 </ul>
 </div>
@@ -12061,15 +12085,21 @@ All the problems found are reported together. The following differences are erro
 <p>The table primary key is different from the mapped identity</p>
 </li>
 <li>
-<p>A declared index (<code>@Index</code>, <code>@VectorIndex</code>) or unique constraint does not exist</p>
+<p>A declared index (<code>@Index</code>, <code>@VectorIndex</code>) does not exist. Spatial and vector indexes are matched by their name, the declared or the generated one, since the index method is not reported by the database metadata</p>
+</li>
+<li>
+<p>A unique constraint does not exist, validated only when <code>schema-generate-unique-constraints</code> is enabled</p>
 </li>
 <li>
 <p>A vector column has a different element format (for example <code>FLOAT64</code> instead of <code>FLOAT32</code>)</p>
 </li>
 <li>
-<p>A JSON view allows different operations than declared, or has fields not mapped by the view entity</p>
+<p>A JSON view or one of its sub views allows different operations than declared, or the view has fields or sub views not mapped by the view entity</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (<code>@MappedEntity(escape = true)</code>, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (<code>lower_case_table_names=0</code>).</p>
 </div>
 <div class="paragraph">
 <p>The schema metadata is read in bulk (a single call per schema for the tables, columns, primary keys and indexes when the JDBC driver supports it) and validated in memory.</p>
@@ -13074,6 +13104,9 @@ datasources {
 </div>
 <div class="paragraph">
 <p>The <code>schema-generate</code> option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.</p>
+</div>
+<div class="paragraph">
+<p>Set <code>schema-generate-unique-constraints=true</code> to generate the JPA unique constraints, see the JDBC configuration for details.</p>
 </div>
 <div class="paragraph">
 <p>Please note that currently schema validation is not supported for Micronaut Data R2DBC.</p>

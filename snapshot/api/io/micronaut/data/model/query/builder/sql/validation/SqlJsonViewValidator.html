@@ -78,9 +78,10 @@ loadScripts(document, 'script');</script>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Validates Oracle JSON relational duality views against the <a href="../../../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entities.
 <p>
-A missing or invalid view, a different root table, a table of a sub view missing in the view, and a JSON field
-not found or stored in a different column are errors. Different allowed operations and view fields not mapped
-by the entity are warnings.</div>
+The tree of the view tables is compared to the tree of the view entity and its sub views: each sub view is matched
+by its table and JSON key in the parent. A missing or invalid view, a different root table, a missing sub view,
+a sub view that is an object instead of an array (or the opposite), and a JSON field not found or stored in a different
+column are errors. Different allowed operations of a table, and view fields and sub views not mapped by the entity are warnings.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.3.0</dd>

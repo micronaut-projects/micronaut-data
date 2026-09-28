@@ -59,20 +59,20 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.util.Set,java.util.Set,java.util.List)" tabindex="0">SqlJsonViewMapping(String, String, String, Set, Set, List)</a></li>
+<li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlJsonViewMapping.Table)" tabindex="0">SqlJsonViewMapping(String, String, SqlJsonViewMapping.Table)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#rootTable()" tabindex="0">rootTable()</a></li>
+<li><a href="#tables()" tabindex="0">tables()</a></li>
+<li><a href="#fields()" tabindex="0">fields()</a></li>
 <li><a href="#toString()" tabindex="0">toString()</a></li>
 <li><a href="#hashCode()" tabindex="0">hashCode()</a></li>
 <li><a href="#equals(java.lang.Object)" tabindex="0">equals(Object)</a></li>
 <li><a href="#schema()" tabindex="0">schema()</a></li>
 <li><a href="#name()" tabindex="0">name()</a></li>
-<li><a href="#rootTable()" tabindex="0">rootTable()</a></li>
-<li><a href="#operations()" tabindex="0">operations()</a></li>
-<li><a href="#tables()" tabindex="0">tables()</a></li>
-<li><a href="#fields()" tabindex="0">fields()</a></li>
+<li><a href="#root()" tabindex="0">root()</a></li>
 </ol>
 </li>
 </ol>
@@ -92,17 +92,15 @@ loadScripts(document, 'script');</script>
 <dt>Record Components:</dt>
 <dd><code><span id="param-schema">schema</span></code> - The view schema, can be null</dd>
 <dd><code><span id="param-name">name</span></code> - The view name</dd>
-<dd><code><span id="param-rootTable">rootTable</span></code> - The root table, the table of the <a href="../../../annotation/JsonView.html#entity()"><code>JsonView.entity()</code></a></dd>
-<dd><code><span id="param-operations">operations</span></code> - The operations allowed by the view</dd>
-<dd><code><span id="param-tables">tables</span></code> - The tables used by the view and its sub views</dd>
-<dd><code><span id="param-fields">fields</span></code> - The JSON fields mapped to table columns</dd>
+<dd><code><span id="param-root">root</span></code> - The root table of the view, the table of the <a href="../../../annotation/JsonView.html#entity()"><code>JsonView.entity()</code></a></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlJsonViewMapping</span>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;rootTable, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../annotation/JsonView.Operation.html" title="enum class in io.micronaut.data.annotation">JsonView.Operation</a>&gt;&nbsp;operations, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;tables, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;&nbsp;fields)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlJsonViewMapping</span>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, <a href="SqlJsonViewMapping.Table.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a>&nbsp;root)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
-<div class="block">The Oracle JSON relational duality view mapping extracted from a <a href="../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity.</div>
+<div class="block">The Oracle JSON relational duality view mapping extracted from a <a href="../../../annotation/JsonView.html" title="annotation interface in io.micronaut.data.annotation"><code>JsonView</code></a> entity: the tree of the view tables
+as the view is created, each table with its JSON key, relationship, allowed operations and JSON fields.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.3.0</dd>
@@ -127,6 +125,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">A JSON field of the view.</div>
 </div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="SqlJsonViewMapping.Table.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">A table of the view, the root table or a sub view table.</div>
+</div>
 </div>
 </section>
 </li>
@@ -138,12 +141,9 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.util.Set,java.util.Set,java.util.List)" class="member-name-link">SqlJsonViewMapping</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlJsonViewMapping.Table)" class="member-name-link">SqlJsonViewMapping</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;rootTable,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../annotation/JsonView.Operation.html" title="enum class in io.micronaut.data.annotation">JsonView.Operation</a>&gt;&nbsp;operations,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;tables,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;&nbsp;fields)</code></div>
+ <a href="SqlJsonViewMapping.Table.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a>&nbsp;root)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>SqlJsonViewMapping</code> record class.</div>
 </div>
@@ -168,9 +168,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#fields()" class="member-name-link">fields</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-fields"><code>fields</code></a> record component.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -181,16 +179,14 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-name"><code>name</code></a> record component.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="../../../annotation/JsonView.Operation.html" title="enum class in io.micronaut.data.annotation">JsonView.Operation</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#operations()" class="member-name-link">operations</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlJsonViewMapping.Table.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#root()" class="member-name-link">root</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-operations"><code>operations</code></a> record component.</div>
+<div class="block">Returns the value of the <a href="#param-root"><code>root</code></a> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rootTable()" class="member-name-link">rootTable</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-rootTable"><code>rootTable</code></a> record component.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#schema()" class="member-name-link">schema</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -198,9 +194,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tables()" class="member-name-link">tables</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <a href="#param-tables"><code>tables</code></a> record component.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -224,24 +218,18 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,java.lang.String,java.util.Set,java.util.Set,java.util.List)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlJsonViewMapping.Table)">
 <h3>SqlJsonViewMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlJsonViewMapping</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;rootTable,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../annotation/JsonView.Operation.html" title="enum class in io.micronaut.data.annotation">JsonView.Operation</a>&gt;&nbsp;operations,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;tables,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;&nbsp;fields)</span></div>
+ <a href="SqlJsonViewMapping.Table.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a>&nbsp;root)</span></div>
 <div class="block">Creates an instance of a <code>SqlJsonViewMapping</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>schema</code> - the value for the <a href="#param-schema"><code>schema</code></a> record component</dd>
 <dd><code>name</code> - the value for the <a href="#param-name"><code>name</code></a> record component</dd>
-<dd><code>rootTable</code> - the value for the <a href="#param-rootTable"><code>rootTable</code></a> record component</dd>
-<dd><code>operations</code> - the value for the <a href="#param-operations"><code>operations</code></a> record component</dd>
-<dd><code>tables</code> - the value for the <a href="#param-tables"><code>tables</code></a> record component</dd>
-<dd><code>fields</code> - the value for the <a href="#param-fields"><code>fields</code></a> record component</dd>
+<dd><code>root</code> - the value for the <a href="#param-root"><code>root</code></a> record component</dd>
 </dl>
 </div>
 </section>
@@ -254,6 +242,42 @@ loadScripts(document, 'script');</script>
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="rootTable()">
+<h3>rootTable</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">rootTable</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The root table name</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="tables()">
+<h3>tables</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">tables</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The names of all the tables of the view</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="fields()">
+<h3>fields</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;</span>&nbsp;<span class="element-name">fields</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>All the JSON fields of the view</dd>
+</dl>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="toString()">
 <h3>toString</h3>
@@ -328,53 +352,14 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="rootTable()">
-<h3>rootTable</h3>
+<section class="detail" id="root()">
+<h3>root</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">rootTable</span>()</div>
-<div class="block">Returns the value of the <a href="#param-rootTable"><code>rootTable</code></a> record component.</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlJsonViewMapping.Table.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Table</a></span>&nbsp;<span class="element-name">root</span>()</div>
+<div class="block">Returns the value of the <a href="#param-root"><code>root</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <a href="#param-rootTable"><code>rootTable</code></a> record component</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="operations()">
-<h3>operations</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../annotation/JsonView.Operation.html" title="enum class in io.micronaut.data.annotation">JsonView.Operation</a>&gt;</span>&nbsp;<span class="element-name">operations</span>()</div>
-<div class="block">Returns the value of the <a href="#param-operations"><code>operations</code></a> record component.</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the value of the <a href="#param-operations"><code>operations</code></a> record component</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="tables()">
-<h3>tables</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">tables</span>()</div>
-<div class="block">Returns the value of the <a href="#param-tables"><code>tables</code></a> record component.</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the value of the <a href="#param-tables"><code>tables</code></a> record component</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="fields()">
-<h3>fields</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlJsonViewMapping.Field.html" title="class in io.micronaut.data.model.schema.sql">SqlJsonViewMapping.Field</a>&gt;</span>&nbsp;<span class="element-name">fields</span>()</div>
-<div class="block">Returns the value of the <a href="#param-fields"><code>fields</code></a> record component.</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the value of the <a href="#param-fields"><code>fields</code></a> record component</dd>
+<dd>the value of the <a href="#param-root"><code>root</code></a> record component</dd>
 </dl>
 </div>
 </section>
