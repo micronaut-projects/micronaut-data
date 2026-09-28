@@ -44,6 +44,7 @@ import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValid
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlForeignKeyMapping;
 import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlJsonViewMetadata;
@@ -72,6 +73,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Comparator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -321,12 +323,16 @@ public class SchemaGenerator {
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
         }
-        boolean validateForeignKeys = configuration.isSchemaGenerateForeignKeys();
+        // SQLite cannot add the foreign keys to existing tables, they are not created
+        boolean validateForeignKeys = configuration.isSchemaGenerateForeignKeys() && dialect != Dialect.SQLITE;
         SchemaValidationResult result = new SchemaValidationResult();
         JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect,
             JdbcSchemaMetadataReader.MetadataQueries.of(sqlTableMappingValidator));
         // Tables grouped by the schema as stored in the database (empty for the connection default schema)
         Map<String, Map<String, SqlTableMapping>> sqlTableMappingsBySchema = getSqlTableMappingsBySchema(entities, dialect, metadataReader);
+        // Only the foreign keys referencing the tables of the entities are created
+        Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(
+            sqlTableMappingsBySchema.values().stream().flatMap(tables -> tables.values().stream()).toList(), dialect);
 
         for (Map.Entry<String, Map<String, SqlTableMapping>> schemaEntry : sqlTableMappingsBySchema.entrySet()) {
             Map<String, SqlTableMapping> sqlTableMappings = schemaEntry.getValue();
@@ -356,7 +362,10 @@ public class SchemaGenerator {
                     sqlTableMappingValidator.validateUniqueConstraints(sqlTableMapping, dbSqlTableMetadata, result);
                 }
                 if (validateForeignKeys) {
-                    sqlTableMappingValidator.validateForeignKeys(sqlTableMapping, dbSqlTableMetadata, result);
+                    List<SqlForeignKeyMapping> foreignKeys = sqlTableMapping.foreignKeys().stream().filter(createdForeignKeys).toList();
+                    if (!foreignKeys.isEmpty()) {
+                        sqlTableMappingValidator.validateForeignKeys(sqlTableMapping.withForeignKeys(foreignKeys), dbSqlTableMetadata, result);
+                    }
                 }
                 if (sqlTableMapping.sequences().stream().anyMatch(sequence -> SqlSchemaUtils.requiresSequence(sequence, dialect))) {
                     if (!sequencesRead) {

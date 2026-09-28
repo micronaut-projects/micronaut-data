@@ -123,6 +123,54 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
          COLUMN_SIZE: 64, DECIMAL_DIGITS: 0, NULLABLE: DatabaseMetaData.columnNoNulls]
     }
 
+    void 'unnamed foreign keys to the same table are kept separate'() {
+        given:"Two unnamed foreign keys to the same table, reported ordered by the referenced table and the column position"
+        def metaData = [
+                storesUpperCaseIdentifiers : { -> true },
+                storesLowerCaseIdentifiers : { -> false },
+                supportsMixedCaseIdentifiers: { -> false },
+                getSearchStringEscape      : { -> '\\' },
+                getColumns                 : { String catalog, String schema, String table, String column ->
+                    rows([
+                            columnRow('MESSAGE', 'ID'),
+                            columnRow('MESSAGE', 'SENDER_ID'),
+                            columnRow('MESSAGE', 'RECIPIENT_ID')
+                    ])
+                },
+                getPrimaryKeys             : { String catalog, String schema, String table ->
+                    rows([[TABLE_SCHEM: 'S', TABLE_NAME: 'MESSAGE', COLUMN_NAME: 'ID', KEY_SEQ: 1]])
+                },
+                getImportedKeys            : { String catalog, String schema, String table ->
+                    rows([
+                            foreignKeyRow('SENDER_ID'),
+                            foreignKeyRow('RECIPIENT_ID')
+                    ])
+                }
+        ] as DatabaseMetaData
+        def stubConnection = [
+                getMetaData: { -> metaData },
+                getCatalog : { -> null },
+                getSchema  : { -> 'S' }
+        ] as Connection
+
+        when:
+        def table = new JdbcSchemaMetadataReader(stubConnection, Dialect.H2).readTables(null, ['MESSAGE'] as Set, false, true).tables()['MESSAGE']
+
+        then:
+        table.foreignKeys*.columns() as Set == [['SENDER_ID'], ['RECIPIENT_ID']] as Set
+        table.foreignKeys*.referencedTable() == ['USER', 'USER']
+    }
+
+    private static Map<String, Object> columnRow(String table, String name) {
+        [TABLE_SCHEM: 'S', TABLE_NAME: table, COLUMN_NAME: name, DATA_TYPE: Types.BIGINT, TYPE_NAME: 'BIGINT', COLUMN_SIZE: 64,
+         DECIMAL_DIGITS: 0, NULLABLE: DatabaseMetaData.columnNoNulls]
+    }
+
+    private static Map<String, Object> foreignKeyRow(String column) {
+        [FKTABLE_SCHEM: 'S', FKTABLE_NAME: 'MESSAGE', FKCOLUMN_NAME: column, PKTABLE_SCHEM: 'S', PKTABLE_NAME: 'USER',
+         PKCOLUMN_NAME: 'ID', KEY_SEQ: 1, FK_NAME: null]
+    }
+
     private static ResultSet rows(List<Map<String, Object>> rows) {
         int index = -1
         return [

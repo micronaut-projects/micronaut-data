@@ -509,6 +509,23 @@ class H2SchemaValidationSpec extends Specification {
         new SqlQueryBuilder(Dialect.SQLITE).buildCreateForeignKeyStatements([], entities).length == 0
     }
 
+    void 'only the created foreign keys are validated'() {
+        given:"The book and author tables, without the tag table"
+        def registry = context.getBean(RuntimeEntityRegistry)
+        def tables = [SchemaBook, SchemaAuthor].collectMany { SqlSchemaUtils.getSqlTableMappings(registry.getEntity(it), Dialect.H2) }
+        def foreignKeys = tables.collectMany { it.foreignKeys() }
+
+        when:
+        def created = SqlSchemaUtils.createdForeignKeys(tables, Dialect.H2)
+
+        then:"The foreign keys referencing the tag table are not created, nor validated"
+        foreignKeys.findAll { created.test(it) }*.referencedTable() as Set == ['schema_author', 'schema_book'] as Set
+        foreignKeys.any { it.referencedTable() == 'schema_tag' && !created.test(it) }
+
+        and:"No foreign keys are created for SQLite"
+        foreignKeys.every { !SqlSchemaUtils.createdForeignKeys(tables, Dialect.SQLITE).test(it) }
+    }
+
     private static SchemaValidationException findValidationException(Throwable e) {
         Throwable current = e
         while (current != null) {

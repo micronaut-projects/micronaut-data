@@ -692,16 +692,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return StringUtils.EMPTY_STRING_ARRAY;
         }
         Map<String, SqlTableMapping> sqlTableMappingByTableName = getSqlTableMappingsByTableName(definitionProviders, entities);
-        Set<String> tableKeys = sqlTableMappingByTableName.values().stream()
-            .map(table -> tableKey(table.schema(), table.name()))
-            .collect(Collectors.toSet());
+        java.util.function.Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(sqlTableMappingByTableName.values(), dialect);
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
         List<String> statements = new ArrayList<>();
         for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             String tableName = getObjectName(table.schema(), table.name(), escape, true);
             for (SqlForeignKeyMapping foreignKey : table.foreignKeys()) {
-                if (!tableKeys.contains(tableKey(foreignKey.referencedSchema(), foreignKey.referencedTable()))) {
+                if (!createdForeignKeys.test(foreignKey)) {
                     continue;
                 }
                 String constraintName = escape ? quote(foreignKey.name()) : foreignKey.name();
@@ -743,10 +741,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String joinColumnNames(List<String> columns, boolean escape) {
         return columns.stream().map(column -> escape ? quote(column) : column).collect(Collectors.joining(","));
-    }
-
-    private static String tableKey(@Nullable String schema, String table) {
-        return (schema == null ? "" : schema.toLowerCase(Locale.ENGLISH)) + "." + table.toLowerCase(Locale.ENGLISH);
     }
 
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {

@@ -121,6 +121,16 @@ public record SqlTableMapping(
     }
 
     /**
+     * @param foreignKeys The foreign keys
+     * @return A copy of this mapping with the given foreign keys
+     * @since 5.3.0
+     */
+    public SqlTableMapping withForeignKeys(List<SqlForeignKeyMapping> foreignKeys) {
+        return new SqlTableMapping(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements,
+            uniqueConstraints, foreignKeys);
+    }
+
+    /**
      * The SQL table mapping table type.
      */
     public enum TableType {

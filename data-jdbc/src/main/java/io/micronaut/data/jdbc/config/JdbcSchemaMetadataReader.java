@@ -435,10 +435,24 @@ final class JdbcSchemaMetadataReader {
                 String referencedTable = resultSet.getString("PKTABLE_NAME");
                 String referencedSchema = resultSet.getString("PKTABLE_SCHEM");
                 String name = resultSet.getString("FK_NAME");
-                String key = StringUtils.isNotEmpty(name) ? name : referencedSchema + "." + referencedTable;
-                ForeignKeyColumns foreignKey = foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>()).computeIfAbsent(key,
-                    k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
                 int keySeq = resultSet.getInt("KEY_SEQ");
+                Map<String, ForeignKeyColumns> tableForeignKeys = foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>());
+                String key;
+                if (StringUtils.isNotEmpty(name)) {
+                    key = name;
+                } else {
+                    // Unnamed foreign keys to the same table are separated by the column position, the rows are ordered
+                    // by the referenced table and the position, so the columns of the foreign keys can be interleaved
+                    int group = 0;
+                    ForeignKeyColumns existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
+                    while (existing != null && existing.columns().containsKey(keySeq)) {
+                        group++;
+                        existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
+                    }
+                    key = unnamedForeignKeyKey(referencedSchema, referencedTable, group);
+                }
+                ForeignKeyColumns foreignKey = tableForeignKeys.computeIfAbsent(key,
+                    k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
                 foreignKey.columns().put(keySeq, resultSet.getString("FKCOLUMN_NAME"));
                 foreignKey.referencedColumns().put(keySeq, resultSet.getString("PKCOLUMN_NAME"));
             });
@@ -450,6 +464,10 @@ final class JdbcSchemaMetadataReader {
             }
             Objects.requireNonNull(tables.get(tableKey)).setForeignKeys(foreignKeyMetadata);
         }
+    }
+
+    private static String unnamedForeignKeyKey(@Nullable String referencedSchema, String referencedTable, int group) {
+        return referencedSchema + "." + referencedTable + "#" + group;
     }
 
     /**

@@ -90,6 +90,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1317,6 +1318,29 @@ public final class SqlSchemaUtils {
             );
         }
         return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
+    }
+
+    /**
+     * Returns the predicate selecting the foreign keys created by the schema generation: the foreign keys referencing
+     * one of the given tables, and none for SQLite, which cannot add constraints to existing tables.
+     *
+     * @param tables The tables of the schema generation
+     * @param dialect The dialect
+     * @return The predicate
+     * @since 5.3.0
+     */
+    public static Predicate<SqlForeignKeyMapping> createdForeignKeys(Collection<SqlTableMapping> tables, Dialect dialect) {
+        if (dialect == Dialect.SQLITE) {
+            return foreignKey -> false;
+        }
+        Set<String> tableKeys = tables.stream()
+            .map(table -> foreignKeyTableKey(table.schema(), table.name()))
+            .collect(Collectors.toSet());
+        return foreignKey -> tableKeys.contains(foreignKeyTableKey(foreignKey.referencedSchema(), foreignKey.referencedTable()));
+    }
+
+    private static String foreignKeyTableKey(@Nullable String schema, String table) {
+        return (schema == null ? "" : schema.toLowerCase(Locale.ENGLISH)) + "." + table.toLowerCase(Locale.ENGLISH);
     }
 
     /**

@@ -103,16 +103,20 @@ public interface SqlTableMappingValidator {
      */
     default void validateForeignKeys(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
         List<SqlForeignKeyMetadata> foreignKeys = tableMetadata.getForeignKeys();
-        if (foreignKeys == null) {
+        if (foreignKeys == null || tableMetadata.isView()) {
             return;
         }
         // The foreign key is created with the escaping of its table, for the referenced table and columns too
         SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
         boolean escape = tableMapping.escape();
         for (SqlForeignKeyMapping foreignKey : tableMapping.foreignKeys()) {
+            String declaredSchema = foreignKey.referencedSchema();
+            String referencedSchema = declaredSchema == null ? null : matcher.mappedTableKey(declaredSchema, escape);
             String referencedTable = matcher.mappedTableKey(foreignKey.referencedTable(), escape);
             Set<String> columns = foreignKey.columns().stream().map(column -> matcher.mappedColumnKey(column, escape)).collect(Collectors.toSet());
+            // The referenced schema is compared when declared and reported, the database default schema is not known
             boolean found = foreignKeys.stream().anyMatch(fk -> matcher.tableKey(fk.referencedTable()).equals(referencedTable)
+                && (referencedSchema == null || fk.referencedSchema() == null || matcher.tableKey(fk.referencedSchema()).equals(referencedSchema))
                 && fk.columns().stream().map(matcher::columnKey).collect(Collectors.toSet()).equals(columns));
             if (!found) {
                 result.addWarning(String.format("Foreign key on columns %s of table [%s] referencing table [%s] %s not found",
