@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2.schemavalidation
+package io.micronaut.data.jdbc.schemavalidation.h2.validation
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.Nullable
@@ -57,7 +57,7 @@ class H2SchemaValidationSpec extends Specification {
             'datasources.default.dialect'        : 'H2',
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
-            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.schemavalidation',
+            'datasources.default.packages'       : 'io.micronaut.data.jdbc.schemavalidation.h2.validation',
             'datasources.default.driverClassName': 'org.h2.Driver'
     ]
 

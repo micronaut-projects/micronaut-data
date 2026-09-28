@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.oraclexe.vector.validation
+package io.micronaut.data.jdbc.schemavalidation.oracle.vector
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue

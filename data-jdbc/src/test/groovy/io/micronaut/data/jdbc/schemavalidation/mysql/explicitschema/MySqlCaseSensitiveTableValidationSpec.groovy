@@ -13,59 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.mysql.vector.validation
+package io.micronaut.data.jdbc.schemavalidation.mysql.explicitschema
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
-import io.micronaut.data.jdbc.mysql.vector.MySqlVectorTestPropertyProvider
-import io.micronaut.data.model.vector.FloatVector
-import jakarta.persistence.Column
+import io.micronaut.data.jdbc.mysql.MySQLTestPropertyProvider
+import io.micronaut.data.runtime.config.SchemaGenerate
 import spock.lang.Specification
 
 import javax.sql.DataSource
 
-class MySqlVectorSchemaValidationSpec extends Specification implements MySqlVectorTestPropertyProvider {
+class MySqlCaseSensitiveTableValidationSpec extends Specification implements MySQLTestPropertyProvider {
+
+    @Override
+    SchemaGenerate schemaGenerate() {
+        return SchemaGenerate.NONE
+    }
 
     @Override
     List<String> packages() {
         return [getClass().package.name]
     }
 
-    void 'vector columns are validated including the dimension'() {
-        given:"The schema is created"
+    void 'table names differing only in case are validated separately'() {
+        given:"MySQL on Linux (lower_case_table_names=0) with the distinct tables Case_item and case_item"
         def context = ApplicationContext.run(properties)
         def dataSource = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource))
         def validateProperties = properties + ['datasources.default.schema-generate': 'VALIDATE']
+        // The database is shared with the other specs
+        execute(dataSource, 'DROP TABLE IF EXISTS Case_item')
+        execute(dataSource, 'DROP TABLE IF EXISTS case_item')
+        execute(dataSource, 'CREATE TABLE Case_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE TABLE case_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
 
-        when:"The created schema is validated"
+        when:
         ApplicationContext.run(validateProperties).close()
 
         then:
         noExceptionThrown()
 
-        when:"The vector dimension is different"
-        execute(dataSource, "DROP TABLE mysql_vector_validation_doc")
-        execute(dataSource, "CREATE TABLE mysql_vector_validation_doc (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, embedding VECTOR(4) NOT NULL)")
+        when:"One of the tables is missing"
+        execute(dataSource, 'DROP TABLE Case_item')
         ApplicationContext.run(validateProperties).close()
 
         then:
         def e = thrown(Exception)
-        rootMessage(e).contains('Column [embedding] in table [mysql_vector_validation_doc] has vector dimension [4] but the mapped dimension is [3]')
-
-        when:"The column is not a vector"
-        execute(dataSource, "DROP TABLE mysql_vector_validation_doc")
-        execute(dataSource, "CREATE TABLE mysql_vector_validation_doc (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, embedding BIGINT NOT NULL)")
-        ApplicationContext.run(validateProperties).close()
-
-        then:
-        e = thrown(Exception)
-        rootMessage(e).contains('Column [embedding] in table [mysql_vector_validation_doc] of type [BIGINT] is mapped to definition [VECTOR(3)')
+        rootMessage(e) == 'Schema validation failed. Expected table [Case_item] not found'
 
         cleanup:
-        execute(dataSource, "DROP TABLE IF EXISTS mysql_vector_validation_doc")
+        execute(dataSource, 'DROP TABLE IF EXISTS Case_item')
+        execute(dataSource, 'DROP TABLE IF EXISTS case_item')
         context?.close()
     }
 
@@ -84,13 +83,16 @@ class MySqlVectorSchemaValidationSpec extends Specification implements MySqlVect
     }
 }
 
-@MappedEntity("mysql_vector_validation_doc")
-class MySqlVectorValidationDoc {
-
+@MappedEntity(value = "Case_item", escape = false)
+class UpperCaseItem {
     @Id
-    @GeneratedValue
     Long id
+    String name
+}
 
-    @Column(length = 3)
-    FloatVector embedding
+@MappedEntity(value = "case_item", escape = false)
+class LowerCaseItem {
+    @Id
+    Long id
+    String name
 }

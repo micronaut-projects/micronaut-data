@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2.explicitschema
+package io.micronaut.data.jdbc.schemavalidation.h2.explicitschema
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
@@ -36,7 +36,7 @@ class H2ExplicitSchemaValidationSpec extends Specification {
             'datasources.default.dialect'        : 'H2',
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
-            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.explicitschema',
+            'datasources.default.packages'       : 'io.micronaut.data.jdbc.schemavalidation.h2.explicitschema',
             'datasources.default.driverClassName': 'org.h2.Driver',
             'explicit.table.prefix'              : 'prefixed',
             'explicit.sequence.name'             : 'placeholder_seq',

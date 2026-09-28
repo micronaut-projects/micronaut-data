@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2.uniqueschema
+package io.micronaut.data.jdbc.schemavalidation.h2.unique
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
@@ -48,7 +48,7 @@ class H2UniqueConstraintSchemaSpec extends Specification {
             'datasources.default.dialect'        : 'H2',
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
-            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.uniqueschema',
+            'datasources.default.packages'       : 'io.micronaut.data.jdbc.schemavalidation.h2.unique',
             'datasources.default.driverClassName': 'org.h2.Driver',
             'datasources.default.schema-generate-unique-constraints': 'true'
     ]
