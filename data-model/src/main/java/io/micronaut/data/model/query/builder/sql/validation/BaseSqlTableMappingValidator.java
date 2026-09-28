@@ -72,7 +72,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
 
     private static final String DENSE_VECTOR_STORAGE = "DENSE";
 
-    private static final int POSTGRES_MAX_IDENTIFIER_LENGTH = 63;
+    private static final int POSTGRES_MAX_IDENTIFIER_BYTES = 63;
 
     /**
      * The column size reported for character and binary columns without a length limit (H2 reports its maximal length).
@@ -563,9 +563,32 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         if (expectedName.equalsIgnoreCase(indexName)) {
             return true;
         }
-        return dialect == Dialect.POSTGRES
-            && expectedName.length() > POSTGRES_MAX_IDENTIFIER_LENGTH
-            && expectedName.substring(0, POSTGRES_MAX_IDENTIFIER_LENGTH).equalsIgnoreCase(indexName);
+        if (dialect != Dialect.POSTGRES) {
+            return false;
+        }
+        String truncatedName = truncatePostgresIdentifier(expectedName);
+        return truncatedName.length() < expectedName.length() && truncatedName.equalsIgnoreCase(indexName);
+    }
+
+    /**
+     * PostgreSQL truncates the identifiers to 63 bytes (UTF-8 database encoding) without splitting a multibyte character.
+     *
+     * @param identifier The identifier
+     * @return The identifier as stored by PostgreSQL
+     */
+    private static String truncatePostgresIdentifier(String identifier) {
+        int bytes = 0;
+        int index = 0;
+        while (index < identifier.length()) {
+            int codePoint = identifier.codePointAt(index);
+            int codePointBytes = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
+            if (bytes + codePointBytes > POSTGRES_MAX_IDENTIFIER_BYTES) {
+                break;
+            }
+            bytes += codePointBytes;
+            index += Character.charCount(codePoint);
+        }
+        return identifier.substring(0, index);
     }
 
     private static Set<String> toLowerCaseSet(List<String> values) {

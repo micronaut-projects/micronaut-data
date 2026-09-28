@@ -443,8 +443,11 @@ public class SchemaGenerator {
             .anyMatch(column -> StringUtils.isNotEmpty(column.getDefinition()));
     }
 
+    /**
+     * The schema names are compared as declared, the escaped (quoted) schema names differing only in case are different schemas.
+     */
     private static String schemaKey(@Nullable String schema) {
-        return schema == null ? "" : schema.toLowerCase(Locale.ENGLISH);
+        return schema == null ? "" : schema;
     }
 
     /**

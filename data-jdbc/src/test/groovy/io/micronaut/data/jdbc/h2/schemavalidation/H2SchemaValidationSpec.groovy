@@ -236,6 +236,37 @@ class H2SchemaValidationSpec extends Specification {
         result.warnings.isEmpty()
     }
 
+    void 'PostgreSQL truncated multibyte index name matches the expected name'() {
+        given:"An index name shorter than 63 characters but longer than 63 UTF-8 bytes"
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.POSTGRES }
+        def tableName = 'geo_' + Z_CARON * 30
+        def mapping = new SqlTableMapping(null, tableName, true, SqlTableMapping.TableType.MAIN, [], [], [],
+                [new SqlIndexMapping('', false, ['location'] as String[], true)], [])
+        def expectedName = 'idx_' + tableName + '_location'
+        // 8 ASCII bytes and 27 two byte characters, the next character would exceed 63 bytes
+        def truncatedName = 'idx_geo_' + Z_CARON * 27
+
+        expect:
+        expectedName.length() < 63
+        expectedName.getBytes('UTF-8').length > 63
+        validateIndexName(validator, mapping, tableName, truncatedName).warnings.isEmpty()
+
+        and:"A name truncated by characters or cut one character shorter does not match"
+        validateIndexName(validator, mapping, tableName, 'idx_geo_' + Z_CARON * 26).warnings.size() == 1
+        validateIndexName(validator, mapping, tableName, 'idx_geo_' + Z_CARON * 28).warnings.size() == 1
+    }
+
+    // Two bytes in UTF-8
+    private static final String Z_CARON = 'ž'
+
+    private static SchemaValidationResult validateIndexName(SqlTableMappingValidator validator, SqlTableMapping mapping, String tableName, String indexName) {
+        def metadata = new SqlTableMetadata(null, null, tableName)
+        metadata.setIndexes([new SqlIndexMetadata(indexName, false, ['location'])])
+        def result = new SchemaValidationResult()
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.POSTGRES), result)
+        return result
+    }
+
     private static SchemaValidationResult validateUuidItem(SqlTableMappingValidator validator, SqlTableMapping mapping, int uuidLength, int nameLength) {
         def metadata = new SqlTableMetadata(null, null, 'uuid_item')
         metadata.addColumn(new SqlColumnMetadata('uuid_field', Types.VARCHAR, 'VARCHAR', uuidLength, 0, true))
