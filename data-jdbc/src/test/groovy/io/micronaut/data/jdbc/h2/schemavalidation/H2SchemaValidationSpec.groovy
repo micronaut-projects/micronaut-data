@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException
@@ -308,6 +309,26 @@ class H2SchemaValidationSpec extends Specification {
         metadata.addColumn(new SqlColumnMetadata('name', Types.VARCHAR, 'VARCHAR', nameLength, 0, true))
         def result = new SchemaValidationResult()
         validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.MYSQL), result)
+        return result
+    }
+
+    void 'PostgreSQL quoted specialized index name is matched case-sensitively'() {
+        given:"An escaped mapping with the spatial index \"VecIdx\" and PostgreSQL case-sensitive quoted names"
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.POSTGRES }
+        def mapping = new SqlTableMapping(null, 'vec_item', true, SqlTableMapping.TableType.MAIN, [], [], [],
+                [new SqlIndexMapping('VecIdx', false, ['location'] as String[], true)], [])
+        def matcher = SqlIdentifierMatcher.of(Dialect.POSTGRES, IdentifierNamingStrategy.LOWER, false)
+
+        expect:"An unrelated lowercase index without reported columns does not match"
+        validateMatchedIndexName(validator, mapping, matcher, 'vecidx').warnings == ['Spatial index [VecIdx] on columns [location] not found in table [vec_item]']
+        validateMatchedIndexName(validator, mapping, matcher, 'VecIdx').warnings.isEmpty()
+    }
+
+    private static SchemaValidationResult validateMatchedIndexName(SqlTableMappingValidator validator, SqlTableMapping mapping, SqlIdentifierMatcher matcher, String indexName) {
+        def metadata = new SqlTableMetadata(null, null, mapping.name(), matcher)
+        metadata.setIndexes([new SqlIndexMetadata(indexName, false, [])])
+        def result = new SchemaValidationResult()
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.POSTGRES), result)
         return result
     }
 

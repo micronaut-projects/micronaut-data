@@ -39,6 +39,18 @@ class UniqueConstraintColumnsSpec extends Specification {
         mapping.uniqueConstraints().first().columns() == ['code'] as String[]
     }
 
+    void 'generated unique constraint names of columns differing only by the case are distinct'() {
+        when:
+        def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(DistinctUniqueNamesItem), Dialect.POSTGRES).first()
+        def names = mapping.uniqueConstraints()*.name()
+
+        then:"The lowercase name keeps the readable form, the mixed case name gets a hash"
+        names.size() == 2
+        names.toSet().size() == 2
+        names.contains('UK_DISTINCT_UNIQUE_ITEM_CODE')
+        names.every { it.length() <= 30 }
+    }
+
     void 'unique constraint column not matching a single column is kept as declared'() {
         when:"The name matches more columns case-insensitively or no column, the mapping must not fail since unique constraints are opt-in"
         def ambiguous = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(AmbiguousUniqueItem), Dialect.POSTGRES).first()
@@ -74,6 +86,17 @@ class UniqueConstraintColumnsSpec extends Specification {
         def e = thrown(MappingException)
         e.message.contains('@Reservable column [quantity] of table [reservable_unique_item] cannot be indexed')
     }
+}
+
+@Entity
+@Table(name = "distinct_unique_item")
+class DistinctUniqueNamesItem {
+    @Id
+    Long id
+    @Column(name = "Code", unique = true)
+    String upperCode
+    @Column(unique = true)
+    String code
 }
 
 @Entity

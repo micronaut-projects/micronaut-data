@@ -56,6 +56,23 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         reader.readTables(null, ['READER_ITEM'] as Set, true).tables()['READER_ITEM'].indexes*.name().contains('IDX_READER_ITEM_NAME')
     }
 
+    void 'the quoted current schema keeps its case'() {
+        given:"A connection with the quoted current schema \"Foo Bar\""
+        def schemaConnection = DriverManager.getConnection('jdbc:h2:mem:schemaMetadataReaderCurrent;DB_CLOSE_DELAY=-1', 'sa', '')
+        schemaConnection.prepareStatement('CREATE SCHEMA "Foo Bar"').withCloseable { it.executeUpdate() }
+        schemaConnection.prepareStatement('CREATE TABLE "Foo Bar".CURRENT_ITEM (ID BIGINT NOT NULL PRIMARY KEY)').withCloseable { it.executeUpdate() }
+        schemaConnection.setSchema('Foo Bar')
+
+        when:
+        def tables = new JdbcSchemaMetadataReader(schemaConnection, Dialect.H2).readTables(null, ['CURRENT_ITEM'] as Set, false).tables()
+
+        then:
+        tables['CURRENT_ITEM'].schema == 'Foo Bar'
+
+        cleanup:
+        schemaConnection.close()
+    }
+
     private void execute(String sql) {
         connection.prepareStatement(sql).withCloseable { it.executeUpdate() }
     }

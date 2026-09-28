@@ -544,7 +544,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
                 if (special) {
                     // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
                     // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
-                    return matchingIndexName(expectedName, index.name(), dialectOptions.dialect())
+                    return matchingIndexName(expectedName, index.name(), matcher, tableMapping.escape(), dialectOptions.dialect())
                         && (indexColumns.isEmpty() || indexColumns.containsAll(columns));
                 }
                 return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
@@ -566,20 +566,23 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     }
 
     /**
-     * @return whether the index name matches the expected name, PostgreSQL silently truncates the longer identifiers
+     * @return whether the index name matches the expected name. The index is created with the escaping of its table,
+     * and its name is compared like a column name (case-sensitive where the quoted names are, not for MySQL and SQL Server).
+     * PostgreSQL silently truncates the longer identifiers.
      */
-    private static boolean matchingIndexName(String expectedName, @Nullable String indexName, Dialect dialect) {
+    private static boolean matchingIndexName(String expectedName,
+                                             @Nullable String indexName,
+                                             SqlIdentifierMatcher matcher,
+                                             boolean escape,
+                                             Dialect dialect) {
         if (indexName == null) {
             return false;
         }
-        if (expectedName.equalsIgnoreCase(indexName)) {
-            return true;
+        String resolvedName = matcher.resolve(expectedName, escape);
+        if (dialect == Dialect.POSTGRES) {
+            resolvedName = SqlIdentifierMatcher.truncatePostgresIdentifier(resolvedName);
         }
-        if (dialect != Dialect.POSTGRES) {
-            return false;
-        }
-        String truncatedName = SqlIdentifierMatcher.truncatePostgresIdentifier(expectedName);
-        return truncatedName.length() < expectedName.length() && truncatedName.equalsIgnoreCase(indexName);
+        return matcher.columnKey(resolvedName).equals(matcher.columnKey(indexName));
     }
 
     private static Set<String> storedColumnKeys(SqlTableMetadata tableMetadata, List<String> columns) {

@@ -77,7 +77,6 @@ final class JdbcSchemaMetadataReader {
     private final Connection connection;
     private final DatabaseMetaData metaData;
     private final Dialect dialect;
-    private final IdentifierNamingStrategy namingStrategy;
     private final SqlIdentifierMatcher identifierMatcher;
     private final String searchStringEscape;
 
@@ -85,8 +84,7 @@ final class JdbcSchemaMetadataReader {
         this.connection = connection;
         this.metaData = connection.getMetaData();
         this.dialect = dialect;
-        this.namingStrategy = getIdentifierNamingStrategy(metaData);
-        this.identifierMatcher = SqlIdentifierMatcher.of(dialect, namingStrategy, metaData.supportsMixedCaseIdentifiers());
+        this.identifierMatcher = SqlIdentifierMatcher.of(dialect, getIdentifierNamingStrategy(metaData), metaData.supportsMixedCaseIdentifiers());
         String escape = metaData.getSearchStringEscape();
         this.searchStringEscape = escape == null ? "" : escape;
     }
@@ -119,14 +117,15 @@ final class JdbcSchemaMetadataReader {
      * @throws SQLException If reading the metadata fails
      */
     SchemaTables readTables(@Nullable String schema, Set<String> wantedTableNames, boolean readIndexes) throws SQLException {
+        // The connection catalog and schema are the names as stored in the database, a quoted name keeps its case
         String catalog = connection.getCatalog();
         if (schema == null) {
             String currentSchema = dialect == Dialect.MYSQL ? null : connection.getSchema();
-            return readTables(apply(catalog), apply(currentSchema), wantedTableNames, readIndexes);
+            return readTables(catalog, currentSchema, wantedTableNames, readIndexes);
         }
         return dialect == Dialect.MYSQL
             ? readTables(schema, null, wantedTableNames, readIndexes)
-            : readTables(apply(catalog), schema, wantedTableNames, readIndexes);
+            : readTables(catalog, schema, wantedTableNames, readIndexes);
     }
 
     /**
@@ -431,10 +430,6 @@ final class JdbcSchemaMetadataReader {
         return name.replace(searchStringEscape, searchStringEscape + searchStringEscape)
             .replace("_", searchStringEscape + "_")
             .replace("%", searchStringEscape + "%");
-    }
-
-    private @Nullable String apply(@Nullable String identifier) {
-        return identifier == null ? null : namingStrategy.apply(identifier);
     }
 
     private static IdentifierNamingStrategy getIdentifierNamingStrategy(DatabaseMetaData metaData) throws SQLException {

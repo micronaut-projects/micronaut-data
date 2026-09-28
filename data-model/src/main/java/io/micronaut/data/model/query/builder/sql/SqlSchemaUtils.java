@@ -1233,11 +1233,22 @@ public final class SqlSchemaUtils {
 
     private static String shortConstraintName(String prefix, String tableName, List<String> columns) {
         String name = prefix + sanitize(tableName) + "_" + sanitize(String.join("_", columns));
-        if (name.length() <= MAX_SHORT_CONSTRAINT_NAME_LENGTH) {
+        // The sanitized name folds the case and the special characters, names differing only by them (like the quoted
+        // columns "Code" and "code") get a hash of the original names to stay distinct
+        boolean lossless = isSanitizedLosslessly(tableName) && columns.stream().allMatch(SqlSchemaUtils::isSanitizedLosslessly);
+        if (lossless && name.length() <= MAX_SHORT_CONSTRAINT_NAME_LENGTH) {
             return name;
         }
-        String hash = constraintNameHash(name).substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
-        return name.substring(0, MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1) + "_" + hash;
+        String hash = constraintNameHash(prefix + tableName + "_" + String.join("_", columns))
+            .substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
+        return name.substring(0, Math.min(name.length(), MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1)) + "_" + hash;
+    }
+
+    /**
+     * @return Whether the value can be restored from its sanitized form: lower case letters and digits separated by single underscores
+     */
+    private static boolean isSanitizedLosslessly(String value) {
+        return sanitize(value).toLowerCase(Locale.ENGLISH).equals(value);
     }
 
     private record ColumnOptions(@Nullable Integer length,
