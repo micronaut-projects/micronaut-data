@@ -21,7 +21,10 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.DriverManager
+import java.sql.ResultSet
+import java.sql.Types
 
 class JdbcSchemaMetadataReaderSpec extends Specification {
 
@@ -71,6 +74,51 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
 
         cleanup:
         schemaConnection.close()
+    }
+
+    void 'MySQL database reported as the schema is read from the current schema'() {
+        given:"Connector/J databaseTerm=SCHEMA: no catalog, the database is the schema, the same table exists in another database"
+        def metaData = [
+                storesUpperCaseIdentifiers  : { -> false },
+                storesLowerCaseIdentifiers  : { -> false },
+                supportsMixedCaseIdentifiers: { -> true },
+                getSearchStringEscape       : { -> '\\' },
+                getColumns                  : { String catalog, String schema, String table, String column ->
+                    rows([databaseColumnRow('mysql'), databaseColumnRow('app')].findAll { schema == null || it.TABLE_SCHEM == schema })
+                },
+                getPrimaryKeys              : { String catalog, String schema, String table ->
+                    rows([[TABLE_SCHEM: 'app', TABLE_NAME: 'USER', COLUMN_NAME: 'ID', KEY_SEQ: 1]])
+                }
+        ] as DatabaseMetaData
+        def stubConnection = [
+                getMetaData: { -> metaData },
+                getCatalog : { -> null },
+                getSchema  : { -> 'app' }
+        ] as Connection
+
+        when:
+        def schemaTables = new JdbcSchemaMetadataReader(stubConnection, Dialect.MYSQL).readTables(null, ['USER'] as Set, false)
+
+        then:
+        schemaTables.schema() == 'app'
+        schemaTables.tables()['USER'].schema == 'app'
+    }
+
+    private static Map<String, Object> databaseColumnRow(String database) {
+        [TABLE_CAT: 'def', TABLE_SCHEM: database, TABLE_NAME: 'USER', COLUMN_NAME: 'ID', DATA_TYPE: Types.BIGINT, TYPE_NAME: 'BIGINT',
+         COLUMN_SIZE: 64, DECIMAL_DIGITS: 0, NULLABLE: DatabaseMetaData.columnNoNulls]
+    }
+
+    private static ResultSet rows(List<Map<String, Object>> rows) {
+        int index = -1
+        return [
+                next      : { -> ++index < rows.size() },
+                getString : { String name -> rows[index][name] as String },
+                getInt    : { String name -> (rows[index][name] ?: 0) as int },
+                getShort  : { String name -> (rows[index][name] ?: 0) as short },
+                getBoolean: { String name -> rows[index][name] as boolean },
+                close     : { -> }
+        ] as ResultSet
     }
 
     private void execute(String sql) {

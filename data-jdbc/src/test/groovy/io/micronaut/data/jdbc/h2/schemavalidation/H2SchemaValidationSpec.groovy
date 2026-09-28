@@ -251,6 +251,45 @@ class H2SchemaValidationSpec extends Specification {
             errors.isEmpty()
             warnings.isEmpty()
         }
+
+        and:"A fixed length CHAR(36) column stores a UUID string too"
+        with(validateUuidItem(validator, mapping, 36, 255, Types.CHAR, 'CHAR')) {
+            errors.isEmpty()
+            warnings.isEmpty()
+        }
+        validateUuidItem(validator, mapping, 20, 255, Types.CHAR, 'CHAR').errors ==
+                ['Column [uuid_field] in table [uuid_item] has length [20] which is less than the mapped length [36]']
+    }
+
+    void 'MySQL ENUM column length is not compared to the mapped length'() {
+        given:"A native ENUM column reported with the length of its longest value"
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.MYSQL }
+        def mapping = new SqlTableMapping(null, 'enum_item', false, SqlTableMapping.TableType.MAIN, [], [
+                new SqlColumnMapping('status', DataType.STRING, SqlDbType.VARCHAR, false, 255, false, false, GeneratedValue.Type.AUTO, null)
+        ])
+        def metadata = new SqlTableMetadata(null, null, 'enum_item')
+        metadata.addColumn(new SqlColumnMetadata('status', Types.CHAR, 'ENUM', 8, 0, true))
+        def result = new SchemaValidationResult()
+
+        when:
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.MYSQL), result)
+
+        then:
+        result.errors.isEmpty()
+        result.warnings.isEmpty()
+    }
+
+    void 'identifiers are case-folded independently of the default locale'() {
+        given:"The Turkish default locale, which upper cases i to the dotted İ"
+        def defaultLocale = Locale.getDefault()
+        Locale.setDefault(Locale.forLanguageTag('tr-TR'))
+
+        expect:
+        SqlIdentifierMatcher.of(Dialect.H2, IdentifierNamingStrategy.UPPER, false).resolve('id', false) == 'ID'
+        SqlIdentifierMatcher.of(Dialect.POSTGRES, IdentifierNamingStrategy.LOWER, false).resolve('ID', false) == 'id'
+
+        cleanup:
+        Locale.setDefault(defaultLocale)
     }
 
     void 'PostgreSQL truncated index name matches the expected name'() {
@@ -303,9 +342,10 @@ class H2SchemaValidationSpec extends Specification {
         return result
     }
 
-    private static SchemaValidationResult validateUuidItem(SqlTableMappingValidator validator, SqlTableMapping mapping, int uuidLength, int nameLength) {
+    private static SchemaValidationResult validateUuidItem(SqlTableMappingValidator validator, SqlTableMapping mapping, int uuidLength, int nameLength,
+                                                           int uuidType = Types.VARCHAR, String uuidTypeName = 'VARCHAR') {
         def metadata = new SqlTableMetadata(null, null, 'uuid_item')
-        metadata.addColumn(new SqlColumnMetadata('uuid_field', Types.VARCHAR, 'VARCHAR', uuidLength, 0, true))
+        metadata.addColumn(new SqlColumnMetadata('uuid_field', uuidType, uuidTypeName, uuidLength, 0, true))
         metadata.addColumn(new SqlColumnMetadata('name', Types.VARCHAR, 'VARCHAR', nameLength, 0, true))
         def result = new SchemaValidationResult()
         validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.MYSQL), result)

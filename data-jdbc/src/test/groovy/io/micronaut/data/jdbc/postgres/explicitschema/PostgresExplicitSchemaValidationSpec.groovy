@@ -56,10 +56,10 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         execute(dataSource, 'CREATE TABLE foo.t_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE TABLE foo."T_ITEM" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
 
-        and:"The quoted column \"Name\" and the quoted sequence \"Sequence_item_seq\""
+        and:"The quoted column \"Name\", and the sequence used by nextval('Sequence_item_seq') stored in lower case"
         execute(dataSource, 'CREATE TABLE foo.column_case_item (id BIGINT NOT NULL PRIMARY KEY, "Name" VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE TABLE foo."Sequence_item" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
-        execute(dataSource, 'CREATE SEQUENCE foo."Sequence_item_seq"')
+        execute(dataSource, 'CREATE SEQUENCE foo.sequence_item_seq')
 
         and:"A table and a column with names longer than 63 bytes, truncated by PostgreSQL"
         execute(dataSource, "CREATE TABLE foo.${LongNameItem.TABLE} (id BIGINT NOT NULL PRIMARY KEY, ${LongNameItem.COLUMN} VARCHAR(255) NOT NULL)")
@@ -70,11 +70,11 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         then:
         noExceptionThrown()
 
-        when:"The quoted table, column and sequence only exist unquoted"
+        when:"The quoted table and column only exist unquoted, and the sequence only quoted, which nextval doesn't find"
         execute(dataSource, 'DROP TABLE foo."T_ITEM"')
         execute(dataSource, 'ALTER TABLE foo.column_case_item RENAME COLUMN "Name" TO name')
-        execute(dataSource, 'DROP SEQUENCE foo."Sequence_item_seq"')
-        execute(dataSource, 'CREATE SEQUENCE foo.sequence_item_seq')
+        execute(dataSource, 'DROP SEQUENCE foo.sequence_item_seq')
+        execute(dataSource, 'CREATE SEQUENCE foo."Sequence_item_seq"')
         ApplicationContext.run(validateProperties).close()
 
         then:

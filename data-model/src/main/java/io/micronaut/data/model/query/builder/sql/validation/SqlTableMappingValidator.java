@@ -111,7 +111,9 @@ public interface SqlTableMappingValidator {
                 continue;
             }
             String sequenceName = SqlSchemaUtils.resolveSequenceName(tableMapping, sequence, dialect);
-            if (!sequenceNames.contains(identifierMatcher.mappedTableKey(sequenceName, tableMapping.escape()))) {
+            // The sequence must be the one the insert uses, PostgreSQL refers to it unquoted in nextval('name'), which folds the case
+            boolean escape = dialect != Dialect.POSTGRES && tableMapping.escape();
+            if (!sequenceNames.contains(identifierMatcher.mappedTableKey(sequenceName, escape))) {
                 result.addError(String.format("Expected sequence [%s] for column [%s] in table [%s] not found",
                     sequenceName, sequence.columnName(), tableMapping.name()));
             }

@@ -76,17 +76,20 @@ final class JdbcSchemaMetadataReader {
 
     private final Connection connection;
     private final DatabaseMetaData metaData;
-    private final Dialect dialect;
     private final SqlIdentifierMatcher identifierMatcher;
     private final String searchStringEscape;
+    /**
+     * Whether the MySQL database is the catalog, the MySQL Connector/J option {@code databaseTerm=SCHEMA} reports it as the schema.
+     */
+    private final boolean databaseAsCatalog;
 
     JdbcSchemaMetadataReader(Connection connection, Dialect dialect) throws SQLException {
         this.connection = connection;
         this.metaData = connection.getMetaData();
-        this.dialect = dialect;
         this.identifierMatcher = SqlIdentifierMatcher.of(dialect, getIdentifierNamingStrategy(metaData), metaData.supportsMixedCaseIdentifiers());
         String escape = metaData.getSearchStringEscape();
         this.searchStringEscape = escape == null ? "" : escape;
+        this.databaseAsCatalog = dialect == Dialect.MYSQL && (connection.getCatalog() != null || connection.getSchema() == null);
     }
 
     /**
@@ -120,10 +123,10 @@ final class JdbcSchemaMetadataReader {
         // The connection catalog and schema are the names as stored in the database, a quoted name keeps its case
         String catalog = connection.getCatalog();
         if (schema == null) {
-            String currentSchema = dialect == Dialect.MYSQL ? null : connection.getSchema();
+            String currentSchema = databaseAsCatalog ? null : connection.getSchema();
             return readTables(catalog, currentSchema, wantedTableNames, readIndexes);
         }
-        return dialect == Dialect.MYSQL
+        return databaseAsCatalog
             ? readTables(schema, null, wantedTableNames, readIndexes)
             : readTables(catalog, schema, wantedTableNames, readIndexes);
     }
@@ -233,7 +236,7 @@ final class JdbcSchemaMetadataReader {
                                     Set<String> wantedTableNames,
                                     boolean readIndexes) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
-        String resolvedSchema = dialect == Dialect.MYSQL ? catalog : schema;
+        String resolvedSchema = databaseAsCatalog ? catalog : schema;
         // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns.
         // The schema is a pattern, its wildcard characters are escaped and the rows of the other schemas are skipped.
         try (ResultSet resultSet = metaData.getColumns(catalog, schema == null ? null : escapePattern(schema), null, MATCH_ALL)) {
@@ -246,14 +249,14 @@ final class JdbcSchemaMetadataReader {
                 }
                 String tableCatalog = resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
                 String tableSchema = resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-                if (!sameOrUnknown(dialect == Dialect.MYSQL ? catalog : schema, dialect == Dialect.MYSQL ? tableCatalog : tableSchema)) {
+                if (!sameOrUnknown(databaseAsCatalog ? catalog : schema, databaseAsCatalog ? tableCatalog : tableSchema)) {
                     continue;
                 }
                 SqlTableMetadata table = tables.get(tableKey);
                 if (table == null) {
                     table = new SqlTableMetadata(tableCatalog, tableSchema, tableName, identifierMatcher);
                     tables.put(tableKey, table);
-                    resolvedSchema = dialect == Dialect.MYSQL ? tableCatalog : tableSchema;
+                    resolvedSchema = databaseAsCatalog ? tableCatalog : tableSchema;
                 } else if (!Objects.equals(table.getCatalog(), tableCatalog) || !Objects.equals(table.getSchema(), tableSchema)) {
                     // A table with the same name in another schema (the schema pattern can match more schemas)
                     continue;

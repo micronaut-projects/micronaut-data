@@ -35,7 +35,8 @@ class H2ExplicitSchemaValidationSpec extends Specification {
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
             'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.explicitschema',
-            'datasources.default.driverClassName': 'org.h2.Driver'
+            'datasources.default.driverClassName': 'org.h2.Driver',
+            'explicit.table.prefix'              : 'prefixed'
     ]
 
     @Shared
@@ -59,6 +60,9 @@ class H2ExplicitSchemaValidationSpec extends Specification {
         execute(connection, 'CREATE SCHEMA FOOXBAR')
         execute(connection, 'CREATE TABLE FOO_BAR.pattern_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(connection, 'CREATE TABLE FOOXBAR.pattern_item (id BIGINT NOT NULL PRIMARY KEY)')
+
+        and:"The table of the entity mapped with a property placeholder"
+        execute(connection, 'CREATE TABLE foo.prefixed_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
 
         when:
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -95,6 +99,13 @@ class EscapedItem {
 
 @MappedEntity(value = "pattern_item", schema = "FOO_BAR")
 class PatternItem {
+    @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = '${explicit.table.prefix}_item', schema = "foo", escape = false)
+class PlaceholderItem {
     @Id
     Long id
     String name

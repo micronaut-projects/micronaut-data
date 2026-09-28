@@ -67,6 +67,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -407,7 +408,8 @@ public class SchemaGenerator {
                 continue;
             }
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
-            for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
+            for (SqlTableMapping mapping : sqlTableMappings) {
+                SqlTableMapping sqlTableMapping = resolvePlaceholders(mapping);
                 String key = schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape())
                     + "." + metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape());
                 SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
@@ -427,6 +429,20 @@ public class SchemaGenerator {
             .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()), LinkedHashMap::new,
                 Collectors.toMap(sqlTableMapping -> metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape()), sqlTableMapping -> sqlTableMapping,
                     (first, second) -> first, LinkedHashMap::new)));
+    }
+
+    /**
+     * Resolves the property placeholders of the schema and table names (like {@code @MappedEntity("${prefix}entity")}),
+     * the same way as in the SQL executed by the schema generation. The default sequence name is derived from the table name.
+     */
+    private SqlTableMapping resolvePlaceholders(SqlTableMapping sqlTableMapping) {
+        String schema = sqlTableMapping.schema();
+        String resolvedSchema = schema == null ? null : resolveSql(propertyPlaceholderResolver, schema);
+        String resolvedName = resolveSql(propertyPlaceholderResolver, sqlTableMapping.name());
+        if (Objects.equals(schema, resolvedSchema) && sqlTableMapping.name().equals(resolvedName)) {
+            return sqlTableMapping;
+        }
+        return sqlTableMapping.withSchemaAndName(resolvedSchema, resolvedName);
     }
 
     /**

@@ -67,6 +67,16 @@ public record SqlTableMapping(
     }
 
     /**
+     * @param schema The schema
+     * @param name The table name
+     * @return A copy of this mapping with the given schema and table name
+     * @since 5.3.0
+     */
+    public SqlTableMapping withSchemaAndName(@Nullable String schema, String name) {
+        return new SqlTableMapping(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, uniqueConstraints);
+    }
+
+    /**
      * The SQL table mapping table type.
      */
     public enum TableType {
