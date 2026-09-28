@@ -65,14 +65,18 @@ final class JdbcSchemaMetadataReader {
     private static final String MATCH_ALL = "%";
 
     private static final String JSON_DUALITY_VIEWS_QUERY = """
-        SELECT VIEW_NAME, ROOT_TABLE_NAME, ALLOW_INSERT, ALLOW_UPDATE, ALLOW_DELETE, STATUS
+        SELECT VIEW_NAME, STATUS
         FROM ALL_JSON_DUALITY_VIEWS WHERE VIEW_OWNER = ?""";
     private static final String JSON_DUALITY_VIEW_TABLES_QUERY = """
-        SELECT VIEW_NAME, TABLE_NAME
+        SELECT VIEW_NAME, TABLE_NUMBER, PARENT_TABLE_NUMBER, TABLE_NAME, RELATIONSHIP, ALLOW_INSERT, ALLOW_UPDATE, ALLOW_DELETE
         FROM ALL_JSON_DUALITY_VIEW_TABS WHERE VIEW_OWNER = ?""";
     private static final String JSON_DUALITY_VIEW_COLUMNS_QUERY = """
-        SELECT VIEW_NAME, TABLE_NAME, COLUMN_NAME, JSON_KEY_NAME
+        SELECT VIEW_NAME, TABLE_NUMBER, COLUMN_NAME, JSON_KEY_NAME
         FROM ALL_JSON_DUALITY_VIEW_TAB_COLS WHERE VIEW_OWNER = ? AND JSON_KEY_NAME IS NOT NULL""";
+    // A composite join has a row per column, the distinct rows are the links
+    private static final String JSON_DUALITY_VIEW_LINKS_QUERY = """
+        SELECT DISTINCT VIEW_NAME, PARENT_TABLE_NAME, CHILD_TABLE_NAME, KEY_NAME
+        FROM ALL_JSON_DUALITY_VIEW_LINKS WHERE VIEW_OWNER = ?""";
 
     private final Connection connection;
     private final DatabaseMetaData metaData;
@@ -196,8 +200,7 @@ final class JdbcSchemaMetadataReader {
         Map<String, JsonViewBuilder> views = new LinkedHashMap<>();
         query(JSON_DUALITY_VIEWS_QUERY, schema, resultSet -> {
             String viewName = resultSet.getString(1);
-            views.put(viewName.toLowerCase(Locale.ENGLISH), new JsonViewBuilder(viewName, resultSet.getString(2),
-                resultSet.getBoolean(3), resultSet.getBoolean(4), resultSet.getBoolean(5), resultSet.getString(6)));
+            views.put(viewName.toLowerCase(Locale.ENGLISH), new JsonViewBuilder(viewName, resultSet.getString(2)));
         });
         if (views.isEmpty()) {
             return Map.of();
@@ -205,19 +208,36 @@ final class JdbcSchemaMetadataReader {
         query(JSON_DUALITY_VIEW_TABLES_QUERY, schema, resultSet -> {
             JsonViewBuilder view = views.get(resultSet.getString(1).toLowerCase(Locale.ENGLISH));
             if (view != null) {
-                view.tables.add(resultSet.getString(2));
+                int tableNumber = resultSet.getInt(2);
+                int parentNumber = resultSet.getInt(3);
+                // The root table has no parent, wasNull applies to the last read column
+                Integer parent = resultSet.wasNull() ? null : parentNumber;
+                view.tables.add(new SqlJsonViewMetadata.Table(tableNumber, parent, resultSet.getString(4), resultSet.getString(5),
+                    isTrue(resultSet.getString(6)), isTrue(resultSet.getString(7)), isTrue(resultSet.getString(8))));
             }
         });
         query(JSON_DUALITY_VIEW_COLUMNS_QUERY, schema, resultSet -> {
             JsonViewBuilder view = views.get(resultSet.getString(1).toLowerCase(Locale.ENGLISH));
             if (view != null) {
-                view.fields.add(new SqlJsonViewMetadata.Field(resultSet.getString(2), resultSet.getString(4), resultSet.getString(3)));
+                view.fields.add(new SqlJsonViewMetadata.Field(resultSet.getInt(2), resultSet.getString(4), resultSet.getString(3)));
+            }
+        });
+        query(JSON_DUALITY_VIEW_LINKS_QUERY, schema, resultSet -> {
+            JsonViewBuilder view = views.get(resultSet.getString(1).toLowerCase(Locale.ENGLISH));
+            if (view != null) {
+                view.links.add(new SqlJsonViewMetadata.Link(resultSet.getString(2), resultSet.getString(3), resultSet.getString(4)));
             }
         });
         Map<String, SqlJsonViewMetadata> result = new LinkedHashMap<>(views.size());
-        views.forEach((key, view) -> result.put(key, new SqlJsonViewMetadata(view.name, view.rootTable, view.allowInsert,
-            view.allowUpdate, view.allowDelete, view.status, view.tables, view.fields)));
+        views.forEach((key, view) -> result.put(key, new SqlJsonViewMetadata(view.name, view.status, view.tables, view.fields, view.links)));
         return result;
+    }
+
+    /**
+     * The dictionary reports the flags as the strings {@code true} and {@code false}.
+     */
+    private static boolean isTrue(@Nullable String value) {
+        return "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
     }
 
     private void query(String sql, @Nullable String parameter, RowReader rowReader) throws SQLException {
@@ -475,20 +495,13 @@ final class JdbcSchemaMetadataReader {
 
     private static final class JsonViewBuilder {
         private final String name;
-        private final String rootTable;
-        private final boolean allowInsert;
-        private final boolean allowUpdate;
-        private final boolean allowDelete;
         private final @Nullable String status;
-        private final Set<String> tables = new LinkedHashSet<>();
+        private final List<SqlJsonViewMetadata.Table> tables = new ArrayList<>();
         private final List<SqlJsonViewMetadata.Field> fields = new ArrayList<>();
+        private final List<SqlJsonViewMetadata.Link> links = new ArrayList<>();
 
-        private JsonViewBuilder(String name, String rootTable, boolean allowInsert, boolean allowUpdate, boolean allowDelete, @Nullable String status) {
+        private JsonViewBuilder(String name, @Nullable String status) {
             this.name = name;
-            this.rootTable = rootTable;
-            this.allowInsert = allowInsert;
-            this.allowUpdate = allowUpdate;
-            this.allowDelete = allowDelete;
             this.status = status;
         }
     }

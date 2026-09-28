@@ -19,18 +19,18 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.JsonView;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * The Oracle JSON relational duality view mapping extracted from a {@link JsonView} entity.
+ * The Oracle JSON relational duality view mapping extracted from a {@link JsonView} entity: the tree of the view tables
+ * as the view is created, each table with its JSON key, relationship, allowed operations and JSON fields.
  *
  * @param schema The view schema, can be null
  * @param name The view name
- * @param rootTable The root table, the table of the {@link JsonView#entity()}
- * @param operations The operations allowed by the view
- * @param tables The tables used by the view and its sub views
- * @param fields The JSON fields mapped to table columns
+ * @param root The root table of the view, the table of the {@link JsonView#entity()}
  *
  * @author radovanradic
  * @since 5.3.0
@@ -38,15 +38,65 @@ import java.util.Set;
 @Internal
 public record SqlJsonViewMapping(@Nullable String schema,
                                  String name,
-                                 String rootTable,
-                                 Set<JsonView.Operation> operations,
-                                 Set<String> tables,
-                                 List<Field> fields) {
+                                 Table root) {
 
-    public SqlJsonViewMapping {
-        operations = Set.copyOf(operations);
-        tables = Set.copyOf(tables);
-        fields = List.copyOf(fields);
+    /**
+     * @return The root table name
+     */
+    public String rootTable() {
+        return root.table();
+    }
+
+    /**
+     * @return The names of all the tables of the view
+     */
+    public Set<String> tables() {
+        Set<String> tables = new LinkedHashSet<>();
+        collectTables(root, tables);
+        return tables;
+    }
+
+    /**
+     * @return All the JSON fields of the view
+     */
+    public List<Field> fields() {
+        List<Field> fields = new ArrayList<>();
+        collectFields(root, fields);
+        return fields;
+    }
+
+    private static void collectTables(Table table, Set<String> tables) {
+        tables.add(table.table());
+        table.children().forEach(child -> collectTables(child, tables));
+    }
+
+    private static void collectFields(Table table, List<Field> fields) {
+        fields.addAll(table.fields());
+        table.children().forEach(child -> collectFields(child, fields));
+    }
+
+    /**
+     * A table of the view, the root table or a sub view table.
+     *
+     * @param table The table name
+     * @param key The JSON key of the sub view in its parent, null for the root table and for an unnested sub view
+     * @param nested Whether the sub view is an array of objects (one-to-many), false for an object and the root table
+     * @param operations The operations allowed on the table
+     * @param fields The JSON fields stored in the table
+     * @param children The sub view tables
+     */
+    public record Table(String table,
+                        @Nullable String key,
+                        boolean nested,
+                        Set<JsonView.Operation> operations,
+                        List<Field> fields,
+                        List<Table> children) {
+
+        public Table {
+            operations = Set.copyOf(operations);
+            fields = List.copyOf(fields);
+            children = List.copyOf(children);
+        }
     }
 
     /**

@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder.sql;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
@@ -1053,40 +1054,47 @@ public final class SqlSchemaUtils {
     }
 
     /**
-     * Returns the Oracle JSON relational duality view mapping of the {@link JsonView} entity: the view name, its root table,
-     * the allowed operations and the JSON fields with the tables and columns storing them. The JSON keys and columns are
-     * resolved the same way as when the view is created, see {@link SqlQueryBuilder#buildCreateTableStatements(PersistentEntity)}.
+     * Returns the Oracle JSON relational duality view mapping of the {@link JsonView} entity: the view name and the tree
+     * of its tables, each with its JSON key, relationship, allowed operations and JSON fields. The tree, JSON keys and columns
+     * are resolved the same way as when the view is created, see {@link SqlQueryBuilder#buildCreateTableStatements(PersistentEntity)}.
      *
      * @param viewEntity The {@link JsonView} entity
      * @return The view mapping or null if the entity is not a JSON view
      * @since 5.3.0
      */
     public static @Nullable SqlJsonViewMapping getSqlJsonViewMapping(PersistentEntity viewEntity) {
-        AnnotationMetadata annotationMetadata = viewEntity.getAnnotationMetadata();
-        PersistentEntity entity = annotationMetadata.classValue(JsonView.class, "entity").map(PersistentEntity::of).orElse(null);
+        PersistentEntity entity = viewEntity.getAnnotationMetadata().classValue(JsonView.class, "entity").map(PersistentEntity::of).orElse(null);
         if (entity == null) {
             return null;
         }
-        Set<String> tables = new LinkedHashSet<>();
-        Set<SqlJsonViewMapping.Field> fields = new LinkedHashSet<>();
-        collectJsonViewFields(viewEntity, entity, tables, fields);
-        JsonView.Operation[] operations = annotationMetadata.enumValues(JsonView.class, "operations", JsonView.Operation.class);
         return new SqlJsonViewMapping(
             SqlQueryBuilderUtils.getSchemaName(viewEntity),
             viewEntity.getPersistedName(),
-            entity.getPersistedName(),
-            operations.length == 0 ? EnumSet.allOf(JsonView.Operation.class) : EnumSet.copyOf(Arrays.asList(operations)),
-            tables,
-            new ArrayList<>(fields)
+            jsonViewTable(viewEntity, entity, null, false)
         );
+    }
+
+    private static SqlJsonViewMapping.Table jsonViewTable(PersistentEntity viewEntity, PersistentEntity entity, @Nullable String key, boolean nested) {
+        Set<SqlJsonViewMapping.Field> fields = new LinkedHashSet<>();
+        List<SqlJsonViewMapping.Table> children = new ArrayList<>();
+        collectJsonViewFields(viewEntity, entity, fields, children);
+        return new SqlJsonViewMapping.Table(entity.getPersistedName(), key, nested, jsonViewOperations(viewEntity),
+            new ArrayList<>(fields), children);
+    }
+
+    private static Set<JsonView.Operation> jsonViewOperations(PersistentEntity viewEntity) {
+        AnnotationMetadata annotationMetadata = viewEntity.getAnnotationMetadata();
+        JsonView.Operation[] operations = annotationMetadata.hasAnnotation(JsonView.class)
+            ? annotationMetadata.enumValues(JsonView.class, "operations", JsonView.Operation.class)
+            : annotationMetadata.enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
+        return operations.length == 0 ? EnumSet.allOf(JsonView.Operation.class) : EnumSet.copyOf(Arrays.asList(operations));
     }
 
     private static void collectJsonViewFields(PersistentEntity viewEntity,
                                               PersistentEntity entity,
-                                              Set<String> tables,
-                                              Set<SqlJsonViewMapping.Field> fields) {
+                                              Set<SqlJsonViewMapping.Field> fields,
+                                              List<SqlJsonViewMapping.Table> children) {
         String table = entity.getPersistedName();
-        tables.add(table);
         for (PersistentProperty identity : viewEntity.getIdentityProperties()) {
             AnnotationMetadata identityMetadata = identity.getAnnotationMetadata();
             String key = jsonViewKey(identity);
@@ -1103,26 +1111,29 @@ public final class SqlSchemaUtils {
         }
         for (PersistentProperty property : viewEntity.getPersistentProperties()) {
             if (property.getDataType() != DataType.OBJECT || isFlexColumn(property)) {
-                collectJsonViewProperty(property, entity, tables, fields);
+                collectJsonViewProperty(property, entity, fields, children);
             }
         }
     }
 
     private static void collectJsonViewProperty(PersistentProperty property,
                                                 PersistentEntity entity,
-                                                Set<String> tables,
-                                                Set<SqlJsonViewMapping.Field> fields) {
+                                                Set<SqlJsonViewMapping.Field> fields,
+                                                List<SqlJsonViewMapping.Table> children) {
         String table = entity.getPersistedName();
         if (property instanceof Association association) {
             if (association.getKind() == Relation.Kind.EMBEDDED) {
+                // The embedded properties are stored in the same table
                 for (PersistentProperty embeddedProperty : association.getAssociatedEntity().getPersistentProperties()) {
-                    collectJsonViewProperty(embeddedProperty, entity, tables, fields);
+                    collectJsonViewProperty(embeddedProperty, entity, fields, children);
                 }
             } else {
                 PersistentEntity subView = association.getAssociatedEntity();
-                subView.getAnnotationMetadata().classValue(JsonSubView.class, "entity")
-                    .map(PersistentEntity::of)
-                    .ifPresent(subEntity -> collectJsonViewFields(subView, subEntity, tables, fields));
+                PersistentEntity subEntity = subView.getAnnotationMetadata().classValue(JsonSubView.class, "entity")
+                    .map(PersistentEntity::of).orElse(null);
+                if (subEntity != null) {
+                    children.add(jsonSubViewTable(association, subView, subEntity, entity));
+                }
             }
         } else if (property.getDataType() != DataType.OBJECT) {
             String key = jsonViewKey(property);
@@ -1132,6 +1143,31 @@ public final class SqlSchemaUtils {
                 addJsonViewField(entity, table, key, fields);
             }
         }
+    }
+
+    /**
+     * The sub view table, created the same way as the view: a to-one association is an object, unnested when annotated with
+     * {@code @JsonUnwrapped}, and a to-many association is an array, nested in an unnested join table when the join table
+     * entity has an embedded id.
+     */
+    private static SqlJsonViewMapping.Table jsonSubViewTable(Association association,
+                                                             PersistentEntity subView,
+                                                             PersistentEntity subEntity,
+                                                             PersistentEntity entity) {
+        String key = jsonViewKey(association);
+        if (association.getKind().isSingleEnded()) {
+            return jsonViewTable(subView, subEntity, association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class) ? null : key, false);
+        }
+        PersistentProperty identity = subEntity.getIdentity();
+        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && identity != null
+            && identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)
+            && entity.getPropertyByName(association.getName()) instanceof Association joinAssociation) {
+            String joinTable = joinAssociation.getAnnotationMetadata().stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+                .orElseGet(() -> entity.getNamingStrategy().mappedName(joinAssociation));
+            return new SqlJsonViewMapping.Table(joinTable, null, false, EnumSet.allOf(JsonView.Operation.class), List.of(),
+                List.of(jsonViewTable(subView, subEntity, key, true)));
+        }
+        return jsonViewTable(subView, subEntity, key, true);
     }
 
     private static void addJsonViewField(PersistentEntity entity, String table, String key, Set<SqlJsonViewMapping.Field> fields) {

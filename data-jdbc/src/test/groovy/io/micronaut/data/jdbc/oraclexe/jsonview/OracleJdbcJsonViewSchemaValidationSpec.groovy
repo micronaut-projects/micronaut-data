@@ -88,6 +88,24 @@ class OracleJdbcJsonViewSchemaValidationSpec extends Specification {
         recreateView(PersonView)
     }
 
+    void 'JSON view sub view under a different key is reported'() {
+        given:"The student view with the address sub view under another key"
+        def ddl = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(runtimeEntityRegistry.getEntity(StudentView))
+                .find { it.contains('DUALITY VIEW') }
+        execute(ddl.replace("'address':", "'homeAddress':"))
+
+        when:
+        ApplicationContext.run(validateProperties()).close()
+
+        then:
+        def e = thrown(Exception)
+        def message = findValidationException(e).message.toLowerCase()
+        message.contains('json view [student_view] sub view [address] of table [tbl_address] not found')
+
+        cleanup:
+        recreateView(StudentView)
+    }
+
     private Map<String, Object> validateProperties() {
         return [
                 'datasources.default.url'            : context.getRequiredProperty('datasources.default.url', String),

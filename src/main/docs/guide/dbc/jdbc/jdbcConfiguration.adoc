@@ -57,7 +57,7 @@ All the problems found are reported together. The following differences are erro
 * The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, `TEXT` or `CLOB` for strings, or any type name synonym (`int4` for `INTEGER`). Columns with an explicit definition (`@MappedProperty(definition = "...")`) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL) and the Oracle vector storage (dense or sparse).
 * A `UUID` stored as a string in a column shorter than 36 characters
 * A sequence used to generate the identity values does not exist
-* An Oracle JSON relational duality view (`@JsonView`) does not exist, is not valid, has a different root table, or a JSON field of the view entity is missing or stored in a different column
+* An Oracle JSON relational duality view (`@JsonView`) does not exist, is not valid, has a different root table, a sub view (`@JsonSubView`) is missing under its JSON key or is an object instead of an array (or the opposite), or a JSON field of the view entity is missing or stored in a different column
 
 The following differences are only logged as warnings, since they only fail for some values or don't affect the mapping:
 
@@ -67,7 +67,7 @@ The following differences are only logged as warnings, since they only fail for 
 * A declared index (`@Index`, `@VectorIndex`) does not exist. Spatial and vector indexes are matched by their name, the declared or the generated one, since the index method is not reported by the database metadata
 * A unique constraint does not exist, validated only when `schema-generate-unique-constraints` is enabled
 * A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
-* A JSON view allows different operations than declared, or has fields not mapped by the view entity
+* A JSON view or one of its sub views allows different operations than declared, or the view has fields or sub views not mapped by the view entity
 
 The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (`@MappedEntity(escape = true)`, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (`lower_case_table_names=0`).
 
