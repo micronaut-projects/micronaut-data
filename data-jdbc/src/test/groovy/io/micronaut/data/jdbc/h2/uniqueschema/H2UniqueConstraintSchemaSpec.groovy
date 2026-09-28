@@ -26,6 +26,8 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
 import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
@@ -60,10 +62,17 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         def indexes = SqlSchemaUtils.getSqlTableMappings(entity, Dialect.H2).first().indexes()
 
         then:
-        indexes.collect { [it.name(), it.unique(), it.columns().toList()] } as Set == [
+        indexes.size() == 3
+        indexes.collect { [it.name(), it.unique(), it.columns().toList()] }.containsAll([
                 ['UK_H2_UNIQUE_ITEM_CODE', true, ['code']],
                 ['uk_h2_unique_item_first_second', true, ['first_part', 'second_part']]
-        ] as Set
+        ])
+
+        and:"An unnamed constraint can use an embedded column and gets a bounded name"
+        def unnamed = indexes.find { it.columns().toList() == ['address_street', 'first_part'] }
+        unnamed.unique()
+        unnamed.name().startsWith('UK_H2_UNIQUE_ITEM_')
+        unnamed.name().length() <= 30
     }
 
     void 'unique indexes are created and validated'() {
@@ -82,6 +91,7 @@ class H2UniqueConstraintSchemaSpec extends Specification {
 
         then:
         uniqueIndexes.containsAll(['uk_h2_unique_item_code', 'uk_h2_unique_item_first_second'])
+        uniqueIndexes.any { it.startsWith('uk_h2_unique_item_') && it != 'uk_h2_unique_item_code' && it != 'uk_h2_unique_item_first_second' }
 
         when:"The created schema is validated"
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -100,6 +110,7 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         metadata.addColumn(new SqlColumnMetadata('code', Types.VARCHAR, 'CHARACTER VARYING', 255, 0, false))
         metadata.addColumn(new SqlColumnMetadata('first_part', Types.VARCHAR, 'CHARACTER VARYING', 255, 0, false))
         metadata.addColumn(new SqlColumnMetadata('second_part', Types.VARCHAR, 'CHARACTER VARYING', 255, 0, false))
+        metadata.addColumn(new SqlColumnMetadata('address_street', Types.VARCHAR, 'CHARACTER VARYING', 255, 0, true))
         metadata.setPrimaryKeyColumns(['id'])
         metadata.setIndexes([])
         def result = new SchemaValidationResult()
@@ -109,15 +120,20 @@ class H2UniqueConstraintSchemaSpec extends Specification {
 
         then:
         !result.hasErrors()
-        result.warnings as Set == [
+        result.warnings.size() == 3
+        result.warnings.containsAll([
                 'Unique index [UK_H2_UNIQUE_ITEM_CODE] on columns [code] not found in table [h2_unique_item]',
                 'Unique index [uk_h2_unique_item_first_second] on columns [first_part, second_part] not found in table [h2_unique_item]'
-        ] as Set
+        ])
+        result.warnings.any { it.contains('on columns [address_street, first_part] not found') }
     }
 }
 
 @Entity
-@Table(name = "h2_unique_item", uniqueConstraints = @UniqueConstraint(name = "uk_h2_unique_item_first_second", columnNames = ["first_part", "second_part"]))
+@Table(name = "h2_unique_item", uniqueConstraints = [
+        @UniqueConstraint(name = "uk_h2_unique_item_first_second", columnNames = ["first_part", "second_part"]),
+        @UniqueConstraint(columnNames = ["address_street", "first_part"])
+])
 class H2UniqueItem {
 
     @Id
@@ -132,4 +148,14 @@ class H2UniqueItem {
 
     @Column(nullable = false)
     String secondPart
+
+    @Embedded
+    H2UniqueAddress address
+}
+
+@Embeddable
+class H2UniqueAddress {
+
+    @Column(name = "address_street", nullable = true)
+    String street
 }

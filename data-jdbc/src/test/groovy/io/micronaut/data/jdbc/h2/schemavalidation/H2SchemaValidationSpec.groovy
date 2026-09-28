@@ -29,8 +29,14 @@ import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.model.schema.sql.SqlColumnMapping
+import io.micronaut.data.model.schema.sql.SqlDbType
+import io.micronaut.data.model.schema.sql.SqlIndexMapping
+import io.micronaut.data.model.schema.sql.SqlTableMapping
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
+import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -164,6 +170,61 @@ class H2SchemaValidationSpec extends Specification {
         result.warnings.any { it.contains('Table [h2_validate_item] has no primary key') }
         result.warnings.any { it.contains('Index on columns [name] not found in table [h2_validate_item]') }
         result.warnings.size() == 5
+    }
+
+    void 'LOB mappings require LOB or unbounded columns'() {
+        given:
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
+        def mapping = new SqlTableMapping(null, 'lob_item', false, SqlTableMapping.TableType.MAIN, [], [
+                new SqlColumnMapping('text', DataType.OBJECT, SqlDbType.CLOB),
+                new SqlColumnMapping('data', DataType.OBJECT, SqlDbType.BLOB),
+                new SqlColumnMapping('name', DataType.STRING, SqlDbType.VARCHAR)
+        ])
+
+        expect:"LOB mappings are rejected for bounded columns"
+        validateLobItem(validator, mapping, [Types.VARCHAR, 'CHARACTER VARYING', 255], [Types.VARBINARY, 'BINARY VARYING', 255]).errors == [
+                'Column [text] in table [lob_item] of type [CHARACTER VARYING] is mapped to [CLOB]',
+                'Column [data] in table [lob_item] of type [BINARY VARYING] is mapped to [BLOB]'
+        ]
+
+        and:"LOB and unbounded columns are accepted, as well as a string mapped to a LOB column"
+        validateLobItem(validator, mapping, [Types.CLOB, 'CHARACTER LARGE OBJECT', 0], [Types.BLOB, 'BINARY LARGE OBJECT', 0], [Types.CLOB, 'CLOB', 0]).errors.isEmpty()
+        validateLobItem(validator, mapping, [Types.LONGVARCHAR, 'LONGTEXT', 0], [Types.LONGVARBINARY, 'LONGBLOB', 0]).errors.isEmpty()
+        validateLobItem(validator, mapping, [Types.VARCHAR, 'text', Integer.MAX_VALUE], [Types.BINARY, 'bytea', Integer.MAX_VALUE]).errors.isEmpty()
+    }
+
+    void 'columnless index only matches the expected index'() {
+        given:
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
+        def mapping = new SqlTableMapping(null, 'geo_item', false, SqlTableMapping.TableType.MAIN, [], [], [],
+                [new SqlIndexMapping('', false, ['location'] as String[], true)], [])
+
+        expect:"An unrelated index without reported columns does not match"
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('idx_geo_item_expression', false, [])).warnings ==
+                ['Index on columns [location] not found in table [geo_item]']
+
+        and:"The index created for the mapping matches"
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('IDX_GEO_ITEM_LOCATION', false, [])).warnings.isEmpty()
+        validateGeoItem(validator, mapping, new SqlIndexMetadata('any_name', false, ['LOCATION'])).warnings.isEmpty()
+    }
+
+    private static SchemaValidationResult validateLobItem(SqlTableMappingValidator validator, SqlTableMapping mapping,
+                                                          List text, List data, List name = [Types.VARCHAR, 'CHARACTER VARYING', 255]) {
+        def metadata = new SqlTableMetadata(null, null, 'lob_item')
+        metadata.addColumn(new SqlColumnMetadata('text', text[0] as int, text[1] as String, text[2] as int, 0, true))
+        metadata.addColumn(new SqlColumnMetadata('data', data[0] as int, data[1] as String, data[2] as int, 0, true))
+        metadata.addColumn(new SqlColumnMetadata('name', name[0] as int, name[1] as String, name[2] as int, 0, true))
+        def result = new SchemaValidationResult()
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.H2), result)
+        return result
+    }
+
+    private static SchemaValidationResult validateGeoItem(SqlTableMappingValidator validator, SqlTableMapping mapping, SqlIndexMetadata index) {
+        def metadata = new SqlTableMetadata(null, null, 'geo_item')
+        metadata.setIndexes([index])
+        def result = new SchemaValidationResult()
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.H2), result)
+        return result
     }
 
     void 'SQLite columns are matched by the type affinity'() {

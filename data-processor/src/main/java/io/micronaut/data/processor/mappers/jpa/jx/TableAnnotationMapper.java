@@ -26,7 +26,6 @@ import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -54,24 +53,13 @@ public class TableAnnotationMapper implements NamedAnnotationMapper {
         annotation.stringValue("schema").ifPresent(schema -> builder.member("schema", schema));
         final AnnotationValueBuilder<Indexes> idxBuilder = AnnotationValue.builder(Indexes.class);
 
-        List<AnnotationValue<Index>> indexes = new ArrayList<>();
-        for (AnnotationValue<Annotation> index : annotation.getAnnotations("indexes")) {
-            indexes.add((AnnotationValue<Index>) mapper.map(index, visitorContext).get(0));
-        }
-        // Unique constraints are represented by unique indexes
-        for (AnnotationValue<Annotation> uniqueConstraint : annotation.getAnnotations("uniqueConstraints")) {
-            String[] columnNames = uniqueConstraint.stringValues("columnNames");
-            if (columnNames.length == 0) {
-                continue;
-            }
-            AnnotationValueBuilder<Index> indexBuilder = AnnotationValue.builder(Index.class)
-                .member("columns", columnNames)
-                .member("unique", true);
-            uniqueConstraint.stringValue("name").ifPresent(name -> indexBuilder.member("name", name));
-            indexes.add(indexBuilder.build());
-        }
-        if (CollectionUtils.isNotEmpty(indexes)) {
-            idxBuilder.member("value", indexes.toArray(new AnnotationValue[0]));
+        List<AnnotationValue<Annotation>> indexesValue = annotation.getAnnotations("indexes");
+        if (CollectionUtils.isNotEmpty(indexesValue)) {
+            final AnnotationValue<Index>[] annotationValues =
+                (AnnotationValue<Index>[]) indexesValue.stream()
+                    .map(a -> mapper.map(a, visitorContext)
+                        .get(0)).toArray(AnnotationValue[]::new);
+            idxBuilder.member("value", annotationValues);
         }
 
         return Arrays.asList(builder.build(), idxBuilder.build());

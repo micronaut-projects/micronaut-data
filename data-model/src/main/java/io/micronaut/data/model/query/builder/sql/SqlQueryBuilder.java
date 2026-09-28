@@ -1059,10 +1059,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String createIndexName(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, boolean escape) {
         // Create index name without escaped table name and then escape if needed
-        String columnNames = String.join(", ", indexMapping.columns());
-        String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
-            String.format("idx_%s%s", prepareNames(tableMapping.name()),
-                makeTransformedColumnList(columnNames));
+        String indexName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
         if (escape) {
             indexName = quote(indexName);
         }
@@ -1149,21 +1146,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         return createSequenceStmt;
-    }
-
-    private String makeTransformedColumnList(String columnList) {
-        return Arrays.stream(prepareNames(columnList).split(","))
-            .map(col -> "_" + col)
-            .collect(Collectors.joining());
-    }
-
-    private String prepareNames(String columnList) {
-        return columnList.chars()
-            .mapToObj(c -> String.valueOf((char) c))
-            .filter(x -> !x.equals(" "))
-            .filter(x -> !x.equals("\""))
-            .map(String::toLowerCase)
-            .collect(Collectors.joining());
     }
 
     @Override

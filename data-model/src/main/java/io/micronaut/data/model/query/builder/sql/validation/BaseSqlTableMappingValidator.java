@@ -186,7 +186,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     protected final boolean matchingColumnType(SqlColumnMapping columnMapping,
                                                SqlColumnMetadata columnMetadata,
                                                SqlDialectOptions dialectOptions) {
-        if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
+        if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata)) {
             return true;
         }
         String sqlType = columnMapping.getSqlType(dialectOptions);
@@ -526,11 +526,16 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         for (SqlIndexMapping indexMapping : tableMapping.indexes()) {
             List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
             boolean special = indexMapping.spatial() || indexMapping.sqlIndexDefinitionProvider() != null;
+            String expectedName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
             boolean found = indexes.stream().anyMatch(index -> {
                 List<String> indexColumns = index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).toList();
                 if (special) {
                     // Spatial and vector indexes are not always reported with their columns in the same way
-                    return indexColumns.isEmpty() || indexColumns.containsAll(columns);
+                    if (indexColumns.isEmpty()) {
+                        // No columns are reported (also for unrelated expression indexes), only the index with the expected name matches
+                        return expectedName.equalsIgnoreCase(index.name());
+                    }
+                    return indexColumns.containsAll(columns);
                 }
                 return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
             });
@@ -546,22 +551,48 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         return values.stream().map(value -> value.toLowerCase(Locale.ENGLISH)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
+    private static boolean matchingColumnTypes(SqlDbType dbType, SqlColumnMetadata columnMetadata) {
         int mappedTypeCode = dbType.getType();
-        return mappedTypeCode == typeCode
-            || isCompatibleIntegralType(mappedTypeCode, typeCode)
-            || (isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode))
-            || (isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode))
-            || (isMappedToCharacterType(dbType) && isCharacterType(typeCode))
-            || (isBinaryType(mappedTypeCode) && isBinaryType(typeCode))
-            || (isBooleanOrBit(mappedTypeCode) && isBooleanOrBit(typeCode));
+        int typeCode = columnMetadata.type();
+        if (mappedTypeCode == typeCode) {
+            return true;
+        }
+        return switch (dbType) {
+            // A LOB can only be stored in a LOB or unbounded column, a bounded column can reject or truncate the values
+            case CLOB, NCLOB -> isCharacterLobType(typeCode) || (isCharacterType(typeCode) && isUnbounded(columnMetadata));
+            case BLOB -> isBinaryLobType(typeCode) || (isBinaryType(typeCode) && isUnbounded(columnMetadata));
+            default -> isCompatibleIntegralType(mappedTypeCode, typeCode)
+                || (isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode))
+                || (isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode))
+                || (isMappedToCharacterType(dbType) && isCharacterType(typeCode))
+                || (isBinaryType(mappedTypeCode) && isBinaryType(typeCode))
+                || (isBooleanOrBit(mappedTypeCode) && isBooleanOrBit(typeCode));
+        };
     }
 
     private static boolean isMappedToCharacterType(SqlDbType dbType) {
         return switch (dbType) {
-            case CHAR, VARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, LONGNVARCHAR, CLOB, NCLOB, ENUM -> true;
+            case CHAR, VARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, LONGNVARCHAR, ENUM -> true;
             default -> false;
         };
+    }
+
+    private static boolean isCharacterLobType(int typeCode) {
+        return switch (typeCode) {
+            case Types.CLOB, Types.NCLOB, Types.LONGVARCHAR, Types.LONGNVARCHAR -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isBinaryLobType(int typeCode) {
+        return typeCode == Types.BLOB || typeCode == Types.LONGVARBINARY;
+    }
+
+    /**
+     * @return whether the column has no length limit, for example PostgreSQL {@code text}/{@code bytea} or SQL Server {@code VARCHAR(MAX)}
+     */
+    private static boolean isUnbounded(SqlColumnMetadata columnMetadata) {
+        return columnMetadata.columnSize() <= 0 || columnMetadata.columnSize() == Integer.MAX_VALUE;
     }
 
     private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {
