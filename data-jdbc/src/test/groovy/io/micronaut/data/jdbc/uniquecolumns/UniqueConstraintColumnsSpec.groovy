@@ -44,11 +44,21 @@ class UniqueConstraintColumnsSpec extends Specification {
         def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(DistinctUniqueNamesItem), Dialect.POSTGRES).first()
         def names = mapping.uniqueConstraints()*.name()
 
-        then:"The lowercase name keeps the readable form, the mixed case name gets a hash"
+        then:
         names.size() == 2
         names.toSet().size() == 2
-        names.contains('UK_DISTINCT_UNIQUE_ITEM_CODE')
         names.every { it.length() <= 30 }
+    }
+
+    void 'generated unique constraint names of different column lists are distinct'() {
+        when:"The column lists a_b and (a, b) have the same readable name"
+        def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(ColumnListUniqueItem), Dialect.POSTGRES).first()
+        def names = mapping.uniqueConstraints()*.name()
+
+        then:
+        mapping.uniqueConstraints()*.columns() == [['a_b'] as String[], ['a', 'b'] as String[]]
+        names.toSet().size() == 2
+        names.every { it.startsWith('UK_ITEM_A_B_') && it.length() <= 30 }
     }
 
     void 'unique constraint column not matching a single column is kept as declared'() {
@@ -97,6 +107,20 @@ class DistinctUniqueNamesItem {
     String upperCode
     @Column(unique = true)
     String code
+}
+
+@Entity
+@Table(name = "item", uniqueConstraints = [
+        @UniqueConstraint(columnNames = "a_b"),
+        @UniqueConstraint(columnNames = ["a", "b"])
+])
+class ColumnListUniqueItem {
+    @Id
+    Long id
+    @Column(name = "a_b")
+    String ab
+    String a
+    String b
 }
 
 @Entity

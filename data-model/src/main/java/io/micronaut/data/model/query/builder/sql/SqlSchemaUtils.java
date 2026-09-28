@@ -1221,7 +1221,8 @@ public final class SqlSchemaUtils {
     }
 
     /**
-     * Builds a deterministic unique constraint (index) name that fits the identifier length limit of all supported databases.
+     * Builds a deterministic unique constraint (index) name that fits the identifier length limit of all supported databases:
+     * a readable part followed by a hash of the table and column names, which keeps the names of different column lists distinct.
      *
      * @param tableName The owning table
      * @param columns The unique columns
@@ -1233,22 +1234,13 @@ public final class SqlSchemaUtils {
 
     private static String shortConstraintName(String prefix, String tableName, List<String> columns) {
         String name = prefix + sanitize(tableName) + "_" + sanitize(String.join("_", columns));
-        // The sanitized name folds the case and the special characters, names differing only by them (like the quoted
-        // columns "Code" and "code") get a hash of the original names to stay distinct
-        boolean lossless = isSanitizedLosslessly(tableName) && columns.stream().allMatch(SqlSchemaUtils::isSanitizedLosslessly);
-        if (lossless && name.length() <= MAX_SHORT_CONSTRAINT_NAME_LENGTH) {
-            return name;
-        }
-        String hash = constraintNameHash(prefix + tableName + "_" + String.join("_", columns))
+        // The readable part is ambiguous: the sanitization folds the case and the special characters (the quoted columns
+        // "Code" and "code"), and the underscores don't mark the table and column boundaries (the columns a_b and (a, b),
+        // or the tables item_a and item). The constraint names are unique per schema in some databases, the hash of
+        // the names separated by a character not allowed in identifiers keeps them distinct.
+        String hash = constraintNameHash(prefix + '\0' + tableName + '\0' + String.join("\0", columns))
             .substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
         return name.substring(0, Math.min(name.length(), MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1)) + "_" + hash;
-    }
-
-    /**
-     * @return Whether the value can be restored from its sanitized form: lower case letters and digits separated by single underscores
-     */
-    private static boolean isSanitizedLosslessly(String value) {
-        return sanitize(value).toLowerCase(Locale.ENGLISH).equals(value);
     }
 
     private record ColumnOptions(@Nullable Integer length,

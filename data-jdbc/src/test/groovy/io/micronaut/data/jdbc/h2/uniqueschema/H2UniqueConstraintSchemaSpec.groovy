@@ -66,10 +66,15 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         then:"The unique constraints are kept apart from the declared indexes"
         table.indexes().isEmpty()
         indexes.size() == 3
-        indexes.collect { [it.name(), it.unique(), it.columns().toList()] }.containsAll([
-                ['UK_H2_UNIQUE_ITEM_CODE', true, ['code']],
+        indexes.collect { [it.name(), it.unique(), it.columns().toList()] }.contains(
                 ['uk_h2_unique_item_first_second', true, ['first_part', 'second_part']]
-        ])
+        )
+
+        and:"An unique column gets a bounded name with a hash"
+        def code = indexes.find { it.columns().toList() == ['code'] }
+        code.unique()
+        code.name() ==~ /UK_H2_UNIQUE_ITEM_\w*_[0-9A-F]{8}/
+        code.name().length() <= 30
 
         and:"An unnamed constraint can use an embedded column and gets a bounded name"
         def unnamed = indexes.find { it.columns().toList() == ['address_street', 'first_part'] }
@@ -93,8 +98,8 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         }
 
         then:
-        uniqueIndexes.containsAll(['uk_h2_unique_item_code', 'uk_h2_unique_item_first_second'])
-        uniqueIndexes.any { it.startsWith('uk_h2_unique_item_') && it != 'uk_h2_unique_item_code' && it != 'uk_h2_unique_item_first_second' }
+        uniqueIndexes.contains('uk_h2_unique_item_first_second')
+        uniqueIndexes.findAll { it ==~ /uk_h2_unique_item_\w+_[0-9a-f]{8}/ }.size() == 2
 
         when:"The created schema is validated"
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -164,10 +169,8 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         then:
         !result.hasErrors()
         result.warnings.size() == 3
-        result.warnings.containsAll([
-                'Unique constraint [UK_H2_UNIQUE_ITEM_CODE] on columns [code] not found in table [h2_unique_item]',
-                'Unique constraint [uk_h2_unique_item_first_second] on columns [first_part, second_part] not found in table [h2_unique_item]'
-        ])
+        result.warnings.contains('Unique constraint [uk_h2_unique_item_first_second] on columns [first_part, second_part] not found in table [h2_unique_item]')
+        result.warnings.any { it ==~ /Unique constraint \[UK_H2_UNIQUE_ITEM_\w+\] on columns \[code\] not found in table \[h2_unique_item\]/ }
         result.warnings.any { it.contains('on columns [address_street, first_part] not found') }
     }
 }
