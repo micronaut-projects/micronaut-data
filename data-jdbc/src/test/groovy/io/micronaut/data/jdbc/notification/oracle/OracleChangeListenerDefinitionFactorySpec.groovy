@@ -106,6 +106,24 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '180'
     }
 
+    void "disables Oracle timeout when renewal is none"() {
+        given:
+        def operations = operations()
+        def listenerMethod = listenerMethod(notification([
+                timeoutSeconds        : 0,
+                renewal               : OracleChangeNotification.RenewalMode.NONE,
+                renewalLeadTimeSeconds: 0
+        ]))
+
+        when:
+        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
+
+        then:
+        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
+        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
+        !definition.renewalPolicy().renewable()
+    }
+
     void "rejects select or where for object change notifications"() {
         given:
         def operations = operations()

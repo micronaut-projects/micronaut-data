@@ -156,8 +156,8 @@ Use `OracleChangeNotification.Property` to pass Oracle JDBC registration propert
 })
 ----
 
-Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and derives `NTF_TIMEOUT` from `timeoutSeconds` and the renewal strategy.
-`NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. If the registration reaches its timeout before any notification arrives, Micronaut Data renews it according to the configured renewal strategy.
+Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and controls `NTF_TIMEOUT` according to the renewal strategy.
+`NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. With a timed renewal strategy, a registration that reaches its timeout before any notification arrives is renewed.
 
 Configure the registration lifetime and replacement strategy with the typed annotation members instead of passing `OracleConnection.NTF_TIMEOUT` in `properties`:
 
@@ -173,7 +173,7 @@ void onBookChanged(ChangeEvent<Book> event) {
 }
 ----
 
-Every registration has a finite logical lifetime. Time spent associating the registration query counts toward that lifetime, and Micronaut Data calculates renewal from the creation time of the physical Oracle registration. The default `OVERLAPPING` strategy activates and associates the replacement `renewalLeadTimeSeconds` before the old registration expires, and only then unregisters the old registration. This provides at-least-once behavior across a successful planned renewal handoff, but the overlap can deliver the same database change through both registrations. It is not a durable-delivery guarantee, and listeners must be idempotent.
+With a timed renewal strategy, each registration has a finite logical lifetime. Time spent associating the registration query counts toward that lifetime, and Micronaut Data calculates renewal from the creation time of the physical Oracle registration. The default `OVERLAPPING` strategy activates and associates the replacement `renewalLeadTimeSeconds` before the old registration expires, and only then unregisters the old registration. This provides at-least-once behavior across a successful planned renewal handoff, but the overlap can deliver the same database change through both registrations. It is not a durable-delivery guarantee, and listeners must be idempotent.
 
 To avoid duplicates caused specifically by overlapping registrations, select `AFTER_EXPIRATION`:
 
@@ -193,11 +193,24 @@ This strategy uses a local timer. At `timeoutSeconds`, Micronaut Data explicitly
 
 For `AFTER_EXPIRATION`, the Oracle `NTF_TIMEOUT` is configured with a short grace period beyond `timeoutSeconds`. The longer server-side timeout normally remains unused; it removes an abandoned registration if the process is interrupted before local deregistration or if local deregistration fails. If deregistration fails while the application is running, Micronaut Data delays replacement until Oracle's timeout boundary to avoid creating overlapping registrations. A timeout deregistration event received before the local fallback can trigger replacement sooner, but renewal does not depend on that event being delivered.
 
+To keep one registration for the application lifetime without scheduled renewal, select `NONE`:
+
+[source,java]
+----
+@ChangeListener
+@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.NONE)
+void onBookChanged(ChangeEvent<Book> event) {
+    // ...
+}
+----
+
+In this mode, Micronaut Data sets `NTF_TIMEOUT` to `0`, so Oracle does not automatically expire the registration. `timeoutSeconds` and `renewalLeadTimeSeconds` are ignored. Normal shutdown still unregisters it, but after an abrupt service termination the operator must identify and manually remove any abandoned registration. Driver-reported notification receiver failures can still trigger a recovery registration; `NONE` disables planned, time-based renewal rather than failure recovery.
+
 If creating or associating a replacement registration fails, Micronaut Data logs the failure and schedules another renewal attempt while the scheduler remains available. With `OVERLAPPING`, the previous registration can continue delivering notifications while the replacement is retried. With `AFTER_EXPIRATION`, the previous registration has already been unregistered, so notifications can be missed until a replacement is successfully created.
 
 If Oracle deregisters a registration for a reason other than a renewable timeout, Micronaut Data closes that subscription and does not recreate it automatically. The same applies when Oracle deregisters a registered QRCN query. The application must correct the database or registration condition and restart the application if a new registration is required.
 
-Micronaut Data renews registrations that reach their timeout before a notification arrives, including those configured with `NTF_QOS_PURGE_ON_NTFN`. If Oracle purges a registration after delivering a notification, Micronaut Data closes that listener subscription and does not recreate it. Micronaut Data also cannot directly monitor the driver-owned CQN receiver connection because Oracle JDBC does not expose that connection, a heartbeat API, or a callback for a silently lost receiver channel. Setting `NTF_QOS_RELIABLE` does not cause Micronaut Data to recreate a lost channel or re-register a listener.
+Micronaut Data renews timed registrations that reach their timeout before a notification arrives, including those configured with `NTF_QOS_PURGE_ON_NTFN`. If Oracle purges a registration after delivering a notification, Micronaut Data closes that listener subscription and does not recreate it. The driver can report notification receiver failures to Micronaut Data, which attempts to replace the failed registration, but a silently lost channel with no failure callback cannot be detected by the framework. Setting `NTF_QOS_RELIABLE` does not itself cause Micronaut Data to recreate a lost channel or re-register a listener.
 
 == Delivery and Concurrency
 
@@ -231,4 +244,4 @@ If entity loading or listener execution fails and retry or recovery advice does 
 
 During graceful shutdown, Micronaut Data stops accepting new callbacks, unregisters live Oracle registrations, and waits for already accepted blocking-executor tasks to finish. Normal non-graceful context destruction also attempts registration cleanup.
 
-An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. The finite Oracle timeout ensures that Oracle eventually removes an abandoned registration. For `AFTER_EXPIRATION`, that server timeout includes a short cleanup grace period after the locally managed `timeoutSeconds` deadline. While the application is healthy, Micronaut Data renews long-lived registrations according to the configured renewal strategy.
+An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. With timed renewal, the finite Oracle timeout eventually removes an abandoned registration. For `AFTER_EXPIRATION`, that server timeout includes a short cleanup grace period after the locally managed `timeoutSeconds` deadline. With `NONE`, no server timeout is configured, so abandoned registrations require manual removal.

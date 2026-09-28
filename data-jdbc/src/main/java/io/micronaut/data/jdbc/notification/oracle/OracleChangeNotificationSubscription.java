@@ -23,13 +23,16 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 
 /**
@@ -40,10 +43,11 @@ import java.util.function.LongSupplier;
  * both the current and replacement registrations. After-expiration renewal locally unregisters the
  * current registration at its logical expiration deadline before creating a replacement. In this
  * mode, the Oracle Database registration timeout includes a grace period as fallback cleanup if
- * local deregistration cannot complete.</p>
+ * local deregistration cannot complete. A terminal notification-connection failure reported by
+ * the JDBC driver also causes the failed registration to be replaced.</p>
  *
- * <p>All state transitions are synchronized on this subscription. Physical registration ownership
- * is guarded separately so Oracle callbacks, renewal work, and shutdown cleanup can safely compete
+ * <p>Lifecycle state and physical registration ownership are synchronized on this subscription
+ * so Oracle callbacks, renewal work, and shutdown cleanup can safely compete
  * to claim a tracked registration for deregistration, while only one path can make that attempt.</p>
  */
 @SuppressWarnings("ReferenceEquality")
@@ -67,6 +71,8 @@ final class OracleChangeNotificationSubscription {
      * separately identifies which registration controls the next renewal.
      */
     private final List<DatabaseChangeRegistration> registrations = new ArrayList<>(2);
+
+    private final IdentityHashMap<DatabaseChangeRegistration, SQLException> pendingFailures = new IdentityHashMap<>();
 
     private State state = State.UNREGISTERED;
     private @Nullable OracleRegistrationLease currentLease;
@@ -142,10 +148,8 @@ final class OracleChangeNotificationSubscription {
      *
      * @param registration the registration to track
      */
-    void track(DatabaseChangeRegistration registration) {
-        synchronized (registrations) {
-            registrations.add(registration);
-        }
+    synchronized void track(DatabaseChangeRegistration registration) {
+        registrations.add(registration);
     }
 
     /**
@@ -155,16 +159,54 @@ final class OracleChangeNotificationSubscription {
      * @param registration the registration to remove
      * @return {@code true} if the registration was tracked and removed
      */
-    boolean untrack(DatabaseChangeRegistration registration) {
-        synchronized (registrations) {
-            for (int i = 0; i < registrations.size(); i++) {
-                if (registrations.get(i) == registration) {
-                    registrations.remove(i);
-                    return true;
-                }
+    synchronized boolean untrack(DatabaseChangeRegistration registration) {
+        pendingFailures.remove(registration);
+        for (int i = 0; i < registrations.size(); i++) {
+            if (registrations.get(i) == registration) {
+                registrations.remove(i);
+                return true;
             }
-            return false;
         }
+        return false;
+    }
+
+    /**
+     * Handles a terminal failure of the driver's notification connection for a registration.
+     *
+     * <p>The callback can arrive while a registration is still being associated, before its
+     * lease becomes current. Such failures are held until activation. For an active lease, the
+     * subscription immediately starts asynchronous recovery: it attempts to remove the old
+     * database registration and creates a replacement. The Oracle registration timeout remains
+     * the fallback cleanup if explicit removal is not possible.</p>
+     *
+     * @param registration the registration whose notification connection failed
+     * @param failure      the failure reported by the JDBC driver
+     */
+    void handleRegistrationFailure(DatabaseChangeRegistration registration, SQLException failure) {
+        OracleRegistrationLease failedLease;
+        synchronized (this) {
+            if (state == State.CLOSED) {
+                return;
+            }
+            if (!isCurrent(registration)) {
+                if (isTracked(registration)) {
+                    pendingFailures.put(registration, failure);
+                }
+                return;
+            }
+            if (state != State.ACTIVE) {
+                return;
+            }
+            if (currentLease == null) {
+                return;
+            }
+            failedLease = currentLease;
+            state = State.RECOVERING;
+            cancelRenewal();
+        }
+        LOG.error("DCN receiver failed for registration [{}], datasource [{}], and listener method [{}]; attempting recovery",
+            registration.getRegId(), dataSourceName, methodDescription, failure);
+        submitFailureRecovery(failedLease);
     }
 
     /**
@@ -189,10 +231,10 @@ final class OracleChangeNotificationSubscription {
      *
      * <p>The deregistered registration is removed from local tracking. If it is the current
      * registration, a {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT} normally schedules a
-     * replacement, while another reason closes the subscription. If an in-progress renewal already
-     * handles the deregistration, the callback does not start another renewal or close the
-     * subscription. Deregistration events for a registration that is no longer current do not change
-     * the subscription state.</p>
+     * replacement, while another reason closes the subscription. If an in-progress renewal or
+     * receiver recovery already handles the deregistration, the callback does not start another
+     * renewal or close the subscription. Deregistration events for a registration that is no longer
+     * current do not change the subscription state.</p>
      *
      * @param registration the Oracle Database registration that was deregistered
      * @param additionalEventType the additional reason reported for the deregistration
@@ -216,12 +258,13 @@ final class OracleChangeNotificationSubscription {
      *
      * <p>A callback for a registration that is no longer current has no effect. For the current
      * registration, this clears its lease and cancels its scheduled renewal. A
-     * {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT} requests a replacement unless the
-     * subscription is closed or an in-progress renewal already handles it. Other deregistration
-     * reasons close the subscription, except while an after-expiration renewal is in progress,
-     * because that renewal may itself produce a deregistration callback when unregistering the old
-     * registration. This method only updates state; the caller acts on the returned
-     * {@link DeregistrationAction}.</p>
+     * {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT} requests a replacement when renewal
+     * is enabled, unless the subscription is closed or an in-progress renewal or receiver recovery
+     * already handles it.
+     * Other deregistration reasons close the subscription, except while an after-expiration
+     * renewal is in progress, because that renewal may itself produce a deregistration callback
+     * when unregistering the old registration. This method only updates state; the caller acts on
+     * the returned {@link DeregistrationAction}.</p>
      *
      * @param registration        the registration reported as deregistered
      * @param additionalEventType the reason reported by Oracle Database
@@ -233,6 +276,10 @@ final class OracleChangeNotificationSubscription {
         if (!isCurrent(registration)) {
             return DeregistrationAction.NONE;
         }
+        if (state == State.RECOVERING) {
+            // Recovery already owns this failed registration and will create its replacement.
+            return DeregistrationAction.NONE;
+        }
         // Cancel the timer, but this cannot stop renewal work already submitted to the executor.
         // The checks below and in markRenewing determine whether that work is still valid.
         currentLease = null;
@@ -242,7 +289,7 @@ final class OracleChangeNotificationSubscription {
                 // The renewal already handles this timeout; don't submit a second renewal
                 return DeregistrationAction.NONE;
             }
-            if (state != State.CLOSED) {
+            if (state != State.CLOSED && renewalPolicy.renewable()) {
                 state = State.UNREGISTERED;
                 return DeregistrationAction.RENEW;
             }
@@ -332,23 +379,124 @@ final class OracleChangeNotificationSubscription {
     /**
      * Makes a newly created lease current and schedules its next renewal.
      *
-     * <p>Activation is rejected if this subscription has closed, shutdown has started, or the
+     * <p>When renewal is disabled, activation keeps the lease without scheduling a replacement.
+     * Activation is rejected if this subscription has closed, shutdown has started, or the
      * registration is no longer locally tracked. The check and state update are synchronized so a
      * concurrent shutdown or callback cannot reactivate a closed subscription.</p>
      *
      * @param registrationLease the lease to activate
      * @return {@code true} if the lease became current; {@code false} if it is no longer eligible
      */
-    private synchronized boolean activateLease(OracleRegistrationLease registrationLease) {
-        if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
-            return false;
+    private boolean activateLease(OracleRegistrationLease registrationLease) {
+        SQLException pendingFailure;
+        synchronized (this) {
+            pendingFailure = pendingFailures.remove(registrationLease.registration());
+            if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
+                return false;
+            }
+            // Preserve the previous lease and state if scheduling the replacement fails.
+            ScheduledFuture<?> nextRenewal = pendingFailure == null && renewalPolicy.renewable()
+                ? scheduleRenewal(registrationLease) : null;
+            currentLease = registrationLease;
+            renewalTask = nextRenewal;
+            state = pendingFailure == null ? State.ACTIVE : State.RECOVERING;
+            LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
+                registrationLease.registration().getRegId(), dataSourceName, methodDescription, renewalPolicy.mode());
         }
-        renewalTask = scheduleRenewal(registrationLease);
-        currentLease = registrationLease;
-        state = State.ACTIVE;
-        LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
-            registrationLease.registration().getRegId(), dataSourceName, methodDescription, renewalPolicy.mode());
+        if (pendingFailure != null) {
+            LOG.error("DCN receiver failed for registration [{}], datasource [{}], and listener method [{}] during activation; attempting recovery",
+                registrationLease.registration().getRegId(), dataSourceName, methodDescription, pendingFailure);
+            submitFailureRecovery(registrationLease);
+        }
         return true;
+    }
+
+    /**
+     * Submits recovery work without blocking the Oracle driver's notification thread.
+     *
+     * @param failedLease the lease whose receiver failed
+     */
+    private void submitFailureRecovery(OracleRegistrationLease failedLease) {
+        submitTrackedTask(() -> executeFailureRecovery(failedLease),
+            rejection -> scheduleFailureRecoveryRetry(failedLease, rejection));
+    }
+
+    /**
+     * Attempts to unregister a failed receiver's registration and activate a replacement.
+     *
+     * <p>Recovery is counted by the task tracker only once execution begins, so graceful shutdown
+     * does not wait for work that was merely queued. If shutdown has begun, the queued task is
+     * discarded. Replacement failures are retried by the scheduler.</p>
+     *
+     * @param failedLease the lease whose receiver failed
+     */
+    private void executeFailureRecovery(OracleRegistrationLease failedLease) {
+        try {
+            DatabaseChangeRegistration registration = failedLease.registration();
+            synchronized (this) {
+                if (state != State.RECOVERING || currentLease != failedLease) {
+                    return;
+                }
+            }
+            LOG.trace("Recovering failed DCN registration [{}] for datasource [{}] and listener method [{}]",
+                registration.getRegId(), dataSourceName, methodDescription);
+            unregisterFailedRegistration(registration);
+            synchronized (this) {
+                if (state != State.RECOVERING || currentLease != failedLease) {
+                    return;
+                }
+            }
+            createReplacementRegistration(failedLease);
+        } catch (RuntimeException recoveryFailure) {
+            LOG.error("Unable to recover failed DCN registration [{}] for datasource [{}] and listener method [{}]",
+                failedLease.registration().getRegId(), dataSourceName, methodDescription, recoveryFailure);
+            scheduleFailureRecoveryRetry(failedLease, recoveryFailure);
+        }
+    }
+
+    /**
+     * Claims a failed registration for best-effort cleanup, including when the driver marks it
+     * closed. Cleanup failures are logged; the database timeout remains the fallback.
+     *
+     * @param registration the registration whose receiver failed
+     */
+    private void unregisterFailedRegistration(DatabaseChangeRegistration registration) {
+        if (untrack(registration)) {
+            try {
+                registrar.unregisterRegistrationAfterFailure(registration);
+            } catch (RuntimeException cleanupFailure) {
+                LOG.warn("Unable to unregister failed DCN registration [{}] for datasource [{}] and listener method [{}]; "
+                        + "its Oracle Database timeout will provide fallback cleanup",
+                    registration.getRegId(), dataSourceName, methodDescription, cleanupFailure);
+            }
+        }
+    }
+
+    /**
+     * Schedules a failed receiver recovery attempt to be retried after the standard renewal retry
+     * delay, provided the same failed lease is still current and shutdown has not started.
+     *
+     * @param failedLease the lease whose receiver failed
+     * @param recoveryFailure the executor rejection or failed recovery attempt
+     */
+    private synchronized void scheduleFailureRecoveryRetry(OracleRegistrationLease failedLease,
+                                                           RuntimeException recoveryFailure) {
+        if (state != State.RECOVERING || currentLease != failedLease || taskTracker.isShutdownStarted()) {
+            return;
+        }
+        try {
+            renewalTask = taskScheduler.schedule(
+                Duration.ofSeconds(RENEWAL_RETRY_DELAY_SECONDS),
+                () -> submitFailureRecovery(failedLease));
+            LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
+                RENEWAL_RETRY_DELAY_SECONDS, dataSourceName, methodDescription,
+                failedLease.registration().getRegId(), recoveryFailure);
+        } catch (RuntimeException schedulingFailure) {
+            recoveryFailure.addSuppressed(schedulingFailure);
+            state = State.CLOSED;
+            LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], and listener method [{}]",
+                failedLease.registration().getRegId(), dataSourceName, methodDescription, recoveryFailure);
+        }
     }
 
     /**
@@ -391,10 +539,33 @@ final class OracleChangeNotificationSubscription {
     private void submitRenewal(State expectedState,
                                @Nullable OracleRegistrationLease expectedLease,
                                RenewalTrigger trigger) {
+        submitTrackedTask(() -> executeRenewal(expectedState, expectedLease, trigger),
+            rejection -> handleRejectedRenewal(expectedState, expectedLease, rejection));
+    }
+
+    /**
+     * Submits lifecycle work and applies shutdown task tracking when execution begins.
+     * Queued work is discarded after shutdown; accepted work is always reported complete.
+     *
+     * @param task the renewal or recovery work, including its eligibility checks
+     * @param rejectionHandler the retry handler for executor rejection
+     */
+    private void submitTrackedTask(Runnable task, Consumer<RejectedExecutionException> rejectionHandler) {
         try {
-            blockingExecutor.execute(() -> executeRenewal(expectedState, expectedLease, trigger));
+            blockingExecutor.execute(() -> {
+                if (!taskTracker.acceptTask()) {
+                    LOG.trace("Skipping DCN lifecycle task for datasource [{}] and listener method [{}] because shutdown has started",
+                        dataSourceName, methodDescription);
+                    return;
+                }
+                try {
+                    task.run();
+                } finally {
+                    taskTracker.completeTask();
+                }
+            });
         } catch (RejectedExecutionException e) {
-            handleRejectedRenewal(expectedState, expectedLease, e);
+            rejectionHandler.accept(e);
         }
     }
 
@@ -413,22 +584,13 @@ final class OracleChangeNotificationSubscription {
     private void executeRenewal(State expectedState,
                                 @Nullable OracleRegistrationLease expectedLease,
                                 RenewalTrigger trigger) {
-        if (!taskTracker.acceptTask()) {
-            LOG.trace("Skipping DCN renewal for datasource [{}] and listener method [{}] because shutdown has started",
+        if (markRenewing(expectedState, expectedLease)) {
+            LOG.trace("Accepted DCN renewal for datasource [{}], listener method [{}], and trigger [{}]",
+                dataSourceName, methodDescription, trigger);
+            renew(expectedLease, trigger);
+        } else {
+            LOG.trace("Skipping stale DCN renewal for datasource [{}] and listener method [{}]",
                 dataSourceName, methodDescription);
-            return;
-        }
-        try {
-            if (markRenewing(expectedState, expectedLease)) {
-                LOG.trace("Accepted DCN renewal for datasource [{}], listener method [{}], and trigger [{}]",
-                    dataSourceName, methodDescription, trigger);
-                renew(expectedLease, trigger);
-            } else {
-                LOG.trace("Skipping stale DCN renewal for datasource [{}] and listener method [{}]",
-                    dataSourceName, methodDescription);
-            }
-        } finally {
-            taskTracker.completeTask();
         }
     }
 
@@ -774,15 +936,13 @@ final class OracleChangeNotificationSubscription {
      * @param registration the registration to check
      * @return {@code true} if the registration is tracked
      */
-    private boolean isTracked(DatabaseChangeRegistration registration) {
-        synchronized (registrations) {
-            for (DatabaseChangeRegistration tracked : registrations) {
-                if (tracked == registration) {
-                    return true;
-                }
+    private synchronized boolean isTracked(DatabaseChangeRegistration registration) {
+        for (DatabaseChangeRegistration tracked : registrations) {
+            if (tracked == registration) {
+                return true;
             }
-            return false;
         }
+        return false;
     }
 
     /**
@@ -790,10 +950,8 @@ final class OracleChangeNotificationSubscription {
      *
      * @return a snapshot of tracked registrations
      */
-    private DatabaseChangeRegistration[] registrationsSnapshot() {
-        synchronized (registrations) {
-            return registrations.toArray(DatabaseChangeRegistration[]::new);
-        }
+    private synchronized DatabaseChangeRegistration[] registrationsSnapshot() {
+        return registrations.toArray(DatabaseChangeRegistration[]::new);
     }
 
     /**
@@ -815,6 +973,7 @@ final class OracleChangeNotificationSubscription {
         UNREGISTERED,
         ACTIVE,
         RENEWING,
+        RECOVERING,
         CLOSED
     }
 

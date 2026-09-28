@@ -36,7 +36,7 @@ import java.util.Properties;
  *                               {@code ROWID}; deleted rows cannot be reloaded.
  * @param registrationProperties The effective registration properties, including framework-required
  *                               {@code ROWID} notification and registration timeout settings.
- * @param renewalPolicy          The finite registration lifetime and replacement policy.
+ * @param renewalPolicy          The registration lifetime and replacement policy, if enabled.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,

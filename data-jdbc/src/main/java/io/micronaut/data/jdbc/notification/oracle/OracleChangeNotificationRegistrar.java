@@ -54,6 +54,16 @@ final class OracleChangeNotificationRegistrar {
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final LongSupplier nanoTimeSupplier;
 
+    /**
+     * Creates a registrar for one datasource and the subscriptions managed for it.
+     *
+     * @param dataSourceName   the name used to identify the datasource in diagnostics
+     * @param operations       the JDBC operations used to acquire datasource connections
+     * @param beanContext      the context used by the notification dispatcher to resolve listener beans
+     * @param blockingExecutor the executor used for asynchronous notification processing
+     * @param taskTracker      the tracker used to coordinate asynchronous work with shutdown
+     * @param nanoTimeSupplier a monotonic clock used to calculate registration lease deadlines
+     */
     OracleChangeNotificationRegistrar(String dataSourceName,
                                       JdbcOperations operations,
                                       BeanContext beanContext,
@@ -68,6 +78,19 @@ final class OracleChangeNotificationRegistrar {
         this.nanoTimeSupplier = nanoTimeSupplier;
     }
 
+    /**
+     * Creates and associates a database registration for a subscription.
+     *
+     * <p>The Oracle listeners are attached before the generated registration query is associated.
+     * The registration is tracked before the driver failure listener is attached so an early
+     * failure callback can be retained by the subscription until its lease is activated. If
+     * listener setup or query association fails, this method removes the registration from local
+     * tracking and attempts to unregister it before propagating the failure.</p>
+     *
+     * @param subscription the subscription that owns the registration and receives its callbacks
+     * @return the registration and its locally calculated logical expiration deadline
+     * @throws RuntimeException if registration setup or query association fails
+     */
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
@@ -88,6 +111,7 @@ final class OracleChangeNotificationRegistrar {
                     subscription::handleQueryDeregistered
                 ));
                 subscription.track(registration);
+                registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration, failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
@@ -109,8 +133,47 @@ final class OracleChangeNotificationRegistrar {
         });
     }
 
+    /**
+     * Unregisters a registration during ordinary cleanup.
+     *
+     * <p>If the JDBC driver already marks the registration closed, no datasource connection is
+     * acquired. Oracle Database reporting that the registration ID is already absent is treated as
+     * successful cleanup; other failures propagate to the caller.</p>
+     *
+     * @param registration the registration to unregister
+     */
     void unregisterRegistration(DatabaseChangeRegistration registration) {
-        if (registration.getState() == NotificationRegistration.RegistrationState.CLOSED) {
+        unregisterRegistration(registration, false);
+    }
+
+    /**
+     * Attempts to unregister a registration after the driver's notification connection failed.
+     *
+     * <p>The driver marks the local registration closed after its reconnect attempts are exhausted,
+     * but the database-side registration may still exist. Unlike ordinary cleanup, this method
+     * therefore attempts the database call even when the local state is closed.</p>
+     *
+     * @param registration the registration whose notification connection failed
+     */
+    void unregisterRegistrationAfterFailure(DatabaseChangeRegistration registration) {
+        unregisterRegistration(registration, true);
+    }
+
+    /**
+     * Performs datasource-backed unregistration, optionally attempting it for a locally closed
+     * registration.
+     *
+     * <p>A closed registration is normally skipped because Oracle Database has already removed it.
+     * Recovery after a notification-connection failure sets {@code attemptWhenClosed} to true
+     * because the driver may have closed only its local registration state while the
+     * database-side registration remains present.</p>
+     *
+     * @param registration      the registration to unregister
+     * @param attemptWhenClosed whether to attempt unregistration when the driver's local state is
+     *                          closed
+     */
+    private void unregisterRegistration(DatabaseChangeRegistration registration, boolean attemptWhenClosed) {
+        if (!attemptWhenClosed && registration.getState() == NotificationRegistration.RegistrationState.CLOSED) {
             LOG.trace("Skipping already closed DCN registration [{}] for datasource [{}]", registration.getRegId(), dataSourceName);
             return;
         }

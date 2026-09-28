@@ -83,7 +83,7 @@ final class OracleChangeListenerDefinitionFactory {
         OracleChangeNotification.RenewalMode mode = notification
             .enumValue("renewal", OracleChangeNotification.RenewalMode.class)
             .orElse(OracleChangeNotification.RenewalMode.OVERLAPPING);
-        if (timeoutSeconds <= 0) {
+        if (mode != OracleChangeNotification.RenewalMode.NONE && timeoutSeconds <= 0) {
             throw invalidChangeListener(method, "requires timeoutSeconds to be greater than 0");
         }
         if (mode == OracleChangeNotification.RenewalMode.OVERLAPPING

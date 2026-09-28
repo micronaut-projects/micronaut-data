@@ -106,6 +106,23 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
     }
 
+    void "test no renewal ignores timeout and overlap lead time"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(
+        timeoutSeconds = 0,
+        renewal = OracleChangeNotification.RenewalMode.NONE,
+        renewalLeadTimeSeconds = 0
+    )
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+    }
+
     @Unroll
     void "test invalid Oracle notification configuration fails compilation: #description"() {
         when:

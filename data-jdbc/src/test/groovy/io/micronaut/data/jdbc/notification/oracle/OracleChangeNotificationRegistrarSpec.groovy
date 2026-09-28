@@ -44,6 +44,23 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         0 * operations.execute(_ as ConnectionCallback)
     }
 
+    void "attempts to unregister a closed registration after its notification connection fails"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def registration = Mock(DatabaseChangeRegistration)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        registration.state >> NotificationRegistration.RegistrationState.CLOSED
+        connection.unwrap(OracleConnection) >> oracleConnection
+
+        when:
+        registrar(operations).unregisterRegistrationAfterFailure(registration)
+
+        then:
+        1 * operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
+    }
+
     void "unregisters an active registration using a datasource connection"() {
         given:
         def operations = Mock(JdbcOperations)

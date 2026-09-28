@@ -112,7 +112,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         int timeoutSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "timeoutSeconds").orElse(3600);
         int leadTimeSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "renewalLeadTimeSeconds").orElse(60);
         String renewal = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "renewal").orElse("OVERLAPPING");
-        if (timeoutSeconds <= 0) {
+        if (!"NONE".equals(renewal) && timeoutSeconds <= 0) {
             context.fail("@OracleChangeNotification requires timeoutSeconds to be greater than 0", element);
             return false;
         }

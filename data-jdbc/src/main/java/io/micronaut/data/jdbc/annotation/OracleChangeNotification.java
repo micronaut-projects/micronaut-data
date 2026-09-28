@@ -31,10 +31,11 @@ import java.lang.annotation.Target;
  * available, or report a dependent table for Query Result Change Notification; either is delivered with
  * {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
- * <p>Registrations have a finite lifetime. By default, Micronaut Data renews long-lived
+ * <p>By default, registrations have a finite lifetime. Micronaut Data renews long-lived
  * registrations by activating a replacement shortly before the previous registration expires.
  * This avoids a planned delivery gap, but both registrations can briefly report the same database
- * change.</p>
+ * change. {@link RenewalMode#NONE} instead leaves the registration active until it is explicitly
+ * unregistered.</p>
  *
  * @since 5.2.0
  */
@@ -44,11 +45,12 @@ import java.lang.annotation.Target;
 public @interface OracleChangeNotification {
 
     /**
-     * Controls the finite lifetime of each registration.
+     * Controls the finite lifetime of each registration when renewal is enabled.
      *
-     * @return The logical registration lifetime in seconds. Must be greater than zero. For
-     * {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data configures a slightly longer Oracle
-     * Database timeout as a cleanup fallback if local deregistration cannot run.
+     * @return The logical registration lifetime in seconds. Must be greater than zero when
+     * renewal is enabled. For {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data configures a
+     * slightly longer Oracle Database timeout as a cleanup fallback if local deregistration cannot
+     * run. Ignored for {@link RenewalMode#NONE}, which has no automatic timeout.
      */
     int timeoutSeconds() default 3600;
 
@@ -109,7 +111,7 @@ public @interface OracleChangeNotification {
     }
 
     /**
-     * Determines whether successive registrations overlap.
+     * Determines how, or whether, registrations are renewed.
      */
     enum RenewalMode {
         /**
@@ -123,6 +125,12 @@ public @interface OracleChangeNotification {
          * the replacement is created. A longer Oracle Database timeout removes abandoned registrations
          * if local deregistration cannot run.
          */
-        AFTER_EXPIRATION
+        AFTER_EXPIRATION,
+        /**
+         * Does not set a registration timeout or schedule renewal. Micronaut Data unregisters the
+         * registration during normal shutdown, but the application operator must remove abandoned
+         * registrations after an ungraceful termination.
+         */
+        NONE
     }
 }
