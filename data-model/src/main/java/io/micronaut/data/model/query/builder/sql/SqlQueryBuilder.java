@@ -1175,10 +1175,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
         String sequenceName;
         if (dialect == Dialect.POSTGRES) {
-            // The inserts refer to the sequence unquoted in nextval('schema.name'), which folds the case,
-            // the sequence is created with the same name, see getSequenceStatement
-            String schema = table.schema();
-            sequenceName = (StringUtils.isEmpty(schema) ? "" : schema + DOT) + resolveSequenceName(table, sequence);
+            // Created with the same name as the inserts refer to it in nextval('...')
+            sequenceName = postgresSequenceName(table.schema(), resolveSequenceName(table, sequence), escape);
         } else {
             sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         }
@@ -1523,7 +1521,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property, escape));
                     } else {
                         addWriteExpression(values, property);
 
@@ -1640,14 +1638,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return path.toArray(new String[0]);
     }
 
-    final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
+    final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property, boolean escape) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
             case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true) + ".nextval";
-            case POSTGRES -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
+            case POSTGRES -> "nextval('" + postgresSequenceName(unescapedSchemaName, sequenceName, escape) + "')";
             case SQL_SERVER -> "NEXT VALUE FOR " + (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true);
             default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
+    }
+
+    /**
+     * The PostgreSQL sequence name used both to create the sequence and in the {@code nextval('...')} of the inserts.
+     * The schema is quoted like the schema of the table, the sequence name is unquoted and folded to lower case,
+     * as the inserts always referred to it.
+     */
+    private String postgresSequenceName(@Nullable String schema, String sequenceName, boolean escape) {
+        if (StringUtils.isEmpty(schema)) {
+            return sequenceName;
+        }
+        return (escape ? quote(schema, true) : schema) + DOT + sequenceName;
     }
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {

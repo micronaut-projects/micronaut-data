@@ -44,7 +44,6 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
-import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlJsonViewMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
@@ -68,7 +67,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -433,32 +431,12 @@ public class SchemaGenerator {
     }
 
     /**
-     * Resolves the property placeholders of the schema, table and sequence names (like {@code @MappedEntity("${prefix}entity")}
-     * or {@code @GeneratedValue(ref = "${sequence}")}), the same way as in the SQL executed by the schema generation.
-     * The default sequence name is derived from the table name. The column names don't support placeholders.
+     * Resolves the property placeholders of all the names (like {@code @MappedEntity("${prefix}entity")},
+     * {@code @MappedProperty("${column}")} or {@code @GeneratedValue(ref = "${sequence}")}), the same way as in the SQL
+     * executed by the schema generation and the queries.
      */
     private SqlTableMapping resolvePlaceholders(SqlTableMapping sqlTableMapping) {
-        String schema = sqlTableMapping.schema();
-        String resolvedSchema = schema == null ? null : resolveSql(propertyPlaceholderResolver, schema);
-        String resolvedName = resolveSql(propertyPlaceholderResolver, sqlTableMapping.name());
-        List<SqlSequenceMapping> resolvedSequences = sqlTableMapping.sequences().stream().map(this::resolvePlaceholders).toList();
-        if (Objects.equals(schema, resolvedSchema) && sqlTableMapping.name().equals(resolvedName)
-            && resolvedSequences.equals(sqlTableMapping.sequences())) {
-            return sqlTableMapping;
-        }
-        return sqlTableMapping.withNames(resolvedSchema, resolvedName, resolvedSequences);
-    }
-
-    private SqlSequenceMapping resolvePlaceholders(SqlSequenceMapping sequence) {
-        String definedName = sequence.definedName();
-        if (definedName == null) {
-            return sequence;
-        }
-        String resolvedName = resolveSql(propertyPlaceholderResolver, definedName);
-        if (resolvedName.equals(definedName)) {
-            return sequence;
-        }
-        return new SqlSequenceMapping(sequence.columnName(), sequence.definition(), resolvedName, sequence.dataType(), sequence.generatedValueType());
+        return sqlTableMapping.withNames(name -> resolveSql(propertyPlaceholderResolver, name));
     }
 
     /**

@@ -16,6 +16,11 @@
 package io.micronaut.data.jdbc.postgres.explicitschema
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -60,6 +65,8 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         execute(dataSource, 'CREATE TABLE foo.column_case_item (id BIGINT NOT NULL PRIMARY KEY, "Name" VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE TABLE foo."Sequence_item" (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
         execute(dataSource, 'CREATE SEQUENCE foo.sequence_item_seq')
+        execute(dataSource, 'CREATE TABLE "Foo".quoted_schema_sequence_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(dataSource, 'CREATE SEQUENCE "Foo".quoted_schema_sequence_item_seq')
 
         and:"A table and a column with names longer than 63 bytes, truncated by PostgreSQL"
         execute(dataSource, "CREATE TABLE foo.${LongNameItem.TABLE} (id BIGINT NOT NULL PRIMARY KEY, ${LongNameItem.COLUMN} VARCHAR(255) NOT NULL)")
@@ -109,6 +116,18 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         def nextValue = query(dataSource, "SELECT nextval('foo.Sequence_item_seq')")
 
         then:
+        nextValue == 1L
+
+        when:"The insert of an entity in the quoted schema \"Foo\" refers to the created sequence"
+        def insertDefinition = [
+                persistentEntity: { -> new RuntimePersistentEntity(QuotedSchemaSequenceItem) },
+                returning       : { -> false }
+        ] as QueryBuilder.InsertQueryDefinition
+        def insert = new SqlQueryBuilder(Dialect.POSTGRES).buildInsert(AnnotationMetadata.EMPTY_METADATA, insertDefinition).query
+        nextValue = query(dataSource, "SELECT nextval('\"Foo\".quoted_schema_sequence_item_seq')")
+
+        then:
+        insert.contains("nextval('\"Foo\".quoted_schema_sequence_item_seq')")
         nextValue == 1L
 
         cleanup:
@@ -186,6 +205,14 @@ class LongNameItem {
     Long id
     @MappedProperty(COLUMN)
     String longName
+}
+
+@MappedEntity(value = "quoted_schema_sequence_item", schema = "Foo", escape = true)
+class QuotedSchemaSequenceItem {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.SEQUENCE)
+    Long id
+    String name
 }
 
 @MappedEntity(value = "Sequence_item", schema = "foo", escape = true)

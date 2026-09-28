@@ -18,7 +18,9 @@ package io.micronaut.data.model.schema.sql;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 /**
  * The SQL table mapping information extracted from the {@link io.micronaut.data.model.PersistentEntity}.
@@ -67,14 +69,39 @@ public record SqlTableMapping(
     }
 
     /**
-     * @param schema The schema
-     * @param name The table name
-     * @param sequences The sequences
-     * @return A copy of this mapping with the given schema, table name and sequences
+     * Maps all the names of the mapping: the schema, table, column, sequence, index and unique constraint names,
+     * used to resolve their property placeholders.
+     *
+     * @param nameMapper The function mapping a name
+     * @return A copy of this mapping with the mapped names
      * @since 5.3.0
      */
-    public SqlTableMapping withNames(@Nullable String schema, String name, List<SqlSequenceMapping> sequences) {
-        return new SqlTableMapping(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, uniqueConstraints);
+    public SqlTableMapping withNames(UnaryOperator<String> nameMapper) {
+        return new SqlTableMapping(
+            schema == null ? null : nameMapper.apply(schema),
+            nameMapper.apply(name),
+            escape,
+            type,
+            mapColumns(primaryKeyColumns == null ? List.of() : primaryKeyColumns, nameMapper),
+            mapColumns(columns, nameMapper),
+            sequences.stream().map(sequence -> {
+                String definedName = sequence.definedName();
+                return new SqlSequenceMapping(nameMapper.apply(sequence.columnName()), sequence.definition(),
+                    definedName == null ? null : nameMapper.apply(definedName), sequence.dataType(), sequence.generatedValueType());
+            }).toList(),
+            mapIndexes(indexes, nameMapper),
+            auxiliaryStatements,
+            mapIndexes(uniqueConstraints, nameMapper));
+    }
+
+    private static List<SqlColumnMapping> mapColumns(List<SqlColumnMapping> columns, UnaryOperator<String> nameMapper) {
+        return columns.stream().map(column -> column.withName(nameMapper.apply(column.getName()))).toList();
+    }
+
+    private static List<SqlIndexMapping> mapIndexes(List<SqlIndexMapping> indexes, UnaryOperator<String> nameMapper) {
+        return indexes.stream().map(index -> new SqlIndexMapping(nameMapper.apply(index.name()), index.unique(),
+            Arrays.stream(index.columns()).map(nameMapper).toArray(String[]::new), index.sqlIndexDefinitionProvider(),
+            index.vectorIndexMetadata(), index.spatial(), index.srid())).toList();
     }
 
     /**
